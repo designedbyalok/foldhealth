@@ -1,7 +1,7 @@
-/* RecordsRequestDialog — QA / Compliance role picker (Figma ICD-Import
+/* RecordsRequestDialog: QA / Compliance role picker (Figma ICD-Import
    5723-171525). Radios stacked with a hairline between them, optional
    comment box with a 0/150 counter, Cancel outlined on the left and
-   Request Record filled on the right. No close-X in header — Cancel is
+   Request Record filled on the right. No close-X in header, Cancel is
    the only exit. */
 
 .dialog {
@@ -11,14 +11,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  /* Local override — the shared AlertDialogContent primitive lands on
+  /* Local override: the shared AlertDialogContent primitive lands on
      Tailwind's `rounded-xl` which resolves to 16px in this project's
      theme. This dialog spec calls for 12px so it reads a touch lighter
      than the destructive ConfirmDialog it sits above. */
   border-radius: 12px;
 }
 
-/* Header — title + description stacked, no close button. Rely on the
+/* Header: title + description stacked, no close button. Rely on the
    title's tight line-height for the ~2px visual gap the Figma calls for
    (the token grid only descends to 4px). */
 .header {
@@ -41,7 +41,7 @@
   margin: 0;
 }
 
-/* Inline radio row — Coder + Support Team side by side, no descriptions
+/* Inline radio row: Coder + Support Team side by side, no descriptions
    or divider. Matches the Figma ICD-Import 6379-182566 layout. */
 .radioRow {
   display: flex;
@@ -73,18 +73,18 @@
   color: var(--neutral-400);
 }
 
-/* Assigned to — uses the shared Select component. These classes only
+/* Assigned to: uses the shared Select component. These classes only
    dress the trigger's picked-value row and the dropdown option rows;
    Select owns the border, chevron, and menu chrome. */
 .assigneeSelectWrapper {
   /* Field label uses Select's built-in labelled-field spacing; nothing
-     extra here — the wrapper is a hook for future overrides. */
+     extra here: the wrapper is a hook for future overrides. */
 }
 .assigneeSelect {
   /* Reserved for trigger-height / typography overrides if the design
      ever needs them; empty for now so Select's defaults apply. */
 }
-/* Picked-value pill inside Select's trigger — avatar + name + green
+/* Picked-value pill inside Select's trigger: avatar + name + green
    "(Available)" tag on one row. */
 .assigneeTriggerLabel {
   display: inline-flex;
@@ -112,7 +112,7 @@
   font-weight: 500;
   flex-shrink: 0;
 }
-/* Dropdown row inside the Select menu — M-size avatar on the left,
+/* Dropdown row inside the Select menu, M-size avatar on the left,
    two-line text (name + role) in the middle, Available/Unavailable
    tag pinned to the right. No chevron. */
 .assigneeOption {
@@ -170,7 +170,7 @@
   border-radius: 4px;
 }
 
-/* Custom radio circle — outline when idle, filled purple dot when active. */
+/* Custom radio circle: outline when idle, filled purple dot when active. */
 .radio {
   flex-shrink: 0;
   width: 20px;
@@ -193,7 +193,7 @@
 .optionText {
   display: flex;
   flex-direction: column;
-  /* Tight label→description gap — tokens only go down to 4px, so tighten
+  /* Tight label→description gap: tokens only go down to 4px, so tighten
      via the description's line-height instead of an explicit gap. */
   min-width: 0;
 }
@@ -210,7 +210,7 @@
   line-height: var(--leading-normal);
 }
 
-/* Optional comment — label above, textarea with a 0/150 counter overlaid
+/* Optional comment: label above, textarea with a 0/150 counter overlaid
    in the bottom-right corner. Matches Figma's compact treatment. */
 .commentField {
   display: flex;
@@ -239,7 +239,7 @@
   pointer-events: none;
 }
 
-/* Actions — Cancel left (secondary), Request Record right (primary). Each
+/* Actions: Cancel left (secondary), Request Record right (primary). Each
    button flexes to fill half the row so the pair spans the dialog width,
    matching Figma's edge-to-edge treatment. */
 .actions {

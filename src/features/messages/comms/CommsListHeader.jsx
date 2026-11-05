@@ -21,11 +21,11 @@ export function CommsListHeader({
 }) {
   const right = [
     onSearch && (
-      <ActionButton key="search" icon="solar:magnifer-linear" size="S" tooltip="Search" active={searchActive} onClick={onSearch} />
+      <ActionButton key="search" icon="solar:magnifer-linear" size="sm" tooltip="Search" active={searchActive} onClick={onSearch} />
     ),
-    onBulk && <BulkSelectToggle key="bulk" size="S" active={bulkActive} onToggle={onBulk} />,
+    onBulk && <BulkSelectToggle key="bulk" size="sm" active={bulkActive} onToggle={onBulk} />,
     onFilter && (
-      <ActionButton key="filter" icon="custom:filter" size="S" tooltip="Filter" active={filterActive} onClick={onFilter} />
+      <ActionButton key="filter" icon="custom:filter" size="sm" tooltip="Filter" active={filterActive} onClick={onFilter} />
     ),
   ].filter(Boolean);
 
@@ -35,7 +35,7 @@ export function CommsListHeader({
         <>
           <ActionButton
             icon="custom:collapse-sidebar"
-            size="S"
+            size="sm"
             tooltip={navCollapsed ? 'Expand menu' : 'Collapse menu'}
             onClick={onToggleNav}
           />

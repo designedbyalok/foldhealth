@@ -6,7 +6,7 @@ import { safeTableRows } from './shared.utils';
 import { EditableGrid } from './EditableGrid';
 import s from '../AnalyticsLayout.module.css';
 
-// Editable dashboard config. `h` values are seeds only — EditableGrid
+// Editable dashboard config. `h` values are seeds only: EditableGrid
 // auto-fits each cell to its content height. x/y/w drive placement & order.
 const STORAGE_KEY = 'analytics-quality-layout-v2';
 
@@ -135,7 +135,7 @@ export function QualityView({ showToast, editing = false, resetTick = 0 }) {
   );
 
   const renderPracticeQuality = () => (
-    <Card title="Practice-Level Quality" flush actions={<Button variant="ghost" size="S" onClick={() => showToast?.('Exporting practice quality...')}>Export</Button>}>
+    <Card title="Practice-Level Quality" flush actions={<Button variant="ghost" size="sm" onClick={() => showToast?.('Exporting practice quality...')}>Export</Button>}>
       <div className={s.tblWrap}>
         <table className={s.tbl}>
           <thead>
@@ -168,8 +168,8 @@ export function QualityView({ showToast, editing = false, resetTick = 0 }) {
       style={{ border: '1px solid var(--status-error-light)' }}
       actions={
         <div style={{ display: 'flex', gap: 6 }}>
-          <Button variant="primary" size="S" style={{ fontSize: 'var(--font-sm)' }} onClick={() => showToast?.('Scheduling AWV for 620 members')}>Schedule AWV (620)</Button>
-          <Button variant="ghost" size="S" style={{ fontSize: 'var(--font-sm)' }} onClick={() => showToast?.('Scheduling office visits for 620 members')}>Schedule Office Visit (620)</Button>
+          <Button size="sm" style={{ fontSize: 'var(--font-sm)' }} onClick={() => showToast?.('Scheduling AWV for 620 members')}>Schedule AWV (620)</Button>
+          <Button variant="ghost" size="sm" style={{ fontSize: 'var(--font-sm)' }} onClick={() => showToast?.('Scheduling office visits for 620 members')}>Schedule Office Visit (620)</Button>
         </div>
       }
     >
@@ -177,8 +177,8 @@ export function QualityView({ showToast, editing = false, resetTick = 0 }) {
       <ProgressBar label="Tier 3 (Moderate Risk)" value="488 members \u00B7 close via AWV scheduling" pct={39} color="amber" />
       <ProgressBar label="Tier 1\u20132 (Low Risk)" value="340 members \u00B7 close via targeted reminder" pct={27} color="green" />
       <div style={{ display: 'flex', gap: 7, marginTop: 10, flexWrap: 'wrap' }}>
-        <Button variant="primary" size="S" onClick={() => showToast?.('Viewing all 1,240 members')}>View All 1,240 Members &rarr;</Button>
-        <Button variant="ghost" size="S" onClick={() => showToast?.('AWV Opportunity: 847 members')}>AWV Opportunity (847) &rarr;</Button>
+        <Button size="sm" onClick={() => showToast?.('Viewing all 1,240 members')}>View All 1,240 Members &rarr;</Button>
+        <Button variant="ghost" size="sm" onClick={() => showToast?.('AWV Opportunity: 847 members')}>AWV Opportunity (847) &rarr;</Button>
       </div>
       <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)', marginTop: '0.5rem' }}>
         Two separate cohorts for split targeting: AWV scheduling for prevention-eligible members; office visit for members recently seen but no gap addressed.

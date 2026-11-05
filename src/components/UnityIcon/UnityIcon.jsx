@@ -1,5 +1,5 @@
 /**
- * UnityIcon — the Unity brand mark, drawn as a single-color glyph.
+ * UnityIcon: the Unity brand mark, drawn as a single-color glyph.
  * Color is controlled via the `color` prop (defaults to currentColor), so it
  * inherits CSS context. Shape paths come from the source SVG provided by design.
  */

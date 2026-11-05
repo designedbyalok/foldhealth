@@ -1,5 +1,5 @@
 /**
- * Member-consent glyph — thumbs-up with a verified ribbon.
+ * Member-consent glyph: thumbs-up with a verified ribbon.
  *
  * Usage: <Icon name="custom:member-consent" size={20} color="var(--primary-300)" />
  */

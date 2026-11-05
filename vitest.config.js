@@ -20,7 +20,7 @@ export default mergeConfig(
         test: {
           name: 'unit',
           environment: 'node',
-          include: ['src/**/*.test.{js,jsx}', 'api/**/*.test.js'],
+          include: ['src/**/*.test.{js,jsx}', 'api/**/*.test.js', 'patient/**/*.test.{js,jsx}'],
         },
       }, {
         extends: true,

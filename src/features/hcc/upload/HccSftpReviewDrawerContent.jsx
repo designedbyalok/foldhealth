@@ -12,7 +12,7 @@ export function HccSftpReviewDrawerContent({
     <>
       {activeBatch ? (
         <div className={styles.panels}>
-          {/* LEFT — filename strip + page preview. */}
+          {/* LEFT: filename strip + page preview. */}
           <div className={styles.leftPanel}>
             <div className={styles.fileStrip}>
               <button
@@ -71,11 +71,11 @@ export function HccSftpReviewDrawerContent({
             />
           </div>
 
-          {/* RIGHT — per-patient encounter card stack (one patient per
-              document, N DOS inside). No tabs / status filters — the
+          {/* RIGHT: per-patient encounter card stack (one patient per
+              document, N DOS inside). No tabs / status filters, the
               reviewer just works the document's records. */}
           <div className={styles.rightPanel}>
-            {/* Encounter card stack — replaces the table. */}
+            {/* Encounter card stack: replaces the table. */}
             <div className={styles.cardStack}>
               {visibleEncs.length === 0 ? (
                 // Every record on this document has been triaged → completion
@@ -106,7 +106,7 @@ export function HccSftpReviewDrawerContent({
                   onAddToWorklist={(enc) => {
                     const r = createFromEncounter?.({ ...enc, _docName: activeBatch.fileName, _batchId: activeBatch.id });
                     if (r?.kind === 'skipped') {
-                      showToast?.(`Cannot add — ${r.reason || 'encounter is incomplete'}`);
+                      showToast?.(`Cannot add: ${r.reason || 'encounter is incomplete'}`);
                       return false;
                     }
                     setEncounterStatus?.(activeBatch.id, activeEncs.indexOf(enc), 'added');

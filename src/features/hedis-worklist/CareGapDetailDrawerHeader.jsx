@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
@@ -9,6 +9,8 @@ import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { MEASURE_NAMES, STATUSES, daysAgo, initialsOf } from './CareGapDetailDrawer.utils';
 import { computeDsfbDueDateISO } from './dsf/dsfScoring';
 import { CIS_CODE } from './cis/cisRules';
+import { GapSourceCircle } from './GapSourceCircle';
+import { gapSourceLabel } from './hedisFilters';
 import styles from './CareGapDetailDrawer.module.css';
 
 // Status → shared Badge tone. Aligns with STATUS_STYLE's colour intent
@@ -20,10 +22,10 @@ const STATUS_TONE = {
   'Engaged Requires Follow-Up':  'warning',
   'Submitted':                   'warning',
   'Completed':                   'success',
-  'Closed - Data':               'grey',
-  'Closed - Do not call':        'grey',
-  'Closed - UTR':                'grey',
-  'Closed - Other':              'grey',
+  'Closed - Data':               'neutral',
+  'Closed - Do not call':        'neutral',
+  'Closed - UTR':                'neutral',
+  'Closed - Other':              'neutral',
 };
 
 export function CareGapDetailDrawerHeader({
@@ -61,8 +63,18 @@ export function CareGapDetailDrawerHeader({
   goNext,
   canPrev,
   canNext,
+  // Every instance of this gap, newest first ({ no, gap, active }); the
+  // dropdown shows only once there is a second one. A previous instance is
+  // shown read-only.
+  instances = [],
+  viewedInstanceNo = null,
+  onPickInstance,
 }) {
   const statusBtnRef = useRef(null);
+  const instanceBtnRef = useRef(null);
+  const [instanceMenuOpen, setInstanceMenuOpen] = useState(false);
+  const viewed = instances.find(i => i.no === viewedInstanceNo) || instances[0];
+  const readOnly = !!viewed && !viewed.active;
   const measureName = MEASURE_NAMES[gap.code] ?? gap.code;
   const isCis = gap.code === CIS_CODE;
 
@@ -71,7 +83,7 @@ export function CareGapDetailDrawerHeader({
       <div className={styles.gapHeader}>
         <div className={styles.gapToolbar}>
           <div className={styles.yearWrap}>
-            {/* Shared FilterChip in single-select mode — same "Label ⌄" idle
+            {/* Shared FilterChip in single-select mode: same "Label ⌄" idle
                 → "Label : value ✕" active behaviour every other filter chip
                 in the app uses. Emits a 1-element array so the local state
                 stays a plain number. */}
@@ -91,7 +103,7 @@ export function CareGapDetailDrawerHeader({
             />
           </div>
           <div className={styles.gapToolbarRight}>
-            {/* Assignee + Status promoted from the title row into the toolbar —
+            {/* Assignee + Status promoted from the title row into the toolbar,
                 primary actions live in Suggested Actions below, so the toolbar
                 is reserved for the gap's identity chips (who owns it, what
                 state it's in) plus the More menu that catches everything else
@@ -99,11 +111,12 @@ export function CareGapDetailDrawerHeader({
             {(() => {
               const effectiveAssignee = gap.assignee ?? member?.assignee ?? null;
               const pickerUsers = effectiveAssignee
-                ? [...(platformUsers || []), { id: '__unassign', name: 'Unassign', initials: '—' }]
+                ? [...(platformUsers || []), { id: '__unassign', name: 'Unassign', initials: '-' }]
                 : (platformUsers || []);
               return (
                 <AssigneeChange
                   avatarOnly
+                  disabled={readOnly}
                   unassigned={!effectiveAssignee}
                   name={effectiveAssignee || undefined}
                   initials={effectiveAssignee ? initialsOf(effectiveAssignee) : undefined}
@@ -134,8 +147,8 @@ export function CareGapDetailDrawerHeader({
                 aria-expanded={statusOpen}
               >
                 <Badge
-                  size="M"
-                  tone={STATUS_TONE[status] || 'grey'}
+                  size="md"
+                  tone={STATUS_TONE[status] || 'neutral'}
                   label={status}
                   chevron={!statusLocked}
                   icon={status === 'Completed' ? 'solar:check-circle-linear' : undefined}
@@ -187,7 +200,6 @@ export function CareGapDetailDrawerHeader({
                 <span className={styles.headerDivider} />
                 <ActionButton
                   icon="solar:book-2-linear"
-                  size="L"
                   tooltip="Measure Tutorial"
                   tooltipBelow
                   tooltipLeft
@@ -196,7 +208,7 @@ export function CareGapDetailDrawerHeader({
               </>
             )}
             <span className={styles.headerDivider} />
-            <ActionButton ref={moreBtnRef} icon="solar:menu-dots-linear" size="L" tooltip="More" tooltipBelow tooltipLeft
+            <ActionButton ref={moreBtnRef} icon="solar:menu-dots-linear" tooltip="More" tooltipBelow tooltipLeft
               onClick={moreMenuRect ? closeMoreMenu : openMoreMenu} />
           </div>
         </div>
@@ -204,10 +216,60 @@ export function CareGapDetailDrawerHeader({
         <div className={styles.gapTitleWrap}>
           <div className={styles.gapTitleRow}>
             <div className={styles.gapTitleCol}>
-              <div className={styles.gapTitle}>{gap.code} - {measureName}</div>
+              <div className={`${styles.gapTitle} ${styles.gapTitleWithSource}`}>
+                {gap.code} - {measureName}
+                <GapSourceCircle gap={gap} />
+              </div>
               {gap.startDate && (
                 <div className={styles.gapSubRow}>
                   <span>{gap.startDate}{daysAgo(gap.startDate) ? ` (${daysAgo(gap.startDate)})` : ''}</span>
+                  {instances.length > 1 && viewed && (
+                    <>
+                      <span style={{ color: 'var(--neutral-300)' }}>{' • '}</span>
+                      <button
+                        ref={instanceBtnRef}
+                        type="button"
+                        className={styles.instancePickerBtn}
+                        aria-haspopup="menu"
+                        aria-expanded={instanceMenuOpen}
+                        onClick={() => setInstanceMenuOpen(v => !v)}
+                      >
+                        Instance {viewed.no} • {viewed.active ? 'Active' : 'Previous'}
+                        <Icon name="solar:alt-arrow-down-linear" size={12} color="currentColor" />
+                      </button>
+                      {instanceMenuOpen && (
+                        <MenuPopover
+                          anchorRef={instanceBtnRef}
+                          align="left"
+                          width={380}
+                          ariaLabel="Gap instances"
+                          items={instances.map(i => ({
+                            key: String(i.no),
+                            // Second line: source, the instance it is the
+                            // parent of (if any), and its dates.
+                            iconElement: <GapSourceCircle gap={i.gap} />,
+                            tall: true,
+                            label: (
+                              <span className={styles.instanceOption}>
+                                <span>{`Instance ${i.no} • ${i.active ? 'Active' : 'Previous'} • ${i.gap.status}`}</span>
+                                <span className={styles.instanceOptionMeta}>
+                                  {[
+                                    gapSourceLabel(i.gap),
+                                    !i.active && instances.find(x => x.no === i.no + 1) ? `Parent of Instance ${i.no + 1}` : null,
+                                    `Opened ${i.gap.startDate || '-'}`,
+                                    i.gap.closedDate ? `Closed ${i.gap.closedDate}` : null,
+                                  ].filter(Boolean).join(' • ')}
+                                </span>
+                              </span>
+                            ),
+                            selected: i.no === viewed.no,
+                          }))}
+                          onSelect={(key) => { setInstanceMenuOpen(false); onPickInstance?.(Number(key)); }}
+                          onClose={() => setInstanceMenuOpen(false)}
+                        />
+                      )}
+                    </>
+                  )}
                   {/* DSF-B carries a 30-day due window that the worklist
                       row already surfaces; mirror the same "Due in Xd" /
                       "Overdue by Xd" chip here so the drawer header
@@ -241,6 +303,7 @@ export function CareGapDetailDrawerHeader({
         </div>
       </div>
 
+      {!readOnly && (
       <div className={styles.suggestSection}>
         <div className={styles.suggestRow}>
           <Icon name="custom:ai" size={14} color="var(--primary-300)" /> Suggested Actions
@@ -257,7 +320,7 @@ export function CareGapDetailDrawerHeader({
               { key: 'Task', label: 'Add Task', onClick: () => onAddTask?.() },
             ].filter(a => a && gap.workflows.includes(a.key));
             return actions.map((a, i) => (
-              <Button key={a.key} variant={i === 0 ? 'primary' : 'tertiary'} size="L" onClick={a.onClick}>{a.label}</Button>
+              <Button key={a.key} variant={i === 0 ? 'solid' : 'soft'} onClick={a.onClick}>{a.label}</Button>
             ));
           })() : (
           <>
@@ -267,27 +330,28 @@ export function CareGapDetailDrawerHeader({
             // also sets the follow-up reminder. Nothing to book once every
             // dose is given.
             <>
-              <Button variant="primary" size="L" onClick={() => onAddOutreach?.()}>Add Outreach</Button>
-              <Button variant="tertiary" size="L" disabled={!onScheduleVaccine} onClick={() => onScheduleVaccine?.()}>Schedule Vaccine Reminder</Button>
+              <Button onClick={() => onAddOutreach?.()}>Add Outreach</Button>
+              <Button variant="soft" disabled={!onScheduleVaccine} onClick={() => onScheduleVaccine?.()}>Schedule Vaccine Reminder</Button>
             </>
           ) : (
             <>
-              <Button variant="primary" size="L" onClick={() => onScheduleAppointment?.()}>Schedule with Specialist</Button>
+              <Button onClick={() => onScheduleAppointment?.()}>Schedule with Specialist</Button>
               {/* Hide Add Note once the note has moved past the "start" state:
                   Submitted (pending review), Completed (signed), or any Closed
                   status. The Add Note suggested action is for kicking off the
                   flow; after review it would just create a duplicate. */}
               {!(status === 'Submitted' || status === 'Completed' || (status || '').startsWith('Closed')) && (
-                <Button variant="tertiary" size="L" onClick={() => (onOpenClinicalNote ? onOpenClinicalNote() : setShowClinicalNote(true))}>Add Note</Button>
+                <Button variant="soft" onClick={() => (onOpenClinicalNote ? onOpenClinicalNote() : setShowClinicalNote(true))}>Add Note</Button>
               )}
-              <Button variant="tertiary" size="L" onClick={() => showToast('Add MRC Task — coming soon')}>Add MRC Task</Button>
-              <Button variant="secondary" size="L" onClick={() => onAddOutreach?.()}>Add Outreach</Button>
+              <Button variant="soft" onClick={() => showToast('Add MRC Task: coming soon')}>Add MRC Task</Button>
+              <Button variant="outline" onClick={() => onAddOutreach?.()}>Add Outreach</Button>
             </>
           )}
           </>
           )}
         </div>
       </div>
+      )}
     </>
   );
 }

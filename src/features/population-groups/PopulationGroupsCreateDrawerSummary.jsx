@@ -12,7 +12,7 @@ export function PopulationGroupsCreateDrawerSummary({ vm, onMemberAdded }) {
   } = vm;
 
   return (
-                  /* Summary panel — default flow */
+                  /* Summary panel: default flow */
                   <div className="thin-scroll" style={{ flex:1, minWidth:0, overflowY:'auto', padding:'16px' }}>
                     {newMode ? (
                       <NewModePanel
@@ -33,7 +33,7 @@ export function PopulationGroupsCreateDrawerSummary({ vm, onMemberAdded }) {
                           <div style={{ fontSize: 'var(--font-base)', fontWeight:500, color:'var(--neutral-400)', marginBottom: 'var(--font-2xs)' }}>File Processing Summary</div>
                         )}
 
-                        {/* ── Info banner (Figma 1921-9782) — above file chip, hidden on Review Pop Group ── */}
+                        {/* ── Info banner (Figma 1921-9782): above file chip, hidden on Review Pop Group ── */}
                         {!showPreview && uploadFile && !csvAllClear && (
                           <div style={{ background:'var(--status-info-light)', border:'0.5px solid rgba(20,94,204,0.2)', borderRadius:4, padding:6, marginBottom:8, display:'flex', alignItems:'flex-start', gap:4 }}>
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink:0, marginTop:1 }}>

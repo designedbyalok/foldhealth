@@ -1,4 +1,4 @@
-// Patient Monitoring — seed + row mappers for the P360 Monitoring tab.
+// Patient Monitoring: seed + row mappers for the P360 Monitoring tab.
 //
 // The snapshot is keyed by member id. The Today feed's top scenario (a
 // post-discharge CHF / TCM episode) binds to the first adult patient in
@@ -6,7 +6,7 @@
 // clicking "Take over" / the patient name in Today lands on this view.
 //
 // Identity (name, age, gender, PCP, payer) comes from the live patient record
-// at render time — this data is only the clinical monitoring overlay.
+// at render time: this data is only the clinical monitoring overlay.
 
 export const MONITORING_SEED = {
   // Amy Phillips · member 11103 · the discharge/TCM episode from the prototype.
@@ -41,7 +41,7 @@ export const MONITORING_SEED = {
     programs: [
       {
         code: 'TCM',
-        name: 'Transition of Care — IP',
+        name: 'Transition of Care: IP',
         progress: '3 of 7 · contact window met',
         next: 'Next: 7-day visit · Wed 8/26',
         steps: [
@@ -56,7 +56,7 @@ export const MONITORING_SEED = {
       },
       {
         code: 'CCM',
-        name: 'Chronic Care Management — September',
+        name: 'Chronic Care Management: September',
         progress: '1 of 5 · cycle day 4 of 30',
         next: 'Next: 14 min to threshold',
         steps: [],
@@ -74,12 +74,12 @@ export const MONITORING_SEED = {
         at: '8/21 10:20 AM',
         category: 'agent',
         title: 'Tara · TCM first contact · call 4:12',
-        body: 'Reached Amy 26 min after the ADT event. Confirmed home, has both med bottles on counter. New torsemide unfamiliar — trigger for med-confusion workflow.',
+        body: 'Reached Amy 26 min after the ADT event. Confirmed home, has both med bottles on counter. New torsemide unfamiliar, trigger for med-confusion workflow.',
       },
       {
         at: '8/21 6:40 AM',
         category: 'clinical',
-        title: 'Discharged — Mercy General',
+        title: 'Discharged: Mercy General',
         body: 'CHF exacerbation (I50.23), 3-day stay. Disposition: home; lives alone. Discharge list: stop furosemide, start torsemide 20 mg.',
         icon: 'solar:danger-triangle-linear',
         iconTone: 'error',
@@ -99,7 +99,7 @@ export const MONITORING_SEED = {
       {
         at: '8/18 9:15 PM',
         category: 'clinical',
-        title: 'Admitted — Mercy General ED',
+        title: 'Admitted: Mercy General ED',
         body: 'Presented with dyspnea and +8 lb weight gain over 10 days. BNP 890 on admission (480 in June). Admitted to telemetry.',
         icon: 'solar:heart-pulse-linear',
         iconTone: 'info',
@@ -112,7 +112,7 @@ export const MONITORING_SEED = {
       },
     ],
     tasks: [
-      { title: 'TCM contact — due today 5:00 PM', sub: 'Overdue risk · 4h left', tone: 'error' },
+      { title: 'TCM contact: due today 5:00 PM', sub: 'Overdue risk · 4h left', tone: 'error' },
       { title: 'Medication reconciliation vs discharge list', sub: 'During first contact', tone: 'warning' },
       { title: 'Schedule 7-day visit', sub: 'Window closes Thu 8/27', tone: 'default' },
     ],

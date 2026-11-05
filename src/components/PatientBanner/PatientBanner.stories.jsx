@@ -59,7 +59,7 @@ export default {
     },
     onCall: {
       action: 'onCall',
-      description: 'Call button handler — omit to hide the phone button.',
+      description: 'Call button handler: omit to hide the phone button.',
       table: { type: { summary: '() => void' } },
     },
   },

@@ -1,0 +1,16 @@
+/* Settings > Member/Leads > Tags: table and Add / Edit Tag drawer. */
+
+.row { border-bottom: 0.5px solid var(--neutral-50); }
+.row:hover td { background: var(--neutral-50); }
+.td {
+  padding: var(--space-3) var(--space-4); font-size: var(--font-base); color: var(--neutral-400);
+  vertical-align: middle; background: var(--neutral-0); height: 58px;
+}
+.desc { color: var(--neutral-300); line-height: 1.2; }
+.colorCell { display: inline-flex; align-items: center; gap: var(--space-1); }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tdActions { position: sticky; right: 0; z-index: 2; }
+.actions { display: flex; align-items: center; gap: var(--space-2); }
+.actionDivider { width: 1px; height: var(--space-4); background: var(--neutral-150); flex-shrink: 0; }
+
+.form { display: flex; flex-direction: column; gap: var(--space-4); }

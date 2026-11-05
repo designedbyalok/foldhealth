@@ -37,7 +37,7 @@ export function RowActionMenu({ task }) {
   const completeTask = () => {
     if (task.hedisMemberId) {
       completeCareGapSignOffTask(task.id, 'NP');
-      showToast('Sign-off task completed — gaps closed');
+      showToast('Sign-off task completed: gaps closed');
     } else {
       updateTask(task.id, { status: 'completed' });
       showToast('Task marked as complete');
@@ -70,9 +70,14 @@ export function RowActionMenu({ task }) {
 
   return (
     <div ref={btnRef} style={{ position: 'relative' }}>
-      <button className={styles.actionMenuBtn} onClick={e => { e.stopPropagation(); setOpen(v => !v); }} aria-label="Task actions">
-        <Icon name="solar:menu-dots-bold" size={16} color="var(--neutral-300)" />
-      </button>
+      <ActionButton
+        icon="solar:menu-dots-linear"
+        size="sm"
+        tooltip="More"
+        tooltipLeft
+        className={`${styles.actionMenuBtn} ${open ? styles.actionMenuBtnOpen : ''}`}
+        onClick={e => { e.stopPropagation(); setOpen(v => !v); }}
+      />
       {open && pos && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={e => { e.stopPropagation(); setOpen(false); }}>
           <div
@@ -130,7 +135,7 @@ export function RowStatusDropdown({ task }) {
         onClick={e => { e.stopPropagation(); setOpen(v => !v); }}
         aria-label="Change status"
       >
-        <Badge variant={STATUS_BADGE_VARIANTS[task.status]} label={STATUS_LABELS[task.status]} trailingIcon="solar:alt-arrow-down-linear" />
+        <Badge tone={STATUS_BADGE_VARIANTS[task.status]} label={STATUS_LABELS[task.status]} trailingIcon="solar:alt-arrow-down-linear" />
       </button>
       {open && (
         <MenuPopover

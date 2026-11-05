@@ -1,4 +1,4 @@
-# 002 — Replace the blanket reduced-motion nuke with a scoped strategy
+# 002: Replace the blanket reduced-motion nuke with a scoped strategy
 
 - **Status**: TODO
 - **Commit**: c672e8b
@@ -14,7 +14,7 @@ The global reduced-motion handler is too aggressive. It kills every transition o
 Current code, verbatim:
 
 ```css
-/* src/index.css:60-74 — current */
+/* src/index.css:60-74, current */
 body {
   transition: background-color 200ms ease, color 200ms ease;
 }
@@ -38,24 +38,24 @@ body {
 }
 ```
 
-The AUDIT rule this violates: "Reduced motion means fewer and gentler animations, **not zero** — keep transitions that aid comprehension, remove position changes." The intent of the pref is to prevent motion sickness from position/scale movement, not to blind users to state changes.
+The AUDIT rule this violates: "Reduced motion means fewer and gentler animations, **not zero**, keep transitions that aid comprehension, remove position changes." The intent of the pref is to prevent motion sickness from position/scale movement, not to blind users to state changes.
 
-`!important` here also defeats every well-scoped reduced-motion rule elsewhere in the codebase — the ten files that opt in via their own `@media (prefers-reduced-motion: reduce)` block are overridden.
+`!important` here also defeats every well-scoped reduced-motion rule elsewhere in the codebase, the ten files that opt in via their own `@media (prefers-reduced-motion: reduce)` block are overridden.
 
 ## Target
 
 Replace the current global reduced-motion rule with a scoped strategy that (a) does not use `!important`, (b) does not touch every element in the DOM, and (c) preserves opacity/color fades while shortening durations.
 
 ```css
-/* target — src/index.css, replacing lines 60-74 */
+/* target: src/index.css, replacing lines 60-74 */
 
-/* Global theme-transition surface removed from this file — see plan 003.
+/* Global theme-transition surface removed from this file, see plan 003.
    The 200ms cross-fade is opt-in via [data-theme-transitioning] toggled
    by the theme switcher, not applied to every element in the DOM. */
 
 /* Reduced-motion strategy.
    The AUDIT rule: fewer and gentler, not zero. Users who set this pref
-   are avoiding motion sickness from position/scale — they still need
+   are avoiding motion sickness from position/scale, they still need
    feedback for state changes. Opacity/color fades stay; position, scale,
    and rotation are dropped by per-component reduced-motion blocks (see
    src/features/hcc/DiagPanel/*.module.css for the exemplar). This global
@@ -72,23 +72,23 @@ Replace the current global reduced-motion rule with a scoped strategy that (a) d
 ```
 
 Note the deliberate choices:
-- `animation-duration: 0.01ms` (not `none`) collapses `@keyframes`-based motion to imperceptibly short without disabling the animation state machine — the `@starting-style`/`data-mounted` patterns still fire their state changes.
+- `animation-duration: 0.01ms` (not `none`) collapses `@keyframes`-based motion to imperceptibly short without disabling the animation state machine, the `@starting-style`/`data-mounted` patterns still fire their state changes.
 - `animation-iteration-count: 1` stops infinite pulses/shimmers from running forever with the pref.
 - `transition` is **not** blanket-disabled. Components that need to drop position/scale under reduced-motion do so in their own module CSS (see exemplars). Opacity fades survive.
 - No `!important` on `transition` anywhere in this rule.
-- Duration overrides use `!important` only because CSS module classes carry higher specificity — this matches how `src/features/hcc/DiagPanel/LeftWorkspace.module.css:19-21` and `src/features/hcc/DiagPanel/IcdRow.module.css:48-50` already handle it.
+- Duration overrides use `!important` only because CSS module classes carry higher specificity, this matches how `src/features/hcc/DiagPanel/LeftWorkspace.module.css:19-21` and `src/features/hcc/DiagPanel/IcdRow.module.css:48-50` already handle it.
 
 ## Repo conventions to follow
 
 - The a11y block sits directly under the theme-transition block in `src/index.css`. Keep it in the same location.
-- Per-component reduced-motion blocks are the pattern — `src/features/hcc/DiagPanel/LeftWorkspace.module.css:19-21` shows the shape:
+- Per-component reduced-motion blocks are the pattern, `src/features/hcc/DiagPanel/LeftWorkspace.module.css:19-21` shows the shape:
   ```css
   @media (prefers-reduced-motion: reduce) {
     .leftWs { animation: none; }
   }
   ```
   Components that opt in should override just their own transforms; this global rule provides the safety net.
-- Exemplar for a well-behaved reduced-motion component: `src/components/FoldIdTag/FoldIdTag.module.css:21-23` — drops the transform but keeps everything else.
+- Exemplar for a well-behaved reduced-motion component: `src/components/FoldIdTag/FoldIdTag.module.css:21-23`, drops the transform but keeps everything else.
 
 ## Steps
 
@@ -100,7 +100,7 @@ Note the deliberate choices:
 
 ## Boundaries
 
-- Do **NOT** move or re-scope the theme transitions in this plan — that is plan 003. This plan removes them from the global cascade (plan 003 puts them back correctly). Between plan 002 landing and plan 003 landing, theme switching will have no cross-fade — that's fine; ship 003 in the same PR or immediately after.
+- Do **NOT** move or re-scope the theme transitions in this plan, that is plan 003. This plan removes them from the global cascade (plan 003 puts them back correctly). Between plan 002 landing and plan 003 landing, theme switching will have no cross-fade, that's fine; ship 003 in the same PR or immediately after.
 - Do **NOT** touch any per-component `@media (prefers-reduced-motion: reduce)` blocks that already exist in module CSS. They keep working.
 - Do **NOT** add `useReducedMotion()` calls anywhere in JS in this plan.
 - Do **NOT** modify any other file.
@@ -116,11 +116,11 @@ Note the deliberate choices:
   - `bun run dev`, open `http://localhost:5173`.
   - Hover a worklist row → the row-hover feedback still works (per-component transitions still fire).
   - Open a drawer → still slides in with its `slideIn` keyframe (plan 006 replaces this, not this plan).
-  - Flip theme (light ↔ dark) — colors change instantly with no cross-fade (expected until plan 003 lands).
+  - Flip theme (light ↔ dark): colors change instantly with no cross-fade (expected until plan 003 lands).
 - **Feel check** (reduced motion enabled):
   - DevTools → Rendering panel → "Emulate CSS media feature prefers-reduced-motion: reduce".
-  - Open a drawer — the `slideIn` keyframe collapses to 0.01ms so the drawer appears instantly with no slide (correct — this is the AUDIT-preferred behavior for keyframe-based movement).
-  - Hover a worklist row — the color transition on the row still runs (it's a `transition`, not an `animation`, and the plan does not disable transitions).
-  - Watch the on-call pulse indicator (`animation: oncallPulse … infinite`) — it stops after one iteration.
+  - Open a drawer, the `slideIn` keyframe collapses to 0.01ms so the drawer appears instantly with no slide (correct, this is the AUDIT-preferred behavior for keyframe-based movement).
+  - Hover a worklist row: the color transition on the row still runs (it's a `transition`, not an `animation`, and the plan does not disable transitions).
+  - Watch the on-call pulse indicator (`animation: oncallPulse … infinite`): it stops after one iteration.
   - No spinning loader animates continuously (iteration-count capped at 1).
 - **Done when**: with reduced-motion on, infinite pulses/shimmers stop and keyframe entrances collapse, but per-component color/opacity transitions still fire; with reduced-motion off, nothing changed except that the app no longer pays the global-`*` transition cost on every hover.

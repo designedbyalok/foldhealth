@@ -2,7 +2,7 @@
 export const FALLBACK_P360 = {
   profile_type: 'Central Profile',
   health_plan_name: 'FoldHealth',
-  // Intentionally null — the profile card falls back to the patient's real
+  // Intentionally null: the profile card falls back to the patient's real
   // Fold ID (patient.memberId) instead of a made-up plan number.
   health_plan_id: null,
   health_plan_desc: 'SCAN Insurance Handler',

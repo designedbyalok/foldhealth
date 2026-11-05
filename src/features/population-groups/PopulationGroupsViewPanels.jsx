@@ -7,7 +7,7 @@ import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { Link } from '../../components/Link/Link';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { Badge } from '../../components/Badge/Badge';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { TableIcon, MiniCloseIcon, Spinner, ReplaceIcon, FileErrorIllustration } from './components/icons.jsx';
 import SectionAccordion from './components/SectionAccordion.jsx';
@@ -37,7 +37,7 @@ export function BulkSelectIcon({ size = 20 }) {
   );
 }
 
-/* Group name — clamped to 2 lines; shows the full name via the Tooltip component only when truncated.
+/* Group name: clamped to 2 lines; shows the full name via the Tooltip component only when truncated.
    The structure stays stable (always Tooltip-wrapped) so the measured span node never swaps out;
    the tooltip only opens when the text is actually truncated. */
 const GROUP_NAME_STYLE = {
@@ -55,7 +55,7 @@ export function GroupName({ name }) {
     const check = () => { if (!cancelled) setTruncated(el.scrollHeight > el.clientHeight + 1); };
     check();
     // The clamped span's box height is fixed, so a font swap grows scrollHeight
-    // without resizing the box — re-check after paint, on resize, and after fonts load.
+    // without resizing the box: re-check after paint, on resize, and after fonts load.
     const raf = requestAnimationFrame(check);
     const timers = [100, 400, 1000].map(d => setTimeout(check, d));
     const ro = new ResizeObserver(check);
@@ -78,7 +78,7 @@ export function GroupName({ name }) {
   );
 }
 
-/* ── CSV parser (replaces xlsx) — handles quoted fields, escaped quotes, CRLF ── */
+/* ── CSV parser (replaces xlsx): handles quoted fields, escaped quotes, CRLF ── */
 function parseCsv(text) {
   const rows = [];
   let row = [], field = '', inQuotes = false;
@@ -126,7 +126,7 @@ function parseTable(text) {
 }
 
 
-/* ─── Population Groups — data ───────────────────────────────────────────── */
+/* ─── Population Groups: data ───────────────────────────────────────────── */
 const POP_GROUPS = [
   { id:1,  name:'Patients having CAD with LDL > 100 and not seen in the last 3 months',     type:'Dynamic', count:43,   inactive:7,  updated:'01/16/2024 06:30 PM', created:'02/22/2024' },
   { id:2,  name:'45 years or older without screening colonoscopy',                            type:'Dynamic', count:84,   inactive:12, updated:'01/16/2024 06:30 PM', created:'02/22/2024' },
@@ -152,7 +152,7 @@ const POP_GROUPS = [
   { id:22, name:'Patients with osteoporosis and no DEXA scan in 2 years',                     type:'Static',  count:37,   inactive:5,  updated:'04/16/2024 03:30 PM', created:'04/16/2024' },
   { id:23, name:'High-cost members with 3+ specialist visits and no care coordination',       type:'Dynamic', count:15,   inactive:1,  updated:'04/18/2024 11:00 AM', created:'04/18/2024' },
   { id:24, name:'Patients with tobacco use and no cessation counseling',                       type:'Dynamic', count:88,   inactive:16, updated:'04/22/2024 02:15 PM', created:'04/22/2024' },
-  { id:25, name:'Pediatric immunization gap list — missing MMR booster',                       type:'Static',  count:29,   inactive:0,  updated:'04/25/2024 08:00 AM', created:'04/25/2024' },
+  { id:25, name:'Pediatric immunization gap list: missing MMR booster',                       type:'Static',  count:29,   inactive:0,  updated:'04/25/2024 08:00 AM', created:'04/25/2024' },
   { id:26, name:'Patients with BMI ≥ 35 and no referral to weight management program',        type:'Dynamic', count:54,   inactive:7,  updated:'04/28/2024 05:00 PM', created:'04/28/2024' },
   { id:27, name:'Patients awaiting colonoscopy with bowel prep instructions not sent',         type:'Static',  count:6,    inactive:0,  updated:'05/01/2024 10:30 AM', created:'05/01/2024' },
   { id:28, name:'Members with lupus and no rheumatology visit in last 12 months',              type:'Dynamic', count:21,   inactive:4,  updated:'05/05/2024 01:45 PM', created:'05/05/2024' },
@@ -246,7 +246,7 @@ export function DrawerSelect({ value, onChange, options, placeholder, disabled =
 
 /* ─── Figma-aligned summary components (grey-button / default Create Group flow) ── */
 
-/* CellOuter at module level — MUST be outside FigmaIncorrectRow so React doesn't remount on every render, which would lose cursor focus */
+/* CellOuter at module level: MUST be outside FigmaIncorrectRow so React doesn't remount on every render, which would lose cursor focus */
 export function CellOuter({ err, children }) {
   return (
     <div style={{
@@ -260,7 +260,7 @@ export function CellOuter({ err, children }) {
   );
 }
 
-/* fmtAge — imported from ./utils/formatters.js */
+/* fmtAge: imported from ./utils/formatters.js */
 
 export function FigmaMatchedSection({ patients, expanded, onToggle, allDone }) {
   const title        = allDone ? 'Review Pop Group' : 'Matched Members';
@@ -366,7 +366,7 @@ export function FigmaIncorrectRow({ row, onAdd, onRemove, isLast, onToast, match
   }, [firstName, lastName, dob, hasError, nameDobSuggestions.length]);
   */
 
-  /* Only show match when Patient ID resolves — no name/DOB fallback */
+  /* Only show match when Patient ID resolves, no name/DOB fallback */
   const matchLabel = resolved ? 'Patient ID match Found :' : null;
   const matchPat   = resolved || null;
 
@@ -398,7 +398,7 @@ export function FigmaIncorrectRow({ row, onAdd, onRemove, isLast, onToast, match
 
   return (
     <div className={isRemoving ? 'row-removing' : ''} style={{ borderBottom: isLast ? 'none' : '0.5px solid var(--neutral-200)', paddingTop: 8, fontFamily: 'Inter,sans-serif' }}>
-      {/* Column headers — inside each card per Figma */}
+      {/* Column headers: inside each card per Figma */}
       <div style={{ display: 'flex', paddingRight: 12 }}>
         {FIGMA_INCORRECT_HDR_COLS.map((h, hi) => (
           <div key={h} style={{
@@ -465,7 +465,7 @@ export function FigmaIncorrectRow({ row, onAdd, onRemove, isLast, onToast, match
               <button
                 onClick={() => {
                   onAdd(row.entryId, matchPat);
-                  /* Show top-centre toast via DOM — bypasses React prop chain */
+                  /* Show top-centre toast via DOM: bypasses React prop chain */
                   const _t = document.createElement('div');
                   _t.textContent = 'Member added to Matched Members successfully';
                   Object.assign(_t.style, { position:'fixed', top:'12px', left:'50%', transform:'translateX(-50%)', background:'var(--status-success)', color:'var(--neutral-0)', padding:'8px 20px', borderRadius:'8px', fontSize:'14px', fontWeight:'500', zIndex:'99999', pointerEvents:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.18)', fontFamily:'Inter,sans-serif', display:'flex', alignItems:'center', gap:'8px', whiteSpace:'nowrap' });
@@ -491,14 +491,14 @@ export function FigmaIncorrectRow({ row, onAdd, onRemove, isLast, onToast, match
         </div>
       )}
 
-      {/* No match found — Patient ID entered but not in DB */}
+      {/* No match found: Patient ID entered but not in DB */}
       {hasError && !loading && foldId.length > 4 && (
         <div style={{ padding: '0 15px 10px', fontSize: 'var(--font-md)', fontWeight: 500, color: 'var(--status-error)' }}>
           No match found.
         </div>
       )}
 
-      {/* Error banner — shown when Fold ID is wrong AND no name+DOB match found */}
+      {/* Error banner: shown when Fold ID is wrong AND no name+DOB match found */}
       {/* {!loading && incorrectOtherField && (
         <div style={{ padding: '0 15px 12px' }}>
           <div style={{ background:'var(--status-error-light)', border:'0.5px solid rgba(215,40,37,0.1)', borderRadius:4, padding:'4px 6px', display:'flex', alignItems:'center', gap:4 }}>
@@ -546,7 +546,7 @@ export function FigmaIncorrectSection({ entries, expanded, onToggle, onAdd, onRe
 }
 
 export function FigmaDuplicateSection({ entries, matched, expanded, onToggle, onRemove }) {
-  /* Group entries by rawId — each key is a duplicate group */
+  /* Group entries by rawId: each key is a duplicate group */
   const groups = React.useMemo(() => {
     const g = {};
     entries.forEach(e => { (g[e.rawId] = g[e.rawId] || []).push(e); });
@@ -583,7 +583,7 @@ export function FigmaDuplicateSection({ entries, matched, expanded, onToggle, on
       onToggle={onToggle}
     >
       <div>
-          {/* Column headers — shared once at the top */}
+          {/* Column headers: shared once at the top */}
           <div style={{ display:'flex', padding:'4px 0', borderBottom:'0.5px solid var(--neutral-150)', fontFamily:'Inter,sans-serif' }}>
             <div style={{ flex:1, minWidth:0, padding:'0 12px 0 24px', ...DUPLICATE_COL_HDR }}>Patient ID</div>
             <div style={{ flex:1, minWidth:0, padding:'0 12px', ...DUPLICATE_COL_HDR }}>First Name</div>
@@ -617,11 +617,11 @@ export function FigmaDuplicateSection({ entries, matched, expanded, onToggle, on
                       onClick={() => setSelectedToRemove(p => ({ ...p, [rawId]: row.key }))}
                       style={{
                         display:'flex', alignItems:'center',
-                        height: 44, /* Fixed height — no layout shift on selection */
+                        height: 44, /* Fixed height, no layout shift on selection */
                         borderLeft: isSelected ? '3px solid var(--status-warning)' : '3px solid transparent',
                         background: isSelected ? 'var(--status-warning-light)' : 'var(--neutral-0)',
                         cursor:'pointer', fontFamily:'Inter,sans-serif',
-                        /* No inner-pair border — only show separator after last row of a group (handled by parent) */
+                        /* No inner-pair border: only show separator after last row of a group (handled by parent) */
                         transition:'background 0.15s, border-color 0.15s',
                         overflow:'hidden',
                       }}
@@ -631,7 +631,7 @@ export function FigmaDuplicateSection({ entries, matched, expanded, onToggle, on
                       <div style={{ flex:1, minWidth:0, padding:'0 12px', fontSize: 'var(--font-base)', color:'var(--neutral-400)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{row.rawLn}</div>
                       <div style={{ flex:1, minWidth:0, padding:'0 12px', fontSize: 'var(--font-base)', color:'var(--neutral-400)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{row.rawDob}</div>
                       <div style={{ width:130, flexShrink:0, padding:'0 12px', display:'flex', alignItems:'center' }}>
-                        {/* Remove Entry always in DOM but invisible when not selected — preserves height */}
+                        {/* Remove Entry always in DOM but invisible when not selected, preserves height */}
                         <button
                           onClick={e => { e.stopPropagation(); if (isSelected) handleRemove(rawId, row.key, row.entryId); }}
                           style={{ height:30, padding:'0 10px', border:'0.5px solid var(--neutral-200)', borderRadius:4, background:'var(--neutral-0)', color:'var(--neutral-300)', fontSize: 'var(--font-sm)', fontWeight:500, cursor: isSelected ? 'pointer' : 'default', fontFamily:'Inter,sans-serif', whiteSpace:'nowrap', transition:'background 0.15s', opacity: isSelected ? 1 : 0, pointerEvents: isSelected ? 'auto' : 'none' }}
@@ -693,8 +693,8 @@ export function PreviewPanel({ patients, onBack }) {
               </div>
               <span style={{ fontSize: 'var(--font-md)', color:'var(--neutral-400)', fontWeight: 500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.name}</span>
             </div>
-            <div style={{ fontSize: 'var(--font-md)', color:'var(--neutral-300)' }}>{p.dob || '—'}</div>
-            <div style={{ fontSize: 'var(--font-md)', color:'var(--neutral-300)' }}>{p.mrn || '—'}</div>
+            <div style={{ fontSize: 'var(--font-md)', color:'var(--neutral-300)' }}>{p.dob || '-'}</div>
+            <div style={{ fontSize: 'var(--font-md)', color:'var(--neutral-300)' }}>{p.mrn || '-'}</div>
             <div>
               <span style={{ fontSize: 'var(--font-sm)', fontWeight:500, padding:'2px 6px', borderRadius: 4,
                 color: p.source==='Matched' ? 'var(--status-success)' : 'var(--primary-300)',
@@ -708,15 +708,15 @@ export function PreviewPanel({ patients, onBack }) {
       {/* Footer */}
       <div style={{ padding:'8px 14px', borderTop:'0.5px solid var(--primary-100)', background:'var(--primary-25)', display:'flex', alignItems:'center', flexShrink:0 }}>
         <span style={{ fontSize: 'var(--font-md)', color:'var(--neutral-300)' }}>
-          <span style={{ color:'var(--primary-300)', fontWeight:500 }}>{patients.length}</span> patients ready — click <strong>Create</strong> in the header to save.
+          <span style={{ color:'var(--primary-300)', fontWeight:500 }}>{patients.length}</span> patients ready: click <strong>Create</strong> in the header to save.
         </span>
       </div>
     </div>
   );
 }
 
-/* ─── NewModePanel — "Download Errors" Create Group flow ─────────────────── */
-/* Reusable uploaded-file preview row — table-icon avatar + name/size + replace action.
+/* ─── NewModePanel: "Download Errors" Create Group flow ─────────────────── */
+/* Reusable uploaded-file preview row: table-icon avatar + name/size + replace action.
    Shared by the processing view and the all-members-matched summary (Figma 2023:9490). */
 export function FilePreviewCard({ fileName, sizeMB, onReplace }) {
   return (
@@ -744,7 +744,7 @@ export function FilePreviewCard({ fileName, sizeMB, onReplace }) {
 
 /* One matched/extracted patient row. Shows ID • Age(DOB); the green tick flips
    to a red remove (×) on hover when onRemove is provided. */
-/* Stable signature of a group's editable fields — used to detect unsaved edits. */
+/* Stable signature of a group's editable fields: used to detect unsaved edits. */
 function groupSignature({ name, description, memberStatus, memberIds }) {
   return JSON.stringify({
     name: (name || '').trim(),
@@ -773,7 +773,7 @@ export function MatchedRow({ p, isLast, onRemove }) {
         </div>
         <div style={{ flex:'1 0 0', minWidth:0 }}>
           <div style={{ fontSize: 'var(--font-base)', fontWeight:500, color:'var(--neutral-400)', lineHeight: 1.2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.name}</div>
-          {/* ID • Age(DOB) — full identity, shown consistently in review + edit */}
+          {/* ID • Age(DOB): full identity, shown consistently in review + edit */}
           <div style={{ display:'flex', alignItems:'center', gap:2, fontSize: 'var(--font-base)', fontWeight:400, color:'var(--neutral-200)', lineHeight:1.2, marginTop: 4, whiteSpace:'nowrap', overflow:'hidden' }}>
             <span style={{ overflow:'hidden', textOverflow:'ellipsis' }}>{p.id}</span>
             <span>•</span>
@@ -781,7 +781,7 @@ export function MatchedRow({ p, isLast, onRemove }) {
           </div>
         </div>
       </div>
-      {/* edit phase 2 — patient delete disabled in the Create review (kept for reference):
+      {/* edit phase 2: patient delete disabled in the Create review (kept for reference):
       {onRemove && !removing && (
         <button
           onClick={() => setConfirmOpen(true)}
@@ -808,7 +808,7 @@ export function MatchedRow({ p, isLast, onRemove }) {
   );
 }
 
-/* Search field above the list — type to find patients from the DB and add them. */
+/* Search field above the list: type to find patients from the DB and add them. */
 export function AddPatientSearch({ matched, onAdd }) {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
@@ -861,13 +861,13 @@ export function AddPatientSearch({ matched, onAdd }) {
   );
 }
 
-/* All-members-matched review state (Figma 2023:9479) — file preview + matched/extracted list.
+/* All-members-matched review state (Figma 2023:9479), file preview + matched/extracted list.
    - heading: section title (review = "All Members Matched…", edit = "Extracted Patients")
    - onReupload: when omitted, the file-preview replace icon is hidden (edit mode)
    - onRemoveMember: enables the hover × remove action on each row
    - onAddMember: shows a "Search and Add Patients" field above the list */
 export function AllMatchedPanel({ matched, uploadFile, onReupload, heading = 'All Members Matched; Review Pop Group', onRemoveMember, onAddMember }) {
-  // edit phase 2 — search disabled in the Create review (kept for reference):
+  // edit phase 2: search disabled in the Create review (kept for reference):
   // const [query, setQuery] = useState('');
   // const q = query.trim().toLowerCase();
   // const shown = q ? matched.filter(m => (m.name || '').toLowerCase().includes(q) || String(m.id).toLowerCase().includes(q)) : matched;
@@ -880,11 +880,11 @@ export function AllMatchedPanel({ matched, uploadFile, onReupload, heading = 'Al
         <FilePreviewCard fileName={uploadFile.name} sizeMB={(uploadFile.size/1048576).toFixed(1)} onReplace={onReupload} />
       )}
 
-      {/* edit phase 2 — "Search and Add Patients" disabled in the Create review (kept for reference):
+      {/* edit phase 2: "Search and Add Patients" disabled in the Create review (kept for reference):
       {onAddMember && <AddPatientSearch matched={matched} onAdd={onAddMember} />}
       */}
 
-      {/* edit phase 2 — search of added patients disabled in the Create review (kept for reference):
+      {/* edit phase 2: search of added patients disabled in the Create review (kept for reference):
       <div style={{ display:'flex', alignItems:'center', gap:8, height:36, padding:'0 10px', border:'0.5px solid var(--neutral-200)', borderRadius:6, background:'var(--neutral-0)', flexShrink:0 }}>
         <Icon name="solar:magnifer-linear" size={15} color="var(--neutral-300)" />
         <input
@@ -896,14 +896,14 @@ export function AllMatchedPanel({ matched, uploadFile, onReupload, heading = 'Al
       </div>
       */}
 
-      {/* Review / extracted list — hugs its content; caps at the drawer bottom and scrolls internally */}
+      {/* Review / extracted list: hugs its content; caps at the drawer bottom and scrolls internally */}
       <div style={{ border:'0.5px solid var(--neutral-150)', borderRadius:8, background:'var(--neutral-0)', overflow:'hidden', width:'100%', flex:'0 1 auto', minHeight:0, display:'flex', flexDirection:'column' }}>
         <div style={{ display:'flex', alignItems:'center', gap:4, padding:'8px 12px', borderBottom:'0.5px solid var(--neutral-150)', background:'linear-gradient(90deg, var(--status-success-light) 0%, var(--neutral-0) 100%)', flexShrink:0 }}>
           <span style={{ fontSize: 'var(--font-base)', fontWeight:500, color:'var(--neutral-400)', lineHeight: 1.2 }}>Review Population Group</span>
           <Badge label={String(matched.length)} style={{ background:'var(--status-success)', color:'var(--neutral-0)', borderColor:'var(--status-success)' }} />
         </div>
 
-        {/* Member rows — hugs content; scrolls only when the card hits the drawer bottom */}
+        {/* Member rows: hugs content; scrolls only when the card hits the drawer bottom */}
         <div className="thin-scroll" style={{ flex:'0 1 auto', minHeight:0, overflowY:'auto' }}>
           {shown.map((p, i) => (
             <MatchedRow key={p.id || i} p={p} isLast={i === shown.length - 1} />
@@ -915,17 +915,17 @@ export function AllMatchedPanel({ matched, uploadFile, onReupload, heading = 'Al
 }
 
 export function NewModePanel({ matchSummary, uploadFile, csvAllClear, onReupload, matchedHeading, onRemoveMember, onAddMember }) {
-  // All entries matched — show review state. In edit mode (matchedHeading set) always
+  // All entries matched: show review state. In edit mode (matchedHeading set) always
   // show the extracted list, even if empty, rather than the "couldn't read file" card.
   if (csvAllClear && (matchSummary.matched.length > 0 || matchedHeading)) {
     return <AllMatchedPanel matched={matchSummary.matched} uploadFile={uploadFile} onReupload={onReupload} heading={matchedHeading} onRemoveMember={onRemoveMember} onAddMember={onAddMember} />;
   }
 
-  // Has errors — show download panel
+  // Has errors: show download panel
   const hasIssues = matchSummary.notFound.length > 0 || matchSummary.duplicates.length > 0;
   if (!uploadFile) return null;
 
-  // File present but nothing parsed (empty / unreadable / wrong columns) — never render blank.
+  // File present but nothing parsed (empty / unreadable / wrong columns), never render blank.
   if (!hasIssues && matchSummary.matched.length === 0) {
     return (
       <div style={{ display:'flex', flexDirection:'column', gap:8, padding:'12px 0', fontFamily:'Inter, sans-serif', width:'100%', boxSizing:'border-box' }}>
@@ -937,7 +937,7 @@ export function NewModePanel({ matchSummary, uploadFile, csvAllClear, onReupload
             We couldn't read any patient records from this file. Ensure it's a <strong>CSV</strong> with
             {' '}<strong>Patient ID, First Name, Last Name, DOB</strong> columns, then reupload.
           </p>
-          <Button variant="secondary" size="L" leadingIcon="solar:refresh-linear" onClick={onReupload}>Reupload File</Button>
+          <Button variant="outline" leadingIcon="solar:refresh-linear" onClick={onReupload}>Reupload File</Button>
         </div>
       </div>
     );
@@ -999,17 +999,17 @@ export function NewModePanel({ matchSummary, uploadFile, csvAllClear, onReupload
   const reuploadFile = () => { onReupload?.(); };
 
   return (
-    /* Frame 1433:10239 — py-12, gap-8, column, items-start */
+    /* Frame 1433:10239, py-12, gap-8, column, items-start */
     <div style={{ display:'flex', flexDirection:'column', gap:8, padding:'12px 0', fontFamily:'Inter, sans-serif', width:'100%', boxSizing:'border-box' }}>
 
-      {/* Heading 1433:10241 — Inter Medium 16 / var(--neutral-500) / lh 1.2 */}
+      {/* Heading 1433:10241, Inter Medium 16 / var(--neutral-500) / lh 1.2 */}
       <div style={{ display:'flex', alignItems:'center', width:'100%' }}>
         <p style={{ margin:0, flex:'1 0 0', minWidth:0, fontSize: 'var(--font-lg)', fontWeight:500, lineHeight: 1.2, color:'var(--neutral-500)', wordBreak:'break-word' }}>
           File Processing Summary
         </p>
       </div>
 
-      {/* Card 1433:10244 — 0.5px red-40% border, p-64, rounded-12, gap-16, centered, red→white gradient */}
+      {/* Card 1433:10244–0.5px red-40% border, p-64, rounded-12, gap-16, centered, red→white gradient */}
       <div style={{
         width:'100%', boxSizing:'border-box',
         border:'0.5px solid rgba(215,40,37,0.4)', borderRadius:12, padding:64,
@@ -1017,10 +1017,10 @@ export function NewModePanel({ matchSummary, uploadFile, csvAllClear, onReupload
         background:'linear-gradient(162.29deg, var(--status-error-light) 1.82%, var(--neutral-0) 61.18%)',
       }}>
 
-        {/* Illustration 1433:10245 — 80px */}
+        {/* Illustration 1433:10245–80px */}
         <FileErrorIllustration />
 
-        {/* Body 1433:10246 — 14 / var(--neutral-400) / lh 1.2 / center */}
+        {/* Body 1433:10246–14 / var(--neutral-400) / lh 1.2 / center */}
         <p style={{ margin:0, width:'100%', fontSize: 'var(--font-base)', lineHeight: 1.2, color:'var(--neutral-400)', textAlign:'center', wordBreak:'break-word' }}>
           Your file has entries with{' '}
           <span style={{ color:'var(--status-error)', fontWeight:500 }}>incorrect</span>{' '}
@@ -1031,10 +1031,10 @@ export function NewModePanel({ matchSummary, uploadFile, csvAllClear, onReupload
           {' '}These are flagged in red and yellow respectively in a file ready to download below. Please download, correct entries, and re-upload here to create a population group.
         </p>
 
-        {/* Buttons row 1433:10247 — gap-12, justify-center, full width */}
+        {/* Buttons row 1433:10247, gap-12, justify-center, full width */}
         <div style={{ display:'flex', gap:12, justifyContent:'center', alignItems:'flex-start', width:'100%' }}>
-          <Button variant="primary" size="L" leadingIcon="solar:download-minimalistic-linear" onClick={downloadErrorFile}>Download File with Errors</Button>
-          <Button variant="secondary" size="L" leadingIcon="solar:refresh-linear" onClick={reuploadFile}>Reupload File</Button>
+          <Button leadingIcon="solar:download-minimalistic-linear" onClick={downloadErrorFile}>Download File with Errors</Button>
+          <Button variant="outline" leadingIcon="solar:refresh-linear" onClick={reuploadFile}>Reupload File</Button>
         </div>
       </div>
     </div>

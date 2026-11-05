@@ -1,0 +1,67 @@
+.card {
+  align-items: center;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-xl);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.tiles {
+  list-style: none;
+  margin: var(--space-4) 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.tile {
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  transition: background-color var(--duration-base) var(--ease-hover);
+}
+
+.tile:hover {
+  background: var(--primary-50);
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+}
+
+.name {
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+}
+
+.signOut {
+  border: 0;
+  padding: 0;
+  background: none;
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+  cursor: pointer;
+}
+
+.signOut:hover {
+  text-decoration: underline;
+}

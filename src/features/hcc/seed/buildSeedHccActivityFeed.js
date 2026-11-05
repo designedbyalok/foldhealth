@@ -1,7 +1,7 @@
 export function buildSeedHccActivityFeed() {
   const now = Date.now();
   const day = 24 * 60 * 60 * 1000;
-  // Older first — we reverse at the end so newest sorts to the top.
+  // Older first: we reverse at the end so newest sorts to the top.
   const batches = [
     { id: 'seed-b1', file: 'progress-notes-week-of-04-14.pdf', actor: 'Dr. Sarah Connor',
       approved: 8, rejected: 0, encounters: 8, source: 'manual', daysAgo: 0.2,
@@ -22,7 +22,7 @@ export function buildSeedHccActivityFeed() {
     { id: 'seed-b5', file: 'multi-patient-chart-batch.pdf', actor: 'M. Singh',
       approved: 0, rejected: 0, encounters: 0, source: 'sftp', daysAgo: 7.0,
       rejectedList: [],
-      // Failed extraction — surfaces as Processing/Failed status in the tab.
+      // Failed extraction: surfaces as Processing/Failed status in the tab.
       failed: true },
   ];
   const rows = [];
@@ -34,7 +34,7 @@ export function buildSeedHccActivityFeed() {
       id: `${b.id}-c`, ts: iso(0), event_name: 'batch.created',
       batch_id: b.id, category: 'intake', severity: 'info',
       actor_name: b.actor,
-      headline: `Batch ${b.id} created — 1 file queued.`,
+      headline: `Batch ${b.id} created, 1 file queued.`,
       scope,
       payload: { batchId: b.id, fileCount: 1, fileName: b.file, actor: b.actor },
     });
@@ -53,14 +53,14 @@ export function buildSeedHccActivityFeed() {
         actor_name: 'System',
         headline: `OCR failed on ${b.file}.`,
         scope,
-        payload: { fileName: b.file, reason: 'Could not read PDF — likely corrupt or password-protected.' },
+        payload: { fileName: b.file, reason: 'Could not read PDF: likely corrupt or password-protected.' },
       });
     } else {
       rows.push({
         id: `${b.id}-oc`, ts: iso(2), event_name: 'ocr.completed',
         batch_id: b.id, category: 'ocr', severity: 'success',
         actor_name: 'System',
-        headline: `OCR completed on ${b.file} — ${b.encounters} encounters extracted.`,
+        headline: `OCR completed on ${b.file}, ${b.encounters} encounters extracted.`,
         scope,
         payload: {
           fileName: b.file,
@@ -72,7 +72,7 @@ export function buildSeedHccActivityFeed() {
         id: `${b.id}-pc`, ts: iso(3), event_name: 'batch.processing_completed',
         batch_id: b.id, category: 'intake', severity: 'success',
         actor_name: b.actor,
-        headline: `Batch ${b.id} complete — ${b.approved} approved, ${b.rejected} rejected.`,
+        headline: `Batch ${b.id} complete, ${b.approved} approved, ${b.rejected} rejected.`,
         scope,
         payload: {
           batchId: b.id,

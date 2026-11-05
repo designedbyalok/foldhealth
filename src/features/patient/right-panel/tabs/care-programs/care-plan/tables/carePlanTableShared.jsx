@@ -1,7 +1,7 @@
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { Input } from '../../../../../../../components/Input/Input';
 import { Badge } from '../../../../../../../components/Badge/Badge';
-import { Checkbox } from '../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../components/Checkbox/Checkbox';
 import { Tooltip } from '../../../../../../../components/Tooltip/Tooltip';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
 import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevronIcon';
@@ -87,7 +87,8 @@ export const GBI_COL_WIDTH = {
   value: 132,
   assignee: 124,
   progress: 90,
-  status: 116,
+  // Fits the widest status badge ("Not Applicable", 128px) inside the header's 6px padding.
+  status: 140,
   actions: 36,
 };
 
@@ -99,7 +100,7 @@ export const SELECT_COLUMN = { key: 'select', label: '', showCheckbox: true, wid
 export const withSelectColumn = (columns, bulkMode) =>
   (bulkMode ? [SELECT_COLUMN, ...columns] : columns);
 
-// Goals surface Start + Target instead of Current Value — the value
+// Goals surface Start + Target instead of Current Value, the value
 // is more useful on the goal detail drawer, where trends and last
 // measurement context live; the schedule cadence reads better in the
 // table. Widths intentionally match the intervention table one-for-one
@@ -108,17 +109,17 @@ export const withSelectColumn = (columns, bulkMode) =>
 export const GBI_COL_DATE_WIDTH = 108;
 export const GOAL_COLUMNS = [
   { key: 'priority', label: 'P', popoverLabel: 'Priority', width: GBI_COL_WIDTH.priority, align: 'center', sortKey: '_sortPriority', sortType: 'priority', hideSortIcon: true, thStyle: { paddingLeft: 4, paddingRight: 4 } },
-  // Goal Title is the row's identity — hiding it leaves a nameless row,
+  // Goal Title is the row's identity: hiding it leaves a nameless row,
   // so lock the picker's Hide toggle off (the column still renders and
   // stays sortable).
   { key: 'title', label: 'Goal Title', sortKey: 'title', sortType: 'alpha', locked: true },
   { key: 'createdDate', label: 'Start', popoverLabel: 'Start Date', width: GBI_COL_DATE_WIDTH, sortKey: '_sortCreatedAt', sortType: 'generic', thStyle: HEADER_COMPACT },
   { key: 'targetDate', label: 'Target', popoverLabel: 'Target Date', width: GBI_COL_WIDTH.assignee, sortKey: '_sortTargetDate', sortType: 'generic', thStyle: HEADER_COMPACT },
-  // Optional columns — off by default; users opt in through the picker.
+  // Optional columns: off by default; users opt in through the picker.
   { key: 'currentValue', label: 'Current Value', width: GBI_COL_WIDTH.progress, defaultHidden: true, thStyle: HEADER_COMPACT },
   { key: 'progress', label: 'Progress', width: GBI_COL_WIDTH.progress, sortKey: '_sortProgress', sortType: 'number', defaultHidden: true, thStyle: HEADER_COMPACT },
   { key: 'trend', label: 'Trend', width: GBI_COL_WIDTH.progress, defaultHidden: true, thStyle: HEADER_COMPACT },
-  // Status is intentionally non-hideable — the row is meaningless without
+  // Status is intentionally non-hideable: the row is meaningless without
   // its Status pill. It stays in-flow (not sticky) so it reads next to
   // optional metrics; only the picker's Hide toggle is locked off.
   { key: 'status', label: 'Status', width: GBI_COL_WIDTH.status, sortKey: 'status', sortType: 'alpha', locked: true, thStyle: HEADER_COMPACT },
@@ -127,7 +128,7 @@ export const GOAL_COLUMNS = [
 
 export const INTERVENTION_COLUMNS = [
   { key: 'priority', label: 'P', popoverLabel: 'Priority', width: GBI_COL_WIDTH.priority, align: 'center', sortKey: '_sortPriority', sortType: 'priority', hideSortIcon: true, thStyle: { paddingLeft: 4, paddingRight: 4 } },
-  // Name is the intervention row's identity — same locking treatment
+  // Name is the intervention row's identity: same locking treatment
   // as Goal Title above.
   { key: 'title', label: 'Name', sortKey: 'title', sortType: 'alpha', locked: true },
   { key: 'assignee', label: 'Assigned To', width: GBI_COL_WIDTH.assignee, sortKey: '_sortAssignee', sortType: 'alpha', thStyle: HEADER_COMPACT },
@@ -137,13 +138,13 @@ export const INTERVENTION_COLUMNS = [
 ];
 
 export const BARRIER_COLUMNS = [
-  { key: 'priority', label: '', width: GBI_COL_WIDTH.priority, thStyle: { paddingLeft: 4, paddingRight: 4 } },
+  { key: 'priority', label: 'P', popoverLabel: 'Priority', width: GBI_COL_WIDTH.priority, align: 'center', sortKey: '_sortPriority', sortType: 'priority', hideSortIcon: true, thStyle: { paddingLeft: 4, paddingRight: 4 } },
   { key: 'title', label: 'Name', sortKey: 'title', sortType: 'alpha' },
   { key: 'status', label: 'Status', width: GBI_COL_WIDTH.status, sortKey: 'status', sortType: 'alpha', thStyle: HEADER_COMPACT },
   { key: 'actions', label: '', width: GBI_COL_WIDTH.actions, thStyle: { paddingLeft: 4, paddingRight: 4 } },
 ];
 
-/** "Start 09/15/2026 • Due 12/14/2026" — segments joined with a muted bullet. */
+/** "Start 09/15/2026 • Due 12/14/2026", segments joined with a muted bullet. */
 export function GbiMetaLine({ segments }) {
   const shown = segments.filter(Boolean);
   if (shown.length === 0) return null;
@@ -195,7 +196,7 @@ export function GbiMetaDate({ label, noun, value, emptyLabel, status, editable, 
 }
 
 /**
- * Linked items · Notes · More — the fixed Actions cell for every GBI row.
+ * Linked items · Notes · More, the fixed Actions cell for every GBI row.
  * `note`: { count, isNew } when the item has notes. The count shows on the
  * note button, highlighted when one is new to this user.
  */
@@ -207,7 +208,7 @@ export function GbiRowActions({ linked, note, onNotes, onMenu, menuDisabled = fa
       <span className={styles.actionDivider} aria-hidden="true" />
       <ActionButton
         icon="solar:notes-linear"
-        size="S"
+        size="sm"
         tooltip={!hasNote ? 'Add note' : note.isNew ? 'New note' : `View note${note.count > 1 ? 's' : ''}`}
         tooltipBelow
         tooltipLeft
@@ -220,7 +221,7 @@ export function GbiRowActions({ linked, note, onNotes, onMenu, menuDisabled = fa
       <span className={styles.actionDivider} aria-hidden="true" />
       <ActionButton
         icon="solar:menu-dots-linear"
-        size="S"
+        size="sm"
         tooltip="More"
         tooltipBelow
         tooltipLeft
@@ -262,7 +263,7 @@ export function CompletedRowsGroup({ label, rows, open, onToggle, colSpan, rende
   );
 }
 
-// The per-row bulk checkbox cell shared by all three GBI tables — stops click
+// The per-row bulk checkbox cell shared by all three GBI tables, stops click
 // propagation so ticking never fires the row action.
 export function GbiCheckboxCell({ checked, onToggle, label, disabled }) {
   return (
@@ -281,7 +282,7 @@ export function LinkChip({ count }) {
   );
 }
 
-/** Shared name cell — primary title + optional secondary meta (inline or stacked). */
+/** Shared name cell: primary title + optional secondary meta (inline or stacked). */
 export function GbiNameCell({
   icon,
   iconTitle,
@@ -289,7 +290,7 @@ export function GbiNameCell({
   meta,
   layout = 'inline',
   linked = null,
-  // `recurring` — when true, renders a small refresh glyph before
+  // `recurring`, when true, renders a small refresh glyph before
   // the link button so recurring interventions are visible at a
   // glance. No-op for goals / barriers, which never pass it.
   recurring = false,
@@ -299,7 +300,7 @@ export function GbiNameCell({
   recurringLabel = 'Recurring',
   // The compact grid moves the link button into the Actions column.
   showLink = true,
-  // (next) => void — makes the title editable in place: click the text to
+  // (next) => void: makes the title editable in place: click the text to
   // type, Enter or click away saves, Escape cancels. Clicks anywhere else
   // on the row still open the drawer.
   onTitleCommit,
@@ -357,7 +358,7 @@ export function GbiNameCell({
   );
 }
 
-/** Progress / adherence cell — bar in tables, ring in drawers. */
+/** Progress / adherence cell: bar in tables, ring in drawers. */
 export function GbiProgressCell({ progress, variant = 'bar', size = 'S' }) {
   const pct = Math.max(0, Math.min(100, Number(progress) || 0));
   return <CarePlanProgressRing progress={pct} variant={variant} size={size} />;
@@ -367,18 +368,18 @@ export function GbiProgressCell({ progress, variant = 'bar', size = 'S' }) {
 export const GoalProgressCell = GbiProgressCell;
 
 export function TrendCell({ trend }) {
-  if (!trend || trend === '-') return <span className={styles.trendDash}>—</span>;
-  const tone = trend === '↑' ? 'success' : trend === '↓' ? 'error' : 'grey';
+  if (!trend || trend === '-') return <span className={styles.trendDash}>-</span>;
+  const tone = trend === '↑' ? 'success' : trend === '↓' ? 'danger' : 'neutral';
   const icon = trend === '↑'
     ? 'solar:arrow-up-linear'
     : trend === '↓'
       ? 'solar:arrow-down-linear'
       : 'solar:minus-circle-linear';
-  return <Badge tone={tone} size="S" icon={icon} />;
+  return <Badge tone={tone} size="sm" icon={icon} />;
 }
 
-export function GbiStatusButton({ value, disabled, onOpen, badgeSize = 'S' }) {
-  return (
+export function GbiStatusButton({ value, reason, disabled, onOpen, badgeSize = 'sm' }) {
+  const button = (
     <button
       type="button"
       className={styles.statusBtn}
@@ -386,7 +387,7 @@ export function GbiStatusButton({ value, disabled, onOpen, badgeSize = 'S' }) {
       onClick={(e) => onOpen?.(e.currentTarget.getBoundingClientRect())}
     >
       <Badge
-        tone={GBI_STATUS_TONE[value] || 'grey'}
+        tone={GBI_STATUS_TONE[value] || 'neutral'}
         size={badgeSize}
         icon={gbiStatusMeta(value).icon}
         label={value}
@@ -394,4 +395,7 @@ export function GbiStatusButton({ value, disabled, onOpen, badgeSize = 'S' }) {
       />
     </button>
   );
+  // Why it holds this status: the reason picked when it changed, or the
+  // automation that set it (e.g. Program UTR).
+  return reason ? <Tooltip label={`Reason: ${reason}`}>{button}</Tooltip> : button;
 }

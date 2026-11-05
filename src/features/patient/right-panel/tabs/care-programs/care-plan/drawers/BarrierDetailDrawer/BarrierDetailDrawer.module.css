@@ -1,4 +1,4 @@
-/* Figma 2937:267306 — Barrier Details Drawer.
+/* Figma 2937:267306, Barrier Details Drawer.
    Spacing tokens: body px-24 py-12 with 12px gap; status bar p-8;
    section head h-24 gap-8; link rows py-8 border-bottom neutral-100;
    action cluster px-8 with a hairline 4px-padded divider between the
@@ -18,7 +18,7 @@
   flex-shrink: 0;
 }
 
-/* Status bar — pill on the left, delete-barrier on the right. */
+/* Status bar: pill on the left, delete-barrier on the right. */
 .statusBar {
   display: flex;
   align-items: center;
@@ -112,7 +112,7 @@
   margin: 0 var(--space-2);
 }
 
-/* Read-only summary card shown when the barrier is Met / Not Met — the
+/* Read-only summary card shown when the barrier is Met / Not Met, the
    affordances to rename / link / unlink / note are all gated in JSX, so
    this replaces the editable Input with a static row that still surfaces
    the title, meta line, and linked-goals chip. */
@@ -141,7 +141,7 @@
 }
 
 
-/* Note editor — plain Textarea sits above a Discard / Save row. */
+/* Note editor: plain Textarea sits above a Discard / Save row. */
 .noteEditor {
   display: flex;
   flex-direction: column;
@@ -191,7 +191,7 @@
   padding: var(--space-2) 0;
 }
 
-/* Linked row — icon 16 + title/subtitle + open/unlink cluster. */
+/* Linked row: icon 16 + title/subtitle + open/unlink cluster. */
 .linkList {
   list-style: none;
   padding: 0;

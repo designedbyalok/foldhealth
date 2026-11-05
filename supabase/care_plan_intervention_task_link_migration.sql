@@ -5,8 +5,8 @@
 -- task the patient or staff carries out). The Add Intervention flow used
 -- to write to `patient_care_plan_interventions` only; the Add Task flow
 -- (used by patient-task / internal-task kinds) additionally wrote a
--- `tasks` row and stored its id in `patient_care_plan_interventions.config.taskId`
--- — but nothing read that id, so completing the task never updated the
+-- `tasks` row and stored its id in `patient_care_plan_interventions.config.taskId`,
+-- but nothing read that id, so completing the task never updated the
 -- intervention.
 --
 -- This migration promotes the config-blob taskId into a real FK column so

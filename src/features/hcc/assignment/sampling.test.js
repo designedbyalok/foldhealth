@@ -10,7 +10,7 @@ describe('isSampled', () => {
 
   it('two DOS sharing a date but differing provider/POS can get independent outcomes', () => {
     // Not every pair will differ at every rate, but the hash input must
-    // include provider/pos — verify the seed actually changes by checking
+    // include provider/pos: verify the seed actually changes by checking
     // a rate of 1 (always true) vs 0 (always false) don't mask this, and
     // that differing composite keys are at least capable of diverging by
     // sampling a spread of synthetic POS values and confirming not all
@@ -33,12 +33,12 @@ describe('sampledForReviewer2', () => {
     expect(typeof result).toBe('boolean');
   });
 
-  it('DEFAULT_SAMPLING_RATES has exactly one gate — reviewer2 — no reviewer3', () => {
+  it('DEFAULT_SAMPLING_RATES has exactly one gate, reviewer2, no reviewer3', () => {
     expect(DEFAULT_SAMPLING_RATES).toEqual({ reviewer2: 0.10 });
   });
 });
 
-describe('validateAsmReadinessConfig — Phase 0 (WR7) guard', () => {
+describe('validateAsmReadinessConfig: Phase 0 (WR7) guard', () => {
   it('is a dormant no-op when minReviewsBeforeAsm is unset (default state today)', () => {
     expect(validateAsmReadinessConfig({})).toEqual({ ok: true });
     expect(validateAsmReadinessConfig()).toEqual({ ok: true });

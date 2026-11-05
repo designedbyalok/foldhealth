@@ -13,7 +13,7 @@ import styles from './GoalPreviewDrawer.module.css';
  *   [ icon ]  [ title / subtitle ]  [ status | (open) | unlink ]
  *
  * Barriers have no priority or assignee, so those slots are omitted.
- * `onOpen` is optional — when provided, the arrow-right-up action
+ * `onOpen` is optional: when provided, the arrow-right-up action
  * surfaces the same way it does on the interventions list.
  */
 export function GoalLinkedBarriersList({
@@ -60,7 +60,7 @@ export function GoalLinkedBarriersList({
               </>
             )}
             <GbiStatusButton
-              value={b.status || 'Not Started'}
+              value={b.status || 'Not Started'} reason={b.statusReason}
               disabled={!canEdit}
               onOpen={(rect) => onStatusMenu?.({ kind: 'barrier', item: b, rect })}
             />
@@ -69,19 +69,19 @@ export function GoalLinkedBarriersList({
                 <span className={styles.intvLinkActionsDivider} aria-hidden style={{ margin: 0 }} />
                 <ActionButton
                   icon="solar:arrow-right-up-linear"
-                  size="S"
+                  size="sm"
                   tooltip="Open barrier"
                   onClick={() => onOpen(b)}
                 />
               </>
             )}
-            {/* Three-dot menu — Open, Unlink and the scope-aware
+            {/* Three-dot menu: Open, Unlink and the scope-aware
                 Delete flow all live here so both rows carry the
                 identical overflow control on the far right. */}
             <span className={styles.intvLinkActionsDivider} aria-hidden style={{ margin: 0 }} />
             <ActionButton
               icon="solar:menu-dots-linear"
-              size="S"
+              size="sm"
               tooltip="More"
               disabled={!onRowMenu}
               onClick={(e) => onRowMenu?.({ item: b, rect: e.currentTarget.getBoundingClientRect() })}

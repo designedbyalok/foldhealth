@@ -35,8 +35,9 @@ export const HISTORY_TYPES = [
 
 const NOUN = { goal: 'Goal', intervention: 'Intervention', barrier: 'Barrier' };
 const SCHEDULE_DETAIL = /^(Due Date|Repeat|Repeat Count|Repeats Every|Repeat Unit|Repeat Ends|Repeat Ends Unit):/;
-// call_note and review_finished come from the Review care plan drawer.
-const PLAN_EVENT_ACTIONS = new Set(['review_requested', 'shared', 'discarded', 'restored', 'call_note', 'review_finished']);
+// call_note and review_finished come from the Review care plan drawer;
+// cadence_changed from the care plan's Review cadence override.
+const PLAN_EVENT_ACTIONS = new Set(['review_requested', 'shared', 'discarded', 'restored', 'call_note', 'review_finished', 'cadence_changed']);
 
 /** The activity type of an audit row that records live progress, else null. */
 export function liveActivityType(row) {
@@ -57,6 +58,7 @@ export function liveActivityType(row) {
 export function isStructuralRow(row) {
   if (!row || liveActivityType(row)) return false;
   if (NOTE_ACTIONS.has(row.action) || PLAN_EVENT_ACTIONS.has(row.action)) return false;
+  if (row.action === 'note_linked') return false;
   if (row.action === 'signed' || row.action === 'value_changed') return false;
   if (row.action === 'goal_linked' || row.action === 'goal_unlinked') return false; // goal_link_changed says it
   return true;
@@ -173,10 +175,10 @@ function parseArrow(detail) {
 const capitalize = v => (v ? v.charAt(0).toUpperCase() + v.slice(1) : v);
 
 // Values as people read them: an ISO date ("2026-10-11", with or without a
-// time) as MM/DD/YYYY, and a blank ("—", "-") as None.
+// time) as MM/DD/YYYY, and a blank ("-", "-") as None.
 function displayValue(v) {
   const text = (v || '').trim();
-  if (!text || text === '—' || text === '-') return 'None';
+  if (!text || text === '\u2014' || text === '-') return 'None';
   const iso = /^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$/.exec(text);
   return iso ? `${iso[2]}/${iso[3]}/${iso[1]}` : text;
 }
@@ -261,6 +263,18 @@ export function activityEntries(audit, measurements, goals) {
       });
       continue;
     }
+    if (e.action === 'note_linked') {
+      const noun = NOUN[e.entityType] || 'Item';
+      const itemTitle = e.entityType === 'goal' ? goalTitle(e.entityId) || e.summary : e.summary;
+      out.push({
+        id: `a-${e.id}`, kind: 'activity', type: 'item_note', entityType: e.entityType, entityId: e.entityId ?? null,
+        headline: `Linked in a Care Plan Note: ${noun}: ${itemTitle}`,
+        headlineAction: 'Linked in a Care Plan Note:',
+        headlineSubject: `${noun}: ${itemTitle}`,
+        title: itemTitle, body: e.detail, previous: '', at: e.createdAt, actor: e.actor || '',
+      });
+      continue;
+    }
     if (e.action === 'call_note') {
       // Written in a rich-text field, so the body is HTML.
       out.push({
@@ -277,8 +291,9 @@ export function activityEntries(audit, measurements, goals) {
         shared: e.summary || 'Care Plan Shared',
         discarded: 'Discarded Unsigned Changes',
         restored: e.summary || 'Loaded an Older Version Into the Draft',
+        cadence_changed: e.summary || 'Review Cadence Changed',
       }[e.action];
-      const detail = e.action === 'discarded' || e.action === 'review_finished' ? e.detail || '' : '';
+      const detail = ['discarded', 'review_finished', 'cadence_changed'].includes(e.action) ? e.detail || '' : '';
       out.push({ id: `a-${e.id}`, kind: 'activity', type: 'plan_event', entityType: 'plan', headline, detail, at: e.createdAt, actor: e.actor || '' });
     }
   }

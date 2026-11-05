@@ -126,7 +126,7 @@
   white-space: nowrap;
 }
 
-/* Task pill mirrors TOC's .taskBadge — small primary chip. */
+/* Task pill mirrors TOC's .taskBadge, small primary chip. */
 .taskBadge {
   min-width: 24px;
   height: 22px;

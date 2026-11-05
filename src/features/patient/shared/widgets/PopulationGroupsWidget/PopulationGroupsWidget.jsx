@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ActionButton } from '../../../../../components/ActionButton/ActionButton';
 import { Avatar } from '../../../../../components/Avatar/Avatar';
 import { BadgeSelect } from '../../../../../components/BadgeSelect/BadgeSelect';
-import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../components/EmptyState/EmptyState';
 import { PanelSection, PanelSectionDivider, PanelSectionItem, PanelSectionMore } from '../../../../../components/PanelSection/PanelSection';
 
 const GROUPS = [
@@ -25,6 +25,7 @@ export function PopulationGroupsWidget() {
 
   return (
     <PanelSection
+      icon="solar:users-group-rounded-linear"
       title="Population Groups"
       actions={(
         <>
@@ -35,12 +36,12 @@ export function PopulationGroupsWidget() {
             onChange={(v) => { setView(v); setExpanded(false); }}
           />
           <PanelSectionDivider />
-          <ActionButton icon="solar:add-circle-linear" size="S" tooltip="Add to Population Group" />
+          <ActionButton icon="solar:add-circle-linear" size="sm" tooltip="Add to Population Group" />
         </>
       )}
     >
       {groups.length === 0 ? (
-        <RingEmptyState icon="solar:users-group-rounded-linear" label={`No ${view.toLowerCase()} population groups`} size="S" />
+        <EmptyState icon="solar:users-group-rounded-linear" title={`No ${view.toLowerCase()} population groups`} size="sm" />
       ) : (
         <>
           {shown.map(g => (

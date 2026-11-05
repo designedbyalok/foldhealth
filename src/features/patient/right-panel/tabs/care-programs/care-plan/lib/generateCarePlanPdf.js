@@ -9,12 +9,12 @@ import { generateCarePlanSummaryPdf } from './generateCarePlanSummaryPdf';
  * Care plan PDF, "Tables" format: a patient card, then Goals, Interventions
  * and Barriers as one clean table each (or a block per condition), the Care
  * Note and the note to the recipient. A4, Inter when the fonts are passed.
- * Empty values print "—"; nothing is filled in.
+ * Empty values print "-"; nothing is filled in.
  */
 const PAGE = { w: 595, h: 842 };
 const M = 32;
 const CONTENT_W = PAGE.w - M * 2;
-const DASH = '—';
+const DASH = '-';
 
 const C = {
   ink: [31, 41, 55],
@@ -87,7 +87,10 @@ export function conditionGroups(selection) {
  * @param {object} [options] Personalize settings: format, groupBy, carePlanNote,
  *   demographics ([{ label, value }]), header / footer (drawn components;
  *   header undefined or null for none, footer undefined for the standard
- *   line and null for none), logo, fonts
+ *   line and null for none), logo, fonts, sections (Personalize > Content:
+ *   labs / medications / history, from carePlanPrintContent). Items may carry
+ *   `changeTag` ("New", "Changed: …", "Removed") when printing recent changes;
+ *   meta.changesNote says what they were compared with.
  * @returns {Blob}
  */
 export function generateCarePlanPdf(meta, selection, options = {}) {
@@ -106,6 +109,7 @@ export function generateCarePlanPdf(meta, selection, options = {}) {
     footer: footerImage,
     logo = null,
     fonts = null,
+    sections = [],
   } = options;
   const { patientName = 'Patient', programName = '', sharedBy = '', date = '', note = '', versionLabel = '' } = meta;
 
@@ -193,6 +197,12 @@ export function generateCarePlanPdf(meta, selection, options = {}) {
     y += 34;
   };
   versionBand();
+  if (meta.changesNote) {
+    font('regular', 8.5, C.muted);
+    const lines = wrap(meta.changesNote, CONTENT_W);
+    doc.text(lines, M, y);
+    y += lines.length * 11 + 10;
+  }
 
   // ── Patient card: name, conditions as chips, picked demographics ──
   {
@@ -327,20 +337,22 @@ export function generateCarePlanPdf(meta, selection, options = {}) {
     y += 22;
   };
 
+  // A recent-changes print leads each row's second line with what changed.
+  const withTag = (item, sub) => [item.changeTag, sub].filter(Boolean).join(' · ');
   const goalRow = g => [
-    { title: g.title, sub: g.subtitle },
+    { title: g.title, sub: withTag(g, g.subtitle) },
     [formatGoalTarget(g), g.duration ? `in ${formatGoalDuration(g)}` : ''].filter(Boolean).join(' '),
     [g.currentValue && g.currentValue !== 'No Data' ? g.currentValue : '', g.trend && g.trend !== '-' ? g.trend : ''].filter(Boolean).join(' · '),
     fmtDate(g.createdAt),
     g.status,
   ];
   const intvRow = i => [
-    { title: i.title, sub: [KIND_LABEL[i.kind], i.config?.dueDate ? `Due ${fmtDate(i.config.dueDate)}` : ''].filter(Boolean).join(' · ') },
+    { title: i.title, sub: withTag(i, [KIND_LABEL[i.kind], i.config?.dueDate ? `Due ${fmtDate(i.config.dueDate)}` : ''].filter(Boolean).join(' · ')) },
     i.assignee?.name && i.assignee.name !== 'Unassigned' ? i.assignee.name : '',
     fmtDate(i.createdAt),
     i.status,
   ];
-  const barrierRow = b => [{ title: b.title, sub: b.description }, fmtDate(b.createdAt), b.status];
+  const barrierRow = b => [{ title: b.title, sub: withTag(b, b.description) }, fmtDate(b.createdAt), b.status];
 
   const GOAL_COLS = [
     { label: 'Goal', w: 0.38 }, { label: 'Target', w: 0.22 }, { label: 'Current', w: 0.13 },
@@ -354,11 +366,12 @@ export function generateCarePlanPdf(meta, selection, options = {}) {
     { label: 'Barrier', w: 0.73 }, { label: 'Start', w: 0.13 }, { label: 'Status', w: 0.14, kind: 'status' },
   ];
 
+  const emptyText = noun => (meta.changesNote ? `No changes to ${noun}.` : `No ${noun} included.`);
   const drawTypeSections = (part, { skipEmpty = false, titleSize = 11 } = {}) => {
     [
-      { title: 'Goals', items: part.goals || [], cols: GOAL_COLS, row: goalRow, empty: 'No goals included.' },
-      { title: 'Interventions', items: part.interventions || [], cols: INTV_COLS, row: intvRow, empty: 'No interventions included.' },
-      { title: 'Barriers', items: part.barriers || [], cols: BARRIER_COLS, row: barrierRow, empty: 'No barriers included.' },
+      { title: 'Goals', items: part.goals || [], cols: GOAL_COLS, row: goalRow, empty: emptyText('goals') },
+      { title: 'Interventions', items: part.interventions || [], cols: INTV_COLS, row: intvRow, empty: emptyText('interventions') },
+      { title: 'Barriers', items: part.barriers || [], cols: BARRIER_COLS, row: barrierRow, empty: emptyText('barriers') },
     ].filter(s => !skipEmpty || s.items.length).forEach(s => {
       sectionTitle(s.title, s.items.length, titleSize);
       table(s.cols, [...s.items].sort(byStatus).map(s.row), s.empty);
@@ -382,6 +395,12 @@ export function generateCarePlanPdf(meta, selection, options = {}) {
     });
   } else {
     drawTypeSections(selection);
+  }
+
+  // ── Content sections: labs, medications, history ──
+  for (const section of sections) {
+    sectionTitle(section.title, section.rows.length);
+    table(section.cols, section.rows, section.empty);
   }
 
   // ── Notes ──

@@ -198,9 +198,9 @@ export function SdohView({ showToast, editing = false, resetTick = 0 }) {
                     <td className={s.fw600}>{d.label}</td>
                     <td className={`${s.r} ${s.mono}`}>{d.patients}</td>
                     <td className={`${s.r} ${s.mono}`}>{d.needs}</td>
-                    <td className={`${s.r} ${s.mono}`}>{d.needs ? `${d.referredPct}% (${d.referred})` : '—'}</td>
-                    <td className={`${s.r} ${s.mono}`}>{d.referrals ? `${d.closedLoopPct}% (${d.closedLoop}/${d.referrals})` : '—'}</td>
-                    <td className={`${s.r} ${s.mono}`}>{d.needs ? `${d.resolvedPct}% (${d.resolved})` : '—'}</td>
+                    <td className={`${s.r} ${s.mono}`}>{d.needs ? `${d.referredPct}% (${d.referred})` : '-'}</td>
+                    <td className={`${s.r} ${s.mono}`}>{d.referrals ? `${d.closedLoopPct}% (${d.closedLoop}/${d.referrals})` : '-'}</td>
+                    <td className={`${s.r} ${s.mono}`}>{d.needs ? `${d.resolvedPct}% (${d.resolved})` : '-'}</td>
                   </tr>
                 ))}
                 {t.needs > 0 && (
@@ -209,7 +209,7 @@ export function SdohView({ showToast, editing = false, resetTick = 0 }) {
                     <td className={`${s.r} ${s.mono} ${s.fw600}`}>{t.patients}</td>
                     <td className={`${s.r} ${s.mono} ${s.fw600}`}>{t.needs}</td>
                     <td className={`${s.r} ${s.mono} ${s.fw600}`}>{t.referredPct}% ({t.referred})</td>
-                    <td className={`${s.r} ${s.mono} ${s.fw600}`}>{t.referrals ? `${t.closedLoopPct}% (${t.closedLoop}/${t.referrals})` : '—'}</td>
+                    <td className={`${s.r} ${s.mono} ${s.fw600}`}>{t.referrals ? `${t.closedLoopPct}% (${t.closedLoop}/${t.referrals})` : '-'}</td>
                     <td className={`${s.r} ${s.mono} ${s.fw600}`}>{t.resolvedPct}% ({t.resolved})</td>
                   </tr>
                 )}

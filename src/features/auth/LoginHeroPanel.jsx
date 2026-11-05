@@ -6,7 +6,7 @@ export function LoginHeroPanel() {
     <div className={styles.leftPanel}>
       <div className={styles.heroWrap}>
         <div className={styles.gridBg} />
-        <img src={loginHero} alt="Healthcare illustration" className={styles.heroImg} />
+        <img src={loginHero} alt="Healthcare illustration" width={1200} height={675} className={styles.heroImg} />
       </div>
       <div className={styles.dots}>
         <span className={styles.dotActive} />

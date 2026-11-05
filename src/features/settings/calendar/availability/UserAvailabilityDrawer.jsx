@@ -11,12 +11,12 @@ import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialo
 import { Icon } from '../../../../components/Icon/Icon';
 import { CloseIcon } from '../../../../components/Icon/CloseIcon';
 import { DownChevronIcon } from '../../../../components/Icon/DownChevronIcon';
-import { Collapse } from '../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../components/Collapsible/Collapsible';
 import { Badge } from '../../../../components/Badge/Badge';
 import { Link } from '../../../../components/Link/Link';
 import { TimePicker } from '../../../../components/TimePicker/TimePicker';
 import { Tooltip } from '../../../../components/Tooltip/Tooltip';
-import { InfoBar } from '../../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../../components/Banner/Banner';
 import { RadioOptionGroup } from '../../../../components/RadioOptionGroup/RadioOptionGroup';
 import { recordsFor, oooStatus, formatDate as oooDate } from '../../../ooo/oooUtils';
 import { AddIconMinimalist } from '../../../../components/Icon/AddIconMinimalist';
@@ -314,7 +314,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
               {cloneFrom && targetCount > 0 && i === targetCount && (
                 <div className={styles.groupLabel}>
                   <span className={styles.groupTitle}>Copied from {cloneFrom.name}</span>
-                  <Badge tone="grey" size="S" label={String(blocks.length - targetCount)} />
+                  <Badge size="sm" label={String(blocks.length - targetCount)} />
                 </div>
               )}
               <section
@@ -341,19 +341,19 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                     <span className={styles.blockTitleText}>
                       <span className={styles.blockTitle}>
                         {unit} {blockNumber(i)}
-                        {status && <Badge tone={status.tone} size="S" label={status.label} />}
+                        {status && <Badge tone={status.tone} size="sm" label={status.label} />}
                       </span>
                       {b.collapsed && ruleSummary(b) && <span className={styles.blockSub}>{ruleSummary(b)}</span>}
                     </span>
                   </button>
                   <span className={styles.blockActions}>
-                    <ActionButton icon="solar:copy-linear" size="S" tooltip="Duplicate block" onClick={() => cloneBlock(i)} />
+                    <ActionButton icon="solar:copy-linear" size="sm" tooltip="Duplicate block" onClick={() => cloneBlock(i)} />
                     {shown > 1 && (
                       <>
                         <span className={styles.actionDivider} aria-hidden="true" />
                         <ActionButton
                           icon="solar:trash-bin-minimalistic-linear"
-                          size="S"
+                          size="sm"
                           tooltip="Remove block"
                           onClick={() => { setDirty(true); setBlocks(bs => bs.filter((_, k) => k !== i)); }}
                         />
@@ -363,21 +363,21 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                 </header>
 
                 {!isNew && conflicts[i].length > 0 && (
-                  <InfoBar variant="inline" tone="warning" icon="solar:danger-triangle-linear" className={styles.conflictNote}>
+                  <Banner size="sm" tone="warning" icon="solar:danger-triangle-linear" className={styles.conflictNote}>
                     {conflicts[i].map(c => (
                       <span key={c.index} className={styles.conflictLine}>
                         Overlaps {blockLabel(c.index)}: {conflictText(c)}
                       </span>
                     ))}
-                  </InfoBar>
+                  </Banner>
                 )}
 
-                <Collapse open={!b.collapsed}>
+                <CollapsibleContent open={!b.collapsed}>
                 <div className={styles.blockBody}>
                 {/* New view: overlaps are allowed; the alert at the top of the slot says where. */}
                 {isNew && conflicts[i].length > 0 && (
                   // A title, then one line per overlapping slot (which days, which hours).
-                  <InfoBar variant="inline" tone="warning" className={styles.conflictNoteNew}>
+                  <Banner icon="solar:info-circle-linear" size="sm" tone="warning" className={styles.conflictNoteNew}>
                     <span className={styles.conflictTitle}>Schedule Conflict</span>
                     {conflicts[i].map((c) => {
                       // The other slot's location whenever it has one; its timezone
@@ -392,7 +392,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                       );
                     })}
                     <span className={styles.conflictLine}>Double booking may occur during overlapping availability.</span>
-                  </InfoBar>
+                  </Banner>
                 )}
                 {isNew && (
                   <RadioOptionGroup
@@ -411,14 +411,14 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                     searchable
                     options={locationOptions}
                     value={b.location}
-                    onChange={(v) => {
+                    onValueChange={(v) => {
                       const loc = (locations || []).find(l => l.name === v);
                       update(i, { location: v, ...(loc?.timezone ? { timezone: loc.timezone } : {}) });
                     }}
                     placeholder="Select location"
                     errorText={e.location}
                   />
-                  <Select label="Timezone" required searchable options={tzOptions} value={b.timezone} onChange={(v) => update(i, { timezone: v })} placeholder="Select timezone" errorText={e.timezone} />
+                  <Select label="Timezone" required searchable options={tzOptions} value={b.timezone} onValueChange={(v) => update(i, { timezone: v })} placeholder="Select timezone" errorText={e.timezone} />
                 </div>
 
                 <div className={styles.pair}>
@@ -510,7 +510,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                             options={typeOptions}
                             value={s.appointmentType}
                             placeholder="Appointment type"
-                            onChange={(v) => updateSlot(i, j, { appointmentType: v })}
+                            onValueChange={(v) => updateSlot(i, j, { appointmentType: v })}
                             wrapperClassName={styles.slotType}
                             aria-label="Appointment type"
                           />
@@ -518,9 +518,9 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                           <span className={styles.to}>to</span>
                           <TimePicker value={s.end} placeholder="End time" defaultTime={s.start} after={s.start} onChange={(v) => updateSlot(i, j, { end: s.start && v <= s.start ? '' : v })} aria-label="End time" wrapperClassName={styles.slotTime} />
                           <ActionButton
-                            size="S"
+                            size="sm"
                             tooltip="Remove time range"
-                            state={b.slots.length > 1 ? 'active' : 'disabled'}
+                            disabled={!(b.slots.length > 1)}
                             onClick={() => b.slots.length > 1 && update(i, { slots: b.slots.filter((_, k) => k !== j) })}
                           >
                             <CloseIcon size={16} color={b.slots.length > 1 ? 'var(--neutral-300)' : 'var(--neutral-200)'} />
@@ -545,16 +545,16 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                   const out = slotOoo(b);
                   if (!out.length) return null;
                   return (
-                    <InfoBar variant="inline" tone="info">
+                    <Banner size="sm" tone="info">
                       This slot includes the user&apos;s out-of-office days ({out.map(r => `${oooDate(r.startAt)} – ${oooDate(r.endAt)}`).join(', ')}). Availability does not apply to those days.
-                    </InfoBar>
+                    </Banner>
                   );
                 })()}
                 {ruleSummary(b) && (
                   <div className={styles.summary}><BlockMeta block={b} /></div>
                 )}
                 </div>
-                </Collapse>
+                </CollapsibleContent>
               </section>
               </Fragment>
             );
@@ -574,23 +574,21 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
         primaryAction={(
           <Tooltip label={saveBlocker} placement="bottom" align="right">
             <Button
-              variant="primary"
-              size="L"
               onClick={() => save()}
-              disabled={saving || !!saveBlocker}
+              disabled={!!saveBlocker}
               // A disabled button swallows hover, so let it reach the tooltip's wrapper.
-              style={saveBlocker ? { pointerEvents: 'none' } : undefined}
+              style={saveBlocker ? { pointerEvents: 'none' } : undefined} loading={saving}
             >
-              {saving ? 'Saving…' : 'Save'}
+              Save
             </Button>
           </Tooltip>
         )}
       >
         <div className={styles.form}>
           {cloneFrom && (
-            <InfoBar variant="inline">
+            <Banner size="sm">
               Copying {cloneFrom.blocks.length} availability block{cloneFrom.blocks.length === 1 ? '' : 's'} from {cloneFrom.name}. Pick who they're for; any availability they already have is kept.
-            </InfoBar>
+            </Banner>
           )}
           {/* User and the blocks heading stay put; only the blocks scroll. */}
           <div className={styles.stickyTop}>
@@ -602,7 +600,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
               disabled={!!initialUser}
               options={users.filter(u => u.name !== cloneFrom?.name).map(u => ({ value: u.name, label: u.email ? `${u.name} (${u.email})` : u.name }))}
               value={userName}
-              onChange={pickUser}
+              onValueChange={pickUser}
               placeholder="Select user"
               errorText={touched && !user ? 'Choose a user.' : undefined}
             />
@@ -617,8 +615,8 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                   </>
                 )}
                 <Button
-                  variant="tertiary"
-                  size="S"
+                  variant="soft"
+                  size="sm"
                   leadingIconElement={<AddIconMinimalist size={16} color="currentColor" />}
                   onClick={() => {
                     setDirty(true);
@@ -633,8 +631,8 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                 {!cloneFrom && (
                   <Tooltip label={user ? '' : 'Choose a user first'} placement="bottom" align="right">
                     <Button
-                      variant="secondary"
-                      size="S"
+                      variant="outline"
+                      size="sm"
                       leadingIcon="solar:arrow-left-down-linear"
                       disabled={!user}
                       style={user ? undefined : { pointerEvents: 'none' }}
@@ -654,7 +652,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
             <section className={[styles.current, styles.arrive].join(' ')}>
               <div className={styles.groupLabel}>
                 <span className={styles.groupTitle}>{user.name}'s current availability</span>
-                <Badge tone="grey" size="S" label={String(targetCount)} />
+                <Badge size="sm" label={String(targetCount)} />
               </div>
               <ul className={styles.currentList}>
                 {blocks.slice(0, targetCount).map((b, k) => (
@@ -691,14 +689,14 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                 aria-expanded={pastOpen}
               >
                 <span className={styles.pastTitle}>Past slots</span>
-                <Badge tone="grey" size="S" label={String(pastCount)} className={styles.pastCount} />
+                <Badge size="sm" label={String(pastCount)} className={styles.pastCount} />
                 <DownChevronIcon size={12} color="var(--neutral-200)" style={pastOpen ? undefined : { transform: 'rotate(-90deg)' }} />
               </button>
-              <Collapse open={pastOpen}>
+              <CollapsibleContent open={pastOpen}>
                 <div className={styles.pastList}>
                   {blocks.map((b, i) => (!b.arrive && isPast(b) ? renderBlock(b, i) : null))}
                 </div>
-              </Collapse>
+              </CollapsibleContent>
             </section>
           )}
 
@@ -710,7 +708,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
               <section key={from || 'imported'} className={[styles.newGroup, styles.arrive].join(' ')}>
                 <div className={styles.groupLabel}>
                   <span className={styles.groupTitle}>{from ? `Imported from ${from}` : 'Imported'}</span>
-                  <Badge tone="primary" size="S" label={String(count)} className={styles.countBadge} />
+                  <Badge tone="primary" size="sm" label={String(count)} className={styles.countBadge} />
                 </div>
                 {blocks.map((b, i) => (b.arrive && b.importedFrom === from ? renderBlock(b, i) : null))}
               </section>

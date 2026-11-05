@@ -1,4 +1,4 @@
--- Patient immunization list — the immunizations shown in the PAMI/Hx tab's
+-- Patient immunization list: the immunizations shown in the PAMI/Hx tab's
 -- "Immunizations" section and its Add Immunizations drawer. One row per
 -- administered vaccine per patient.
 -- Read with the anon key, so RLS needs a permissive policy or the table

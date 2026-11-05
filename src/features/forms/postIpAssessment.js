@@ -1,6 +1,7 @@
 import { parseLocalDate } from '../../lib/localDate';
+import { isEmptyDash } from '../../lib/emptyDash';
 /**
- * Post IP (Inpatient) Assessment — the AstraConnect post-discharge follow-up
+ * Post IP (Inpatient) Assessment: the AstraConnect post-discharge follow-up
  * form. Shared definition consumed by:
  *   - the TOC queue AssessmentDrawer (pre-filled by the TOC agent)
  *   - Content → Forms (listed as an authored form, editable in the builder)
@@ -47,7 +48,7 @@ export function buildPostIpIntro(patient) {
   if (!patient) return POST_IP_INTRO_TEMPLATE;
   const salutation = honorific(patient.gender);
   const last = lastNameOf(patient.name);
-  const provider = patient.pcp && patient.pcp !== '—' ? patient.pcp : 'Dr. William Wang, DO';
+  const provider = patient.pcp && !isEmptyDash(patient.pcp) ? patient.pcp : 'Dr. William Wang, DO';
   const visitType = 'Hospital';
   const facility = patient.facility || 'Providence St. Joseph Medical Center';
   const visitDate = formatVisitDate(patient.dischargeDate || patient.lastAdmission) || 'August 8, 2026';
@@ -172,7 +173,7 @@ export function buildPostIpForm(patient) {
 
 /**
  * Sample TOC-agent-completed answers. Modeled after a patient recently
- * discharged following an acute CHF exacerbation — realistic driver
+ * discharged following an acute CHF exacerbation, realistic driver
  * breakdown, interventions, and week-over-week follow-up notes.
  */
 export const POST_IP_PREFILLED_ANSWERS = {
@@ -180,8 +181,8 @@ export const POST_IP_PREFILLED_ANSWERS = {
   q2: 'Shortness of breath',
   q3: 'Acute exacerbation of congestive heart failure (CHF)',
   q4: 'Patient reports 3-day history of progressive lower-extremity edema, orthopnea (2-pillow), and dyspnea on minimal exertion. Weight up 6 lbs from dry weight. Reviewed daily weight tracking, low-sodium diet, and diuretic titration plan with patient and daughter.',
-  driver1: 'Medication non-adherence — patient reports missing furosemide doses due to $$ concerns. Intervention: enrolled in manufacturer PAP; pharmacy 90-day refill authorized.',
-  driver2: 'Dietary — high-sodium meals over holiday weekend. Intervention: RD teleconsult scheduled; provided low-sodium meal guide.',
+  driver1: 'Medication non-adherence: patient reports missing furosemide doses due to $$ concerns. Intervention: enrolled in manufacturer PAP; pharmacy 90-day refill authorized.',
+  driver2: 'Dietary: high-sodium meals over holiday weekend. Intervention: RD teleconsult scheduled; provided low-sodium meal guide.',
   driver3: 'Missed cardiology follow-up on 07/15. Intervention: rescheduled for 08/22; transportation coordinated via LogistiCare.',
   driverN: 'Social work referral placed for prescription assistance and utility support (SDoH screen positive for financial strain).',
   q5: 'See Drivers #1–#3 above. Overall discharge plan: TCM enrollment, home health nursing 2x/week x 30 days, telemonitoring for daily weight + BP.',
@@ -198,7 +199,7 @@ export const POST_IP_PREFILLED_ANSWERS = {
   q19: 'Yes',
   q20: 'No',
   q21: 'Yes',
-  q21b: 'Daughter — Sarah Reyes (555) 213-4467, primary caregiver, lives 10 min away.\nNeighbor — Ms. Alma Chen (555) 987-6543, weekday check-ins.',
+  q21b: 'Daughter, Sarah Reyes (555) 213-4467, primary caregiver, lives 10 min away.\nNeighbor, Ms. Alma Chen (555) 987-6543, weekday check-ins.',
   q22: 'Yes',
   q23: 'Yes',
   q24: 'Yes',
@@ -206,10 +207,10 @@ export const POST_IP_PREFILLED_ANSWERS = {
   q26: 'Home health RN visits 2x/week x 30 days. TCM enrollment complete. Medication reconciliation performed at bedside on 08/11; discrepancies resolved with prescribing MD. Enrolled in remote weight + BP monitoring. Cardiology follow-up on 08/22 confirmed.',
   q27: 'Yes',
   q28: 'Yes',
-  q29: 'Day 3 post-discharge call — patient afebrile, weight stable at 178 lb (dry weight 176), no new dyspnea. Confirmed Rx pickup for furosemide and metoprolol. Reinforced daily weight log + when to call. No red-flag symptoms.',
-  q30: 'Day 10 follow-up — patient feeling stronger, resumed light housework. Weight trending down (175 lb). Home health RN reports lungs clear, no LE edema. PCP appointment attended 08/18; labs stable.',
-  q31: 'Day 17 — attended cardiology follow-up 08/22 with Dr. Palacios. Echo shows preserved EF (55%). Diuretic dose maintained. Patient ambulating 15 min/day per PT plan.',
-  q32: 'Day 25 — patient stable, no symptom recurrence. Home health discharge planned for 09/10. TCM billing documented. Patient graduated to APCM long-term care management.',
+  q29: 'Day 3 post-discharge call: patient afebrile, weight stable at 178 lb (dry weight 176), no new dyspnea. Confirmed Rx pickup for furosemide and metoprolol. Reinforced daily weight log + when to call. No red-flag symptoms.',
+  q30: 'Day 10 follow-up: patient feeling stronger, resumed light housework. Weight trending down (175 lb). Home health RN reports lungs clear, no LE edema. PCP appointment attended 08/18; labs stable.',
+  q31: 'Day 17: attended cardiology follow-up 08/22 with Dr. Palacios. Echo shows preserved EF (55%). Diuretic dose maintained. Patient ambulating 15 min/day per PT plan.',
+  q32: 'Day 25: patient stable, no symptom recurrence. Home health discharge planned for 09/10. TCM billing documented. Patient graduated to APCM long-term care management.',
   'q-note': 'Patient meets criteria for post-discharge APCM enrollment. AWV due within 90 days.',
   q33: '2026-09-10',
   q34: '2026-08-14',

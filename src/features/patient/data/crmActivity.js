@@ -21,6 +21,13 @@ export const CRM_CHANNELS = {
   visit:      { label: 'Visit', icon: 'solar:videocamera-record-linear', color: 'var(--accent-cyan)', tint: 'var(--accent-light-cyan)' },
   assessment: { label: 'Assessment', icon: 'solar:clipboard-list-linear', color: 'var(--accent-pink)', tint: 'var(--accent-light-pink)' },
   task:       { label: 'Task', icon: 'solar:checklist-minimalistic-linear', color: 'var(--accent-magenta)', tint: 'var(--accent-light-magenta)' },
+  // P360 timeline actions (Figma 727:245147).
+  in_person:  { label: 'In-Person Visit', icon: 'solar:walking-linear', color: 'var(--accent-cyan)', tint: 'var(--accent-light-cyan)' },
+  education:  { label: 'Patient Education', icon: 'solar:book-2-linear', color: 'var(--accent-pink)', tint: 'var(--accent-light-pink)' },
+  review:     { label: 'Clinical Review', icon: 'solar:stethoscope-linear', color: 'var(--accent-pink)', tint: 'var(--accent-light-pink)' },
+  ip_visit:   { label: 'IP Visit', icon: 'solar:bed-linear', color: 'var(--accent-cyan)', tint: 'var(--accent-light-cyan)' },
+  er_visit:   { label: 'ER Visit', icon: 'solar:bed-linear', color: 'var(--accent-cyan)', tint: 'var(--accent-light-cyan)' },
+  lab:        { label: 'Lab', icon: 'solar:test-tube-linear', color: 'var(--accent-blue)', tint: 'var(--accent-light-blue)' },
 };
 
 // Status → text colour, as in Figma: done is green, anything waiting amber.
@@ -33,7 +40,7 @@ export const CRM_STATUS_COLOR = {
 
 // [days ago, hour, minute, channel, title, status, by, role]
 const SAMPLE = [
-  [2, 12, 30, 'chat', 'Patient Chat', '', 'Dr. Aldo Richman', 'Physician'],
+  [2, 12, 30, 'chat', 'Patient Chat', 'Completed', 'Dr. Aldo Richman', 'Physician'],
   [5, 12, 30, 'call', 'Outgoing Call with Patient', 'Completed', 'Dr. Aldo Richman', 'Physician'],
   [9, 10, 15, 'email', 'Sent Welcome Email', '', 'Dr. Jenny Wilson', 'Care Coordinator'],
   [12, 16, 5, 'sms', 'Sent Form Through SMS', '', "Dr. Robert D'Souza", 'Nurse'],
@@ -41,8 +48,14 @@ const SAMPLE = [
   [34, 12, 30, 'visit', 'Follow-up (Remote Visit)', 'Completed', 'Dr. Aldo Richman', 'Physician'],
   [38, 9, 0, 'assessment', 'HRA Assessment', 'Pending', 'Dr. Jenny Wilson', 'Care Coordinator'],
   [41, 14, 20, 'task', 'Record daily blood pressure readings', 'Pending', 'Nathan Williams', 'Care Coordinator'],
-  [66, 12, 30, 'visit', 'Regular Checkup (Remote Visit)', 'Completed', 'Dr. Aldo Richman', 'Physician'],
+  [66, 12, 30, 'in_person', 'Regular Checkup (In-Person Visit)', 'Completed', 'Dr. Aldo Richman', 'Physician'],
   [70, 15, 45, 'assessment', 'HIU Assessment Sent', 'In Progress', 'Nathan Williams', 'Care Coordinator'],
+  // Appended so the rows above keep their seeded ids.
+  [20, 12, 30, 'education', 'Patient Education', 'Completed', 'Dr. Jenny Wilson', 'Care Coordinator'],
+  [25, 12, 30, 'review', 'Reviewing Diabetic Conditions', 'In Progress', 'Nathan Williams', 'Care Coordinator'],
+  [45, 12, 30, 'ip_visit', 'IP Visit', 'Completed', 'Dr. Jenny Wilson', 'Care Coordinator'],
+  [48, 12, 30, 'er_visit', 'ER Visit', 'Pending', "Dr. Robert D'Souza", 'Nurse'],
+  [52, 12, 30, 'lab', 'Complete Blood Count (CBC)', '', 'Nathan Williams', 'Care Coordinator'],
 ];
 
 /** Sample activity for one patient, dated back from `now` so months fill. */
@@ -83,4 +96,9 @@ export const rowToCrm = (r) => ({
   performedByRole: r.performed_by_role,
   occurredAt: r.occurred_at,
   note: r.note || '',
+  // patient_event_stream_migration.sql
+  programCode: r.program_code || null,
+  billingProgram: r.billing_program || null,
+  durationSeconds: r.duration_seconds || null,
+  vendorName: r.vendor_name || null,
 });

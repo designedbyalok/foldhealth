@@ -1,11 +1,11 @@
-# Design-system critical paths — require owner review on any change.
+# Design-system critical paths: require owner review on any change.
 # The listed owner is auto-requested as a reviewer; pair with a branch
 # protection rule ("Require review from Code Owners") to make it blocking.
 
-# Design tokens — the single source of truth for color/shadow.
+# Design tokens: the single source of truth for color/shadow.
 /src/tokens/                       @designedbyalok
 
-# Shared component primitives — the reusable building blocks.
+# Shared component primitives: the reusable building blocks.
 /src/components/                   @designedbyalok
 
 # The guardrails themselves must not be weakened without review.

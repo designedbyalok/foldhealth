@@ -1,26 +1,25 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useMemo, useRef, useState } from 'react';
+import { Popover } from '../Popover/Popover';
 import { Icon } from '../Icon/Icon';
 import { Button } from '../Button/Button';
 import { Select } from '../Select/Select';
 import { Badge } from '../Badge/Badge';
 import { SearchListPopover } from '../SearchListPopover/SearchListPopover';
-import { SubTabs } from '../SubTabs/SubTabs';
+import { Tabs } from '../Tabs/Tabs';
+import { Calendar } from '../Calendar/Calendar';
 import styles from './DateRangePopover.module.css';
-import { parseLocalDate } from '../../lib/localDate';
-import { yearSpan } from './yearSpan';
+import { isoFromLocal as toISO, parseLocalDate } from '../../lib/localDate';
+import { yearSpan, monthSpan } from './yearSpan';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-const sameDay = (a, b) => a && b && a.toDateString() === b.toDateString();
 
 /**
- * Fold Health DateRangePopover — dual-month calendar with click-and-click
+ * Fold Health DateRangePopover: dual-month calendar with click-and-click
  * range selection (no drag). First click sets `start`; second click sets
  * `end`. Hovering after the first click previews the range.
  *
@@ -37,10 +36,13 @@ const sameDay = (a, b) => a && b && a.toDateString() === b.toDateString();
  *  - onClose    (fn)                   Dismiss on overlay click / Escape /
  *                                       Apply / Clear.
  *  - width      (number)               Default 504.
- *  - years      (boolean)              Adds a Years | Custom Dates switch (e.g.
- *                                       DOB): Years picks a From and To year,
- *                                       saved as Jan 1 to Dec 31; Custom Dates
- *                                       is the calendar, with a year jump.
+ *  - years      (boolean)              Adds a Years | Month & Year | Custom
+ *                                       Dates switch (e.g. DOB): Years picks a
+ *                                       From and To year, saved as Jan 1 to
+ *                                       Dec 31; Month & Year picks a From and
+ *                                       To month, saved as the 1st to the last
+ *                                       day of the month; Custom Dates is the
+ *                                       calendar, with a year jump.
  */
 export function DateRangePopover({
   anchorRect,
@@ -64,9 +66,31 @@ export function DateRangePopover({
     return s ? stepMonth({ y: s.getFullYear(), m: s.getMonth() }, 1) : { y: today.getFullYear(), m: today.getMonth() };
   });
   const savedYears = yearSpan(selected);
-  const [mode, setMode] = useState(() => (years && (savedYears || !selected.length) ? 'years' : 'custom'));
+  const savedMonths = savedYears ? null : monthSpan(selected);
+  const [mode, setMode] = useState(() => {
+    if (!years) return 'custom';
+    if (savedYears || !selected.length) return 'years';
+    return savedMonths ? 'months' : 'custom';
+  });
   const [fromYear, setFromYear] = useState(savedYears ? String(savedYears[0]) : '');
   const [toYear, setToYear] = useState(savedYears ? String(savedYears[1]) : '');
+  // Month & Year values are 'YYYY-MM'. With nothing saved they start on last
+  // month to this month, so Apply works straight away.
+  const [fromYM, setFromYM] = useState(() => (savedMonths ? ymKey(...savedMonths[0]) : defaultMonths(today)[0]));
+  const [toYM, setToYM] = useState(() => (savedMonths ? ymKey(...savedMonths[1]) : defaultMonths(today)[1]));
+  const monthYearOptions = useMemo(() => {
+    const out = [];
+    for (let i = today.getFullYear() * 12 + today.getMonth(); i >= (today.getFullYear() - YEAR_SPAN) * 12; i -= 1) {
+      const y = Math.floor(i / 12);
+      const m = i % 12;
+      out.push({
+        value: ymKey(y, m + 1),
+        label: `${MONTH_NAMES[m]} ${y}`,
+        searchText: `${MONTH_NAMES[m]} ${y} ${MONTH_NAMES[m].slice(0, 3)} ${y} ${pad2(m + 1)}/${y}`,
+      });
+    }
+    return out;
+  }, [today]);
   const yearOptions = useMemo(() => {
     const out = [];
     for (let y = today.getFullYear(); y >= today.getFullYear() - YEAR_SPAN; y -= 1) out.push({ value: String(y), label: String(y) });
@@ -77,23 +101,16 @@ export function DateRangePopover({
   const [end, setEnd]     = useState(() => parseLocalDate(selected[1]));
   const [hover, setHover] = useState(null);
 
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   if (!anchorRect) return null;
 
-  const isStart = (d) => sameDay(d, start);
-  const isEnd   = (d) => sameDay(d, end);
-
-  const inRange = (d) => {
-    const lo = start && end ? (start <= end ? start : end) : start;
-    const hi = start && end ? (start <= end ? end : start) : hover;
-    if (!lo || !hi) return false;
-    return d > lo && d < hi;
-  };
+  // Committed ends draw the range; with only a start, hovering previews it.
+  const calendarRange = end
+    ? { rangeStart: start, rangeEnd: end }
+    : {
+      pendingStart: start,
+      previewStart: start && hover ? (hover < start ? hover : start) : undefined,
+      previewEnd: start && hover ? (hover < start ? start : hover) : undefined,
+    };
 
   const handleDayClick = (d) => {
     if (!start || end) {
@@ -134,13 +151,22 @@ export function DateRangePopover({
   );
 
   const yearsReady = !!fromYear && !!toYear;
-  const canApply = mode === 'years' ? yearsReady : !!(start && end);
+  const monthsReady = !!fromYM && !!toYM;
+  const canApply = mode === 'years' ? yearsReady : mode === 'months' ? monthsReady : !!(start && end);
 
   const apply = () => {
     if (mode === 'years') {
       if (!yearsReady) return;
       const [lo, hi] = [Number(fromYear), Number(toYear)].sort((a, b) => a - b);
       onChange?.([`${lo}-01-01`, `${hi}-12-31`]);
+      onClose?.();
+      return;
+    }
+    if (mode === 'months') {
+      if (!monthsReady) return;
+      const [lo, hi] = [fromYM, toYM].sort().map(k => k.split('-').map(Number));
+      const lastDay = new Date(hi[0], hi[1], 0).getDate();
+      onChange?.([`${lo[0]}-${pad2(lo[1])}-01`, `${hi[0]}-${pad2(hi[1])}-${pad2(lastDay)}`]);
       onClose?.();
       return;
     }
@@ -154,92 +180,97 @@ export function DateRangePopover({
     setEnd(null);
     setFromYear('');
     setToYear('');
+    const [d0, d1] = defaultMonths(today);
+    setFromYM(d0);
+    setToYM(d1);
     onChange?.([]);
   };
 
-  // Position the popover anchored to the trigger.
-  const left = Math.min(anchorRect.left, window.innerWidth - width - 12);
-  const top = Math.min(anchorRect.bottom + 6, window.innerHeight - 420);
+  return (
+    <Popover
+      anchor={anchorRect}
+      onOpenChange={() => onClose?.()}
+      offset={6}
+      width={width}
+      role="group"
+      aria-label={`Select ${label}`}
+      className={styles.popover}
+    >
+      <div className={styles.heading}>Select {label}</div>
 
-  return createPortal(
-    <>
-      {/* Decorative click-catcher: the keyboard path to dismiss is the Escape
-          handler above, so this must not become a full-viewport tab stop. */}
-      <div className={styles.overlay} onClick={onClose} aria-hidden="true" />
-      <div
-        className={styles.popover}
-        style={{ top, left: Math.max(12, left), width }}
-        onClick={(e) => e.stopPropagation()}
-        role="group"
-        aria-label={`Select ${label}`}
-      >
-        <div className={styles.heading}>Select {label}</div>
+      {years && (
+        <Tabs
+          variant="pill"
+          className={styles.modeTabs}
+          items={[
+            { key: 'years', label: 'Years' },
+            { key: 'months', label: 'Month & Year' },
+            { key: 'custom', label: 'Custom Dates' },
+          ]}
+          value={mode}
+          onValueChange={setMode}
+        />
+      )}
 
-        {years && (
-          <SubTabs
-            className={styles.modeTabs}
-            tabs={[{ key: 'years', label: 'Years' }, { key: 'custom', label: 'Custom Dates' }]}
-            activeKey={mode}
-            onChange={setMode}
-          />
-        )}
-
-        {mode === 'years' ? (
-          <div className={styles.yearRow}>
-            <Select label="From" searchable placeholder="Year" options={yearOptions} value={fromYear} onChange={setFromYear} />
-            <Select label="To" searchable placeholder="Year" options={yearOptions} value={toYear} onChange={setToYear} />
+      {mode === 'years' ? (
+        <div className={styles.yearRow}>
+          <Select label="From" searchable placeholder="Year" options={yearOptions} value={fromYear} onValueChange={setFromYear} />
+          <Select label="To" searchable placeholder="Year" options={yearOptions} value={toYear} onValueChange={setToYear} />
+        </div>
+      ) : mode === 'months' ? (
+        <div className={styles.yearRow}>
+          <Select label="From" searchable searchPlaceholder="e.g. Apr 1958" placeholder="Month & Year" options={monthYearOptions} value={fromYM} onValueChange={setFromYM} />
+          <Select label="To" searchable searchPlaceholder="e.g. Dec 1961" placeholder="Month & Year" options={monthYearOptions} value={toYM} onValueChange={setToYM} />
+        </div>
+      ) : (
+      <div className={styles.calBody}>
+        <div className={styles.month}>
+          <div className={styles.calHeader}>
+            <button type="button" className={styles.navBtn} onClick={() => stepView(-1)} aria-label="Previous month">
+              <Icon name="solar:alt-arrow-left-linear" size={14} color="var(--neutral-300)" />
+            </button>
+            {title(viewL, setLeftYear)}
+            <span className={styles.navSpacer} />
           </div>
-        ) : (
-        <div className={styles.calBody}>
-          <MonthGrid
-            header={(
-              <div className={styles.calHeader}>
-                <button type="button" className={styles.navBtn} onClick={() => stepView(-1)} aria-label="Previous month">
-                  <Icon name="solar:alt-arrow-left-linear" size={14} color="var(--neutral-300)" />
-                </button>
-                {title(viewL, setLeftYear)}
-                <span className={styles.navSpacer} />
-              </div>
-            )}
-            view={viewL}
-            isStart={isStart}
-            isEnd={isEnd}
-            inRange={inRange}
-            onDay={handleDayClick}
+          <Calendar
+            mode="range"
+            year={viewL.y}
+            month={viewL.m}
+            today={today}
+            {...calendarRange}
+            onPick={handleDayClick}
             onHover={setHover}
-            hasEnd={!!end}
-          />
-          <span className={styles.calDivider} />
-          <MonthGrid
-            header={(
-              <div className={styles.calHeader}>
-                <span className={styles.navSpacer} />
-                {title(viewR, setRightYear)}
-                <button type="button" className={styles.navBtn} onClick={() => stepView(1)} aria-label="Next month">
-                  <Icon name="solar:alt-arrow-right-linear" size={14} color="var(--neutral-300)" />
-                </button>
-              </div>
-            )}
-            view={viewR}
-            isStart={isStart}
-            isEnd={isEnd}
-            inRange={inRange}
-            onDay={handleDayClick}
-            onHover={setHover}
-            hasEnd={!!end}
           />
         </div>
-        )}
-
-        <div className={styles.footer}>
-          <Button variant="secondary" size="S" onClick={clear}>Clear</Button>
-          <Button variant="primary" size="S" disabled={!canApply} onClick={apply}>
-            Apply
-          </Button>
+        <span className={styles.calDivider} />
+        <div className={styles.month}>
+          <div className={styles.calHeader}>
+            <span className={styles.navSpacer} />
+            {title(viewR, setRightYear)}
+            <button type="button" className={styles.navBtn} onClick={() => stepView(1)} aria-label="Next month">
+              <Icon name="solar:alt-arrow-right-linear" size={14} color="var(--neutral-300)" />
+            </button>
+          </div>
+          <Calendar
+            mode="range"
+            year={viewR.y}
+            month={viewR.m}
+            today={today}
+            {...calendarRange}
+            onPick={handleDayClick}
+            onHover={setHover}
+          />
         </div>
       </div>
-    </>,
-    document.body,
+      )}
+
+      <div className={styles.footer}>
+        <Button variant="outline" size="sm" onClick={clear}>Clear</Button>
+        <Button size="sm" disabled={!canApply} onClick={apply}>
+          Apply
+        </Button>
+      </div>
+    </Popover>
   );
 }
 
@@ -259,7 +290,7 @@ function YearBadge({ value, options, onChange }) {
         aria-label={`Year: ${value}`}
         onClick={() => setRect(rect ? null : ref.current?.getBoundingClientRect() ?? null)}
       >
-        <Badge tone="white" size="M" label={value} chevron />
+        <Badge variant="outline" size="md" label={value} chevron />
       </button>
       {rect && (
         <SearchListPopover
@@ -276,56 +307,9 @@ function YearBadge({ value, options, onChange }) {
   );
 }
 
-function MonthGrid({ header, view, isStart, isEnd, inRange, onDay, onHover, hasEnd }) {
-  const days = daysInMonth(view.y, view.m);
-  const first = firstDow(view.y, view.m);
-
-  const cells = [];
-  for (let i = 0; i < first; i++) cells.push(<div key={`e${i}`} className={styles.cellEmpty} />);
-
-  for (let d = 1; d <= days; d++) {
-    const dt = new Date(view.y, view.m, d);
-    const sel = isStart(dt) || isEnd(dt);
-    const rng = inRange(dt);
-    const roundLeft  = isStart(dt) || (rng && dt.getDay() === 0);
-    const roundRight = isEnd(dt)   || (rng && dt.getDay() === 6);
-    cells.push(
-      <button
-        key={d}
-        type="button"
-        className={[
-          styles.cell,
-          sel ? styles.cellSelected : '',
-          rng && !sel ? styles.cellInRange : '',
-          sel && roundLeft && roundRight ? styles.cellRoundFull : '',
-          sel && roundLeft && !roundRight ? styles.cellRoundLeft : '',
-          sel && roundRight && !roundLeft ? styles.cellRoundRight : '',
-        ].filter(Boolean).join(' ')}
-        onClick={() => onDay(dt)}
-        onMouseEnter={() => !hasEnd && onHover(dt)}
-        onMouseLeave={() => onHover(null)}
-      >
-        {d}
-      </button>
-    );
-  }
-
-  return (
-    <div className={styles.month}>
-      {header}
-      <div className={styles.dowRow}>
-        {DOW.map((d) => <div key={d} className={styles.dow}>{d}</div>)}
-      </div>
-      <div className={styles.grid}>{cells}</div>
-    </div>
-  );
-}
-
 // How far back the year pickers go (birth years).
 const YEAR_SPAN = 120;
 
-function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
-function firstDow(y, m)    { return new Date(y, m, 1).getDay(); }
 
 function stepMonth(v, delta) {
   let m = v.m + delta;
@@ -335,9 +319,13 @@ function stepMonth(v, delta) {
   return { y, m };
 }
 
-function toISO(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function ymKey(y, m) { return `${y}-${pad2(m)}`; } // m: 1–12
+
+/** Last month and this month, as 'YYYY-MM' (January's last month is last December). */
+function defaultMonths(today) {
+  const prev = stepMonth({ y: today.getFullYear(), m: today.getMonth() }, -1);
+  return [ymKey(prev.y, prev.m + 1), ymKey(today.getFullYear(), today.getMonth() + 1)];
 }

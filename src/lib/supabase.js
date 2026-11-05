@@ -1,12 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
+import { supabaseTarget } from './supabaseConfig';
 
-// Env vars for local dev, hardcoded fallback for production builds.
-// The anon key is a public client-side key with RLS — safe to embed.
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  || 'https://osnihfqqrcchsaqhagcx.supabase.co';
-
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zbmloZnFxcmNjaHNhcWhhZ2N4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNTI0NTksImV4cCI6MjA4OTgyODQ1OX0.ZuJQLMriqBcmf_nqLqcwu05x9BM5G_CAWz4R180xZ-w';
+// Vite bakes __DEPLOY_TARGET__ at build time: "dev" on Vercel preview,
+// empty otherwise. Local `vite` dev also uses Foldhealth Dev.
+// eslint-disable-next-line no-undef
+const previewBuild = typeof __DEPLOY_TARGET__ !== 'undefined' && __DEPLOY_TARGET__ === 'dev';
+const { url: supabaseUrl, anonKey: supabaseAnonKey } = supabaseTarget({
+  useDev: import.meta.env.DEV || previewBuild,
+  url: import.meta.env.VITE_SUPABASE_URL,
+  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+});
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   db: { schema: 'public' },

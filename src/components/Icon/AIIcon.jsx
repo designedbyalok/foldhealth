@@ -1,7 +1,7 @@
 import { useId } from 'react';
 
 /**
- * Custom AI/magic sparkle icon — two gradient stars, teal→purple. Used for
+ * Custom AI/magic sparkle icon: two gradient stars, teal→purple. Used for
  * AI-generated or AI-assisted content and actions (e.g. discharge-summary
  * extraction in Medication Reconciliation) in place of the plain Solar
  * "magic-stick" glyph.
@@ -11,8 +11,8 @@ import { useId } from 'react';
  * filled surface (a primary button, a purple ribbon) the gradient disappears,
  * so pass `color` (or use `custom:ai-mono`) for a solid icon instead.
  *
- * @param {number}  [props.size=16]  — Width & height in px
- * @param {string}  [props.color]    — Solid fill instead of the gradient
+ * @param {number}  [props.size=16], Width & height in px
+ * @param {string}  [props.color], Solid fill instead of the gradient
  * @param {string}  [props.className]
  */
 export function AIIcon({ size = 16, color, className, ...rest }) {

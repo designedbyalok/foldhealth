@@ -1,9 +1,9 @@
 ---
 title: "Home"
-description: "A personalized dashboard of draggable, resizable cards — your morning launchpad."
+description: "A personalized dashboard of draggable, resizable cards, your morning launchpad."
 ---
 
-The **Home** page is a customizable dashboard powered by `react-grid-layout`. It gives every user a personal "morning huddle" view — weather, patient alerts, today's calendar, and the items assigned to them — without touching a worklist.
+The **Home** page is a customizable dashboard powered by `react-grid-layout`. It gives every user a personal "morning huddle" view, weather, patient alerts, today's calendar, and the items assigned to them, without touching a worklist.
 
 ## The default layout
 
@@ -15,7 +15,7 @@ The **Home** page is a customizable dashboard powered by `react-grid-layout`. It
 | **Today's Calendar** | 24-hour day view with appointment blocks, a live "Now" line, and click-to-schedule |
 | **Quick Notes** | Sticky-note style cards with free text and timestamps |
 
-## Walkthrough — customize your dashboard
+## Walkthrough: customize your dashboard
 
 <Steps>
   <Step title="Open the dashboard">
@@ -31,11 +31,11 @@ The **Home** page is a customizable dashboard powered by `react-grid-layout`. It
     Drag the bottom-right corner of any card to change width and height. The grid honors minimum sizes so cards never collapse below usable dimensions.
   </Step>
   <Step title="Save or reset">
-    Click **Done** to commit the layout — it's written to `localStorage` and restored on your next visit. Or click **Reset** to restore the default layout.
+    Click **Done** to commit the layout, it's written to `localStorage` and restored on your next visit. Or click **Reset** to restore the default layout.
   </Step>
 </Steps>
 
-## Walkthrough — schedule from the calendar card
+## Walkthrough: schedule from the calendar card
 
 <Steps>
   <Step title="Find an open slot">
@@ -45,12 +45,12 @@ The **Home** page is a customizable dashboard powered by `react-grid-layout`. It
     Clicking an unfilled row on the day-view opens the **Schedule Drawer** pre-populated with the selected date and time.
   </Step>
   <Step title="Fill in the appointment">
-    Pick a patient, provider, location, and appointment type. Click **Save** — the appointment writes to Supabase and appears immediately on both the Home card and the full [Calendar](/features/calendar).
+    Pick a patient, provider, location, and appointment type. Click **Save**, the appointment writes to Supabase and appears immediately on both the Home card and the full [Calendar](/features/calendar).
   </Step>
 </Steps>
 
 ## Tips
 
 - **Layout is per-user, per-browser.** Layouts are stored in `localStorage`; if a user clears storage or opens the app on a new machine, they see the default until they customize again.
-- **Weather uses your OS location.** The Welcome card requests browser geolocation once — deny it and you'll see a generic greeting with no weather.
-- **Cards use live data.** Alerts, Assigned to Me, and Today's Calendar all subscribe to Supabase — no refresh needed after a task is completed or an appointment is added.
+- **Weather uses your OS location.** The Welcome card requests browser geolocation once, deny it and you'll see a generic greeting with no weather.
+- **Cards use live data.** Alerts, Assigned to Me, and Today's Calendar all subscribe to Supabase, no refresh needed after a task is completed or an appointment is added.

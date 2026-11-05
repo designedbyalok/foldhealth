@@ -24,7 +24,7 @@ function BulkSelectCloseIcon({ size = 20 }) {
  * glyph in neutral; on → a close glyph in primary. Carries the same visual and
  * tooltip everywhere so bulk-select reads identically across settings tables.
  */
-export function BulkSelectToggle({ active = false, onToggle, size = 'L' }) {
+export function BulkSelectToggle({ active = false, onToggle, size = 'md' }) {
   return (
     <ActionButton
       size={size}

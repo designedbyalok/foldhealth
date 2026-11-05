@@ -220,7 +220,7 @@ export function createBlockTree(type, genId) {
     }
 
     case 'Section': {
-      // Section = Container with section-like defaults — generous vertical
+      // Section = Container with section-like defaults, generous vertical
       // padding and a transparent background so the user can drop it as a
       // structural divider that's visually distinct from a Wrapper (which
       // ships with a colored backdrop).
@@ -243,7 +243,7 @@ export function createBlockTree(type, genId) {
     case 'Column':
       return makeColumns(genId, 2, null);
 
-    // ── Layout presets — preconfigured ColumnsContainer ──
+    // ── Layout presets: preconfigured ColumnsContainer ──
     case 'Layout-2-equal':   return makeColumns(genId, 2, [50, 50]);
     case 'Layout-1-2':       return makeColumns(genId, 2, [33.33, 66.67]);
     case 'Layout-2-1':       return makeColumns(genId, 2, [66.67, 33.33]);
@@ -355,7 +355,7 @@ export function cloneBlockTree(doc, sourceId, genId) {
 }
 
 // Extract a self-contained { rootId, blocks } subtree from a live document.
-// Used when saving the currently-selected header/footer to the preset library —
+// Used when saving the currently-selected header/footer to the preset library,
 // the returned object has the same shape replaceHeaderFooter() expects, and
 // can be re-IDed via cloneStoredTree() before being applied somewhere else.
 export function extractSubtree(doc, rootId) {
@@ -374,7 +374,7 @@ export function extractSubtree(doc, rootId) {
 //
 // Used by the Save-as-preset affordance to detect whether the currently
 // selected header/footer is byte-equal to a built-in (or already-saved)
-// preset — if so, saving would duplicate, so we hide the button.
+// preset: if so, saving would duplicate, so we hide the button.
 export function fingerprintTree(tree) {
   if (!tree?.rootId || !tree?.blocks) return '';
   const order = [];

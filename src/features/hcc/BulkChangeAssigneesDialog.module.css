@@ -211,7 +211,7 @@
   line-height: 1.2;
 }
 
-/* Footer — two buttons share the row equally. We don't use Button's
+/* Footer: two buttons share the row equally. We don't use Button's
    `fullWidth` because two fullWidth buttons inside a flex row collapse
    onto each other; instead make the row a flex container and let each
    child stretch via flex:1. */

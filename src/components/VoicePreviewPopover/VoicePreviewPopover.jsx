@@ -9,7 +9,7 @@ const SAMPLE_LINES = {
   Ricardo: "Hola, I'm Ricardo. Let me help you with your care plan today.",
   Jia: "Hello, I'm Jia. I'm here to support your recovery.",
 };
-const DEFAULT_LINE = "Hi there — I'm your Fold Health care assistant.";
+const DEFAULT_LINE = "Hi there! I'm your Fold Health care assistant.";
 
 const PREVIEW_MS = 4000;
 

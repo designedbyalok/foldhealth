@@ -5,7 +5,7 @@ import styles from './CareManagementToolbar.module.css';
 const Divider = () => <span className={styles.vDivider} />;
 
 /**
- * Shared Care Management toolbar row — identical across every sub-tab:
+ * Shared Care Management toolbar row: identical across every sub-tab:
  * [search] | [sub-tabs] … [per-tab CTA] | [filter]. Only the `cta` (and the
  * `filterBar` it toggles) change per tab; search and filter are always present.
  *
@@ -22,7 +22,7 @@ export function CareManagementToolbar({
   const filterBtn = (
     <ActionButton
       icon="custom:filter"
-      size="S"
+      size="sm"
       tooltip="Filter"
       tooltipLeft
       iconColor={showFilters ? 'var(--primary-300)' : undefined}
@@ -49,7 +49,7 @@ export function CareManagementToolbar({
         </div>
       ) : (
         <div className={styles.subTabBar}>
-          <ActionButton icon="solar:magnifer-linear" size="S" tooltip="Search" onClick={() => setSearchMode(true)} />
+          <ActionButton icon="solar:magnifer-linear" size="sm" tooltip="Search" onClick={() => setSearchMode(true)} />
           <Divider />
           <div className={styles.subTabs}>{header}</div>
           {cta}

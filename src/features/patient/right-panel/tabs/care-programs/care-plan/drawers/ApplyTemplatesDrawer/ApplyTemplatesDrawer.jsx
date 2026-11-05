@@ -1,21 +1,23 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { Input } from '../../../../../../../../components/Input/Input';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Link } from '../../../../../../../../components/Link/Link';
+import { Select } from '../../../../../../../../components/Select/Select';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
-import { TemplateScopeBadge } from '../../../../../../../settings/care-plan-library/shared';
+import { EpisodeBadge, RetiringBadge, TemplateScopeBadge } from '../../../../../../../settings/care-plan-library/shared';
 import { availableForPatient, inLibrary, matchesScopeFilter, scopeFilterOptions } from '../../lib/templateScope';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { recommendedTemplateMatches } from '../../../../../../../settings/care-plan-library/lib';
+import { describeCriteria, hasCategories, matchCategory } from '../../../../../../../settings/care-plan-library/lib/templateCategories';
 import { TemplatePreviewDrawer } from '../TemplatePreviewDrawer';
 import styles from './ApplyTemplatesDrawer.module.css';
 
-// Figma 2349:336796 — the picker lists PROBLEMS with the parent template as
+// Figma 2349:336796, the picker lists PROBLEMS with the parent template as
 // the subtitle line and a three-button priority selector on the right.
 // `onApply` carries both the selected ids and the priority map through
 // `applyPatientCarePlanTemplates` to `patient_care_plans.applied_template_priorities`,
@@ -34,7 +36,7 @@ const conditionTextOf = (t) => {
   const items = (Array.isArray(t.conditions) ? t.conditions : []).filter(Boolean);
   return items.length ? items.join(', ') : '';
 };
-// Sort/compare key — the first (primary) condition, lowercased. Templates with
+// Sort/compare key: the first (primary) condition, lowercased. Templates with
 // no condition sort last regardless of direction.
 const conditionSortKey = (t) => {
   const first = (Array.isArray(t.conditions) ? t.conditions : []).filter(Boolean)[0];
@@ -64,6 +66,10 @@ const conditionSortKey = (t) => {
  *   the "Recommended" group (templates whose conditions match an active problem).
  * @param {Function} [props.onApplyAgain]  Called with a template already on the
  *   plan to extend or reinstate it; its rows get an Apply again action.
+ *
+ * A template with categories that is being added to a patient's plan gets a
+ * Category picker, preset to the category the patient's latest results match.
+ * `onApply(ids, priorities, categoryPicks)` carries { templateId: categoryId }.
  */
 export function ApplyTemplatesDrawer({
   onClose,
@@ -83,7 +89,7 @@ export function ApplyTemplatesDrawer({
   const allTemplates = useAppStore(s => s.carePlanTemplates);
   const authUserId = useAppStore(s => s.authUserId);
   const templates = useMemo(
-    () => (allTemplates || []).filter(t => (patientId
+    () => (allTemplates || []).filter(t => t.status !== 'archived' && (patientId
       ? availableForPatient(t, authUserId, patientId)
       : inLibrary(t, authUserId))),
     [allTemplates, authUserId, patientId],
@@ -113,7 +119,7 @@ export function ApplyTemplatesDrawer({
     [...appliedTemplateIds, ...preselectedIds].forEach(id => { if (!seed[id]) seed[id] = DEFAULT_PRIORITY; });
     return seed;
   });
-  // Condition filter chip — an OR set of conditions to keep. Empty = all.
+  // Condition filter chip: an OR set of conditions to keep. Empty = all.
   const [conditionFilter, setConditionFilter] = useState([]);
   // The filter row is revealed by the toolbar Filter button rather than always
   // occupying space next to search. It opens automatically if a condition
@@ -125,7 +131,8 @@ export function ApplyTemplatesDrawer({
   // Template opened for read-only preview (its GBI stack), or null.
   const [previewTemplate, setPreviewTemplate] = useState(null);
 
-  // Grouping key — the templates already applied to the plan. Kept off the
+
+  // Grouping key: the templates already applied to the plan. Kept off the
   // live `selected` set so toggling a row in-session doesn't make it jump
   // groups; it stays where it was when the drawer opened, exactly like the
   // Barriers drawer's "Already Added" group.
@@ -133,6 +140,20 @@ export function ApplyTemplatesDrawer({
 
   // Same per-user favorites as Settings → Care Plan Library (care_plan_template_favorites).
   const favoriteSet = useMemo(() => new Set(favorites), [favorites]);
+
+  // Categories: on a patient's plan, each newly added template with
+  // categories goes on with the one the patient matches, or the one picked.
+  const anyCategories = useMemo(() => !!patientId && templates.some(hasCategories), [patientId, templates]);
+  const criteriaInputs = useAppStore(s => (patientId ? s.patientCriteriaInputs[patientId] : null));
+  const fetchPatientCriteriaInputs = useAppStore(s => s.fetchPatientCriteriaInputs);
+  useEffect(() => { if (anyCategories) fetchPatientCriteriaInputs(patientId); }, [anyCategories, patientId, fetchPatientCriteriaInputs]);
+  const categoryMatches = useMemo(() => {
+    if (!criteriaInputs) return {};
+    return Object.fromEntries(templates.filter(hasCategories).map(t => [t.id, matchCategory(t, criteriaInputs)]));
+  }, [templates, criteriaInputs]);
+  const [categoryOverrides, setCategoryOverrides] = useState({});
+  const categoryFor = (id) => categoryOverrides[id] ?? categoryMatches[id]?.category?.id ?? null;
+  const needsCategory = (t) => anyCategories && hasCategories(t) && selected.has(t.id) && !appliedSet.has(t.id);
 
   // Every distinct condition across the library, for the filter chip.
   const conditionOptions = useMemo(() => {
@@ -202,7 +223,7 @@ export function ApplyTemplatesDrawer({
     [rows, recommendedSet, favoriteSet, appliedSet],
   );
   // When nothing is recommended, starred, or applied there is only one flat
-  // list — drop the group labels so the drawer reads as a simple table.
+  // list: drop the group labels so the drawer reads as a simple table.
   const flat = recRows.length === 0 && favRows.length === 0 && addedRows.length === 0;
 
   const toggle = (id) => {
@@ -248,10 +269,10 @@ export function ApplyTemplatesDrawer({
         </>
       )}
       <Button
-        variant="primary"
-        size="M"
-        disabled={selected.size === 0}
-        onClick={() => onApply?.([...selected], priorities)}
+        disabled={selected.size === 0 || templates.some(t => needsCategory(t) && !categoryFor(t.id))}
+        onClick={() => onApply?.([...selected], priorities, Object.fromEntries(
+          templates.filter(needsCategory).map(t => [t.id, categoryFor(t.id)]),
+        ))}
       >
         Add
       </Button>
@@ -270,7 +291,8 @@ export function ApplyTemplatesDrawer({
       ? `Recommended for ${reasons.join(', ')}${appliedSet.has(t.id) ? '. Already on this plan' : ''}`
       : null;
     return (
-      <div key={t.id} className={styles.row}>
+      <Fragment key={t.id}>
+      <div className={styles.row}>
         <Checkbox
           checked={isChecked}
           onCheckedChange={() => toggle(t.id)}
@@ -287,11 +309,13 @@ export function ApplyTemplatesDrawer({
               {templateNameOf(t)}
             </button>
             <TemplateScopeBadge template={t} />
+            <EpisodeBadge template={t} />
+            <RetiringBadge template={t} templates={allTemplates} />
           </span>
           {reasonText && <span className={styles.rowReason} title={reasonText}>{reasonText}</span>}
         </span>
         <span className={styles.conditionCell} title={condition || undefined}>
-          {condition || <span className={styles.conditionEmpty}>—</span>}
+          {condition || <span className={styles.conditionEmpty}>-</span>}
         </span>
         {showPriority && (
           <div
@@ -322,13 +346,13 @@ export function ApplyTemplatesDrawer({
           {onApplyAgain && appliedSet.has(t.id) && (
             <ActionButton
               icon="solar:restart-linear"
-              size="S"
+              size="sm"
               tooltip="Apply again"
               onClick={() => onApplyAgain(t)}
             />
           )}
           <ActionButton
-            size="S"
+            size="sm"
             active={isFavorite(t.id)}
             tooltip={isFavorite(t.id) ? 'Remove favorite' : 'Add favorite'}
             onClick={() => toggleCarePlanFavorite(t.id)}
@@ -340,6 +364,34 @@ export function ApplyTemplatesDrawer({
             />
           </ActionButton>
         </span>
+      </div>
+      {needsCategory(t) && renderCategory(t)}
+      </Fragment>
+    );
+  };
+
+  // The category a template goes on with, and why.
+  const renderCategory = (t) => {
+    const match = categoryMatches[t.id];
+    const picked = categoryFor(t.id);
+    const matchedId = match?.category?.id || null;
+    const status = !criteriaInputs ? "Checking the patient's latest results…"
+      : matchedId && picked === matchedId ? `Matches: ${match.reasons.join('; ')}`
+        : matchedId ? `Changed from ${match.category.name}, which the patient's latest results match.`
+          : picked ? 'Picked by hand: no category matches the latest results.'
+            : "No category matches the patient's latest results. Pick one.";
+    return (
+      <div className={styles.categoryRow}>
+        <Select
+          label="Category"
+          portal
+          options={t.categories.map(c => ({ value: c.id, label: [c.name, describeCriteria(c)].filter(Boolean).join(' · ') }))}
+          value={picked || ''}
+          placeholder="Pick a category"
+          onValueChange={v => setCategoryOverrides(prev => ({ ...prev, [t.id]: v }))}
+          wrapperClassName={styles.categorySelect}
+        />
+        <span className={matchedId && picked === matchedId ? styles.categoryMatched : styles.categoryNote}>{status}</span>
       </div>
     );
   };
@@ -358,7 +410,6 @@ export function ApplyTemplatesDrawer({
           />
           <ActionButton
             icon="custom:filter"
-            size="L"
             tooltip="Filter"
             active={filtersOpen || conditionFilter.length > 0 || scopeFilter.length > 0}
             aria-expanded={filtersOpen}

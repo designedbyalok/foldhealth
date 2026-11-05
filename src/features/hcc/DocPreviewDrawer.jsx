@@ -12,7 +12,7 @@ const STATUS_STYLE = {
 };
 
 /**
- * DocPreviewDrawer — read-only document preview for non-Support roles
+ * DocPreviewDrawer: read-only document preview for non-Support roles
  * (Coder / QA / Compliance). A standard right-side Drawer showing the selected
  * chart's PDF with its current review status and no actions. Figma 9799:173025.
  *

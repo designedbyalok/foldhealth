@@ -24,7 +24,7 @@ function isRoleResolved(s) { return RESOLVED_STATUSES.has(s); }
 export const DOS_INNER = {
   dos: (entry, { openDiagPanel, openClaimPreview, member, hasDoc, charts }) => {
     // Source letter comes from the entry itself when available (Manual
-    // entries must carry `source: 'manual'`) — never from a hash-only guess.
+    // entries must carry `source: 'manual'`): never from a hash-only guess.
     // Click affordances split by target:
     //   • DATE click        → always opens the Documents tab (the doc
     //                         extracted / mapped to this DOS, or the first
@@ -81,7 +81,7 @@ export const DOS_INNER = {
   pos: (entry) => (
     entry.pos
       ? <span className={styles.posText}>{entry.pos}{entry.posDesc ? ` - ${entry.posDesc}` : ''}</span>
-      : <span className={styles.muted}>—</span>
+      : <span className={styles.muted}>-</span>
   ),
 };
 
@@ -230,7 +230,7 @@ export const CELL_RENDERERS = {
     <td key="rl" data-col="rl" className={styles.colRl}>
       {member.rl
         ? <span className={styles.codeText}>{member.rl}</span>
-        : <span className={styles.muted}>—</span>}
+        : <span className={styles.muted}>-</span>}
     </td>
   ),
   ad: ({ member }) => (

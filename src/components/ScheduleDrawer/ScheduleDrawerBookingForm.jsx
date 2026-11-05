@@ -5,7 +5,7 @@ import { ScheduleDrawerAppointmentDetails } from './ScheduleDrawerAppointmentDet
 import { ScheduleDrawerInstructionFields } from './ScheduleDrawerInstructionFields';
 import styles from './ScheduleDrawer.module.css';
 
-// Body-only view of the booking form — no `<Drawer>` shell. Callers that
+// Body-only view of the booking form, no `<Drawer>` shell. Callers that
 // host the scheduler as an inline workspace (e.g. HEDIS Care Gap left
 // pane) render this directly and own their own header + save CTA.
 export function ScheduleDrawerBookingBody(props) {
@@ -52,7 +52,7 @@ export function ScheduleDrawerBookingForm(props) {
   return (
     <Drawer title="Schedule Appointment" onClose={onClose} noCloseDivider headerRight={
       <>
-        <Button variant="primary" size="L" disabled={!canSchedule} onClick={handleSchedule}>Schedule</Button>
+        <Button disabled={!canSchedule} onClick={handleSchedule}>Schedule</Button>
         <span className={styles.headerDivider} />
       </>
     } bodyClassName={styles.drawerBody}>

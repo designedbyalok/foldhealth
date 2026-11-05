@@ -28,7 +28,7 @@
   flex-shrink: 0;
 }
 
-/* Outcome / status tiles — same box as "others", tinted to match the badge
+/* Outcome / status tiles: same box as "others", tinted to match the badge
    the entry carries. */
 .success,
 .error,
@@ -80,7 +80,7 @@
   flex-shrink: 0;
 }
 
-/* "Others" variant — used for care team members outside patient/staff scope
+/* "Others" variant: used for care team members outside patient/staff scope
    (case managers, external contacts, etc.). Neutral grey palette so it reads
    as distinct from the patient (primary) and staff (secondary) chips. */
 .others {
@@ -161,7 +161,7 @@
   flex-shrink: 0;
 }
 
-/* Locked avatar — used when a record has been Rejected. The inner avatar
+/* Locked avatar: used when a record has been Rejected. The inner avatar
    turns neutral-grey, and a red lock badge sits on the bottom-right corner.
    The wrapper is inline so it drops into any row layout that already
    expected a bare avatar. */
@@ -191,7 +191,7 @@
   color: var(--neutral-300);
 }
 
-/* Billed avatar — mirror of .locked, but a green dollar badge marks a
+/* Billed avatar: mirror of .locked, but a green dollar badge marks a
    record that has been billed out (post-billing terminal state). The
    inner avatar keeps its colour (billing isn't a failure so we don't
    grey it out) and the badge palette is success-green. */
@@ -237,4 +237,23 @@
   flex-direction: column;
   text-align: left;
   white-space: nowrap;
+}
+
+/* Figma draws avatars at 100% corner smoothing: the curve eases in over
+   twice the radius. A squircle at double the radius is the CSS match;
+   browsers without corner-shape keep the plain radii above. */
+@supports (corner-shape: squircle) {
+  .patient, .provider, .success, .error, .warning, .primary,
+  .assignee, .others, .generic { corner-shape: squircle; }
+
+  .patient, .provider, .success, .error, .warning, .primary,
+  .others, .generic { border-radius: 1rem; }
+  .assignee { border-radius: 0.75rem; }
+
+  .sizeXS  { border-radius: 0.625rem; }
+  .sizeS   { border-radius: 0.75rem; }
+  .sizeM   { border-radius: 1rem; }
+  .sizeL   { border-radius: 1.25rem; }
+  .sizeXL  { border-radius: 1.5rem; }
+  .sizeDXL { border-radius: 2rem; }
 }

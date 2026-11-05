@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
 import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevronIcon';
+import { CollapsibleContent } from '../../../../../../../components/Collapsible/Collapsible';
 import { FilterChip } from '../../../../../../../components/FilterChip/FilterChip';
 import { DateRangePopover } from '../../../../../../../components/DateRangePopover/DateRangePopover';
 import { getOpenIcdsForMember } from '../../../../../../hcc/data/icds';
@@ -98,22 +99,24 @@ function DiagnosisGapRow({ item }) {
           </div>
         </div>
         <div className={styles.moreBtn}>
-          <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More" />
+          <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More" />
         </div>
       </div>
-      {expanded && item.icds.length > 0 && (
-        <div className={styles.icdList} role="table" aria-label={`ICDs linked to ${item.raw}`}>
-          <div className={styles.icdHeaderRow} role="row">
-            <span className={styles.icdHeaderCell} role="columnheader">ICD Code</span>
-            <span className={styles.icdHeaderCell} role="columnheader">Description</span>
-          </div>
-          {item.icds.map(icd => (
-            <div key={icd.code} className={styles.icdRow} role="row">
-              <span className={styles.icdCode} role="cell">{icd.code}</span>
-              <span className={styles.icdDesc} role="cell" title={icd.desc}>{icd.desc}</span>
+      {item.icds.length > 0 && (
+        <CollapsibleContent open={expanded}>
+          <div className={styles.icdList} role="table" aria-label={`ICDs linked to ${item.raw}`}>
+            <div className={styles.icdHeaderRow} role="row">
+              <span className={styles.icdHeaderCell} role="columnheader">ICD Code</span>
+              <span className={styles.icdHeaderCell} role="columnheader">Description</span>
             </div>
-          ))}
-        </div>
+            {item.icds.map(icd => (
+              <div key={icd.code} className={styles.icdRow} role="row">
+                <span className={styles.icdCode} role="cell">{icd.code}</span>
+                <span className={styles.icdDesc} role="cell" title={icd.desc}>{icd.desc}</span>
+              </div>
+            ))}
+          </div>
+        </CollapsibleContent>
       )}
     </div>
   );
@@ -130,7 +133,7 @@ export function ProgramDiagnosisGapsTable({ memberName, search }) {
   }, [memberName]);
 
   // Options are derived from the full unfiltered set so a picker never
-  // hides a value the user might want to add — narrowing on Measure Year
+  // hides a value the user might want to add, narrowing on Measure Year
   // doesn't collapse the HCC dropdown to a single row.
   const filterMeta = useMemo(() => {
     const yearSet = new Set();
@@ -167,7 +170,7 @@ export function ProgramDiagnosisGapsTable({ memberName, search }) {
     const end = parseLocalDate(rangeEnd);
 
     return allGroups.filter(g => {
-      // Group-level HCC filter — the whole HCC row drops out when its
+      // Group-level HCC filter: the whole HCC row drops out when its
       // label isn't in the picked set.
       if (hccActive && !filters.hcc.includes(g.raw)) return false;
 

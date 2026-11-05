@@ -10,6 +10,7 @@ export const GBI_STATUS_META = {
   'Not Started': { tone: 'grey', icon: 'solar:minus-circle-linear' },
   'In Progress': { tone: 'warning', icon: 'custom:pending' },
   'On Hold': { tone: 'info', icon: 'solar:pause-circle-linear', hint: 'Temporary pause' },
+  UTR: { tone: 'error', icon: 'solar:phone-calling-rounded-linear', hint: 'Patient unable to reach' },
   Met: { tone: 'success', icon: 'solar:check-circle-linear' },
   Resolved: { tone: 'success', icon: 'solar:shield-check-linear' },
   'Not Met': { tone: 'error', icon: 'solar:close-circle-linear' },
@@ -23,10 +24,10 @@ const FALLBACK_META = GBI_STATUS_META['Not Started'];
 export const gbiStatusMeta = (status) => GBI_STATUS_META[status] || FALLBACK_META;
 
 /** What goals and interventions can be set to. */
-export const GBI_STATUSES = ['Not Started', 'In Progress', 'On Hold', 'Met', 'Not Met', 'Discontinued', 'Not Applicable'];
+export const GBI_STATUSES = ['Not Started', 'In Progress', 'On Hold', 'UTR', 'Met', 'Not Met', 'Discontinued', 'Not Applicable'];
 
 /** Barriers add Resolved (and keep Met for barriers already recorded that way). */
-export const BARRIER_STATUSES = ['Not Started', 'In Progress', 'On Hold', 'Resolved', 'Met', 'Not Met', 'Discontinued', 'Not Applicable'];
+export const BARRIER_STATUSES = ['Not Started', 'In Progress', 'On Hold', 'UTR', 'Resolved', 'Met', 'Not Met', 'Discontinued', 'Not Applicable'];
 
 /** Every status an item can hold, in display order: filters and status mixes. */
 export const ALL_GBI_STATUSES = BARRIER_STATUSES;
@@ -50,7 +51,7 @@ export const gbiStatusColor = (status) => TONE_COLOR[gbiStatusMeta(status).tone]
 // Achieved counts as success, Not Met as the only failure. Discontinued and
 // Not Applicable close an item without judging it: they leave the active
 // list and drop out of completion-rate denominators, and never count as a
-// failure. Everything else (Not Started, In Progress, On Hold) is open.
+// failure. Everything else (Not Started, In Progress, On Hold, UTR) is open.
 const ACHIEVED = new Set(['Met', 'Resolved']);
 const FAILED = new Set(['Not Met']);
 const EXCLUDED = new Set(['Discontinued', 'Not Applicable']);

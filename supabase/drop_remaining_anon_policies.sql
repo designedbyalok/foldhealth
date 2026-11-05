@@ -15,7 +15,7 @@
 --
 --   hcc_activity_log
 --     Its two policies are granted to {anon,authenticated} TOGETHER, so there
---     is no anon-only policy to drop — dropping them would revoke access for
+--     is no anon-only policy to drop, dropping them would revoke access for
 --     real users too. ALTER POLICY ... TO authenticated narrows the role list
 --     while leaving USING / WITH CHECK untouched.
 --
@@ -25,12 +25,12 @@
 
 begin;
 
--- Anon-only twins — safe to drop outright.
+-- Anon-only twins: safe to drop outright.
 drop policy if exists "call_lines_read_anon"     on public.call_lines;
 drop policy if exists "call_nav_items_read_anon" on public.call_nav_items;
 drop policy if exists "call_sessions_read_anon"  on public.call_sessions;
 
--- Shared policies — narrow the role list, keep the expressions.
+-- Shared policies: narrow the role list, keep the expressions.
 alter policy "hcc_activity_log_select" on public.hcc_activity_log to authenticated;
 alter policy "hcc_activity_log_insert" on public.hcc_activity_log to authenticated;
 

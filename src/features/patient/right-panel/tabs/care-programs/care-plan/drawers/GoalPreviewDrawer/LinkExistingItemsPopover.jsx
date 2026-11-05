@@ -104,8 +104,8 @@ export function LinkExistingItemsPopover({
         </div>
         {onConfirm && (
           <div className={styles.footer}>
-            <Button variant="secondary" size="S" onClick={onClose}>Cancel</Button>
-            <Button size="S" disabled={confirmDisabled} onClick={onConfirm}>{confirmLabel}</Button>
+            <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+            <Button size="sm" disabled={confirmDisabled} onClick={onConfirm}>{confirmLabel}</Button>
           </div>
         )}
       </div>

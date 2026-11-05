@@ -19,6 +19,7 @@ import { emailConfigured, sendSecurityEmail, flushSecurityOutbox, appOrigin } fr
  */
 const CODE_TTL_MS = 15 * 60 * 1000;
 const MAX_TRIES = 5;
+const REQUEST_MIN_MS = 1500;
 const MAX_CODES_PER_HOUR = 3;
 const MIN_PASSWORD = 8;
 const PEPPER = process.env.SECURITY_CODE_PEPPER || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -92,11 +93,15 @@ async function handleRequest(req, res, admin) {
     return res.status(200).json({ ok: true });
   }
 
+  // Same answer, and about the same response time, whether or not the account
+  // exists or is rate limited: a real send waits on the database and Resend.
+  const started = Date.now();
   const profile = await profileByEmail(admin, email);
-  // Same answer whether or not the account exists, or is rate limited.
   if (profile && !['Pending', 'Rejected'].includes(profile.status) && !(await selfResetBlocked(admin, profile.id))) {
     await issueCode(admin, profile, null);
   }
+  const wait = REQUEST_MIN_MS - (Date.now() - started);
+  if (wait > 0) await new Promise(r => setTimeout(r, wait));
   return res.status(200).json({ ok: true });
 }
 
@@ -108,33 +113,45 @@ async function handleVerify(req, res, admin) {
     return fail(res, 400, `Use at least ${MIN_PASSWORD} characters for your new password.`, 'password');
   }
 
+  // One answer for every failure (unknown email, no code, expired, used up,
+  // wrong), so the form doesn't reveal which emails have accounts.
+  const rejected = () => fail(res, 400, "That code isn't right or has expired. Check it, or request a new code.", 'code');
   const profile = await profileByEmail(admin, email);
-  const expired = () => fail(res, 400, 'That code has expired or was already used. Request a new code.', 'expired');
-  if (!profile || await selfResetBlocked(admin, profile.id)) return expired();
+  if (!profile || await selfResetBlocked(admin, profile.id)) return rejected();
 
   const { data: row } = await admin.from('password_reset_codes')
     .select('id, code_hash, expires_at, attempts')
     .eq('user_id', profile.id).is('used_at', null)
     .order('created_at', { ascending: false }).limit(1).maybeSingle();
-  if (!row || new Date(row.expires_at).getTime() < Date.now()) return expired();
-  if (row.attempts >= MAX_TRIES) return fail(res, 400, 'Too many tries with this code. Request a new code.', 'expired');
+  if (!row || new Date(row.expires_at).getTime() < Date.now() || row.attempts >= MAX_TRIES) return rejected();
 
-  if (!sameHash(row.code_hash, hashCode(profile.id, cleanCode))) {
-    const attempts = row.attempts + 1;
-    await admin.from('password_reset_codes').update({ attempts }).eq('id', row.id);
-    const left = MAX_TRIES - attempts;
-    return left > 0
-      ? fail(res, 400, `That code isn't right. ${left} ${left === 1 ? 'try' : 'tries'} left.`, 'code')
-      : fail(res, 400, 'Too many tries with this code. Request a new code.', 'expired');
-  }
+  // Spend a try before comparing, and only if nobody else spent it first:
+  // parallel guesses all read the same `attempts`, so only one of them wins
+  // this compare-and-set and the rest are turned away unchecked.
+  const { data: spent } = await admin.from('password_reset_codes').update({ attempts: row.attempts + 1 })
+    .eq('id', row.id).eq('attempts', row.attempts).is('used_at', null).select('id');
+  if (!spent?.length) return rejected();
+  if (!sameHash(row.code_hash, hashCode(profile.id, cleanCode))) return rejected();
+
+  // Claim the code before changing the password so it can't be replayed
+  // while that runs; hand it back if the password isn't accepted.
+  const { data: claimed } = await admin.from('password_reset_codes').update({ used_at: new Date().toISOString() })
+    .eq('id', row.id).is('used_at', null).select('id');
+  if (!claimed?.length) return rejected();
+  const release = () => admin.from('password_reset_codes').update({ used_at: null }).eq('id', row.id);
 
   const { data: reused, error: reuseErr } = await admin.rpc('password_matches_recent', { target: profile.id, candidate: password });
-  if (reuseErr) throw reuseErr;
-  if (reused) return fail(res, 400, "You've used this password recently. Choose a different one.", 'password');
+  if (reuseErr) { await release(); throw reuseErr; }
+  if (reused) {
+    await release();
+    return fail(res, 400, "You've used this password recently. Choose a different one.", 'password');
+  }
 
   const { error: updErr } = await admin.auth.admin.updateUserById(profile.id, { password });
-  if (updErr) return fail(res, 400, updErr.message || 'That password could not be set. Try a different one.', 'password');
-  await admin.from('password_reset_codes').update({ used_at: new Date().toISOString() }).eq('id', row.id);
+  if (updErr) {
+    await release();
+    return fail(res, 400, updErr.message || 'That password could not be set. Try a different one.', 'password');
+  }
 
   // The password-change trigger queued the emails; send them now.
   try { await flushSecurityOutbox(admin, 50, { origin: appOrigin(req) }); } catch (err) { console.warn('[password-reset] outbox flush failed', err?.message); }

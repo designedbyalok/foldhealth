@@ -2,13 +2,13 @@
 --
 -- THE HOLE THIS CLOSES
 -- 30 of 57 profiles are currently **read-only**. Not slow, not partially
--- broken — every UPDATE against them is rejected outright, including a no-op:
+-- broken: every UPDATE against them is rejected outright, including a no-op:
 --
 --   update profiles set updated_at = now() where email = 'abhi@fold.health';
 --   ERROR: violates check constraint "profiles_mobile_check"
 --
 -- A batch of NOT VALID CHECK constraints was added to `profiles`, and a
--- NOT VALID constraint still fires on every INSERT and UPDATE — it only skips
+-- NOT VALID constraint still fires on every INSERT and UPDATE, it only skips
 -- the one-time validation scan of existing rows. Three of them reject the
 -- empty string:
 --
@@ -22,7 +22,7 @@
 --
 -- USER-VISIBLE CONSEQUENCE
 -- Those 30 people cannot save any profile change at all. Preferences → Save
--- fails for them — including the first/last name fix that the
+-- fails for them: including the first/last name fix that the
 -- `profile.name_incomplete` notification asks them to make. The notification
 -- points at a form that cannot succeed.
 --
@@ -34,14 +34,14 @@
 --
 -- and every text field in that form initialises to `''`. So opening
 -- Preferences and pressing Save writes an empty string into every field the
--- user left blank. Data alone is therefore not enough to fix — hence the
+-- user left blank. Data alone is therefore not enough to fix, hence the
 -- trigger below, which is what stops this recurring.
 --
 -- SAFETY
 -- Verified before writing this: of the 30/30/27 violating rows, **every**
 -- violating value is exactly `''`. There are zero non-empty invalid values
 -- (no 5-digit mobiles, no malformed zips, no stray gender strings). So
--- `'' -> NULL` cannot destroy a real value — it only replaces "the user typed
+-- `'' -> NULL` cannot destroy a real value: it only replaces "the user typed
 -- nothing" with the representation the constraints already expect.
 --
 --   select count(*) from profiles
@@ -102,7 +102,7 @@ create trigger profiles_aa_blank_to_null
 -- statement aborts. (Confirmed the hard way while fixing two rows by hand.)
 --
 -- The trigger above would do this anyway, but relying on it would mean
--- issuing a no-op UPDATE per row and hoping — being explicit keeps the
+-- issuing a no-op UPDATE per row and hoping, being explicit keeps the
 -- migration readable and reviewable.
 update public.profiles
    set middle_name   = nullif(btrim(middle_name), ''),
@@ -134,11 +134,11 @@ update public.profiles
 -- Safe now that no row holds a blank in these columns, and worth doing: a
 -- validated constraint is a fact the planner can rely on, and it stops these
 -- rows lingering as a permanent asterisk. If any of these fail, the backfill
--- above did not cover something — read the error, do not weaken the check.
+-- above did not cover something: read the error, do not weaken the check.
 -- Guarded on existence. These three constraints are created by
 -- `profiles_field_types_migration.sql`; this file only promotes them. A bare
 -- `validate constraint` would make this migration fail outright on any
--- database where that one has not been applied yet — including a fresh one
+-- database where that one has not been applied yet, including a fresh one
 -- replaying the `supabase/` files in some other order. Skipping is the right
 -- behaviour there: nothing to promote means nothing to fix.
 do $$
@@ -163,7 +163,7 @@ end $$;
 
 -- The other NOT VALID checks on this table (profiles_languages_array and the
 -- five char_length forms) already have zero violations and could be promoted
--- in the same breath — deliberately not done here. This migration exists to
+-- in the same breath: deliberately not done here. This migration exists to
 -- unfreeze the blank-string rows; promoting constraints it did not fix would
 -- make the diff harder to review and the rollback less obvious. Separate
 -- concern, separate change.
@@ -180,7 +180,7 @@ commit;
 --                 coalesce(ehr_mapping,'x'), coalesce(ehr_user,'x'));
 --   Expect: 0
 --
--- The 30 rows are writable again — this is the actual point of the migration:
+-- The 30 rows are writable again, this is the actual point of the migration:
 --   update public.profiles set updated_at = now() where email = 'abhi@fold.health';
 --   Expect: UPDATE 1  (before this migration: ERROR on profiles_mobile_check)
 --
@@ -189,7 +189,7 @@ commit;
 --   update public.profiles set mobile = '', zip_code = '', gender = ''
 --    where email = 'abhi@fold.health'
 --   returning mobile, zip_code, gender;
---   Expect: NULL | NULL | NULL  — accepted, not rejected, because the trigger
+--   Expect: NULL | NULL | NULL, accepted, not rejected, because the trigger
 --   normalised the blanks before the constraints were evaluated.
 --
 -- The three implicated constraints promoted:
@@ -199,7 +199,7 @@ commit;
 --   profiles_zip_code_check and profiles_gender_check (plus
 --   profiles_name_parts_present and profiles_status_check, already validated).
 --   The *_length checks and profiles_languages_array stay NOT VALID by
---   choice — see the note in section 3.
+--   choice: see the note in section 3.
 --
 -- Trigger firing order is what we think it is:
 --   select tgname from pg_trigger

@@ -9,7 +9,7 @@ import { SelectNewDosPopover } from './SelectNewDosPopover';
 import styles from './NewDiagGapPanel.module.css';
 
 /**
- * IcdCard — the pick-an-ICD editor card rendered inline on the RHS of the
+ * IcdCard: the pick-an-ICD editor card rendered inline on the RHS of the
  * DiagPanel. Each picked ICD (from the toolbar's + ICD flow) becomes its
  * own card at the top of the associated-ICDs list with a per-card Save.
  *
@@ -23,7 +23,7 @@ export function IcdCard({
   onUpdate, onRemove, onSave,
 }) {
   const [dragOver, setDragOver] = useState(false);
-  // Anchor ref for the DOS field — SelectNewDosPopover positions itself
+  // Anchor ref for the DOS field, SelectNewDosPopover positions itself
   // against this so the calendar view sits exactly where the Select's
   // dropdown was.
   const dosFieldRef = useRef(null);
@@ -76,7 +76,7 @@ export function IcdCard({
   const handleDosSelect = (nextValueOrList) => {
     // singleAction items (Custom Date) still come through as a scalar in
     // multi mode. Snapshot the field's DOMRect and open the Select New DOS
-    // calendar view — replaces the native OS picker with an in-app popover
+    // calendar view: replaces the native OS picker with an in-app popover
     // that matches Figma (back arrow + month grid).
     if (nextValueOrList === DOS_CUSTOM) {
       const rect = dosFieldRef.current?.getBoundingClientRect() || null;
@@ -174,7 +174,7 @@ export function IcdCard({
         </div>
         {!onSave && (
           <ActionButton
-            size="S"
+            size="sm"
             icon="solar:trash-bin-2-linear"
             tooltip="Remove"
             onClick={onRemove}
@@ -215,7 +215,7 @@ export function IcdCard({
         max={todayIso()}
         onBack={() => {
           setCustomDosOpen(false);
-          // Return to the DOS Select's list — click the trigger button
+          // Return to the DOS Select's list: click the trigger button
           // inside the DOS field wrapper so the dropdown re-opens as if
           // the user had clicked it themselves.
           const trigger = dosFieldRef.current?.querySelector('button[aria-expanded]');

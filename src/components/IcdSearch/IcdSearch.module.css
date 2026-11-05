@@ -37,7 +37,7 @@
   pointer-events: none;
 }
 
-/* Portaled to document.body with a fixed anchor rect — must sit above the
+/* Portaled to document.body with a fixed anchor rect, must sit above the
    Drawer panel (z-index 401). */
 .dropdown {
   position: fixed;

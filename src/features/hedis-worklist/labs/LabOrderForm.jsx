@@ -35,7 +35,7 @@ export function LabOrderForm({ values, onChange, providers = [], labs }) {
         searchPlaceholder="Search tests"
         options={catalog.map(t => ({ value: t, label: t }))}
         value={values.tests}
-        onChange={v => onChange('tests', v)}
+        onValueChange={v => onChange('tests', v)}
         placeholder="Select tests"
         helperText={labs.rule ? `${labs.rule.test} is the evidence this measure needs. Add other tests to draw them at the same time.` : 'Add every test to collect in this draw.'}
       />
@@ -87,7 +87,7 @@ export function LabOrderForm({ values, onChange, providers = [], labs }) {
           required
           options={PERFORMING_LABS.map(l => ({ value: l, label: l }))}
           value={values.performingLab}
-          onChange={v => onChange('performingLab', v)}
+          onValueChange={v => onChange('performingLab', v)}
           helperText="One lab per order. Split tests across labs into separate orders."
         />
         <Select
@@ -96,7 +96,7 @@ export function LabOrderForm({ values, onChange, providers = [], labs }) {
           searchable
           options={providers.map(p => ({ value: p.name, label: p.name }))}
           value={values.orderingProvider}
-          onChange={v => onChange('orderingProvider', v)}
+          onValueChange={v => onChange('orderingProvider', v)}
         />
       </div>
       <Input label="Measurement Period" value={labs.period.label} readOnly disabled helperText="Results must be collected in this period to count toward the Care Gap." />

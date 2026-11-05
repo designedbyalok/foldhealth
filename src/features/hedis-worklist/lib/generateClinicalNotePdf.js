@@ -1,4 +1,3 @@
-import jsPDF from 'jspdf';
 import { GAP_TEMPLATES, MEASURE_CPT, savedGapData } from '../ClinicalNotePanel.utils';
 import { contentOf, isFieldVisible } from '../../../lib/noteTemplateRules';
 
@@ -23,9 +22,9 @@ const hasTemplateValues = (fields, data) => fields.some(f => f.type !== 'content
  * @param {Record<string, object>} params.gapData per-gap form values (state)
  * @param {string} [params.signedBy]   actor that triggered generation
  *
- * @returns {{ blob: Blob, filename: string }}
+ * @returns {Promise<{ blob: Blob, filename: string }>}
  */
-export function generateClinicalNotePdf({
+export async function generateClinicalNotePdf({
   member,
   gapCodes,
   dateOfService,
@@ -34,6 +33,7 @@ export function generateClinicalNotePdf({
   gapData,
   signedBy = 'Care Manager',
 }) {
+  const { default: jsPDF } = await import('jspdf');
   const doc = new jsPDF({ unit: 'pt', format: 'letter' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -107,7 +107,7 @@ export function generateClinicalNotePdf({
   heading(noteTitle, 18);
   body(`Patient: ${member.name}   ·   ${member.gender === 'F' ? 'Female' : member.gender === 'M' ? 'Male' : 'Other'} · Age ${member.age}`);
   body(`Fold ID: ${member.memberId}`);
-  body(`Date of Service: ${dateOfService || '—'}`);
+  body(`Date of Service: ${dateOfService || '-'}`);
   body(`Generated: ${new Date().toLocaleString()}   ·   Signed by: ${signedBy}`);
   divider();
 
@@ -117,10 +117,10 @@ export function generateClinicalNotePdf({
     body('No telehealth consent recorded.');
   } else {
     if (audioOnly) {
-      body('☑ Audio-only visit — Verbal consent obtained. Patient was informed of the nature of the visit and the limitations of audio-only communication, and agreed to proceed.');
+      body('☑ Audio-only visit: Verbal consent obtained. Patient was informed of the nature of the visit and the limitations of audio-only communication, and agreed to proceed.');
     }
     if (audioVideo) {
-      body('☑ Audio-video visit — Verbal consent obtained. Patient was informed of the nature of the visit and the limitations of audio-video communication, and agreed to proceed.');
+      body('☑ Audio-video visit: Verbal consent obtained. Patient was informed of the nature of the visit and the limitations of audio-video communication, and agreed to proceed.');
     }
   }
   divider();
@@ -153,11 +153,11 @@ export function generateClinicalNotePdf({
       y += 8;
       divider();
     }
-    heading(`${code} — ${MEASURE_NAMES[code] ?? code}`, 13);
+    heading(`${code}: ${MEASURE_NAMES[code] ?? code}`, 13);
 
     if (code === 'CBP') {
       // Aligned with the CBP Visit Note form fields in ClinicalNotePanel.utils.js
-      // (defaultGapData) — Initial Blood Pressure card + Location + the five
+      // (defaultGapData): Initial Blood Pressure card + Location + the five
       // patient-question radios.
       const LOCATION_LABEL = {
         outpatient: 'Outpatient visit',
@@ -224,7 +224,7 @@ export function generateClinicalNotePdf({
       }
       if (MEASURE_CPT[code]) kv('CPT Code', MEASURE_CPT[code]);
     } else {
-      // Generic fallback for GAP_TEMPLATES-driven gaps — render all stored
+      // Generic fallback for GAP_TEMPLATES-driven gaps: render all stored
       // key/value pairs so DM and future templates automatically appear in
       // the PDF without needing a bespoke branch per code.
       const entries = Object.entries(data || {}).filter(([, v]) => v !== '' && v !== null && v !== undefined && v !== false);
@@ -251,7 +251,7 @@ export function generateClinicalNotePdf({
     doc.text(`Page ${p} of ${pageCount}`, pageW - margin, pageH - 24, { align: 'right' });
   }
 
-  // Return the jsPDF-native Blob — it's far more reliable to render in an
+  // Return the jsPDF-native Blob: it's far more reliable to render in an
   // <object>/<iframe> via URL.createObjectURL(blob) than to round-trip through
   // a `data:application/pdf;filename=…;base64,…` URL (which some browsers
   // refuse to render inline because of the non-standard `filename=` segment).

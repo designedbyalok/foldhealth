@@ -13,7 +13,7 @@
   padding: 16px;
 }
 
-/* Ready banner — soft purple gradient with a lightbulb icon and a trailing
+/* Ready banner: soft purple gradient with a lightbulb icon and a trailing
    chevron. Sits under the tab strip and only renders when the current
    month has crossed the required-minutes threshold. */
 .readyBanner {
@@ -243,7 +243,7 @@
   min-width: 0;
 }
 
-/* Legacy month card tokens — kept for any downstream references. */
+/* Legacy month card tokens: kept for any downstream references. */
 .monthCard {
   border: 0.5px solid var(--neutral-150);
   border-radius: 12px;

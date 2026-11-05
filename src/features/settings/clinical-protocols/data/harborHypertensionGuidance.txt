@@ -1,0 +1,61 @@
+HARBOR HEALTH
+Hypertension Clinical Practice Guidance
+Document HH-CPG-CV-004 | Version 2.1
+Effective date: January 15, 2026 | Next review: January 15, 2027
+Approved by: Clinical Quality and Pharmacy & Therapeutics Committee
+Sample document for Fold Health demonstrations. Content follows published national guidance; it is not an actual Harbor Health policy.
+
+1. PURPOSE AND SCOPE
+This guidance standardizes blood pressure (BP) assessment, treatment and follow-up for adults managed by Harbor Health care teams.
+Applies to: adults 18 years and older with essential hypertension (ICD-10 I10) or hypertensive chronic kidney disease (ICD-10 I12.9) enrolled in Disease Management or the Special Needs Plan care program.
+Exclusions: pregnancy or the first 12 weeks postpartum (follow HH-CPG-OB-002); patients under 18; hospice or comfort-focused care; secondary hypertension managed by a specialist.
+
+2. MEASURING BLOOD PRESSURE
+Use a validated, upper-arm automated device with the correct cuff size. Seat the patient for 5 minutes, back supported, feet flat. Base decisions on the average of at least 2 readings taken on at least 2 occasions. Home readings count when taken with a validated device: 2 readings 1 minute apart, morning and evening.
+
+3. BP CATEGORIES AND RESPONSE
+Normal: systolic below 120 and diastolic below 80 mmHg. Reinforce healthy lifestyle; recheck yearly.
+Elevated: systolic 120-129 and diastolic below 80 mmHg. Lifestyle changes; recheck in 3 to 6 months.
+Stage 1: systolic 130-139 or diastolic 80-89 mmHg. Lifestyle changes for all. Start medication when 10-year ASCVD risk is 10% or higher, or the patient has diabetes or chronic kidney disease.
+Stage 2: systolic 140 or higher, or diastolic 90 or higher. Start medication. When BP is more than 20/10 mmHg above goal, start two first-line agents from different classes.
+Severe elevation: systolic 180 or higher, or diastolic 120 or higher.
+ - Without symptoms: contact the treating provider the same day; recheck within 1 week.
+ - With chest pain, shortness of breath, new weakness or numbness, confusion or vision change: direct the patient to call 911 or go to the emergency department.
+Low BP: systolic below 100 mmHg, or dizziness or fainting on standing. Do not increase any antihypertensive; provider review within 1 business day.
+
+4. BP GOALS
+Most adults, including those with diabetes or chronic kidney disease: below 130/80 mmHg.
+Age 65 and older with frailty, falls or orthostatic hypotension: systolic below 140 mmHg, individualized by the provider.
+
+5. MEDICATION TITRATION PATHWAY
+Confirm adherence and home technique before every step. Allow 4 weeks between steps unless BP is in the severe range.
+Step 1: Start lisinopril 10 mg once daily (ACE inhibitor). If ACE inhibitor cough, use losartan 50 mg once daily (ARB). For Black patients without chronic kidney disease or albuminuria, start amlodipine 5 mg once daily or chlorthalidone 12.5 mg once daily instead.
+Step 2: Not at goal after 4 weeks: increase lisinopril to 20 mg, then to 40 mg once daily (losartan to 100 mg).
+Step 3: Still not at goal: add amlodipine 5 mg once daily; increase to 10 mg after 4 weeks.
+Step 4: Still not at goal: add chlorthalidone 12.5 mg once daily (or hydrochlorothiazide 25 mg once daily).
+Step 5: Above goal on three agents including a diuretic at maximum tolerated doses (resistant hypertension): add spironolactone 25 mg once daily if potassium is below 4.5 mmol/L and eGFR is above 45 mL/min/1.73m2, and refer to nephrology or a hypertension specialist.
+Never combine an ACE inhibitor with an ARB. Stop ACE inhibitors and ARBs if angioedema occurs.
+
+6. LABORATORY MONITORING
+Basic metabolic panel (potassium, creatinine, eGFR) at baseline and 1 to 2 weeks after starting or increasing an ACE inhibitor, ARB, diuretic or spironolactone.
+Potassium above 5.5 mmol/L, or creatinine up more than 30% from baseline: hold the new or increased agent, repeat the panel within 72 hours and notify the provider.
+Potassium below 3.5 mmol/L on a thiazide-type diuretic: notify the provider for replacement.
+Every 12 months: basic metabolic panel, lipid panel, urine albumin-to-creatinine ratio, and HbA1c for patients with diabetes.
+
+7. CARE MANAGEMENT CHECK-IN SCHEDULE
+Not at goal, or a medication change in the last 30 days: care manager check-in every 2 weeks with a home BP log review, until at goal at 2 consecutive check-ins.
+At goal: monthly check-ins for 3 months, then every 3 months.
+Before each provider visit: home BP twice daily (morning and evening) for 7 days.
+Provider visits every 4 weeks during titration; every 3 to 6 months once BP is controlled.
+Review medication adherence at every check-in. Proportion of days covered below 80% triggers a pharmacist referral.
+
+8. ESCALATION
+Two consecutive check-ins with an average home systolic BP 10 mmHg or more above goal despite confirmed adherence: provider review within 5 business days.
+Any reading in the severe range: follow section 3.
+
+9. REFERENCES
+2017 ACC/AHA Guideline for the Prevention, Detection, Evaluation, and Management of High Blood Pressure in Adults. Hypertension. 2018;71:e13-e115.
+American Diabetes Association. Standards of Care in Diabetes, Section 10: Cardiovascular Disease and Risk Management.
+KDIGO 2021 Clinical Practice Guideline for the Management of Blood Pressure in Chronic Kidney Disease.
+Harbor Health policy HH-POL-MED-011, Medication Reconciliation.
+Harbor Health guidance HH-CPG-OB-002, Hypertensive Disorders of Pregnancy.

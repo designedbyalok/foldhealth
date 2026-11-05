@@ -1,4 +1,4 @@
-// Care Plan Library — organized by domain for easy selection
+// Care Plan Library: organized by domain for easy selection
 // panel/   → library list (tabs: template/goals/interventions/barriers)
 // create/  → full-pane template creation
 // goals/   → goal drawers + pickers

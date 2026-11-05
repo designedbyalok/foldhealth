@@ -1,6 +1,6 @@
 ---
 title: "Campaigns"
-description: "Multi-channel outreach campaigns with a full visual email builder — from single sends to multi-step sequences."
+description: "Multi-channel outreach campaigns with a full visual email builder, from single sends to multi-step sequences."
 ---
 
 The **Campaign** workspace is where you turn a filtered patient list into a coordinated outreach. It has two connected surfaces: a **Campaign Builder** for who/when/how, and an **Email Builder** for the actual message.
@@ -9,14 +9,14 @@ The **Campaign** workspace is where you turn a filtered patient list into a coor
 
 <CardGroup cols={2}>
   <Card title="One-Time campaign" icon="paper-plane">
-    A single send to a fixed audience — e.g. "Send annual wellness reminder to all Medicare Advantage members over 65 by Friday."
+    A single send to a fixed audience, e.g. "Send annual wellness reminder to all Medicare Advantage members over 65 by Friday."
   </Card>
   <Card title="Sequence campaign" icon="list-timeline">
-    Multi-step, time-delayed automation — e.g. "Send welcome email on Day 0, SMS reminder on Day 3, follow-up email on Day 7."
+    Multi-step, time-delayed automation, e.g. "Send welcome email on Day 0, SMS reminder on Day 3, follow-up email on Day 7."
   </Card>
 </CardGroup>
 
-## Walkthrough — send a one-time email campaign
+## Walkthrough: send a one-time email campaign
 
 <Steps>
   <Step title="Open Campaigns">
@@ -35,7 +35,7 @@ The **Campaign** workspace is where you turn a filtered patient list into a coor
     Click **Edit Email**. The **Email Builder** opens full-screen. See the walkthrough below.
   </Step>
   <Step title="Preview and launch">
-    Back on the campaign form, use **Send Test** to email yourself a copy. Verify the preview pane matches. Click **Schedule** — the campaign moves to **Active** with a countdown to send time.
+    Back on the campaign form, use **Send Test** to email yourself a copy. Verify the preview pane matches. Click **Schedule**, the campaign moves to **Active** with a countdown to send time.
   </Step>
 </Steps>
 
@@ -43,7 +43,7 @@ The **Campaign** workspace is where you turn a filtered patient list into a coor
 Every field in the campaign form auto-saves to Supabase via a 600ms debounce. You can close the browser mid-edit without losing work.
 </Note>
 
-## Walkthrough — build an email with the Email Builder
+## Walkthrough: build an email with the Email Builder
 
 <Steps>
   <Step title="Start from a template or blank">
@@ -53,7 +53,7 @@ Every field in the campaign form auto-saves to Supabase via a 600ms debounce. Yo
     From the left **Components** panel, drag blocks into the preview: **Text**, **Heading**, **Image**, **Button**, **Divider**, **Spacer**, **Container**, **Columns**, **Raw HTML**.
   </Step>
   <Step title="Edit inline">
-    Click any block to select it. Edit text directly on the canvas. Use the right **Properties** panel to change fonts, colors, padding, alignment, and layout — every value uses design-system tokens.
+    Click any block to select it. Edit text directly on the canvas. Use the right **Properties** panel to change fonts, colors, padding, alignment, and layout, every value uses design-system tokens.
   </Step>
   <Step title="Preview across devices">
     Toggle **Desktop / Tablet / Mobile** in the top toolbar. The canvas re-flows to the target viewport so you catch mobile-only issues before sending.
@@ -71,18 +71,18 @@ Every field in the campaign form auto-saves to Supabase via a 600ms debounce. Yo
 | Block | Notes |
 | --- | --- |
 | **Text** | Rich text with inline formatting; supports variables like `{{first_name}}` |
-| **Heading** | Presets for Title, Subtitle, Heading, Body — each maps to a token size/weight |
+| **Heading** | Presets for Title, Subtitle, Heading, Body, each maps to a token size/weight |
 | **Image** | Upload to Supabase Storage or paste a URL; auto-inserts responsive width |
 | **Button** | Shape (rounded / pill / square), fill color, hover state, target URL |
 | **Divider** | Horizontal rule with configurable color and thickness |
 | **Spacer** | Vertical whitespace with pixel control |
 | **Container** | Wraps children in a background color + padding; useful for hero blocks |
 | **Columns** | 2- or 3-column layouts with independent block content per column |
-| **Raw HTML** | Escape hatch — paste custom HTML with variable interpolation |
+| **Raw HTML** | Escape hatch, paste custom HTML with variable interpolation |
 
 ## Tips
 
-- **Undo/Redo** — `Cmd+Z` / `Shift+Cmd+Z` covers every canvas action; the history stack is unbounded per session.
-- **Header/Footer presets** — build once, reuse everywhere. Save from the top-right menu; presets appear as a picker on new emails.
-- **Send test** — the top-right **Send Test** popover accepts any email address; useful for showing a draft to a stakeholder without publishing.
-- **Auto-save** — the builder writes to the campaign row every few seconds. You'll never lose more than a keystroke or two on a crash.
+- **Undo/Redo**: `Cmd+Z` / `Shift+Cmd+Z` covers every canvas action; the history stack is unbounded per session.
+- **Header/Footer presets**: build once, reuse everywhere. Save from the top-right menu; presets appear as a picker on new emails.
+- **Send test**: the top-right **Send Test** popover accepts any email address; useful for showing a draft to a stakeholder without publishing.
+- **Auto-save**: the builder writes to the campaign row every few seconds. You'll never lose more than a keystroke or two on a crash.

@@ -2,7 +2,7 @@
 --
 -- THE HOLE THIS CLOSES
 -- 27 of 57 profiles fail the rule. 25 of them have a correct `full_name` and
--- NULL first/last, which is not a coincidence — it is a single missing write.
+-- NULL first/last, which is not a coincidence, it is a single missing write.
 --
 -- `handle_new_user()` (profiles_signup_role_defaults.sql) inserts:
 --
@@ -19,7 +19,7 @@
 -- the row without ever filling the gap.
 --
 -- WHAT THIS DOES
---   1. `public.profile_name_parts(text)` — the canonical split: first
+--   1. `public.profile_name_parts(text)`, the canonical split: first
 --      whitespace-delimited token is the first name, the remainder is the last
 --      name. Mirrors `splitFullName()` in src/lib/nameValidation.js exactly;
 --      if you change one, change the other.
@@ -79,7 +79,7 @@ declare
   parts record;
 begin
   -- Derive only what is missing. A caller that supplied a real first/last
-  -- keeps it — this repairs gaps, it does not overrule the client.
+  -- keeps it: this repairs gaps, it does not overrule the client.
   if nullif(btrim(coalesce(new.first_name, '')), '') is null
      or nullif(btrim(coalesce(new.last_name, '')), '') is null then
     select * into parts from public.profile_name_parts(new.full_name)
@@ -124,7 +124,7 @@ create trigger profiles_normalize_name
 -- ── 3. Fix the source: store the parts at signup ────────────────────────────
 -- Same body as profiles_signup_role_defaults.sql, with first_name/last_name
 -- added to the column list. role/admin_role stay hardcoded to the
--- non-privileged defaults — they must never be client-supplied.
+-- non-privileged defaults: they must never be client-supplied.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -193,7 +193,7 @@ alter table public.profiles
 
 -- ── 6. Ask the remaining users to fix their own name ────────────────────────
 -- Addressed to whoever STILL fails after the backfill, computed rather than
--- hardcoded — so this stays correct if the data shifts before it is run, and
+-- hardcoded: so this stays correct if the data shifts before it is run, and
 -- notifies nobody if the backfill happened to resolve everything.
 --
 -- Guarded by NOT EXISTS on (recipient, type) so re-running the migration does
@@ -234,7 +234,7 @@ commit;
 --   (the two with no name to derive). ketanp@ and sunnyb+22june@ should now
 --   read "Patni" and "22june" -> the trigger capitalises the leading char, so
 --   "22june" stays "22june" (a digit has no uppercase form) and still fails
---   the constraint — which is correct, it needs a human.
+--   the constraint: which is correct, it needs a human.
 --
 -- Split convention matches the client:
 --   select * from public.profile_name_parts('Abhay Pratap Chaudhary')
@@ -246,14 +246,14 @@ commit;
 --   values (gen_random_uuid(), 'trigger-probe@example.com', 'ada lovelace')
 --   returning first_name, last_name, full_name;
 --   Expect: Ada | Lovelace | ada lovelace
---   (full_name is left as given — only the parts are normalised.)
+--   (full_name is left as given: only the parts are normalised.)
 --   Then: delete from public.profiles where email = 'trigger-probe@example.com';
 --
 -- The constraint rejects a bad write:
 --   update public.profiles set last_name = 'patni'
 --    where email = 'ketanp@fold.health';
 --   Expect: ERROR ... violates check constraint "profiles_name_parts_present"
---   (the trigger capitalises first, so this actually succeeds as "Patni" —
+--   (the trigger capitalises first, so this actually succeeds as "Patni",
 --    to see the constraint bite, try last_name = '' instead.)
 --
 -- Signup now stores the parts:

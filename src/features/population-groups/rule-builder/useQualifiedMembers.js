@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { PROFILE_COLUMNS, evaluate, hasEventRules } from './evaluateRules';
 
-/* Supabase caps a select at 1000 rows — page through in batches so the
+/* Supabase caps a select at 1000 rows, page through in batches so the
    evaluation always runs against the FULL population, not a silent
    truncation. */
 const BATCH = 1000;
@@ -36,7 +36,7 @@ async function fetchEvents() {
 }
 
 /**
- * useQualifiedMembers — evaluates a rule tree against every patient profile
+ * useQualifiedMembers: evaluates a rule tree against every patient profile
  * (p360_profiles) client-side and joins each qualified profile to its
  * identity row for display.
  *

@@ -1,7 +1,7 @@
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { TopBar } from '../../components/TopBar/TopBar';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
-import { FilterBar } from '../../components/FilterBar/FilterBar';
+import { FilterBar } from '../worklists/FilterBar';
 import { useAppStore } from '../../store/useAppStore';
 import { AddTaskDrawer } from './AddTaskDrawer';
 import { TaskDetailDrawer } from './TaskDetailDrawer';
@@ -12,7 +12,7 @@ import { useTasksView } from './useTasksView';
 import { TasksViewContent } from './TasksViewContent';
 import styles from './TasksView.module.css';
 
-// Local to this file — TasksViewIcons.jsx is a components-only file, and
+// Local to this file: TasksViewIcons.jsx is a components-only file, and
 // keeping VIEW_TOGGLE_ITEMS there mixes a JSX-carrying constant with the
 // component exports and trips react-refresh HMR.
 const VIEW_TOGGLE_ITEMS = [
@@ -26,7 +26,7 @@ export { TaskListSection } from './TasksViewListSection';
 
 export function TasksView() {
   const view = useTasksView();
-  // Standalone linked-note preview + Edit surface — driven by the store
+  // Standalone linked-note preview + Edit surface, driven by the store
   // slice `previewNoteFromHover` (set by the paperclip hover card's
   // "View note" action). This lives at the TasksView root so it opens
   // WITHOUT dragging the Task Details drawer in behind it.
@@ -49,11 +49,11 @@ export function TasksView() {
         onTabChange={view.setTasksTab}
         rightExtras={
           <>
-            <Toggle
+            <SegmentedControl
               items={VIEW_TOGGLE_ITEMS}
-              active={view.tasksViewMode}
-              onChange={view.setTasksViewMode}
-              size="S"
+              value={view.tasksViewMode}
+              onValueChange={view.setTasksViewMode}
+              size="sm"
             />
             <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} aria-hidden="true" />
           </>

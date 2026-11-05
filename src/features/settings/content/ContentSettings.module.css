@@ -67,7 +67,7 @@
   line-height: 1.125rem;
 }
 
-/* Sticky Action column — stays pinned to the right when the table scrolls
+/* Sticky Action column: stays pinned to the right when the table scrolls
    horizontally. The shadow on the left edge fades in to suggest "more
    content under here". Header + body cells both stick. */
 .headerRow th:last-child,
@@ -79,7 +79,7 @@
   background: var(--neutral-0);
 }
 
-/* Sticky-column background must follow row state — otherwise the underlying
+/* Sticky-column background must follow row state, otherwise the underlying
    row colour would show through whatever's already scrolled under it. */
 .row:hover .tdAction { background: var(--primary-25); }
 .rowSelected .tdAction { background: var(--primary-25); }
@@ -96,7 +96,7 @@
 
 .row:hover { background: var(--primary-25); }
 
-/* Name cell — sticky-left so the primary identity column stays visible
+/* Name cell: sticky-left so the primary identity column stays visible
    when the table scrolls horizontally, mirroring .tdAction on the right. */
 .tdName {
   padding: 10px 16px;
@@ -128,6 +128,13 @@
   min-width: 0;
 }
 
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
 .nameText {
   font-size: var(--font-base);
   font-weight: 500;
@@ -149,7 +156,7 @@
 .rowSelected { background: var(--primary-25, #FDFDFF); }
 .rowSelected:hover { background: var(--primary-50); }
 
-/* Leading slot — fixed-size container so swapping between Icon (16px) and
+/* Leading slot: fixed-size container so swapping between Icon (16px) and
    Checkbox (16px) never shifts the rest of the row by even a pixel. Both
    layers are stacked absolutely so they can cross-fade. */
 .nameLeading {
@@ -168,7 +175,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* cubic-bezier(.4,0,.2,1) is the Material "standard" ease — quick out,
+  /* cubic-bezier(.4,0,.2,1) is the Material "standard" ease: quick out,
      slow settle. Feels snappy enough for inline UI toggles. */
   transition: opacity 0.18s cubic-bezier(.4, 0, .2, 1),
               transform 0.18s cubic-bezier(.4, 0, .2, 1);
@@ -195,7 +202,7 @@
   vertical-align: middle;
 }
 
-/* Animated header leading slot — width transitions from 0 → 16px when bulk
+/* Animated header leading slot: width transitions from 0 → 16px when bulk
    mode activates, plus the checkbox inside fades + scales in. Margin-right
    animates so the gap between checkbox and "Name" appears smoothly. */
 .headerLeading {
@@ -222,7 +229,7 @@
   pointer-events: auto;
 }
 
-/* Honor OS-level "Reduce motion" — clobbers everything we just defined. */
+/* Honor OS-level "Reduce motion", clobbers everything we just defined. */
 @media (prefers-reduced-motion: reduce) {
   .leadingLayer,
   .headerLeading,
@@ -253,7 +260,7 @@
   color: var(--neutral-200);
 }
 
-/* Subject cell — wraps to two lines, then ellipsises. -webkit-line-clamp is
+/* Subject cell: wraps to two lines, then ellipsises. -webkit-line-clamp is
    the only cross-browser way to multi-line truncate in 2026 without JS. */
 .subjectText {
   font-size: var(--font-md);
@@ -266,7 +273,7 @@
   word-break: break-word;
 }
 
-/* ── Skeleton (shimmer) — matches the live row layout ── */
+/* ── Skeleton (shimmer): matches the live row layout ── */
 @keyframes skelShimmer {
   0%   { background-position: -400px 0; }
   100% { background-position: 400px 0; }
@@ -291,7 +298,7 @@
 .skelChip    { width: 80px; height: 18px; border-radius: 50px; }
 .skelDot     { width: 18px; height: 18px; border-radius: 4px; }
 
-/* Action cell — left-aligned like every other column header / cell. The
+/* Action cell: left-aligned like every other column header / cell. The
    tight column width (.colAction: 110px) keeps trailing whitespace minimal. */
 .actionCell {
   display: flex;
@@ -391,7 +398,7 @@
 /* Anchored just above the Pagination component so users can keep selecting
    across pages without the floating bar covering the page numbers. The
    Pagination height is ~62px (14px padding + 34px buttons + 14px padding +
-   0.5px border) — bottom 62px puts the bar's bottom edge right on the
+   0.5px border): bottom 62px puts the bar's bottom edge right on the
    divider line that separates the table from the pagination. The bar
    itself sits fully above that line. */
 .bulkBar {
@@ -449,7 +456,7 @@
 }
 .bulkClose:hover { background: var(--neutral-50); }
 
-/* ─── Notes tab — template inspector drawer (P2-1) ─────────────── */
+/* ─── Notes tab: template inspector drawer (P2-1) ─────────────── */
 .inspectorPanel {
   position: fixed;
   top: var(--space-2);
@@ -531,7 +538,7 @@
   color: var(--neutral-300);
 }
 
-/* Compact toggle chip used in the section title bar's rightExtras — the
+/* Compact toggle chip used in the section title bar's rightExtras: the
    Notes tab's Show/Hide archived affordance. Mirrors the filterChip
    pattern used for status filters. */
 .filterChipIdle,
@@ -566,7 +573,7 @@
    the list itself; the drawer chrome above reuses .inspectorHeader /
    .inspectorBody, so no more styles are needed here. */
 
-/* Row actions — small ActionButton cluster in the trailing column of a
+/* Row actions: small ActionButton cluster in the trailing column of a
    note-template row. Visible at rest so admins can see the affordances
    without hovering; the row hover still tints the sticky-right cell so
    the affordances still feel row-scoped. */

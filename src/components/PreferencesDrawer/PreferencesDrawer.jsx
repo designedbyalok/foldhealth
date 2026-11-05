@@ -140,7 +140,7 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
           {activeTab !== 'account' && activeTab !== 'ooo' && (
             <div className={styles.sectionHeader}>
               <h3 className={styles.contentTitle}>{PREF_TABS.find(t => t.key === activeTab)?.label?.toUpperCase() || ''}</h3>
-              <ActionButton icon="solar:close-linear" size="S" tooltip="Close" onClick={onClose} />
+              <ActionButton icon="solar:close-linear" size="sm" tooltip="Close" onClick={onClose} />
             </div>
           )}
 
@@ -151,7 +151,7 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
               <div style={{ padding: 32, textAlign: 'center', color: 'var(--neutral-300)' }}>Loading profile...</div>
             ) : (
               <div className={styles.profileForm}>
-                {/* User header — same as Account edit drawer */}
+                {/* User header: same as Account edit drawer */}
                 <div className={styles.editHeader}>
                   <div className={styles.avatarUploadWrap}>
                     {profile?.avatar_url ? (
@@ -188,8 +188,8 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                     <span className={styles.editHeaderEmail}>{form.email}</span>
                   </div>
                   <div className={styles.editHeaderActions}>
-                    <Button variant="ghost" size="S" onClick={onClose}>Discard</Button>
-                    <Button variant="primary" size="S" onClick={handleSave}>Save</Button>
+                    <Button variant="ghost" size="sm" onClick={onClose}>Discard</Button>
+                    <Button size="sm" onClick={handleSave}>Save</Button>
                   </div>
                 </div>
 
@@ -208,7 +208,7 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                       validate={PROFILE_FIELD_VALIDATORS.first_name}
                       validateOn="blur"
                       errorText={fieldErrors.first_name}
-                      variant={fieldErrors.first_name || (form.first_name && !isCapitalizedName(form.first_name)) ? 'error' : 'default'}
+                      invalid={fieldErrors.first_name || (form.first_name && !isCapitalizedName(form.first_name))}
                     />
                   </div>
                   <div className={styles.formField}>
@@ -222,7 +222,7 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                       validate={PROFILE_FIELD_VALIDATORS.last_name}
                       validateOn="blur"
                       errorText={fieldErrors.last_name}
-                      variant={fieldErrors.last_name || (form.last_name && !isCapitalizedName(form.last_name)) ? 'error' : 'default'}
+                      invalid={fieldErrors.last_name || (form.last_name && !isCapitalizedName(form.last_name))}
                     />
                   </div>
                   <div className={styles.formField}>
@@ -231,10 +231,10 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                       id={`${uid}-gender`}
                       options={PROFILE_GENDER_OPTIONS.map(g => ({ value: g, label: g }))}
                       value={form.gender || undefined}
-                      onChange={v => set('gender', v)}
+                      onValueChange={v => set('gender', v)}
                       placeholder="Select gender"
                       portal
-                      variant={fieldErrors.gender ? 'error' : 'default'}
+                      invalid={fieldErrors.gender}
                       errorText={fieldErrors.gender}
                     />
                   </div>
@@ -248,7 +248,7 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                       validate={PROFILE_FIELD_VALIDATORS.date_of_birth}
                       validateOn="blur"
                       errorText={fieldErrors.date_of_birth}
-                      variant={fieldErrors.date_of_birth ? 'error' : 'default'}
+                      invalid={fieldErrors.date_of_birth}
                     />
                   </div>
                   <div className={styles.formField}>
@@ -263,7 +263,7 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                       validate={PROFILE_FIELD_VALIDATORS.mobile}
                       validateOn="blur"
                       errorText={fieldErrors.mobile}
-                      variant={fieldErrors.mobile ? 'error' : 'default'}
+                      invalid={fieldErrors.mobile}
                     />
                   </div>
                   <div className={styles.formField}>
@@ -281,9 +281,9 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                     portal
                     options={PROFILE_LANGUAGE_OPTIONS.map(l => ({ value: l, label: l }))}
                     value={form.languages || []}
-                    onChange={v => set('languages', v)}
+                    onValueChange={v => set('languages', v)}
                     placeholder="Select languages..."
-                    variant={fieldErrors.languages ? 'error' : 'default'}
+                    invalid={fieldErrors.languages}
                     errorText={fieldErrors.languages}
                   />
                 </div>
@@ -294,10 +294,10 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                     id={`${uid}-bio`}
                     rows={3}
                     value={form.bio}
-                    onChange={e => set('bio', e.target.value)}
+                    onValueChange={text => set('bio', text)}
                     placeholder="Brief bio..."
                     maxLength={PROFILE_FIELD_TYPES.bio.maxLength}
-                    variant={fieldErrors.bio ? 'error' : 'default'}
+                    invalid={fieldErrors.bio}
                   />
                   {fieldErrors.bio && <span className={styles.fieldError}>{fieldErrors.bio}</span>}
                 </div>
@@ -316,7 +316,7 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                       validate={PROFILE_FIELD_VALIDATORS.address_line1}
                       validateOn="blur"
                       errorText={fieldErrors.address_line1}
-                      variant={fieldErrors.address_line1 ? 'error' : 'default'}
+                      invalid={fieldErrors.address_line1}
                     />
                   </div>
                   <div className={styles.formField}>
@@ -330,7 +330,7 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                       validate={PROFILE_FIELD_VALIDATORS.address_line2}
                       validateOn="blur"
                       errorText={fieldErrors.address_line2}
-                      variant={fieldErrors.address_line2 ? 'error' : 'default'}
+                      invalid={fieldErrors.address_line2}
                     />
                   </div>
                   <div className={styles.formField}>
@@ -344,7 +344,7 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                       validate={PROFILE_FIELD_VALIDATORS.city}
                       validateOn="blur"
                       errorText={fieldErrors.city}
-                      variant={fieldErrors.city ? 'error' : 'default'}
+                      invalid={fieldErrors.city}
                     />
                   </div>
                   <div className={styles.formField}>
@@ -358,7 +358,7 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                       validate={PROFILE_FIELD_VALIDATORS.state}
                       validateOn="blur"
                       errorText={fieldErrors.state}
-                      variant={fieldErrors.state ? 'error' : 'default'}
+                      invalid={fieldErrors.state}
                     />
                   </div>
                   <div className={styles.formField}>
@@ -371,7 +371,7 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                       validate={PROFILE_FIELD_VALIDATORS.zip_code}
                       validateOn="blur"
                       errorText={fieldErrors.zip_code}
-                      variant={fieldErrors.zip_code ? 'error' : 'default'}
+                      invalid={fieldErrors.zip_code}
                     />
                   </div>
                 </div>
@@ -405,7 +405,7 @@ export function PreferencesDrawer({ onClose, initialTab = 'account' }) {
                 <div className={styles.signatureEmpty}>
                   <Icon name="solar:pen-new-square-linear" size={32} color="var(--neutral-150)" />
                   <p>Add and edit your customized signatures that will be added to your mail.</p>
-                  <Button variant="primary" size="L">Add Signature</Button>
+                  <Button>Add Signature</Button>
                 </div>
               </div>
             </div>

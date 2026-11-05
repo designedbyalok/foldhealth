@@ -55,7 +55,7 @@
   color: var(--sidebar-fg);
 }
 
-/* Icons here read as the brand's primary chrome — Fold's global 1px
+/* Icons here read as the brand's primary chrome: Fold's global 1px
    stroke normalization gets overridden locally so Solar linear icons
    render at their native 1.5px weight. Scoped to the rail so the
    sub-panel icons (inside <Input> etc.) keep the global 1px look.
@@ -73,7 +73,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  /* Breathing room before the Home tile — the rail's 4 px gap was too
+  /* Breathing room before the Home tile, the rail's 4 px gap was too
      tight and made the logo read as another nav tile. */
   margin-bottom: var(--space-3);
 }
@@ -102,7 +102,7 @@
   padding-top: var(--space-1);
 }
 
-/* ── Rail tile — single-layer 44×44 painted card ─────────────────────── */
+/* ── Rail tile: single-layer 44×44 painted card ─────────────────────── */
 /* Figma: 44×44 tile with 8px padding and 12px radius, holding a 24×24
    icon. Hover / active repaint the whole card (no nested padding to
    nibble at the paint). White icons throughout, per Figma spec. */
@@ -151,7 +151,7 @@
   box-shadow: 0 0 0 2px var(--primary-200);
 }
 
-/* Count badge on a rail tile — same corner anchor as the primary Sidebar
+/* Count badge on a rail tile, same corner anchor as the primary Sidebar
    so the two components surface counts the same way. */
 .tileBadge {
   position: absolute;

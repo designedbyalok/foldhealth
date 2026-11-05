@@ -53,7 +53,7 @@ export function AssignedToCell({ task }) {
 
   const onSelect = (u) => {
     const realName = u._realName || u.name;
-    // Giving a pooled task an owner IS claiming it — the store's claimTask()
+    // Giving a pooled task an owner IS claiming it, the store's claimTask()
     // clears `pool` for exactly this reason. Leaving it set would keep the
     // task advertised as unclaimed work in the pool tab.
     updateTask(task.id, { assigned_to: realName, assigned_to_id: u.id || null, pool: null });
@@ -217,7 +217,7 @@ export function TaskRow({ task, onToggle, onTaskClick, hideAssignedTo, hideMembe
   const labels = Array.isArray(task.labels) ? task.labels : [];
   const updateTask = useAppStore(s => s.updateTask);
   const showToast = useAppStore(s => s.showToast);
-  // Row-flash signal from the activity feed clickthrough — highlights the
+  // Row-flash signal from the activity feed clickthrough, highlights the
   // matching task for 3s in primary-50 / primary-300 so the user sees where
   // the drawer landed. Cleared automatically by the store's timer.
   const flashTaskId = useAppStore(s => s.flashTaskId);
@@ -297,7 +297,7 @@ export function TaskRow({ task, onToggle, onTaskClick, hideAssignedTo, hideMembe
           {labels.length > 0 ? (
             <>
               {labels.slice(0, 2).map(l => (
-                <Badge key={l} variant="overflow" label={l} />
+                <Badge key={l} label={l} />
               ))}
               {labels.length > 2 && (
                 <span className={styles.labelOverflow} title={labels.slice(2).join(', ')}>+{labels.length - 2}</span>
@@ -404,7 +404,7 @@ export function TaskTableRow({ task, onToggle, onTaskClick, hideAssignedTo, hide
             {labels.length > 0 ? (
               <>
                 {labels.slice(0, 2).map(l => (
-                  <Badge key={l} variant="overflow" label={l} />
+                  <Badge key={l} label={l} />
                 ))}
                 {labels.length > 2 && (
                   <span className={styles.labelOverflow} title={labels.slice(2).join(', ')}>+{labels.length - 2}</span>
@@ -428,7 +428,7 @@ export function TaskTableRow({ task, onToggle, onTaskClick, hideAssignedTo, hide
 }
 
 /* ── Linked-Note hover preview for the paperclip badge ──
-   HEDIS Sign-Off tasks always link back to a clinical note — the row
+   HEDIS Sign-Off tasks always link back to a clinical note, the row
    already shows an attachments count via the paperclip badge, but there
    is no fast way to know WHICH note is linked without opening the task
    drawer. On hover (after a 300ms intent delay) surface a compact card
@@ -461,7 +461,7 @@ function LinkedNotePaperclip({ task, count }) {
   const canPreview = !!resolvedMemberId;
   const handleEnter = () => {
     if (!canPreview) return;
-    // Lazy-fetch the member's notes on first hover — Tasks-tab rows
+    // Lazy-fetch the member's notes on first hover: Tasks-tab rows
     // never trigger the CareGap-flow fetches, so the slice can be empty
     // when the user hovers without ever having opened the drawer.
     if (!linkedNote && resolvedMemberId) fetchClinicalNotesForMember?.(resolvedMemberId);
@@ -496,13 +496,13 @@ function LinkedNotePaperclip({ task, count }) {
           onOpen={(e) => {
             e?.stopPropagation();
             setOpen(false);
-            // Opens ONLY the note preview drawer — not the task drawer.
+            // Opens ONLY the note preview drawer, not the task drawer.
             // TasksView owns the mount point via the `previewNoteFromHover`
             // store slice.
             openNotePreview?.(linkedNote);
           }}
           onHoverBridge={(e) => {
-            // Keep the card open while the pointer is over it — the
+            // Keep the card open while the pointer is over it, the
             // paperclip badge's mouseleave still fires as the cursor
             // travels the gap, and cursor entering the card must
             // supersede that so the reader can click "View note".
@@ -529,11 +529,11 @@ function LinkedNoteHoverCard({ note, style, onOpen, onHoverBridge }) {
   const status = note.status === 'signed' ? 'Signed'
     : note.status === 'submitted' ? 'Pending Review'
     : 'Draft';
-  const tone = status === 'Signed' ? 'success' : status === 'Draft' ? 'grey' : 'warning';
+  const tone = status === 'Signed' ? 'success' : status === 'Draft' ? 'neutral' : 'warning';
   const subtitle = note.status === 'signed'
     ? `Signed by ${note.signedByName || note.reviewerName || 'Provider'}`
     : note.status === 'submitted'
-      ? `Submitted for Review to ${note.reviewerName || '—'}`
+      ? `Submitted for Review to ${note.reviewerName || '-'}`
       : `Draft by ${note.authorName || 'You'}`;
   const when = note.updatedAt || note.createdAt;
   let whenStr = '';
@@ -559,11 +559,11 @@ function LinkedNoteHoverCard({ note, style, onOpen, onHoverBridge }) {
       </div>
       {!!codes.length && (
         <div className={styles.linkedNoteHoverChips}>
-          {codes.map(c => <Badge key={c} tone="grey" size="S" label={c} />)}
+          {codes.map(c => <Badge key={c} size="sm" label={c} />)}
         </div>
       )}
       <div className={styles.linkedNoteHoverFooter}>
-        <Badge tone={tone} size="S" label={status} />
+        <Badge tone={tone} size="sm" label={status} />
         <button
           type="button"
           className={styles.linkedNoteHoverAction}

@@ -126,7 +126,7 @@ export function GroupDetailDrawerParticipants(props) {
                     style={{ accentColor: 'var(--primary-300)' }} />
                   Enable all 1:1 Chat
                 </label>
-                <Button variant="danger" size="S" leadingIcon="solar:close-circle-linear" onClick={clearAll}>Clear All Selection</Button>
+                <Button variant="soft" tone="danger" size="sm" leadingIcon="solar:close-circle-linear" onClick={clearAll}>Clear All Selection</Button>
               </div>
             </div>
 
@@ -163,18 +163,18 @@ export function GroupDetailDrawerParticipants(props) {
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 'var(--font-base)', color: 'var(--neutral-500)', display: 'flex', alignItems: 'center', gap: 6 }}>
                           {p.name}
-                          {p.isAgent && <Badge variant="ai-care" label="AI Agent" />}
+                          {p.isAgent && <Badge tone="primary" label="AI Agent" />}
                         </div>
                         <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)' }}>{p.role}</div>
                       </div>
                       {p.isAgent ? (
-                        <Button variant="tertiary" size="S" leadingIcon="solar:settings-linear" trailingIcon="solar:alt-arrow-right-linear" onClick={handleConfigureRules}>
+                        <Button variant="soft" size="sm" leadingIcon="solar:settings-linear" trailingIcon="solar:alt-arrow-right-linear" onClick={handleConfigureRules}>
                           Configure Rules
                         </Button>
                       ) : (
                         <>
                           <Switch checked={chatEnabled[p.id] || false} onChange={(val) => toggleChatForUser(p.id, val)} />
-                          <ActionButton icon="solar:close-circle-linear" size="L" tooltip="Remove user" onClick={() => removeUser(p.id)} />
+                          <ActionButton icon="solar:close-circle-linear" tooltip="Remove user" onClick={() => removeUser(p.id)} />
                         </>
                       )}
                     </div>
@@ -195,7 +195,7 @@ export function GroupDetailDrawerParticipants(props) {
                     <span style={{ fontSize: 'var(--font-base)', color: 'var(--neutral-500)' }}>{r.name}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <Switch checked={chatEnabled[r.id] || false} onChange={(val) => setChatEnabled(prev => ({ ...prev, [r.id]: val }))} />
-                      <ActionButton icon="solar:close-circle-linear" size="L" tooltip="Remove role" onClick={() => removeRole(r.id)} />
+                      <ActionButton icon="solar:close-circle-linear" tooltip="Remove role" onClick={() => removeRole(r.id)} />
                     </div>
                   </div>
                 ))}

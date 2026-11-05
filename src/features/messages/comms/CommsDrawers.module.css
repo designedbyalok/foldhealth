@@ -26,10 +26,14 @@
 }
 
 .counter {
-  align-self: flex-end;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
   font-size: var(--font-sm);
   color: var(--neutral-300);
 }
+.counter > :last-child { margin-left: auto; }
 
 .radios {
   display: flex;
@@ -111,3 +115,4 @@
   font-size: var(--font-sm);
   color: var(--neutral-300);
 }
+

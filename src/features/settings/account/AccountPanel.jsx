@@ -9,7 +9,7 @@ import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Drawer } from '../../../components/Drawer/Drawer';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { UserProfileBanner } from './users/UserProfileBanner';
 import { AccountLockPanel } from './users/AccountLockPanel';
 import { Input } from '../../../components/Input/Input';
@@ -24,24 +24,26 @@ import { AddIconMinimalist } from '../../../components/Icon/AddIconMinimalist';
 import { CreateInsurancePlanDrawer } from './CreateInsurancePlanDrawer';
 import { InsurancePlanViewDrawer } from './InsurancePlanViewDrawer';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from '../../../components/ShadcnDialog/ShadcnDialog';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from '../../../components/Dialog/Dialog';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { BulkBar } from '../../../components/BulkBar/BulkBar';
 import { BulkSelectToggle } from '../../../components/BulkSelect/BulkSelectToggle';
 import { useBulkSelect } from '../../../components/BulkSelect/useBulkSelect';
 import { OrgPanel } from './OrgPanel';
+import { AccessControlTab } from './access-control/AccessControlTab';
+import { useRoleOptions } from './access-control/useRoleOptions';
 import { UsersTab } from './users/UsersTab';
 import { LocationsTab } from './locations/LocationsTab';
 import { HolidaysTab } from '../calendar/HolidaysTab';
 import { HCC_ROLES, ROLE_COLORS, getInitials } from './AccountPanel.constants';
 import { useLocationNames, AddColumnDropdown } from './AccountPanelParts';
-import { ADMIN_ROLES, GENDER_OPTIONS, LANGUAGE_OPTIONS, MOCK_ROLES, isCapitalizedName } from './InviteUserDrawer.utils';
+import { ADMIN_ROLES, GENDER_OPTIONS, LANGUAGE_OPTIONS, isCapitalizedName } from './InviteUserDrawer.utils';
 import { MEDICAL_SPECIALTIES, PHYSICIAN_ROLE } from '../../../data/medicalSpecialties';
 import styles from './AccountPanel.module.css';
 
 const ALL_TABS = ['Org', 'Users', 'Teams', 'Access Control', 'Locations', 'Insurance Plans', 'Holiday Configuration', 'Merged Or Delayed', 'Allowed Phone', 'Allowed Emails'];
 
-// Bridge the store's slug (`accountTab`, e.g. 'access-control' — also the URL
+// Bridge the store's slug (`accountTab`, e.g. 'access-control', also the URL
 // segment the router reads) and the display names in ALL_TABS.
 const tabKeyToName = (key) => ALL_TABS.find(t => t.toLowerCase().replace(/ /g, '-') === key) || 'Org';
 const tabNameToKey = (name) => name.toLowerCase().replace(/ /g, '-');
@@ -61,7 +63,7 @@ export function AccountPanel() {
   const [deletingPlanId, setDeletingPlanId] = useState(null);
 
   // Bulk-select for the Insurance Plans table. Resets when the account tab
-  // changes. Plans are local state, so bulk delete filters that state — same
+  // changes. Plans are local state, so bulk delete filters that state, same
   // as the single-row delete below.
   const planBulk = useBulkSelect(activeTab);
   const [bulkDeletePlansOpen, setBulkDeletePlansOpen] = useState(false);
@@ -112,7 +114,7 @@ export function AccountPanel() {
         // its three drawers. See src/features/settings/account/users/.
         <UsersTab tabsForBar={tabsForBar} activeTab={activeTab} setActiveTab={setActiveTab} />
       ) : isLocations ? (
-        // Locations tab — same shell + drawers pattern as Users.
+        // Locations tab: same shell + drawers pattern as Users.
         <LocationsTab tabsForBar={tabsForBar} activeTab={activeTab} setActiveTab={setActiveTab} />
       ) : isHolidays ? (
         // The same holidays as Settings → Calendar → Holiday configuration.
@@ -121,6 +123,8 @@ export function AccountPanel() {
         <div className={styles.tableWrap}>
           {activeTab === 'Org' ? (
             <OrgPanel />
+          ) : activeTab === 'Access Control' ? (
+            <AccessControlTab />
           ) : activeTab === 'Insurance Plans' ? (
             <InsurancePlansTab
               plans={plans}
@@ -185,7 +189,7 @@ export function AccountPanel() {
           actions={[{
             label: 'Delete',
             icon: 'solar:trash-bin-trash-linear',
-            variant: 'secondary',
+            variant: 'outline',
             onClick: () => setBulkDeletePlansOpen(true),
           }]}
         />
@@ -237,13 +241,13 @@ function ViewField({ label, value }) {
 }
 
 // A titled row of badges, rendered only when there's something to show.
-function ViewBadgeSection({ label, items, variant }) {
+function ViewBadgeSection({ label, items, tone }) {
   if (!items?.length) return null;
   return (
     <div className={styles.viewSection}>
       <div className={styles.viewSectionLabel}>{label}</div>
       <div className={styles.viewBadges}>
-        {items.map(v => <Badge key={v} variant={variant} label={v} />)}
+        {items.map(v => <Badge key={v} tone={tone} label={v} />)}
       </div>
     </div>
   );
@@ -266,16 +270,16 @@ function UserDetailsView({ user, raw }) {
       <div className={styles.viewSection}>
         <div className={styles.viewSectionLabel}>Administrative Role</div>
         <div className={styles.viewBadges}>
-          <Badge variant="ai-neutral" label={adminRole} />
+          <Badge label={adminRole} />
         </div>
       </div>
 
-      <ViewBadgeSection label="Roles" items={roles} variant="ai-care" />
-      <ViewBadgeSection label="Location" items={raw.locations} variant="ai-neutral" />
+      <ViewBadgeSection label="Roles" items={roles} tone="primary" />
+      <ViewBadgeSection label="Location" items={raw.locations} tone="neutral" />
       {/* Doctors always show Specialty, even before one is set. */}
       {roles.includes(PHYSICIAN_ROLE) && (
         raw.specialties?.length ? (
-          <ViewBadgeSection label="Specialty" items={raw.specialties} variant="ai-neutral" />
+          <ViewBadgeSection label="Specialty" items={raw.specialties} tone="neutral" />
         ) : (
           <div className={styles.viewSection}>
             <div className={styles.viewSectionLabel}>Specialty</div>
@@ -283,7 +287,7 @@ function UserDetailsView({ user, raw }) {
           </div>
         )
       )}
-      <ViewBadgeSection label="Languages" items={raw.languages} variant="toc-engaged" />
+      <ViewBadgeSection label="Languages" items={raw.languages} tone="info" />
 
       <div className={styles.viewSection}>
         <div className={styles.viewSectionTitle}>Basic Info</div>
@@ -352,12 +356,12 @@ export function ViewUserDrawer({ user, onClose, onEdit, canEdit = true, lock, ca
     <Drawer title="User Profile" onClose={onClose} bodyClassName={styles.editDrawerBody} headerStyle={{ padding: '12px' }} titleStyle={{ fontSize: 'var(--font-base)' }}>
       <UserProfileBanner user={user} onChat={openChat} />
       <AccountLockPanel lock={lock} canUnlock={canUnlock} onUnlock={onUnlock} onResendLink={onResendLink} />
-      <TabStrip
+      <Tabs
         items={VIEW_TABS.map(t => ({ key: t, label: t }))}
-        activeKey={viewTab}
-        onChange={setViewTab}
+        value={viewTab}
+        onValueChange={setViewTab}
         fullWidth={false}
-        trailing={canEdit && viewTab !== 'Audit Log' ? <ActionButton icon="solar:pen-linear" size="S" tooltip="Edit Profile" onClick={onEdit} /> : undefined}
+        trailing={canEdit && viewTab !== 'Audit Log' ? <ActionButton icon="solar:pen-linear" size="sm" tooltip="Edit Profile" onClick={onEdit} /> : undefined}
       />
 
       {viewTab === 'Audit Log' ? (
@@ -403,7 +407,7 @@ function InsurancePlansTab({
           </div>
         </div>
         <p className={styles.insuranceEmptyText}>No Insurance Plans have been Created.</p>
-        <Button variant="primary" size="L" leadingIcon="solar:add-circle-linear" onClick={onCreateNew}>
+        <Button leadingIcon="solar:add-circle-linear" onClick={onCreateNew}>
           Create New
         </Button>
       </div>
@@ -449,20 +453,20 @@ function InsurancePlansTab({
                     className={styles.insuranceLogoImg}
                   />
                 ) : (
-                  <span className={styles.insuranceLogoPlaceholder}>—</span>
+                  <span className={styles.insuranceLogoPlaceholder}>-</span>
                 )}
               </td>
               <td className={styles.insuranceTd}>
                 <span className={styles.insurancePlanName}>{plan.planName}</span>
               </td>
               <td className={styles.insuranceTd}>
-                <span className={styles.insurancePlanTypeBadge}>{plan.planType || '—'}</span>
+                <span className={styles.insurancePlanTypeBadge}>{plan.planType || '-'}</span>
               </td>
               <td className={styles.insuranceTd}>
-                <span className={styles.insuranceCellText}>{plan.groupNumber || '—'}</span>
+                <span className={styles.insuranceCellText}>{plan.groupNumber || '-'}</span>
               </td>
               <td className={styles.insuranceTd}>
-                <span className={styles.insuranceCellText}>{plan.ediPayerId || '—'}</span>
+                <span className={styles.insuranceCellText}>{plan.ediPayerId || '-'}</span>
               </td>
               <td className={styles.insuranceTd}>
                 <div className={styles.insuranceActions}>
@@ -491,7 +495,7 @@ function InsurancePlansTab({
 
 const DRAWER_TABS = ['User Details', 'Business Hours', 'Assigned Patients'];
 const EHR_SYSTEMS = ['Athena Health', 'Epic', 'Cerner', 'eClinicalWorks', 'Allscripts', 'NextGen', 'Greenway Health', 'DrChrono'];
-// US states + DC — licence states are a fixed set, so a multi-select reads
+// US states + DC: licence states are a fixed set, so a multi-select reads
 // cleaner than free-typed tags.
 const US_STATES = [
   'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware',
@@ -505,6 +509,7 @@ const US_STATES = [
 const toOptions = (arr) => arr.map(v => ({ value: v, label: v }));
 
 export function EditUserDrawer({ user, onClose, onSave }) {
+  const roleOptions = useRoleOptions();
   const uid = useId();
   const locationNames = useLocationNames();
   const raw = user._raw || {};
@@ -542,7 +547,7 @@ export function EditUserDrawer({ user, onClose, onSave }) {
   }), [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Per-user draft so an accidental close (or a reload) never loses typing.
-  // localStorage is per-viewer and best-effort — every access is guarded.
+  // localStorage is per-viewer and best-effort: every access is guarded.
   const draftKey = `foldEditUserDraft:${user.id}`;
   const clearDraft = () => { try { localStorage.removeItem(draftKey); } catch { /* ignore */ } };
 
@@ -660,20 +665,20 @@ export function EditUserDrawer({ user, onClose, onSave }) {
   return (
     <Drawer title="User Profile" onClose={onClose} beforeClose={beforeClose} bodyClassName={styles.editDrawerBody} headerStyle={{ padding: '12px' }} titleStyle={{ fontSize: 'var(--font-base)' }}>
       <UserProfileBanner user={user} />
-      <TabStrip
+      <Tabs
         items={DRAWER_TABS.map(t => ({ key: t, label: t }))}
-        activeKey={drawerTab}
-        onChange={setDrawerTab}
+        value={drawerTab}
+        onValueChange={setDrawerTab}
         fullWidth={false}
         trailing={<>
-          <Button variant="ghost" size="S" onClick={handleDiscard}>Discard</Button>
-          <Button variant="primary" size="S" onClick={handleSave}>Save</Button>
+          <Button variant="ghost" size="sm" onClick={handleDiscard}>Discard</Button>
+          <Button size="sm" onClick={handleSave}>Save</Button>
         </>}
       />
 
       {drawerTab === 'User Details' ? (
         <div className={styles.formScroll}>
-          {/* Administrative Roles — a radiogroup keeps an external group label
+          {/* Administrative Roles: a radiogroup keeps an external group label
               (aria-labelledby, no built-in control to own it), sized to match
               the DS label + 4px gap via .formField. */}
           <div className={styles.formField}>
@@ -691,9 +696,9 @@ export function EditUserDrawer({ user, onClose, onSave }) {
             <Select
               label="Clinical & Operational Roles"
               multiple checkboxes searchable
-              options={toOptions(MOCK_ROLES)}
+              options={toOptions(roleOptions)}
               value={form.clinical_roles}
-              onChange={v => { set('clinical_roles', v); if (v.length > 0) set('role', v[0]); }}
+              onValueChange={v => { set('clinical_roles', v); if (v.length > 0) set('role', v[0]); }}
               placeholder="Select..."
             />
           </div>
@@ -705,7 +710,7 @@ export function EditUserDrawer({ user, onClose, onSave }) {
               multiple checkboxes searchable
               options={toOptions(locationNames)}
               value={form.locations}
-              onChange={v => set('locations', v)}
+              onValueChange={v => set('locations', v)}
               placeholder="Select..."
             />
             <Select
@@ -714,26 +719,26 @@ export function EditUserDrawer({ user, onClose, onSave }) {
               searchPlaceholder="Search specialty"
               options={toOptions(MEDICAL_SPECIALTIES)}
               value={isPhysician ? form.specialties : []}
-              onChange={v => set('specialties', v)}
+              onValueChange={v => set('specialties', v)}
               placeholder={isPhysician ? 'Select specialty' : 'Select Physician/Doctor role first'}
               disabled={!isPhysician}
             />
           </div>
 
-          {/* Map User to EHR — each select carries its own built-in label. */}
+          {/* Map User to EHR: each select carries its own built-in label. */}
           <div className={styles.formGrid}>
             <Select
               label="EHR System"
               options={EHR_SYSTEMS.map(s => ({ value: s, label: s }))}
               value={form.ehr_mapping || undefined}
-              onChange={v => set('ehr_mapping', v)}
+              onValueChange={v => set('ehr_mapping', v)}
               placeholder="Select EHR system"
             />
             <Select
               label="EHR User"
               options={[`${form.first_name} ${form.last_name} (${form.ehr_mapping || 'EHR'})`, 'Amy Brenneman (Athena Health)', 'John Doe (Epic)', 'Jane Smith (Cerner)'].filter(Boolean).map(u => ({ value: u, label: u }))}
               value={form.ehr_user || undefined}
-              onChange={v => set('ehr_user', v)}
+              onValueChange={v => set('ehr_user', v)}
               placeholder="Select EHR user"
             />
           </div>
@@ -744,7 +749,7 @@ export function EditUserDrawer({ user, onClose, onSave }) {
             multiple checkboxes searchable
             options={toOptions(LANGUAGE_OPTIONS)}
             value={form.languages}
-            onChange={v => set('languages', v)}
+            onValueChange={v => set('languages', v)}
             placeholder="Select..."
           />
 
@@ -785,14 +790,14 @@ export function EditUserDrawer({ user, onClose, onSave }) {
                 id={`${uid}-gender`}
                 options={GENDER_OPTIONS.map(g => ({ value: g, label: g }))}
                 value={form.gender || undefined}
-                onChange={v => set('gender', v)}
+                onValueChange={v => set('gender', v)}
                 placeholder="Select gender"
               />
             </div>
           </div>
 
           {/* Profile */}
-          <Textarea title="Profile" id={`${uid}-bio`} rows={5} value={form.bio} onChange={e => set('bio', e.target.value)} placeholder="Brief bio or description..." />
+          <Textarea title="Profile" id={`${uid}-bio`} rows={5} value={form.bio} onValueChange={text => set('bio', text)} placeholder="Brief bio or description..." />
 
           {/* Licence State */}
           <Select
@@ -800,7 +805,7 @@ export function EditUserDrawer({ user, onClose, onSave }) {
             multiple checkboxes searchable
             options={toOptions(US_STATES)}
             value={form.licence_states}
-            onChange={v => set('licence_states', v)}
+            onValueChange={v => set('licence_states', v)}
             placeholder="Add state..."
           />
 
@@ -835,8 +840,8 @@ export function EditUserDrawer({ user, onClose, onSave }) {
       )}
 
       {/* Unsaved-changes guard: shown when the user tries to close a dirty
-          form. Dismissing it (overlay / Esc) keeps the drawer open — the safe
-          default — so a stray click never discards work. */}
+          form. Dismissing it (overlay / Esc) keeps the drawer open, the safe
+          default: so a stray click never discards work. */}
       <Dialog open={confirmClose} onOpenChange={open => !open && setConfirmClose(false)}>
         <DialogContent>
           <DialogHeader>
@@ -846,9 +851,9 @@ export function EditUserDrawer({ user, onClose, onSave }) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="ghost" size="M" onClick={() => setConfirmClose(false)}>Keep editing</Button>
-            <Button variant="secondary" size="M" onClick={discardFromDialog}>Discard</Button>
-            <Button variant="primary" size="M" onClick={saveFromDialog}>Save changes</Button>
+            <Button variant="ghost" onClick={() => setConfirmClose(false)}>Keep editing</Button>
+            <Button variant="outline" onClick={discardFromDialog}>Discard</Button>
+            <Button onClick={saveFromDialog}>Save changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

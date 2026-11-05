@@ -58,10 +58,10 @@ SELECT DISTINCT ON (m.patient_id)
   CASE WHEN m.status = 'Open' THEN 'New' ELSE 'Engaged' END,
   CASE WHEN m.status = 'Open' THEN 'var(--primary-300)' ELSE 'var(--status-warning)' END,
   to_char(now(), 'MM/DD/YYYY'),
-  '—',
+  '-',
   to_char(now(), 'MM/DD/YYYY'),
   COALESCE(m.assignee_name, 'Unassigned'),
-  '—',
+  '-',
   0
 FROM public.pharmacy_worklist_members m
 WHERE m.patient_id IS NOT NULL AND m.patient_id <> ''

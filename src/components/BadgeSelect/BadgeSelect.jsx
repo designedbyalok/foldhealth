@@ -11,12 +11,15 @@ import styles from './BadgeSelect.module.css';
  * @param {object}   props
  * @param {string}   [props.label]           – prefix on the badge ("View By"); omit to show the value alone
  * @param {string}   props.value
- * @param {string[]} props.options
+ * @param {(string|{ value: string, label?: string, disabled?: boolean, tooltip?: string })[]} props.options
+ *                                           – an option can be disabled, with a tooltip saying why
  * @param {function} props.onChange          – (value) => void
- * @param {string}   [props.variant='toc-new'] – Badge variant for the trigger
  * @param {'left'|'right'} [props.align='right'] – which edge of the menu meets the badge
+ * @param {string}   [props.tone='neutral']  – Badge tone, e.g. a status colour
+ * @param {'xs'|'sm'|'md'|'lg'} [props.size] – Badge size
+ * @param {boolean}  [props.disabled]        – greys the badge out (chevron kept); it doesn't open
  */
-export function BadgeSelect({ label, value, options, onChange, variant = 'toc-new', align = 'right' }) {
+export function BadgeSelect({ label, value, options, onChange, align = 'right', tone = 'neutral', size, disabled = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const text = label ? `${label}: ${value}` : value;
@@ -29,18 +32,22 @@ export function BadgeSelect({ label, value, options, onChange, variant = 'toc-ne
         className={styles.trigger}
         aria-haspopup="menu"
         aria-expanded={open}
+        disabled={disabled}
         aria-label={label ? `${label}: ${value}` : `Change ${value}`}
         onClick={() => setOpen(v => !v)}
       >
-        <Badge variant={variant} label={text} trailingIcon="solar:alt-arrow-down-linear" />
+        <Badge tone={tone} disabled={disabled} size={size} label={text} trailingIcon="solar:alt-arrow-down-linear" />
       </button>
-      {open && (
+      {open && !disabled && (
         <MenuPopover
           anchorRef={ref}
           align={align}
           width="auto"
           ariaLabel={label || 'Options'}
-          items={options.map(o => ({ key: o, label: o, selected: o === value }))}
+          items={options.map((o) => {
+            const opt = typeof o === 'string' ? { value: o } : o;
+            return { key: opt.value, label: opt.label || opt.value, selected: opt.value === value, disabled: opt.disabled, tooltip: opt.tooltip };
+          })}
           onSelect={(key) => { onChange(key); setOpen(false); }}
           onClose={() => setOpen(false)}
         />

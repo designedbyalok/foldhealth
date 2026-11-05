@@ -1,4 +1,4 @@
--- Patient problem list — the patient's medical conditions, shown in the PAMI/Hx
+-- Patient problem list: the patient's medical conditions, shown in the PAMI/Hx
 -- tab's "Problems" section and used to recommend condition-relevant goals in the
 -- Add Goals drawer. One row per condition per patient. Read with the anon key,
 -- so RLS needs a permissive policy or the table returns 0 rows and the UI falls

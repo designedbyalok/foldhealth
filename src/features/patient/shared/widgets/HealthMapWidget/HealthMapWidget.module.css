@@ -5,6 +5,13 @@
 }
 
 /* ── Chart ── */
+/* A bordered box around the chart, like Care Utilization's. */
+.container {
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  padding: var(--space-2);
+}
+
 .chart {
   height: calc(var(--space-16) * 5);
 }

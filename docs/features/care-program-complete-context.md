@@ -61,7 +61,7 @@ A **care program** is a per-patient enrollment in a structured care workflow (SN
 - Dropdown options (`PROGRAM_STATUS_OPTIONS`, line 4): `Engaged`, `Declined`, `Unable to Reach`, `Enrolled`, `Attempted`.
 - `STATUS_COLOR` also defines `New` and `Closed`.
 - New enrollments start at `New` (Store:1548).
-- Picking `Enrolled` backfills `startDate` when it is `'—'` (`CareProgramsTab.jsx:167-173`, `useProgramDetailView.js:213-221`).
+- Picking `Enrolled` backfills `startDate` when it is `'-'` (`CareProgramsTab.jsx:167-173`, `useProgramDetailView.js:213-221`).
 - "Close Program" sets `Closed` (`CareProgramsTab.jsx:183-185`). There is no unenroll/delete.
 - `Completed` is checked for "Past" grouping (`CareProgramsTab.jsx:31`) but nothing in the UI can set it.
 - Only SNP can be enrolled more than once (Store:1540-1543).

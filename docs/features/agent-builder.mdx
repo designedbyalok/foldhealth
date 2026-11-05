@@ -1,6 +1,6 @@
 ---
 title: "Agent Builder"
-description: "Full-screen node canvas for designing AI voice and chat agents — with a live chat preview and version history."
+description: "Full-screen node canvas for designing AI voice and chat agents, with a live chat preview and version history."
 ---
 
 The **Agent Builder** is a visual workflow designer for AI agents. It uses [XYFlow](https://reactflow.dev) (React Flow) for the node-based canvas. Each agent is a graph of **conversation nodes** connected by edges that describe how a patient interaction unfolds.
@@ -8,7 +8,7 @@ The **Agent Builder** is a visual workflow designer for AI agents. It uses [XYFl
 ## When you'd use it
 
 - Design a new outreach agent (TOC 48-hour welcome, HEDIS gap-closure call, SNP re-enrollment).
-- Tweak conditional branching on an existing agent — e.g. "if the patient answers 'no' to consent, transfer to a live care manager."
+- Tweak conditional branching on an existing agent, e.g. "if the patient answers 'no' to consent, transfer to a live care manager."
 - Attach tools, goals, or a knowledge base to shape the agent's behavior.
 - Compare or roll back to a previous agent version.
 
@@ -22,25 +22,25 @@ The **Agent Builder** is a visual workflow designer for AI agents. It uses [XYFl
     In the TOC Queue view, the TabBar has an **Edit Configuration** button that opens the builder for the active TOC agent.
   </Step>
   <Step title="Direct URL">
-    Deep-link with `#/builder/{id}` — useful for design reviews and comment threads.
+    Deep-link with `#/builder/{id}`, useful for design reviews and comment threads.
   </Step>
 </Steps>
 
 ## The canvas
 
-- **Left side panel** — **Node Panel** with every node type from `src/features/agent-builder/nodes/nodeConfig.js`. Drag a node into the canvas to add it.
-- **Center canvas** — your graph. Pan with drag, zoom with scroll, fit-to-screen with the toolbar button.
-- **Right side panel** — **Chat Panel** for live testing (see the walkthrough).
-- **Top bar** — Agent name (editable inline), Save, Publish, Version history, and a Preview toggle.
+- **Left side panel**: **Node Panel** with every node type from `src/features/agent-builder/nodes/nodeConfig.js`. Drag a node into the canvas to add it.
+- **Center canvas**: your graph. Pan with drag, zoom with scroll, fit-to-screen with the toolbar button.
+- **Right side panel**: **Chat Panel** for live testing (see the walkthrough).
+- **Top bar**: Agent name (editable inline), Save, Publish, Version history, and a Preview toggle.
 
-## Walkthrough — build a simple welcome agent
+## Walkthrough: build a simple welcome agent
 
 <Steps>
   <Step title="Start blank">
     From Settings → Agents click **+ New Agent**, name it, pick a use case (TOC Welcome, HEDIS Gap, etc.), and click **Open Builder**. The canvas opens with a single **Start** node.
   </Step>
   <Step title="Add a greeting">
-    Drag a **Say** node from the panel. Drop it near the Start node. Connect the Start node's output to the Say node's input. Click the Say node and type the greeting in its config panel — variables like `{{first_name}}` are supported.
+    Drag a **Say** node from the panel. Drop it near the Start node. Connect the Start node's output to the Say node's input. Click the Say node and type the greeting in its config panel, variables like `{{first_name}}` are supported.
   </Step>
   <Step title="Ask a question">
     Drag an **Ask** node next. Wire the Say node → Ask node. In config, set the question and add expected intents (e.g. `yes_consent`, `no_consent`, `reschedule`).
@@ -55,16 +55,16 @@ The **Agent Builder** is a visual workflow designer for AI agents. It uses [XYFl
     Every terminal branch should connect to an **End** node so the agent knows the conversation is complete and can log the outcome.
   </Step>
   <Step title="Preview in the chat panel">
-    Click **Preview**. The chat panel becomes interactive — type responses as if you were the patient. The agent walks the graph in real time, highlighting the current node so you can see routing.
+    Click **Preview**. The chat panel becomes interactive, type responses as if you were the patient. The agent walks the graph in real time, highlighting the current node so you can see routing.
   </Step>
   <Step title="Save and publish">
-    Click **Save** to persist a new draft version. Click **Publish** to promote the draft to the running version — deployed agents pick up the new graph on their next call.
+    Click **Save** to persist a new draft version. Click **Publish** to promote the draft to the running version, deployed agents pick up the new graph on their next call.
   </Step>
 </Steps>
 
 ## Node types
 
-Nodes come from `nodeConfig.js` — the single source of truth for both the Node Panel and the ConversationNode component. Common types:
+Nodes come from `nodeConfig.js`, the single source of truth for both the Node Panel and the ConversationNode component. Common types:
 
 | Node | Purpose |
 | --- | --- |
@@ -77,17 +77,17 @@ Nodes come from `nodeConfig.js` — the single source of truth for both the Node
 | **Schedule** | Pick a follow-up window; writes to the patient's outreach schedule |
 | **Note** | Record an internal note on the patient's chart (not spoken) |
 
-Each node's config panel is generated from the schema in `nodeConfig.js` — add a field there and it shows up on both the panel and the canvas config automatically.
+Each node's config panel is generated from the schema in `nodeConfig.js`, add a field there and it shows up on both the panel and the canvas config automatically.
 
 ## Version history
 
 The top-bar **History** button opens a drawer with every saved and published version, newest first. From there you can:
 
-- **Compare** — side-by-side diff of two versions with added/removed nodes highlighted.
-- **Restore** — replace the current draft with any prior version. The active version keeps running until you click Publish.
+- **Compare**: side-by-side diff of two versions with added/removed nodes highlighted.
+- **Restore**: replace the current draft with any prior version. The active version keeps running until you click Publish.
 
 ## Tips
 
 - **Save early.** Save writes a version snapshot; Publish promotes it. You can save many drafts between publishes.
-- **Preview covers routing, not tools.** The chat panel simulates the graph but does not execute real tool calls — use a staging phone number for end-to-end validation.
+- **Preview covers routing, not tools.** The chat panel simulates the graph but does not execute real tool calls, use a staging phone number for end-to-end validation.
 - **Add tools in Settings.** Agents call tools registered in **Settings → Agents → Tools**. If you don't see a tool on the Tool node, add it there first.

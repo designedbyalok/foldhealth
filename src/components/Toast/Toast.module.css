@@ -7,7 +7,7 @@
   pointer-events: none; /* allow clicks to pass through wrapper */
 }
 
-/* Toast body — matches Figma nodes 5578:8010-8013.
+/* Toast body: matches Figma nodes 5578:8010-8013.
  * 4px around the close button, 12px inline start on the message, 8px gap
  * between them. 8px radius, 14px Inter Medium at line-height 1.2. */
 .toast {
@@ -47,7 +47,7 @@
   background: var(--status-error) !important;
 }
 
-/* Warning — Figma design has white text on --status-warning, but that's
+/* Warning: Figma design has white text on --status-warning, but that's
  * 2.24:1 (WCAG AA fail). Keep the brand yellow bg and use dark text so
  * the toast is still readable. See PR #88 for the a11y decision. */
 .warning {
@@ -81,7 +81,7 @@
   color: var(--neutral-0) !important;
 }
 
-/* Close button — 24×24 pill sitting inline at the trailing edge (Figma
+/* Close button: 24×24 pill sitting inline at the trailing edge (Figma
  * "ActionButton size=S" with a 16px close icon). Override Sonner's default
  * absolute positioning so it flows in the toast's flex row. */
 .closeButton {

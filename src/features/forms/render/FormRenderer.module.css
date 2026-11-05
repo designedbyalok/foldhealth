@@ -9,7 +9,7 @@
   overflow: hidden;
 }
 
-/* Paged (Q-by-Q / section) fills the entire available container — white,
+/* Paged (Q-by-Q / section) fills the entire available container, white,
    no card chrome. Progress pinned top, question centered, nav pinned bottom. */
 .pagedSheet {
   --px: 72px;
@@ -21,7 +21,7 @@
   position: relative;
 }
 .pagedRoot { outline: none; }
-/* Centered question region — grows to fill, pushing the nav to the bottom. */
+/* Centered question region: grows to fill, pushing the nav to the bottom. */
 .pagedMain { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; justify-content: center; overflow-y: auto; }
 .pagedMain::-webkit-scrollbar { display: none; }
 .pagedMain { scrollbar-width: none; }
@@ -75,7 +75,7 @@
 /* Nav row pinned to the bottom of the paged sheet. */
 .stepNav { display: flex; align-items: center; gap: 12px; padding-top: 16px; flex-shrink: 0; }
 
-/* Real mobile viewport (the standalone #/f/{id} fill view) — full-bleed,
+/* Real mobile viewport (the standalone #/f/{id} fill view): full-bleed,
    compact padding. The transform-scaled iPhone preview uses .compact instead. */
 @media (max-width: 640px) {
   .sheet { --px: 16px; --py: 20px; max-width: 100%; border-radius: 0; box-shadow: none; margin: 0; }
@@ -89,9 +89,9 @@
   .pagedSheet .stepNav > :last-child { flex: 1 1 0; justify-content: center; }
 }
 
-/* ↵ enter icon shown after a button label — bare icon, inherits color + size */
+/* ↵ enter icon shown after a button label, bare icon, inherits color + size */
 .enterBadge { margin-left: 6px; vertical-align: middle; }
-/* OK button — compact Typeform-style, not full-width */
+/* OK button: compact Typeform-style, not full-width */
 .okBtn { align-self: flex-start; }
 
 /* Long-text "Shift + Enter to make a line break" hint */
@@ -124,7 +124,7 @@
 .tfDesc { font-size: var(--font-base); font-style: italic; color: var(--primary-200); margin: 8px 0 0; }
 .tfBody { display: flex; flex-direction: column; gap: 16px; padding-left: 36px; }
 
-/* Typeform underline-style input/textarea — override the shared chrome.
+/* Typeform underline-style input/textarea: override the shared chrome.
    The shared Input/Textarea apply .tfInput directly to the <input>/<textarea>. */
 .tfInput,
 textarea.tfInput,
@@ -157,7 +157,7 @@ textarea.tfInput { resize: none; line-height: 1.5; min-height: 48px; }
 .tfOptionSel .tfLetter { border-color: var(--primary-300); color: var(--primary-300); }
 .tfOptText { flex: 1 1 0; font-size: 1.0625rem; color: var(--neutral-500); }
 
-/* Start / End screens — fill the paged sheet and center their content. */
+/* Start / End screens: fill the paged sheet and center their content. */
 .tfScreen {
   flex: 1 1 0; align-self: stretch;
   display: flex; flex-direction: column; align-items: center; justify-content: center;

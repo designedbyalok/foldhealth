@@ -1,0 +1,54 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--neutral-0);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* A readable column, centred in the panel rather than hugging its left edge. */
+.inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: calc(var(--space-16) * 14);
+  margin: 0 auto;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: calc(var(--space-1) / 2) 0;
+}
+
+/* The views take the row and scroll sideways when the panel is narrow. */
+.views {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.searchRow { padding: 0 var(--space-1); }
+.searchField { flex: 1; min-width: 0; }
+
+.divider {
+  flex-shrink: 0;
+  width: 0.5px;
+  height: var(--space-4);
+  background: var(--neutral-150);
+}
+
+/* The coloured bullet before a view's name. */
+.dot {
+  line-height: var(--leading-tight);
+}
+
+/* The first month header sits closer under the header and filters than the
+   log's own 12px: the section's gap already spaces it. */
+.log > div > button:first-child { padding-top: var(--space-2); }

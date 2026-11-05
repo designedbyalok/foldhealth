@@ -1,0 +1,2325 @@
+/* review-kit styles. Values come from theme.css variables only. */
+
+/* The kit can't rely on the host app's CSS reset: size its own boxes. */
+.rk-layer,
+.rk-layer *,
+.rk-layer *::before,
+.rk-layer *::after,
+.rk-pick-box,
+.rk-pick-label,
+.rk-pick-hint {
+  box-sizing: border-box;
+}
+
+/* A 0x0 anchor at the top-left corner, not a full-screen overlay: the box
+   and its tab are positioned against the viewport. A full-screen layer can
+   hide the whole page if anything gives it a background (a host stylesheet,
+   an extension, a browser default), as one did in Chrome 155. */
+.rk-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  z-index: var(--rk-z);
+  background: none;
+  pointer-events: none;
+  font-family: var(--rk-font);
+  color: var(--rk-text);
+}
+
+.rk-dock {
+  pointer-events: auto;
+}
+
+/* Text selection takes the accent color so highlights read as part of the
+   theme, not the OS default blue. Scoped so the host app's selection stays
+   untouched. */
+.rk-layer ::selection {
+  background: color-mix(in srgb, var(--rk-accent) 28%, transparent);
+  color: var(--rk-text);
+}
+
+/* Grow-out animation when a thumbnail opens into its preview, and shrink back
+   when the preview closes. The thumbnail and the preview image share one
+   view-transition-name per attachment, so the browser morphs between them. */
+::view-transition-group(*) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.2, 0.9, 0.1, 1);
+}
+
+/* The dock morph (expand ↔ collapse) is slightly slower and more buoyant so
+   the "liquid fuse to the wall" lands rather than snaps. */
+::view-transition-group(rk-dock-surface) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* By default each snapshot keeps its aspect ratio and fills the morph's
+   width, which blew the tab (and its chevron) up to panel size for a moment.
+   Keep both at their real size instead: the tab fades out almost at once,
+   and the panel fades in, revealed as the shape grows (or the reverse). */
+::view-transition-group(rk-dock-surface) {
+  overflow: clip;
+  border-radius: var(--rk-radius, 18px);
+}
+::view-transition-old(rk-dock-surface),
+::view-transition-new(rk-dock-surface) {
+  height: 100%;
+  object-fit: none;
+  object-position: left top;
+}
+::view-transition-old(rk-dock-surface) {
+  animation: rk-dock-snap-out 100ms ease-out both;
+}
+::view-transition-new(rk-dock-surface) {
+  animation: rk-dock-snap-in 220ms 40ms ease-out both;
+}
+@keyframes rk-dock-snap-out {
+  to { opacity: 0; }
+}
+@keyframes rk-dock-snap-in {
+  from { opacity: 0; }
+}
+
+/* The preview shell and image share the same buoyant easing so the thumb
+   grows into the modal, and the modal reshapes into the annotator in place. */
+::view-transition-group(rk-preview-shell),
+::view-transition-group(rk-preview-surface),
+::view-transition-group(rk-annotator-tools),
+::view-transition-group(rk-preview-action) {
+  animation-duration: 440ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-group(rk-preview-shell) {
+  overflow: clip;
+}
+::view-transition-old(rk-preview-shell),
+::view-transition-new(rk-preview-shell),
+::view-transition-old(rk-preview-surface),
+::view-transition-new(rk-preview-surface) {
+  animation-duration: 440ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* The toolbar row doesn't exist in the preview, so it slides up from the
+   bottom when the annotator opens, and slides back down on return. */
+@keyframes rk-tools-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@keyframes rk-tools-down {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(100%); opacity: 0; }
+}
+::view-transition-new(rk-annotator-tools) {
+  animation: rk-tools-up 440ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+::view-transition-old(rk-annotator-tools) {
+  animation: rk-tools-down 320ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) { animation-duration: 0ms; }
+}
+
+/* Edge-pull: while the user drags within the EDGE threshold, the dock gets
+   subtly pulled toward the wall and rounds down, previewing the fuse. */
+.rk-dock--pulling-left,
+.rk-dock--pulling-right {
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+              filter 160ms ease;
+  filter: saturate(1.1);
+}
+.rk-dock--pulling-left {
+  transform: translateX(-6px) scale(0.985);
+}
+.rk-dock--pulling-right {
+  transform: translateX(6px) scale(0.985);
+}
+.rk-dock--pulling-left .rk-panel,
+.rk-dock--pulling-right .rk-panel {
+  transition: border-radius 160ms ease;
+}
+.rk-dock--pulling-left .rk-panel {
+  border-top-left-radius: 28px;
+  border-bottom-left-radius: 28px;
+}
+.rk-dock--pulling-right .rk-panel {
+  border-top-right-radius: 28px;
+  border-bottom-right-radius: 28px;
+}
+
+/* Minimal, overlay-style scrollbars for everything inside the kit. Firefox uses
+   `scrollbar-*`; WebKit/Blink gets the ::-webkit-scrollbar pseudos. The thumb
+   fades in on hover of its container so it stays quiet when idle. */
+.rk-layer * {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.rk-layer *::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background: transparent;
+}
+.rk-layer *::-webkit-scrollbar-track,
+.rk-layer *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+.rk-layer *::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  /* A 6px hit area around a 2px line; it thickens to 4px under the pointer. */
+  border: 2px solid transparent;
+  min-height: 24px;
+  transition: background-color 120ms ease;
+}
+.rk-layer *::-webkit-scrollbar-thumb:hover,
+.rk-layer *::-webkit-scrollbar-thumb:active {
+  border-width: 1px;
+}
+.rk-layer *:hover::-webkit-scrollbar-thumb,
+.rk-layer *:focus-within::-webkit-scrollbar-thumb {
+  background-color: var(--rk-scrollbar, color-mix(in srgb, currentColor 22%, transparent));
+}
+.rk-layer *::-webkit-scrollbar-thumb:hover,
+.rk-layer *::-webkit-scrollbar-thumb:active {
+  background-color: var(--rk-scrollbar-hover, color-mix(in srgb, currentColor 38%, transparent));
+}
+.rk-layer *:hover,
+.rk-layer *:focus-within {
+  scrollbar-color: var(--rk-scrollbar, color-mix(in srgb, currentColor 22%, transparent)) transparent;
+}
+
+.rk-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--rk-border);
+  border-radius: var(--rk-radius);
+  background: var(--rk-bg);
+  /* Prefixed first: CSS minifiers (Lightning CSS) keep only the last of the
+     pair, and Chromium ignores the -webkit- one. */
+  -webkit-backdrop-filter: blur(var(--rk-glass-blur, 24px)) saturate(var(--rk-glass-saturate, 180%));
+  backdrop-filter: blur(var(--rk-glass-blur, 24px)) saturate(var(--rk-glass-saturate, 180%));
+  box-shadow:
+    inset 0 1px 0 var(--rk-glass-highlight, transparent),
+    var(--rk-shadow);
+  container-type: inline-size;
+}
+
+/* No backdrop-filter support (e.g. older Firefox): fall back to the solid
+   surface so the dock stays readable instead of showing through. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .rk-panel {
+    background: var(--rk-bg-solid);
+  }
+}
+
+.rk-header {
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-3) var(--rk-space-3) var(--rk-space-2);
+  cursor: grab;
+  user-select: none;
+}
+
+.rk-header:active {
+  cursor: grabbing;
+}
+
+.rk-grip {
+  flex-shrink: 0;
+  color: var(--rk-text-muted);
+}
+
+.rk-heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.rk-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--rk-font-md);
+  font-weight: var(--rk-font-weight-medium);
+}
+
+.rk-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--rk-font-xs);
+  color: var(--rk-text-muted);
+}
+
+.rk-header-actions {
+  display: flex;
+  gap: var(--rk-space-1);
+}
+
+.rk-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  background: transparent;
+  color: var(--rk-text-muted);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.rk-icon-btn:hover {
+  background: var(--rk-bg-subtle);
+  color: var(--rk-text);
+}
+
+/* The body fills the panel and scrolls under the header and footer, which
+   float over it; padding the size of each bar keeps content clear of them
+   at rest. Each bar carries a progressive blur that shows once content sits
+   beneath it, so nothing is cut off and the body keeps its full height. */
+.rk-scroll {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rk-scroll > .rk-body {
+  padding-top: var(--rk-bar-top, 0px);
+  padding-bottom: var(--rk-bar-bottom, 0px);
+  scroll-padding-top: var(--rk-bar-top, 0px);
+  scroll-padding-bottom: var(--rk-bar-bottom, 0px);
+}
+
+/* Keep the scrollbar between the bars. */
+.rk-scroll > .rk-body::-webkit-scrollbar-track {
+  margin-top: var(--rk-bar-top, 0px);
+  margin-bottom: var(--rk-bar-bottom, 0px);
+}
+
+.rk-panel > .rk-header,
+.rk-panel > .rk-footer {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 4;
+  isolation: isolate;
+}
+
+.rk-panel > .rk-header { top: 0; }
+.rk-panel > .rk-footer { bottom: 0; }
+
+/* Three stacked backdrop blurs, strongest at the panel edge, each masked to a
+   band, plus a light wash of the surface; it runs a little past the bar so
+   the blur eases off instead of stopping at the bar's edge. */
+.rk-bar-blur {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: -1;
+  height: calc(100% + 16px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.rk-header > .rk-bar-blur { top: 0; }
+.rk-footer > .rk-bar-blur { bottom: 0; }
+
+[data-covering] > .rk-bar-blur {
+  opacity: 1;
+}
+
+.rk-bar-blur > span,
+.rk-bar-blur::after {
+  position: absolute;
+  inset: 0;
+}
+
+/* Under the bar itself the blur is at full strength behind a near-solid wash,
+   so text scrolling beneath never competes with the title or the tools; the
+   layers only ease off in the 16px tail past the bar. */
+.rk-bar-blur > span:nth-child(1) {
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+.rk-bar-blur > span:nth-child(2) {
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.rk-bar-blur > span:nth-child(3) {
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.rk-header > .rk-bar-blur > span:nth-child(1) { mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent); }
+.rk-header > .rk-bar-blur > span:nth-child(2) { mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent calc(100% - 6px)); }
+.rk-header > .rk-bar-blur > span:nth-child(3) { mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent calc(100% - 12px)); }
+.rk-footer > .rk-bar-blur > span:nth-child(1) { mask-image: linear-gradient(to top, #000 calc(100% - 16px), transparent); }
+.rk-footer > .rk-bar-blur > span:nth-child(2) { mask-image: linear-gradient(to top, #000 calc(100% - 22px), transparent calc(100% - 6px)); }
+.rk-footer > .rk-bar-blur > span:nth-child(3) { mask-image: linear-gradient(to top, #000 calc(100% - 28px), transparent calc(100% - 12px)); }
+
+.rk-bar-blur::after {
+  content: '';
+}
+.rk-header > .rk-bar-blur::after { background: linear-gradient(to bottom, var(--rk-bg-solid, var(--rk-bg)) calc(100% - 24px), transparent); opacity: 0.85; }
+.rk-footer > .rk-bar-blur::after { background: linear-gradient(to top, var(--rk-bg-solid, var(--rk-bg)) calc(100% - 24px), transparent); opacity: 0.85; }
+
+@media (prefers-reduced-transparency: reduce) {
+  .rk-bar-blur > span { display: none; }
+  .rk-header > .rk-bar-blur::after { background: linear-gradient(to bottom, var(--rk-bg-solid, var(--rk-bg)) 60%, transparent); }
+  .rk-footer > .rk-bar-blur::after { background: linear-gradient(to top, var(--rk-bg-solid, var(--rk-bg)) 60%, transparent); }
+}
+
+.rk-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--rk-space-2);
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--rk-space-3);
+}
+
+/* Host content passed as children sits at the bottom of the body, just
+   above the footer, rather than floating under the last point. */
+.rk-extra {
+  margin-top: auto;
+  padding-bottom: var(--rk-space-2);
+}
+
+/* ── Points: one per screen or section of a flow ── */
+
+.rk-points {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rk-space-2);
+  padding: 0 var(--rk-space-3) var(--rk-space-2);
+}
+
+.rk-point-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--rk-space-1);
+  min-width: 0;
+}
+
+.rk-point-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 var(--rk-space-2);
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  background: var(--rk-bg-subtle);
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+  color: var(--rk-text-muted);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.rk-point-tab:hover {
+  color: var(--rk-text);
+}
+
+.rk-point-tab-on,
+.rk-point-tab-on:hover {
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+}
+
+.rk-point-tab-empty {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--rk-border);
+}
+
+/* Screenshot count on a point's chip. */
+.rk-point-shots {
+  position: absolute;
+  top: calc(-1 * var(--rk-space-1));
+  right: calc(-1 * var(--rk-space-1));
+  min-width: 14px;
+  height: 14px;
+  padding: 0 calc(var(--rk-space-1) / 2);
+  border-radius: 7px;
+  background: var(--rk-accent);
+  font-size: var(--rk-font-xs);
+  line-height: 14px;
+  color: var(--rk-accent-text);
+  text-align: center;
+}
+
+.rk-point-add {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--rk-space-1) / 2);
+  height: 26px;
+  padding: 0 var(--rk-space-2);
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  background: transparent;
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  color: var(--rk-accent);
+  cursor: pointer;
+}
+
+.rk-point-add:hover {
+  background: var(--rk-accent-soft);
+}
+
+.rk-point-remove {
+  flex-shrink: 0;
+  height: 26px;
+  padding: 0 var(--rk-space-2);
+  border: 0;
+  border-radius: var(--rk-radius-sm);
+  background: transparent;
+  font: inherit;
+  font-size: var(--rk-font-xs);
+  color: var(--rk-text-muted);
+  cursor: pointer;
+}
+
+.rk-point-remove:hover {
+  background: var(--rk-bg-subtle);
+  color: var(--rk-danger);
+}
+
+/* ── Timeline: each feedback point as a connected card ── */
+
+.rk-timeline {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: var(--rk-space-3) 0;
+  list-style: none;
+}
+
+.rk-timeline-item {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: var(--rk-space-3);
+  padding-bottom: var(--rk-space-3);
+}
+
+.rk-timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.rk-timeline-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rk-timeline-dot {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--rk-bg-subtle);
+  color: var(--rk-text-muted);
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.rk-timeline-dot:hover {
+  color: var(--rk-text);
+}
+
+.rk-timeline-item--active .rk-timeline-dot {
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+}
+
+/* Trail line between dots. The last item has none. */
+.rk-timeline-item:not(:last-child) .rk-timeline-rail::after,
+.rk-timeline-add-item .rk-timeline-rail::after {
+  content: '';
+  flex: 1;
+  width: 1.5px;
+  margin-top: var(--rk-space-1);
+  background: color-mix(in srgb, var(--rk-text) 14%, transparent);
+  border-radius: 2px;
+}
+
+/* Add-point waypoint: looks like a next-step placeholder on the trail. The
+   whole row is one button so the dot and the label both trigger it. */
+.rk-timeline-add-item {
+  display: block;
+  padding-bottom: var(--rk-space-3);
+}
+.rk-timeline-add {
+  display: grid;
+  grid-template-columns: 24px auto;
+  align-items: center;
+  gap: var(--rk-space-3);
+  width: 100%;
+  padding: 2px 10px 2px 0;
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  background: transparent;
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  color: var(--rk-text-muted);
+  text-align: left;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+.rk-timeline-dot--add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1.5px dashed color-mix(in srgb, var(--rk-text) 24%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--rk-text-muted);
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+.rk-timeline-add-label {
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: var(--rk-radius-pill);
+  transition: background 120ms ease;
+}
+.rk-timeline-add:hover {
+  color: var(--rk-text);
+}
+.rk-timeline-add:hover .rk-timeline-dot--add {
+  color: var(--rk-text);
+  border-color: color-mix(in srgb, var(--rk-text) 42%, transparent);
+  background: var(--rk-bg-subtle);
+}
+.rk-timeline-add:hover .rk-timeline-add-label {
+  background: var(--rk-bg-subtle);
+}
+
+.rk-timeline-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rk-space-2);
+  min-width: 0;
+}
+
+.rk-timeline-remove {
+  position: absolute;
+  top: -4px;
+  right: 0;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--rk-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease, background 120ms ease, color 120ms ease;
+}
+
+.rk-timeline-item:hover .rk-timeline-remove,
+.rk-timeline-remove:focus-visible {
+  opacity: 1;
+}
+
+.rk-timeline-remove:hover {
+  background: var(--rk-bg-subtle);
+  color: var(--rk-text);
+}
+
+/* Read-only card for past points: clickable button that activates editing. */
+.rk-timeline-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rk-space-2);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.rk-timeline-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rk-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rk-timeline-body {
+  font-size: var(--rk-font-md);
+  line-height: 1.5;
+  color: var(--rk-text);
+}
+
+.rk-timeline-body--empty {
+  color: color-mix(in srgb, var(--rk-text) 32%, transparent);
+  font-size: var(--rk-font-sm);
+}
+
+.rk-timeline-body p {
+  margin: 0;
+}
+
+.rk-timeline-body p + p {
+  margin-top: calc(var(--rk-space-1) / 2);
+}
+
+/* ── Attachments: square thumbnails (top of the box) ── */
+
+.rk-strip {
+  flex-shrink: 0;
+  padding: 0 0 var(--rk-space-2);
+  background: transparent;
+}
+
+.rk-strip-list {
+  display: flex;
+  gap: var(--rk-space-2);
+  /* Give the row vertical breathing room so hover shadows and the outside
+     remove button don't get clipped by overflow-x. Negative margin keeps the
+     visual height the same. */
+  margin: -12px 0;
+  padding: 12px 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  list-style: none;
+}
+
+/* iOS-style squircle: a modest radius, soft border, lifted by a subtle
+   shadow. Thumbs sit on the dock surface rather than inside a chrome strip. */
+.rk-thumb {
+  position: relative;
+  flex: 0 0 48px;
+  height: 48px;
+  border-radius: 10px;
+  overflow: visible;
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.rk-thumb:hover {
+  transform: translateY(-1px);
+}
+
+.rk-thumb-open {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--rk-border);
+  border-radius: 10px;
+  background: var(--rk-bg-subtle);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  cursor: zoom-in;
+  transition: border-color 120ms ease, box-shadow 180ms ease;
+}
+
+.rk-thumb-open:hover,
+.rk-thumb-open:focus-visible {
+  outline: none;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+}
+
+.rk-thumb-open img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+}
+
+/* Marks an annotated image. */
+.rk-thumb-mark {
+  position: absolute;
+  left: var(--rk-space-1);
+  bottom: var(--rk-space-1);
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--rk-bg);
+  border-radius: 50%;
+  background: var(--rk-danger);
+}
+
+.rk-thumb-remove {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1.5px solid var(--rk-bg-solid, var(--rk-bg));
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.78);
+  color: #ffffff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease, background 120ms ease;
+}
+
+.rk-thumb-remove:hover {
+  background: rgba(15, 23, 42, 0.92);
+}
+
+.rk-thumb:hover .rk-thumb-remove,
+.rk-thumb-remove:focus-visible {
+  opacity: 1;
+}
+
+/* ── Image preview and annotator (over the page) ── */
+
+.rk-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--rk-space-4);
+  background: var(--rk-overlay);
+  pointer-events: auto;
+}
+
+/* Native modal <dialog>s, in the browser's top layer. The preview uses a
+   solid surface: the image inside is the subject, and a translucent card
+   would let the real page bleed through and read as a duplicate of the
+   captured content. The frosted-glass feel still comes from a blurred
+   ::backdrop (page behind) and a soft shadow. */
+.rk-preview,
+.rk-annotator {
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--rk-border);
+  border-radius: var(--rk-radius);
+  background: var(--rk-bg-solid, var(--rk-bg));
+  box-shadow:
+    inset 0 1px 0 var(--rk-glass-highlight, transparent),
+    var(--rk-shadow);
+  color: var(--rk-text);
+  font-family: var(--rk-font);
+  pointer-events: auto; /* the kit's layer turns them off */
+}
+
+.rk-preview[open],
+.rk-annotator[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The dim behind the dialog is heavily frosted so the page behind reads as
+   "paused" and can't be confused with the captured image inside. */
+.rk-preview::backdrop,
+.rk-annotator::backdrop {
+  background: color-mix(in srgb, var(--rk-overlay, rgba(15, 23, 42, 0.55)) 85%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
+}
+
+/* Preview and annotator share the exact same explicit dimensions so switching
+   between the two is purely a content crossfade, nothing resizes. */
+.rk-preview,
+.rk-annotator {
+  width: min(1200px, calc(100vw - var(--rk-space-4) * 2));
+  height: min(900px, calc(100vh - var(--rk-space-4) * 2));
+  max-width: none;
+  max-height: none;
+}
+
+.rk-preview-header {
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-3);
+}
+
+.rk-preview-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--rk-font-md);
+  font-weight: var(--rk-font-weight-medium);
+  color: var(--rk-text);
+}
+
+.rk-preview-annotate {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rk-space-1);
+  height: 32px;
+  padding: 0 var(--rk-space-3);
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  background: var(--rk-bg-subtle);
+  color: var(--rk-text);
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.rk-preview-annotate:hover {
+  background: color-mix(in srgb, var(--rk-text) 10%, transparent);
+}
+
+/* The Done variant: same pill shape as Annotate, filled with the accent so
+   the morph between the two states reads as a state change on the same
+   button rather than a swap. */
+.rk-preview-annotate--done {
+  background: var(--rk-accent);
+  color: var(--rk-accent-text);
+  font-weight: var(--rk-font-weight-medium);
+}
+
+.rk-preview-annotate--done:hover:not(:disabled) {
+  background: var(--rk-accent);
+  filter: brightness(1.05);
+}
+
+.rk-preview-annotate--done:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.rk-preview-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 0 var(--rk-space-3) var(--rk-space-3);
+  overflow: hidden;
+  background: transparent;
+  view-transition-name: rk-preview-surface;
+}
+
+/* The image fills the body: stretched to the body's bounds, with aspect
+   preserved. Soft rounded corners and the muted canvas tint; no border or
+   shadow so it reads as a flat surface, not a lifted card. */
+.rk-preview-img,
+.rk-preview-body img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  object-fit: contain;
+  border: 0;
+  border-radius: 10px;
+  background: var(--rk-bg-subtle);
+}
+
+/* The canvas region: a muted "working surface" below the header. The image
+   sits in a card centred inside; the three control pills live in a separate
+   row below (not floating over the canvas), so the layout reads as three
+   clear sections: header, canvas, controls. */
+.rk-annotator-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin: 0 var(--rk-space-3);
+  overflow: hidden;
+  border-radius: 10px;
+  background-color: var(--rk-bg-subtle);
+  background-image: radial-gradient(color-mix(in srgb, var(--rk-text) 18%, transparent) 1px, transparent 1px);
+  background-size: 14px 14px;
+  background-position: 0 0;
+  touch-action: none;
+  view-transition-name: rk-preview-surface;
+}
+
+.rk-annotator-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-3);
+  view-transition-name: rk-annotator-tools;
+}
+
+/* A card-like frame sitting at the image's exact bounds, giving the annotator
+   the same contained look as the preview. The Konva stage's transparent
+   canvas sits on top and the image renders inside the frame. */
+.rk-annotator-frame {
+  position: absolute;
+  z-index: 0;
+  border: 1px solid var(--rk-border);
+  border-radius: 10px;
+  background: var(--rk-bg-subtle);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  pointer-events: none;
+}
+
+.rk-annotator-done {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rk-space-1);
+}
+
+/* Three pill groups in the bottom controls row: zoom (left), the main
+   toolbar (center), undo/redo/remove (right). All three share the same pill
+   treatment so they read as one toolbar system. */
+.rk-annotator-bar,
+.rk-annotator-actions,
+.rk-annotator-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--rk-space-1);
+  border: 0.5px solid var(--rk-border);
+  border-radius: 999px;
+  background: var(--rk-bg);
+}
+
+.rk-annotator-bar {
+  max-width: 100%;
+}
+
+.rk-annotator-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.rk-annotator-divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: var(--rk-space-4);
+  margin: 0 var(--rk-space-1);
+  background: var(--rk-border);
+}
+
+.rk-annotator-tool {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rk-text);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.rk-annotator-tool:hover:not([aria-disabled='true']) {
+  background: var(--rk-bg-subtle);
+}
+
+.rk-annotator-tool:focus-visible {
+  outline: 2px solid var(--rk-accent);
+  outline-offset: -2px;
+}
+
+.rk-annotator-tool-on,
+.rk-annotator-tool-on:hover:not([aria-disabled='true']) {
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+}
+
+/* aria-disabled rather than disabled, so the tooltip still shows. */
+.rk-annotator-tool[aria-disabled='true'] {
+  color: var(--rk-text-muted);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.rk-annotator-swatch {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 0.5px solid var(--rk-border);
+  border-radius: 50%;
+}
+
+.rk-annotator-color-wrap {
+  position: relative;
+}
+
+/* Opens above the bar. */
+.rk-annotator-colors {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + var(--rk-space-2));
+  display: flex;
+  gap: 2px;
+  padding: var(--rk-space-1);
+  border: 0.5px solid var(--rk-border);
+  border-radius: 999px;
+  background: var(--rk-bg);
+  box-shadow: var(--rk-shadow);
+  transform: translateX(-50%);
+}
+
+.rk-annotator-color {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.rk-annotator-color-on {
+  border-color: var(--rk-accent);
+}
+
+.rk-annotator-zoom {
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+  color: var(--rk-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rk-annotator-zoom-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rk-text);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.rk-annotator-zoom-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--rk-text) 8%, transparent);
+}
+
+.rk-annotator-zoom-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.rk-annotator-zoom-value {
+  min-width: 34px;
+  padding: 0;
+  text-align: center;
+  color: var(--rk-text);
+}
+
+/* Toolbar tooltip: above the hovered button. */
+.rk-annotator-tip {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-1) var(--rk-space-2);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-text);
+  color: var(--rk-bg);
+  font-size: var(--rk-font-xs);
+  font-weight: var(--rk-font-weight-medium);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - var(--rk-space-2)));
+  animation: rk-tip-in 120ms ease-out;
+}
+
+.rk-annotator-tip kbd {
+  padding: 0 var(--rk-space-1);
+  border-radius: calc(var(--rk-radius-sm) / 2);
+  background: color-mix(in srgb, var(--rk-bg) 18%, transparent);
+  font: inherit;
+  opacity: 0.85;
+}
+
+@keyframes rk-tip-in {
+  from { opacity: 0; transform: translate(-50%, calc(-100% - var(--rk-space-1))); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rk-annotator-tip { animation: none; }
+}
+
+/* Typing a text mark: sits exactly where the text will be drawn. */
+.rk-annotator-text {
+  position: absolute;
+  min-width: 160px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  outline: 1px dashed var(--rk-accent);
+  background: transparent;
+  font: inherit;
+  font-weight: var(--rk-font-weight-medium);
+  line-height: 1.25;
+  resize: none;
+  field-sizing: content;
+}
+
+.rk-annotator-loading {
+  margin: 0;
+  padding: var(--rk-space-2) var(--rk-space-3);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-bg);
+  font-size: var(--rk-font-sm);
+  color: var(--rk-text-muted);
+}
+
+/* ── Rich-text editor (bottom of the box) ── */
+
+.rk-editor {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 96px;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+}
+
+.rk-editor:focus-within .rk-format-bar {
+  color: var(--rk-text);
+}
+
+.rk-format-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--rk-space-1) / 2);
+  padding: var(--rk-space-1);
+  margin-bottom: var(--rk-space-2);
+  border-radius: var(--rk-radius-pill);
+  background: var(--rk-bg-subtle);
+  color: var(--rk-text-muted);
+  opacity: 1;
+  transition: opacity 180ms ease, transform 180ms ease, max-height 180ms ease;
+}
+
+/* Progressive disclosure: when the editor is idle and empty, keep the surface
+   clean. Toolbar comes back on focus or once the user has typed something. */
+.rk-editor:not(:focus-within):has(.rk-editor-content p.is-editor-empty:first-child) .rk-format-bar {
+  opacity: 0;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  overflow: hidden;
+  transform: translateY(-4px);
+}
+
+.rk-format-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.rk-format-btn:hover {
+  background: var(--rk-bg-subtle);
+  color: var(--rk-text);
+}
+
+.rk-format-btn-on {
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+}
+
+/* Text-color picker: a toolbar button that opens a small floating palette.
+   Anchors to the trigger button's right edge so the popover opens leftward
+   and never leaks past the dock's right side. */
+.rk-color-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 28px;
+  height: 28px;
+}
+
+.rk-color-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--rk-border);
+  border-radius: var(--rk-radius-pill);
+  background: var(--rk-bg-solid, var(--rk-bg));
+  box-shadow: var(--rk-shadow);
+}
+
+.rk-color-swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: currentColor;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.rk-color-swatch:hover {
+  transform: scale(1.12);
+}
+
+.rk-color-swatch:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--rk-bg-solid, var(--rk-bg)), 0 0 0 4px color-mix(in srgb, currentColor 60%, transparent);
+}
+
+/* "Default" is a hollow ring that reads as "remove color". */
+.rk-color-swatch--default {
+  background: transparent;
+  border: 1.5px solid color-mix(in srgb, var(--rk-text) 30%, transparent);
+  position: relative;
+}
+
+.rk-color-swatch--default::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, transparent calc(50% - 1px), color-mix(in srgb, var(--rk-text) 30%, transparent) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px));
+}
+
+.rk-editor-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.rk-editor-content {
+  min-height: 100%;
+  padding: 0;
+  font-size: var(--rk-font-md);
+  line-height: 1.5;
+  color: var(--rk-text);
+  outline: none;
+}
+
+.rk-editor-content p {
+  margin: 0;
+}
+
+.rk-editor-content ul,
+.rk-editor-content ol {
+  margin: 0;
+  padding-left: var(--rk-space-4);
+}
+
+.rk-editor-content a {
+  color: var(--rk-accent);
+  text-decoration: underline;
+}
+
+.rk-editor-content code {
+  padding: 0 calc(var(--rk-space-1) / 2);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-bg-subtle);
+  font-family: var(--rk-font-mono);
+  font-size: var(--rk-font-sm);
+}
+
+/* Tiptap placeholder: shown on the empty first paragraph. Deliberately lighter
+   than muted body text so it clearly reads as a hint, not real content. */
+.rk-editor-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--rk-text-placeholder, color-mix(in srgb, var(--rk-text) 32%, transparent));
+  pointer-events: none;
+}
+
+.rk-notice {
+  /* Sits at the bottom of the body, just above the toolbar. */
+  margin: auto 0 0;
+  padding-bottom: var(--rk-space-2);
+  font-size: var(--rk-font-sm);
+}
+
+.rk-notice + .rk-extra,
+.rk-extra + .rk-notice {
+  margin-top: 0;
+}
+
+/* ── Sent: a check that draws itself, then what's next ── */
+.rk-done {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* Bottom padding matches the footer's, so Review next lands where Send was. */
+  padding: var(--rk-space-3) 0 var(--rk-space-3);
+  animation: rk-done-in 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* The check and title take the space above Up next and center in it. */
+.rk-done-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* safe: in a short box the content scrolls instead of clipping at the top. */
+  justify-content: safe center;
+  gap: var(--rk-space-1);
+  text-align: center;
+}
+
+.rk-done-check {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: var(--rk-space-2);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--rk-success) 14%, transparent);
+  color: var(--rk-success);
+  animation: rk-done-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* One soft ring that ripples out as the check lands. */
+.rk-done-check::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--rk-success);
+  opacity: 0;
+  animation: rk-done-ring 700ms 180ms ease-out;
+}
+
+.rk-done-tick {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: rk-done-draw 360ms 200ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.rk-done-title {
+  font-size: var(--rk-font-md);
+  font-weight: var(--rk-font-weight-medium);
+  color: var(--rk-text);
+}
+
+.rk-done-detail {
+  font-size: var(--rk-font-sm);
+  color: var(--rk-text-muted);
+}
+
+.rk-next {
+  width: 100%;
+  margin-top: var(--rk-space-3);
+  text-align: left;
+  animation: rk-next-in 360ms 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.rk-next-label {
+  margin-bottom: 6px;
+  font-size: var(--rk-font-xs);
+  color: var(--rk-text-muted);
+}
+
+.rk-next-card {
+  padding: var(--rk-space-3);
+  border: 1px solid var(--rk-border);
+  border-radius: calc(var(--rk-radius-sm) + 4px);
+  background: var(--rk-bg-subtle);
+}
+
+.rk-next-title {
+  overflow: hidden;
+  font-size: var(--rk-font-md);
+  font-weight: var(--rk-font-weight-medium);
+  color: var(--rk-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rk-next-meta {
+  margin-top: 2px;
+  font-size: var(--rk-font-xs);
+  color: var(--rk-text-muted);
+}
+
+.rk-next-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--rk-space-2);
+  margin-top: var(--rk-space-3);
+}
+
+.rk-next-dismiss,
+.rk-next-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 var(--rk-space-3);
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+  cursor: pointer;
+  transition: background-color 120ms ease, filter 120ms ease;
+}
+
+.rk-next-dismiss {
+  background: none;
+  color: var(--rk-text-muted);
+}
+
+.rk-next-dismiss:hover {
+  background: var(--rk-bg-subtle);
+  color: var(--rk-text);
+}
+
+.rk-next-go {
+  padding-right: var(--rk-space-2);
+  background: var(--rk-accent);
+  color: var(--rk-accent-text);
+}
+
+.rk-next-go:hover {
+  filter: brightness(1.05);
+}
+
+.rk-next-arrow {
+  display: inline-flex;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.rk-next-go:hover .rk-next-arrow {
+  transform: translateX(2px);
+}
+
+@keyframes rk-done-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes rk-done-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes rk-done-ring {
+  0% { opacity: 0.45; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+
+@keyframes rk-done-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* pointer-events flips halfway through, so a double-click on the button that
+   was under the pointer (Send, Sign off) can't land on Review next. */
+@keyframes rk-next-in {
+  from { opacity: 0; transform: translateY(8px); pointer-events: none; }
+  to { opacity: 1; transform: none; pointer-events: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rk-done,
+  .rk-done-check,
+  .rk-next {
+    animation: none;
+  }
+  .rk-done-check::after {
+    display: none;
+  }
+  .rk-done-tick {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+.rk-notice-error {
+  color: var(--rk-danger);
+}
+
+.rk-notice-ok {
+  color: var(--rk-success);
+}
+
+.rk-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-2) var(--rk-space-3) var(--rk-space-3);
+  min-width: 0;
+}
+
+.rk-tools {
+  display: flex;
+  gap: var(--rk-space-1);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.rk-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rk-space-1);
+  height: 32px;
+  padding: 0 var(--rk-space-2);
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  background: transparent;
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  color: var(--rk-text-muted);
+  cursor: pointer;
+  flex: 0 1 auto;
+  min-width: 0;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.rk-tool span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rk-tool:hover:not(:disabled) {
+  background: var(--rk-bg-subtle);
+  color: var(--rk-text);
+}
+
+.rk-tool:disabled,
+.rk-send:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.rk-send {
+  height: 32px;
+  padding: 0 var(--rk-space-4);
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  background: var(--rk-accent);
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+  color: var(--rk-accent-text);
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: filter 120ms ease, transform 120ms ease;
+}
+
+.rk-send:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+/* Split Send: the main action plus a chevron for the host's finish action. */
+.rk-send-group {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 1px;
+}
+
+.rk-send-main {
+  border-radius: var(--rk-radius-pill) 0 0 var(--rk-radius-pill);
+  padding-right: var(--rk-space-3);
+}
+
+.rk-send-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 var(--rk-radius-pill) var(--rk-radius-pill) 0;
+  padding: 0 var(--rk-space-2) 0 6px;
+}
+
+.rk-send-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 2;
+  min-width: 100%;
+  padding: 4px;
+  border: 1px solid var(--rk-border);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-bg-solid, var(--rk-bg));
+  box-shadow: var(--rk-shadow);
+}
+
+.rk-send-menu-item {
+  display: block;
+  width: 100%;
+  padding: 6px var(--rk-space-2);
+  border: 0;
+  border-radius: calc(var(--rk-radius-sm) - 2px);
+  background: none;
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  color: var(--rk-text);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rk-send-menu-item:hover,
+.rk-send-menu-item:focus-visible {
+  background: var(--rk-bg-subtle);
+}
+
+@container (max-width: 380px) {
+  .rk-tool {
+    padding: 0 var(--rk-space-1);
+  }
+  .rk-tool span {
+    display: none;
+  }
+}
+
+
+.rk-drop-overlay {
+  position: absolute;
+  inset: var(--rk-space-2);
+  /* Above the floating header and footer. */
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--rk-accent);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-accent-soft);
+  font-size: var(--rk-font-md);
+  color: var(--rk-accent);
+  pointer-events: none;
+}
+
+/* Collapsed: a tab on the wall it was dropped against. */
+.rk-tab {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--rk-space-1);
+  width: 28px;
+  padding: var(--rk-space-2) 0;
+  border: 0.5px solid var(--rk-border);
+  background: var(--rk-bg);
+  box-shadow: var(--rk-shadow);
+  color: var(--rk-accent);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.rk-tab-left {
+  left: 0;
+  border-left: 0;
+  border-radius: 0 var(--rk-radius-sm) var(--rk-radius-sm) 0;
+}
+
+.rk-tab-right {
+  right: 0;
+  border-right: 0;
+  border-radius: var(--rk-radius-sm) 0 0 var(--rk-radius-sm);
+}
+
+.rk-tab:hover {
+  background: var(--rk-accent-soft);
+}
+
+.rk-tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rk-accent);
+}
+
+/* While dragging near a wall: shows where it will tuck in. */
+.rk-edge-hint {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--rk-accent);
+  opacity: 0.6;
+}
+
+.rk-edge-hint-left {
+  left: 0;
+}
+
+.rk-edge-hint-right {
+  right: 0;
+}
+
+/* ── Element picker overlay (attached to <body>) ── */
+
+.rk-picking,
+.rk-picking * {
+  cursor: crosshair !important;
+}
+
+/* ── Inline comment at a picked element ── */
+.rk-inline-target,
+.rk-inline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--rk-z);
+}
+
+.rk-inline-target {
+  border: 1.5px solid var(--rk-accent);
+  border-radius: 4px;
+  background: var(--rk-pick-fill);
+  pointer-events: none;
+  animation: rk-inline-target-in 200ms ease-out;
+}
+
+.rk-inline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-3);
+  border: 1px solid var(--rk-border);
+  border-radius: calc(var(--rk-radius-sm) + 6px);
+  background: var(--rk-bg);
+  -webkit-backdrop-filter: blur(var(--rk-glass-blur, 24px)) saturate(var(--rk-glass-saturate, 180%));
+  backdrop-filter: blur(var(--rk-glass-blur, 24px)) saturate(var(--rk-glass-saturate, 180%));
+  box-shadow: var(--rk-shadow);
+  font-family: var(--rk-font);
+  color: var(--rk-text);
+  pointer-events: auto;
+}
+
+.rk-inline > * {
+  animation: rk-inline-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.rk-inline-element {
+  align-self: flex-start;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 2px 8px;
+  border-radius: var(--rk-radius-pill);
+  background: var(--rk-accent-soft);
+  font-family: var(--rk-font-mono);
+  font-size: var(--rk-font-xs);
+  color: var(--rk-accent);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rk-inline-input {
+  width: 100%;
+  min-height: 64px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font: inherit;
+  font-size: var(--rk-font-md);
+  line-height: 1.45;
+  color: var(--rk-text);
+}
+
+.rk-inline-input::placeholder {
+  color: var(--rk-text-muted);
+}
+
+.rk-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-1);
+}
+
+.rk-inline-hint {
+  flex: 1;
+  font-size: var(--rk-font-xs);
+  color: var(--rk-text-muted);
+}
+
+.rk-inline-cancel,
+.rk-inline-add {
+  height: 28px;
+  padding: 0 var(--rk-space-3);
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+  cursor: pointer;
+  transition: background-color 120ms ease, filter 120ms ease;
+}
+
+.rk-inline-cancel {
+  background: none;
+  color: var(--rk-text-muted);
+}
+
+.rk-inline-cancel:hover {
+  background: var(--rk-bg-subtle);
+  color: var(--rk-text);
+}
+
+.rk-inline-add {
+  background: var(--rk-accent);
+  color: var(--rk-accent-text);
+}
+
+.rk-inline-add:hover {
+  filter: brightness(1.05);
+}
+
+@keyframes rk-inline-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes rk-inline-target-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rk-inline > *,
+  .rk-inline-target {
+    animation: none;
+  }
+}
+
+.rk-pick-box {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--rk-z);
+  display: none;
+  border: 1px solid var(--rk-accent);
+  border-radius: 2px;
+  background: var(--rk-pick-fill);
+  pointer-events: none;
+  transition: transform 60ms ease-out, width 60ms ease-out, height 60ms ease-out;
+}
+
+.rk-pick-label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--rk-z);
+  display: none;
+  padding: calc(var(--rk-space-1) / 2) var(--rk-space-1);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-accent);
+  font-family: var(--rk-font);
+  font-size: var(--rk-font-xs);
+  color: var(--rk-accent-text);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.rk-pick-hint {
+  position: fixed;
+  top: var(--rk-space-3);
+  left: 50%;
+  z-index: var(--rk-z);
+  padding: var(--rk-space-2) var(--rk-space-3);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-text);
+  box-shadow: var(--rk-shadow);
+  font-family: var(--rk-font);
+  font-size: var(--rk-font-sm);
+  color: var(--rk-bg);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rk-pick-box {
+    transition: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Feedback drawer: a reviewer's queue, separate from the ReviewDock. Slides
+   in from the right edge and holds tabbed lists of what-needs-feedback,
+   in-progress reviews, and submitted reviews. */
+
+.rk-fb-layer {
+  pointer-events: auto;
+}
+
+.rk-fb-scrim {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--rk-overlay, rgba(15, 23, 42, 0.55)) 55%, transparent);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  animation: rk-fb-scrim-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes rk-fb-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.rk-fb-panel {
+  position: fixed;
+  inset: 0 0 0 auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: min(440px, 100vw);
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--rk-border);
+  background: var(--rk-bg);
+  -webkit-backdrop-filter: blur(var(--rk-glass-blur, 24px)) saturate(var(--rk-glass-saturate, 180%));
+  backdrop-filter: blur(var(--rk-glass-blur, 24px)) saturate(var(--rk-glass-saturate, 180%));
+  box-shadow: var(--rk-shadow);
+  color: var(--rk-text);
+  font-family: var(--rk-font);
+  animation: rk-fb-panel-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes rk-fb-panel-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .rk-fb-panel {
+    background: var(--rk-bg-solid, var(--rk-bg));
+  }
+}
+
+.rk-fb-header {
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-3);
+}
+
+.rk-fb-title {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.rk-fb-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-1);
+}
+
+.rk-fb-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 var(--rk-space-3);
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  background: var(--rk-accent);
+  color: var(--rk-accent-text);
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+  cursor: pointer;
+  transition: filter 120ms ease;
+}
+
+.rk-fb-start:hover {
+  filter: brightness(1.05);
+}
+
+/* Tabs. Pill group matching the toolbar language. */
+.rk-fb-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 0 var(--rk-space-3) var(--rk-space-3);
+  padding: 3px;
+  border-radius: var(--rk-radius-pill);
+  background: var(--rk-bg-subtle);
+}
+
+.rk-fb-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--rk-space-1);
+  height: 32px;
+  padding: 0 var(--rk-space-2);
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  background: transparent;
+  color: var(--rk-text-muted);
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.rk-fb-tab:hover {
+  color: var(--rk-text);
+}
+
+.rk-fb-tab-on,
+.rk-fb-tab-on:hover {
+  background: var(--rk-bg);
+  color: var(--rk-text);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.rk-fb-tab-count {
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: var(--rk-radius-pill);
+  background: color-mix(in srgb, var(--rk-text) 10%, transparent);
+  color: var(--rk-text);
+  font-size: 11px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.rk-fb-tab-on .rk-fb-tab-count {
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+}
+
+/* The scrollable list. */
+.rk-fb-list {
+  flex: 1;
+  margin: 0;
+  list-style: none;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rk-space-2);
+  padding: 0 var(--rk-space-3) var(--rk-space-3);
+  overflow-y: auto;
+}
+
+.rk-fb-list > li {
+  display: flex;
+  flex-direction: column;
+}
+
+.rk-fb-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--rk-space-1);
+  padding: var(--rk-space-8) var(--rk-space-3);
+  text-align: center;
+}
+
+.rk-fb-empty-title {
+  font-size: var(--rk-font-md);
+  font-weight: var(--rk-font-weight-medium);
+  color: var(--rk-text);
+}
+
+.rk-fb-empty-body {
+  font-size: var(--rk-font-sm);
+  line-height: 20px;
+  color: var(--rk-text-muted);
+  max-width: 300px;
+}
+
+/* Each item card. */
+.rk-fb-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-3);
+  border: 1px solid var(--rk-border);
+  border-radius: 14px;
+  background: var(--rk-bg);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease, border-color 120ms ease;
+}
+
+.rk-fb-card:hover {
+  border-color: color-mix(in srgb, var(--rk-text) 14%, transparent);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.rk-fb-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--rk-space-2);
+}
+
+.rk-fb-card-title {
+  flex: 1;
+  font-size: var(--rk-font-md);
+  font-weight: var(--rk-font-weight-medium);
+  color: var(--rk-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rk-fb-card-target {
+  padding: 2px 8px;
+  border-radius: var(--rk-radius-pill);
+  background: var(--rk-bg-subtle);
+  color: var(--rk-text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.rk-fb-card-body {
+  font-size: var(--rk-font-sm);
+  line-height: 20px;
+  color: var(--rk-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rk-fb-card-thumbs {
+  display: flex;
+  gap: 6px;
+}
+
+.rk-fb-card-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--rk-bg-subtle);
+  border: 1px solid var(--rk-border);
+}
+
+.rk-fb-card-thumb--more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: none;
+  color: var(--rk-text-muted);
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+}
+
+.rk-fb-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--rk-text-muted);
+}
+
+.rk-fb-card-cta {
+  margin-left: auto;
+  display: inline-flex;
+  color: var(--rk-text-muted);
+}
+
+/* Trigger for a host's nav. */
+.rk-fb-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rk-space-1);
+  height: 32px;
+  padding: 0 var(--rk-space-3);
+  border: 1px solid var(--rk-border);
+  border-radius: var(--rk-radius-pill);
+  background: var(--rk-bg);
+  color: var(--rk-text);
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.rk-fb-trigger:hover {
+  background: var(--rk-bg-subtle);
+}
+
+.rk-fb-trigger-badge {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: var(--rk-radius-pill);
+  background: var(--rk-accent);
+  color: var(--rk-accent-text);
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

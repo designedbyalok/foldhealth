@@ -8,18 +8,18 @@ import {
 } from './AlertDialogPrimitives';
 import { Icon } from '../Icon/Icon';
 import { Button } from '../Button/Button';
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
 
 const VARIANT_DEFAULTS = {
-  warning: { icon: 'solar:danger-triangle-linear', iconColor: 'var(--status-error)', button: 'danger' },
-  destructive: { icon: 'solar:danger-circle-bold', iconColor: 'var(--status-error)', button: 'danger' },
-  primary: { icon: 'solar:info-circle-linear', iconColor: 'var(--primary-300)', button: 'primary' },
-  // `error` retained as an alias for existing callers — same look as `warning`.
-  error: { icon: 'solar:danger-triangle-linear', iconColor: 'var(--status-error)', button: 'danger' },
+  warning: { icon: 'solar:danger-triangle-linear', iconColor: 'var(--status-error)', button: { variant: 'soft', tone: 'danger' } },
+  destructive: { icon: 'solar:danger-circle-bold', iconColor: 'var(--status-error)', button: { variant: 'soft', tone: 'danger' } },
+  primary: { icon: 'solar:info-circle-linear', iconColor: 'var(--primary-300)', button: { variant: 'solid', tone: 'primary' } },
+  // `error` retained as an alias for existing callers, same look as `warning`.
+  error: { icon: 'solar:danger-triangle-linear', iconColor: 'var(--status-error)', button: { variant: 'soft', tone: 'danger' } },
 };
 
 /**
- * Reusable confirmation dialog — matches Fold Health design system.
+ * Reusable confirmation dialog: matches Fold Health design system.
  *
  * Pick a `variant` for the canonical look, or override individual props
  * (icon, iconColor, confirmLabel) when a specific caller needs it.
@@ -34,10 +34,13 @@ const VARIANT_DEFAULTS = {
  * @param {string}   props.title       – Dialog heading.
  * @param {string}   props.description – Supporting text.
  * @param {string}   props.confirmLabel – Label for the primary action button.
- * @param {string}   props.cancelLabel  – Label for the cancel button.
+ * @param {string|null} props.cancelLabel – Label for the cancel button. `null` leaves it out,
+ *   for a notice with a single acknowledge button ("Okay, understood").
  * @param {function} props.onConfirm   – Called when user clicks the primary action.
  * @param {function} props.onCancel    – Called when user clicks cancel or overlay.
  * @param {boolean}  props.loading     – If true, disable buttons and show loading text.
+ * @param {boolean}  [props.confirmDisabled=false] – Keeps the primary action off until
+ *   the caller's own input (e.g. a required choice in `children`) is filled in.
  * @param {string}   [props.overlayClassName] – Override the scrim utility class
  *   (defaults to the shared `bg-black/40`), e.g. `bg-black/25` for a lighter
  *   backdrop.
@@ -51,7 +54,7 @@ const VARIANT_DEFAULTS = {
  * @param {'center'|'start'} [props.align='center'] – 'start' lays it out
  *   left-aligned: the icon inline with the title, the description under them,
  *   then the checkbox and the buttons (Figma Dialog Box 2, 2810:68907).
- * @param {'S'|'L'|'XL'} [props.buttonSize='L']
+ * @param {'sm'|'md'|'lg'} [props.buttonSize='md']
  * @param {function} [props.onClose] – Adds a close (X) beside the title. When
  *   set, the X, Escape and the overlay call it instead of onCancel, so the
  *   cancel button can be a real second choice (e.g. "Save as Draft").
@@ -60,6 +63,9 @@ const VARIANT_DEFAULTS = {
  *   answer depends on), shown above the checkbox and buttons. Pairs with
  *   align="start".
  * @param {string}   [props.className] – Extra class on the dialog box.
+ * @param {boolean}  [props.heroIcon=false] – Centred layout only: shows the icon
+ *   large, in a ringed circle, with the close (X) in the top-right corner
+ *   (Figma consent dialogs, 29:7133).
  */
 export function ConfirmDialog({
   variant = 'warning',
@@ -72,14 +78,16 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
   loading = false,
+  confirmDisabled = false,
   overlayClassName,
   inline = false,
   checkbox,
   align = 'center',
-  buttonSize = 'L',
+  buttonSize = 'md',
   className,
   onClose,
   children,
+  heroIcon = false,
 }) {
   const preset = VARIANT_DEFAULTS[variant] ?? VARIANT_DEFAULTS.warning;
   const resolvedIcon = icon ?? preset.icon;
@@ -91,11 +99,11 @@ export function ConfirmDialog({
   const Description = inline ? 'p' : AlertDialogDescription;
   const start = align === 'start';
   const boxClass = [
-    start ? 'flex flex-col items-stretch gap-6 p-5 max-w-[400px]' : 'flex flex-col items-center gap-4 p-5 max-w-[340px]',
+    start ? 'flex flex-col items-stretch gap-6 p-5 max-w-[400px]' : `flex flex-col items-center gap-4 p-5 ${heroIcon ? 'max-w-[350px]' : 'max-w-[340px]'}`,
     className,
   ].filter(Boolean).join(' ');
 
-  const iconEl = resolvedIcon === false ? null : <Icon name={resolvedIcon} size={24} color={resolvedIconColor} />;
+  const iconEl = resolvedIcon === false ? null : <Icon name={resolvedIcon} size={heroIcon ? 32 : 24} color={resolvedIconColor} />;
   const closeEl = onClose && (
     <button type="button" aria-label="Close" onClick={onClose} className="ml-auto flex p-0.5 border-0 bg-transparent cursor-pointer text-[var(--neutral-300)] hover:text-[var(--neutral-400)]">
       <Icon name="solar:close-linear" size={16} />
@@ -119,11 +127,13 @@ export function ConfirmDialog({
   );
   const footerEl = (
     <AlertDialogFooter className="flex-row justify-center w-full gap-2 mt-0">
-      <Button variant="secondary" size={buttonSize} onClick={onCancel} disabled={loading} className="flex-1">
-        {cancelLabel}
-      </Button>
-      <Button variant={preset.button} size={buttonSize} onClick={onConfirm} disabled={loading} className="flex-1">
-        {loading ? 'Processing…' : confirmLabel}
+      {cancelLabel != null && (
+        <Button variant="outline" size={buttonSize} onClick={onCancel} disabled={loading} className="flex-1">
+          {cancelLabel}
+        </Button>
+      )}
+      <Button variant={preset.button.variant} tone={preset.button.tone} size={buttonSize} onClick={onConfirm} disabled={confirmDisabled} className="flex-1" loading={loading}>
+        {confirmLabel}
       </Button>
     </AlertDialogFooter>
   );
@@ -146,7 +156,14 @@ export function ConfirmDialog({
     </>
   ) : (
     <>
-      <div className="flex items-center justify-center w-6 h-6 shrink-0">{iconEl}</div>
+      {heroIcon && onClose && <div className="absolute top-4 right-4">{closeEl}</div>}
+      {heroIcon ? (
+        <div className="flex items-center justify-center w-24 h-24 shrink-0 rounded-full border border-[var(--neutral-100)]">
+          <div className="flex items-center justify-center w-[76px] h-[76px] rounded-full bg-[var(--neutral-50)] border border-[var(--neutral-100)]">{iconEl}</div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center w-6 h-6 shrink-0">{iconEl}</div>
+      )}
       <AlertDialogHeader className="items-center text-center sm:text-center gap-1">
         {titleEl}
         {descriptionEl}

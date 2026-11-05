@@ -1,0 +1,48 @@
+/* The review cadence, laid out in the care plan overview's Review Cadence tab. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.detail {
+  display: flex;
+  gap: var(--space-2);
+  font-size: var(--font-base);
+}
+.detailLabel {
+  width: 104px;
+  flex-shrink: 0;
+  color: var(--placeholder-text);
+}
+.detailValue {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--neutral-400);
+}
+.detailValue strong { font-weight: 500; }
+.rules {
+  margin: 0;
+  padding: var(--space-2) 0 0 var(--space-4);
+  border-top: 0.5px solid var(--neutral-100);
+  font-size: var(--font-base);
+  color: var(--placeholder-text);
+  list-style: disc;
+}
+.rules li + li { margin-top: var(--space-1); }
+.hint {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.spacer { flex: 1; }

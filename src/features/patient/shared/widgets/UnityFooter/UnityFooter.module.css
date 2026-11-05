@@ -3,8 +3,8 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
+  /* No rule above: the section's content sits in its own bordered box. */
   padding-top: var(--space-2);
-  border-top: 0.5px solid var(--neutral-100);
 }
 
 .left {

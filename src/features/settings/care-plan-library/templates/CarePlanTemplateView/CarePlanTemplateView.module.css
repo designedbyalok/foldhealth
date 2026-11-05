@@ -1,9 +1,10 @@
-/* Same full-pane card as New Care Plan (CarePlanCreateView) — a template is
-   read and edited on the screen it was authored on. */
+/* Same full-pane card as New Care Plan (CarePlanCreateView): a template is
+   read and edited on the screen it was authored on. It fills the body slot;
+   the floating shell no longer wraps it in a second card. */
 .view {
   flex: 1;
+  min-width: 0;
   min-height: 0;
-  margin: var(--space-2);
   display: flex;
   align-items: stretch;
   background: var(--neutral-0);
@@ -48,11 +49,6 @@
   flex-direction: column;
   gap: var(--space-1);
 }
-.radioGroup {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
 .fieldLabel {
   font-size: var(--font-base);
   color: var(--neutral-200);
@@ -86,6 +82,13 @@
   background: var(--neutral-150);
   flex-shrink: 0;
 }
+/* Common / category switch and the open category's criteria. */
+.categories {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .planBody {
   flex: 1;
   min-height: 0;

@@ -75,9 +75,9 @@ export function QuickActionsCard({ overview, actions }) {
       title="Quick Actions"
       actions={(
         <>
-          <Button variant="ghost" size="S" onClick={(e) => setCustomizeRect(e.currentTarget.getBoundingClientRect())}>Customize</Button>
+          <Button variant="ghost" size="sm" onClick={(e) => setCustomizeRect(e.currentTarget.getBoundingClientRect())}>Pin actions</Button>
           {overflow.length > 0 && (
-            <ActionButton icon="solar:menu-dots-bold" size="S" tooltip="More actions" onClick={(e) => setMenuRect(e.currentTarget.getBoundingClientRect())} />
+            <ActionButton icon="solar:menu-dots-bold" size="sm" tooltip="More actions" onClick={(e) => setMenuRect(e.currentTarget.getBoundingClientRect())} />
           )}
         </>
       )}

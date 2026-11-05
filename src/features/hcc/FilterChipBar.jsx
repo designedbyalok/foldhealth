@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
-import { FilterBar } from '../../components/FilterBar/FilterBar';
+import { FilterBar } from '../worklists/FilterBar';
 import { RangeSliderPopover } from '../../components/RangeSliderPopover/RangeSliderPopover';
 import { DateRangePopover } from '../../components/DateRangePopover/DateRangePopover';
 import { dobRangeSummary } from '../../components/DateRangePopover/yearSpan';
@@ -17,7 +17,7 @@ import {
  * supports it, so the HCC worklist tbody crossfades between filter sets
  * (paired with the view-transition-name in HccWorklistRow.module.css).
  * Falls back to a direct call when the API is unavailable (Firefox pre-129,
- * Safari pre-18) — filter still applies, just without the crossfade.
+ * Safari pre-18): filter still applies, just without the crossfade.
  *
  * Rapid filter changes abort in-flight transitions; the API surfaces that
  * as InvalidStateError on the ready/finished promises. We swallow those
@@ -56,6 +56,14 @@ const STORE_SELECTORS_BY_LIST = {
     setVisible:    'setHedisVisibleFilterKeys',
     clearVisible:  'clearHedisVisibleFilters',
   },
+  Pharmacy: {
+    filters:       'pharmacyFilters',
+    setFilter:     'setPharmacyFilter',
+    clearFilters:  'clearPharmacyFilters',
+    visibleKeys:   'pharmacyVisibleFilterKeys',
+    setVisible:    'setPharmacyVisibleFilterKeys',
+    clearVisible:  'clearPharmacyVisibleFilters',
+  },
 };
 
 export function FilterChipBar({
@@ -65,6 +73,7 @@ export function FilterChipBar({
   primaryFilterKeys = HCC_PRIMARY_FILTER_KEYS,
   dynamicOpts: dynamicOptsProp,
   onSaveFilter,
+  collapsed = false,
 }) {
   const sel = STORE_SELECTORS_BY_LIST[list] || STORE_SELECTORS_BY_LIST.HCC;
 
@@ -138,7 +147,7 @@ export function FilterChipBar({
     return def?.opts || [];
   };
 
-  // FilterDefs for the shared bar — moreFilterItems shape ({k,label}) plus a
+  // FilterDefs for the shared bar: moreFilterItems shape ({k,label}) plus a
   // `primary` flag driven by PRIMARY_FILTER_KEYS, and matching `key` prop.
   const primaryKeySet = useMemo(() => new Set(primaryFilterKeys), [primaryFilterKeys]);
 
@@ -162,7 +171,7 @@ export function FilterChipBar({
   // Toggle a chip's visibility from the More Filters popover. Base priority:
   //   1. The user's persisted custom set (they've customized before).
   //   2. Whatever FilterBar is *currently* showing after auto-fit narrowed
-  //      the row (passed in as `currentVisible`) — so toggling one chip on
+  //      the row (passed in as `currentVisible`): so toggling one chip on
   //      only reveals that chip, not every hidden primary at once.
   //   3. Primary set (very first open, before auto-fit measured anything).
   const toggleVisible = (k, currentVisible) => {
@@ -191,7 +200,7 @@ export function FilterChipBar({
     const def = filterDefMap[k];
     const vals = filters[k] || [];
     const active = vals.length > 0;
-    const summary = active ? summarize(k, vals) : undefined;
+    const summary = active ? summarize(k, vals, def) : undefined;
     const setVals = list === 'HCC'
       ? (next) => withViewTransition(() => setFilter(k, next))
       : (next) => setFilter(k, next);
@@ -203,8 +212,8 @@ export function FilterChipBar({
           active={false}
           renderPopover={({ onClose }) => {
             showToast(
-              def ? `Filter "${item.label}" popover — not yet wired`
-                  : `Filter "${item.label}" — coming soon`
+              def ? `Filter "${item.label}" popover: not yet wired`
+                  : `Filter "${item.label}", coming soon`
             );
             onClose();
             return null;
@@ -288,6 +297,7 @@ export function FilterChipBar({
 
   return (
     <FilterBar
+      collapsed={collapsed}
       autoFit
       // HCC and HEDIS follow the filter spec: primaries always show; More
       // Filters lists the secondary filters by domain.
@@ -319,11 +329,11 @@ export function FilterChipBar({
   );
 }
 
-function summarize(k, vals) {
-  if (k === 'dec' && vals.length >= 2) return `${vals[0]}–${vals[1]}`;
+function summarize(k, vals, def) {
+  if ((k === 'dec' || def?.type === 'range') && vals.length >= 2) return `${vals[0]}–${vals[1]}`;
   // DOB: a year pick reads "1950 – 1960" (or "1950"); a custom range keeps the year.
   if (k === 'dob' && vals.length >= 2) return dobRangeSummary(vals);
-  if (['cd', 'dos', 'dob', 'lvd', 'lastOutreachDate'].includes(k) && vals.length >= 2) {
+  if ((['cd', 'dos', 'dob', 'lvd', 'lastOutreachDate'].includes(k) || def?.type === 'date') && vals.length >= 2) {
     return `${formatShortDate(vals[0])} – ${formatShortDate(vals[1])}`;
   }
   if (vals.length > 2) return `${vals[0]} +${vals.length - 1}`;

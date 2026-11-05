@@ -20,11 +20,11 @@ import styles from './ClaimPreviewDrawer.module.css';
 // Status → badge variant. Keep in sync with the DiagPanel version so a
 // "Paid" claim reads the same in the tab and in this drawer.
 const CLAIM_STATUS_BADGE = {
-  Paid:     'status-completed',
-  Pending:  'status-queued',
-  Billed:   'status-scheduled',
-  Denied:   'status-failed',
-  Rejected: 'status-failed',
+  Paid:     'success',
+  Pending:  'warning',
+  Billed:   'info',
+  Denied:   'danger',
+  Rejected: 'danger',
 };
 
 /**
@@ -45,7 +45,7 @@ export function ClaimPreviewDrawer() {
 
   if (!open || !member) return null;
 
-  // "View Gaps" hand-off — closes this drawer and opens the DiagPanel for
+  // "View Gaps" hand-off: closes this drawer and opens the DiagPanel for
   // the member, pinned to this DOS. Gap context lives in the DiagPanel;
   // the button below is the explicit entry point from this claim view.
   const viewGaps = () => {
@@ -61,8 +61,8 @@ export function ClaimPreviewDrawer() {
       headerRight={(
         <>
           <Button
-            variant="tertiary"
-            size="S"
+            variant="soft"
+            size="sm"
             leadingIcon="solar:document-medicine-linear"
             onClick={viewGaps}
           >
@@ -72,7 +72,7 @@ export function ClaimPreviewDrawer() {
         </>
       )}
       banner={(
-        // Full-bleed banner slot — hugs the drawer edges (no side padding),
+        // Full-bleed banner slot: hugs the drawer edges (no side padding),
         // treated as its own entity above the padded Claim Details body.
         <PatientBanner
           initials={member.in}
@@ -91,7 +91,7 @@ export function ClaimPreviewDrawer() {
         <section className={styles.claimSection}>
           <div className={styles.claimSectionHead}>
             <span className={styles.claimSectionTitle}>Claim Information</span>
-            <Badge size="M" variant={CLAIM_STATUS_BADGE[claim.status] || 'status-scheduled'} label={claim.status} />
+            <Badge size="md" tone={CLAIM_STATUS_BADGE[claim.status] || 'info'} label={claim.status} />
           </div>
           <div className={styles.claimInfoGrid}>
             <ClaimField label="Claims Number" value={claim.number} />
@@ -153,18 +153,18 @@ export function ClaimPreviewDrawer() {
   );
 }
 
-// ── Small composition helpers (kept local — single-use UI) ─────────────
+// ── Small composition helpers (kept local: single-use UI) ─────────────
 
 function ClaimField({ label, value }) {
   return (
     <div className={styles.claimField}>
       <span className={styles.claimFieldLabel}>{label}</span>
-      <span className={styles.claimFieldValue}>{value || '—'}</span>
+      <span className={styles.claimFieldValue}>{value || '-'}</span>
     </div>
   );
 }
 
-// ── Mock claim shape — replace with a real fetch when the claims service
+// ── Mock claim shape: replace with a real fetch when the claims service
 // lands. Uses the shared `deriveClaimId` so the number rendered here
 // matches the one shown in the DOS-source badge tooltip.
 function buildClaim(member, dosDate) {

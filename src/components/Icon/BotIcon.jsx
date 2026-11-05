@@ -2,8 +2,8 @@
  * Custom bot icon for Invoke Agent actions.
  *
  * @param {object}  props
- * @param {number}  [props.size=24]    — Width & height in px
- * @param {string}  [props.color='#6F7A90'] — Fill color
+ * @param {number}  [props.size=24], Width & height in px
+ * @param {string}  [props.color='#6F7A90']: Fill color
  * @param {string}  [props.className]
  */
 export function BotIcon({ size = 24, color = '#6F7A90', className, ...rest }) {

@@ -3,7 +3,7 @@
 // Given a (patient, DOS, role), `pickAssignee` walks the per-role priority
 // chain defined in the user story and returns the staff member that should
 // be assigned, plus a short `reason` describing which rule fired. The engine
-// is **pure** — no React, no Zustand. The store calls it during transition
+// is **pure**: no React, no Zustand. The store calls it during transition
 // actions (see `lifecycle.js`).
 //
 // Astrana invariant (Global Assignment Rule):
@@ -25,13 +25,13 @@ import {
 // ── Helpers ──────────────────────────────────────────────────────────────
 
 // Find an assignee that's already been pinned to this patient at the given
-// role — looks across all DOSs the engine has previously assigned.
+// role: looks across all DOSs the engine has previously assigned.
 // `patientHistory[patientId]?.[role]` is `{ assignee, since } | undefined`.
 function existingAssigneeForPatient(patientHistory, patientId, role) {
   return patientHistory?.[patientId]?.[role]?.assignee || null;
 }
 
-// Workload balancer — pick the staff member with the most spare capacity.
+// Workload balancer: pick the staff member with the most spare capacity.
 // `workload[staffId]` is the current count of DOSs assigned to that person.
 // Ties are broken by `id` (alphabetical) so output is deterministic.
 function pickByWorkload(candidates, workload = {}) {
@@ -48,7 +48,7 @@ function pickByWorkload(candidates, workload = {}) {
   return scored[0].s;
 }
 
-// Deterministic "random" fallback — keyed off (patientId, dosDate) so the
+// Deterministic "random" fallback: keyed off (patientId, dosDate) so the
 // same DOS always lands on the same person if the engine is re-run, but the
 // distribution is still spread across the pool.
 function pickByStableRandom(candidates, seed) {
@@ -69,7 +69,7 @@ function pickSupport(ctx) {
   const pool = activeStaffForRole('support');
   if (!pool.length) return null;
 
-  // Priority 1 — TIN mapping (provider TIN on the DOS / member)
+  // Priority 1: TIN mapping (provider TIN on the DOS / member)
   const tin = dos?.tin || patient?.tin || null;
   const tinMatches = staffForTin('support', tin);
   if (tinMatches.length === 1) {
@@ -80,13 +80,13 @@ function pickSupport(ctx) {
     return { staff: w, reason: `tin:${tin}+workload` };
   }
 
-  // Priority 2 — workload balance across the full pool
+  // Priority 2: workload balance across the full pool
   if (!opts.skipWorkload) {
     const w = pickByWorkload(pool, workload);
     if (w) return { staff: w, reason: 'workload' };
   }
 
-  // Fallback — deterministic random
+  // Fallback: deterministic random
   const fb = pickByStableRandom(pool, `support::${patient?.id}::${dos?.date}::${dos?.renderingProvider}::${dos?.pos}`);
   return fb ? { staff: fb, reason: 'fallback' } : null;
 }
@@ -121,7 +121,7 @@ function pickCoder(ctx) {
 
 // Shared priority chain for AC-3 / AC-4 (Reviewer / Reviewer 2).
 // `priorRole` is the role just below this one ('coder' → 'reviewer',
-// 'reviewer' → 'reviewer2') — used for the "role-to-role mapping" rule.
+// 'reviewer' → 'reviewer2'): used for the "role-to-role mapping" rule.
 function pickReviewer(role, priorRole, ctx) {
   const { patient, dos, workload, slaCloseDays, patientHistory } = ctx;
   const pool = activeStaffForRole(role);
@@ -145,7 +145,7 @@ function pickReviewer(role, priorRole, ctx) {
     return { staff: pickByWorkload(vendorMatches, workload), reason: `vendor:${vendor}` };
   }
 
-  // 3. SLA prioritisation — if the DOS has a deadline within `slaCloseDays`,
+  // 3. SLA prioritisation: if the DOS has a deadline within `slaCloseDays`,
   //    prefer reviewers with the highest spare capacity (they can act fastest).
   //    Falls through to the workload step otherwise.
   const slaDue = !!dos?.due && Number.isFinite(dos?.daysUntilDue) && dos.daysUntilDue <= (slaCloseDays || 7);
@@ -154,9 +154,9 @@ function pickReviewer(role, priorRole, ctx) {
     if (w) return { staff: w, reason: `sla<${slaCloseDays || 7}d` };
   }
 
-  // 4. Same-patient preference — has any reviewer in this role already
+  // 4. Same-patient preference: has any reviewer in this role already
   //    handled a DOS for this patient? (Used when the patient has multiple
-  //    DOSs and one was already routed before the Astrana pin took effect —
+  //    DOSs and one was already routed before the Astrana pin took effect,
   //    rare but a real edge case in test data.)
   const sameUser = existingAssigneeForPatient(patientHistory, patient?.id, role);
   if (sameUser) {
@@ -198,7 +198,7 @@ export function pickAssignee(role, ctx) {
   }
   const astrana = ctx?.opts?.astrana !== false; // default ON
 
-  // Continuity pin — caller-supplied preferred assignee wins over everything
+  // Continuity pin: caller-supplied preferred assignee wins over everything
   // else when valid. Used by the QA/Compliance +ICD flow to keep the same
   // Coder on the newly-spawned DOS as on the DOS the user was reviewing.
   const preferredId = ctx?.preferredAssignees?.[role] || ctx?.preferredAssignee;
@@ -211,7 +211,7 @@ export function pickAssignee(role, ctx) {
     // and let the standard priority chain pick someone else.
   }
 
-  // Global Assignment Rule (Astrana) — pin to whoever is already on this
+  // Global Assignment Rule (Astrana): pin to whoever is already on this
   // patient at this role. Skipped for non-Astrana clients.
   if (astrana) {
     const pinnedId = existingAssigneeForPatient(ctx.patientHistory, ctx.patient?.id, role);

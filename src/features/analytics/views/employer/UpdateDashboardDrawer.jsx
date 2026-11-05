@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Drawer } from '../../../../components/Drawer/Drawer';
 import { Button } from '../../../../components/Button/Button';
-import { Toggle } from '../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../components/SegmentedControl/SegmentedControl';
 import { Switch } from '../../../../components/Switch/Switch';
 import { SECTIONS, WIDGETS, SAVINGS_CATEGORIES, SCOPE_OPTIONS } from './employerImpactConfig';
 import { defaultLayout, savingsKey } from './employerImpactLayout';
-import { SortableItem, SortableList } from './SortableParts';
+import { SortableItem, SortableList } from '../../../../components/SortableList/SortableList';
 import styles from './UpdateDashboardDrawer.module.css';
 
 const SECTION_TITLES = Object.fromEntries(SECTIONS.map(s => [s.id, s.heading || s.title]));
@@ -49,22 +49,21 @@ export function UpdateDashboardDrawer({ layouts, scope, onSubmit, onClose }) {
       headerRight={(
         <>
           <Button
-            variant="secondary"
-            size="L"
+            variant="outline"
             leadingIcon="solar:refresh-linear"
             onClick={() => setDraft(() => defaultLayout(draftScope))}
           >
             Reset
           </Button>
           <span className={styles.headerDivider} aria-hidden="true" />
-          <Button variant="primary" size="L" onClick={() => onSubmit(drafts, draftScope)}>Submit</Button>
+          <Button onClick={() => onSubmit(drafts, draftScope)}>Submit</Button>
           <span className={styles.headerDivider} aria-hidden="true" />
         </>
       )}
       bodyClassName={styles.body}
     >
       <div className={styles.scope}>
-        <Toggle size="S" items={SCOPE_OPTIONS} active={draftScope} onChange={setDraftScope} />
+        <SegmentedControl size="sm" items={SCOPE_OPTIONS} value={draftScope} onValueChange={setDraftScope} />
       </div>
 
       <div className={styles.sections}>

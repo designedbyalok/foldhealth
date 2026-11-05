@@ -1,9 +1,9 @@
 /**
- * Custom close (cross) icon — replaces all solar close variants for dismiss/close actions.
+ * Custom close (cross) icon: replaces all solar close variants for dismiss/close actions.
  *
  * @param {object}  props
- * @param {number}  [props.size=20]    — Width & height in px
- * @param {string}  [props.color='#6F7A90'] — Fill color
+ * @param {number}  [props.size=20], Width & height in px
+ * @param {string}  [props.color='#6F7A90']: Fill color
  * @param {string}  [props.className]
  */
 export function CloseIcon({ size = 20, color = '#6F7A90', className, ...rest }) {

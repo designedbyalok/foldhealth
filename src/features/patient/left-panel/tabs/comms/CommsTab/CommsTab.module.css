@@ -1,0 +1,11 @@
+/* Failed-to-load state: centred in the tab like the empty state. */
+.state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20rem;
+}
+
+/* Names stay medium whether read or not (Messages drops read ones to
+   regular); a read conversation only softens its colour. */
+.readName { color: var(--neutral-400); }

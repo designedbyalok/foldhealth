@@ -54,7 +54,7 @@ export function ChatMessagesList({
             <ChatBubble
               side={isOwn ? 'right' : 'left'}
               name={name}
-              initials={isOwn ? 'Y' : initials}
+              initials={isOwn ? getInitials(currentUser) : initials}
               text={msg.content || ''}
               attachment={attachment}
               reply={replyMsg ? { name: replyMsg.sender_id === currentUser.id ? 'You' : displayName, text: replyMsg.content || 'Attachment' } : undefined}

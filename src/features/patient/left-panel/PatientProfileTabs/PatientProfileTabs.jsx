@@ -1,7 +1,7 @@
 import { Fragment, useState, useRef, useEffect, useMemo } from 'react';
 import { DownChevronIcon } from '../../../../components/Icon/DownChevronIcon';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
-import { OverflowTabStrip } from '../../../../components/TabStrip/OverflowTabStrip';
+import { OverflowTabs } from '../../../../components/Tabs/OverflowTabs';
 import { StickyNote } from '../../../../components/StickyNote/StickyNote';
 import { StickyNoteAuditDrawer } from '../../../../components/StickyNoteAuditDrawer/StickyNoteAuditDrawer';
 import { useAppStore } from '../../../../store/useAppStore';
@@ -13,7 +13,7 @@ import { VitalsLabsTab } from '../tabs/vitals-labs/VitalsLabsTab/VitalsLabsTab.j
 import { CommsTab } from '../tabs/comms/CommsTab/CommsTab.jsx';
 import { OutreachTab } from '../tabs/outreach/OutreachTab/OutreachTab.jsx';
 import { SummaryTab } from '../tabs/summary/SummaryTab/SummaryTab.jsx';
-import { TasksTab } from '../tabs/tasks/TasksTab/TasksTab.jsx';
+import { PatientTasksTab } from '../tabs/tasks/PatientTasksTab/PatientTasksTab.jsx';
 import { ProfileTab } from '../tabs/profile/ProfileTab/ProfileTab.jsx';
 import { CrmTab } from '../tabs/crm/CrmTab/CrmTab.jsx';
 import { CARE_GAP_SECTIONS_EXTENDED, CARE_GAP_TABS, CARE_GAP_TABS_DRAWER } from '../../data/careGapsMock';
@@ -38,14 +38,14 @@ export function PatientProfileTabs({
   activeTab: controlledActiveTab,
   onTabChange,
   // Hide the panel's own tab strip when the tabs are hosted elsewhere (the
-  // right-panel tab bar) — the sticky note + content still render.
+  // right-panel tab bar): the sticky note + content still render.
   showTabBar = true,
   // Tabs hosted elsewhere that join this strip (the right panel's tabs while
   // a care program owns the right card). The parent renders their content
   // via `renderExtraTab(key)`; pass a stable array.
   extraTabs,
   renderExtraTab,
-  // Trailing action on hosted tabs in the More dropdown (OverflowTabStrip
+  // Trailing action on hosted tabs in the More dropdown (OverflowTabs
   // `itemAction` shape, minus `appliesTo`, which is scoped to extraTabs here).
   extraTabAction,
 }) {
@@ -124,7 +124,7 @@ export function PatientProfileTabs({
           id: `hedis-${g.code}-${i}`,
           title: `${g.code} - ${MEASURE_NAMES[g.code] || g.code}`,
           status: g.status,
-          statusVariant: STATUS_BADGE_VARIANT[g.status] || 'ai-neutral',
+          statusVariant: STATUS_BADGE_VARIANT[g.status] || 'neutral',
           diagnosis: g.supersededAt
             ? `Previous gap · Closed ${g.closedDate || g.supersededAt}`
             : g.startDate ? `Opened ${g.startDate}` : '',
@@ -176,7 +176,7 @@ export function PatientProfileTabs({
                   <span className={styles.viewBy}>View By: Action</span>
                   <DownChevronIcon size={10} />
                   <span className={styles.filterDivider} />
-                  <ActionButton icon="custom:filter" size="S" tooltip="Filter" />
+                  <ActionButton icon="custom:filter" size="sm" tooltip="Filter" />
                 </div>
               )}
             </div>
@@ -221,7 +221,7 @@ export function PatientProfileTabs({
                   <span className={styles.dosValue}>03/04/2025</span>
                   <DownChevronIcon size={10} />
                   <span className={styles.filterDivider} />
-                  <ActionButton icon="custom:filter" size="S" tooltip="Filter" />
+                  <ActionButton icon="custom:filter" size="sm" tooltip="Filter" />
                 </div>
               )}
             </div>
@@ -254,7 +254,7 @@ export function PatientProfileTabs({
               </button>
               {!alertsCollapsed && (
                 <div className={styles.sectionActions}>
-                  <ActionButton icon="custom:filter" size="S" tooltip="Filter" />
+                  <ActionButton icon="custom:filter" size="sm" tooltip="Filter" />
                 </div>
               )}
             </div>
@@ -291,10 +291,10 @@ export function PatientProfileTabs({
       ) : (
         <div className={styles.tabRow}>
           <div className={styles.tabsArea}>
-            <OverflowTabStrip
+            <OverflowTabs
               items={tabItems}
-              activeKey={extraActive ? activeTab : currentTab}
-              onChange={setActiveTab}
+              value={extraActive ? activeTab : currentTab}
+              onValueChange={setActiveTab}
               itemAction={itemAction}
               moreActions={moreActions}
             />
@@ -302,7 +302,7 @@ export function PatientProfileTabs({
           {!extraActive && (
             <ActionButton
               icon="solar:magnifer-linear"
-              size="S"
+              size="sm"
               tooltip="Search gaps"
               className={styles.searchBtn}
               onClick={() => setSearching(true)}
@@ -344,17 +344,17 @@ export function PatientProfileTabs({
 
         {currentTab === 'PAMI/Hx' && <PAMIHxTab patientId={patientId} widgets={visibleWidgets(layout, 'PAMI/Hx')} />}
 
-        {currentTab === 'Vitals/Labs' && <VitalsLabsTab widgets={visibleWidgets(layout, 'Vitals/Labs')} />}
+        {currentTab === 'Vitals/Labs' && <VitalsLabsTab widgets={visibleWidgets(layout, 'Vitals/Labs')} patientId={patientId} />}
 
         {currentTab === 'Comms' && <CommsTab patient={patient} />}
 
-        {currentTab === 'Outreach' && <OutreachTab memberName={patient?.name} />}
+        {currentTab === 'Outreach' && <OutreachTab memberName={patient?.name} classicForm />}
 
         {currentTab === 'Summary' && <SummaryTab widgets={visibleWidgets(layout, 'Summary')} />}
 
         {/* Tasks and Profile show here only in the QuickView drawer; on the
             full page they live in the right panel. */}
-        {currentTab === 'Tasks' && <TasksTab />}
+        {currentTab === 'Tasks' && <PatientTasksTab patient={patient} />}
 
         {currentTab === 'CRM' && <CrmTab patientId={patientId} />}
 

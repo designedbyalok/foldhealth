@@ -1,0 +1,34 @@
+.flow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0.5px solid var(--primary-100);
+  border-radius: 6px;
+  background: var(--primary-25);
+  color: var(--primary-300);
+}
+.arrow {
+  position: relative;
+  width: 18px;
+  border-top: 1px dotted var(--primary-200);
+}
+.arrow::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: -3px;
+  border-left: 4px solid var(--primary-200);
+  border-top: 2.5px solid transparent;
+  border-bottom: 2.5px solid transparent;
+}
+.more {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}

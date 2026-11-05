@@ -22,7 +22,7 @@
   min-height: 0;
 }
 
-/* Split layout — when the preview pane is open the body becomes a two-column
+/* Split layout: when the preview pane is open the body becomes a two-column
    row: PDF preview on the left, upload form on the right. */
 .layout {
   display: flex;
@@ -156,7 +156,7 @@
   color: var(--neutral-200);
 }
 
-/* 4×4 required dot — rendered directly on the .required span (not via a
+/* 4×4 required dot: rendered directly on the .required span (not via a
  * pseudo) so the inline-flex parent centers it vertically against the label
  * text. Using a pseudo forced the span to baseline-align, which pushed the
  * dot low on 14px labels. */
@@ -189,7 +189,7 @@
   color: var(--neutral-200);
 }
 
-/* Sizing wrapper for the shared <Select> — trigger chrome comes from the
+/* Sizing wrapper for the shared <Select>, trigger chrome comes from the
    component itself. */
 .select {
   width: 100%;
@@ -236,7 +236,7 @@
   color: var(--status-error);
 }
 
-/* Inline fail-reason picker — shares the FailReasonInline component from
+/* Inline fail-reason picker: shares the FailReasonInline component from
    ChartDetailDrawerParts so the reason vocabulary + interaction match the
    Document Review drawer 1:1. */
 .failInlineWrap {

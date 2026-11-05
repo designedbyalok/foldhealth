@@ -1,4 +1,4 @@
-/* Smooth width transition when the workspace pane opens/closes — pairs
+/* Smooth width transition when the workspace pane opens/closes, pairs
    with the workspace's swipe-in animation for a "something is coming in"
    feel rather than a jarring snap to the wider size. */
 .panel {
@@ -6,7 +6,7 @@
               max-width 280ms cubic-bezier(0.32, 0.72, 0.36, 1) !important;
 }
 
-/* Drawer body override — full-bleed, scrollable */
+/* Drawer body override: full-bleed, scrollable */
 .body {
   padding: 0 !important;
   display: flex;
@@ -21,8 +21,8 @@
   color: var(--neutral-400);
 }
 
-/* ── Title row — Figma: pl-12 pr-12 py-6, border-bottom 0.5px grey-150 ── */
-/* ── Title row — matches prototype's 44px header (line 1900) ─────────── */
+/* ── Title row: Figma: pl-12 pr-12 py-6, border-bottom 0.5px grey-150 ── */
+/* ── Title row: matches prototype's 44px header (line 1900) ─────────── */
 .titleRow {
   display: flex;
   align-items: center;
@@ -73,7 +73,7 @@
   transition: none !important;
 }
 
-/* ── Patient banner — matches prototype's 57px row (line 1911) ───────── */
+/* ── Patient banner: matches prototype's 57px row (line 1911) ───────── */
 .patientBanner {
   display: flex;
   align-items: center;
@@ -187,15 +187,15 @@
   background: var(--neutral-0);
   flex-shrink: 0;
 }
-/* Left cluster — Bulk + view-by toggle. Sits against the left edge. */
+/* Left cluster: Bulk + view-by toggle. Sits against the left edge. */
 .toolbarLeft {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-/* (`.viewBy` / `.viewByLabel` removed — Figma drops the "View by:" prefix
+/* (`.viewBy` / `.viewByLabel` removed: Figma drops the "View by:" prefix
    so the toggle sits inline with the Bulk action.) */
-/* Animated segmented toggle — mirrors AgentCanvas .toolbarTabs pattern */
+/* Animated segmented toggle: mirrors AgentCanvas .toolbarTabs pattern */
 .segmented {
   display: flex;
   gap: 2px;
@@ -242,7 +242,7 @@
   gap: 8px;
   margin-left: auto;
 }
-/* Figma: + ICD pill-link — 16px add icon, 4px gap, 14px Inter Regular
+/* Figma: + ICD pill-link, 16px add icon, 4px gap, 14px Inter Regular
    primary-300 label. No padding, no border by default; subtle neutral-50
    bg on hover for affordance. */
 .addIcdBtn {
@@ -317,7 +317,7 @@
   background: var(--neutral-50);
 }
 
-/* Pending gap cards from the toolbar's + ICD flow — sits above the
+/* Pending gap cards from the toolbar's + ICD flow: sits above the
    associated-ICDs section header with the same 8px rhythm as the rest of
    the cards list. Cards render on a white surface (via IcdCard's own
    styles.card), lifted slightly above the neutral-50 background. */
@@ -427,7 +427,7 @@
   border-bottom: 0.5px solid var(--neutral-150);
   flex-shrink: 0;
   /* Wrap when the RHS is too narrow to hold Created / Coder pill / CK
-     avatar / status pill on one line — the right cluster drops to a new
+     avatar / status pill on one line, the right cluster drops to a new
      line below the left cluster so nothing gets clipped or overlapped. */
   flex-wrap: wrap;
 }
@@ -456,7 +456,7 @@
 
 /* With-<Stage> pill in the DOS row. Hover opens ReviewProgressPopover.
    The leading ring is rendered by <ProgressRing> from
-   ReviewProgressPopover.jsx — no static CSS half-circle anymore. */
+   ReviewProgressPopover.jsx, no static CSS half-circle anymore. */
 .withCoderPill {
   display: inline-flex;
   align-items: center;
@@ -602,7 +602,7 @@
    Gaps) panes split the drawer 50-50 by default. Users can drag the
    .resizeHandle divider to shrink the RHS (clamped in JS to
    [MIN_RHS_PX, 50%]). Container queries in this file collapse toolbar
-   icons progressively as the RHS narrows — see the `@container` blocks
+   icons progressively as the RHS narrows, see the `@container` blocks
    below. */
 .rightPane {
   flex: 1 1 0;
@@ -660,12 +660,12 @@
   background: var(--primary-300);
 }
 
-/* Toolbar responsive collapse — as the RHS narrows the low-priority
+/* Toolbar responsive collapse: as the RHS narrows the low-priority
    icons (Timeline first, then Comments) drop out so the primary flow
    (Bulk / Search / ICD / Filter / Docs / More) stays legible. The More
    overflow menu remains a placeholder for now; a follow-up will populate
    it with whatever the current width has hidden. */
-/* Breakpoints are inclusive — set them slightly below the width the
+/* Breakpoints are inclusive: set them slightly below the width the
    toolbar occupies at "normal" widths so nothing hides until the user
    actively shrinks the pane. The default RHS is 640px (50/50 with LHS
    open), so Timeline hides at 620 rather than 640 to stay visible at
@@ -680,7 +680,7 @@
   .hideBelow460 { display: none !important; }
 }
 
-/* Overflow-menu companions — each dropdown item is the inverse of the
+/* Overflow-menu companions: each dropdown item is the inverse of the
    inline button's hide breakpoint, so the More dropdown only shows items
    the toolbar is currently hiding. The More button itself hides above
    620px (nothing is overflowing) and appears at the same breakpoint as
@@ -700,7 +700,7 @@
   .showBelow460 { display: flex !important; }
 }
 
-/* Toolbar overflow (More) menu — anchor + dropdown match the shared
+/* Toolbar overflow (More) menu: anchor + dropdown match the shared
    BulkBar chrome, but with a smaller footprint that fits inline in the
    drawer toolbar. */
 .toolbarMoreWrap {
@@ -905,7 +905,7 @@
 /* Push the icon cluster to the right edge now that search sits inline. */
 .toolbarIcons { margin-left: auto; }
 
-/* addIcdMode — the toolbar collapses to a single dedicated search row.
+/* addIcdMode: the toolbar collapses to a single dedicated search row.
    IcdSearch fills the entire width, and the close X sits inside its
    right edge (over IcdSearch's own right padding). All sibling toolbar
    actions hide in this mode so the user's focus stays on adding an ICD. */
@@ -935,7 +935,7 @@
 }
 .toolbarAddIcdClose:hover { background: var(--neutral-50); }
 
-/* + ICD trigger — clicking opens the "New Diagnosis Gap" left workspace
+/* + ICD trigger: clicking opens the "New Diagnosis Gap" left workspace
    (NewDiagGapPanel). Wrap keeps the layout slot stable even though there
    is no longer an inline popover. */
 .addIcdWrap {
@@ -961,7 +961,7 @@
   margin-right: 2px;
   flex-shrink: 0;
 }
-/* "N/M DOSs" badge — expands the per-DOS panel (Paper 1ZV3). */
+/* "N/M DOSs" badge: expands the per-DOS panel (Paper 1ZV3). */
 .dosBadge {
   display: inline-flex;
   align-items: center;
@@ -978,11 +978,11 @@
 }
 .dosBadge:hover { background: var(--primary-50); }
 
-/* Inline expanded per-DOS panel — a row per DOS with a toggle. */
+/* Inline expanded per-DOS panel: a row per DOS with a toggle. */
 .dosPanel {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0; /* overflow:hidden makes it shrinkable in the flex column — keep full height */
+  flex-shrink: 0; /* overflow:hidden makes it shrinkable in the flex column, keep full height */
   border: 0.5px solid var(--neutral-150);
   border-radius: 8px;
   background: var(--neutral-0);
@@ -1009,7 +1009,7 @@
   align-items: center;
   gap: 8px;
 }
-/* Clickable variant — claim-sourced DOSs open the ClaimsTab detail on
+/* Clickable variant: claim-sourced DOSs open the ClaimsTab detail on
    click. Keeps the same visual as the static row (matching row height +
    Badge alignment) so users don't get a jump when the button style
    swaps in. */
@@ -1029,7 +1029,7 @@
   font-weight: 400;
   color: var(--neutral-400);
   /* Match the S badge's compact vertical rhythm so the date text and the
-     "Claims/Documents/Manual" pill share the same optical center — align-
+     "Claims/Documents/Manual" pill share the same optical center, align-
      items: center on the row does the layout math, this keeps the type
      from adding stray ascender/descender space on top of that. */
   line-height: var(--leading-tight);
@@ -1041,7 +1041,7 @@
 }
 .dosPanelSep { color: var(--neutral-200); margin: 0 2px; }
 
-/* Skeleton ICD card — mirrors .card padding/layout so the swap to real
+/* Skeleton ICD card: mirrors .card padding/layout so the swap to real
    content doesn't reflow, and shimmer bars stand in for the ICD title,
    description, and one DOS row while hccDiagnosisGaps is loading. */
 .icdCardSkeleton {
@@ -1154,7 +1154,7 @@
 }
 .bulkClear:hover { color: var(--neutral-500); }
 
-/* Toolbar Bulk-Action button — active state while bulk-select mode is on. */
+/* Toolbar Bulk-Action button: active state while bulk-select mode is on. */
 .toolbarBtnActive {
   background: var(--primary-50);
   color: var(--primary-300);
@@ -1166,10 +1166,10 @@
    The shared bar is `position: fixed`, but the drawer's `.panel` carries a
    `transform` (its slide animation, always present as translateX(0)), which
    makes the panel the containing block for any fixed descendant. So the bar's
-   coordinates resolve against the PANEL, not the viewport — the old
+   coordinates resolve against the PANEL, not the viewport, the old
    `left: calc(100vw − 358px)` hard-coded a 700px drawer and pushed the bar off
    the panel's right edge (misaligned, and fully off-screen at other widths /
-   when the panel is resized or a left sub-panel is open — the "sometimes
+   when the panel is resized or a left sub-panel is open, the "sometimes
    doesn't show up" report).
    Fixing it as `absolute` + `left: 50%` centres the bar within the panel of
    whatever width, tracking resize and the left sub-panel automatically. It
@@ -1183,7 +1183,7 @@
 }
 
 /* ── Reject record confirmation modal ────────────────────────────────────
-   Same visual shape as the Insufficient dialog on ChartDetailDrawer —
+   Same visual shape as the Insufficient dialog on ChartDetailDrawer,
    title + close X, subtitle, vertical list of reason checkboxes, required
    note (asterisk), danger Confirm + Cancel. */
 .rejectDialog {
@@ -1269,7 +1269,7 @@
 
 /* ── Reject info banner (sits above "ICDs Associated with") ──────────────
    Read-only strip that surfaces who rejected the record, the reasons, and
-   any note — so downstream reviewers understand why every ICD action is
+   any note: so downstream reviewers understand why every ICD action is
    locked without having to open the Comments tab. */
 .rejectBanner {
   display: flex;
@@ -1348,7 +1348,7 @@
   margin-top: 4px;
 }
 
-/* ── Billed info banner — green sibling of .rejectBanner ────────────────
+/* ── Billed info banner: green sibling of .rejectBanner ────────────────
    Post-billing terminal state. Same locked semantics as rejected (all ICD
    actions frozen) but a happy-path outcome, so the palette is success-
    green instead of error-red. Structure mirrors .rejectBanner exactly. */

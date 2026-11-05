@@ -1,5 +1,5 @@
 /**
- * Care Plan glyph — the clipboard-with-heart mark used wherever a care plan
+ * Care Plan glyph: the clipboard-with-heart mark used wherever a care plan
  * is represented (history rail, section headers, empty states). Solar has no
  * equivalent, so this is the design-system source of truth for one; reach for
  * it (or `custom:care-plan` via `<Icon>`) instead of re-drawing it per feature.

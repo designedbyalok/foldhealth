@@ -1,0 +1,115 @@
+/* Overrides the 420px ShadcnDialog box: a 1000px preview, or the whole
+   window (8px inset) in full screen. */
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: calc(100vw - var(--space-8));
+  max-width: 1000px;
+  height: min(988px, calc(100vh - var(--space-8)));
+  padding: var(--space-6);
+}
+
+.modal.full {
+  width: calc(100vw - var(--space-4));
+  max-width: none;
+  height: calc(100vh - var(--space-4));
+  padding: var(--space-2);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-right: var(--space-8);
+  padding-bottom: var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+
+.head[hidden] {
+  display: none;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-2xl);
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--neutral-500);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+
+.description {
+  margin: 0;
+  font-size: var(--font-base);
+  line-height: 1.45;
+  color: var(--neutral-300);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0 0 var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 0 var(--space-6);
+  border-left: 0.5px solid var(--neutral-150);
+}
+
+.statItem:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.statLabel {
+  font-size: var(--font-xs);
+  color: var(--neutral-200);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statValue {
+  margin: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+}
+
+.canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 0.5px solid var(--neutral-100);
+  border-radius: var(--space-3);
+  background: var(--neutral-25);
+}
+
+.expand {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 5;
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-card);
+}

@@ -66,7 +66,7 @@ export const CONDITION_OPTIONS = [
 export const TOKEN_LIFETIME_OPTIONS = [
   { value: 5, label: '5 min (default)' },
   { value: 15, label: '15 min' },
-  { value: 30, label: '30 min — for long workflows' },
+  { value: 30, label: '30 min: for long workflows' },
 ];
 
 export const CONTEXT_FIELDS = [
@@ -308,7 +308,7 @@ export const COMPONENTS = [
   },
 ];
 
-/* ── Tab Widgets — existing widgets per patient profile tab (from Excel) ── */
+/* ── Tab Widgets: existing widgets per patient profile tab (from Excel) ── */
 export const TAB_WIDGETS = {
   'Gaps': ['Care Gaps', 'Diagnosis Gaps'],
   'Insight': ['Health Radar', 'Patient Synopsis', 'Care Plan Recommendation', 'Prior Authorization Request', 'Alerts', 'Diagnoses Surfacing', 'Recent Clinical Events', 'PAMI', 'Vitals', 'History', 'Home Monitoring', 'Lab Trends'],

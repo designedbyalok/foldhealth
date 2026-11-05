@@ -1,4 +1,4 @@
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
 import styles from './BulkCheckboxCell.module.css';
 
 /**
@@ -6,7 +6,7 @@ import styles from './BulkCheckboxCell.module.css';
  *
  * WorklistShell owns bulk-select state and injects the matching select column,
  * but a row's `<tr>` is opaque to the shell, so the row renders this cell
- * itself — driven by the `ctx.bulk` context the shell passes to renderRow:
+ * itself: driven by the `ctx.bulk` context the shell passes to renderRow:
  *
  *   renderRow={(row, i, ctx) => (
  *     <tr onClick={() => ctx.bulk?.active ? ctx.bulk.toggle(row.id) : open(row)}>

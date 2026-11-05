@@ -1,4 +1,4 @@
-// Deterministic claim-id derivation — used by both the DOS-source hover
+// Deterministic claim-id derivation: used by both the DOS-source hover
 // tooltip (worklist) and the Claim Preview drawer so a given (member, DOS)
 // tuple always renders the same claim number across the two surfaces.
 // In production this would come from the claims service; keep the shape

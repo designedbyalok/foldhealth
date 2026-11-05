@@ -75,13 +75,13 @@ export function buildActivityLogItems(auditLog, activityTab) {
       case 'priority_changed':
         entries.push({
           ...base,
-          title: `${actor} ${verb}: ${log.from_value || '—'} → ${log.to_value || '—'}`,
+          title: `${actor} ${verb}: ${log.from_value || '-'} → ${log.to_value || '-'}`,
         });
         break;
       case 'due_date_changed':
         entries.push({
           ...base,
-          title: `${actor} ${verb}: ${log.from_value || '—'} → ${log.to_value || '—'}`,
+          title: `${actor} ${verb}: ${log.from_value || '-'} → ${log.to_value || '-'}`,
         });
         break;
       case 'renamed':

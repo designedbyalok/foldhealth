@@ -4,7 +4,7 @@ import { renderEmailHtml } from './patchEmailHtml';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Input } from '../../components/Input/Input';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Select as SharedSelect } from '../../components/Select/Select';
@@ -47,7 +47,7 @@ export function DesignTabBlocksPrimary({ ctx }) {
             <FieldLabel>Text</FieldLabel>
             {/* props.text can contain inline HTML from the selection toolbar
                 (bold/italic/link/etc). The textarea should show only the
-                visible text — so we strip tags for display, and on edit
+                visible text: so we strip tags for display, and on edit
                 commit the plain string (which replaces any prior HTML).
                 Inline edits made on the canvas via the SelectionToolbar
                 still round-trip through the contentEditable directly. */}
@@ -63,7 +63,7 @@ export function DesignTabBlocksPrimary({ ctx }) {
                 onChange={v => update(['data', 'props', 'level'], v)}
               />
             )}
-            {/* Link wrap — set on the text/heading to render <a href> */}
+            {/* Link wrap: set on the text/heading to render <a href> */}
             <LinkInput
               value={props.linkHref || ''}
               openInNewTab={props.linkOpenInNewTab !== false}
@@ -131,7 +131,7 @@ export function DesignTabBlocksPrimary({ ctx }) {
                 // Best-effort: if the new URL is an SVG, fetch its markup
                 // and cache it on the block so we can re-tint the fills
                 // via dangerouslySetInnerHTML. CORS-blocked URLs fall back
-                // to a plain <img> render — the tint just won't apply.
+                // to a plain <img> render: the tint just won't apply.
                 if (typeof v === 'string' && /\.svg(\?|#|$)/i.test(v)) {
                   try {
                     const res = await fetch(v);
@@ -139,7 +139,7 @@ export function DesignTabBlocksPrimary({ ctx }) {
                     if (text.includes('<svg')) {
                       update(['data', 'props', 'svgRaw'], text);
                     }
-                  } catch { /* fine — tint just won't apply */ }
+                  } catch { /* fine: tint just won't apply */ }
                 } else if (props.svgRaw) {
                   update(['data', 'props', 'svgRaw'], null);
                 }

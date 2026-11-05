@@ -8,13 +8,13 @@
  *
  *   1. Permission is only ever requested from a user gesture. Safari requires
  *      user activation for `requestPermission()` outright, and Chrome
- *      penalises pages that prompt on load — a dismissed prompt can get the
+ *      penalises pages that prompt on load, a dismissed prompt can get the
  *      origin auto-blocked, which is unrecoverable from script. So there is
  *      no auto-prompt on mount; `requestBrowserNotifications()` is wired to
  *      an explicit control in the notifications popover.
  *
  *   2. Nothing is shown while the app is the visible tab. An OS banner for
- *      something the user can already see on screen is pure noise — the bell
+ *      something the user can already see on screen is pure noise, the bell
  *      badge is the right signal there.
  */
 
@@ -37,7 +37,7 @@ export function canAskBrowserNotifications() {
  *
  * On a grant it fires one confirmation banner. That is not decoration: the
  * browser can report 'granted' while the OS still refuses to display
- * anything — macOS keeps its own per-application notification setting, and
+ * anything: macOS keeps its own per-application notification setting, and
  * Focus/Do Not Disturb drops banners silently. Without this, the first
  * evidence that delivery is broken would be a notification that never
  * arrives hours later, which is indistinguishable from "nothing happened".
@@ -75,7 +75,7 @@ export async function requestBrowserNotifications() {
 export function showBrowserNotification({ title, body, tag, onClick, force = false } = {}) {
   if (browserNotificationPermission() !== 'granted') return null;
   // Suppress only when the app is genuinely in front of the user, which means
-  // visible AND focused — not just visible.
+  // visible AND focused: not just visible.
   //
   // `visibilityState` alone is not enough: a tab sitting in a background
   // WINDOW still reports 'visible', so gating on visibility silently dropped
@@ -85,7 +85,7 @@ export function showBrowserNotification({ title, body, tag, onClick, force = fal
   //
   // `force` is for the confirmation notification fired straight after the
   // user grants permission: they are looking at the app at that moment, and
-  // showing it anyway is the point — it proves delivery works end to end,
+  // showing it anyway is the point, it proves delivery works end to end,
   // and its absence is the fastest way to discover the browser is blocked at
   // the OS level.
   if (!force && typeof document !== 'undefined'
@@ -104,7 +104,7 @@ export function showBrowserNotification({ title, body, tag, onClick, force = fal
     return n;
   } catch (err) {
     // Constructing a Notification throws on Android Chrome, where the API is
-    // service-worker-only. Nothing to recover — the in-app bell still works.
+    // service-worker-only. Nothing to recover, the in-app bell still works.
     console.warn('browser notification failed:', err?.message || err);
     return null;
   }

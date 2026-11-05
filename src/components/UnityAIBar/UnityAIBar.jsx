@@ -3,7 +3,7 @@ import { UnityIcon } from '../UnityIcon/UnityIcon';
 import styles from './UnityAIBar.module.css';
 
 /**
- * UnityAIBar — the "Compose … with UnityAI · + Generate …" strip from the
+ * UnityAIBar: the "Compose … with UnityAI · + Generate …" strip from the
  * Communications compose designs (Figma Communications 1:24088 / 1:24499).
  * The host decides what Generate does.
  *

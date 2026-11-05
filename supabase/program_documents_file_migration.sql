@@ -8,7 +8,7 @@ ALTER TABLE program_documents
   ADD COLUMN IF NOT EXISTS storage_path TEXT,
   ADD COLUMN IF NOT EXISTS ext          TEXT;
 
--- ── Storage bucket (manual step — no migration in this repo creates buckets;
+-- ── Storage bucket (manual step: no migration in this repo creates buckets;
 --    `chart-uploads` was set up the same way) ──────────────────────────────
 -- In the Supabase dashboard, create a bucket named `program-documents`:
 --   - Public: on (so getPublicUrl() links resolve without a signed URL)

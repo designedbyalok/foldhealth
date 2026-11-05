@@ -15,11 +15,11 @@ const RULES = [
   { match: /^new 90\/100ds conversion|^max day supply 90-100/, intervention: '90/100-day conversion' },
   { match: /^enrolled in auto-refill/, intervention: 'Autofill Set-Up' },
   { match: /^pill box organizer sent/, intervention: 'Pill Box Sent' },
-  { match: /^follow up appointment\/lab — appointment scheduled|^need follow up appointment/, intervention: 'Schedule MD Appointment/Labs' },
+  { match: /^follow up appointment\/lab(?: \u2014|:) appointment scheduled|^need follow up appointment/, intervention: 'Schedule MD Appointment/Labs' },
   // Results
   { match: /^confirmed medication pickup/, result: 'Rx Pick Up Confirmed' },
-  { match: /^pending — pick up|^notification\/reminder medication ready for pickup/, result: 'Rx Pick Up Pending' },
-  { match: /^pending — refill approval|^refill approval pending|^refill approval sent to pharmacy/, result: 'Pending Refill Approval' },
+  { match: /^pending(?: \u2014|:) pick up|^notification\/reminder medication ready for pickup/, result: 'Rx Pick Up Pending' },
+  { match: /^pending(?: \u2014|:) refill approval|^refill approval pending|^refill approval sent to pharmacy/, result: 'Pending Refill Approval' },
   { match: /^medication (changed|discontinued|paused|stopped)/, result: 'Rx Changed/Discontinued by MD or Member' },
 ];
 

@@ -1,4 +1,4 @@
-/* IcdDosCard — one card per ICD, one action row per DOS (Paper 1WXT). */
+/* IcdDosCard: one card per ICD, one action row per DOS (Paper 1WXT). */
 
 .card {
   background: var(--neutral-0);
@@ -8,22 +8,22 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  /* Whole card is a click target — opens the tabbed document viewer. */
+  /* Whole card is a click target, opens the tabbed document viewer. */
   cursor: pointer;
   transition: background 0.12s ease, border-color 0.12s ease, opacity 0.2s ease;
 }
-/* Card hover — subtle lift; skipped while selected so the purple ring wins. */
+/* Card hover: subtle lift; skipped while selected so the purple ring wins. */
 .card:hover:not(.cardSelected) {
   border-color: var(--neutral-200);
   background: var(--neutral-25);
 }
-/* Selected — bold 3px left accent so the active ICD is clearly
+/* Selected: bold 3px left accent so the active ICD is clearly
    distinguishable; doc preview open on the left (Paper 1UD1). */
 .cardSelected {
   border-color: var(--primary-300);
   box-shadow: inset 3px 0 0 var(--primary-300);
 }
-/* Completed — every DOS on this ICD has been acted upon; tone it down to
+/* Completed: every DOS on this ICD has been acted upon; tone it down to
    keep only the actionable ICDs in focus (worklist progression). */
 .cardCompleted { opacity: 0.6; }
 
@@ -62,7 +62,7 @@
   flex-shrink: 0;
 }
 .code:hover { text-decoration: underline; }
-/* No UA focus ring on the title triggers — the ICD code button and the
+/* No UA focus ring on the title triggers, the ICD code button and the
    description toggle the same selection (keyboard uses A/X/M/D + arrows). */
 .code:focus,
 .desc:focus { outline: none; }
@@ -76,7 +76,7 @@
   font: 400 12px/1.3 'Inter', sans-serif;
   color: var(--neutral-300);
 }
-/* Suspected / Recaptured badge — marks a card that moved up from the
+/* Suspected / Recaptured badge: marks a card that moved up from the
    Suspects & Recaptures section after being acted on. */
 .suspectBadge {
   display: inline-flex;
@@ -109,7 +109,7 @@
 .counter:hover { background: var(--neutral-50); }
 .counterDivider { width: 1px; height: 14px; background: var(--neutral-150); }
 
-/* Card-level delete — only rendered for manually-added ICDs so real
+/* Card-level delete: only rendered for manually-added ICDs so real
    pipeline gaps can't be silently removed. Icon-only trash button that
    sits at the end of the counters cluster. */
 .deleteBtn {
@@ -146,7 +146,7 @@
   border-radius: 4px;
 }
 .row:last-child { border-bottom: none; }
-/* Clickable DOS row — cursor + tint on hover so the affordance is
+/* Clickable DOS row: cursor + tint on hover so the affordance is
    discoverable. Focus-visible ring matches keyboard-nav semantics. */
 .rowClickable { cursor: pointer; }
 .rowClickable:hover:not(.rowFocused) { background: var(--neutral-50); }
@@ -154,7 +154,7 @@
   outline: 2px solid var(--primary-200);
   outline-offset: -2px;
 }
-/* Focused/selected DOS — no left bar, just a subtle background so the
+/* Focused/selected DOS: no left bar, just a subtle background so the
    currently-active row reads as selected within the ICD. */
 .rowFocused {
   background: var(--primary-100);
@@ -174,7 +174,7 @@
 .dosDateGroup {
   display: inline-flex;
   align-items: center;
-  /* 6px — no --space token lands there; a 1.5× multiple of --space-1
+  /* 6px: no --space token lands there; a 1.5× multiple of --space-1
      (4px) keeps the value inside the token system without a raw px. */
   gap: calc(var(--space-1) * 1.5);
   flex-shrink: 0;
@@ -212,7 +212,7 @@
   flex-shrink: 0;
 }
 
-/* Header meta row — sits under "Last Reviewed by" and hosts the ICD's
+/* Header meta row: sits under "Last Reviewed by" and hosts the ICD's
    HCC chip and (when any DOS on the card is accepted) the green
    "Already Accepted" pill. Grouping badges here rather than repeating
    the HCC chip per row keeps the DOS rows lean and gives coders one
@@ -263,7 +263,7 @@
   border-color: var(--primary-300);
   color: var(--primary-300);
 }
-/* Support role can't accept/reject ICDs — drop the outline so the button
+/* Support role can't accept/reject ICDs: drop the outline so the button
    no longer reads as "clickable," but keep the tinted background so it
    still occupies its slot in the row. */
 .disabledAction,
@@ -286,7 +286,7 @@
 }
 .acceptedPill { color: var(--status-success-bright); }
 .dismissedPill { color: var(--status-error); }
-/* Deferred — neutral-300 per Figma; the row will be revisited later so the
+/* Deferred: neutral-300 per Figma; the row will be revisited later so the
    pill should read as "parked", not "warning". */
 .deferredPill { color: var(--neutral-300); }
 
@@ -319,7 +319,7 @@
 }
 .dismissReasonLink:hover { color: var(--neutral-500); text-decoration: underline; }
 
-/* Hover popover on the "Dismiss Reason" link — mirrors the ChartDetailDrawer
+/* Hover popover on the "Dismiss Reason" link: mirrors the ChartDetailDrawer
    failed-badge tooltip so both surfaces feel like one system, but promotes the
    reason itself to a larger, darker body line (the reason IS the payload here;
    the "Failed Due to:" list is what's payload there). Portalled so it can

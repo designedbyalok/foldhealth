@@ -1,7 +1,7 @@
 import { isClosedStatus } from './gbiStatus';
 
 /**
- * Goal progress band (5-band, Figma 2632:81504) — used by the Goal Details
+ * Goal progress band (5-band, Figma 2632:81504), used by the Goal Details
  * drawer readout and the care-plan audit log so the "changed the Progress"
  * pill and the drawer label read identically.
  */
@@ -19,13 +19,13 @@ export function goalProgressTone(label) {
   if (/High|Complete/.test(label)) return 'success';
   return 'grey';
 }
-/** "70% - Moderate" — the exact string the care-plan audit stores as detail. */
+/** "70% - Moderate", the exact string the care-plan audit stores as detail. */
 export function goalProgressAuditDetail(pct) {
   return `${Number(pct) || 0}% - ${goalProgressBand(pct)}`;
 }
 
 /**
- * Adherence band (3-band, Figma 2632:110774) — used by the intervention
+ * Adherence band (3-band, Figma 2632:110774), used by the intervention
  * preview drawer's slider + badge. Adherence is a separate metric from
  * goal progress and the product intentionally uses fewer bands here.
  */
@@ -49,14 +49,14 @@ export function adherenceTone(label) {
  *
  * Contract:
  *   • Average `adherence` (as a number) across every intervention whose
- *     `goalId === goal.id` — non-numeric adherence values ("-", null,
+ *     `goalId === goal.id`, non-numeric adherence values ("-", null,
  *     undefined) are excluded from the average, not counted as 0.
  *   • Any open barrier (no final status, see gbiStatus isClosedStatus,
  *     i.e. an active blocker) linked to the goal caps the progress at 80% of
  *     the raw average, so an active barrier is visible on the goal's
  *     progress ring without wiping progress the patient already made.
  *   • Returns `null` when there are no linked interventions to derive
- *     from — the caller should leave `goal.progress` untouched in that
+ *     from: the caller should leave `goal.progress` untouched in that
  *     case (a plan with no interventions yet keeps its manual value).
  *
  * `barriers` may carry `goalIds: string[]` (new join-table shape) or the
@@ -84,7 +84,7 @@ export function computeGoalProgress(goal, interventions = [], barriers = []) {
   return Math.max(0, Math.min(100, Math.round(rawAvg * cap)));
 }
 
-/** First numeric token in a reading (e.g. "145/90" → 145) — shared by table + drawer. */
+/** First numeric token in a reading (e.g. "145/90" → 145): shared by table + drawer. */
 export function sparkNum(v) {
   const m = String(v).match(/(\d+(?:\.\d+)?)/);
   return m ? parseFloat(m[1]) : NaN;

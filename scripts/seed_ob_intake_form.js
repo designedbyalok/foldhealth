@@ -7,7 +7,7 @@
  *   - control: 'radio'|'checkbox'|'dropdown'|'consent'|'email'|'tel'|'paragraph'
  *   - options: [{ value, score? }] for choice types
  *
- * Idempotent — re-running upserts by form name.
+ * Idempotent: re-running upserts by form name.
  *
  * Run:
  *   SUPABASE_SERVICE_ROLE_KEY=... node scripts/seed_ob_intake_form.js
@@ -44,15 +44,15 @@ const items = [
     type: 'choice',
     control: 'dropdown',
     text: 'Prior pregnancies and outcomes',
-    description: 'Gravida / Para with outcome detail. If more than one, pick the closest match — we\'ll capture the rest on the next visit.',
+    description: 'Gravida / Para with outcome detail. If more than one, pick the closest match, we\'ll capture the rest on the next visit.',
     required: true,
     options: [
-      opt('G0 P0 — first pregnancy'),
-      opt('G1 P0 — one prior, no live births'),
-      opt('G1 P1 — one prior live birth'),
-      opt('G2 P1 — two prior, one live birth'),
-      opt('G2 P2 — two prior live births'),
-      opt('G3+ P2+ — three or more prior pregnancies'),
+      opt('G0 P0: first pregnancy'),
+      opt('G1 P0: one prior, no live births'),
+      opt('G1 P1: one prior live birth'),
+      opt('G2 P1: two prior, one live birth'),
+      opt('G2 P2: two prior live births'),
+      opt('G3+ P2+: three or more prior pregnancies'),
       opt('Prior miscarriage or loss'),
       opt('Prior termination'),
     ],
@@ -63,7 +63,7 @@ const items = [
     control: 'checkbox',
     repeats: true,
     text: 'Personal or pregnancy history',
-    description: 'Select all that apply — flags feed risk stratification instantly.',
+    description: 'Select all that apply: flags feed risk stratification instantly.',
     required: false,
     options: [
       opt('Type 1 or Type 2 diabetes'),
@@ -92,24 +92,24 @@ const items = [
     description: '0 = very worried or overwhelmed · 10 = very positive. Scores into mood screening.',
     required: true,
     options: [
-      opt('0 — very worried', 0),
+      opt('0: very worried', 0),
       opt('1', 1),
       opt('2', 2),
       opt('3', 3),
       opt('4', 4),
-      opt('5 — mixed', 5),
+      opt('5: mixed', 5),
       opt('6', 6),
       opt('7', 7),
       opt('8', 8),
       opt('9', 9),
-      opt('10 — very positive', 10),
+      opt('10: very positive', 10),
     ],
   },
   {
     linkId: 'ob_insurance',
     type: 'string',
     text: 'Insurance member ID',
-    description: 'Photograph the front of your insurance card in the patient app to auto-fill — OCR extracts the member ID for eligibility. You can also type it in.',
+    description: 'Photograph the front of your insurance card in the patient app to auto-fill, OCR extracts the member ID for eligibility. You can also type it in.',
     placeholder: 'Member ID',
     required: false,
   },
@@ -135,8 +135,8 @@ const scoring = {
       sources: [{ linkId: 'ob_mood' }],
       range: { min: 0, max: 10 },
       interpretations: [
-        { min: 0, max: 3, label: 'High concern — flag for outreach', severity: 'high' },
-        { min: 4, max: 6, label: 'Mixed — offer perinatal support resources', severity: 'warning' },
+        { min: 0, max: 3, label: 'High concern: flag for outreach', severity: 'high' },
+        { min: 4, max: 6, label: 'Mixed: offer perinatal support resources', severity: 'warning' },
         { min: 7, max: 10, label: 'Positive', severity: 'info' },
       ],
     },
@@ -148,7 +148,7 @@ const settings = {
   layout: 'sectioned',
   header: { enabled: true, title: FORM_NAME, subtitle: 'Sent automatically at scheduling' },
   footer: { enabled: false },
-  start: { enabled: true, title: 'Welcome', description: 'A few questions before your first OB visit — takes about 3 minutes.', buttonLabel: 'Start' },
+  start: { enabled: true, title: 'Welcome', description: 'A few questions before your first OB visit, takes about 3 minutes.', buttonLabel: 'Start' },
   end:   { enabled: true, title: 'Thank you', description: 'We\'ll review your responses before your visit.' },
 };
 
@@ -169,7 +169,7 @@ async function main() {
 
   const payload = {
     name: FORM_NAME,
-    description: 'Sent automatically at scheduling — captures LMP, obstetric history, medications, mood, insurance, and consent so the first visit is ready to run.',
+    description: 'Sent automatically at scheduling: captures LMP, obstetric history, medications, mood, insurance, and consent so the first visit is ready to run.',
     category: 'OB',
     status: 'active',
     schema,

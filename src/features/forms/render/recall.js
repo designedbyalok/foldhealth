@@ -1,5 +1,5 @@
 /**
- * Recall / piping — interpolate `{{…}}` tokens in titles, descriptions, and
+ * Recall / piping: interpolate `{{…}}` tokens in titles, descriptions, and
  * screen copy with live answers, scores, and hidden-field values.
  *
  *   {{field:linkId}}   → the respondent's answer to that field

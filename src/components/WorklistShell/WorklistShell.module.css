@@ -1,4 +1,4 @@
-/* WorklistShell — outer chrome shared by every worklist. Header row mirrors
+/* WorklistShell: outer chrome shared by every worklist. Header row mirrors
    src/layouts/TabBar so the two visually match; the table wrapper below
    provides sticky-column scrolling and hosts the BulkBar + Pagination. */
 
@@ -57,7 +57,7 @@
 .iconActive :global(svg) { color: var(--primary-300) !important; }
 .searchWrap { display: inline-flex; align-items: center; }
 
-/* Filter chip row — thin passthrough wrapper. Callers pass a FilterBar
+/* Filter chip row: thin passthrough wrapper. Callers pass a FilterBar
    (or equivalent) that brings its own padding and border-bottom, so this
    wrapper only guarantees the flex-shrink + z-index behavior; adding
    padding here doubles up on top of the caller's chrome. */
@@ -66,7 +66,7 @@
 }
 
 /* Table scroll container */
-/* Embedded mode — see the `embedded` prop. Height follows content and the
+/* Embedded mode: see the `embedded` prop. Height follows content and the
    parent keeps the scroll, so several tables can stack in one scroller. */
 .shellEmbedded {
   flex: 0 0 auto;
@@ -74,7 +74,7 @@
   overflow: visible;
 }
 /* Compound selector (both classes are applied together) so it beats the plain
-   `.tableScroll` rule below regardless of source order — otherwise the embedded
+   `.tableScroll` rule below regardless of source order, otherwise the embedded
    table keeps `.tableScroll`'s flex:1 + overflow:auto and scrolls internally. */
 .tableScroll.tableScrollEmbedded {
   flex: 0 0 auto;
@@ -119,16 +119,16 @@
   border-collapse: collapse;
   font-size: var(--font-base);
 }
-/* Stacked embedded tables (Care Plan GBI) — no internal scroll or sticky headers. */
+/* Stacked embedded tables (Care Plan GBI): no internal scroll or sticky headers. */
 .tableFlush .headRow > th {
   position: static;
 }
 
-/* Row-load animation — default for every WorklistShell consumer, so
+/* Row-load animation: default for every WorklistShell consumer, so
    callers don't have to opt in via the shared WorklistRow.row class.
    Rows fade + slide up on mount; the first 10 stagger by 30ms each so
    the initial load reads as one wave. Rows past n=10 play immediately
-   at delay 0 — denser tables shouldn't wait a full second to fill. */
+   at delay 0: denser tables shouldn't wait a full second to fill. */
 .table tbody tr {
   animation: worklistShellRowIn var(--duration-base) var(--ease-out) both;
 }
@@ -152,7 +152,7 @@
   .table tbody tr { animation: none; }
 }
 
-/* Header row — pinned to 32px via an explicit height + zero vertical
+/* Header row: pinned to 32px via an explicit height + zero vertical
    padding on the cells, so checkbox state toggles never reflow the row.
    Content is centered via `vertical-align: middle`. The single
    row-level bottom border reads as one continuous divider even when
@@ -170,7 +170,7 @@
   border-bottom: 0.5px solid var(--neutral-150);
 }
 
-/* Plain <th className={styles.th}> — HeaderCell.module.css sets the
+/* Plain <th className={styles.th}>, HeaderCell.module.css sets the
    same typography for its own header, so both variants match visually.
    Vertical padding is 0 (row height controls height); horizontal padding
    12px matches HeaderCell and the shared row `.td`. */
@@ -197,3 +197,8 @@
   color: var(--neutral-300);
   font-size: var(--font-md);
 }
+
+/* A blocked header checkbox ignores the pointer; its wrapper still catches
+   the hover for the tooltip that says why. */
+.checkBlocked { display: inline-flex; cursor: not-allowed; }
+.checkBlocked > * { pointer-events: none; }

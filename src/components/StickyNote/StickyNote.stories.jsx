@@ -62,7 +62,7 @@ const MULTI_NOTES = [
   SAMPLE_NOTE,
   {
     id: 'note-2',
-    text: 'Blue Cross plan — prior auth required for A1c strips. Called MedRx 5/12.',
+    text: 'Blue Cross plan: prior auth required for A1c strips. Called MedRx 5/12.',
     author_name: 'Michael Torres',
     author_date: '2026-05-12T14:15:00Z',
     ehr_profile: 'BCBS PPO',

@@ -25,7 +25,7 @@ export function AttestationResultView({ isAccept, selectedCount, onDone }) {
             ? `Patient claim generation is in progress for ${selectedCount} patient${selectedCount !== 1 ? 's' : ''}. You will be notified once the claims have been processed.`
             : `Billing has not been generated as the consent to bill has been declined for ${selectedCount} patient${selectedCount !== 1 ? 's' : ''}.`}
         </p>
-        <Button variant="primary" onClick={onDone}>Done</Button>
+        <Button onClick={onDone}>Done</Button>
       </div>
     </Drawer>
   );

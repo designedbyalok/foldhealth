@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
 import { SubnavToggle } from '../../components/SubnavToggle/SubnavToggle';
-import { FilterBar } from '../../components/FilterBar/FilterBar';
+import { FilterBar } from '../worklists/FilterBar';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { DobFilter } from '../../components/DobFilter/DobFilter';
 import { dobInRange } from '../../components/DateRangePopover/yearSpan';
+import { GENDER_FILTER_OPTIONS, LANGUAGE_FILTER_OPTIONS, memberGenderLabel, memberLanguageLabel } from '../../lib/memberFilters';
 import { Pagination } from '../../components/Pagination/Pagination';
 import { TableSkeleton } from '../../components/TableSkeleton/TableSkeleton';
 import { HeaderCell } from '../../components/HeaderCell/HeaderCell';
@@ -17,11 +18,11 @@ import { SavedFiltersChip } from '../hcc/SavedFiltersChip';
 import { useSavedFilterActions } from '../hcc/useSavedFilterActions';
 import { SnpWorklistRow, SNP_MIDDLE_COLUMNS } from './SnpWorklistRow';
 import { ColumnsHeaderButton } from '../../components/WorklistColumns/ColumnsHeaderButton';
-import { useWorklistColumns } from '../../components/WorklistColumns/useWorklistColumns';
+import { useWorklistColumns } from '../worklists/useWorklistColumns';
 import { CarePlanReviewDrawer } from '../patient/right-panel/tabs/care-programs/care-plan/drawers/CarePlanReviewDrawer/CarePlanReviewDrawer';
 import styles from './SnpWorklistTable.module.css';
 
-// Sortable columns — each maps to a field on the enriched row. Tags and
+// Sortable columns: each maps to a field on the enriched row. Tags and
 // Outreach are intentionally omitted (visual composite cells with no natural
 // ordering). Dates surface as `<field>Sort` timestamps computed in enrichment
 // so MM/DD/YYYY strings sort chronologically instead of lexicographically.
@@ -45,11 +46,11 @@ const parseMdy = (s) => {
   return Date.UTC(+m[3], +m[1] - 1, +m[2]);
 };
 
-// Filter chips — each is a multi-select of string buckets derived per row.
+// Filter chips: each is a multi-select of string buckets derived per row.
 // `primary: true` chips render by default; extended chips are opt-in via the
 // More Filters popover. The extended set mirrors the full SNP-filter roster
 // (Member Status → Tags) even when the underlying member data doesn't yet
-// carry those fields — filtering on those is a no-op today.
+// carry those fields: filtering on those is a no-op today.
 const FILTER_KEYS = [
   // Spec 2.1: always-primary, then the SNP workflow filters (UTR Flag isn't
   // on SNP yet). Every primary always shows, in this order (FilterBar `pinPrimary`).
@@ -102,9 +103,13 @@ const BUCKET_FN = {
   trigger:          (m) => m.trigger || 'None',
   riskIq:           (m) => m.riskIq || 'Undetermined',
   outreach:         (m) => (m.outreach ? m.outreach.status : 'None'),
-  gender:           (m) => m.gender || null,
-  language:         (m) => m.language || null,
+  gender:           (m) => memberGenderLabel(m.gender),
+  language:         (m) => memberLanguageLabel(m.language),
 };
+
+// Member filters show the vocabulary every worklist shares, not the values
+// that happen to be in the rows.
+const STATIC_OPTIONS = { gender: GENDER_FILTER_OPTIONS, language: LANGUAGE_FILTER_OPTIONS };
 
 const MORE_FILTER_ITEMS = FILTER_KEYS.map(f => ({ k: f.key, label: f.label, primary: f.primary, group: f.group }));
 const PRIMARY_FILTER_KEYS = [];
@@ -177,7 +182,7 @@ export function SnpWorklistTable() {
 
   useEffect(() => { fetchMembers(); }, [fetchMembers]);
 
-  // Ensure the row-level assignee picker has users to show — one-shot
+  // Ensure the row-level assignee picker has users to show, one-shot
   // fetch, guarded in the store so repeat mounts don't re-round-trip.
   const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
   useEffect(() => { fetchPlatformUsers(); }, [fetchPlatformUsers]);
@@ -197,7 +202,7 @@ export function SnpWorklistTable() {
     }
     const opts = {};
     for (const { key } of FILTER_KEYS) {
-      opts[key] = sets[key] ? [...sets[key]].toSorted() : [];
+      opts[key] = STATIC_OPTIONS[key] || (sets[key] ? [...sets[key]].toSorted() : []);
     }
     return opts;
   }, [members]);
@@ -235,7 +240,7 @@ export function SnpWorklistTable() {
     return rows;
   }, [enriched, searchQuery, filters]);
 
-  // Shared sort hook — click cycles asc → desc → cleared, same as HCC.
+  // Shared sort hook: click cycles asc → desc → cleared, same as HCC.
   const { sorted, sortKey, sortDir, setSort, clearSort } = useTableSort(filtered);
   const handleSort = (field) => {
     if (sortKey === field) {
@@ -248,7 +253,7 @@ export function SnpWorklistTable() {
   };
 
   // Visible chips = primary set (or user-customised set) plus any chip that
-  // has an active value — otherwise applying a saved filter could hide the
+  // has an active value: otherwise applying a saved filter could hide the
   // very chip whose value it just set.
   const activeKeys = useMemo(() => {
     const keys = [];
@@ -290,7 +295,7 @@ export function SnpWorklistTable() {
     return next;
   });
 
-  // Column prefs — bespoke table, wire useWorklistColumns directly.
+  // Column prefs: bespoke table, wire useWorklistColumns directly.
   const columnPrefs = useWorklistColumns('snp', SNP_MIDDLE_COLUMNS);
   const visibleMiddle = columnPrefs.visibleColumns;
   const orderedColumnsForRow = useMemo(() => (
@@ -324,7 +329,6 @@ export function SnpWorklistTable() {
             <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
             <ActionButton
               icon="solar:upload-minimalistic-linear"
-              size="L"
               tooltip="Upload Document"
               tooltipBelow
               onClick={() => showToast('Upload Document – coming soon')}
@@ -334,42 +338,42 @@ export function SnpWorklistTable() {
         }
       />
 
-      {filterBarOpen && (
-        <FilterBar
-          filterDefs={FILTER_KEYS}
-          filters={filters}
-          onFilterChange={(k, vals) => setFilter(k, vals)}
-          onClearAll={savedActions.onClearAll}
-          clearAllLabel={savedActions.clearAllLabel}
-          saveLabel={savedActions.saveLabel}
-          saveMenuItems={savedActions.saveMenuItems}
-          onSaveMenuSelect={savedActions.onSaveMenuSelect}
-          hasActive={savedActions.edited || undefined}
-          onSaveFilter={(name) => saveSnpFilter(name)}
-          getOptions={(def) => filterOptions[def.key] || []}
-          multiSelect
-          visibleKeys={visibleKeys}
-          onToggleVisible={toggleVisible}
-          onClearVisible={clearVisibleFilters}
-          moreFilterItems={MORE_FILTER_ITEMS}
-          leading={null}
-          pinPrimary
-          // DOB gets the Years | Custom Dates picker; every other chip is the usual multi-select.
-          renderChip={(k) => {
-            if (k === 'dob') return <DobFilter value={filters.dob || []} onChange={vals => setFilter('dob', vals)} />;
-            const def = FILTER_KEYS.find(f => f.key === k);
-            if (!def) return null;
-            return (
-              <FilterChip
-                label={def.label}
-                options={filterOptions[k] || []}
-                selected={filters[k] || []}
-                onChange={vals => setFilter(k, vals)}
-              />
-            );
-          }}
-        />
-      )}
+      <FilterBar
+        collapsed={!filterBarOpen}
+        filterDefs={FILTER_KEYS}
+        filters={filters}
+        onFilterChange={(k, vals) => setFilter(k, vals)}
+        onClearAll={savedActions.onClearAll}
+        clearAllLabel={savedActions.clearAllLabel}
+        saveLabel={savedActions.saveLabel}
+        saveMenuItems={savedActions.saveMenuItems}
+        onSaveMenuSelect={savedActions.onSaveMenuSelect}
+        hasActive={savedActions.edited || undefined}
+        onSaveFilter={(name) => saveSnpFilter(name)}
+        getOptions={(def) => filterOptions[def.key] || []}
+        multiSelect
+        visibleKeys={visibleKeys}
+        onToggleVisible={toggleVisible}
+        onClearVisible={clearVisibleFilters}
+        moreFilterItems={MORE_FILTER_ITEMS}
+        leading={null}
+        pinPrimary
+        // DOB gets the Years | Custom Dates picker; every other chip is the usual multi-select.
+        renderChip={(k) => {
+          if (k === 'dob') return <DobFilter value={filters.dob || []} onChange={vals => setFilter('dob', vals)} />;
+          const def = FILTER_KEYS.find(f => f.key === k);
+          if (!def) return null;
+          return (
+            <FilterChip
+              label={def.label}
+              options={filterOptions[k] || []}
+              selected={filters[k] || []}
+              onChange={vals => setFilter(k, vals)}
+              searchable={k === 'language'}
+            />
+          );
+        }}
+      />
 
       <div className={styles.tableScroll}>
         {loading && members.length === 0 ? (

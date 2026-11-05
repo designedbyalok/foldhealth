@@ -13,7 +13,7 @@ export default {
   argTypes: {
     goalsDetail: {
       control: 'object',
-      description: 'Flat list of goals — used by callDetails / DetailDrawer.',
+      description: 'Flat list of goals: used by callDetails / DetailDrawer.',
       table: { type: { summary: '{ name, desc, pass }[]' } },
     },
     goals: {

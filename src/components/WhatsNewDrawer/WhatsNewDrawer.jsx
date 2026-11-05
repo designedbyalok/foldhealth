@@ -8,15 +8,15 @@ import styles from './WhatsNewDrawer.module.css';
 
 // kind → Badge variant (existing Badge palette: purple / blue / green).
 const KIND_VARIANT = {
-  New: 'toc-oncall',
-  Improved: 'status-scheduled',
-  Fixed: 'status-completed',
+  New: 'primary',
+  Improved: 'info',
+  Fixed: 'success',
 };
 
 const DATE_FMT = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
 /**
- * WhatsNewDrawer — in-house changelog, opened from Help → "What's New".
+ * WhatsNewDrawer: in-house changelog, opened from Help → "What's New".
  * Entries live in Supabase (changelog_entries), written automatically by
  * the changelog GitHub Action on every push to main. Opening the drawer
  * marks everything as seen (clears the unread badge in the Help popover).
@@ -50,7 +50,7 @@ export function WhatsNewDrawer({ onClose }) {
       ) : groups.length === 0 ? (
         <div className={styles.empty}>
           <Icon name="solar:gift-linear" size={32} color="var(--neutral-200)" />
-          <p>No updates published yet — check back soon.</p>
+          <p>No updates published yet: check back soon.</p>
         </div>
       ) : (
         groups.map(([day, items]) => (
@@ -58,7 +58,7 @@ export function WhatsNewDrawer({ onClose }) {
             <div className={styles.dayLabel}>{day}</div>
             {items.map(e => (
               <div key={e.id} className={styles.entry}>
-                <Badge variant={KIND_VARIANT[e.kind] || 'toc-new'} label={e.kind} />
+                <Badge tone={KIND_VARIANT[e.kind] || 'neutral'} label={e.kind} />
                 <span className={styles.entryTitle}>{e.title}</span>
               </div>
             ))}

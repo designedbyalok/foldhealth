@@ -81,7 +81,7 @@ export function EfaxThread({ fax, reading, patients, me }) {
           <div className={listStyles.chatHeaderMeta}>{fax.senderFax}</div>
         </div>
         <div className={listStyles.chatHeaderActions}>
-          <ActionButton icon="solar:eye-linear" size="S" tooltip="View File" onClick={viewFile} />
+          <ActionButton icon="solar:eye-linear" size="sm" tooltip="View File" onClick={viewFile} />
         </div>
       </div>
 

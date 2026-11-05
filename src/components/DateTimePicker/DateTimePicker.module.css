@@ -74,42 +74,8 @@
 
 .calendarTitle { font-size: var(--font-base); font-weight: 600; color: var(--neutral-400); }
 
-.calendarGrid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: var(--space-1);
-  text-align: center;
-}
-
-.calendarDayLabel {
-  font-size: var(--font-sm);
-  font-weight: 500;
-  color: var(--neutral-200);
-  padding: var(--space-1) 0;
-}
-
-.calendarDay {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: var(--font-md);
-  color: var(--neutral-400);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.1s;
-}
-.calendarDay:hover:not(:disabled) { background: var(--primary-50); color: var(--primary-300); }
-.calendarDay:disabled { color: var(--neutral-150); cursor: not-allowed; }
-
-.calendarDaySelected {
-  background: var(--primary-300) !important;
-  color: var(--neutral-0) !important;
-  font-weight: 600;
-}
+/* Figma calendar grid width (Fold-Pixel 8646:12168). */
+.calendar { width: 15.625rem; }
 
 /* ── Time columns ── */
 .timeColumnsSection {

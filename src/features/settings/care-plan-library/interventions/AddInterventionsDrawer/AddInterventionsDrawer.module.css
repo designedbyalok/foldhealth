@@ -1,4 +1,4 @@
-/* Sits between the Add button and the drawer's close control — the drawer is
+/* Sits between the Add button and the drawer's close control: the drawer is
    passed `noCloseDivider` so this is the only rule line. */
 .headerDivider {
   display: inline-block;

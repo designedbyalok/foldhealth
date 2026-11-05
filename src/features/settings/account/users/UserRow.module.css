@@ -1,4 +1,4 @@
-/* Settings → Account → Users row — composes from the shared row shell so
+/* Settings → Account → Users row, composes from the shared row shell so
    it reads exactly like every other worklist row (hover tint, sticky
    columns, cell padding). Users-specific bits (user cell layout, roles
    cell, overflow badge) live below. */
@@ -19,7 +19,7 @@
 .tableWrap th:first-child:not(:has([role="checkbox"])) { padding-left: var(--space-5); }
 .membersTd.membersTdInset { padding-left: var(--space-5); }
 
-/* User cell — avatar + name/email stack. */
+/* User cell: avatar + name/email stack. */
 /* A <button> so the row's member cell opens the profile from the keyboard.
    width/text-align restore what the <div> had inside its <td>. */
 .userCell {
@@ -63,7 +63,7 @@
   color: var(--neutral-200);
 }
 
-/* Last Sign-in At — mm/dd/yyyy on top with a smaller relative-time line
+/* Last Sign-in At: mm/dd/yyyy on top with a smaller relative-time line
    underneath ("2 days ago"). */
 .dateStack {
   display: flex;
@@ -88,11 +88,16 @@
   white-space: nowrap;
 }
 
-/* "Account locked since 10:42 AM, 5 failed attempts" under the email. */
-.userLockLine {
+/* Status badge with "Since 10:42 AM" under it for a locked account. */
+.statusStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(var(--space-1) / 2);
+}
+/* Badge centers itself with align-self; keep it on the left edge. */
+.statusStack > * { align-self: flex-start; }
+.lockSince {
   font-size: var(--font-sm);
   color: var(--status-error);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }

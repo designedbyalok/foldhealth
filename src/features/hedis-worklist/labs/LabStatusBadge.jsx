@@ -26,8 +26,8 @@ const GAP = {
   [GAP_EVALUATION.notSatisfied]: { tone: 'error', icon: 'solar:close-circle-linear' },
 };
 
-function StatusBadge({ map, status, size = 'S' }) {
-  const cfg = map[status] || { tone: 'grey', icon: 'solar:info-circle-linear' };
+function StatusBadge({ map, status, size = 'sm' }) {
+  const cfg = map[status] || { tone: 'neutral', icon: 'solar:info-circle-linear' };
   return <Badge tone={cfg.tone} size={size} icon={cfg.icon} label={status} />;
 }
 

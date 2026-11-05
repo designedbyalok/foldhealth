@@ -12,7 +12,7 @@ export function InviteUserBulkUploadStep({ onClose, bulkFile, fileInputRef, onFi
       title={<div><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600 }}>Bulk Import Users</div><div style={{ fontSize: 'var(--font-md)', color: 'var(--neutral-300)', fontWeight: 400 }}>Import the users in bulk by uploading a spreadsheet.</div></div>}
       onClose={onClose}
       bodyClassName={styles.inviteDrawerBody}
-      headerRight={<Button variant="primary" size="L" disabled={!bulkFile} onClick={onNext}>Next</Button>}
+      headerRight={<Button disabled={!bulkFile} onClick={onNext}>Next</Button>}
     >
       <div className={styles.inviteFormScroll}>
         <div className={styles.bulkStepper}>

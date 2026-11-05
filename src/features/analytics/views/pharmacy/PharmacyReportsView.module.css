@@ -1,0 +1,32 @@
+/* Pharmacy Adherence reports: filter row, report tabs and the issue list. */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.filterDivider {
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+}
+
+.tabs { margin-bottom: var(--space-3); }
+
+.note {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  margin-bottom: var(--space-3);
+}
+
+.groupCell { font-weight: 500; color: var(--neutral-500); }
+
+.totalRow td { font-weight: 500; color: var(--neutral-500); background: var(--neutral-50); }
+
+.alert { color: var(--status-error); }
+
+.detail { color: var(--neutral-300); }
+
+.bars { display: flex; flex-direction: column; gap: var(--space-2); }

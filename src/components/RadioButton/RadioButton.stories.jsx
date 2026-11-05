@@ -33,7 +33,7 @@ export default {
     },
     name: {
       control: 'text',
-      description: 'HTML `name` attribute — shared across a mutually-exclusive group.',
+      description: 'HTML `name` attribute: shared across a mutually-exclusive group.',
       table: { type: { summary: 'string' } },
     },
     value: {

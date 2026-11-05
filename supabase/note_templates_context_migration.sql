@@ -52,7 +52,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS forms_gap_code_context_default_idx
     AND gap_code IS NOT NULL
     AND context IS NOT NULL;
 
--- 4. Helper index for look-ups by (gap_code, context) — used by the
+-- 4. Helper index for look-ups by (gap_code, context), used by the
 --    fetchNoteTemplates store action and the Add-Note flow when picking
 --    a default template.
 CREATE INDEX IF NOT EXISTS forms_gap_code_context_idx

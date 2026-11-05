@@ -29,6 +29,7 @@ export function OrgPanel() {
   const [showName, setShowName] = useState(false);
   const [showPatientAppIndicator, setShowPatientAppIndicator] = useState(false);
   const [carePlanMode, setCarePlanMode] = useState(DEFAULT_CARE_PLAN_MODE);
+  const [askStatusChangeReason, setAskStatusChangeReason] = useState(false);
   const [primaryColor, setPrimaryColor] = useState('#8C5AE2');
   const [about, setAbout] = useState('');
   const [socials, setSocials] = useState({ twitter: '', instagram: '', facebook: '', linkedin: '', website: '' });
@@ -58,6 +59,7 @@ export function OrgPanel() {
           setShowName(!!data.show_name);
           setShowPatientAppIndicator(!!data.show_patient_app_indicator);
           setCarePlanMode(normalizeCarePlanMode(data.care_plan_mode));
+          setAskStatusChangeReason(!!data.ask_status_change_reason);
           setPrimaryColor(data.primary_color || '#8C5AE2');
           setAbout(data.about || '');
           setLogo(data.logo_url || null);
@@ -81,7 +83,7 @@ export function OrgPanel() {
     return () => { cancelled = true; };
   }, [showToast]);
 
-  // Read an image file into a data URL — no storage bucket needed, and SVGs
+  // Read an image file into a data URL, no storage bucket needed, and SVGs
   // render cleanly in an <img>. Persisted as-is in the logo_url text column.
   const readLogoFile = (file) => {
     if (!file) return;
@@ -128,6 +130,25 @@ export function OrgPanel() {
     useAppStore.setState({ carePlanMode: mode });
     const label = CARE_PLAN_MODES.find(m => m.value === mode)?.label || mode;
     showToast(`Care plan level set to ${label}`);
+  };
+
+  // Same as the care plan level: a behavior setting, saved when toggled.
+  const toggleStatusChangeReason = async (on) => {
+    setAskStatusChangeReason(on);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setAskStatusChangeReason(!on); showToast('Not authenticated'); return; }
+    const { data, error } = await supabase
+      .from('org_settings')
+      .update({ ask_status_change_reason: on, updated_at: new Date().toISOString() })
+      .eq('user_id', session.user.id)
+      .select('id');
+    if (error || !data?.length) {
+      setAskStatusChangeReason(!on);
+      showToast(error ? 'Could not save the status change setting' : 'Save the organization details first');
+      return;
+    }
+    useAppStore.setState({ askStatusChangeReason: on });
+    showToast(on ? 'Status changes will ask for a reason' : 'Status changes no longer ask for a reason');
   };
 
   const saveOrgData = async () => {
@@ -207,8 +228,8 @@ export function OrgPanel() {
             <>
               <img src={logo} alt="Organization logo" className={styles.logoImg} />
               <Button
-                variant="secondary"
-                size="S"
+                variant="outline"
+                size="sm"
                 iconOnly
                 leadingIcon="solar:trash-bin-trash-linear"
                 className={styles.removeLogo}
@@ -251,7 +272,7 @@ export function OrgPanel() {
         />
       </div>
 
-      {/* Preview — only once a logo exists */}
+      {/* Preview: only once a logo exists */}
       {logo && (
         <div className={styles.formGroup}>
           <span className={styles.label}>Preview</span>
@@ -303,6 +324,18 @@ export function OrgPanel() {
         </div>
       </div>
 
+      {/* Reason on care plan status changes */}
+      <div className={styles.formGroup}>
+        <Switch
+          checked={askStatusChangeReason}
+          onChange={toggleStatusChangeReason}
+          label="Ask for a reason on care plan status changes"
+        />
+        <p className={styles.fieldHint}>
+          When enabled, changing a goal, intervention or barrier's status asks for a reason and an optional note. A reason is required for Met, Resolved, Discontinued and On Hold.
+        </p>
+      </div>
+
       {/* About */}
       <div className={styles.formGroup}>
         <label className={styles.label} htmlFor={`${uid}-about`}>About</label>
@@ -339,12 +372,9 @@ export function OrgPanel() {
       <div className={styles.formGroup}>
         <Button
           onClick={saveOrgData}
-          disabled={saving}
-          variant="primary"
-          size="L"
-          className={styles.saveButton}
+          className={styles.saveButton} loading={saving}
         >
-          {saving ? 'Saving…' : 'Save Changes'}
+          Save Changes
         </Button>
       </div>
     </div>

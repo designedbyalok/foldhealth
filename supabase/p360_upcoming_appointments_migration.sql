@@ -1,5 +1,5 @@
 -- ============================================================
--- P360 banner — persist "Upcoming Appointments" per patient.
+-- P360 banner: persist "Upcoming Appointments" per patient.
 -- The expanded banner reads p.upcoming_appointments; until now it
 -- only existed in FALLBACK_P360, so every patient with a real
 -- p360_profiles row rendered an empty Appointments column.

@@ -1,8 +1,9 @@
 /**
  * Full-screen form builder. Three modes via the header segmented control:
- *   • Edit Form — palette (drag) → canvas (drop/reorder) → properties
- *   • Score     — define scores + bands over the scorable fields
- *   • Preview   — fill the form for real, with live scoring
+ *   • Edit Form: palette (drag) → canvas (drop/reorder) → properties
+ *   • Score: define scores + bands over the scorable fields
+ *   • Care Plan: map score ranges / answers to care plan templates to suggest
+ *   • Preview: fill the form for real, with live scoring
  *
  * The working copy (name / fields / scoring) lives in local state; Save pushes
  * it to Supabase via store.saveForm. Opened/closed through editingFormId.
@@ -22,8 +23,8 @@ import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Input } from '../../../components/Input/Input';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { Switch } from '../../../components/Switch/Switch';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Select } from '../../../components/Select/Select';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
@@ -44,6 +45,7 @@ import {
 } from './rating';
 import { ScorePanel } from './ScorePanel';
 import { LogicPanel } from './LogicPanel';
+import { CarePlanMappingPanel } from './CarePlanMappingPanel';
 import { PreviewPanel } from './PreviewPanel';
 import { FormAnalyticsPanel } from '../analytics/FormAnalyticsPanel';
 import { FormSettings } from './FormSettings';
@@ -370,7 +372,7 @@ function RatingProperties({ field, onPatch }) {
           aria-labelledby={`${uid}-description`}
           placeholder="Description for this field."
           value={field.description || ''}
-          onChange={(html) => onPatch({ description: html })}
+          onValueChange={(html) => onPatch({ description: html })}
         />
 
         <label className={styles.propLabel} htmlFor={`${uid}-element`}>Rating Elements</label>
@@ -380,7 +382,7 @@ function RatingProperties({ field, onPatch }) {
           options={RATING_ELEMENT_OPTIONS}
           value={element.key}
           leadingIcon={element.icon}
-          onChange={(key) => {
+          onValueChange={(key) => {
             // NPS is a fixed instrument: 0–10, likelihood labels, and the
             // standard question unless the author already wrote their own.
             const next = ratingElement(key);
@@ -413,7 +415,7 @@ function RatingProperties({ field, onPatch }) {
               id={`${uid}-scale`}
               options={RATING_SCALE_OPTIONS}
               value={String(scale)}
-              onChange={(v) => {
+              onValueChange={(v) => {
                 const n = Number(v);
                 onPatch({ ratingScale: n, options: ratingOptions(n) });
               }}
@@ -427,7 +429,7 @@ function RatingProperties({ field, onPatch }) {
           id={`${uid}-labels`}
           options={RATING_LABEL_OPTIONS}
           value={labelsKey}
-          onChange={(key) => onPatch({ ratingLabels: key })}
+          onValueChange={(key) => onPatch({ ratingLabels: key })}
         />
         {labelsKey === 'custom' && (
           <>
@@ -505,7 +507,7 @@ function ConsentRow({ item, fieldLinkId, onToggleIncluded, onPatchItem, onRemove
         {item.custom && (
           <ActionButton
             icon="solar:trash-bin-trash-linear"
-            size="S"
+            size="sm"
             tooltip="Remove"
             tooltipLeft
             onClick={() => onRemove(item)}
@@ -513,7 +515,7 @@ function ConsentRow({ item, fieldLinkId, onToggleIncluded, onPatchItem, onRemove
         )}
         <ActionButton
           icon="solar:pen-linear"
-          size="S"
+          size="sm"
           tooltip={editing ? 'Hide description' : 'Edit description'}
           tooltipLeft
           active={editing}
@@ -681,7 +683,7 @@ function Properties({ field, onPatch, settings, onSettingsChange }) {
         <div className={styles.propsBody}>
           <div className={styles.lockedBanner}>
             <Icon name="solar:lock-keyhole-minimalistic-linear" size={14} color="var(--status-success)" />
-            {validated ? <>Validated &amp; locked — items and scoring can’t be edited.</> : 'Locked: questions and options can’t be edited.'}
+            {validated ? <>Validated &amp; locked, items and scoring can’t be edited.</> : 'Locked: questions and options can’t be edited.'}
           </div>
           <label className={styles.propLabel} htmlFor={`${uid}-locked-label`}>Label</label>
           <Input id={`${uid}-locked-label`} className={styles.ctl} value={field.text || ''} disabled readOnly />
@@ -766,7 +768,7 @@ function Properties({ field, onPatch, settings, onSettingsChange }) {
                 <Input
                   className={styles.optScore}
                   type="number"
-                  placeholder="—"
+                  placeholder="-"
                   value={o.score ?? ''}
                   onChange={(e) => setOpt(i, { score: e.target.value === '' ? undefined : Number(e.target.value) })}
                 />
@@ -808,7 +810,7 @@ export function FormBuilder() {
       return;
     }
     const ok = await copyToClipboard(formShareLink(form.id));
-    showToast?.(ok ? 'Shareable form link copied' : 'Could not copy — link: ' + formShareLink(form.id));
+    showToast?.(ok ? 'Shareable form link copied' : 'Could not copy: link: ' + formShareLink(form.id));
   };
 
   const [name, setName] = useState(form?.name || 'Untitled Form');
@@ -821,7 +823,7 @@ export function FormBuilder() {
   const [activeDrag, setActiveDrag] = useState(null);
 
   // Skip the auto-save that the very next render would otherwise trigger right
-  // after we (re)load a form's state — we only want to persist real user edits.
+  // after we (re)load a form's state: we only want to persist real user edits.
   const skipAutoSave = useRef(true);
 
   // Re-sync when a different form is opened.
@@ -867,6 +869,7 @@ export function FormBuilder() {
       const { field, score, criticalTriggers } = instantiateInstrument(entry.instrument);
       setFields((prev) => insertAt(prev, field));
       setScoring((prev) => ({
+        ...prev,
         scores: [...(prev?.scores || []), score],
         criticalTriggers: [...(prev?.criticalTriggers || []), ...criticalTriggers],
       }));
@@ -938,6 +941,7 @@ export function FormBuilder() {
     // Remove any score / critical triggers registered by a validated instrument
     // instance (their ids are suffixed with the group's linkId).
     setScoring((prev) => ({
+      ...prev,
       scores: (prev?.scores || []).filter((s) => !String(s.id).endsWith(`_${id}`)),
       criticalTriggers: (prev?.criticalTriggers || []).filter((t) => !String(t.id).endsWith(`_${id}`)),
     }));
@@ -962,19 +966,18 @@ export function FormBuilder() {
           <Icon name="solar:pen-2-linear" size={14} color="var(--neutral-300)" />
         </div>
 
-        <Toggle
-          items={[{ key: 'edit', label: 'Edit Form' }, { key: 'logic', label: 'Logic' }, { key: 'score', label: 'Score' }, { key: 'preview', label: 'Preview' }, { key: 'analytics', label: 'Analytics' }]}
-          active={mode}
-          onChange={setMode}
-          size="M"
+        <SegmentedControl
+          items={[{ key: 'edit', label: 'Edit Form' }, { key: 'logic', label: 'Logic' }, { key: 'score', label: 'Score' }, { key: 'care-plan', label: 'Care Plan' }, { key: 'preview', label: 'Preview' }, { key: 'analytics', label: 'Analytics' }]}
+          value={mode}
+          onValueChange={setMode}
         />
 
         <div className={styles.headerRight}>
-          <ActionButton icon="solar:link-linear" size="L" tooltip="Copy share link" onClick={copyShareLink} />
-          <ActionButton icon="solar:printer-linear" size="L" tooltip="Print" onClick={() => window.print()} />
+          <ActionButton icon="solar:link-linear" tooltip="Copy share link" onClick={copyShareLink} />
+          <ActionButton icon="solar:printer-linear" tooltip="Print" onClick={() => window.print()} />
           <span className={styles.hDivider} />
-          <Button variant="primary" size="L" disabled={saving} onClick={handleSave}>
-            {saving ? 'Saving…' : 'Save'}
+          <Button onClick={handleSave} loading={saving}>
+            Save
           </Button>
           <span className={styles.hDivider} />
           <CloseButton onClick={closeFormBuilder} />
@@ -1024,6 +1027,12 @@ export function FormBuilder() {
       {mode === 'score' && (
         <div className={styles.body}>
           <ScorePanel fields={fields} scoring={scoring} onChange={setScoring} />
+        </div>
+      )}
+
+      {mode === 'care-plan' && (
+        <div className={styles.body}>
+          <CarePlanMappingPanel fields={fields} scoring={scoring} onChange={setScoring} />
         </div>
       )}
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Icon } from '../../components/Icon/Icon';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Button } from '../../components/Button/Button';
 import { OverlayVerticalScroll, highlightJson, highlightHtml } from './PropertiesPanel.utils.jsx';
 import { CodeTabHtmlOverrideBanner, CodeTabCustomHtmlBanner } from './PropertiesPanelCodeTabBanners.jsx';
@@ -29,17 +29,17 @@ export function CodeTab({ doc }) {
   return (
     <div className={styles.codeScroll}>
       <div className={styles.codeToolbar}>
-        <Toggle
+        <SegmentedControl
           items={[{ key: 'json', label: 'JSON' }, { key: 'html', label: 'HTML' }]}
-          active={mode}
-          size="S"
-          onChange={switchMode}
+          value={mode}
+          size="sm"
+          onValueChange={switchMode}
         />
         <div className={styles.codeToolbarRight}>
-          <Button variant="secondary" size="S" leadingIcon="solar:magic-stick-3-linear" onClick={reformat} aria-label="Format">
+          <Button variant="outline" size="sm" leadingIcon="solar:magic-stick-3-linear" onClick={reformat} aria-label="Format">
             Format
           </Button>
-          <Button variant="secondary" size="S" leadingIcon="solar:copy-linear" onClick={copy} aria-label="Copy">
+          <Button variant="outline" size="sm" leadingIcon="solar:copy-linear" onClick={copy} aria-label="Copy">
             Copy
           </Button>
         </div>

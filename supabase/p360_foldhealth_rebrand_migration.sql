@@ -1,4 +1,4 @@
--- P360 profile card rebrand: the demo health plan reads "JADE Health" —
+-- P360 profile card rebrand: the demo health plan reads "JADE Health",
 -- rename to FoldHealth. Plan ids stay as sample data (only the name was
 -- wrong); the banner shows health_plan_id, falling back to the patient's
 -- Fold ID when a profile has none.

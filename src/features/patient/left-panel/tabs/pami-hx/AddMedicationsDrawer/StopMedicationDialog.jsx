@@ -32,7 +32,7 @@ export function StopMedicationDialog({ medication, onConfirm, onCancel }) {
       standardReasons={MEDICATION_STOP_REASONS}
       notes={false}
       confirmLabel="Save"
-      confirmVariant="primary"
+      confirmTone="primary"
       confirmDisabled={!stop || stopTooEarly}
       onCancel={onCancel}
       onSubmit={({ code }) => onConfirm({ stop, stopReason: code })}

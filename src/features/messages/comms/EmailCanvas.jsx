@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import styles from './ComposeEmail.module.css';
+import { sanitizeRichText } from '../../../lib/sanitizeHtml';
 
 const TOOLS = [
   { cmd: 'undo', icon: 'solar:undo-left-linear', tip: 'Undo' },
@@ -41,9 +42,11 @@ export const EmailCanvas = forwardRef(function EmailCanvas({ html, editing }, re
     setBody: (bodyHtml) => {
       const d = doc();
       if (!d?.body) return false;
+      // allow-same-origin makes this frame our origin, so injected markup is sanitized.
+      const safe = sanitizeRichText(bodyHtml);
       const slot = d.querySelector('[data-fold-body]');
-      if (slot) slot.innerHTML = bodyHtml;
-      else d.body.insertAdjacentHTML('afterbegin', `<div style="padding:24px 32px">${bodyHtml}</div>`);
+      if (slot) slot.innerHTML = safe;
+      else d.body.insertAdjacentHTML('afterbegin', `<div style="padding:24px 32px">${safe}</div>`);
       return true;
     },
   }), [html]);
@@ -72,7 +75,7 @@ export const EmailCanvas = forwardRef(function EmailCanvas({ html, editing }, re
       {editing && (
         <div className={styles.toolbar} role="toolbar" aria-label="Formatting">
           {TOOLS.map((t, i) => t
-            ? <ActionButton key={t.cmd} icon={t.icon} size="S" tooltip={t.tip} onClick={() => run(t.cmd)} />
+            ? <ActionButton key={t.cmd} icon={t.icon} size="sm" tooltip={t.tip} onClick={() => run(t.cmd)} />
             : <span key={`d${i}`} className={styles.toolbarDivider} />)}
         </div>
       )}
@@ -80,7 +83,7 @@ export const EmailCanvas = forwardRef(function EmailCanvas({ html, editing }, re
         ref={frameRef}
         title="Email preview"
         className={styles.frame}
-        sandbox="allow-same-origin allow-popups"
+        sandbox="allow-same-origin"
         srcDoc={html}
         onLoad={applyMode}
       />

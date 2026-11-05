@@ -1,12 +1,12 @@
-// HCC worklist column metadata — single source of truth for header labels,
+// HCC worklist column metadata: single source of truth for header labels,
 // sort keys, and the keys exposed in the column-config popover.
 //
-// `k`  — internal column key (also drives `data-col` attributes on cells)
-// `lb` — display label
-// `sortable` — true if the column should open a SortPopover on header click
+// `k`, internal column key (also drives `data-col` attributes on cells)
+// `lb`, display label
+// `sortable`, true if the column should open a SortPopover on header click
 //
 // Sticky Member (always-visible identity column) and Actions are intentionally
-// excluded — they're rendered separately and can't be hidden.
+// excluded: they're rendered separately and can't be hidden.
 
 // `sortField` is the property on the member row that drives the sort comparison.
 // If omitted, defaults to `k` (works when the column key matches the data field).
@@ -30,7 +30,7 @@ export const HCC_COLUMNS = [
   { k: 'r1',       lb: 'QA',            sortable: true,  sortField: 'r1s',   sortType: 'generic' },
   { k: 'r2',       lb: 'Compliance',    sortable: true,  sortField: 'r2s',   sortType: 'generic' },
   { k: 'progress', lb: 'Progress',      sortable: false },
-  // Current assignee — derived from the assignment engine (whoever is
+  // Current assignee: derived from the assignment engine (whoever is
   // actively working the record right now). Sorted by display name.
   { k: 'assignee', lb: 'Assignee',      sortable: true,  sortField: 'assigneeName' },
   { k: 'pcp',      lb: 'PCP',           sortable: true,  sortField: 'pcp' },
@@ -49,7 +49,7 @@ export const HCC_COL_MAP = Object.fromEntries(HCC_COLUMNS.map(c => [c.k, c]));
 
 // Apply a user-defined key order to a column descriptor list. Unknown keys in
 // `order` are ignored; columns missing from `order` are appended in their
-// original position. Returns a new array — never mutates inputs.
+// original position. Returns a new array, never mutates inputs.
 export function orderColumns(columns, order) {
   if (!order || !order.length) return columns;
   const byKey = Object.fromEntries(columns.map(c => [c.k, c]));
@@ -64,7 +64,7 @@ export function orderColumns(columns, order) {
   return ordered;
 }
 
-// Member-column sort axes — drives the MemberSortPopover trigger on the Member header.
+// Member-column sort axes: drives the MemberSortPopover trigger on the Member header.
 export const MEMBER_SORT_ITEMS = [
   { key: 'name_first', label: 'First Name' },
   { key: 'name_last',  label: 'Last Name' },

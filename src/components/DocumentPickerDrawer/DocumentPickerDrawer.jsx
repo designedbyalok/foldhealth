@@ -5,10 +5,11 @@ import { Icon } from '../Icon/Icon';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { SearchBar } from '../SearchBar/SearchBar';
 import { FilterChip } from '../FilterChip/FilterChip';
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
 import { DocumentUploadForm } from '../DocumentUploadForm/DocumentUploadForm';
 import { useDocumentUploadForm } from '../DocumentUploadForm/useDocumentUploadForm';
 import styles from './DocumentPickerDrawer.module.css';
+import { openSafeUrl } from '../../lib/openSafeUrl';
 
 const LAST_UPDATE_OPTIONS = [
   { label: 'Last 7 Days', days: 7 },
@@ -23,7 +24,7 @@ const fmtDate = (d) => (d
   : '');
 
 /**
- * DocumentPickerDrawer — pick existing patient documents to attach
+ * DocumentPickerDrawer: pick existing patient documents to attach
  * (Figma New Care Gap Workflow 19:57753). Search, Type and Last Update
  * filters; rows with checkbox, name, "type • Added on: date", a per-row Add
  * and a preview. Header "Add Selected" adds every checked document.
@@ -103,7 +104,7 @@ export function DocumentPickerDrawer({ documents = [], alreadyAdded = [], onAdd,
       noCloseDivider
       headerRight={(
         <div className={styles.headerRight}>
-          <Button variant="primary" size="M" disabled={!checkedDocs.length} onClick={() => { addDocs(checkedDocs); onClose?.(); }}>
+          <Button disabled={!checkedDocs.length} onClick={() => { addDocs(checkedDocs); onClose?.(); }}>
             {checkedDocs.length ? `Add Selected (${checkedDocs.length})` : 'Add Selected'}
           </Button>
           <span className={styles.headerDivider} />
@@ -120,14 +121,14 @@ export function DocumentPickerDrawer({ documents = [], alreadyAdded = [], onAdd,
             onClose={() => { setSearchOpen(false); setSearch(''); }}
           />
         ) : (
-          <ActionButton size="S" icon="solar:magnifer-linear" tooltip="Search" onClick={() => setSearchOpen(true)} />
+          <ActionButton size="sm" icon="solar:magnifer-linear" tooltip="Search" onClick={() => setSearchOpen(true)} />
         )}
         <span className={styles.divider} />
         <FilterChip size="S" label="Type" options={typeOptions} selected={filters.type} onChange={v => setFilters(f => ({ ...f, type: v }))} />
         <FilterChip size="S" label="Last Update" options={LAST_UPDATE_OPTIONS.map(o => o.label)} selected={filters.lastUpdate} onChange={v => setFilters(f => ({ ...f, lastUpdate: v }))} singleSelect />
         {onUpload && (
           <ActionButton
-            size="S"
+            size="sm"
             icon="solar:upload-minimalistic-linear"
             tooltip="Upload"
             tooltipLeft
@@ -145,8 +146,8 @@ export function DocumentPickerDrawer({ documents = [], alreadyAdded = [], onAdd,
           <span className={styles.uploadTitle}>Upload Document</span>
           <DocumentUploadForm form={upload} docTypes={docTypes} />
           <div className={styles.uploadActions}>
-            <Button variant="primary" size="S" disabled={!upload.canSave} onClick={submitUpload}>Upload</Button>
-            <Button variant="secondary" size="S" onClick={() => setUploading(false)}>Cancel</Button>
+            <Button size="sm" disabled={!upload.canSave} onClick={submitUpload}>Upload</Button>
+            <Button variant="outline" size="sm" onClick={() => setUploading(false)}>Cancel</Button>
           </div>
         </div>
       )}
@@ -205,16 +206,16 @@ export function DocumentPickerDrawer({ documents = [], alreadyAdded = [], onAdd,
                   </td>
                   <td className={styles.td}>
                     <div className={styles.actions}>
-                      <Button variant="secondary" size="S" disabled={isAdded} onClick={() => addDocs([r])}>
+                      <Button variant="outline" size="sm" disabled={isAdded} onClick={() => addDocs([r])}>
                         {isAdded ? 'Added' : 'Add'}
                       </Button>
                       <span className={styles.divider} />
                       <ActionButton
-                        size="S"
+                        size="sm"
                         icon="solar:eye-linear"
                         tooltip={r.url ? 'Preview' : 'Preview not available'}
-                        state={r.url ? 'active' : 'disabled'}
-                        onClick={() => { if (r.url) window.open(r.url, '_blank', 'noopener'); }}
+                        disabled={!r.url}
+                        onClick={() => { if (r.url) openSafeUrl(r.url, 'noopener'); }}
                       />
                     </div>
                   </td>

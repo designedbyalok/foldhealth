@@ -1,5 +1,5 @@
 import { Button } from '../../../components/Button/Button';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { KpiCard, InsightBanner, Card, ProgressBar, EmptyState, KpiSkeleton, TableSkeleton, ChartSkeleton, ProgressBarSkeleton } from './shared';
 import { safeTableRows, safeBarItems } from './shared.utils';
 import { TcocLineChart, SavingsAreaChart } from './charts';
@@ -34,7 +34,7 @@ export function ExecutiveDriversSection({ showToast }) {
   return (
     <InsightBanner
       icon="solar:chart-linear"
-      title="Key Drivers — Where to Focus"
+      title="Key Drivers: Where to Focus"
       text="Cost: <strong>Inpatient $23 over benchmark</strong> driven by readmission spike at 3 facilities. Quality: <strong>AWV 19pp below target</strong>. Risk: <strong>962 HCC suspects open</strong> = $2.1M revenue at risk. Engagement: <strong>SMS-first converting at 61%</strong> vs 29% phone."
       buttons={[
         { label: 'Financial', navTo: 'financial' },
@@ -61,16 +61,16 @@ export function ExecutiveTcocSection({
       sub={periodLabel}
       actions={
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Toggle
+          <SegmentedControl
             items={[
               { key: 'pmpm', label: 'PMPM' },
               { key: 'total', label: 'Total Cost' },
             ]}
-            active={tcocMode}
-            onChange={onTcocModeChange}
-            size="S"
+            value={tcocMode}
+            onValueChange={onTcocModeChange}
+            size="sm"
           />
-          <Toggle
+          <SegmentedControl
             items={[
               { key: 'all', label: 'All' },
               { key: 'ip', label: 'Inpatient' },
@@ -79,9 +79,9 @@ export function ExecutiveTcocSection({
               { key: 'rx', label: 'Pharmacy' },
               { key: 'pac', label: 'PAC' },
             ]}
-            active={tcocTab}
-            onChange={onTcocTabChange}
-            size="S"
+            value={tcocTab}
+            onValueChange={onTcocTabChange}
+            size="sm"
           />
         </div>
       }
@@ -102,7 +102,7 @@ export function ExecutiveTcocSection({
 
 export function ExecutiveQualitySection({ qualitySummary, qualFallback, showToast }) {
   return (
-    <Card title="Quality Summary" actions={<Button variant="ghost" size="S" onClick={() => showToast?.('Opening Quality view')}>Full View &rarr;</Button>}>
+    <Card title="Quality Summary" actions={<Button variant="ghost" size="sm" onClick={() => showToast?.('Opening Quality view')}>Full View &rarr;</Button>}>
       {qualitySummary === null ? (
         <ProgressBarSkeleton count={5} />
       ) : (
@@ -119,7 +119,7 @@ export function ExecutiveCareSection({ careProgramData, carePrograms, showToast 
     <Card
       title="Care Program Command Center"
       sub={`8 programs · $7.3M saved · 3.7× blended ROI`}
-      actions={<Button variant="ghost" size="S" onClick={() => showToast?.('Opening Care Management view')}>Full Program View &rarr;</Button>}
+      actions={<Button variant="ghost" size="sm" onClick={() => showToast?.('Opening Care Management view')}>Full Program View &rarr;</Button>}
       flush
     >
       <div className={s.tblWrap}>
@@ -171,7 +171,7 @@ export function ExecutiveSavingsSection({
     <Card
       title="Shared Savings Trajectory"
       sub={periodLabel}
-      actions={<Button variant="ghost" size="S" onClick={() => showToast?.('Opening Shared Savings view')}>Full View &rarr;</Button>}
+      actions={<Button variant="ghost" size="sm" onClick={() => showToast?.('Opening Shared Savings view')}>Full View &rarr;</Button>}
     >
       <div style={{ display: 'flex', gap: 20, marginBottom: 12, flexWrap: 'wrap', alignItems: 'baseline' }}>
         <div>
@@ -207,7 +207,7 @@ export function ExecutiveSavingsSection({
 
 export function ExecutiveCostTableSection({ costData, costRows }) {
   return (
-    <Card title="Cost by Setting — Benchmark Comparison" flush>
+    <Card title="Cost by Setting: Benchmark Comparison" flush>
       <div className={s.tblWrap}>
         <table className={s.tbl}>
           <thead>

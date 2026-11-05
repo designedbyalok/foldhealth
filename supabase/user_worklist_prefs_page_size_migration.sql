@@ -4,16 +4,16 @@
 -- user_id and used for worklist_order) rather than adding a second
 -- preferences table, so a user's table settings stay in one row.
 --
---   auto_page_size — true (default) lets each table size its page to the
+--   auto_page_size: true (default) lets each table size its page to the
 --                    viewport; false pins it to per_page.
---   per_page       — the size the user picked explicitly. Only meaningful
+--   per_page: the size the user picked explicitly. Only meaningful
 --                    when auto_page_size is false, but stored either way so
 --                    toggling back to manual restores the last choice.
 --
 -- In deployed environments the table already exists with RLS enabled and an
 -- authenticated-only "Allow all" policy (see
 -- narrow_public_policies_to_authenticated.sql). Its CREATE was never checked
--- in, so guard it here to keep this runnable against a fresh database — on
+-- in, so guard it here to keep this runnable against a fresh database, on
 -- an existing one every statement below is a no-op.
 CREATE TABLE IF NOT EXISTS public.user_worklist_prefs (
   user_id        text PRIMARY KEY,
@@ -25,7 +25,7 @@ ALTER TABLE public.user_worklist_prefs ENABLE ROW LEVEL SECURITY;
 
 -- These rows are per-user preferences, so the policy is ownership rather than a
 -- blanket allow. The previous "Allow all" (FOR ALL USING (true)) let any
--- authenticated user read — and overwrite — every other user's saved worklist
+-- authenticated user read, and overwrite, every other user's saved worklist
 -- order and page size.
 --
 -- This replaces that policy unconditionally. The earlier guarded version only
@@ -34,7 +34,7 @@ ALTER TABLE public.user_worklist_prefs ENABLE ROW LEVEL SECURITY;
 --
 -- user_id is `text` while auth.uid() returns uuid, hence the cast. Legacy rows
 -- keyed 'local-dev' (written by the localhost dev-bypass, which is an anonymous
--- session) match no authenticated user and become invisible — they were already
+-- session) match no authenticated user and become invisible, they were already
 -- unreachable once this table was scoped to `authenticated`.
 DROP POLICY IF EXISTS "Allow all" ON public.user_worklist_prefs;
 DROP POLICY IF EXISTS user_worklist_prefs_own ON public.user_worklist_prefs;

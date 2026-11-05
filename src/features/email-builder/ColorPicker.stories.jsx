@@ -25,15 +25,15 @@ export default {
       description: {
         component: [
           'Color picker popover behind every color field in the email builder and form-builder settings.',
-          'Controlled — the host owns `value`, which is a hex string (`#RRGGBB`, or `#RRGGBBAA` when opacity is',
+          'Controlled: the host owns `value`, which is a hex string (`#RRGGBB`, or `#RRGGBBAA` when opacity is',
           'below 100%) or a CSS gradient string. The Solid/Gradient toggle reads the initial `value`: a gradient',
           'string opens in Gradient mode, anything else in Solid.',
           '',
-          'The value field reads and accepts **Hex, RGB, HSL, HSB, OKLCH and CSS** — a display preference only,',
+          'The value field reads and accepts **Hex, RGB, HSL, HSB, OKLCH and CSS**, a display preference only,',
           'since the stored value is always hex. Opacity has its own ramp and `%` field.',
           'Drag the picker anywhere by the grip at the top.',
           '',
-          'The eyedropper button only renders where the native `EyeDropper` API exists (Chromium, Edge, Opera) —',
+          'The eyedropper button only renders where the native `EyeDropper` API exists (Chromium, Edge, Opera) -',
           'expect it to be missing in Firefox and Safari rather than present-but-dead.',
         ].join(' '),
       },
@@ -42,7 +42,7 @@ export default {
   argTypes: {
     value: {
       control: 'text',
-      description: 'Current color — `#RRGGBB` (or `#RRGGBBAA` with opacity) for solid, or a `linear-gradient(…)` / `radial-gradient(…)` string.',
+      description: 'Current color: `#RRGGBB` (or `#RRGGBBAA` with opacity) for solid, or a `linear-gradient(…)` / `radial-gradient(…)` string.',
       table: { type: { summary: 'string' } },
     },
     onChange: {
@@ -94,7 +94,7 @@ function Wrapper({ value: initial = '#7C5CFA', recentlyUsed = [], onCommitRecent
 }
 
 // Keyed on the incoming value so editing the `value` control remounts the
-// picker — mode is derived from `value` at mount only.
+// picker: mode is derived from `value` at mount only.
 const render = (args) => <Wrapper key={args.value} {...args} />;
 
 export const Playground = {
@@ -119,7 +119,7 @@ export const SolidOnly = {
   render,
   args: { value: '#22C55E', variables: VARIABLES, recentlyUsed: RECENT, allowGradient: false },
   parameters: {
-    docs: { description: { story: '`allowGradient={false}` — the mode toggle is gone and the picker can only produce a hex. Used by fields where a gradient is not a valid value (e.g. text color).' } },
+    docs: { description: { story: '`allowGradient={false}`, the mode toggle is gone and the picker can only produce a hex. Used by fields where a gradient is not a valid value (e.g. text color).' } },
   },
 };
 
@@ -127,7 +127,7 @@ export const Translucent = {
   render,
   args: { value: '#7C5CFA59', variables: VARIABLES, recentlyUsed: RECENT },
   parameters: {
-    docs: { description: { story: 'Opacity rides along in the value as an 8-digit hex (`#RRGGBBAA`) — here 35%. The opacity ramp sits under the hue ramp with a checkerboard track, and the `%` field mirrors it. Note the MRU list only takes opaque hexes, so translucent picks are not recorded as recents.' } },
+    docs: { description: { story: 'Opacity rides along in the value as an 8-digit hex (`#RRGGBBAA`): here 35%. The opacity ramp sits under the hue ramp with a checkerboard track, and the `%` field mirrors it. Note the MRU list only takes opaque hexes, so translucent picks are not recorded as recents.' } },
   },
 };
 
@@ -135,7 +135,7 @@ export const Bare = {
   render,
   args: { value: '#0EA5E9', variables: [], recentlyUsed: [] },
   parameters: {
-    docs: { description: { story: 'No variables and no history — both swatch sections collapse and the popover is just square + hue + inputs. This is the first-run state.' } },
+    docs: { description: { story: 'No variables and no history: both swatch sections collapse and the popover is just square + hue + inputs. This is the first-run state.' } },
   },
 };
 
@@ -143,7 +143,7 @@ export const VariablesOnly = {
   render,
   args: { value: '#3A485F', variables: VARIABLES, recentlyUsed: [] },
   parameters: {
-    docs: { description: { story: 'Variables present, history empty — what a fresh session on a branded template looks like.' } },
+    docs: { description: { story: 'Variables present, history empty, what a fresh session on a branded template looks like.' } },
   },
 };
 
@@ -181,7 +181,7 @@ function FieldRow({ label, value: initial, allowGradient }) {
 export const TriggerField = {
   parameters: {
     layout: 'padded',
-    docs: { description: { story: 'The `ColorInput` field that hosts the picker — a swatch dot plus a hex input, opening the popover on click. A white swatch gets a visible border so it does not disappear against the panel; a gradient value shows a read-only "Gradient" label instead of a hex.' } },
+    docs: { description: { story: 'The `ColorInput` field that hosts the picker: a swatch dot plus a hex input, opening the popover on click. A white swatch gets a visible border so it does not disappear against the panel; a gradient value shows a read-only "Gradient" label instead of a hex.' } },
   },
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: 220 }}>

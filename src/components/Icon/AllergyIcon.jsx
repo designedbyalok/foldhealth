@@ -1,5 +1,5 @@
 /**
- * Custom allergy icon — the raised hand used for the Allergies section and
+ * Custom allergy icon: the raised hand used for the Allergies section and
  * its empty state. No Solar glyph matches it.
  *
  * The 1.27778 stroke is 1px once drawn: this icon's viewBox is 31 units where

@@ -1,7 +1,7 @@
 /* ── Drawer shell ─────────────────────────────────────────────────── */
 /* Fixed 660px width across every phase (chooser, picker, processing,
    review, single, sftp). The previous narrow/wide split was confusing
-   when the drawer "grew" during AI extraction — a single width keeps
+   when the drawer "grew" during AI extraction: a single width keeps
    the layout calm. */
 .drawer {
   width: 660px;
@@ -25,7 +25,7 @@
   font-weight: 500;
   color: var(--neutral-500);
 }
-/* Two-line picker header — bold 18px title + 12px grey subtitle stacked. */
+/* Two-line picker header: bold 18px title + 12px grey subtitle stacked. */
 .titleBlock {
   display: inline-flex;
   align-items: flex-start;
@@ -67,7 +67,7 @@
   color: var(--neutral-300);
 }
 
-/* Step indicator — numbered chip + label, two steps connected by a hairline. */
+/* Step indicator: numbered chip + label, two steps connected by a hairline. */
 .steps {
   display: flex;
   align-items: center;
@@ -107,7 +107,7 @@
   background: var(--neutral-150);
 }
 
-/* Hero illustration — two dashed concentric rings around an icon disc.
+/* Hero illustration: two dashed concentric rings around an icon disc.
    Sized to Figma (120 outer / 102 middle / 84 inner). */
 .hero {
   align-self: center;
@@ -143,7 +143,7 @@
   background: linear-gradient(141.7deg, #f9fafc 12.7%, #f1f2f3 91.4%);
 }
 
-/* Dropzone now provided by src/components/Dropzone — the old
+/* Dropzone now provided by src/components/Dropzone: the old
    .dropZoneBlock / .dropZone / .formatsLine rules below are no longer
    referenced by the HCC picker. Kept temporarily for any reuse during
    the migration of the other 4 dropzone sites. */
@@ -158,7 +158,7 @@
   min-height: 0;
   overflow: hidden;
 }
-/* Only the tab content region scrolls — tabs, cron strip, and filter row
+/* Only the tab content region scrolls, tabs, cron strip, and filter row
    stay pinned at the top so the user always sees them regardless of how
    far down the record list they scroll. Negative horizontal margin +
    matching padding preserves the drawer-edge bleed of section headers. */
@@ -224,7 +224,7 @@
 
 /* Inline FilterChip row shown under the tab bar when the trailing Filter
    icon is toggled on. Same pattern as the worklist / DiagPanel filter
-   rows — reuses <FilterChip> primitives so the interaction is identical. */
+   rows: reuses <FilterChip> primitives so the interaction is identical. */
 .filterChipRow {
   display: flex;
   flex-wrap: wrap;
@@ -246,7 +246,7 @@
 }
 .filterChipClear:hover { background: var(--primary-50); }
 
-/* Upload card — the PHI notice + Dropzone share a single rounded border so
+/* Upload card: the PHI notice + Dropzone share a single rounded border so
    the warning reads as an integrated header on the upload surface (Figma
    Communications 1-23639). */
 .uploadCard {
@@ -257,7 +257,7 @@
   background: var(--neutral-0);
   margin: 12px 0;
 }
-/* Embedded dropzone — drop the outer border since .uploadCard owns it. */
+/* Embedded dropzone: drop the outer border since .uploadCard owns it. */
 .dropzoneEmbedded > :global([class*="_zone_"]) {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
@@ -272,7 +272,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  /* Bleed to drawer edges AND sit flush against the TabStrip above — cancel
+  /* Bleed to drawer edges AND sit flush against the TabStrip above, cancel
      the pickerPhase2 flex gap that would otherwise push us down 12px. */
   margin: -12px -20px 0;
   background: var(--status-success-light);
@@ -372,7 +372,7 @@
 .recCard > .exRow + .exRow {
   border-top: 0.5px solid var(--neutral-100);
 }
-/* Section variants — left-to-right fade from a status-tinted wash into
+/* Section variants: left-to-right fade from a status-tinted wash into
    pure white, per Figma review-tab spec. Border stays neutral-150 across
    variants so the tint doesn't compete with the card outline. */
 .recCardDegraded {
@@ -390,7 +390,7 @@
   border-top-color: var(--neutral-150);
 }
 
-/* PDF document glyph — custom 24×24 SVG that carries the inline "PDF"
+/* PDF document glyph: custom 24×24 SVG that carries the inline "PDF"
    letters, so no separate label is needed. Drives color via currentColor
    so a token change here recolors the paths. */
 .pdfBadge {
@@ -403,7 +403,7 @@
   color: var(--neutral-300);
 }
 
-/* Patient name link on Added rows — inline text button that opens the
+/* Patient name link on Added rows, inline text button that opens the
    DiagPanel for that member. Purple with a matching trailing arrow. */
 .patientLink {
   display: inline-flex;
@@ -537,7 +537,7 @@
   border: 0.5px solid var(--neutral-150);
 }
 
-/* When files are staged, the dropzone shrinks vertically — Figma
+/* When files are staged, the dropzone shrinks vertically, Figma
    124:84012 trades dropzone real estate for the file list below. The
    inner zone's :where() selector targets the shared Dropzone primitive
    without touching its base styles. */
@@ -714,7 +714,7 @@
   margin-top: 4px;
 }
 
-/* Queued Documents — Figma 211:66363 */
+/* Queued Documents: Figma 211:66363 */
 .queuedSection {
   display: flex;
   flex-direction: column;
@@ -965,7 +965,7 @@
   border-top: 0.5px solid var(--neutral-100);
 }
 
-/* Demo PDF chip strip — single line under the footer note. Greyed out
+/* Demo PDF chip strip: single line under the footer note. Greyed out
    so it reads as a developer affordance, not a primary surface. */
 .demoStrip {
   display: flex;
@@ -981,7 +981,7 @@
   margin-right: 4px;
 }
 
-/* How-to banner — light info-blue background, numbered list. */
+/* How-to banner: light info-blue background, numbered list. */
 .howToBanner {
   padding: 8px 10px;
   background: var(--status-info-light, #f4f8fe);
@@ -1007,7 +1007,7 @@
 .howToList li { padding-left: 2px; }
 .howToList li::marker { color: var(--neutral-400); }
 
-/* Dropzone — Figma simplifies this to a single-line CTA inside a dashed box. */
+/* Dropzone: Figma simplifies this to a single-line CTA inside a dashed box. */
 .dropZone {
   display: flex;
   flex-direction: column;
@@ -1042,7 +1042,7 @@
 }
 .fileInput { display: none; }
 
-/* Format / size meta line — flexed apart, left/right. */
+/* Format / size meta line: flexed apart, left/right. */
 .formatsLine {
   display: flex;
   justify-content: space-between;
@@ -1051,7 +1051,7 @@
   margin-top: -10px;
 }
 
-/* Sample document card — icon · text · trailing action / chip row. */
+/* Sample document card: icon · text · trailing action / chip row. */
 .sampleCard {
   display: flex;
   align-items: flex-start;
@@ -1104,7 +1104,7 @@
   border-color: var(--primary-300);
 }
 
-/* Footer info note — white card with leading info icon, neutral subtle text. */
+/* Footer info note: white card with leading info icon, neutral subtle text. */
 .footerNote {
   display: flex;
   align-items: flex-start;
@@ -1270,7 +1270,7 @@
   padding: 16px 20px 0;
 }
 
-/* Bulk-action bar — sits below the filter chips with two CTAs on the
+/* Bulk-action bar: sits below the filter chips with two CTAs on the
    left (Accept All High Confidence + Review Flagged) and the selection
    summary on the right when something is checked. */
 .bulkBar {
@@ -1326,7 +1326,7 @@
   color: var(--neutral-500);
 }
 
-/* Bulk-selection summary banner — only visible in table layout when at
+/* Bulk-selection summary banner: only visible in table layout when at
    least one row is checked. */
 .selectionBar {
   display: flex;
@@ -1460,7 +1460,7 @@
   margin-left: auto;
 }
 
-/* Master row — one per encounter */
+/* Master row: one per encounter */
 .masterRow {
   display: grid;
   grid-template-columns: 1fr auto auto auto;
@@ -1642,7 +1642,7 @@
   margin: 0 4px;
 }
 
-/* Upload-more button — primary-link styled, sits between the layout
+/* Upload-more button: primary-link styled, sits between the layout
    toggle and the Confirm button. Used to append more OCR results
    without leaving the review phase. */
 .uploadMoreBtn {
@@ -1669,7 +1669,7 @@
   animation: spin 0.8s linear infinite;
 }
 
-/* ── Option 2 — editable table ────────────────────────────────────── */
+/* ── Option 2: editable table ────────────────────────────────────── */
 .tableWrap {
   flex: 1;
   min-height: 0;
@@ -1722,7 +1722,7 @@
 .thIcds    { min-width: 220px; }
 .thRequired { color: var(--status-error); margin-left: 2px; }
 
-/* Field cell — wraps an editable input/select with a per-field
+/* Field cell: wraps an editable input/select with a per-field
    confidence chip below it. Adds breathing room so the chip doesn't
    crash into the next row's input. */
 .tdField {
@@ -1736,7 +1736,7 @@
    stays pinned on the left, and the Action column stays pinned on the
    right so destructive affordances stay reachable at any scroll
    position. Header cells use the existing `position: sticky; top: 0`
-   for the vertical sticky — we layer horizontal sticky on top by
+   for the vertical sticky: we layer horizontal sticky on top by
    bumping z-index where the two stickies meet. */
 .encTable thead .thCheck,
 .encTable tbody .tdCheck {
@@ -1798,7 +1798,7 @@
 .encTableRow:hover   .tdActions,
 .encTableRow:hover   .tdStatus     { background: var(--neutral-50); }
 
-/* Group-header row — sits above every patient cluster. */
+/* Group-header row: sits above every patient cluster. */
 .groupHeaderRow {
   background: var(--neutral-50);
   position: sticky;
@@ -1834,7 +1834,7 @@
   color: var(--neutral-300);
 }
 
-/* Source-page chip — clickable, opens a (stubbed) preview. */
+/* Source-page chip: clickable, opens a (stubbed) preview. */
 .tdPage {
   padding: 8px 10px;
   vertical-align: middle;
@@ -1873,7 +1873,7 @@
 .encTableRowMismatch { border-left-color: var(--status-warning); background: var(--status-warning-light); }
 
 .tdPatient { min-width: 200px; }
-/* Matched patient chip — clickable to open the swap picker. Hover
+/* Matched patient chip: clickable to open the swap picker. Hover
    surfaces the pen-edit affordance so the cell reads as actionable. */
 .tdPatientMatched {
   display: inline-flex;
@@ -2210,7 +2210,7 @@
 }
 .memberPickerCancel:hover { text-decoration: underline; }
 
-/* Rematch row — shown on matched encounters so the user can swap to a
+/* Rematch row: shown on matched encounters so the user can swap to a
    different patient. Light surface, primary-tinted CTA. */
 .rematchRow {
   display: flex;
@@ -2315,14 +2315,14 @@
   gap: 6px;
 }
 
-/* DOS field — toggle stacked above the picker (Select or Input). */
+/* DOS field: toggle stacked above the picker (Select or Input). */
 .dosFieldRow {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-/* Inline ICD add — typeahead input below the chip row, with the
+/* Inline ICD add: typeahead input below the chip row, with the
    matched-results list rendering directly underneath. Mirrors the
    pattern used by the SinglePhase form for visual consistency. */
 .icdAddRow {
@@ -2387,7 +2387,7 @@
 .removeEncounterBtn:hover { background: var(--status-error-light); }
 
 /* ── Chooser phase ────────────────────────────────────────────── */
-/* Title-area back button — small chevron-left sitting before the
+/* Title-area back button: small chevron-left sitting before the
    drawer title text. Lets the user step back from a sub-mode to the
    chooser without closing the drawer. */
 .titleBackBtn {
@@ -2448,7 +2448,7 @@
   background: var(--secondary-100, #fff4ee);
   border-color: var(--secondary-200, #ffd6c0);
 }
-/* Neutral tone — used for utility / passive options like SFTP where
+/* Neutral tone: used for utility / passive options like SFTP where
    the action isn't a direct upload, it's a credential / config jump. */
 .chooserCard_neutral {
   background: var(--neutral-50, #f6f7f8);
@@ -2562,7 +2562,7 @@
 .sftpExternalLink:hover { text-decoration: underline; }
 .sftpExternalHint { font-size: var(--font-xs); }
 
-/* SFTP demo trigger — sits below the credentials link, lets the user
+/* SFTP demo trigger: sits below the credentials link, lets the user
    exercise the multi-doc review workflow without an actual SFTP. */
 .sftpDemo {
   margin-top: 16px;
@@ -2625,7 +2625,7 @@
 }
 .singleReq { color: var(--status-error); margin-left: 2px; }
 
-/* Member picker — the field itself is the search input. When focused
+/* Member picker: the field itself is the search input. When focused
    the caret sits inside a Select-styled shell and the match list opens
    in an absolutely-positioned popover so the DOS card below never
    shifts down. No separate search box inside the popover. */
@@ -2656,7 +2656,7 @@
   right: 12px;
   pointer-events: none;
 }
-/* Selected-member chip — swaps in for the input once a patient is
+/* Selected-member chip: swaps in for the input once a patient is
    picked, showing the Avatar + demographics inline. Clicking it
    reopens the picker so the user can search again. */
 .singleMemberSelected {
@@ -2705,7 +2705,7 @@
   text-align: center;
 }
 
-/* DOS card — mirrors HccAddDosDrawer's DosBlock: head strip + body
+/* DOS card: mirrors HccAddDosDrawer's DosBlock: head strip + body
    with 12px inset, so the layout reads identically across manual and
    worklist entry points. */
 .singleDosCard {
@@ -2756,7 +2756,7 @@
 }
 .singleTrashBtn:hover { background: var(--neutral-50); }
 
-/* ICD Codes — one row per pick, divider between rows. */
+/* ICD Codes: one row per pick, divider between rows. */
 .singleIcdSection {
   display: flex;
   flex-direction: column;
@@ -2779,7 +2779,7 @@
 .singleIcdDesc { font: 400 13px/1.4 'Inter', sans-serif; color: var(--neutral-500); }
 .singleIcdHcc { font: 400 12px/1.4 'Inter', sans-serif; color: var(--neutral-300); margin-top: 2px; }
 
-/* Add More DOS — dashed primary-tinted CTA below the last DOS card. */
+/* Add More DOS: dashed primary-tinted CTA below the last DOS card. */
 .addMoreDosBtn {
   display: inline-flex;
   align-items: center;
@@ -3152,7 +3152,7 @@
   color: var(--neutral-200);
 }
 
-/* ── Provider / POS cells — Select trigger sized for the row ──────── */
+/* ── Provider / POS cells: Select trigger sized for the row ──────── */
 .tdProviderCell,
 .tdPosCell {
   padding: 6px 8px;
@@ -3519,7 +3519,7 @@
   transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
 .bucketPill:hover { background: var(--neutral-50); }
-/* Active states — tinted per bucket; `currentColor` drives the leading icon. */
+/* Active states: tinted per bucket; `currentColor` drives the leading icon. */
 .bucketPill_review {
   color: var(--status-warning);
   background: var(--status-warning-light);

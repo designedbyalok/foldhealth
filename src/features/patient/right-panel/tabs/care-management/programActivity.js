@@ -1,6 +1,6 @@
 import { activityEntries } from '../care-programs/care-plan/lib/carePlanHistory';
 
-// Program Activity Log helpers — icon/token mapping + grouping of raw activity
+// Program Activity Log helpers: icon/token mapping + grouping of raw activity
 // entries into month → day → (date × program) stacks or single rows.
 
 /** Per activity-kind icon + token-based colors (no raw hex). */

@@ -40,9 +40,20 @@ ${body}
 
 const TEMPLATE_KINDS = new Set(['unlock_link', 'password_changed', 'account_activated', 'signup_approved']);
 
-/** The app's address for "Sign in" links: APP_URL, else the request's origin. */
+/**
+ * The app's address for "Sign in" links: APP_URL, else (in production) the
+ * project's production domain from Vercel. Only outside production does it
+ * fall back to the request's own origin: that header is caller-controlled, so
+ * in production it would let anyone point emailed sign-in links at their site.
+ */
 export function appOrigin(req) {
   if (process.env.APP_URL) return process.env.APP_URL.replace(/\/+$/, '');
+  if (process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production') {
+    const prod = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    if (prod) return `https://${prod.replace(/^https?:\/\//, '').replace(/\/+$/, '')}`;
+    console.error('[appOrigin] APP_URL is not set in production');
+    return '';
+  }
   const origin = req?.headers?.origin;
   if (origin) return origin.replace(/\/+$/, '');
   const host = req?.headers?.host;
@@ -133,6 +144,17 @@ export function renderSecurityEmail(kind, payload = {}) {
         html: layout('Your password was changed', [
           `Hi ${name}, the password for your Fold Health account was changed at ${at}.`,
           'You have been signed out everywhere. Sign in again with your new password.',
+        ]),
+      };
+    case 'patient_invite':
+      return {
+        subject: 'Your Fold Health patient portal',
+        html: layout('Welcome to your Fold Health patient portal', [
+          `Hi ${name}, your care team set up the Fold Health patient portal for you${payload.relationship === 'self' ? '' : ` to help with ${esc(payload.patientName)}'s care`}.`,
+          'In the portal you can book visits and see what is coming up next.',
+          `Your sign-in email: <strong>${esc(payload.email)}</strong>`,
+          'Choose a password with this link to get started. It works once and expires in 24 hours.',
+          `<a href="${esc(payload.link)}" style="display:inline-block;padding:10px 16px;border-radius:6px;background:#8C5AE2;color:#FFFFFF;text-decoration:none;font-weight:500">Set your password</a>`,
         ]),
       };
     case 'unlock_link':

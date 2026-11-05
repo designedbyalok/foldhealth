@@ -59,7 +59,7 @@ export function useUsersTab() {
   }, []);
   const currentUserIdRef = useRef(null);
   // Signed-in user's id, and the dev-bypass flag for "no session at all".
-  // Only `getSession()` runs here — it reads the locally persisted session and
+  // Only `getSession()` runs here: it reads the locally persisted session and
   // costs no round trip, unlike `getUser()`.
   const [meId, setMeId] = useState(null);
   const [noSession, setNoSession] = useState(false);
@@ -77,7 +77,7 @@ export function useUsersTab() {
   // `profiles?select=role,clinical_roles,admin_role&id=eq.<me>` round trip,
   // which is redundant: `fetchUsers` below already pulls every profile row
   // including the signed-in user's, with these three columns in it. Verified
-  // against the live table — the current user is present in that response.
+  // against the live table: the current user is present in that response.
   //
   // One deliberate behaviour change: if the list query fails and `users` falls
   // back to FALLBACK_USERS (no `_raw`), this is now false rather than
@@ -85,7 +85,7 @@ export function useUsersTab() {
   // practice the standalone query hit the same table under the same RLS, so it
   // would have failed too.
   const isCurrentUserAdmin = useMemo(() => {
-    if (noSession) return true;   // dev bypass — unchanged
+    if (noSession) return true;   // dev bypass, unchanged
     if (!meId) return false;
     const raw = users.find(u => u.id === meId)?._raw;
     if (!raw) return false;
@@ -114,7 +114,7 @@ export function useUsersTab() {
     setLoading(false);
   }, []);
 
-  // One profiles query per session — revisiting the Users tab reuses the
+  // One profiles query per session: revisiting the Users tab reuses the
   // local list; mutations (toggle/invite/edit) keep it in sync.
   const fetchedRef = useRef(false);
   useEffect(() => {
@@ -258,7 +258,7 @@ export function useUsersTab() {
     }
   };
 
-  // Bulk delete — same edge-function-then-profiles-fallback path as
+  // Bulk delete: same edge-function-then-profiles-fallback path as
   // deleteUser, run per id in parallel. The bulk confirm dialog replaces the
   // per-row confirm(). Returns true if at least one deletion succeeded.
   const deleteUsersBulk = async (ids) => {
@@ -329,7 +329,7 @@ export function useUsersTab() {
     }
 
     // Update just this row from the UPDATE's returned record instead of
-    // re-fetching every profile — the full-table refetch (with a loading
+    // re-fetching every profile: the full-table refetch (with a loading
     // skeleton flash) was what made Save feel slow.
     setUsers(prev => prev.map(u => (u.id === userId ? mapProfileRow(data[0]) : u)));
     showToast('Profile updated');

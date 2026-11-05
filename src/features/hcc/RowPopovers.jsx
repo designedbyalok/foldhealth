@@ -41,7 +41,7 @@ function usePopoverHover(delayOpen = 200, delayClose = 200) {
   return { open, setOpen, onTriggerEnter, onTriggerLeave, cancelClose, requestClose };
 }
 
-// ── RafTooltip — hover popup over RAF Score / Impact cells ────────────────
+// ── RafTooltip: hover popup over RAF Score / Impact cells ────────────────
 
 /**
  * Renders a small invisible "hover bridge" between the trigger and the
@@ -73,7 +73,7 @@ export function RafTooltip({ memberName, children }) {
 }
 
 function RafTooltipPopup({ memberName, rect, onEnter, onLeave }) {
-  // Kick off the RAF-breakdown fetch on first render — didFetch guard in
+  // Kick off the RAF-breakdown fetch on first render, didFetch guard in
   // the store keeps it a single round-trip regardless of how many popups
   // this component instantiates over a session.
   const fetchHccMemberRaf = useAppStore(s => s.fetchHccMemberRaf);
@@ -121,7 +121,7 @@ function RafTooltipPopup({ memberName, rect, onEnter, onLeave }) {
   );
 }
 
-// ── VisitsPopover — click-anchored list of all DOS for a member ───────────
+// ── VisitsPopover: click-anchored list of all DOS for a member ───────────
 
 export function VisitsPopover({ anchorRect, name, visits, onClose, onSelect }) {
   useEffect(() => {
@@ -175,7 +175,7 @@ export function VisitsPopover({ anchorRect, name, visits, onClose, onSelect }) {
   );
 }
 
-// ── ChartPopover — click-anchored list of chart documents ─────────────────
+// ── ChartPopover: click-anchored list of chart documents ─────────────────
 
 const DOC_STATUS_STYLE = {
   Pending: { color: 'var(--neutral-300)', bg: 'var(--neutral-50)',         border: 'var(--neutral-150)',          icon: 'solar:clock-circle-linear' },
@@ -293,7 +293,7 @@ export function ChartPopover({ anchorRect, member, charts, onClose, onEnter, onL
   );
 }
 
-// ── ActionsMenuPopover — right-aligned action list off the row "..." ──────
+// ── ActionsMenuPopover: right-aligned action list off the row "..." ──────
 
 const ACTION_ITEMS = [
   { icon: 'solar:phone-linear',                label: 'Make a Call',     trail: true  },
@@ -349,7 +349,7 @@ export function ActionsMenuPopover({ anchorRect, onClose, onAction }) {
   );
 }
 
-// ── OpenIcdsHoverPopover — list ICDs, click to open DiagPanel ─────────────
+// ── OpenIcdsHoverPopover: list ICDs, click to open DiagPanel ─────────────
 
 export function OpenIcdsHoverPopover({
   anchorRect,
@@ -359,7 +359,7 @@ export function OpenIcdsHoverPopover({
   onLeave,
 }) {
   if (!anchorRect) return null;
-  // Shared open-ICD computation — identical to the worklist count badge, so
+  // Shared open-ICD computation: identical to the worklist count badge, so
   // the list here always matches the number shown upfront.
   const { linked, notLinkedClean, all } = getOpenIcdsForMember(member?.name);
   const dos = member?.dos_list?.[0]?.date || member?.dos || null;
@@ -386,7 +386,7 @@ export function OpenIcdsHoverPopover({
         {linked.length > 0 && (
           <>
             <div className={styles.openIcdsSection}>
-              <span>Open ICD's (DOS: {dos || '—'}):</span>
+              <span>Open ICD's (DOS: {dos || '-'}):</span>
             </div>
             {linked.map((icd, i) => (
               <IcdHoverRow key={`l${i}`} icd={icd} hccShort={hccShort} onClick={() => onIcdClick?.(icd.code)} />
@@ -410,7 +410,7 @@ export function OpenIcdsHoverPopover({
 }
 
 // Row shape (per Figma node 11864:523333): code + description on the top
-// line, HCC chip beneath. AI-suggested ICDs (Suspect / Recapture — the
+// line, HCC chip beneath. AI-suggested ICDs (Suspect / Recapture: the
 // ones that surface under "No DOS Linked") also render a type tag next to
 // the HCC chip so this popover mirrors the DiagPanel view-card list.
 function IcdHoverRow({ icd, hccShort, onClick }) {

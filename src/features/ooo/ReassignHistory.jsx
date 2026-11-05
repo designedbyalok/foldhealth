@@ -7,7 +7,7 @@ import { Icon } from '../../components/Icon/Icon';
 import { UserSwitchIcon } from '../../components/Icon/UserSwitchIcon';
 import { CalendarIcon } from '../../components/Icon/CalendarIcon';
 import { Link } from '../../components/Link/Link';
-import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { Input } from '../../components/Input/Input';
@@ -83,7 +83,7 @@ export function useReassignHistory() {
             </div>
             {failed ? (
               <span className={styles.historyLine}>
-                <Badge tone="error" size="S" label="Failed" />
+                <Badge tone="danger" size="sm" label="Failed" />
               </span>
             ) : running ? (
               <span className={`${styles.historyLine} ${styles.historyRunning}`}>
@@ -105,9 +105,9 @@ export function useReassignHistory() {
                     <span className={styles.historyDot} aria-hidden="true">•</span>
                   </>
                 )}
-                <Badge tone="grey" size="S" label={`${j.results.length} Appointment${j.results.length === 1 ? '' : 's'}`} />
-                {j.conflictingCount > 0 && <Badge tone="warning" size="S" label={`${j.conflictingCount} Conflicting`} />}
-                {j.failedCount > 0 && <Badge tone="error" size="S" label={`${j.failedCount} Failed`} />}
+                <Badge size="sm" label={`${j.results.length} Appointment${j.results.length === 1 ? '' : 's'}`} />
+                {j.conflictingCount > 0 && <Badge tone="warning" size="sm" label={`${j.conflictingCount} Conflicting`} />}
+                {j.failedCount > 0 && <Badge tone="danger" size="sm" label={`${j.failedCount} Failed`} />}
                 <span className={styles.historyDot} aria-hidden="true">•</span>
                 <Link className={styles.historyLink} role="button" tabIndex={0} onClick={() => openSummary(j.id)}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSummary(j.id); } }}>
@@ -140,7 +140,7 @@ export function useReassignHistory() {
         <SearchIconButton tooltipBelow onClick={() => setSearchOpen(true)} />
       )}
       <span className={styles.toolDivider} aria-hidden="true" />
-      <ActionButton size="L" tooltip="Filters" tooltipBelow tooltipLeft count={filterCount || undefined} active={filtersOpen}
+      <ActionButton tooltip="Filters" tooltipBelow tooltipLeft count={filterCount || undefined} active={filtersOpen}
         className={filtersOpen ? styles.toolOn : undefined} onClick={() => setFiltersOpen(o => !o)}>
         <FilterIcon size={20} color="var(--neutral-300)" />
       </ActionButton>
@@ -166,7 +166,7 @@ export function useReassignHistory() {
         </div>
       )}
       {!jobs.length
-        ? <RingEmptyState icon="solar:history-linear" label="No reassignments yet" />
+        ? <EmptyState icon="solar:history-linear" title="No reassignments yet" />
         : <ActivityLog entries={entries} emptyLabel="No reassignments match these filters." />}
     </>
   );

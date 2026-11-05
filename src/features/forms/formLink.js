@@ -16,7 +16,7 @@ export function formIdFromLink(link) {
 /**
  * Copy text to the clipboard reliably. The async Clipboard API silently
  * rejects when the document isn't focused or the context isn't secure, which
- * would leave the user's prior clipboard contents intact — so we fall back to
+ * would leave the user's prior clipboard contents intact: so we fall back to
  * a hidden-textarea + execCommand copy. Returns true on success.
  */
 export async function copyToClipboard(text) {

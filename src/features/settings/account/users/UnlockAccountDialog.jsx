@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ReasonDialog } from '../../../../components/ReasonDialog/ReasonDialog';
-import { Checkbox } from '../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../components/Checkbox/Checkbox';
 import { UNLOCK_REASONS } from './accountLock';
 import styles from './AccountLockPanel.module.css';
 
@@ -20,10 +20,11 @@ export function UnlockAccountDialog({ user, onCancel, onConfirm }) {
       decision="pass"
       standardReasons={UNLOCK_REASONS.map(r => r.label)}
       confirmLabel="Unlock Account"
-      confirmVariant="primary"
+      confirmTone="primary"
       confirmDisabled={!identityChecked}
       notesPlaceholder="How you checked their identity, or why you're unlocking (required for Other)"
-
+      reasonInput="radio"
+      childrenBelow
       onCancel={onCancel}
       onSubmit={({ code, freeText }) => onConfirm({
         reason: code ? BY_LABEL[code] : 'other',

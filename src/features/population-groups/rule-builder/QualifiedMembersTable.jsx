@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
 import { EmptyState } from '../../../components/EmptyState/EmptyState';
+import { Button } from '../../../components/Button/Button';
 import { useAppStore } from '../../../store/useAppStore';
 import styles from './ruleBuilder.module.css';
 
@@ -15,12 +16,12 @@ const COLUMNS = [
   { key: 'engagement', label: 'Engagement', width: 130 },
 ];
 
-const genderShort = (g) => (String(g || '').charAt(0).toUpperCase() || '—');
+const genderShort = (g) => (String(g || '').charAt(0).toUpperCase() || '-');
 
 /**
- * QualifiedMembersTable — the "Qualified Members" tab of the dynamic group
+ * QualifiedMembersTable: the "Qualified Members" tab of the dynamic group
  * detail screen: every patient whose profile satisfies the group's rule,
- * rendered through the shared WorklistShell (header hidden — the tab bar
+ * rendered through the shared WorklistShell (header hidden: the tab bar
  * above owns that chrome).
  */
 export function QualifiedMembersTable({ members, loading, error, onRetry }) {
@@ -43,21 +44,21 @@ export function QualifiedMembersTable({ members, loading, error, onRetry }) {
      link just for members that exist in that store slice. */
   const quickViewable = useMemo(() => new Set((patients || []).map(p => p.id)), [patients]);
 
-  // Error state — clearly different from "no members" so clinical users don't
+  // Error state: clearly different from "no members" so clinical users don't
   // act on missing data.
   if (!loading && error) {
     return (
       <EmptyState
+        tone="danger"
         icon="solar:danger-triangle-linear"
         title="Could not load members"
-        description={`The patient data fetch failed: ${error}. This does NOT mean zero patients qualify — it means we couldn't check.`}
-        actionLabel="Retry"
-        onAction={onRetry}
+        description={`The patient data fetch failed: ${error}. This does NOT mean zero patients qualify, it means we couldn't check.`}
+        action={<Button variant="soft" leadingIcon="solar:refresh-linear" onClick={onRetry}>Retry</Button>}
       />
     );
   }
 
-  // No qualifying patients — a proper empty state beats a headers-only table.
+  // No qualifying patients: a proper empty state beats a headers-only table.
   if (!loading && members.length === 0) {
     return (
       <EmptyState
@@ -111,10 +112,10 @@ export function QualifiedMembersTable({ members, loading, error, onRetry }) {
               </div>
             </td>
             <td className={styles.qmTd}>{m.age}</td>
-            <td className={styles.qmTd}>{m.gender || '—'}</td>
-            <td className={styles.qmTd}>{m.state || '—'}</td>
-            <td className={styles.qmTd}>{m.membershipStatus || '—'}</td>
-            <td className={styles.qmTd}>{m.engagement || '—'}</td>
+            <td className={styles.qmTd}>{m.gender || '-'}</td>
+            <td className={styles.qmTd}>{m.state || '-'}</td>
+            <td className={styles.qmTd}>{m.membershipStatus || '-'}</td>
+            <td className={styles.qmTd}>{m.engagement || '-'}</td>
           </tr>
         );
       }}

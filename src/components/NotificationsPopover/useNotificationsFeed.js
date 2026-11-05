@@ -8,14 +8,14 @@ import { useAppStore } from '../../store/useAppStore';
  * things, all of which have to be app-level rather than page-level:
  *
  *   1. Resolving `currentUserProfile`. Only `useTasksView` used to call
- *      `fetchTaskProfiles`, so before this the signed-in identity — and
- *      therefore the whole notification feed — didn't exist until you
+ *      `fetchTaskProfiles`, so before this the signed-in identity, and
+ *      therefore the whole notification feed: didn't exist until you
  *      happened to visit the Tasks page.
  *   2. The realtime subscription for this user's rows.
  *   3. Recovery refetches. A postgres_changes socket can die quietly
  *      (laptop sleep, VPN flip, network change) and delivers nothing for
  *      the window it was down, so a subscription on its own is not enough
- *      to be correct — only to be fast. Refetching when the tab is shown
+ *      to be correct: only to be fast. Refetching when the tab is shown
  *      again, and when the browser reports coming back online, means the
  *      list and the unread badge heal themselves instead of staying
  *      permanently short by however many events were missed.

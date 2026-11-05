@@ -156,7 +156,7 @@ const HEADER_KEYS = {
  * @returns {Array<{code: string, shortDescription: string, fullName: string,
  *   note: string, status: 'Active'|'Inactive'|'Never Active',
  *   nonVaccine: boolean, updatedAt: string|null}>}
- *   Codes in file order, `nonvaccine` rows included — the caller decides
+ *   Codes in file order, `nonvaccine` rows included: the caller decides
  *   whether a non-vaccine code (e.g. "no vaccine administered") belongs in
  *   its picker.
  */

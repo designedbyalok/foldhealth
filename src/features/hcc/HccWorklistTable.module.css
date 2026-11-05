@@ -14,12 +14,12 @@
      (bottom: 120px in BulkBar.module.css) never crops the bottom-most
      member when the table is scrolled to the end. */
   padding-bottom: 80px;
-  /* Suppress the native horizontal scrollbar — a persistent custom bar
+  /* Suppress the native horizontal scrollbar: a persistent custom bar
      (HorizontalScrollbar.jsx) renders as a sticky strip inside instead.
      macOS Chromium won't render a classic (always-visible) native bar
      regardless of ::-webkit-scrollbar CSS when the OS is set to
      "Show scroll bars > When scrolling", so we ship our own. Vertical
-     stays native — its default behavior is fine. */
+     stays native: its default behavior is fine. */
   scrollbar-width: none; /* Firefox: hides both bars. */
 }
 .scrollWrap::-webkit-scrollbar:horizontal {
@@ -39,7 +39,7 @@
   flex-shrink: 0;
   justify-content: space-between;
   min-height: 48px;
-  /* NOT sticky — kept outside the horizontal scroll wrap so it stays anchored */
+  /* NOT sticky: kept outside the horizontal scroll wrap so it stays anchored */
 }
 
 .tabLeft {
@@ -48,7 +48,7 @@
   gap: 8px;
 }
 
-/* Static list title — derives from the SubNav worklist name (same 15px/500
+/* Static list title: derives from the SubNav worklist name (same 15px/500
    type the old InlineEditable rendered at size L). */
 .listTitle {
   font-size: 0.9375rem;
@@ -180,9 +180,9 @@
 
 /* ── Sortable header cells (opens SortPopover on click) ── */
 .headerCell {
-  /* Inherit positioning from base .table thead th — just add interaction state. */
+  /* Inherit positioning from base .table thead th, just add interaction state. */
 }
-/* Right bracket of the DOS group in the header — mirrors the body's
+/* Right bracket of the DOS group in the header, mirrors the body's
    POS-column border-right so the group's vertical divider runs full
    height (Figma 4672:131830). The left bracket is the Member column's
    own border-right. */
@@ -204,7 +204,7 @@
   align-items: center;
   gap: 4px;
   width: 100%;
-  /* Right-align the sort icon per Figma node 7130:229 — label on the left,
+  /* Right-align the sort icon per Figma node 7130:229, label on the left,
      arrow icon flush to the cell's right edge. */
   justify-content: space-between;
 }
@@ -214,7 +214,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* Sort icon is always visible now — idle columns show the double-
+  /* Sort icon is always visible now, idle columns show the double-
      chevron affordance, active columns show the primary arrow. */
   transition: background-color 0.12s;
   /* Padded hit-area so the grey-50 hover background reads as a chip
@@ -224,7 +224,7 @@
   cursor: pointer;
 }
 
-/* Grey-50 hover fill on the arrow itself — tooltip is tied to this
+/* Grey-50 hover fill on the arrow itself, tooltip is tied to this
    same hover so the bubble only shows when the cursor is on the icon,
    not anywhere in the cell. */
 .sortIcon:hover {
@@ -243,7 +243,7 @@
 
 /* Each of the three chevron / tail paths fades independently. The
    visible chevron stays put across state changes; only the counterpart
-   fades out and the vertical tail fades in — no rotation, no swap
+   fades out and the vertical tail fades in, no rotation, no swap
    flicker. */
 .sortIconPart {
   opacity: 1;
@@ -253,7 +253,7 @@
   opacity: 0;
 }
 
-/* Hover tooltip — dark bubble with a downward arrow, sits below the sort
+/* Hover tooltip: dark bubble with a downward arrow, sits below the sort
    icon. Copy is "{Column} • Sort A to Z" (or "Z to A" when the column is
    sorted desc). Only revealed when the arrow itself is hovered. */
 .sortTooltip {
@@ -322,7 +322,7 @@
   max-width: 320px;
 }
 
-/* ── Actions <th> — embeds the column hide/show trigger ───────────────── */
+/* ── Actions <th>, embeds the column hide/show trigger ───────────────── */
 
 .actionsTh {
   /* Header row is pinned at 32px across every worklist; the inner
@@ -333,7 +333,7 @@
   padding: 0 var(--space-2) !important;
 }
 
-/* Inner flex wrapper — keeps the <th> a real table cell (so sticky-right
+/* Inner flex wrapper: keeps the <th> a real table cell (so sticky-right
    and vertical baseline stay intact) while pushing the col-visibility
    button to the far right of the Actions header. */
 .actionsHeaderInner {
@@ -367,7 +367,7 @@
 }
 .colCfgBtnActive:hover { background: var(--primary-100); }
 
-/* ── Section divider row — sits between the primary HCC records and the
+/* ── Section divider row: sits between the primary HCC records and the
    "Patients Without Open Gaps" secondary section. Non-interactive; renders
    as a full-width band with subtle top/bottom borders so it reads as a
    section header rather than another data row. Uses the sticky-left
@@ -387,7 +387,7 @@
 }
 /* Sticky-left inner so the title stays anchored to the viewport-left
    while the wide HCC table scrolls horizontally under it. `inline-flex`
-   is important — a block/full-width sticky element scrolls with its td
+   is important: a block/full-width sticky element scrolls with its td
    because its own leftmost edge is anchored to `left: 0` of the td, not
    of the scroll container. Shrinking to content width lets `left: 0`
    snap it against the scroll viewport instead. */

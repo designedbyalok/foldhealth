@@ -1,4 +1,4 @@
-/* Between Save and the drawer's close control — the drawer gets
+/* Between Save and the drawer's close control: the drawer gets
    `noCloseDivider` so this is the only rule line. */
 .headerDivider {
   display: inline-block;
@@ -27,7 +27,7 @@
   font-size: var(--font-base);
   color: var(--neutral-200);
 }
-/* Inline detail rows — same label-left / control-right pattern the
+/* Inline detail rows: same label-left / control-right pattern the
    AddTaskDrawer uses, so intervention-as-task fields (Assigned To,
    Member, etc.) read identically wherever they surface. */
 .detailRow {
@@ -44,7 +44,7 @@
    read as one continuous list separated only by the row divider. */
 .detailRow + .detailRow { margin-top: calc(-1 * var(--space-4)); }
 
-/* Repeat block — plain toggle row (no label column) that sits below the
+/* Repeat block: plain toggle row (no label column) that sits below the
    Duration Type detail row (Figma 8521:289961). */
 .repeatBlock {
   display: flex;
@@ -65,7 +65,7 @@
   color: var(--neutral-400);
 }
 
-/* Linked Goals section — mirrors the Barrier Detail Drawer's collapsible
+/* Linked Goals section: mirrors the Barrier Detail Drawer's collapsible
    section + row treatment (Figma 2632:94480 / 8629:*) so linked-goal rows
    read identically across barrier and intervention surfaces. */
 .linkedSection {
@@ -104,7 +104,7 @@
   color: var(--neutral-300);
   padding: var(--space-2) 0;
 }
-/* Dashed empty-state card (Figma 8526:291369) — vertical stack: circular
+/* Dashed empty-state card (Figma 8526:291369), vertical stack: circular
    icon chip, message, primary "Link Goals" text link. */
 .linkedEmptyCard {
   display: flex;
@@ -145,7 +145,7 @@
   cursor: not-allowed;
 }
 
-/* Compact Subtasks affordance for the care-plan-scoped Add Task drawer —
+/* Compact Subtasks affordance for the care-plan-scoped Add Task drawer,
    sits under Repeat as a single text link that expands into the shared
    input + staged-cards flow when clicked. */
 .subtaskInline {
@@ -165,7 +165,7 @@
   text-align: left;
 }
 
-/* Inline-editable subtask title — plain-text button by default, promotes
+/* Inline-editable subtask title: plain-text button by default, promotes
    to an input on click. Both share the neutral-500 body-copy treatment
    used by `.linkTitle` so the row height stays stable. */
 .subtaskEditTrigger {
@@ -189,12 +189,12 @@
   font-size: var(--font-base);
   color: var(--neutral-500);
 }
-/* Add-row variant — no border-bottom, hugs the section end. */
+/* Add-row variant: no border-bottom, hugs the section end. */
 .subtaskAddRow {
   border-bottom: 0;
 }
 
-/* Task Title header row — label on the left, char counter aligned right
+/* Task Title header row: label on the left, char counter aligned right
    so it reads on the same line as the label instead of below the input. */
 .titleRow {
   display: flex;
@@ -202,8 +202,8 @@
   justify-content: space-between;
   gap: var(--space-2);
 }
-/* Char counter in this row reads as a subtle meta value — 12px in
-   neutral-200 — instead of the over-limit red the plain helper row uses. */
+/* Char counter in this row reads as a subtle meta value, 12px in
+   neutral-200: instead of the over-limit red the plain helper row uses. */
 .titleRow > :last-child {
   font-size: var(--font-sm);
   color: var(--neutral-200);
@@ -277,7 +277,7 @@
   margin: 0 var(--space-1);
   background: var(--neutral-150);
 }
-/* Same marker Input/Select render for `required` — these labels head a row of
+/* Same marker Input/Select render for `required`, these labels head a row of
    controls, so no single component can own them. */
 .mandatoryDot {
   width: 4px;
@@ -286,7 +286,7 @@
   background: var(--status-error);
   flex-shrink: 0;
 }
-/* Standalone variant — for label contexts that are NOT flex (e.g. the
+/* Standalone variant: for label contexts that are NOT flex (e.g. the
    Tasks-drawer detail rows and section labels). Renders as an inline-
    block dot with a small leading gap so it reads as a proper marker. */
 .mandatoryDotInline {
@@ -346,7 +346,7 @@
   height: 28px;
 }
 /* Neutralise the Input's own trailingTextSegment (grey pill + border) for
-   this compound trailing area — we render the stepper on the input's white
+   this compound trailing area: we render the stepper on the input's white
    background and reapply the pill styling only around the day trigger. */
 .offsetInput > div > span:last-child {
   background: transparent;
@@ -358,7 +358,7 @@
   align-items: stretch;
   height: 100%;
 }
-/* Stepper — stacked up/down buttons that bump the numeric offset. Sits on
+/* Stepper: stacked up/down buttons that bump the numeric offset. Sits on
    the input's white background, hairline divider from the value on the
    left and from the day pill on the right. */
 .spinner {
@@ -404,7 +404,7 @@
   white-space: nowrap;
 }
 
-/* Priority row trigger — icon + capitalized label + chevron, sits in the
+/* Priority row trigger: icon + capitalized label + chevron, sits in the
    Priority detail row so the value styling reads the same as the other
    inline detail dropdowns. */
 .priorityRowTrigger {
@@ -479,7 +479,7 @@
   min-width: 0;
 }
 /* The character counter promotes Input to its shell path, which draws its own
-   border — inside our own bordered shell that reads as a second field. Strip
+   border: inside our own bordered shell that reads as a second field. Strip
    it and let the outer shell own the border and the focus ring. */
 .titleInputWrap > div {
   height: 100%;
@@ -496,7 +496,7 @@
   height: 100%;
 }
 
-/* The column body stretches its children — the kind toggle hugs instead. */
+/* The column body stretches its children, the kind toggle hugs instead. */
 .kindToggle {
   align-self: flex-start;
 }

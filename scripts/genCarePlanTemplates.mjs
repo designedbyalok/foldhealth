@@ -1,6 +1,6 @@
 // One-off generator for the care-plan template library seed.
 // Composes 50 templates out of the EXISTING goal / intervention / barrier
-// libraries — no new clinical text is invented here.
+// libraries: no new clinical text is invented here.
 import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { CARE_PLAN_GOAL_LIBRARY as GOALS } from '../src/features/settings/care-plan-library/data/carePlanGoalLibrarySeed.js';
@@ -9,6 +9,12 @@ import { CARE_PLAN_BARRIER_STRUCTURED_LIBRARY as BARRIERS } from '../src/feature
 import { barrierPriority, interventionPriority } from './carePlanPriorityRules.mjs';
 
 // Stable ids so re-running the generator upserts instead of duplicating.
+// Titles that used to carry an em dash keep their old id seed, so a reseed
+// updates the existing rows instead of adding copies.
+const ID_SEED = {
+  'Diabetes: Intensive Monitoring': 'Diabetes \u2014 Intensive Monitoring',
+  'Hypertension: Uncontrolled': 'Hypertension \u2014 Uncontrolled',
+};
 const uuid = (seed) => {
   const h = createHash('sha1').update(`care-plan-template:${seed}`).digest('hex');
   return [h.slice(0,8), h.slice(8,12), '5'+h.slice(13,16),
@@ -24,7 +30,7 @@ const TEMPLATES = [
   ['Asthma Control Plan', ['Asthma'], ['asthma','inhaler','respiratory','warning signs']],
   ['Cholesterol Management', ['Hyperlipidemia'], ['lipid','cardiovascular risk','activity','nutrition']],
   ['Diabetes Management', ['Diabetes'], ['glucose','a1c','diabetes','hypoglycemia','renal risk']],
-  ['Diabetes — Intensive Monitoring', ['Diabetes'], ['glucose','a1c','self-monitoring','labs','nutrition']],
+  ['Diabetes: Intensive Monitoring', ['Diabetes'], ['glucose','a1c','self-monitoring','labs','nutrition']],
   ['Post-Stroke Recovery', ['Stroke'], ['mobility','balance','adl','blood pressure','specialty follow-up']],
   ['Hearing and Sensory Support', ['Sensory impairment'], ['understanding of condition','community resources','appointment','engagement']],
   ['Disability Support Plan', ['Functional limitation'], ['adl','mobility','independence','assistive','caregiver']],
@@ -32,7 +38,7 @@ const TEMPLATES = [
   ['Heart Failure Management', ['Heart failure'], ['heart failure','daily weight','warning signs','medication adherence']],
   ['Arthritis and Joint Health', ['Arthritis'], ['pain','mobility','balance','activity']],
   ['Hypertension Management', ['Hypertension'], ['blood pressure','medication adherence','activity','nutrition']],
-  ['Hypertension — Uncontrolled', ['Hypertension'], ['blood pressure','self-monitoring','medication adherence','warning signs']],
+  ['Hypertension: Uncontrolled', ['Hypertension'], ['blood pressure','self-monitoring','medication adherence','warning signs']],
   ['Polypharmacy Review', ['Polypharmacy'], ['medication','refill','simplify','adverse effects','reconciliation']],
   ['SDOH Support Plan', ['Social determinants of health'], ['food insecurity','housing','transportation','community resources','social isolation']],
   ['Transitions of Care (TOC)', ['Care transition'], ['post-discharge','discharge','readmission','follow-up','reconciliation']],
@@ -79,13 +85,13 @@ const pick = (list, keywords, cap) => {
 };
 
 const byId = new Map(INTERVENTIONS.map(i => [i.id, i]));
-// A goal's `links` carry its barriers too — only the intervention kinds
+// A goal's `links` carry its barriers too: only the intervention kinds
 // belong in a template's Interventions section.
 const INTERVENTION_KINDS = new Set(['send-form', 'patient-education', 'measure-vital', 'patient-task', 'internal-task']);
 
 const rows = TEMPLATES.map(([name, conditions, keywords]) => {
   const goals = pick(GOALS, keywords, 6);
-  // Interventions come from the goals' own links — the combination the goal
+  // Interventions come from the goals' own links: the combination the goal
   // library already asserts, rather than a second keyword guess.
   const seen = new Set();
   const interventions = [];
@@ -94,7 +100,7 @@ const rows = TEMPLATES.map(([name, conditions, keywords]) => {
       if (!INTERVENTION_KINDS.has(link.kind)) continue;
       const full = byId.get(link.id);
       const title = full?.title || link.title;
-      // Two goals can link separate rows with the same title — dedupe on the
+      // Two goals can link separate rows with the same title, dedupe on the
       // title so a template doesn't list the same intervention twice.
       const key = `${link.kind}|${title.toLowerCase()}`;
       if (seen.has(link.id) || seen.has(key)) continue;
@@ -115,7 +121,7 @@ const rows = TEMPLATES.map(([name, conditions, keywords]) => {
     if (interventions.length >= 8) break;
   }
   // Barriers come from the same goals' links, so a template's barriers are the
-  // ones its goals actually name — that also lets a barrier row report which
+  // ones its goals actually name: that also lets a barrier row report which
   // goals point at it. Keyword matching is only the fallback.
   const barrierSeen = new Set();
   const barriers = [];
@@ -146,7 +152,7 @@ const rows = TEMPLATES.map(([name, conditions, keywords]) => {
       })));
   }
   return {
-    id: uuid(name),
+    id: uuid(ID_SEED[name] || name),
     name,
     conditions,
     goals: goals.map(g => ({
@@ -163,9 +169,9 @@ if (empty.length) { console.error('templates with no goals:', empty.map(r => r.n
 
 const header = `// Care Plan Template Library
 // Generated by scripts/genCarePlanTemplates.mjs from the existing goal,
-// intervention and barrier libraries — every entry references a real library
+// intervention and barrier libraries: every entry references a real library
 // row by id, so nothing here invents clinical content. Upserted by
-// \`bun run seed\` (onConflict: 'id'). Do not hand-edit — regenerate instead.
+// \`bun run seed\` (onConflict: 'id'). Do not hand-edit, regenerate instead.
 
 export const CARE_PLAN_TEMPLATE_LIBRARY = ${JSON.stringify(rows, null, 2)};
 

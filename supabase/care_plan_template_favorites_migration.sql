@@ -1,4 +1,4 @@
--- Care Plan template favorites — a per-user star on a library template.
+-- Care Plan template favorites: a per-user star on a library template.
 --
 -- THE HOLE THIS CLOSES
 -- The Care Plan Library lists every template flat, in created-at order. A user
@@ -9,7 +9,7 @@
 -- care_plan_templates that every user would share.
 --
 -- WHAT THIS DOES
---   care_plan_template_favorites — one row per (user, favorited template).
+--   care_plan_template_favorites: one row per (user, favorited template).
 --   user_id is text to match the id the app already keys other per-user prefs
 --   by (auth user id, falling back to the profile id). ON DELETE CASCADE so a
 --   deleted template takes its stars with it.

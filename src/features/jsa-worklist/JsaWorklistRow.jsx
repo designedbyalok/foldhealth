@@ -4,7 +4,7 @@ import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAva
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../components/Badge/Badge';
 import { DownChevronIcon } from '../../components/Icon/DownChevronIcon';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
@@ -13,20 +13,22 @@ import { useAppStore } from '../../store/useAppStore';
 import { worklistMemberCallId } from '../../lib/patientCall';
 import { FoldIdTag } from '../../components/FoldIdTag/FoldIdTag';
 import styles from './JsaWorklistRow.module.css';
+import { OutreachStatus } from '../../components/OutreachStatus/OutreachStatus';
+import { outreachFromCount } from '../../components/OutreachStatus/outreachStatusModel';
 
 const STATUS_VARIANT = {
-  Open: 'awv-open',
-  New: 'awv-new',
-  'Unable to Reach': 'awv-unable',
-  Engaged: 'awv-engaged',
-  Attempted: 'awv-attempted',
-  'Engaged - Requires Follow Up': 'awv-engaged-followup',
+  Open: 'info',
+  New: 'info',
+  'Unable to Reach': 'neutral',
+  Engaged: 'success',
+  Attempted: 'warning',
+  'Engaged - Requires Follow Up': 'warning',
 };
 
 const RISK_VARIANT = {
-  Low: 'lace-low',
-  Medium: 'lace-medium',
-  High: 'lace-high',
+  Low: 'success',
+  Medium: 'warning',
+  High: 'danger',
 };
 
 const LANG_MAP = {
@@ -58,8 +60,8 @@ export const JSA_MIDDLE_COLUMNS = [
           }}
         >
           <Badge
-            size="M"
-            variant={STATUS_VARIANT[member.progSubStatus] || 'awv-new'}
+            size="md"
+            tone={STATUS_VARIANT[member.progSubStatus] || 'info'}
             label={member.progSubStatus}
             trailingIconElement={<DownChevronIcon size={12} color="currentColor" />}
           />
@@ -120,13 +122,13 @@ export const JSA_MIDDLE_COLUMNS = [
           name={member.assignee}
           initials={member.assigneeIn}
           showRole={false}
-          onClick={() => ctx.showToast(`Change assignee for ${member.name} — coming soon`)}
+          onClick={() => ctx.showToast(`Change assignee for ${member.name}, coming soon`)}
         />
       ) : (
         <AssigneeChange
           unassigned
           showRole={false}
-          onClick={() => ctx.showToast(`Assign owner for ${member.name} — coming soon`)}
+          onClick={() => ctx.showToast(`Assign owner for ${member.name}, coming soon`)}
         />
       )
     ),
@@ -136,14 +138,14 @@ export const JSA_MIDDLE_COLUMNS = [
     label: 'NP Appointment Date',
     sortKey: 'npAppt',
     width: 170,
-    renderCell: (member) => member.npAppt || '—',
+    renderCell: (member) => member.npAppt || '-',
   },
   {
     key: 'lastAwv',
     label: 'Last Annual Visit Date',
     sortKey: 'lastAwv',
     width: 180,
-    renderCell: (member) => member.lastAwv || '—',
+    renderCell: (member) => member.lastAwv || '-',
   },
   {
     key: 'ad',
@@ -167,7 +169,7 @@ export const JSA_MIDDLE_COLUMNS = [
     sortKey: 'ri',
     width: 110,
     renderCell: (member) => (
-      <Badge size="M" variant={RISK_VARIANT[member.ri] || 'lace-low'} label={member.ri} />
+      <Badge size="md" tone={RISK_VARIANT[member.ri] || 'success'} label={member.ri} />
     ),
   },
   {
@@ -228,7 +230,7 @@ export function JsaWorklistRow({ member, columns, hiddenSet, selected, onToggle,
         />
       </td>
 
-      {/* Sticky-left Members cell — entire cell clickable for patient quick view */}
+      {/* Sticky-left Members cell: entire cell clickable for patient quick view */}
       <td
         className={`${styles.membersTd} ${styles.stickyLeft}`}
         style={{ left: 36, cursor: 'pointer' }}
@@ -273,12 +275,11 @@ export function JsaWorklistRow({ member, columns, hiddenSet, selected, onToggle,
         </td>
       ))}
 
-      {/* Actions — sticky-right, L-size buttons with dividers, matches TOC */}
+      {/* Actions: sticky-right, L-size buttons with dividers, matches TOC */}
       <td className={`${styles.td} ${styles.stickyRight}`}>
         <div className={styles.actionsCell}>
           <ActionButton
             icon="solar:document-text-linear"
-            size="L"
             tooltip="View Program"
             onClick={onView}
           />
@@ -286,7 +287,6 @@ export function JsaWorklistRow({ member, columns, hiddenSet, selected, onToggle,
           <ActionButton
             ref={callBtnRef}
             icon="solar:phone-linear"
-            size="L"
             tooltip="Call patient"
             onClick={(e) => {
               e.stopPropagation();
@@ -296,9 +296,8 @@ export function JsaWorklistRow({ member, columns, hiddenSet, selected, onToggle,
           <span className={styles.actionDivider} />
           <ActionButton
             icon="solar:menu-dots-linear"
-            size="L"
             tooltip="More"
-            onClick={() => showToast(`More actions for ${member.name} — coming soon`)}
+            onClick={() => showToast(`More actions for ${member.name}, coming soon`)}
           />
         </div>
       </td>
@@ -306,55 +305,7 @@ export function JsaWorklistRow({ member, columns, hiddenSet, selected, onToggle,
   );
 }
 
+// Outreach: the shared worklist outreach status (icon, result, date, attempt dots).
 function JsaOutreachCell({ member }) {
-  const n = member.outreach || 0;
-  const isEngaged = member.progSubStatus === 'Engaged' || member.progSubStatus === 'Engaged - Requires Follow Up';
-  const isUnableToReach = member.progSubStatus === 'Unable to Reach';
-  const dots = (() => {
-    if (n === 0) return ['pending', 'pending', 'pending'];
-    if (isEngaged) return ['success', 'success', n >= 3 ? 'success' : 'pending'];
-    if (isUnableToReach) return ['failed', 'failed', n >= 3 ? 'failed' : 'pending'];
-    return [
-      n >= 1 ? 'failed' : 'pending',
-      n >= 2 ? 'failed' : 'pending',
-      n >= 3 ? 'failed' : 'pending',
-    ];
-  })();
-  const hasSuccess = dots.includes('success');
-  const hasFailed = dots.includes('failed') && !hasSuccess;
-  return (
-    <div className={styles.outreachWl}>
-      <div className={styles.outreachWlMain}>
-        {hasSuccess ? (
-          <>
-            <Icon name="solar:phone-calling-bold" size={15} color="var(--status-success)" />
-            <div>
-              <div className={styles.outreachWlText}>Attended</div>
-              {member.lastOutreach && (
-                <div className={styles.outreachWlDate}>{member.lastOutreach}</div>
-              )}
-            </div>
-          </>
-        ) : hasFailed ? (
-          <>
-            <Icon name="solar:phone-bold" size={15} color="var(--status-error)" />
-            <div>
-              <div className={styles.outreachWlFailed}>Failed</div>
-              {member.lastOutreach && (
-                <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)' }}>{member.lastOutreach}</div>
-              )}
-            </div>
-          </>
-        ) : (
-          <>
-            <Icon name="solar:phone-linear" size={15} color="var(--neutral-200)" />
-            <div className={styles.outreachWlNone}>—</div>
-          </>
-        )}
-      </div>
-      <div className={styles.dotsRow}>
-        {dots.map((d, i) => <span key={i} className={`${styles.dot} ${styles[d]}`} />)}
-      </div>
-    </div>
-  );
+  return <OutreachStatus {...outreachFromCount(member.outreach, member.progSubStatus, member.lastOutreach)} />;
 }

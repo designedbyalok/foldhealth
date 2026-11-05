@@ -60,7 +60,7 @@ export function BusinessHoursDrawer() {
   };
 
   const headerRight = (
-    <Button variant="primary" size="L" onClick={() => { showToast('Business hours saved'); setBusinessHoursOpen(false); }}>
+    <Button onClick={() => { showToast('Business hours saved'); setBusinessHoursOpen(false); }}>
       Save
     </Button>
   );
@@ -73,7 +73,7 @@ export function BusinessHoursDrawer() {
         <Select
           options={TIMEZONES}
           value={timezone}
-          onChange={setTimezone}
+          onValueChange={setTimezone}
           style={{ width: '100%' }}
         />
       </div>
@@ -94,7 +94,7 @@ export function BusinessHoursDrawer() {
             }}>
               <span style={{ fontSize: 'var(--font-base)', fontWeight: 500, color: 'var(--neutral-500)' }}>{day}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <Button variant="ghost" size="S" onClick={() => addSlot(day)}
+                <Button variant="ghost" size="sm" onClick={() => addSlot(day)}
                   style={{ opacity: isAvailable ? 1 : 0.4 }}>
                   + Add New Time
                 </Button>
@@ -134,7 +134,7 @@ export function BusinessHoursDrawer() {
                     </div>
                   </div>
                   {daySlots.length > 1 && (
-                    <ActionButton icon="solar:close-circle-linear" size="L" tooltip="Remove slot"
+                    <ActionButton icon="solar:close-circle-linear" tooltip="Remove slot"
                       onClick={() => removeSlot(day, idx)} style={{ marginTop: 18 }} />
                   )}
                 </div>

@@ -164,7 +164,7 @@ export const CCM_ACTIVITY_TYPES = [
 // activities; here it's a static mock.
 export const CCM_UNLOGGED_SECONDS = 18 * 60;
 
-// Historical billing reports — one per closed month. Amounts and CPT
+// Historical billing reports: one per closed month. Amounts and CPT
 // breakdown mirror the Figma so the History tab and the report drawer
 // match pixel-for-pixel until real data replaces this.
 export const CCM_BILLING_REPORTS = [

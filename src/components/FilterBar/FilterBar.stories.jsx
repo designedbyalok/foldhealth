@@ -7,13 +7,13 @@ export default {
   parameters: {
     layout: 'fullscreen',
     docs: {
-      description: { component: 'The full worklist filter bar — View By toggle plus the FilterChip cluster. Reads/writes state directly from the shared Zustand store; no props.' },
+      description: { component: 'The full worklist filter bar: View By toggle plus the FilterChip cluster. Reads/writes state directly from the shared Zustand store; no props.' },
     },
   },
 };
 
 // FilterBar pulls state entirely from the shared Zustand store
-// (viewBy, activeFilters, patients, savedFilters). No props to configure —
+// (viewBy, activeFilters, patients, savedFilters). No props to configure,
 // interact with it directly inside the canvas.
 export const Playground = {
   render: () => (

@@ -1,0 +1,53 @@
+/* Snapshot form: titled, collapsible sections; fields in a grid. */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+}
+.sectionToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+  padding: 0 0 var(--space-2);
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 0.5px solid var(--neutral-150);
+  cursor: pointer;
+}
+.chevron { transition: transform var(--duration-medium) var(--ease-out); }
+.closed { transform: rotate(-90deg); }
+.sectionTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--snapshot-columns, 3), minmax(0, 1fr));
+  gap: var(--space-4) var(--space-4);
+  /* Space under the section toggle, kept inside the collapsible body so a
+     closed section adds none. */
+  margin-top: var(--space-3);
+}
+@media (max-width: 900px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) * 1.5);
+  min-width: 0;
+}
+.label {
+  font-size: var(--font-md);
+  color: var(--neutral-400);
+}

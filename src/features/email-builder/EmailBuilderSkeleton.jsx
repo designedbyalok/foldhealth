@@ -1,8 +1,8 @@
 import styles from './EmailBuilder.module.css';
 
 // Skeleton shown while the campaign is fetching from Supabase on a hard
-// refresh. Mirrors the real builder chrome — topbar + left components +
-// canvas with stacked block placeholders + right design panel — so the
+// refresh. Mirrors the real builder chrome, topbar + left components +
+// canvas with stacked block placeholders + right design panel, so the
 // transition to the populated UI is visually continuous.
 export function EmailBuilderSkeleton() {
   return (

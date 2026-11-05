@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
@@ -11,6 +11,7 @@ import { GbiStatusButton } from '../../tables/carePlanTableShared';
 import { parseLocalDate } from '../../../../../../../../lib/localDate';
 import { formatGoalTarget } from '../../../../../../../settings/care-plan-library/lib/goalFormat';
 import { CARE_PLAN_INTERVENTION_KINDS } from '../../lib/carePlanInterventionMenu';
+import { noteDetails } from '../../lib/carePlanNoteRefs';
 import styles from './CarePlanReviewDrawer.module.css';
 
 const QUICK_TAGS = ['Patient reported', 'Education given', 'Follow-up needed', 'Barrier found'];
@@ -42,7 +43,7 @@ function Facts({ kind, item, onPickDate }) {
   if (kind === 'goal') {
     return (
       <dl className={styles.facts}>
-        <div><dt>Started</dt><dd>{fmtDate(item.createdAt) || '—'}</dd></div>
+        <div><dt>Started</dt><dd>{fmtDate(item.createdAt) || '-'}</dd></div>
         <div>
           <dt>Target date</dt>
           <dd>
@@ -64,15 +65,15 @@ function Facts({ kind, item, onPickDate }) {
   if (kind === 'intervention') {
     return (
       <dl className={styles.facts}>
-        <div><dt>Type</dt><dd>{KIND_LABEL[item.kind] || '—'}</dd></div>
+        <div><dt>Type</dt><dd>{KIND_LABEL[item.kind] || '-'}</dd></div>
         <div><dt>Assigned to</dt><dd>{item.assignee?.name && item.assignee.name !== 'Unassigned' ? item.assignee.name : 'Unassigned'}</dd></div>
-        <div><dt>Started</dt><dd>{fmtDate(item.createdAt) || '—'}</dd></div>
+        <div><dt>Started</dt><dd>{fmtDate(item.createdAt) || '-'}</dd></div>
       </dl>
     );
   }
   return (
     <dl className={styles.facts}>
-      <div><dt>Started</dt><dd>{fmtDate(item.createdAt) || '—'}</dd></div>
+      <div><dt>Started</dt><dd>{fmtDate(item.createdAt) || '-'}</dd></div>
       <div><dt>Linked goals</dt><dd>{(item.goalIds?.length || (item.goalId ? 1 : 0)) || 'None'}</dd></div>
     </dl>
   );
@@ -85,9 +86,10 @@ function Facts({ kind, item, onPickDate }) {
  * a quick note with tags. "Open details" there opens the item's own drawer.
  */
 export function ReviewItemRow({
-  kind, item, discussed, selecting, selected, expanded, note, latestNote,
+  kind, item, discussed, selecting, selected, expanded, note, latestNote, noteRefs,
   onToggleSelected, onToggleDiscussed, onToggleExpanded, onOpen, onStatusMenu, onPriorityMenu, onSaveNote, onTargetDate,
 }) {
+  const [html, setHtml] = useState('');
   const [text, setText] = useState('');
   const [tags, setTags] = useState(() => discussed?.tags || []);
   const [saving, setSaving] = useState(false);
@@ -149,7 +151,7 @@ export function ReviewItemRow({
         {/* Hidden, not removed, on rows without notes so statuses still line up. */}
         <span className={`${styles.slotDivider} ${note ? '' : styles.slotDividerHidden}`} aria-hidden="true" />
         <span className={styles.statusSlot}>
-          <GbiStatusButton value={item.status || 'Not Started'} onOpen={onStatusMenu} />
+          <GbiStatusButton value={item.status || 'Not Started'} reason={item.statusReason} onOpen={onStatusMenu} />
         </span>
         <button type="button" className={styles.chevronBtn} onClick={onToggleExpanded} aria-label={expanded ? 'Collapse' : 'Expand'}>
           <DownChevronIcon size={14} color="var(--neutral-300)" className={expanded ? styles.chevronOpen : ''} />
@@ -169,9 +171,13 @@ export function ReviewItemRow({
 
           <div className={styles.composeBox}>
             <Textarea
+              richText
+              mentions
+              mentionUsers={noteRefs?.mentionUsers}
+              links={noteRefs?.links}
               placeholder={latestNote ? 'Add to the notes' : `What did the patient say about this ${kind}?`}
-              value={text}
-              onChange={(v) => setText(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
+              value={html}
+              onValueChange={(v, plain) => { setHtml(v); setText(plain || ''); }}
               rows={2}
             />
             <div className={styles.composeBar}>
@@ -190,13 +196,13 @@ export function ReviewItemRow({
                 ))}
               </div>
               <Button
-                variant="primary"
-                size="S"
+                size="sm"
                 disabled={!canSave}
                 onClick={async () => {
                   setSaving(true);
                   try {
-                    await onSaveNote(text, tags);
+                    await onSaveNote(text, tags, noteDetails(html));
+                    setHtml('');
                     setText('');
                   } finally {
                     setSaving(false);

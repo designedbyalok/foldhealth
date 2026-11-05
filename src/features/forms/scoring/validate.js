@@ -1,5 +1,5 @@
 /**
- * Form scoring — author-time validation (spec §7).
+ * Form scoring: author-time validation (spec §7).
  *
  * Pure: returns a list of diagnostics. A form is publishable when no diagnostic
  * has level 'error'. `scoreRange` is the canonical min/max computation the
@@ -20,7 +20,7 @@ const COMPOSITE_MAX_DEPTH = 5;
  * @returns {{min:number,max:number}}
  */
 export function scoreRange(def, index, byId, seen = new Set()) {
-  if (seen.has(def.id)) return { min: 0, max: 0 }; // composite cycle — reported separately
+  if (seen.has(def.id)) return { min: 0, max: 0 }; // composite cycle, reported separately
   seen.add(def.id);
   const bounds = [];
   for (const src of def.sources || []) {

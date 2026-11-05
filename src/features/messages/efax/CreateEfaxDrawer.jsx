@@ -33,7 +33,7 @@ export function CreateEfaxDrawer({ patients, patientOptions, onCreate, onClose }
       noCloseDivider
       headerRight={(
         <>
-          <Button variant="primary" size="L" disabled={!patientId} onClick={create}>Create</Button>
+          <Button disabled={!patientId} onClick={create}>Create</Button>
           <span className={styles.headerDivider} />
         </>
       )}
@@ -47,7 +47,7 @@ export function CreateEfaxDrawer({ patients, patientOptions, onCreate, onClose }
           searchPlaceholder="Search patients"
           options={patientOptions}
           value={patientId}
-          onChange={setPatientId}
+          onValueChange={setPatientId}
         />
         <RadioOptionGroup
           label="How the fax reads"
@@ -56,8 +56,8 @@ export function CreateEfaxDrawer({ patients, patientOptions, onCreate, onClose }
           value={scenario}
           onChange={setScenario}
         />
-        <Select label="Sent From" options={SENDER_OPTIONS} value={sender} onChange={setSender} />
-        <Select label="Document" options={DOCUMENT_OPTIONS} value={documentType} onChange={setDocumentType} />
+        <Select label="Sent From" options={SENDER_OPTIONS} value={sender} onValueChange={setSender} />
+        <Select label="Document" options={DOCUMENT_OPTIONS} value={documentType} onValueChange={setDocumentType} />
       </div>
     </Drawer>
   );

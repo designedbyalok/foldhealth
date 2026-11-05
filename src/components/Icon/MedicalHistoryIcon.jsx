@@ -1,5 +1,5 @@
 /**
- * Custom medical-history icon — the medical cross used for the Medical
+ * Custom medical-history icon: the medical cross used for the Medical
  * History card and its empty state. The design's own glyph, supplied
  * directly; Solar's medical icons don't match it.
  *

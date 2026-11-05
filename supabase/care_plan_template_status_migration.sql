@@ -9,7 +9,7 @@
 -- Existing rows are published: they were authored before drafts existed and
 -- are already in use.
 --
--- RLS is unchanged — the policy lives on the table, not the column.
+-- RLS is unchanged: the policy lives on the table, not the column.
 
 ALTER TABLE public.care_plan_templates
   ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'published';

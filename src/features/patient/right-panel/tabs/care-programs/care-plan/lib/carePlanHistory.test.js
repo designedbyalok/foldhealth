@@ -101,7 +101,7 @@ describe('note entries', () => {
 
 describe('change values', () => {
   it('reads dates as MM/DD/YYYY and blanks as None', () => {
-    const audit = [{ id: 'd1', action: 'updated', entityType: 'intervention', entityId: 'i1', summary: 'BP review', detail: 'Due Date: — → 2026-10-11', actor: 'A', createdAt: '2026-10-02T09:00:00Z' }];
+    const audit = [{ id: 'd1', action: 'updated', entityType: 'intervention', entityId: 'i1', summary: 'BP review', detail: 'Due Date: \u2014 → 2026-10-11', actor: 'A', createdAt: '2026-10-02T09:00:00Z' }];
     const [entry] = buildCarePlanHistory({ versions: [], audit, slice: slice({ plan: { ...plan, signedAt: null } }), templates }).filter(e => e.id === 'a-d1');
     expect(entry).toMatchObject({ from: 'None', to: '10/11/2026', headline: 'Due Date Changed for Intervention: BP review' });
   });

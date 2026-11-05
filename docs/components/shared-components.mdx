@@ -3,7 +3,7 @@ title: Shared Components
 description: Reusable UI primitives in src/components.
 ---
 
-All shared components live in `src/components/`. These are reusable primitives — feature-specific components belong in `src/features/`.
+All shared components live in `src/components/`. These are reusable primitives, feature-specific components belong in `src/features/`.
 
 ## Core controls
 
@@ -15,13 +15,15 @@ src/components/Button/Button.jsx
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `variant` | string | `primary`, `secondary`, `tertiary`, `ghost`, `alt`, `success`, `danger`, `dangerFilled`, `info` |
-| `size` | string | `S`, `L`, `XL` |
+| `variant` | string | Emphasis: `solid` (default), `soft`, `outline`, `ghost` |
+| `tone` | string | Intent: `primary`, `neutral`, `success`, `warning`, `danger`, `info`. Defaults to `primary` for solid and soft, `neutral` for outline and ghost |
+| `size` | string | `sm` (24px), `md` (32px, default), `lg` (52px, mobile) |
 | `leadingIcon` | string | Iconify icon name |
 | `trailingIcon` | string | Iconify icon name |
 | `iconOnly` | boolean | Icon-only mode |
 | `fullWidth` | boolean | Full container width |
 | `disabled` | boolean | Disabled state |
+| `loading` | boolean | Spinner over the label (same size and colors), clicks ignored. Automatic while an async `onClick` is pending, so `onClick={save}` with an async `save` needs nothing else |
 
 ### ActionButton
 
@@ -34,27 +36,52 @@ Square icon-only toolbar button with optional tooltip, badge, dot, and chevron.
 | Prop | Type | Description |
 |------|------|-------------|
 | `icon` | string | Iconify icon name |
-| `size` | string | `S`, `L`, `XL` |
-| `state` | string | `active`, `disabled`, `error` |
+| `size` | string | `sm`, `md` (default), `lg` |
+| `tone` | string | `neutral` (default) or `danger` for destructive actions |
+| `disabled` | boolean | Disabled state |
+| `loading` | boolean | Spinner instead of the icon, clicks ignored. Automatic while an async `onClick` is pending |
 | `tooltip` | string | Tooltip text |
 | `notification` | boolean | Show notification dot |
 | `count` | number | Badge count |
 | `chevron` | boolean | Show dropdown chevron |
 
-### Toggle
+### SegmentedControl
 
 ```
-src/components/Toggle/Toggle.jsx
+src/components/SegmentedControl/SegmentedControl.jsx
 ```
 
-Animated segmented control with sliding pill indicator.
+Pick one of two to four short options, with a sliding pill under the selected
+one. Was `Toggle`. To switch what is shown below, use `Tabs`.
 
 | Prop | Type | Description |
 |------|------|-------------|
 | `items` | array | `string[]` or `{key, label, icon}[]` |
-| `active` | string | Currently active item |
-| `onChange` | function | Selection callback |
-| `size` | string | `S`, `M` |
+| `value` | string | Selected key (controlled) |
+| `defaultValue` | string | Initially selected key (uncontrolled) |
+| `onValueChange` | function | Called with the picked key |
+| `size` | string | `md` (default, 32px), `sm` (28px) |
+
+### Tabs
+
+```
+src/components/Tabs/Tabs.jsx
+```
+
+A row of tabs that switches what is shown below it. One tab stop; Left /
+Right / Home / End move and select.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `items` | array | `string[]` or `{key, label, icon?, count?, notif?}[]` |
+| `value` / `defaultValue` / `onValueChange` | | Selected key |
+| `variant` | string | `underline` (default, the app tab bar), `pill` (a switch inside a tab) |
+| `size` | string | `md` (default), `sm` |
+| `leading` / `trailing` | node | Content before the tabs (pill) or pinned right (underline) |
+| `fullWidth`, `embedded`, `embeddedBaseline`, `balanceTabs` | boolean | Underline bar layout |
+
+Replaces `TabStrip` (underline) and `SubTabs` (pill). `OverflowTabs`
+(was `OverflowTabStrip`) folds tabs that do not fit into More.
 
 ### Switch
 
@@ -79,11 +106,15 @@ Toggle control (32x19px track, 16x16px knob).
 src/components/Input/Input.jsx
 ```
 
-Text input (32px height, 6px radius, primary-300 focus ring). Accepts all standard HTML input props.
+Text input (32px height, 4px radius, primary-300 focus ring). Accepts all standard HTML input props.
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `variant` | string | `default`, `error` |
+| `variant` | string | `outline` (default), `ghost` (border only on hover / focus) |
+| `invalid` | boolean | Red chrome and `aria-invalid`; `errorText` implies it |
+| `size` | string | `md` (default, 32px), `sm` (28px) |
+| `onChange` | function | Native change event |
+| `onValueChange` | function | Called with the value |
 
 ### Select
 
@@ -97,9 +128,40 @@ Single-select dropdown matching Input height and radius.
 |------|------|-------------|
 | `options` | array | `[{value, label, disabled?}]` |
 | `value` | string | Current value |
-| `onChange` | function | Change callback |
+| `onValueChange` | function | Called with the picked value |
 | `placeholder` | string | Placeholder text |
+| `variant` | string | `outline` (default), `ghost` |
+| `invalid` | boolean | Red chrome and `aria-invalid`; `errorText` implies it |
+| `size` | string | `md` (default, 32px), `sm` (28px) |
 | `menuAlign` | string | `left`, `right` |
+
+`ref`, `aria-label` and any other props reach the trigger.
+
+### Listbox
+
+```
+src/components/Listbox/Listbox.jsx
+```
+
+The list of options inside every picker: `Select`'s menu, `CheckboxListPopover`,
+`RadioListPopover`, `SearchListPopover` and `UserPickerPopover` all render
+their rows through it. It owns the rows, the selection mark, sections,
+filtering and the keyboard; the picker owns its trigger, search box, header
+and footer.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `options` | array | `{ value, label, description?, leading?, icon?, disabled?, section?, searchText?, tooltip?, action? }`; `{ type: 'header', label }` is a header |
+| `multiple` | boolean | Pick several |
+| `value` / `defaultValue` / `onValueChange` | | The pick, or an array of picks |
+| `onSelect` | function | Every pick, with the option |
+| `indicator` | string | `none` (row tints), `check`, `checkbox`, `radio` |
+| `variant` | string | `plain` (default, the pick lists), `menu` (Select's rows) |
+| `size` | string | `md` (default), `lg` (avatar and two lines) |
+| `query` | string | Filters by label, `searchText` or section |
+
+Keyboard: Up / Down / Home / End move, Enter or Space picks; at either end the
+arrow carries on to the surrounding Popover's search box or footer.
 
 ### Textarea
 
@@ -107,7 +169,7 @@ Single-select dropdown matching Input height and radius.
 src/components/Textarea/Textarea.jsx
 ```
 
-Multiline input matching Input design. Supports `variant` (`default`, `error`).
+Multiline input matching Input design. `invalid` for the error look; `onChange` is the native event and `onValueChange` gets the text (`(html, plain)` in `richText` mode, which has no native event).
 
 ## Display
 
@@ -119,7 +181,10 @@ src/components/Badge/Badge.jsx
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `variant` | string | Status variant |
+| `tone` | string | `neutral` (default), `primary`, `secondary`, `success`, `warning`, `danger`, `info`, `magenta`, `unity` |
+| `variant` | string | `soft` (default), `outline`, `ghost`, `solid` |
+| `size` | string | `xs`, `sm`, `md`, `lg`; unset is the compact base |
+| `disabled` | boolean | Muted, for a value that doesn't apply |
 | `label` | string | Badge text |
 | `icon` | string | Leading icon |
 | `dot` | boolean | Status dot indicator |
@@ -222,7 +287,42 @@ Bottom pagination bar with page numbers, per-page dropdown, and go-to-page input
 src/components/EmptyState/EmptyState.jsx
 ```
 
-Centered placeholder with icon, heading, description, and optional CTA button.
+The dashed-ring medallion (Figma) for a list, panel or page with nothing to
+show, or that failed to load.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `icon` | string | Solar linear icon (or an icon component) |
+| `title` | node | The caption under the medallion |
+| `description` | node | A second, explanatory line |
+| `action` | node | A button or link under the text |
+| `tone` | string | `neutral` (default), `danger` (red icon, for a failed load) |
+| `size` | string | `md` (120px, default), `sm` (80px), `xs` (48px) |
+
+Replaces `RingEmptyState` (`label` is now `title`) and `ErrorState`.
+
+## Feedback
+
+### Banner
+
+```
+src/components/Banner/Banner.jsx
+```
+
+A message that stays put in the layout (not a toast).
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `tone` | string | `info` (default), `success`, `warning`, `danger` |
+| `variant` | string | `soft` (default: tint, neutral text), `outline` (tone border and text) |
+| `size` | string | `md` (default), `sm` (compact, in-flow) |
+| `icon` | string | Solar icon; defaults to the tone's |
+| `meta` | node | Short text at the right end |
+| `action` | node | A link or button at the right end |
+| `onClose` | function | Adds a dismiss button |
+
+Replaces `InfoBar` (now `soft`; `variant="inline"` is `size="sm"`) and `Alert`
+(now `variant="outline"`; `tone="error"` is `danger`).
 
 ## Overlays
 
@@ -245,12 +345,60 @@ Confirmation dialog with configurable icon, title, description, and action butto
 
 ## Radix UI primitives
 
-Headless components in `src/components/ui/` wrap Radix UI:
+These wrap Radix UI and are named for their role:
 
-- `alert-dialog.jsx` — AlertDialog
-- `dialog.jsx` — Dialog
-- `checkbox.jsx` — Checkbox
-- `radio-group.jsx` — RadioGroup
-- `select.jsx` — Select (used by Pagination)
-- `slider.jsx` — Slider
-- `tooltip.jsx` — Tooltip
+- `src/components/Checkbox/Checkbox.jsx`, Checkbox (tri-state)
+- `src/components/Dialog/Dialog.jsx`, Dialog and its parts (`DialogContent`, `DialogTitle`, …)
+- `src/components/Slider/Slider.jsx`, Slider (one thumb or a range)
+
+They were `ShadcnCheckbox`, `ShadcnDialog` and `ShadcnSlider`.
+
+## Dates
+
+### Calendar
+
+```
+src/components/Calendar/Calendar.jsx
+```
+
+One month of days (Figma Fold-Pixel-1.0): the grid only. Every date picker
+draws its days with it: `DatePickerPopover` (behind `DatePicker` and
+`Input type="date"`), `DateRangePopover` (the filter-chip range picker) and
+`DateTimePicker`. Props: `year`, `month` (0-based), `onPick`, `mode`
+(`single` | `range`), `selected` or `rangeStart` / `rangeEnd` (plus
+`pendingStart` / `previewStart` / `previewEnd` while a range is being picked),
+`min` / `max`, `isDayDisabled(iso)` (true, or a reason shown as a tooltip),
+`highlighted`. One tab stop; arrows move by day and week, Home / End to the
+ends of the week.
+
+Date helpers live in `src/lib/localDate.js`: `parseLocalDate`, `isoFromLocal`,
+`todayLocal`, `startOfDay`, `addDays`, `sameDay`, `daysInMonth`, `mdyFromIso`,
+`isoFromMdy`. Parse date-only values with `parseLocalDate`, never `new Date()`.
+
+## Disclosure
+
+### Collapsible
+
+```
+src/components/Collapsible/Collapsible.jsx
+```
+
+A region that folds away, in parts: `Collapsible` (root: `open` /
+`defaultOpen` / `onOpenChange`), `CollapsibleTrigger` (the button, with
+`aria-expanded` / `aria-controls`) and `CollapsibleContent` (eases its height
+and is inert while shut). When the control lives elsewhere, use
+`CollapsibleContent` alone with `open`. `Collapse` is its old name.
+`CollapsibleSection` is the bordered card built on it.
+
+## Loading
+
+### Skeleton
+
+```
+src/components/Skeleton/Skeleton.jsx
+```
+
+One shimmering placeholder block (`width`, `height`, `radius`, or a class).
+`TableSkeleton`, `SimpleTableSkeleton`, `CardSkeleton` and `TimelineSkeleton`
+are layouts built from it; arrange `Skeleton` blocks for anything else, and put
+`aria-busy` on the loading region.

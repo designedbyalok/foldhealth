@@ -54,7 +54,7 @@ export function HistoryDelete({ name, description = "This removes it from the pa
     <>
       <ActionButton
         icon="solar:trash-bin-trash-linear"
-        size="S"
+        size="sm"
         tooltip="Remove"
         aria-label={`Remove ${name}`}
         onClick={() => setConfirming(true)}

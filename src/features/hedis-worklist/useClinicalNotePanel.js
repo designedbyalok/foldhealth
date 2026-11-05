@@ -12,6 +12,7 @@ import {
   NOTELESS_GAP_CODES,
   noteOpenGaps,
 } from './ClinicalNotePanel.utils';
+import { openSafeUrl } from '../../lib/openSafeUrl';
 
 // Human-friendly form-type label for the activity log's detailCard.
 const FORM_TYPE_LABEL = {
@@ -36,10 +37,10 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
   // (guarded by noteTemplatesDidFetch); no-op after the first call.
   const fetchNoteTemplates = useAppStore(s => s.fetchNoteTemplates);
   useEffect(() => { fetchNoteTemplates?.(); }, [fetchNoteTemplates]);
-  // Real signed-in user resolved lazily at call time — `currentActorName`
+  // Real signed-in user resolved lazily at call time, `currentActorName`
   // reads `currentUserProfile?.name` from the store. Falls back to the
   // mock `CURRENT_USER` constant only when no session is present (dev
-  // launches without sign-in). Never returns 'Provider' any more — the
+  // launches without sign-in). Never returns 'Provider' any more: the
   // note's signer identity now matches whoever actually clicked Sign.
   const actorName = () => useAppStore.getState().currentActorName?.() || CURRENT_USER;
 
@@ -74,7 +75,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
       init[g.code] = { manuallyOff: false, ...defaultGapData(g.code), ...(g.draft ?? {}) };
     });
     // Seed from the store's cached notes (newest-first) so the first
-    // render already carries any answers persisted by a prior surface —
+    // render already carries any answers persisted by a prior surface,
     // e.g. the DSF-A auto-promote draft written seconds before this
     // panel mounted. Without this, a Save-as-Draft racing the async
     // fetch effect would overwrite the DB row with the empty defaults.
@@ -96,7 +97,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
     return init;
   });
 
-  // RHS pane focuses on one gap at a time — defaults to the caller's gapCode
+  // RHS pane focuses on one gap at a time, defaults to the caller's gapCode
   // (i.e. the row the drawer was opened from). Clicking any LHS row moves it.
   const initialActive = activeGaps.some(g => g.code === gapCode)
     ? gapCode
@@ -131,7 +132,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
 
   // Keep the RHS pane in sync when the drawer switches gaps (prev/next) or
   // when Amend seeds a Completed gap that was filtered out of activeGaps.
-  // activeGapCode is intentionally excluded — including it creates a
+  // activeGapCode is intentionally excluded: including it creates a
   // feedback loop that resets the user's selection back to gapCode on
   // every click.
   useEffect(() => {
@@ -145,7 +146,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
 
   const updateGap = useCallback((code, patch) => {
     setGapState(prev => ({ ...prev, [code]: { ...prev[code], ...patch } }));
-    // `manuallyOff` is a UI-only ready-toggle flag, not a form edit —
+    // `manuallyOff` is a UI-only ready-toggle flag, not a form edit,
     // toggling it should not enable Save-as-Draft on its own.
     const editKeys = Object.keys(patch).filter(k => k !== 'manuallyOff');
     if (editKeys.length) markDirty(code);
@@ -172,7 +173,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
   // due date computed from the save timestamp), then auto-promotes
   // the workspace to the consolidated view with DSF-B focused so the
   // Coordinator flows straight into PHQ-9 without hunting for an
-  // Open DSF-B button. Idempotent — subsequent calls no-op via the
+  // Open DSF-B button. Idempotent, subsequent calls no-op via the
   // store's dedup.
   // Not memoized on purpose: it closes over openDsfbView (which itself
   // reads live state like activeGaps + gapState), so it needs to
@@ -260,7 +261,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
           });
           if (note?.id) codes.forEach(c => rememberNoteId(c, note.id));
           clearDirty(codes);
-        } catch { /* best-effort — promotion still proceeds */ }
+        } catch { /* best-effort: promotion still proceeds */ }
       }
       // Hand the target code to the drawer so the consolidated
       // ClinicalNotePanel mounts with DSF-B active (the point of the
@@ -292,7 +293,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
 
   // Persistent note-row ids per gap so re-saves upsert the same row instead
   // of spawning a fresh draft every click. amendNoteId covers the Amend-
-  // from-preview path — same row is edited, DB trigger snapshots prior
+  // from-preview path: same row is edited, DB trigger snapshots prior
   // version. Also restores persisted draft state on open.
   const [noteIdByCode, setNoteIdByCode] = useState(() => {
     if (amendNoteId) {
@@ -428,7 +429,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
   };
 
   // P3-2: strip `manuallyOff` from every gap's saved payload. It's a
-  // UI-only ready-toggle flag (see updateGap at ~line 120) — persisting
+  // UI-only ready-toggle flag (see updateGap at ~line 120): persisting
   // it inside payload.gaps was leaking client state into the DB row.
   // Readiness is inferred from `gap_codes` alone at read time: a code
   // present in the array is "ready" (it was written), a code absent is
@@ -482,7 +483,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
     } else if (status === 'Signed') {
       // `reviewer` here is the signer name the caller resolved from the
       // signed-in user. Fall back to the current actor if the caller
-      // didn't pass one — never to a placeholder like "Provider".
+      // didn't pass one: never to a placeholder like "Provider".
       const signer = reviewer || actorName();
       subtitle = signedDate
         ? `Signed by ${signer} · ${signedDate}`
@@ -495,14 +496,14 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
       gapCode: singleCode,
       gapCodes: gapList,
       // Human-readable HEDIS measure names for the "N Gaps" chip's
-      // tooltip — falls back to the raw code when a measure isn't in
+      // tooltip: falls back to the raw code when a measure isn't in
       // MEASURE_NAMES yet.
       gapNames: gapList.map(c => MEASURE_NAMES[c] || c),
       title,
       chip,
       status,
       // subMeta ("CBP Visit Note" pre-title) and linkedGroups ("Linked
-      // Score Groups >") were removed from the note-card design — the
+      // Score Groups >") were removed from the note-card design, the
       // note title alone carries the form-type identity now.
       subtitle,
       reviewTask,
@@ -561,14 +562,14 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
   // Two-step Submit-for-Review: open the reviewer picker first; commit only
   // once the caller resolves a reviewer via handleConfirmSubmitForReview.
   // For the reviewer-edit path (editingTaskId set), keep the existing
-  // Submit-updates-attached-PDF flow — no picker involved.
+  // Submit-updates-attached-PDF flow: no picker involved.
   const handleSubmitForReview = async () => {
     setSubmitted(true);
     if (!dateOfService) { showToast('Date of Service is required'); return; }
     const { codes } = noteScope();
     if (codes.length === 0) { showToast('No gaps marked Ready for Review'); return; }
     if (editingTaskId) {
-      const pdf = buildPdf(codes, actorName());
+      const pdf = await buildPdf(codes, actorName());
       await updateSignOffTaskPdf(editingTaskId, pdf, actorName());
       showToast('Sign-off note updated');
       onClose();
@@ -581,7 +582,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
     if (!reviewer?.id) { setReviewerPickerOpen(false); return; }
     const { codes, primary } = noteScope();
     if (codes.length === 0) { setReviewerPickerOpen(false); return; }
-    const pdf = buildPdf(codes, actorName());
+    const pdf = await buildPdf(codes, actorName());
     // If editing an existing note (draft → submit, or resubmitting a
     // pending note after edits), reuse its gap set and id so we update
     // the SAME record. This is the core single-entity guarantee.
@@ -630,7 +631,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
     }
     // Sign-off task + activity card share one derived name so the Tasks
     // table and the nested review-task card read identically. Single-gap
-    // notes drop the "Consolidated" prefix — they're one gap's note, not a
+    // notes drop the "Consolidated" prefix: they're one gap's note, not a
     // consolidated pack.
     // Task name reads off the full note scope (finalCodes) so a
     // decline-only DSF-B note gets "DSF-B Visit Note" instead of the
@@ -646,7 +647,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
     const existingForTask = selectedNoteId ? notesForMember.find(n => n.id === selectedNoteId) : null;
     const existingTaskId = existingForTask?.reviewTaskId || note?.reviewTaskId || null;
     // A decline-only note still needs a sign-off task and its own
-    // activity entry — the reviewer signs off on the decline
+    // activity entry: the reviewer signs off on the decline
     // documentation itself. `finalCodes` (which includes the declined
     // codes) keeps the task's gap context intact so the review card
     // still shows what was submitted.
@@ -660,7 +661,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
       // Also ensure the note stays linked (idempotent).
       if (note?.id) await linkClinicalNoteToReviewTask(note.id, existingTaskId);
     } else {
-      // First submission — create the sign-off task BEFORE logging activity
+      // First submission: create the sign-off task BEFORE logging activity
       // so the entry can carry the real taskId.
       task = await createCareGapSignOffTask({
         hedisMemberId: member.id,
@@ -699,7 +700,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
     if (!task) showToast('Note submitted, but the sign-off task could not be created');
     if (note?.id && task?.id) await linkClinicalNoteToReviewTask(note.id, task.id);
     setReviewerPickerOpen(false);
-    showToast(`Submitted for review — ${codes.length} gap${codes.length === 1 ? '' : 's'} → ${reviewer.name}`);
+    showToast(`Submitted for review: ${codes.length} gap${codes.length === 1 ? '' : 's'} → ${reviewer.name}`);
     onClose();
   };
 
@@ -708,7 +709,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
     const { codes, primary } = noteScope();
     if (!dateOfService) { showToast('Date of Service is required'); return; }
     // Review flow (editingTaskId) trusts the persisted note's scope over
-    // live readiness — the reviewer's job is to sign the note the author
+    // live readiness: the reviewer's job is to sign the note the author
     // submitted, not to re-derive its gap set.
     const linkedForReview = editingTaskId
       ? notesForMember.find(n => String(n.reviewTaskId) === String(editingTaskId))
@@ -735,7 +736,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
       finalCodes = linkedForReview.gapCodes;
       finalPrimary = finalCodes[0] || primary;
     }
-    const pdf = buildPdf(finalCodes, signer);
+    const pdf = await buildPdf(finalCodes, signer);
     const effectiveId = selectedNoteId || linkedForReview?.id || noteIdByCode[finalPrimary];
     const note = await upsertClinicalNote({
       id: effectiveId,
@@ -746,14 +747,14 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
       status: 'signed',
       payload: buildNotePayload(finalCodes),
       pdf,
-      // Omit signedByName — upsertClinicalNote stamps signed_by_id +
+      // Omit signedByName: upsertClinicalNote stamps signed_by_id +
       // signed_by_name from currentUserProfile so the row records the
       // actual signer instead of a placeholder.
     });
     if (note?.id) finalCodes.forEach(c => rememberNoteId(c, note.id));
     bulkUpdateGapStatuses(member.id, Object.fromEntries(finalCodes.map(c => [c, 'Completed'])));
     // If this note was previously submitted (author → review → sign OR
-    // reviewer signing off), its sign-off task must be completed — do
+    // reviewer signing off), its sign-off task must be completed, do
     // not create a new task. The Clinical Notes tab is DB-driven (one
     // row per note), so creating a new task would leave the old
     // Pending task visible as a duplicate nested card.
@@ -809,7 +810,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
       finalCodes = linkedForReview.gapCodes;
       finalPrimary = finalCodes[0] || primary;
     }
-    const pdf = buildPdf(finalCodes, signer);
+    const pdf = await buildPdf(finalCodes, signer);
     const effectiveId = selectedNoteId || linkedForReview?.id || noteIdByCode[finalPrimary];
     const note = await upsertClinicalNote({
       id: effectiveId,
@@ -849,8 +850,7 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
       }),
     });
     if (pdf?.dataUrl) {
-      const w = window.open(pdf.dataUrl, '_blank');
-      try { w?.focus(); } catch { /* popup blocker */ }
+      openSafeUrl(pdf.dataUrl);
     }
     showToast('Signed and printing…');
     onClose();

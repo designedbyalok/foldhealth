@@ -1,7 +1,7 @@
 /* ── Shell ── */
 .wrapper { display: flex; flex-direction: column; flex: 1; overflow: hidden; background: var(--neutral-50); }
 
-/* Nested tab bar — matches Agent Analytics (centered underline tabs). */
+/* Nested tab bar: matches Agent Analytics (centered underline tabs). */
 .tabBar { display: flex; align-items: center; justify-content: center; padding: 0 16px; background: var(--neutral-0); border-bottom: 0.5px solid var(--neutral-150); flex-shrink: 0; }
 .tabBarInner { display: flex; gap: 20px; }
 .tab { display: inline-flex; align-items: center; gap: 6px; padding: 11px 4px; font-size: var(--font-base); font-weight: 500; color: var(--neutral-300); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; transition: color .12s; }
@@ -135,7 +135,7 @@
 .sgSectionMeta { font-size: var(--font-md); color: var(--neutral-300); }
 .sgSectionMeta strong { color: var(--neutral-500); font-weight: 600; margin-left: 4px; }
 
-/* In-progress (Pending) detail — Form Incomplete card */
+/* In-progress (Pending) detail: Form Incomplete card */
 .incompleteBox { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 40px 24px 24px; }
 .incompleteTitle { font-size: 0.9375rem; font-weight: 600; color: var(--neutral-400); }
 .incompleteDesc { font-size: var(--font-md); color: var(--neutral-300); max-width: 360px; }

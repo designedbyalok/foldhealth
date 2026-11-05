@@ -4,22 +4,22 @@
 -- WHY
 -- The client falls back to the src/features/hedis-worklist/data/mock.js
 -- constant when the table is empty, but as soon as the table has ANY rows
--- the Supabase fetch wins — so the mock additions never surface. This seed
+-- the Supabase fetch wins: so the mock additions never surface. This seed
 -- mirrors the mock additions verbatim so both paths agree.
 --
 -- SHAPE
 -- Four members carry 9+ open gaps to exercise the consolidated-note flow:
---   hd16 Angela Rivera   — 9 gaps  (female / older adult)
---   hd22 David Nakamura  — 11 gaps (male / older adult)
---   hd23 Grace Bennett   — 9 gaps  (female / older adult)
---   hd28 Frank O'Neil    — 12 gaps (male / older adult)
+--   hd16 Angela Rivera: 9 gaps  (female / older adult)
+--   hd22 David Nakamura: 11 gaps (male / older adult)
+--   hd23 Grace Bennett: 9 gaps  (female / older adult)
+--   hd28 Frank O'Neil: 12 gaps (male / older adult)
 -- The remaining members carry 2–5 gaps across pediatric, prenatal,
--- adolescent, and adult ranges — with gender-appropriate codes
+-- adolescent, and adult ranges, with gender-appropriate codes
 -- (BCS/CCS/OMW/CHL/PPC* female-only, W30A/W30B/DEV/LSC pediatric, etc.).
 --
 -- SAFETY
 -- Each row is inserted with a WHERE NOT EXISTS guard on the text id
--- so the migration is idempotent and safe to re-run — hand-edits in the
+-- so the migration is idempotent and safe to re-run, hand-edits in the
 -- database survive re-runs.
 
 INSERT INTO public.hedis_members (id, initials, name, gender, age, member_id, language, gaps, assignee, assignee_initials, start_date, adv_illness, frailty, risk_level, tasks, outreach_dots, outreach_date, member_status, phone, dob, ipa, hp_code, zip, city, state)

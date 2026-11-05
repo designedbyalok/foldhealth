@@ -3,7 +3,7 @@ import { SidebarFloating } from './SidebarFloating';
 import { useAppStore } from '../../store/useAppStore';
 
 /**
- * AppSidebar — picks the sidebar shape the user asked for in their profile
+ * AppSidebar: picks the sidebar shape the user asked for in their profile
  * menu. Standard (default) renders the labeled 72px rail + page-column
  * SubNav the app has always shipped; 'floating' renders the compact 240px
  * floating card that pairs a 52px icon rail with the SubNav inline.

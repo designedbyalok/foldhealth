@@ -1,7 +1,7 @@
 export const goals = [
   {
     id: 1, name: 'TCM Full Program Completion', program: 'TCM', programColor: 'purple',
-    description: 'Complete Transitional Care Management program ensuring successful patient outreach, medication reconciliation, symptom monitoring, and billing — in sequential order.',
+    description: 'Complete Transitional Care Management program ensuring successful patient outreach, medication reconciliation, symptom monitoring, and billing, in sequential order.',
     status: 'active', weightedScoring: true, passingScore: 80, mode: 'sequential',
     steps: [
       { id: 's1', name: 'Successful Patient Outreach', type: 'mandatory', score: 25, desc: 'Establish first contact with patient within 2 business days of discharge. Confirm identity and willingness to participate.', condition: null },

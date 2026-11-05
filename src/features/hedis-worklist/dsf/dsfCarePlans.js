@@ -2,7 +2,7 @@
 // the outcome-panel title + the exact bullet list rendered inside
 // `CarePlanOutcomePanel`. Copy is taken verbatim from the user story
 // (Section 4 "Result-Driven Display Logic & Care Plan Text") and MUST
-// NOT be paraphrased — clinical review sits on the exact wording.
+// NOT be paraphrased: clinical review sits on the exact wording.
 
 const WELLNESS_BULLETS = [
   'Encourage maintenance of healthy lifestyle habits, including regular exercise, adequate sleep, stress management, and social engagement.',

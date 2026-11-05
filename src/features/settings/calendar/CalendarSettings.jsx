@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { SectionTitleBar } from '../../../components/SectionTitleBar/SectionTitleBar';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { HolidaysTab } from './HolidaysTab';
 import { OooRecordsTab } from './OooRecordsTab';
 import { UserAvailabilityTab } from './availability/UserAvailabilityTab';
+import { AppointmentTypesTab } from './AppointmentTypesTab';
 import styles from './CalendarSettings.module.css';
 
 const TABS = [
@@ -22,6 +23,7 @@ export function CalendarSettings() {
   if (tab === 'ooo') return <OooRecordsTab tabs={TABS} activeTab={tab} onTabChange={setTab} />;
   if (tab === 'holidays') return <HolidaysTab tabs={TABS} activeTab={tab} onTabChange={setTab} />;
   if (tab === 'users') return <UserAvailabilityTab tabs={TABS} activeTab={tab} onTabChange={setTab} />;
+  if (tab === 'types') return <AppointmentTypesTab tabs={TABS} activeTab={tab} onTabChange={setTab} />;
   return (
     <div className={styles.wrapper}>
       <SectionTitleBar
@@ -32,7 +34,7 @@ export function CalendarSettings() {
       />
       <div className={styles.content}>
         <div className={styles.empty}>
-          <RingEmptyState icon="solar:calendar-linear" label={`${TABS.find(t => t.key === tab)?.label} is coming soon`} />
+          <EmptyState icon="solar:calendar-linear" title={`${TABS.find(t => t.key === tab)?.label} is coming soon`} />
         </div>
       </div>
     </div>

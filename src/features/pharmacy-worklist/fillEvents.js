@@ -4,7 +4,8 @@ import { addDaysMdy, annotateClaims, confirmedFills, latestConfirmedFill as late
 //
 // Two kinds of fill live in each medication's refill history: claims (no
 // `source`) and fills confirmed in Fold (`source` set: a pickup confirmed by
-// call or verification, a refill approval, or a date entered by hand). Last
+// call or verification, or a date entered by hand; older rows may come from a
+// refill approval, which no longer sets a fill). Last
 // Fill stays the claims date. Recent Fill is the latest confirmed fill.
 //
 // One shifted supply schedule (supplySchedule) drives each drug's next fill,
@@ -27,12 +28,13 @@ const fmt = (t) => { const d = new Date(t); return `${pad2(d.getUTCMonth() + 1)}
 export const effectiveFill = (d) => later(d.lastFill, latestConfirmed(d)?.date);
 
 // Counting claims plus confirmed fills still waiting for theirs (or never
-// matched with no claim at all), oldest first.
-function countedFills(d) {
+// matched with no claim at all), oldest first. `claimsOnly` leaves out the
+// confirmed fills, for outcomes only a claim can settle.
+function countedFills(d, { claimsOnly } = {}) {
   const all = annotateClaims(d.refills);
   const claims = all.filter(c => c.counts && parseMdy(c.date) != null);
   const seen = new Set();
-  const confirmed = confirmedFills(d).filter(r => {
+  const confirmed = claimsOnly ? [] : confirmedFills(d).filter(r => {
     const at = parseMdy(r.date);
     if (at == null || seen.has(at)) return false;
     seen.add(at);
@@ -45,9 +47,9 @@ function countedFills(d) {
 }
 
 // Supply intervals [start, end) with each refill shifted past the prior supply.
-function supplySchedule(d) {
+function supplySchedule(d, opts) {
   let supplyEnd = -Infinity;
-  return countedFills(d).map(f => {
+  return countedFills(d, opts).map(f => {
     const start = Math.max(f.at, supplyEnd);
     supplyEnd = start + f.ds * DAY;
     return { start, end: supplyEnd };
@@ -57,11 +59,23 @@ function supplySchedule(d) {
 // Days of the measure year covered by the schedule of every drug in the
 // measure, from the first fill of the year to Dec 31. A drug discontinued
 // later still covered the days it was dispensed for.
-function yearCoverage(x) {
+// Coverage depends only on the measure's own data, and measures are replaced,
+// never mutated, so it is cached per measure object (claims-only apart).
+const coverageCache = new WeakMap();
+function yearCoverage(x, opts) {
+  const key = opts?.claimsOnly ? 'claims' : 'all';
+  const cached = coverageCache.get(x);
+  if (cached && key in cached) return cached[key];
+  const result = computeYearCoverage(x, opts);
+  coverageCache.set(x, { ...cached, [key]: result });
+  return result;
+}
+
+function computeYearCoverage(x, opts) {
   const year = Number((x.failDate || '').slice(6)) || new Date().getFullYear();
   const yearStart = Date.UTC(year, 0, 1);
   const yearEnd = Date.UTC(year, 11, 31);
-  const intervals = (x.medications || []).flatMap(supplySchedule).filter(i => i.end > yearStart && i.start <= yearEnd);
+  const intervals = (x.medications || []).flatMap(d => supplySchedule(d, opts)).filter(i => i.end > yearStart && i.start <= yearEnd);
   if (!intervals.length) return null;
   const start = Math.max(yearStart, Math.min(...intervals.map(i => i.start)));
   const covered = new Set();
@@ -73,10 +87,71 @@ function yearCoverage(x) {
 }
 
 // Projected PDC for the measure year.
-export function projectedPdc(x) {
-  const c = yearCoverage(x);
+export function projectedPdc(x, opts) {
+  const c = yearCoverage(x, opts);
   return c ? Math.round((c.covered.size / c.days) * 100) : null;
 }
+
+const todayUtc = () => { const d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); };
+
+// Days not covered so far this year, from the first fill to today.
+export function daysMissed(x) {
+  const c = yearCoverage(x);
+  if (!c) return null;
+  const today = Math.min(todayUtc(), c.yearEnd + DAY);
+  if (today <= c.start) return 0;
+  let covered = 0;
+  for (const t of c.covered) if (t < today) covered += 1;
+  return (today - c.start) / DAY - covered;
+}
+
+// PDC to date, so it keeps dropping on days the member goes without (a
+// monthly or biweekly gap report would leave it frozen at its last number).
+// With the plan's PDC and the report date (`pdcAsOf`): the plan's covered
+// days at the report, plus the days covered since by claims and fills on
+// record, over the days from the gap's start to today. Without a report date
+// the plan's number stands (null here). With no plan PDC: the fills on
+// record from the first fill of the year.
+export function pdcToDate(x) {
+  const c = yearCoverage(x);
+  const today = Math.min(todayUtc(), (c?.yearEnd ?? Infinity) + DAY);
+  if (x.pdc != null) {
+    const asOf = parseMdy(x.pdcAsOf);
+    const start = parseMdy(x.startDate) ?? c?.start;
+    if (asOf == null || start == null || asOf <= start || today <= asOf) return null;
+    let since = 0;
+    if (c) for (const t of c.covered) if (t >= asOf && t < today) since += 1;
+    const covered = (x.pdc / 100) * ((asOf - start) / DAY) + since;
+    return Math.min(100, Math.round((covered / ((today - start) / DAY)) * 100));
+  }
+  if (!c) return null;
+  const elapsed = (today - c.start) / DAY;
+  if (elapsed <= 0) return null;
+  let covered = 0;
+  for (const t of c.covered) if (t < today) covered += 1;
+  return Math.round((covered / elapsed) * 100);
+}
+
+// Medication possession ratio to date: days supply dispensed by counted
+// claims since the drug's first fill of the year, over the days since then,
+// capped at 100%. The gap shows its best-covered active drug, since any drug
+// in the class covers the measure.
+export function gapMpr(x) {
+  const year = Number((x.failDate || '').slice(6)) || new Date().getFullYear();
+  const yearStart = Date.UTC(year, 0, 1);
+  const today = todayUtc();
+  const values = (x.medications || []).filter(d => d.status !== 'Discontinued').map(d => {
+    const fills = countedFills(d, { claimsOnly: true }).filter(f => f.at >= yearStart && f.at < today);
+    if (!fills.length) return null;
+    const supply = fills.reduce((sum, f) => sum + f.ds, 0);
+    return Math.min(100, Math.round((supply / ((today - fills[0].at) / DAY)) * 100));
+  }).filter(v => v != null);
+  return values.length ? Math.max(...values) : null;
+}
+
+// Year-end PDC from counted claims alone if the member never refills: the
+// Projected PDC (No Refill) column, and Met for Year at 80% or above.
+export const claimsPdcNoRefill = (x) => projectedPdc(x, { claimsOnly: true });
 
 // Projected absolute fail date: the last day the member can be without
 // medication and still reach 80% if they never miss again. Null when the
@@ -118,7 +193,8 @@ export function recomputeMeasure(x) {
   });
   const active = medications.filter(d => d.status !== 'Discontinued');
   const hasConfirmed = active.some(d => d.recentFill);
-  const next = { ...x, medications, nextFillDue: earliest(active.map(d => d.nextFill)) || x.nextFillDue };
+  const recalculated = earliest(active.map(d => d.nextFill));
+  const next = { ...x, medications, nextFillDue: recalculated || x.nextFillDue, nextFillDueCalculated: !!recalculated || !!x.nextFillDueCalculated };
   // A fill confirmed in Fold moves PDC and the fail date; both stay
   // projected until its claim matches.
   return {
@@ -176,23 +252,24 @@ export function applyPendingPickup(member, codes, date) {
 }
 
 // Outcome text → fill event. Covers the schema's pickup outcomes
-// ("Confirmed medication pickup", "…pickup date") and "Pending — Pick up".
+// ("Confirmed medication pickup", "…pickup date") and "Pending: Pick up".
 export function fillEventFor(outcome) {
   const o = (outcome || '').toLowerCase();
   if (o.includes('confirmed medication pickup')) return 'pickup';
-  if (o.includes('pending — pick up')) return 'pending-pickup';
+  if (/pending(?: \u2014|:) pick up/.test(o)) return 'pending-pickup';
   return null;
 }
 
-// Outcomes that mean the medication was just filled; the outreach date
-// becomes the gap's Recent Fill Date (editable later in Gap Closure).
+// Outcomes that mean the medication was just picked up; the outreach date
+// becomes the gap's Recent Fill Date (editable later in Medication Review).
+// "Refill approval received" only logs the approval: nothing was dispensed,
+// so it sets no fill date.
 export function setsRecentFill(outcome) {
-  const o = (outcome || '').toLowerCase();
-  return o.includes('confirmed medication pickup') || o.includes('refill approval received');
+  return (outcome || '').toLowerCase().includes('confirmed medication pickup');
 }
 
-// Recent-fill outcomes ("Confirmed medication pickup", "Refill approval
-// received"): add the confirmed fill to the listed gaps, newer dates only.
+// Recent-fill outcomes ("Confirmed medication pickup"): add the confirmed
+// fill to the listed gaps, newer dates only.
 export function applyRecentFill(member, codes, date, outcome, changes) {
   return member.measures.map(x => (codes.includes(x.code) ? addConfirmedFill(x, date, outcome, changes) : x));
 }

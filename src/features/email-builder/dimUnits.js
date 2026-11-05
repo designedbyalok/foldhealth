@@ -20,7 +20,7 @@ export function formatLineHeight(value, unit) {
   const num = parseFloat(value);
   if (Number.isNaN(num)) return null;
   if (unit === 'px') return `${num}px`;
-  return num / 100; // unitless multiplier — what `style.lineHeight` accepts
+  return num / 100; // unitless multiplier, what `style.lineHeight` accepts
 }
 
 export function parseLetterSpacing(value) {
@@ -38,7 +38,7 @@ export function formatLetterSpacing(value, unit) {
   return unit === '%' ? `${num}%` : num;
 }
 
-// CSS rendering — letter-spacing in CSS doesn't accept %, convert to em.
+// CSS rendering: letter-spacing in CSS doesn't accept %, convert to em.
 export function formatLetterSpacingCss(value) {
   if (value == null || value === '') return undefined;
   if (typeof value === 'number') return `${value}px`;

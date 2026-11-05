@@ -5,88 +5,85 @@ import { ActionButton } from '../ActionButton/ActionButton';
 import { Switch } from '../Switch/Switch';
 import styles from './ConsentPopover.module.css';
 
-const SECTIONS = [
-  {
-    id: 'program',
-    title: 'Program Consent',
-    items: [
-      { id: 'ccm',  label: 'CCM Consent',  status: 'Consent Withdrawn', date: '09/11/2024 9:30 AM' },
-      { id: 'apcm', label: 'APCM Consent', status: 'Consent Given',     date: '09/11/2024 9:30 AM' },
-    ],
-  },
-  {
-    id: 'communication',
-    title: 'Communication Consent',
-    sectionToggle: true,
-    items: [
-      { id: 'call',  label: 'Call Consent',   status: 'Consent Not Given' },
-      { id: 'sms',   label: 'SMS Consent',    status: 'Consent Not Given' },
-      { id: 'email', label: 'Emails Consent', status: 'Consent Not Given' },
-    ],
-  },
-  {
-    id: 'other',
-    title: 'Other Consents',
-    items: [
-      { id: 'data', label: 'Data Sharing Consent', status: 'Consent Given', date: '09/11/2024 9:30 AM' },
-    ],
-  },
-];
-
-const INITIAL_TOGGLES = (() => {
-  const m = {};
-  SECTIONS.forEach(s => {
-    if (s.sectionToggle) m[s.id] = true;
-    s.items.forEach(item => { m[item.id] = true; });
-  });
-  return m;
-})();
-
-export function ConsentPopover({ pos, onClose }) {
+/**
+ * Consent overview popover: one section per consent group, one row per
+ * consent with its state, and an audit view of every record.
+ *
+ * @param {{top:number,left:number}} props.pos
+ * @param {function} props.onClose
+ * @param {Array<{id:string,title:string,toggle?:{checked:boolean,onToggle:function},
+ *   items:Array<{id:string,label:string,status:string,icon:string,color:string,
+ *   checked:boolean,onToggle?:function}>}>} props.sections
+ *   A section's `toggle` puts one switch on its header for every row at once.
+ *   `onToggle(nextChecked)` runs when a row's switch is flipped; the switch
+ *   follows `checked`, so the caller decides whether the change happens.
+ * @param {Array<{id:string,label:string,status:string,meta:string}>} [props.history] newest first
+ * @param {boolean}  [props.loading]
+ * @param {function} [props.onOpenHistory] When set, the history icon calls it
+ *   (e.g. to open a full history drawer) instead of the inline audit view.
+ */
+export function ConsentPopover({ pos, onClose, sections = [], history = [], loading = false, onOpenHistory }) {
   const ref = useRef(null);
-  const [toggles, setToggles] = useState(INITIAL_TOGGLES);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     const handler = (e) => {
       if (ref.current && !ref.current.contains(e.target)) onClose();
     };
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     const raf = requestAnimationFrame(() => document.addEventListener('mousedown', handler));
-    return () => { cancelAnimationFrame(raf); document.removeEventListener('mousedown', handler); };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [onClose]);
 
-  const flip = (id) => setToggles(prev => ({ ...prev, [id]: !prev[id] }));
-
   return createPortal(
-    <div ref={ref} className={styles.popover} style={{ top: pos.top, left: pos.left }}>
+    <div ref={ref} className={styles.popover} style={{ top: pos.top, left: pos.left }} role="dialog" aria-label="Patient consent">
       <div className={styles.header}>
-        <span className={styles.headerTitle}>Patient Consent</span>
-        <ActionButton icon="solar:history-linear" size="S" tooltip="Audit Log" />
+        <span className={styles.headerTitle}>{showHistory ? 'Consent Audit Log' : 'Patient Consent'}</span>
+        <ActionButton
+          icon={showHistory ? 'solar:arrow-left-linear' : 'solar:history-linear'}
+          size="sm"
+          tooltip={showHistory ? 'Back' : onOpenHistory ? 'Consent History' : 'Audit Log'}
+          tooltipBelow
+          onClick={onOpenHistory && !showHistory ? onOpenHistory : () => setShowHistory(v => !v)}
+        />
       </div>
 
       <div className={styles.body}>
-        {SECTIONS.flatMap((section, si) => {
+        {loading && <span className={styles.empty}>Loading consent…</span>}
+        {!loading && showHistory && (history.length ? history.map(h => (
+          <div key={h.id} className={styles.row}>
+            <div className={styles.rowText}>
+              <span className={styles.rowLabel}>{h.label} · {h.status}</span>
+              <span className={styles.rowStatus}>{h.meta}</span>
+            </div>
+          </div>
+        )) : <span className={styles.empty}>No consent has been recorded yet.</span>)}
+        {!loading && !showHistory && sections.flatMap((section, si) => {
           const parts = [];
           if (si > 0) parts.push(<div key={`div-${section.id}`} className={styles.divider} />);
           parts.push(
             <div key={section.id} className={styles.section}>
               <div className={styles.sectionHeader}>
                 <span className={styles.sectionTitle}>{section.title}</span>
-                {section.sectionToggle && (
-                  <Switch checked={toggles[section.id]} onChange={() => flip(section.id)} />
+                {section.toggle && (
+                  <Switch checked={!!section.toggle.checked} onChange={() => section.toggle.onToggle(!section.toggle.checked)} ariaLabel={`All ${section.title}`} />
                 )}
               </div>
               {section.items.map(item => (
                 <div key={item.id} className={styles.row}>
                   <div className={styles.rowCheck}>
-                    <Icon name="solar:check-circle-bold" size={16} color="var(--status-success)" />
+                    <Icon name={item.icon} size={12} color={item.color} />
                   </div>
                   <div className={styles.rowText}>
                     <span className={styles.rowLabel}>{item.label}</span>
-                    <span className={styles.rowStatus}>
-                      {item.status}{item.date ? ` • ${item.date}` : ''}
-                    </span>
+                    <span className={styles.rowStatus}>{item.status}</span>
                   </div>
-                  <Switch checked={toggles[item.id]} onChange={() => flip(item.id)} />
+                  <Switch checked={!!item.checked} onChange={() => item.onToggle?.(!item.checked)} ariaLabel={item.label} />
                 </div>
               ))}
             </div>

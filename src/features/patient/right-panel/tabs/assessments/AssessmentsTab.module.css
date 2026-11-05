@@ -1,0 +1,106 @@
+.wrapper {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  background: var(--neutral-0);
+}
+
+.listPane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-3);
+  overflow-y: auto;
+}
+
+/* Split: the list narrows to titles beside the open assessment. */
+.split .listPane {
+  flex: 0 0 460px;
+  border-right: 0.5px solid var(--neutral-150);
+}
+
+.detailPane {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.fullDetail {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  background: var(--neutral-0);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: calc(var(--space-1) / 2) 0;
+}
+
+.views {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.searchRow { padding: 0 var(--space-1); }
+.searchField { flex: 1; min-width: 0; }
+
+.divider {
+  flex-shrink: 0;
+  width: 0.5px;
+  height: var(--space-4);
+  background: var(--neutral-150);
+}
+
+.row {
+  height: 40px;
+  cursor: pointer;
+}
+.row:hover { background: var(--primary-25); }
+
+.row.rowActive,
+.row.rowActive:hover {
+  background: var(--primary-100);
+}
+.row.rowActive td:first-child { box-shadow: inset 2px 0 0 var(--primary-300); }
+
+.checkCell { width: 36px; }
+
+.title {
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+}
+
+.muted { color: var(--neutral-300); }
+
+.iconCell { display: inline-flex; }
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--neutral-400);
+}
+.zero { color: var(--neutral-200); }
+
+.badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+/* The standard ring empty state, top of the list with 120px above it. */
+.empty { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding-top: calc(var(--space-12) * 2.5); }

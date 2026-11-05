@@ -1,7 +1,7 @@
 // Visit-Type → downstream queue routing.
 //
 // When QA / Compliance adds an ICD via +ICD, we don't need the Support step
-// (documents are already retrieved for their review) — the DOS should land
+// (documents are already retrieved for their review), the DOS should land
 // directly on the queue that owns the Visit Type. Most visit types belong on
 // the Coder queue, but a few high-oversight types (Inpatient, ER, Hospice)
 // route straight to QA so the initial code capture doubles as a compliance
@@ -14,7 +14,7 @@ import { VISIT_TYPES } from './visitTypes';
 
 export const DEFAULT_MANUAL_ROLE = 'coder';
 
-// Explicit overrides — everything else lands on the coder queue.
+// Explicit overrides: everything else lands on the coder queue.
 const OVERRIDES = {
   'Inpatient Visit / Admission':               'reviewer',    // QA reviews acute stays first
   'ER Visit':                                  'reviewer',    // QA reviews ER capture first

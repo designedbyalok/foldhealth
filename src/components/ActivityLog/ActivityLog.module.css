@@ -66,12 +66,18 @@
   line-height: 1.2;
   white-space: nowrap;
 }
-/* Shared "View more" affordance — used by every expandable variant
+.outcomeAside {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--space-2);
+}
+.badgeWrap { display: inline-flex; }
+/* Shared "View more" affordance: used by every expandable variant
    (outreach note, task/note/appointment detail card, comment expander).
    Hidden by default, revealed when the row is hovered/focused, and
    pinned visible once the user has expanded the entry so the collapse
    toggle stays reachable. Uses neutral-400 text + a chevron that
-   rotates 180° when the row is expanded — DownChevronIcon lives in
+   rotates 180° when the row is expanded, DownChevronIcon lives in
    src/components/Icon so every trigger paints the same glyph. */
 .viewMoreBtn {
   display: inline-flex;
@@ -94,7 +100,7 @@
 .viewMoreBtn:focus-visible,
 .viewMoreBtnOpen { opacity: 1; }
 .viewMoreChevronOpen { transform: rotate(180deg); transition: transform 0.15s; }
-/* Separator dot between the headline and the "View Details" affordance —
+/* Separator dot between the headline and the "View Details" affordance,
    uses • (bullet) for a fuller shape than the default interpunct and
    bumps to font-lg so it reads as a proper separator rather than a
    trailing period. Neutral-300 sits between the headline text and the
@@ -135,6 +141,18 @@
   color: var(--neutral-500);
 }
 .expandedMetaDot { color: var(--neutral-200); margin: 0 6px; }
+/* "View details" field list: label column, then values. */
+.detailsGrid {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  font-size: var(--font-md);
+  line-height: var(--leading-normal);
+}
+.detailsLabel { color: var(--neutral-300); }
+.detailsValue { margin: 0; color: var(--neutral-500); overflow-wrap: anywhere; }
+
 .expandedNoteLabel {
   margin-top: var(--space-3);
   font-size: var(--font-base);
@@ -148,6 +166,17 @@
   font-weight: 400;
   line-height: 1.5;
   color: var(--neutral-400);
+}
+/* A note with nothing else in the card: a tight inset, no heading. */
+.expandedCardCompact {
+  padding: var(--space-2) var(--space-3);
+}
+.expandedNoteOnly {
+  margin: 0;
+  font-size: var(--font-base);
+  line-height: 1.4;
+  color: var(--neutral-400);
+  white-space: pre-wrap;
 }
 
 /* ── Call transcript inset ─────────────────────────────────────────── */
@@ -329,7 +358,7 @@
 }
 /* Nested Request-for-Sign-off task card that sits inside a Pending Review
    note card. Per Figma 1030:78586 the nested block is its own distinct
-   card — light grey fill, border, rounded corners — sitting inside the
+   card, light grey fill, border, rounded corners, sitting inside the
    parent card so the reviewer / assignee is visible right there. */
 .detailCardNested {
   margin-top: var(--space-3);

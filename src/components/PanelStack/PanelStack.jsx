@@ -11,7 +11,7 @@ const REVEAL_RATIO = 0.15;
 const OBSERVER_THRESHOLDS = [0, 0.1, REVEAL_RATIO, 0.25, 0.5, 0.75, 1];
 
 /**
- * PanelStack — panels side by side that scroll and snap one at a time, with
+ * PanelStack: panels side by side that scroll and snap one at a time, with
  * browser-style tabs on top once there's more than one. Each panel is the
  * row's width minus `peek`, so the next one's edge always shows. Clicking a
  * tab (or the peeking edge) brings its panel into focus; dragging a tab

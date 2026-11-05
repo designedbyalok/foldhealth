@@ -1,0 +1,44 @@
+/* Worklist Outreach cell (Figma SNP-Story 8602:333343). */
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+
+.labelSuccess,
+.labelError,
+.date {
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.labelSuccess { font-size: var(--font-base); color: var(--status-success); }
+.labelError { font-size: var(--font-base); color: var(--status-error); }
+/* The last outreach attempt's date. */
+.date { font-size: var(--font-sm); color: var(--neutral-300); }
+
+.none {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.dots {
+  display: flex;
+  gap: calc(var(--space-1) / 2);
+}
+.dot {
+  width: calc(var(--space-1) * 1.5);
+  height: calc(var(--space-1) * 1.5);
+  border-radius: var(--space-1);
+}
+.dotPrior { background: var(--secondary-200); }
+.dotSuccess { background: var(--status-success); }
+.dotError { background: var(--status-error); }
+.dotPending { background: var(--neutral-150); }

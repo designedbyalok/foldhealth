@@ -1,6 +1,6 @@
 // CCM shared-list worklist rows. Sourced from the Figma reference
 // (515:16813) so the demo view matches the design pixel-for-pixel.
-// billableMins + unloggedMins on each row are the *display baseline* —
+// billableMins + unloggedMins on each row are the *display baseline*,
 // when the app has real time-log data for the member, that supersedes.
 
 export const CCM_WORKLIST_MEMBERS = [

@@ -6,7 +6,7 @@ const REJECTED_STATUSES = new Set(['Reject', 'Rejected', 'Insufficient']);
 // Map a role's engine status string → the timeline node's visual state.
 // Exported so any surface that overrides a stage's status (e.g. the Chart
 // Review drawer feeding its LIVE derived Support status into the popover)
-// derives the node state the exact same way — no drift between surfaces.
+// derives the node state the exact same way, no drift between surfaces.
 export function stageStateForStatus(status) {
   if (status === 'Skipped') return 'skipped';
   if (status && REJECTED_STATUSES.has(status)) return 'rejected';

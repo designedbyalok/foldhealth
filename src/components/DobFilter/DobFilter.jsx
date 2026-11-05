@@ -3,7 +3,7 @@ import { DateRangePopover } from '../DateRangePopover/DateRangePopover';
 import { dobRangeSummary } from '../DateRangePopover/yearSpan';
 
 /**
- * DobFilter — the worklists' DOB filter: the shared FilterChip opening a
+ * DobFilter: the worklists' DOB filter: the shared FilterChip opening a
  * DateRangePopover with Years | Custom Dates. The value is a [startISO,
  * endISO] range (a year pick is Jan 1 to Dec 31); match rows with
  * `dobInRange` from DateRangePopover/yearSpan.

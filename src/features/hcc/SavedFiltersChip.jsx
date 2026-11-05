@@ -144,15 +144,14 @@ function SavedFiltersPopover({ pos, savedFilters, activeId, onSelect, onClear, o
                 }}
               />
               <Button
-                variant="primary"
-                size="S"
+                size="sm"
                 iconOnly
                 aria-label="Save name"
                 disabled={!editing.name.trim()}
                 leadingIconElement={<CheckIcon size={14} />}
                 onClick={commitRename}
               />
-              <ActionButton size="S" tooltip="Cancel" onClick={() => setEditing(null)}>
+              <ActionButton size="sm" tooltip="Cancel" onClick={() => setEditing(null)}>
                 <CloseIcon size={16} color="var(--neutral-300)" />
               </ActionButton>
             </div>
@@ -171,7 +170,7 @@ function SavedFiltersPopover({ pos, savedFilters, activeId, onSelect, onClear, o
               </button>
               <ActionButton
                 icon="solar:menu-dots-linear"
-                size="S"
+                size="sm"
                 tooltip="More"
                 aria-label={`Manage ${f.name}`}
                 onClick={(e) => {
@@ -182,7 +181,7 @@ function SavedFiltersPopover({ pos, savedFilters, activeId, onSelect, onClear, o
             </div>
           )))}
         </div>
-        <Button variant="secondary" size="L" fullWidth onClick={onClear}>
+        <Button variant="outline" fullWidth onClick={onClear}>
           Reset Selection
         </Button>
       </div>

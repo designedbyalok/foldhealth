@@ -13,7 +13,7 @@ describe('dosKey', () => {
   });
 
   it('falls back to a sentinel for missing provider/pos rather than emitting undefined', () => {
-    expect(dosKey('P1', '01/10/2026')).toBe('P1::01/10/2026::—::—');
+    expect(dosKey('P1', '01/10/2026')).toBe('P1::01/10/2026::-::-');
   });
 });
 
@@ -40,7 +40,7 @@ describe('parseDosKey', () => {
 });
 
 describe('blankDosState', () => {
-  it('has exactly four roles — support, coder, reviewer, reviewer2 — no reviewer3', () => {
+  it('has exactly four roles, support, coder, reviewer, reviewer2, no reviewer3', () => {
     const state = blankDosState('P1', '01/10/2026', 'Dr. Karen Mills', '11');
     expect(Object.keys(state)).toEqual(
       expect.arrayContaining(['support', 'coder', 'reviewer', 'reviewer2']),

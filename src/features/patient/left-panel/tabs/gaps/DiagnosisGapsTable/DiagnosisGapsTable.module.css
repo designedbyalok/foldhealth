@@ -1,32 +1,6 @@
 .wrapper { display: flex; flex-direction: column; }
 
-.card {
-  background: var(--neutral-0);
-  border-bottom: 0.5px solid var(--neutral-100);
-  overflow: hidden;
-}
-
-.colHeader {
-  display: flex; align-items: center;
-  height: 32px; padding: 0 8px;
-  border-bottom: 0.5px solid var(--neutral-150);
-}
-.colTitle { flex: 1; font-size: var(--font-base); font-weight: 500; color: var(--neutral-300); }
-.colStatus { width: 90px; flex-shrink: 0; font-size: var(--font-base); font-weight: 500; color: var(--neutral-300); padding-left: 16px; }
-.colActions { width: 40px; flex-shrink: 0; }
-
-.row {
-  display: flex; align-items: center;
-  border-bottom: 0.5px solid var(--neutral-100);
-  transition: background 0.1s;
-}
-.row:last-child { border-bottom: none; }
-.row:hover { background: var(--primary-25); }
-
-.content {
-  flex: 1; min-width: 0; display: flex; flex-direction: column;
-  gap: 2px; padding: 8px; justify-content: center;
-}
+.content { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); justify-content: center; }
 .title { font-size: var(--font-base); color: var(--neutral-500); line-height: 1.2; }
 .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .metaText { font-size: var(--font-base); color: var(--neutral-300); white-space: nowrap; }
@@ -36,13 +10,9 @@
 }
 .icdLink:hover { text-decoration: underline; }
 
-.statusCell {
-  display: flex; align-items: center; padding: 8px;
-  width: 90px; flex-shrink: 0;
-}
 .status { font-size: var(--font-base); color: var(--neutral-300); line-height: 1.2; }
 
-.moreBtn { display: flex; align-items: center; padding: 8px; flex-shrink: 0; opacity: 0; transition: opacity 0.1s; }
+.moreBtn { display: flex; align-items: center; opacity: 0; transition: opacity 0.1s; }
 .row:hover .moreBtn { opacity: 1; }
 
 .empty {

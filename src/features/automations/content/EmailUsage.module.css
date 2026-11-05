@@ -1,0 +1,105 @@
+.titleStack {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+
+.titleMain {
+  font-size: var(--font-lg);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+
+.titleSub {
+  font-size: var(--font-sm);
+  font-weight: 400;
+  color: var(--neutral-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headerDivider {
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.note,
+.empty {
+  margin: 0;
+  font-size: var(--font-md);
+  color: var(--neutral-300);
+}
+
+.list,
+.templateList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--neutral-100);
+  border-radius: 8px;
+  background: var(--neutral-0);
+}
+
+.cardTop,
+.cardBottom {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.kebab {
+  display: inline-flex;
+  margin-left: auto;
+}
+
+.cardName {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+
+.cardDivider {
+  height: 1px;
+  background: var(--neutral-100);
+}
+
+.templates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.sectionLabel {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-300);
+}
+
+.templateRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+}

@@ -40,7 +40,7 @@ export function MedicationSelect({ value, onChange, leadingIcon }) {
     <Select
       options={options}
       value={value}
-      onChange={onChange}
+      onValueChange={onChange}
       placeholder="Search And Add Medications"
       leadingIcon={leadingIcon}
       searchable

@@ -1,10 +1,10 @@
-/* AWV worklist row — composes shared row shell from WorklistShell's
+/* AWV worklist row: composes shared row shell from WorklistShell's
    WorklistRow.module.css (row divider, hover, sticky columns, .td,
    patient cell, outreach status cell, actions divider). AWV-specific
    pieces (program-status pill, due-date chip, task badge, assignee
    assign-button) sit below.
 
-   Row is NOT clickable in AWV (unlike TOC — no row-click workflow open),
+   Row is NOT clickable in AWV (unlike TOC: no row-click workflow open),
    so we skip `rowClickable` and keep default cursor. */
 
 .row {

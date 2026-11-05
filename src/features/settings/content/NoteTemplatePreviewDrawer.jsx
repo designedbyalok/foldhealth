@@ -7,9 +7,9 @@ import { MEASURE_NAMES } from '../../hedis-worklist/ClinicalNotePanel.utils';
 import styles from './NoteTemplatePreviewDrawer.module.css';
 
 /**
- * NoteTemplatePreviewDrawer — read-only preview of a Note Template's
- * clinician-facing form. Reuses TemplateAnswersForm — the exact same
- * renderer the Non-Visit / Normal Note authoring drawer uses — so what
+ * NoteTemplatePreviewDrawer: read-only preview of a Note Template's
+ * clinician-facing form. Reuses TemplateAnswersForm, the exact same
+ * renderer the Non-Visit / Normal Note authoring drawer uses, so what
  * an admin sees here matches what a clinician sees in the Clinical Note
  * flow. Local answers state is throwaway; nothing is persisted.
  */
@@ -28,15 +28,15 @@ export function NoteTemplatePreviewDrawer({ template, onClose }) {
     >
       <div className={styles.body}>
         <div className={styles.metaRow}>
-          <Badge tone="grey" size="S" label={isCareGap ? 'Care Gap' : 'Normal'} />
+          <Badge size="sm" label={isCareGap ? 'Care Gap' : 'Normal'} />
           {template.gap_code && (
-            <Badge variant="ai-neutral" label={gapName ? `${template.gap_code} · ${gapName}` : template.gap_code} />
+            <Badge label={gapName ? `${template.gap_code} · ${gapName}` : template.gap_code} />
           )}
-          {isCareGap && <Badge tone="grey" size="S" label={contextLabel} />}
+          {isCareGap && <Badge size="sm" label={contextLabel} />}
           {template.is_default_for_gap && template.context && (
-            <Badge tone="success" size="S" label={`${contextLabel} default`} />
+            <Badge tone="success" size="sm" label={`${contextLabel} default`} />
           )}
-          <Badge tone={template.status === 'active' ? 'success' : 'grey'} size="S" label={template.status || 'active'} />
+          <Badge tone={template.status === 'active' ? 'success' : 'neutral'} size="sm" label={template.status || 'active'} />
         </div>
 
         <div className={styles.banner}>

@@ -41,7 +41,7 @@ export function useDiagPanel() {
   const spawnedGaps = useAppStore(s => s.hccSpawnedGaps?.[memberId]);
   const showToast = useAppStore(s => s.showToast);
   const hccMembers = useAppStore(s => s.hccMembers);
-  // Logged-in user — snapshotted as the originator on manual +ICD saves so
+  // Logged-in user: snapshotted as the originator on manual +ICD saves so
   // the new row's reviewer role is pinned to whoever raised the code.
   const currentUserProfile = useAppStore(s => s.currentUserProfile);
   const addHccGap = useAppStore(s => s.addHccGap);
@@ -52,7 +52,7 @@ export function useDiagPanel() {
   const diagnosisGapsLoading = useAppStore(s => s.hccDiagnosisGapsLoading);
   const diagDosStatus = useAppStore(s => s.diagDosStatus);
   const setDiagDosStatus = useAppStore(s => s.setDiagDosStatus);
-  // Assignment-engine read/write — drives the Coder stage pill below.
+  // Assignment-engine read/write: drives the Coder stage pill below.
   const hccDosAssignments = useAppStore(s => s.hccDosAssignments);
   const initializeHccPatient = useAppStore(s => s.initializeHccPatient);
   const hccCompleteSupport = useAppStore(s => s.hccCompleteSupport);
@@ -76,7 +76,7 @@ export function useDiagPanel() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedKeys, setSelectedKeys] = useState(() => new Set());
-  // Bulk-select mode — mirrors the Content Settings pattern. DOS-row
+  // Bulk-select mode: mirrors the Content Settings pattern. DOS-row
   // checkboxes only render when this is on; the shortcut footer swaps to
   // the bulk-action bar the moment something is selected.
   const [bulkMode, setBulkMode] = useState(false);
@@ -87,7 +87,7 @@ export function useDiagPanel() {
     setBulkMode(v => !v);
   };
   // Inline + ICD flow (right-side toolbar). Clicking + ICD flips the
-  // toolbar into search mode — the `Search by code…` input is swapped for
+  // toolbar into search mode: the `Search by code…` input is swapped for
   // an <IcdSearch> autocomplete and the + ICD button hides so the search
   // reclaims its space. Picking an ICD prepends a gap card to the
   // associated-ICDs list where the user completes it. LHS stays free for
@@ -108,7 +108,7 @@ export function useDiagPanel() {
     if (!row) return;
     const rowRect = row.getBoundingClientRect();
     // Pointer capture pins the pointer stream to the handle for the drag's
-    // whole life — it survives the pointer leaving the browser window,
+    // whole life: it survives the pointer leaving the browser window,
     // focus loss, and other cases where a plain window-scoped mouseup can
     // silently misfire. Without this the mousemove listener would leak
     // after the first drag and every subsequent hover would resize the
@@ -148,7 +148,7 @@ export function useDiagPanel() {
     setPendingGaps(prev => prev.filter((_, i) => i !== idx));
   }, []);
   const exitAddIcdMode = useCallback(() => setAddIcdMode(false), []);
-  // Toolbar overflow menu — surfaces the actions currently hidden by the
+  // Toolbar overflow menu: surfaces the actions currently hidden by the
   // container-query collapse (Documents / Comments / Timeline). Click-outside
   // closes the dropdown; individual items are still routed to the same
   // handlers as their toolbar-icon counterparts.
@@ -164,7 +164,7 @@ export function useDiagPanel() {
     document.addEventListener('mousedown', onDocDown);
     return () => document.removeEventListener('mousedown', onDocDown);
   }, [moreOpen]);
-  // Open/closed state for the removed Overridden/Closed ICD sections — kept
+  // Open/closed state for the removed Overridden/Closed ICD sections, kept
   // commented out rather than deleted.
   // const [overriddenOpen, setOverriddenOpen] = useState(false);
   // const [closedOpen, setClosedOpen] = useState(false);
@@ -178,7 +178,7 @@ export function useDiagPanel() {
   const addActivityEntry = useAppStore(s => s.addActivityEntry);
   const setHccRejectInfo = useAppStore(s => s.setHccRejectInfo);
   const hccRejectInfoMap = useAppStore(s => s.hccRejectInfo);
-  // Filter row (Figma 9810:158181) — toggled by the toolbar Filter button.
+  // Filter row (Figma 9810:158181), toggled by the toolbar Filter button.
   // `filters` is a keyed object; the shared `icdMatchesFilters` predicate
   // applies the same rules across every ICD bucket below.
   const [filterOpen, setFilterOpen] = useState(false);
@@ -205,17 +205,17 @@ export function useDiagPanel() {
     if (member?.name && !isDiagHandoff(member.id)) fetchHccDiagnosisGaps(member.id, member.name);
   }, [member?.id, member?.name, fetchHccDiagnosisGaps]);
 
-  // Phase 2f — fall back to the local ICD mock when Supabase has no rows for
+  // Phase 2f: fall back to the local ICD mock when Supabase has no rows for
   // this member. Without the fallback, the panel would render empty for any
   // member that hasn't been seeded into `hcc_diagnosis_gaps` yet.
   // Spawned rows (created client-side via addHccGapNewRow) never fall back
-  // to the mock — they'd inherit their source patient's mock ICDs, which
+  // to the mock: they'd inherit their source patient's mock ICDs, which
   // is wrong. They DO still use DB gaps (member_id-scoped) plus the
   // session-level spawnedGaps buffer to cover the persist→refetch race.
   const icdsRaw = useMemo(() => {
     const spawned = (spawnedGaps || []).filter(g => g.isLinked !== false);
     const fromSupabase = diagnosisGaps.filter(g => g.isLinked !== false);
-    // Dedupe by code — the session buffer and the DB fetch can both carry
+    // Dedupe by code: the session buffer and the DB fetch can both carry
     // the same gap once the persist round-trips.
     const merged = [...fromSupabase];
     const seen = new Set(fromSupabase.map(g => g.code));
@@ -265,7 +265,7 @@ export function useDiagPanel() {
     [icdsRaw, notLinkedRaw, matchesFilters],
   );
 
-  // ── DOS list — from the member's dos_list, with a single-row stub fallback.
+  // ── DOS list: from the member's dos_list, with a single-row stub fallback.
   const dosList = useMemo(() => {
     if (member?.dos_list?.length) return member.dos_list;
     if (member?.dos) return [{ date: member.dos, status: diagDosStatus }];
@@ -286,7 +286,7 @@ export function useDiagPanel() {
   // Reset the per-DOS toggles when the member changes.
   useEffect(() => { setDisabledDos(new Set()); setDosExpanded(false); }, [memberId]);
 
-  // Lazily seed the assignment engine for this patient — idempotent.
+  // Lazily seed the assignment engine for this patient, idempotent.
   useEffect(() => {
     if (member?.id) initializeHccPatient(member.id);
   }, [member?.id, initializeHccPatient]);
@@ -299,13 +299,13 @@ export function useDiagPanel() {
     : null;
   const dosState = dosStateKey ? hccDosAssignments[dosStateKey] : null;
 
-  // The role the logged-in user acts as — drives the DOS status pill so a
+  // The role the logged-in user acts as, drives the DOS status pill so a
   // Coder completes the Coder stage, QA completes the QA stage, etc.
   const hccUserRole = useAppStore(s => s.hccUserRole);
   const actingRole = ROLE_KEY_BY_USER[hccUserRole] || 'coder';
   // Claim-sourced DOS rows link to the ClaimsTab detail view via this action.
   const openHccClaimForDos = useAppStore(s => s.openHccClaimForDos);
-  // Chart-doc count for the Documents toolbar button — mirrors what the
+  // Chart-doc count for the Documents toolbar button, mirrors what the
   // Documents tab actually renders (getChartDocs applies added / removed
   // filters), so the badge tracks reality instead of a stale mock field.
   const hccAddedCharts = useAppStore(s => s.hccAddedCharts[member?.id]);
@@ -334,7 +334,7 @@ export function useDiagPanel() {
   const gapDosOptions = useMemo(() => {
     const opts = [];
     if (memberDosList.length > 0) {
-      opts.push({ type: 'header', value: 'hdr-current', label: `This row (Created ${member?.date || '—'})` });
+      opts.push({ type: 'header', value: 'hdr-current', label: `This row (Created ${member?.date || '-'})` });
       for (const d of memberDosList) {
         opts.push({ value: d.date, label: d.date, memberId: member?.id });
       }
@@ -342,7 +342,7 @@ export function useDiagPanel() {
     for (const sib of siblingRows) {
       const sibDosList = (sib.dos_list || []).filter(d => d?.date);
       if (sibDosList.length === 0) continue;
-      opts.push({ type: 'header', value: `hdr-${sib.id}`, label: `Created ${sib.date || '—'}` });
+      opts.push({ type: 'header', value: `hdr-${sib.id}`, label: `Created ${sib.date || '-'}` });
       for (const d of sibDosList) {
         opts.push({
           value: `${sib.id}::${d.date}`,
@@ -365,7 +365,7 @@ export function useDiagPanel() {
     for (const p of Object.values(POS_BY_VT)) {
       if (seen.has(p.code)) continue;
       seen.add(p.code);
-      out.push({ value: p.code, label: `${p.code} — ${p.desc}` });
+      out.push({ value: p.code, label: `${p.code}, ${p.desc}` });
     }
     return out;
   }, []);
@@ -414,7 +414,7 @@ export function useDiagPanel() {
         siblingCount += 1;
       } else {
         // When QA or Compliance saves a manual +ICD, snapshot the CURRENT
-        // logged-in user as the originator — they raised the code AND own
+        // logged-in user as the originator: they raised the code AND own
         // the initial review, so the new DOS should be pinned to them (not
         // whoever happened to be on the source DOS's reviewer slot). Falls
         // back to the source DOS's assignee only when we have no logged-in
@@ -443,7 +443,7 @@ export function useDiagPanel() {
     if (existingCount) parts.push(`${existingCount} to current row`);
     if (siblingCount) parts.push(`${siblingCount} to sibling row${siblingCount === 1 ? '' : 's'}`);
     if (newRowCount) parts.push(`${newRowCount} new row${newRowCount === 1 ? '' : 's'} spawned`);
-    showToast(`Added ${c.pick.code} — ${parts.join(' · ')}`);
+    showToast(`Added ${c.pick.code}, ${parts.join(' · ')}`);
     removePendingGap(idx);
     // Once an ICD is saved, drop the toolbar back to its default state so
     // the search field reverts to filtering the ICD list. Users who want to
@@ -550,7 +550,7 @@ export function useDiagPanel() {
   }, [diagLeftPanel, diagActivityIcd, setDiagLeftPanel, member?.id, commentIds, markHccDiagSeen]);
   // DOS-row click: open the doc that matches this DOS date (system docs seed
   // `dateAdded` from the member's DOS). Falls back to the first doc if no
-  // match — never leaves the user on an empty list.
+  // match: never leaves the user on an empty list.
   const openDocsForDos = useCallback((dos) => {
     if (!chartsList.length) return;
     const match = chartsList.find(c => c.dateAdded === dos) || chartsList[0];
@@ -562,7 +562,7 @@ export function useDiagPanel() {
     return rs?.status || diagDosStatus || 'New';
   }, [dosState, actingRole, diagDosStatus]);
 
-  // Coder is locked until Support marks the record Completed — coders
+  // Coder is locked until Support marks the record Completed, coders
   // shouldn't accept / dismiss / mark missed / defer while the underlying
   // docs are still under Support review. Support-blocked states
   // (Insufficient / Reject / Rejected) are a subset of "not Completed"
@@ -570,7 +570,7 @@ export function useDiagPanel() {
   //
   // QA and Compliance are reviewers of the Coder's work. They act
   // independently of Support/Coder completion EXCEPT while their own
-  // records-request cycle is open — once they've set their status to
+  // records-request cycle is open: once they've set their status to
   // Record Requested, ICD actions and status changes are frozen until
   // the destination role (Coder or Support) marks the request Completed
   // and the DOS returns to Record Received.
@@ -612,7 +612,7 @@ export function useDiagPanel() {
     if (roleStatus !== 'Record Requested') return null;
     const req = dosState?.[actingRole]?.records_request;
     const dest = req?.destinationRole === 'support' ? 'Support Team' : 'Coder';
-    return `Waiting on ${dest} to return the record — actions unlock when the request is filled.`;
+    return `Waiting on ${dest} to return the record: actions unlock when the request is filled.`;
   }, [actingRole, dosState, rebuttalTarget]);
 
   // ── Review-progress stages + ring (drives the stage pill) ──
@@ -624,15 +624,15 @@ export function useDiagPanel() {
     () => computeReviewProgress(reviewStages),
     [reviewStages],
   );
-  // Pill shows the record's actual current stage — the one right after the
-  // last resolved (done/skipped) stage — so it stays consistent with the
+  // Pill shows the record's actual current stage: the one right after the
+  // last resolved (done/skipped) stage: so it stays consistent with the
   // review-progress card even if statuses landed out of order.
   const pillLabel = useMemo(() => {
     if (!reviewStages.length) return 'Coder';
     const lastResolved = reviewStages.reduce(
       (acc, s, i) => (s.state === 'done' || s.state === 'skipped') ? i : acc, -1);
     if (lastResolved === reviewStages.length - 1) return 'Billing Ready';
-    // Just the stage name — no "Awaiting" prefix.
+    // Just the stage name: no "Awaiting" prefix.
     return reviewStages[lastResolved + 1].label;
   }, [reviewStages]);
 
@@ -647,7 +647,7 @@ export function useDiagPanel() {
   }, [dosState, member]);
 
   // Hover + click-pin state for the Review Progress popover. Click toggles
-  // "pinned" — while pinned, hover-leave and popover blur are ignored; only
+  // "pinned", while pinned, hover-leave and popover blur are ignored; only
   // a click on the pill or outside the popover dismisses.
   const pillRef = useRef(null);
   const openTimer = useRef(null);
@@ -707,7 +707,7 @@ export function useDiagPanel() {
 
   // Bridge from the DosStatusMenu's onChange to the right lifecycle
   // transition for whichever role currently owns the DOS. Only the workflow
-  // status for the current role changes here — ICD statuses are NEVER
+  // status for the current role changes here, ICD statuses are NEVER
   // touched. Unaddressed ICDs stay in their existing state (New / Pending /
   // etc.); acceptance only happens when the user explicitly accepts an ICD.
   // Runs the transition after any gating dialogs have resolved. Split out
@@ -727,7 +727,7 @@ export function useDiagPanel() {
           // Support Completed always routes through the engine's completeSupport
           // lifecycle. If a records_request from any other role (Coder / QA /
           // Compliance) is open, completeSupport auto-detects it and routes the
-          // DOS back to the original requester via recordsReceivedFor — no
+          // DOS back to the original requester via recordsReceivedFor, no
           // longer hardcoded to Coder. Same is true for the Coder / Reviewer
           // branches below.
           hccCompleteSupport(member.id, currentDos);
@@ -773,11 +773,11 @@ export function useDiagPanel() {
   // Public entry point wired to DosStatusMenu. Some transitions require a
   // mandatory comment before they're allowed (Coder → Record Requested).
   // For those we defer the transition, open the Comments panel, and let
-  // the coder author the explanation inline in CommentsTab — matching the
+  // the coder author the explanation inline in CommentsTab, matching the
   // Figma pattern of a card in the comment stream rather than a modal.
   const handleStatusChange = (next) => {
     if (next === 'Reject' || next === 'Rejected') {
-      // Reject requires a reason + a mandatory comment for every role —
+      // Reject requires a reason + a mandatory comment for every role,
       // open the confirmation modal instead of applying immediately.
       setRejectPrompt({});
       return;
@@ -820,7 +820,7 @@ export function useDiagPanel() {
       hccRequestRecordsFrom?.(member.id, currentDos, actingRole, destinationRole, 'current-user', { note, destinationAssignee });
       setDiagDosStatus('Record Requested');
       // If the user attached a comment, post it into the DOS Comments feed
-      // addressed to the destination role — the destination user sees it
+      // addressed to the destination role: the destination user sees it
       // in the Comments tab and the activity log auto-mirrors the entry
       // (addHccDiagComment fans out to addActivityEntry internally).
       if (note && addHccDiagComment) {
@@ -856,12 +856,12 @@ export function useDiagPanel() {
     setRejectPrompt(null);
     // Defer the store writes past the dialog-unmount microtask so Radix's
     // focus-trap teardown finishes before the tree re-renders under a new
-    // `isDosRejected` value — otherwise the focus scope collides with the
+    // `isDosRejected` value: otherwise the focus scope collides with the
     // re-render cascade and the drawer wedges.
     setTimeout(() => {
       applyStatusChange('Reject');
       const reasonText = (reasons || []).join(', ');
-      const combined = reasonText ? `${reasonText} — ${note}` : note;
+      const combined = reasonText ? `${reasonText}: ${note}` : note;
       const now = new Date();
       const pad = (n) => String(n).padStart(2, '0');
       const date = `${pad(now.getMonth() + 1)}/${pad(now.getDate())}/${now.getFullYear()}`;
@@ -893,7 +893,7 @@ export function useDiagPanel() {
     }, 0);
   };
   const rejectInfo = dosStateKey ? hccRejectInfoMap?.[dosStateKey] : null;
-  // Once any role has flagged the DOS Rejected the record is terminal —
+  // Once any role has flagged the DOS Rejected the record is terminal,
   // every ICD-level action (Accept / Dismiss / More / Suspect DOS pickers)
   // freezes across roles, only the Comments composer stays live. Assignee
   // reassignment is also blocked so the audit trail stays intact.
@@ -903,7 +903,7 @@ export function useDiagPanel() {
       r => s[r]?.status === 'Reject' || s[r]?.status === 'Rejected',
     );
   })();
-  // Billed is the post-billing terminal state — freezes every ICD-level
+  // Billed is the post-billing terminal state, freezes every ICD-level
   // action across roles the same way Rejected does, but with a green
   // "Record Billed" treatment (no failure narrative). Rejection wins if
   // both surface on the same DOS so the reviewer still sees why.
@@ -916,7 +916,7 @@ export function useDiagPanel() {
   const billedLockReason = isDosBilled
     ? 'Record has been billed. All ICD actions are locked.'
     : null;
-  // Human-readable "Rejected by X (role) on <date>" — used as the tooltip
+  // Human-readable "Rejected by X (role) on <date>", used as the tooltip
   // on locked ICD action buttons so they explain the actual cause (a
   // rejection upstream) instead of the generic "Support hasn't reviewed
   // the documents yet". Same fallback chain as the reject banner below.
@@ -949,14 +949,14 @@ export function useDiagPanel() {
 
   // Prefer the Supabase sweep table (hcc_gap_sweep); fall back to the JS
   // mock when a member has no row seeded. Kick off the one-shot fetch
-  // here — didFetch inside the store keeps it a single round-trip.
+  // here: didFetch inside the store keeps it a single round-trip.
   const fetchHccGapSweep = useAppStore(s => s.fetchHccGapSweep);
   useEffect(() => { fetchHccGapSweep(); }, [fetchHccGapSweep]);
   const sweepFromDb = useAppStore(s => s.hccGapSweep);
   const sweepByCode = useMemo(() => {
     const m = new Map();
     // Only a member's OWN sweep mapping (design reference patients). No
-    // `_default` fallback — otherwise generic dates would shadow the
+    // `_default` fallback: otherwise generic dates would shadow the
     // dos_list-derived rows and break worklist grouping coherence.
     const dbOwn = member?.name ? sweepFromDb[member.name] : null;
     const own = dbOwn?.length ? dbOwn : (member?.name ? SWEEP_ICD_DATA[member.name] : null);
@@ -990,7 +990,7 @@ export function useDiagPanel() {
           manual: icd.type === 'Manual',
         }));
       } else {
-        base = [{ dos: member?.dos || '—', claimed: false, manual: icd.type === 'Manual' }];
+        base = [{ dos: member?.dos || '-', claimed: false, manual: icd.type === 'Manual' }];
       }
       const entries = base.filter(e =>
         !disabledDos.has(e.dos) && !dosDeletedSet.has(`${icd.code}|${e.dos}`));
@@ -1010,7 +1010,7 @@ export function useDiagPanel() {
   }, [allNotAssoc, q]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Once a suspect / recapture is acted on (any DOS accepted/rejected/deferred/
-  // missed), it graduates up into "ICDs Associated with" — rendered as a normal
+  // missed), it graduates up into "ICDs Associated with", rendered as a normal
   // ICD card (with a Suspected/Recaptured badge) whose entries are the acted
   // DOS. Un-acted suspects stay below in the Suspects & Recaptures section.
   const suspectIcds = useMemo(() => suspectGroups.flatMap(g => g.icds), [suspectGroups]);
@@ -1027,13 +1027,13 @@ export function useDiagPanel() {
     suspectIcds.filter(icd => !Object.keys(hccGapDosActions).some(k => k.startsWith(`${icd.code}|`))),
     [suspectIcds, hccGapDosActions]);
 
-  // ── Keyboard model — a focus ring walks the flat list of DOS rows;
+  // ── Keyboard model: a focus ring walks the flat list of DOS rows;
   // A/X/M/D act on the focused row, Enter opens the Documents workspace.
   // Suppressed while typing in any input.
   // Keyboard nav includes acted Suspect / Recapture rows so A / X / M / D
   // + arrow keys can walk through them the same way they do the primary
   // ICDs. Un-acted suspects still live under the "Suspects and Recaptures"
-  // header and require a DOS pick in their own picker — they're not part
+  // header and require a DOS pick in their own picker, they're not part
   // of the row-walk model.
   const rowKeys = useMemo(
     () => [
@@ -1043,7 +1043,7 @@ export function useDiagPanel() {
     [cardIcds, actedSuspects],
   );
   const focusKey = rowKeys[Math.min(focusIdx, rowKeys.length - 1)] || null;
-  // Click-to-focus for DOS rows — clicking a row makes it the keyboard
+  // Click-to-focus for DOS rows: clicking a row makes it the keyboard
   // target for A/X/M/D shortcuts, matching what arrow keys already do.
   const handleFocusRow = useCallback((rowKey) => {
     const idx = rowKeys.indexOf(rowKey);
@@ -1063,7 +1063,7 @@ export function useDiagPanel() {
   }, [rowKeys.length, focusIdx]);
 
   // After acting on a DOS, advance focus to the next un-acted row (searching
-  // forward, wrapping once) — this rolls onto the next ICD when the current
+  // forward, wrapping once), this rolls onto the next ICD when the current
   // one is fully worked. If nothing is left un-acted, focus stays put.
   const advanceFocusAfterAction = useCallback((actedKey) => {
     const actions = useAppStore.getState().hccGapDosActions;
@@ -1096,7 +1096,7 @@ export function useDiagPanel() {
         const focused = rowKeys[Math.min(focusIdx, rowKeys.length - 1)];
         if (!focused) return;
         const k = key.toLowerCase();
-        // Support can't code ICDs — surface an error toast so the shortcut
+        // Support can't code ICDs: surface an error toast so the shortcut
         // isn't silently swallowed. Applies to every ICD-coding shortcut:
         // A / X / M / D. Matches the tooltip on the disabled action buttons.
         if (useAppStore.getState().hccUserRole === 'Support') {
@@ -1113,7 +1113,7 @@ export function useDiagPanel() {
           setOpenDismissKey(focused);
         } else {
           setHccGapDosAction(code, dos, { a: 'accepted', m: 'missed', d: 'deferred' }[k]);
-          // a/m/d toggle — only advance when the row ended up acted, not undone.
+          // a/m/d toggle: only advance when the row ended up acted, not undone.
           if (useAppStore.getState().hccGapDosActions[focused]) advanceFocusAfterAction(focused);
         }
       }
@@ -1131,7 +1131,7 @@ export function useDiagPanel() {
 
   // Auto-Complete the current role's DOS status once every ICD row on that
   // DOS has been addressed (accepted / dismissed / missed / deferred). Mirror
-  // of _maybeAutoBumpInProgress: same role gate (Coder / QA / Compliance —
+  // of _maybeAutoBumpInProgress: same role gate (Coder / QA / Compliance,
   // Support doesn't code), only fires while the DOS is 'In Progress' so a
   // manual override (Record Requested / Rejected / Skipped) stays put.
   useEffect(() => {
@@ -1161,7 +1161,7 @@ export function useDiagPanel() {
     if (next.has(key)) next.delete(key); else next.add(key);
     return next;
   });
-  // Tri-state select-all for the "ICDs Associated with" section — reflects
+  // Tri-state select-all for the "ICDs Associated with" section: reflects
   // how many of the visible rowKeys are currently selected. Clicking the
   // header checkbox toggles: nothing/some → select all; all → clear.
   const associatedSelectState = useMemo(() => {
@@ -1176,7 +1176,7 @@ export function useDiagPanel() {
     setSelectedKeys(prev => {
       if (rowKeys.every(k => prev.has(k))) {
         // All selected → clear only the associated keys (leave any others
-        // untouched — defensive; today rowKeys covers the whole section).
+        // untouched: defensive; today rowKeys covers the whole section).
         const next = new Set(prev);
         for (const k of rowKeys) next.delete(k);
         return next;
@@ -1197,7 +1197,7 @@ export function useDiagPanel() {
     showToast(`${selectedKeys.size} row${selectedKeys.size === 1 ? '' : 's'} ${verb}`);
     setSelectedKeys(new Set());
   };
-  // Bulk-undo — clears the DOS action for every selected row that has one
+  // Bulk-undo: clears the DOS action for every selected row that has one
   // (accepted / dismissed / missed / deferred → undecided). Rows already in
   // the undecided state are skipped so we don't fire needless persistence.
   const bulkUndo = () => {
@@ -1212,7 +1212,7 @@ export function useDiagPanel() {
     if (count > 0) {
       showToast(`${count} row${count === 1 ? '' : 's'} reverted to undecided`);
     } else {
-      showToast('No rows to undo — none had a decision');
+      showToast('No rows to undo: none had a decision');
     }
     setSelectedKeys(new Set());
   };
@@ -1220,7 +1220,7 @@ export function useDiagPanel() {
 
 
   const rafImpact = (Number(member?.ri) || 0).toFixed(3);
-  const noop = (label) => () => showToast(`${label} — coming soon`);
+  const noop = (label) => () => showToast(`${label}: coming soon`);
 
 
   return {

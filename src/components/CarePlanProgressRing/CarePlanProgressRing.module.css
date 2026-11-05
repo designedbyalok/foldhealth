@@ -1,4 +1,4 @@
-/* Paper ProgressRing — Fold Design System, Care Plan, 2X-0 (46×46). */
+/* Paper ProgressRing: Fold Design System, Care Plan, 2X-0 (46×46). */
 
 .shell {
   position: relative;
@@ -68,7 +68,7 @@
   display: block;
 }
 
-/* Pill — GBI table Progress column. Figma 4539:72258 / 72269 / 72273 /
+/* Pill: GBI table Progress column. Figma 4539:72258 / 72269 / 72273 /
    72277: rounded-8 chip with a task-check icon and the percentage in
    white, background tinted by threshold (neutral 0%, error 1-40, warning
    41-75, success >75). */

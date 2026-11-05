@@ -5,7 +5,7 @@ import { FilePreview } from '../../../../../../../../components/FilePreview/File
 import styles from './LetterPreviewDrawer.module.css';
 
 /**
- * LetterPreviewDrawer — read-only preview of a letter's actual PDF. Mirrors the
+ * LetterPreviewDrawer: read-only preview of a letter's actual PDF. Mirrors the
  * HCC DocPreviewDrawer shell (right-side Drawer, full-bleed FilePreview) but is
  * titled "Preview Letter" with the letter name beneath and carries no status.
  */

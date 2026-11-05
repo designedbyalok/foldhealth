@@ -6,7 +6,7 @@
   background: transparent;
 }
 
-/* Popover container — Figma 1:67779:
+/* Popover container: Figma 1:67779:
    bg white, border 0.5px Neutral 100, radius 8, padding 8px / 12px,
    shadow 0 12px 30px rgba(0,0,0,0.06), 8px gap inside.
    z-index sits above ChartDetailDrawer's panel (9501) so the popover
@@ -23,7 +23,7 @@
   flex-direction: column;
 }
 
-/* Title — Inter Medium 14px, Neutral 300, 4px vertical breathing. */
+/* Title: Inter Medium 14px, Neutral 300, 4px vertical breathing. */
 .titleRow {
   display: flex;
   padding: 4px 0;
@@ -53,7 +53,7 @@
   max-height: 44px;
 }
 
-/* Marker column — top half connector, status badge, bottom half connector.
+/* Marker column: top half connector, status badge, bottom half connector.
    Flex column keeps the connectors flush with the badge centre. */
 .markerCol {
   display: flex;
@@ -86,7 +86,7 @@
   border-radius: 50%;
   border: 1px solid;
   flex-shrink: 0;
-  /* The inner Solar icon is small (~10–11px) — give it a tiny inset so it
+  /* The inner Solar icon is small (~10–11px): give it a tiny inset so it
      visually sits inside the ring instead of crowding the border. */
   padding: 2px;
   box-sizing: border-box;
@@ -160,7 +160,7 @@
   background: var(--neutral-150);
 }
 
-/* Send to Bill — small white-bg badge button per Figma:
+/* Send to Bill: small white-bg badge button per Figma:
    22px tall, min-width 22px, padding 2px 6px, 4px radius,
    border 0.5px rgba(111,122,144,0.1), Inter Regular 14px Neutral 300. */
 .sendToBill {

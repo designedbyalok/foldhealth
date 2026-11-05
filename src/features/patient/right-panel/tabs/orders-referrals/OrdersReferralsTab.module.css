@@ -1,0 +1,60 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--neutral-0);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: calc(var(--space-1) / 2) 0;
+}
+
+/* The views take the row and scroll sideways when the panel is narrow. */
+.views {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.searchRow { padding: 0 var(--space-1); }
+.searchField { flex: 1; min-width: 0; }
+
+.divider {
+  flex-shrink: 0;
+  width: 0.5px;
+  height: var(--space-4);
+  background: var(--neutral-150);
+}
+
+.row { cursor: pointer; }
+.checkCell { padding-left: var(--space-2); padding-right: var(--space-2); }
+
+.party {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+  line-height: var(--leading-tight);
+}
+
+.primaryText { color: var(--neutral-500); }
+.muted { color: var(--neutral-300); }
+.warning { color: var(--status-warning); }
+.success { color: var(--status-success); }
+
+.previewBody {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* The standard ring empty state, centred in the list. */
+.empty { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--space-8) 0; }

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
-import { Checkbox } from '../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../components/Checkbox/Checkbox';
 import { WorklistShell } from '../../../../../../components/WorklistShell/WorklistShell';
 import { AssigneeChange } from '../../../../../../components/AssigneeChange/AssigneeChange';
 import { useAppStore } from '../../../../../../store/useAppStore';
@@ -95,7 +95,7 @@ export function CareProgramsTabTable({
               <td className={styles.actionsCell} onClick={e => e.stopPropagation()}>
                 <ActionButton
                   icon="solar:menu-dots-linear"
-                  size="S"
+                  size="sm"
                   tooltip="More actions"
                   tooltipBelow
                   tooltipLeft

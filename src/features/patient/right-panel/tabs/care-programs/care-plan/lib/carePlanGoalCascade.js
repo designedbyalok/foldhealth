@@ -15,7 +15,7 @@ export function barrierGoalIdsOf(barrier) {
  * The items that go with `goalId`.
  *
  * Interventions are 1:1 with a goal, so all of them go. A barrier only goes
- * when this is its last goal — one shared with another goal stays on the plan
+ * when this is its last goal, one shared with another goal stays on the plan
  * and simply loses this link.
  */
 export function goalCascade(plan, goalId) {
@@ -32,7 +32,7 @@ const countOf = (n, noun) => `${n} ${noun}${n === 1 ? '' : 's'}`;
 
 /**
  * One sentence saying what the removal takes with it, for a confirm dialog.
- * Counts only — the names make the dialog long without helping the decision.
+ * Counts only: the names make the dialog long without helping the decision.
  * Returns '' when the goal has nothing linked to it.
  */
 export function goalCascadeDescription(cascade) {

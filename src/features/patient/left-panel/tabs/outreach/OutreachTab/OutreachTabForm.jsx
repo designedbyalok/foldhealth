@@ -44,6 +44,7 @@ export function OutreachTabForm({
   sharedPanelTitle,
   addOutcome,
   removeOutcome,
+  setOutcomes,
   handleNoteChange,
   canSave,
   handleLogForChange,
@@ -102,6 +103,8 @@ export function OutreachTabForm({
                     setCalledToNumber('Dr. Katherine Moss (581 824-1591)');
                     setCallDurationMin('05');
                     setCallDurationSec('29');
+                    // The last call is now in the fields below; the card is done.
+                    setCallBannerVisible(false);
                   }}
                 >
                   Use This
@@ -159,7 +162,7 @@ export function OutreachTabForm({
         <div className={styles.section}>
           <div className={styles.sectionLabelRow}>
             <span className={styles.sectionLabel}>{programsLabel}</span>
-            <Tooltip label="Select from programs or gaps below to log outreach.">
+            <Tooltip label="Select the programs or gaps this outreach is for. Leave them all unselected to log it as a Member Outreach.">
               <Icon name="solar:info-circle-linear" size={15} color="var(--neutral-300)" />
             </Tooltip>
           </div>
@@ -200,7 +203,8 @@ export function OutreachTabForm({
           </div>
         </div>
 
-        {selectedProgs.length > 0 && (
+        {/* No program or gap picked: the note still opens, as a Member Outreach. */}
+        {(selectedProgs.length > 0 || !scopedProgram) && (
           <div className={styles.notePanels}>
             {useSeparate ? (
               selectedProgs.map(prog => {
@@ -224,6 +228,7 @@ export function OutreachTabForm({
                     }}
                     onAddOutcome={val => addOutcome(prog, val)}
                     onRemoveOutcome={val => removeOutcome(prog, val)}
+                    onSetOutcomes={list => setOutcomes(prog, list)}
                     onNoteChange={text => handleNoteChange(prog, text)}
                     onToggleSyncText={() => toggleSyncText(prog)}
                   />
@@ -244,6 +249,7 @@ export function OutreachTabForm({
                 onToggleOutcomeOpen={() => patchShared({ outcomeOpen: !sharedPanel.outcomeOpen })}
                 onAddOutcome={val => addOutcome(null, val)}
                 onRemoveOutcome={val => removeOutcome(null, val)}
+                onSetOutcomes={list => setOutcomes(null, list)}
                 onNoteChange={text => handleNoteChange(null, text)}
                 onToggleSyncText={() => {}}
               />
@@ -254,17 +260,17 @@ export function OutreachTabForm({
         <div className={styles.actionsRow}>
           <span className={styles.actionsLabel}>Actions:</span>
           <span className={styles.actionsDivider} />
-          <ActionButton size="S" tooltip="Add Task" onClick={onAddTask}>
+          <ActionButton size="sm" tooltip="Add Task" onClick={onAddTask}>
             <AddTaskIcon size={16} color="var(--neutral-300)" />
           </ActionButton>
-          <ActionButton size="S" icon="solar:calendar-add-linear" tooltip="Schedule Appointment" onClick={onSchedule} />
-          <ActionButton size="S" icon="solar:alarm-linear" tooltip="Set Reminder" />
+          <ActionButton size="sm" icon="solar:calendar-add-linear" tooltip="Schedule Appointment" onClick={onSchedule} />
+          <ActionButton size="sm" icon="solar:alarm-linear" tooltip="Set Reminder" />
         </div>
 
         {!hideFooter && (
           <div className={styles.formFooter}>
-            <Button variant="primary" size="L" disabled={!canSave} onClick={handleSave}>Save</Button>
-            <Button variant="ghost" size="L" onClick={handleDiscard}>Discard</Button>
+            <Button disabled={!canSave} onClick={handleSave}>Save</Button>
+            <Button variant="ghost" onClick={handleDiscard}>Discard</Button>
           </div>
         )}
       </div>

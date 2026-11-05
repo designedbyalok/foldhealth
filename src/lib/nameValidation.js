@@ -5,7 +5,7 @@
  * These lived in `features/settings/account/InviteUserDrawer.utils.js`, which
  * was fine while the Invite drawer and Account panel were the only validators.
  * PreferencesDrawer lives in `src/components/`, and a component importing from
- * a feature is backwards layering — so the rule moved here and both original
+ * a feature is backwards layering: so the rule moved here and both original
  * call sites now import it from `lib`.
  *
  * `\p{Lu}` rather than `A-Z`: staff names include accented capitals (É, Ø, Ż)
@@ -28,7 +28,7 @@ export function isValidNamePart(str) {
  * does: first whitespace-delimited token is the first name, everything after
  * it is the last name.
  *
- * This is a convention, not a fact — "Abhay Pratap Chaudhary" could plausibly
+ * This is a convention, not a fact, "Abhay Pratap Chaudhary" could plausibly
  * be first="Abhay Pratap". Keeping the JS and SQL implementations identical
  * matters more than being clever, so a client-side derive and a trigger-side
  * derive never disagree about the same input.

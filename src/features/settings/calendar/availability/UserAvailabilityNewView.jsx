@@ -4,12 +4,12 @@ import { Badge } from '../../../../components/Badge/Badge';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
 import { DateRangeFilter } from '../../../../components/DateRangeFilter/DateRangeFilter';
-import { Toggle } from '../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../components/SegmentedControl/SegmentedControl';
 import { Tooltip } from '../../../../components/Tooltip/Tooltip';
 import { Icon } from '../../../../components/Icon/Icon';
 import { Link } from '../../../../components/Link/Link';
-import { Collapse } from '../../../../components/Collapse/Collapse';
-import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
+import { CollapsibleContent } from '../../../../components/Collapsible/Collapsible';
+import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { WorklistShell } from '../../../../components/WorklistShell/WorklistShell';
 import { DatePickerPopover } from '../../../../components/DatePicker/DatePickerPopover';
 import { useAppStore } from '../../../../store/useAppStore';
@@ -18,7 +18,7 @@ import { STATUS_LOOK, isoDay, cadenceText, slotText, timezoneAbbr, ALL_TYPES } f
 import { HolidayBadgeIcon } from '../../../../components/Icon/HolidayBadgeIcon';
 import {
   dateSpan, hoursText, typesOf, primaryLocationOf, flagsOf, overlapIds, daysCovered,
-  occursOn, weekDays, dayHead, weekLabel,
+  occursOn, weekDays, weekStart, dayHead, weekLabel,
 } from './newViewUtils';
 import styles from './UserAvailabilityNewView.module.css';
 
@@ -34,12 +34,12 @@ const VIEWS = [
  * segments (a location, a repeat, dates, hours per appointment type).
  *  - Provider: a table, one group per provider, their slots grouped by
  *    location (primary first); past slots always fold under "Show N past".
- *  - This Week: a WorklistShell row per user, Sun–Sat across, each day's time ranges
+ *  - This Week: a WorklistShell row per user, Mon–Sun across, each day's time ranges
  *    with their location; OOO days greyed.
  * Filters (provider, location, status, appointment type, dates, OOO /
  * practice availability) open from the filter icon beside search.
  */
-export function UserAvailabilityNewView({ users, loading, filtersOpen, onAdd, onEdit, onDelete, renderActions, view: fixedView }) {
+export function UserAvailabilityNewView({ users, loading, filtersOpen, onAdd, onEdit, onDelete, renderActions, view: fixedView, weekOf, onlyDay }) {
   const oooRecords = useAppStore(s => s.oooRecords);
   const fetchOooRecords = useAppStore(s => s.fetchOooRecords);
   const holidays = useAppStore(s => s.holidaysData);
@@ -56,7 +56,10 @@ export function UserAvailabilityNewView({ users, loading, filtersOpen, onAdd, on
   const [show, setShow] = useState([]);
   const [datePreset, setDatePreset] = useState(null);
   const [dateRange, setDateRange] = useState([]);
-  const [weekOffset, setWeekOffset] = useState(0);
+  const [ownWeekOffset, setWeekOffset] = useState(0);
+  // A host that owns the date (the Calendar) passes the day to show the
+  // week of, and the week's own navigation is hidden.
+  const weekOffset = weekOf ? weeksFromNow(weekOf) : ownWeekOffset;
 
   // Each provider with their primary location, which segments overlap, and
   // any OOO that hasn't ended.
@@ -100,10 +103,10 @@ export function UserAvailabilityNewView({ users, loading, filtersOpen, onAdd, on
     <div className={styles.root}>
       {!fixedView && (
         <div className={styles.toolbar}>
-          <Toggle size="S" items={VIEWS} active={view} onChange={setView} />
+          <SegmentedControl size="sm" items={VIEWS} value={view} onValueChange={setView} />
         </div>
       )}
-      <Collapse open={!!filtersOpen}>
+      <CollapsibleContent open={!!filtersOpen}>
         <div className={styles.filterBar}>
           <FilterChip label="Provider" searchable options={people.filter(u => u.blocks.length).map(u => u.name)} selected={providers} onChange={setProviders} />
           <FilterChip label="Location" searchable options={allLocations} selected={locations} onChange={setLocations} />
@@ -113,14 +116,14 @@ export function UserAvailabilityNewView({ users, loading, filtersOpen, onAdd, on
           <FilterChip label="Show" options={SHOW_FILTER} selected={show} onChange={setShow} />
           {filtersOn ? <Link variant="secondary" onClick={clearAll}>Clear all</Link> : null}
         </div>
-      </Collapse>
+      </CollapsibleContent>
 
       {loading ? (
         <div className={styles.loading}>Loading availability…</div>
       ) : shown.length === 0 ? (
-        <div className={styles.empty}><RingEmptyState icon="solar:calendar-linear" label="No availability matches these filters" /></div>
+        <div className={styles.empty}><EmptyState icon="solar:clock-circle-linear" title="No availability matches applied filters" /></div>
       ) : view === 'week' ? (
-        <WeekGrid people={shown} holidays={holidays || []} offset={weekOffset} onOffset={setWeekOffset} renderActions={renderActions} onEdit={onEdit} onAdd={onAdd} />
+        <WeekGrid people={shown} holidays={holidays || []} offset={weekOffset} onOffset={setWeekOffset} hideNav={!!weekOf} onlyDay={onlyDay} renderActions={renderActions} onEdit={onEdit} onAdd={onAdd} />
       ) : (
         <ProviderTable people={shown} onAdd={onAdd} onEdit={onEdit} onDelete={onDelete} />
       )}
@@ -223,7 +226,7 @@ function SlotTable({ outerLabel, innerLabel, rows, withActions }) {
                   </td>
                   <td className={styles.td}>
                     <span className={styles.statusCell}>
-                      <Badge tone={look.tone} size="S" label={look.label} />
+                      <Badge tone={look.tone} size="sm" label={look.label} />
                       <Flags segment={sl} overlaps={g.overlaps?.has(sl.id)} />
                     </span>
                   </td>
@@ -279,13 +282,13 @@ function ProviderTable({ people, onAdd, onEdit, onDelete }) {
       ),
       actions: (
         <span className={styles.actions}>
-          <ActionButton icon="solar:add-linear" size="S" tooltip="Add slot" onClick={() => onAdd(u)} />
+          <ActionButton icon="solar:add-linear" size="sm" tooltip="Add slot" onClick={() => onAdd(u)} />
           {u.blocks.length > 0 && (
             <>
               <span className={styles.divider} aria-hidden="true" />
-              <ActionButton icon="solar:pen-linear" size="S" tooltip="Edit availability" onClick={() => onEdit(u)} />
+              <ActionButton icon="solar:pen-linear" size="sm" tooltip="Edit availability" onClick={() => onEdit(u)} />
               <span className={styles.divider} aria-hidden="true" />
-              <ActionButton icon="solar:trash-bin-minimalistic-linear" size="S" tooltip="Delete availability" onClick={() => onDelete(u)} />
+              <ActionButton icon="solar:trash-bin-minimalistic-linear" size="sm" tooltip="Delete availability" onClick={() => onDelete(u)} />
             </>
           )}
         </span>
@@ -298,20 +301,27 @@ function ProviderTable({ people, onAdd, onEdit, onDelete }) {
 }
 
 // Like the live weekly view, in the shared WorklistShell table: a row per
-// user with Sunday–Saturday across (today in purple). Each day lists its time
+// user with Monday–Sunday across (today in purple). Each day lists its time
 // ranges (time, timezone, a rule, location, appointment type). Holidays read
 // as on the calendar (green day, badge and name); an out-of-office day keeps
 // its availability with a pink strip on top. Clicking a day edits the user's
 // availability, or adds a slot when the day has none.
+// Whole weeks (Mon–Sun) from this week to the one holding ISO day `iso`.
+const weeksFromNow = (iso) => {
+  const [y, m, d] = iso.split('-').map(Number);
+  return Math.round((weekStart(new Date(y, m - 1, d)) - weekStart(new Date())) / (7 * 864e5));
+};
+
 const WEEK_PER_PAGE = 20;
 const PICKER_W = 282; // DatePickerPopover's single-month width
-function WeekGrid({ people, holidays, offset, onOffset, renderActions, onEdit, onAdd }) {
+function WeekGrid({ people, holidays, offset, onOffset, hideNav = false, onlyDay, renderActions, onEdit, onAdd }) {
   const [page, setPage] = useState(1);
   const [pickerRect, setPickerRect] = useState(null);
   // Users header sorts by name: A–Z, then Z–A, then back to the default order.
   const [nameSort, setNameSort] = useState(null);
   const [perPage, setPerPage] = useState(WEEK_PER_PAGE);
-  const days = weekDays(offset);
+  // `onlyDay` (ISO) narrows the week to that one day.
+  const days = weekDays(offset).filter(d => !onlyDay || isoDay(d) === onlyDay);
   const todayIso = isoDay(new Date());
   const holidayOn = Object.fromEntries((holidays || []).map(h => [h.date, h.name]));
   const lastPage = Math.max(1, Math.ceil(people.length / perPage));
@@ -431,14 +441,13 @@ function WeekGrid({ people, holidays, offset, onOffset, renderActions, onEdit, o
               )}
               {ranges.length ? (
                 // Out all day: what was scheduled still shows, quieter, since it doesn't apply.
-                <span className={`${styles.dayRanges} ${oooLabel === 'All day' ? styles.dayRangesOff : ''}`}>
+                <span className={[styles.dayRanges, onlyDay ? styles.dayRangesRow : '', oooLabel === 'All day' ? styles.dayRangesOff : ''].filter(Boolean).join(' ')}>
                   {ranges.map(({ key, s, sl }) => (
                     <span key={key} className={styles.dayRange} onClick={(e) => { e.stopPropagation(); onEdit?.(u, s.id); }}>
                       <span className={styles.dayHead}>
                         <span className={styles.dayTime}>{slotText(sl)}</span>
-                        {s.timezone && <span className={styles.dayZone}>{timezoneAbbr(s.timezone, d)}</span>}
+                        {s.timezone && <span className={styles.dayZone}>({timezoneAbbr(s.timezone, d)})</span>}
                       </span>
-                      <span className={styles.dayRule} aria-hidden="true" />
                       <span className={styles.dayLoc}>{s.location}</span>
                       <span className={styles.dayType}>{sl.appointmentType || ALL_TYPES}</span>
                     </span>
@@ -455,50 +464,49 @@ function WeekGrid({ people, holidays, offset, onOffset, renderActions, onEdit, o
   );
   return (
     <div className={styles.weekWrap}>
-      <div className={styles.weekNav}>
-        <ActionButton icon="solar:alt-arrow-left-linear" size="S" tooltip="Previous week" onClick={() => onOffset(offset - 1)} />
-        {/* Opens a calendar to jump to any week. */}
-        <button
-          type="button"
-          className={styles.weekLabel}
-          aria-label={`Week of ${weekLabel(days)}, pick a different week`}
-          onClick={(e) => {
-            // Centred under the label (the label sits mid-bar), not hanging off its left edge.
-            const r = e.currentTarget.getBoundingClientRect();
-            const left = r.left + r.width / 2 - PICKER_W / 2;
-            setPickerRect({ left, right: left + PICKER_W, top: r.top, bottom: r.bottom, width: PICKER_W, height: r.height });
-          }}
-        >
-          {weekLabel(days)}
-        </button>
-        {/* One click: the week holding the picked date (Sun–Sat) is shown. This
-            week is shaded, so it's clear where you are. */}
-        <DatePickerPopover
-          open={!!pickerRect}
-          anchorRect={pickerRect}
-          value={isoDay(days[0])}
-          highlightedDates={days.map(isoDay)}
-          onChange={(iso) => {
-            if (iso) {
-              const [y, m, d] = iso.split('-').map(Number);
-              const picked = new Date(y, m - 1, d);
-              const pickedSunday = new Date(y, m - 1, d - picked.getDay());
-              onOffset(Math.round((pickedSunday - weekDays(0)[0]) / (7 * 86400000)));
-            }
-            setPickerRect(null);
-          }}
-          onClose={() => setPickerRect(null)}
-        />
-        <ActionButton icon="solar:alt-arrow-right-linear" size="S" tooltip="Next week" onClick={() => onOffset(offset + 1)} />
-        {/* Figma Care Programs 7843:26166, at the bar's right end. */}
-        {offset !== 0 && (
-          <Link variant="secondary" className={styles.backToToday} onClick={() => onOffset(0)}>
-            <Icon name="solar:double-alt-arrow-left-linear" size={16} />
-            Back to Today
-          </Link>
-        )}
-      </div>
-      {/* A week with a holiday makes room under every day header for its strip. */}
+      {!hideNav && (
+        <div className={styles.weekNav}>
+          <ActionButton icon="solar:alt-arrow-left-linear" size="sm" tooltip="Previous week" onClick={() => onOffset(offset - 1)} />
+          {/* Opens a calendar to jump to any week. */}
+          <button
+            type="button"
+            className={styles.weekLabel}
+            aria-label={`Week of ${weekLabel(days)}, pick a different week`}
+            onClick={(e) => {
+              // Centred under the label (the label sits mid-bar), not hanging off its left edge.
+              const r = e.currentTarget.getBoundingClientRect();
+              const left = r.left + r.width / 2 - PICKER_W / 2;
+              setPickerRect({ left, right: left + PICKER_W, top: r.top, bottom: r.bottom, width: PICKER_W, height: r.height });
+            }}
+          >
+            {weekLabel(days)}
+          </button>
+          {/* One click: the week holding the picked date (Mon–Sun) is shown. This
+              week is shaded, so it's clear where you are. */}
+          <DatePickerPopover
+            open={!!pickerRect}
+            anchorRect={pickerRect}
+            value={isoDay(days[0])}
+            highlightedDates={days.map(isoDay)}
+            onChange={(iso) => {
+              if (iso) {
+                const [y, m, d] = iso.split('-').map(Number);
+                onOffset(Math.round((weekStart(new Date(y, m - 1, d)) - weekDays(0)[0]) / (7 * 86400000)));
+              }
+              setPickerRect(null);
+            }}
+            onClose={() => setPickerRect(null)}
+          />
+          <ActionButton icon="solar:alt-arrow-right-linear" size="sm" tooltip="Next week" onClick={() => onOffset(offset + 1)} />
+          {/* Figma Care Programs 7843:26166, at the bar's right end. */}
+          {offset !== 0 && (
+            <Link variant="secondary" className={styles.backToToday} onClick={() => onOffset(0)}>
+              <Icon name="solar:double-alt-arrow-left-linear" size={16} />
+              Back to Today
+            </Link>
+          )}
+        </div>
+      )}
       <div className={`${styles.weekShell} ${days.some(d => holidayOn[isoDay(d)]) ? styles.weekHasHoliday : ''}`}>
         <WorklistShell
           header={null}

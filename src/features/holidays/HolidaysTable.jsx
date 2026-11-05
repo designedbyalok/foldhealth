@@ -37,10 +37,9 @@ export function HolidaysTable({ holidays, loading, embedded = false, emptyState,
     const off = isPastHoliday(h, now);
     return (
       <ActionButton
-        size="L"
         tooltip={off ? `Past holidays can't be ${verb}` : label}
         tooltipLeft={left}
-        state={off ? 'disabled' : 'active'}
+        disabled={off}
         aria-label={`${label} ${h.name}`}
         onClick={() => !off && onClick(h)}
       >

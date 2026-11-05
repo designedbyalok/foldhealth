@@ -21,7 +21,7 @@ export function useLocationNames() {
   return locations.length ? locations.map(l => l.name) : LOCATION_OPTIONS_FALLBACK;
 }
 
-/* Tag input helper — renders removable badges inside an input-like container */
+/* Tag input helper: renders removable badges inside an input-like container */
 export function TagInput({ value = [], onChange, placeholder, inputId }) {
   const [inputVal, setInputVal] = useState('');
   const addTag = () => {
@@ -150,8 +150,8 @@ export function AddColumnDropdown({ available, labels, onAdd, onClose }) {
         ))}
         {available.length === 0 && <div style={{ padding: 12, color: 'var(--neutral-300)', fontSize: 'var(--font-md)' }}>All columns added</div>}
         <div style={{ display: 'flex', gap: 8, padding: '8px 12px', borderTop: '0.5px solid var(--neutral-100)' }}>
-          <Button variant="ghost" size="S" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" size="S" onClick={() => onAdd(selected)} disabled={selected.length === 0}>Add Columns</Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+          <Button size="sm" onClick={() => onAdd(selected)} disabled={selected.length === 0}>Add Columns</Button>
         </div>
       </div>
     </>

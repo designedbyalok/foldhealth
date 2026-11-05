@@ -4,7 +4,7 @@ import { Textarea } from '../../../components/Textarea/Textarea';
 import { Button } from '../../../components/Button/Button';
 import styles from './DismissReasonForm.module.css';
 
-// Dismiss reasons — Figma ICD-Import states (node 4696:135817). Shared by the
+// Dismiss reasons: Figma ICD-Import states (node 4696:135817). Shared by the
 // confirmed-ICD card (IcdDosCard) and the suspect row (HccSuspectGroup) so both
 // dismiss flows offer the same reasons and layout.
 const DISMISS_REASONS = [
@@ -16,7 +16,7 @@ const DISMISS_REASONS = [
 ];
 
 /**
- * Inline dismiss-reason form — reason radios + a note, Confirm disabled until a
+ * Inline dismiss-reason form: reason radios + a note, Confirm disabled until a
  * reason is chosen.
  *
  * @param {object} props
@@ -56,8 +56,8 @@ export function DismissReasonForm({ initialReason = '', initialNote = '', onCanc
       <div className={styles.noteLabel}>Note</div>
       <Textarea rows={3} placeholder="Add a Note" value={note} onChange={(e) => setNote(e.target.value)} />
       <div className={styles.dismissActions}>
-        <Button variant="primary" size="S" disabled={!reason} onClick={() => onConfirm(reason, note)}>Confirm</Button>
-        <Button variant="secondary" size="S" onClick={onCancel}>Cancel</Button>
+        <Button size="sm" disabled={!reason} onClick={() => onConfirm(reason, note)}>Confirm</Button>
+        <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
       </div>
     </div>
   );

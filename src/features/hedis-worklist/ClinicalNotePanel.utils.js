@@ -33,12 +33,12 @@ export const MEASURE_NAMES = {
   DEV:        'Developmental Screening (First 3 Years)',
   IMACMB2:    'Immunizations for Adolescents (Combo 2)',
   LSC:        'Lead Screening in Children',
-  POLYACH:    'Polypharmacy — Anticholinergic Meds',
-  PPC1A:      'Prenatal Care — Timeliness',
+  POLYACH:    'Polypharmacy: Anticholinergic Meds',
+  PPC1A:      'Prenatal Care: Timeliness',
   PPC2A:      'Postpartum Care',
   SUPD:       'Statin Use in Persons with Diabetes',
-  TRCEA:      'Transitions of Care — Engagement',
-  TRCMA:      'Transitions of Care — Med Reconciliation',
+  TRCEA:      'Transitions of Care: Engagement',
+  TRCMA:      'Transitions of Care: Med Reconciliation',
   W30A:       'Well-Child First 15 Months',
   W30B:       'Well-Child 15–30 Months',
   WCV:        'Well-Care Visit (Children/Adolescents)',
@@ -110,7 +110,7 @@ export const EED_FOLLOW_UP_OPTIONS = [
   { key: 'annualScheduled',    label: 'Annual follow-up scheduled' },
 ];
 
-// CBP (Controlling Blood Pressure) — Location where the BP reading was taken.
+// CBP (Controlling Blood Pressure): Location where the BP reading was taken.
 export const CBP_LOCATIONS = [
   { value: 'outpatient', label: 'Outpatient visit' },
   { value: 'telehealth', label: 'Telehealth visit' },
@@ -156,7 +156,7 @@ export const GAP_TEMPLATES = {
     { key: 'result', label: 'Result', type: 'select', required: true,
       options: [
         { value: 'negative', label: 'Negative' },
-        { value: 'positive', label: 'Positive — further workup needed' },
+        { value: 'positive', label: 'Positive: further workup needed' },
         { value: 'inconclusive', label: 'Inconclusive' },
       ] },
     { key: 'facility', label: 'Facility Name', type: 'text', placeholder: 'Enter facility name' },
@@ -236,7 +236,7 @@ export const GAP_TEMPLATES = {
     { key: 'result', label: 'Result', type: 'select', required: true,
       options: [
         { value: 'negative', label: 'Negative' },
-        { value: 'positive', label: 'Positive — follow-up needed' },
+        { value: 'positive', label: 'Positive: follow-up needed' },
         { value: 'inconclusive', label: 'Inconclusive' },
       ] },
     { key: 'notes', label: 'Additional Notes', type: 'text' },
@@ -370,8 +370,8 @@ export const GAP_TEMPLATES = {
     { key: 'result', label: 'Result', type: 'select', required: true,
       options: [
         { value: 'typical', label: 'Typical development' },
-        { value: 'at-risk', label: 'At risk — monitor' },
-        { value: 'concern', label: 'Concern — refer' },
+        { value: 'at-risk', label: 'At risk: monitor' },
+        { value: 'concern', label: 'Concern: refer' },
       ] },
     { key: 'referral', label: 'Referral placed?', type: 'radio', options: YES_NO },
   ],
@@ -532,20 +532,20 @@ export const MANDATORY_FIELDS = {
   CBP: ['bpDate', 'systolic', 'diastolic', 'location'],
   // DSF-A / DSF-B: Location + telehealth consent (when telehealth) +
   // provider + a saved PHQ-2 score are the minimum before Submit for
-  // Review. Date of Service is intentionally NOT listed here — it
+  // Review. Date of Service is intentionally NOT listed here, it
   // lives on the note-level shared DOS card (v.dateOfService), not
   // in the per-gap payload, and useClinicalNotePanel's submit path
   // already blocks on a missing DOS. Location/consent/performedBy
   // stay per-gap, so they're what the isMandatoryComplete check reads.
   // DSF-B additionally needs a saved PHQ-9 score and the "All components
   // of care plan completed" acknowledgement, OR the standing Decline
-  // checkbox (Decline short-circuits the sign-off queue entirely —
+  // checkbox (Decline short-circuits the sign-off queue entirely,
   // see plan Section 6).
   'DSF-A': ['location', 'telehealthConsent', 'performedBy', 'phq2ScoreSaved'],
   // DSF-B inherits visit context (Location / consent / provider) from
   // the paired DSF-A note that opened it, so those fields aren't asked
   // twice on the DSF-B surface. PHQ-9 completeness alone gates the
-  // sign-off queue — the care plan panel is static reference text with
+  // sign-off queue: the care plan panel is static reference text with
   // an optional Outreach Notes textarea, so it doesn't need its own
   // acknowledgement tick.
   'DSF-B': ['phq9ScoreSaved'],
@@ -629,7 +629,7 @@ export function defaultGapData(code) {
 // shared DOS card"; phq2ScoreSaved reads the nested `phq2.locked`; etc.).
 // Kept here so the derivation lives next to the MANDATORY_FIELDS list it
 // feeds. `noteContext` carries the note-level audioOnly/audioVideo flags
-// that the shared DOS card owns — DSF-A doesn't duplicate that block.
+// that the shared DOS card owns, DSF-A doesn't duplicate that block.
 function dsfDerivedFlag(field, data, noteContext) {
   switch (field) {
     case 'telehealthConsent':
@@ -669,7 +669,7 @@ function dsfDerivedFlag(field, data, noteContext) {
 export function isMandatoryComplete(code, data, noteContext) {
   let req = mandatoryFieldsFor(code, data);
   // Standalone DSF-B (no paired DSF-A on the same note) has to collect
-  // its own visit context — Location, Performed by, and the telehealth
+  // its own visit context: Location, Performed by, and the telehealth
   // consent that normally rides on the shared DOS card. The paired
   // flow keeps inheriting from the DSF-A carrier, so the base list
   // stays lean and only widens when this note is DSF-B-only.

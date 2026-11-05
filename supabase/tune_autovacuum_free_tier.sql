@@ -33,11 +33,11 @@
 -- fires. By the time it fires, the table has been rewritten 10-15× and every
 -- UPDATE has been writing dead-tuple churn to disk (heap + indexes + WAL) with
 -- no compaction in between. On these row counts the *ratio* of dead-to-live
--- looks alarming, but the absolute bytes are still small — the drain is not
+-- looks alarming, but the absolute bytes are still small, the drain is not
 -- storage, it is IO per write.
 --
 -- Larger high-churn tables (patients, hcc_members, all_patients) are being
--- autovacuumed fine — their dead-tuple counts stay near zero — so they are
+-- autovacuumed fine, their dead-tuple counts stay near zero, so they are
 -- left at the defaults.
 --
 -- WHAT THIS DOES
@@ -54,17 +54,17 @@
 -- WHY THIS IS SAFE ON FREE TIER
 --   • autovacuum runs at background priority and yields to foreground writes.
 --     Making it fire more often on a table with 20-page churn does not add
---     meaningful load — it removes the deferred cost.
+--     meaningful load: it removes the deferred cost.
 --   • These are per-table settings via ALTER TABLE ... SET; nothing global
 --     changes. Rollback is one line per table.
---   • No compute or plan change is required. No config.toml push either — the
+--   • No compute or plan change is required. No config.toml push either, the
 --     memory note on that stands.
 --
 -- WHAT THIS DOES NOT DO
 -- The single largest dirtied-block source we control is the email-builder save
 -- (campaigns UPDATE color_variables/email_template: 16,709 dirtied blocks over
 -- 278 calls, ≈ 60 blocks per save). That is intrinsic to rewriting a TOASTed
--- JSONB blob on save and is a legitimate user-initiated write — not worth
+-- JSONB blob on save and is a legitimate user-initiated write, not worth
 -- chasing at the SQL layer. If the free-tier budget stays tight after this
 -- change, the next lever is client-side: dedupe/batch email-builder saves so a
 -- user cannot fire back-to-back saves within a few seconds.
@@ -115,7 +115,7 @@ commit;
 -- ── Reset the bloat that already accumulated ────────────────────────────────
 -- Postgres refuses to run VACUUM inside a transaction block, so these run as
 -- top-level statements below the COMMIT. Regular VACUUM (not FULL) does not
--- take an exclusive lock — it runs concurrently with reads and writes.
+-- take an exclusive lock: it runs concurrently with reads and writes.
 
 vacuum (analyze) public.ccm_billing_periods;
 vacuum (analyze) public.user_worklist_prefs;
@@ -152,7 +152,7 @@ vacuum (analyze) public.agent_flows;
 --   Expect: n_dead_tup = 0 (or near it) and last_vacuum ≈ now().
 --
 -- Monitor going forward: the same query in a week should show n_dead_tup
--- staying below 20 on these tables — that is the sign the tuning is working.
+-- staying below 20 on these tables, that is the sign the tuning is working.
 --
 -- Dashboard: watch Reports → Database → Disk IO for the next 24-48 hours. If
 -- consumption drops back below the burst-refill line, the change is enough.

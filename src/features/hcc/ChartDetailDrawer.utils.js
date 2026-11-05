@@ -13,7 +13,7 @@ export const STATUS_BADGE = {
   'rejected': { color: 'var(--status-error)', bg: 'var(--status-error-light)', border: 'rgba(215, 40, 37, 0.2)' },
   // Rendered when Support is under a records-request cycle (Coder / QA /
   // Compliance asked for docs and Support's engine status is `Returned`).
-  // Read-only — Support can't manually pick this; it appears only when the
+  // Read-only: Support can't manually pick this; it appears only when the
   // engine flags it, and marking Completed sends the DOS back to the
   // requester automatically. Warning tone, matching statusSpec.Returned.
   'returned': { color: 'var(--status-warning)', bg: 'var(--status-warning-light)', border: 'rgba(240, 160, 0, 0.2)' },

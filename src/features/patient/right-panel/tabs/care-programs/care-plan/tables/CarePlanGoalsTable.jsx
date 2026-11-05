@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
-import { WorklistShell } from '../../../../../../../components/WorklistShell/WorklistShell';
+import { WorklistShell } from '../../../../../../worklists/WorklistShell';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { Tooltip } from '../../../../../../../components/Tooltip/Tooltip';
@@ -69,9 +69,9 @@ export function CarePlanGoalsTable({
   onTargetDateChange,
   // Notes icon → open the goal drawer at its Note section.
   onOpenNotes,
-  // (goal, title) => void — saves an in-place title edit.
+  // (goal, title) => void: saves an in-place title edit.
   onTitleChange,
-  // (goal) => boolean — whether the goal has a current (undeleted) note.
+  // (goal) => boolean: whether the goal has a current (undeleted) note.
   hasNote,
   linked,
   template = false,
@@ -162,7 +162,7 @@ export function CarePlanGoalsTable({
         <td className={styles.actionsTd} onClick={e => e.stopPropagation()}>
           <ActionButton
             icon="solar:menu-dots-linear"
-            size="S"
+            size="sm"
             tooltip="More"
             tooltipBelow
             tooltipLeft
@@ -268,7 +268,7 @@ export function CarePlanGoalsTable({
         )}
         <td className={styles.statusTd} onClick={e => e.stopPropagation()}>
           <GbiStatusButton
-            value={g.status}
+            value={g.status} reason={g.statusReason}
             disabled={!canEdit}
             onOpen={rect => onStatusMenu({ kind: 'goal', item: g, rect })}
           />
@@ -277,7 +277,7 @@ export function CarePlanGoalsTable({
           <GbiRowActions
             linked={linked(g)}
             note={hasNote?.(g) || null}
-            onNotes={() => onOpenNotes?.(g)}
+            onNotes={e => onOpenNotes?.(g, e?.currentTarget?.getBoundingClientRect?.())}
             onMenu={(e) => openRowMenu(g, e)}
             menuDisabled={!canEdit}
           />

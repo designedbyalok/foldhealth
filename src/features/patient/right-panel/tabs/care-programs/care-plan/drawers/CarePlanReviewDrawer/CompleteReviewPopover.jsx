@@ -18,7 +18,7 @@ const KIND_ICON = {
  * call (still editable). Complete Review finishes the review, the plan's new
  * last reviewed date, logged to the Activity Log. Resume restarts the clock.
  */
-export function CompleteReviewPopover({ elapsedMs, discussed, note, onNoteChange, onResume, onComplete, onClose }) {
+export function CompleteReviewPopover({ elapsedMs, discussed, note, onNoteChange, noteRefs, onResume, onComplete, onClose }) {
   const [saving, setSaving] = useState(false);
   return (
     <AnchoredPopover
@@ -57,19 +57,21 @@ export function CompleteReviewPopover({ elapsedMs, discussed, note, onNoteChange
         )}
         <Textarea
           richText
+          mentions
+          mentionUsers={noteRefs?.mentionUsers}
+          links={noteRefs?.links}
           title="Call note"
           placeholder="What was discussed, what's next"
           value={note}
-          onChange={(v) => onNoteChange(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
+          onValueChange={(v) => onNoteChange(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
           rows={3}
         />
         <div className={styles.completeActions}>
-          <Button variant="secondary" size="S" leadingIcon="solar:play-linear" onClick={onResume} disabled={saving}>
+          <Button variant="outline" size="sm" leadingIcon="solar:play-linear" onClick={onResume} disabled={saving}>
             Resume
           </Button>
           <Button
-            variant="primary"
-            size="S"
+            size="sm"
             leadingIcon="solar:check-circle-linear"
             disabled={saving}
             onClick={async () => {

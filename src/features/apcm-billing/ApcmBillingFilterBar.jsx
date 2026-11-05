@@ -46,15 +46,15 @@ export function ApcmBillingFilterBar({
         </button>
       )}
 
-      {/* Filter-scoped chronic-mark. Trigger Attestation is not surfaced here —
+      {/* Filter-scoped chronic-mark. Trigger Attestation is not surfaced here,
           it lives in the floating bulk bar, driven by ICD-column marks
           (each chronic-mark auto-selects the row) or the leftmost row
           checkbox. */}
       {bulkTarget && bulkTarget.actionable > 0 && (
         <div className={styles.bulkFilterAction}>
           <Button
-            variant="secondary"
-            size="S"
+            variant="outline"
+            size="sm"
             leadingIcon="solar:check-circle-linear"
             onClick={onBulkMarkChronic}
           >

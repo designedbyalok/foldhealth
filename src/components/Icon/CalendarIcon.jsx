@@ -1,8 +1,8 @@
 /**
- * Calendar icon — custom SVG rendered inside `src/components/DatePicker`
+ * Calendar icon: custom SVG rendered inside `src/components/DatePicker`
  * so date fields show the Fold-brand calendar mark instead of the
  * browser's native `::-webkit-calendar-picker-indicator`. Filled paths
- * (not stroked) — the outline is drawn by the paint order, so pass a
+ * (not stroked): the outline is drawn by the paint order, so pass a
  * solid `color` rather than a stroke width.
  *
  * @param {object} props

@@ -33,7 +33,7 @@ export function ConfigureTeamDrawerUserPicker({ availableUsers, utilizationFor, 
       required
       options={options}
       value={null}
-      onChange={(id) => {
+      onValueChange={(id) => {
         const user = availableUsers.find(u => u.id === id);
         if (user) onAddMember(user);
       }}
@@ -62,7 +62,7 @@ export function ConfigureTeamDrawerBasicFields({ name, teamType, teamTypeOptions
         required
         options={teamTypeOptions.map(opt => ({ value: opt, label: opt }))}
         value={teamType}
-        onChange={onTeamTypeChange}
+        onValueChange={onTeamTypeChange}
       />
     </>
   );

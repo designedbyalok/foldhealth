@@ -17,7 +17,7 @@ const fmtCompleted = (iso) => {
 const EMPTY_FILTERS = { status: [], priority: [], dueDate: [], completedDate: [] };
 
 /**
- * Program Related Tasks — Open / Completed sections built from the shared Tasks
+ * Program Related Tasks: Open / Completed sections built from the shared Tasks
  * module row (TaskRow), with the Member column hidden since we're already in a
  * member's care program. Tasks are created via the Add Task drawer and live in
  * the shared task store, so status toggles/edits stay live.

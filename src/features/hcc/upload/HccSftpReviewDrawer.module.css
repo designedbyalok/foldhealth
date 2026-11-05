@@ -1,4 +1,4 @@
-/* Document Review — promoted from a right-side drawer to a full-
+/* Document Review: promoted from a right-side drawer to a full-
    screen surface per the latest direction. Overrides Drawer's default
    panel sizing (90vw, rounded corners, right-inset) so it spans the
    entire viewport with squared corners. */
@@ -248,7 +248,7 @@
   color: var(--status-warning);
 }
 
-/* Legacy tab strip (no longer used — kept temporarily in case other
+/* Legacy tab strip (no longer used: kept temporarily in case other
    callers rely on these class names; safe to delete in a later sweep). */
 .tabStrip {
   display: flex;
@@ -359,7 +359,7 @@
   color: var(--neutral-500);
 }
 
-/* Slim toolbar above the table — file name + ready/to-review breakdown. */
+/* Slim toolbar above the table: file name + ready/to-review breakdown. */
 .docToolbar {
   display: flex;
   align-items: center;
@@ -913,9 +913,9 @@
 .docTabActive .docTabCount { color: var(--primary-300); }
 .docTabBarSpacer { flex: 1; }
 /* Toolbar buttons (Search, Saved filters, Add New Record) now use
-   ActionButton + Button from the DS — no custom CSS needed. */
+   ActionButton + Button from the DS, no custom CSS needed. */
 
-/* Status filter row — wraps the shared <Toggle> segmented control
+/* Status filter row: wraps the shared <Toggle> segmented control
    inside the Pending tab. Visual styling is owned by Toggle; we only
    provide padding + bg here. */
 .statusChipsRow {
@@ -1041,7 +1041,7 @@
 }
 .encCardMetaDot { color: var(--neutral-200); margin: 0 2px; }
 
-/* Group-count chip — shown only when a patient has >1 DOS in the
+/* Group-count chip: shown only when a patient has >1 DOS in the
    same document. Sits at the right end of the patient header. */
 .encGroupCount {
   display: inline-flex;
@@ -1057,7 +1057,7 @@
   white-space: nowrap;
 }
 
-/* Patient-level actions (upload document · add record · add to worklist) —
+/* Patient-level actions (upload document · add record · add to worklist),
    right-aligned in the patient card header. */
 .encPatientActions {
   display: inline-flex;
@@ -1086,7 +1086,7 @@
   flex-shrink: 0;
 }
 
-/* Status badge hover tooltip — portaled to document.body so it
+/* Status badge hover tooltip: portaled to document.body so it
    escapes the card's overflow. Color-coded border per tone. */
 .statusTipWrap {
   display: inline-flex;
@@ -1113,7 +1113,7 @@
    custom class needed; the card just spaces it via .encCardHead's
    flex gap. */
 
-/* Card actions cluster — `<Button variant="ghost">` and
+/* Card actions cluster: `<Button variant="ghost">` and
    `<ActionButton>` from the DS carry their own styling. We just
    provide the cluster's flex gap. */
 .encCardActions {
@@ -1122,7 +1122,7 @@
   gap: 4px;
 }
 
-/* Flat-link variant of the Add to Worklist button — keeps the
+/* Flat-link variant of the Add to Worklist button, keeps the
    tertiary variant's primary-purple icon/text but strips its filled
    background + border so the action reads as a link. */
 .encAddBtn {
@@ -1191,13 +1191,13 @@
   background: var(--neutral-0);
 }
 
-/* Section labels — "Documents" / "ICD Codes". */
+/* Section labels: "Documents" / "ICD Codes". */
 .dosSectionLabel {
   font: 500 12px/1.3 'Inter', sans-serif;
   color: var(--neutral-500);
 }
 
-/* Documents subsection — label row with an Upload text link at the right,
+/* Documents subsection: label row with an Upload text link at the right,
    then a rounded row card holding the current PDF. */
 .dosDocsHead {
   display: flex;
@@ -1230,7 +1230,7 @@
 .dosDocName { font: 500 13px/1.2 'Inter', sans-serif; color: var(--neutral-500); }
 .dosDocMeta { font: 400 11px/1.3 'Inter', sans-serif; color: var(--neutral-300); }
 
-/* Custom PDF glyph — 24×24 box; currentColor drives the fill so a
+/* Custom PDF glyph: 24×24 box; currentColor drives the fill so a
    token change on .pdfBadge recolors the wordmark. */
 .pdfBadge {
   display: inline-flex;
@@ -1242,7 +1242,7 @@
   color: var(--neutral-300);
 }
 
-/* 2×2 field grid inside the DOS card — DOS/Provider on top, POS/DocType
+/* 2×2 field grid inside the DOS card, DOS/Provider on top, POS/DocType
    below. Same 12×16 gap as the legacy grid. */
 .dosFieldGrid {
   display: grid;
@@ -1250,7 +1250,7 @@
   gap: 14px 16px;
 }
 
-/* ICD Codes section — full-width search + rows list underneath. */
+/* ICD Codes section: full-width search + rows list underneath. */
 .dosIcdSection {
   display: flex;
   flex-direction: column;
@@ -1288,7 +1288,7 @@
   flex-shrink: 0;
 }
 
-/* Add More DOS — dashed primary-tinted button that sits between the
+/* Add More DOS: dashed primary-tinted button that sits between the
    last DOS card and the bottom action bar. */
 .addMoreDos {
   display: inline-flex;
@@ -1307,7 +1307,7 @@
   background: color-mix(in srgb, var(--primary-300) 12%, transparent);
 }
 
-/* Bottom action bar on each patient card — Delete Record on left,
+/* Bottom action bar on each patient card, Delete Record on left,
    Add to the Worklist on right. Sticks to the bottom of the card
    above the drawer's own footer. */
 .encCardFooter {
@@ -1320,7 +1320,7 @@
   margin-top: 4px;
 }
 
-/* Confidence percentage badge — meter + "44%" per Figma. Tiered tints:
+/* Confidence percentage badge: meter + "44%" per Figma. Tiered tints:
    High (≥85) green, Medium (≥60) amber, Low red. Clickable variant is
    used when a source-page citation is available; hover uses the field's
    own title tooltip so no extra popover surface is needed. */
@@ -1520,7 +1520,7 @@
 }
 .encIcdClose:hover { background: var(--primary-100); }
 
-/* Duplicate-warning chip — surfaces when OCR matched a row to an
+/* Duplicate-warning chip: surfaces when OCR matched a row to an
    existing dos_list entry on the member (same DOS + provider + POS).
    Reviewer can still apply, but the row is held in Pending by
    default so they can confirm intent. */
@@ -1642,7 +1642,7 @@
   color: var(--neutral-200);
 }
 
-/* Citation hover tooltip — portaled to document.body. */
+/* Citation hover tooltip: portaled to document.body. */
 .confPillTip {
   position: fixed;
   z-index: 9999;

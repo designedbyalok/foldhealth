@@ -1,4 +1,4 @@
--- Program Activity Log — per-patient activity entries across every care
+-- Program Activity Log: per-patient activity entries across every care
 -- program. The UI groups these by date, then by program, into collapsible
 -- cards (Care Management → Program Activity Log).
 create table if not exists patient_program_activity (
@@ -19,7 +19,7 @@ create table if not exists patient_program_activity (
 alter table patient_program_activity enable row level security;
 
 drop policy if exists "Allow all patient_program_activity" on patient_program_activity;
-create policy "Allow all patient_program_activity" on patient_program_activity
+create policy "Allow all patient_program_activity" on patient_program_activity to authenticated
   for all using ((select auth.uid()) is not null) with check ((select auth.uid()) is not null);
 
 create index if not exists idx_ppa_patient_time

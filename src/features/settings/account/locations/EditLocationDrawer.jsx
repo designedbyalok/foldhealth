@@ -9,7 +9,7 @@ import { EHR_INSTANCES } from './data/mock';
 import styles from './EditLocationDrawer.module.css';
 
 // IANA timezones we support in the Timezone picker. Kept short and
-// US-centric — matches the seeded practice locations.
+// US-centric: matches the seeded practice locations.
 const TIMEZONE_OPTIONS = [
   { value: 'America/New_York',    label: 'America/New_York (ET)' },
   { value: 'America/Detroit',     label: 'America/Detroit (ET)' },
@@ -24,7 +24,7 @@ const TIMEZONE_OPTIONS = [
 const DAY_KEYS  = ['Su', 'M', 'T', 'W', 'Th', 'F', 'Sa'];
 const DAY_LABEL = { Su: 'S', M: 'M', T: 'T', W: 'W', Th: 'T', F: 'F', Sa: 'S' };
 
-// Blank slot row — Mon-Fri, empty times, no location scope. New drawers open
+// Blank slot row: Mon-Fri, empty times, no location scope. New drawers open
 // with one blank slot ready to fill; Edit drawers hydrate from businessHours.
 function blankSlot() {
   return { days: ['M', 'T', 'W', 'Th', 'F'], from: '', to: '', timezone: 'America/New_York', locationId: '' };
@@ -33,10 +33,10 @@ function blankSlot() {
 const EMPTY_ALL_LOCATIONS = [];
 
 /**
- * EditLocationDrawer — used for both "New Location" and "Edit Practice
+ * EditLocationDrawer: used for both "New Location" and "Edit Practice
  * Location". Two-step wizard:
- *   1. Practice location — EHR + address + timezone + phone
- *   2. Business hours    — day chips + time slots
+ *   1. Practice location: EHR + address + timezone + phone
+ *   2. Business hours: day chips + time slots
  *
  * Callers supply the initial `location` (null for New) and `onSubmit`; the
  * drawer builds the merged object and hands it back for persistence.
@@ -99,16 +99,16 @@ export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATION
     onSubmit({ ...form, updatedAt: new Date().toISOString() });
   };
 
-  // Cancel lives on the drawer's shared CloseButton (top-right X) — no need
+  // Cancel lives on the drawer's shared CloseButton (top-right X): no need
   // for a duplicate CTA. Step 1 only ships Next; step 2 ships Previous +
   // Submit at the canonical size="L" variant pair.
   const drawerProps = step === 1
     ? {
-        primaryAction: <Button variant="primary" size="L" onClick={() => setStep(2)} disabled={!step1Valid}>Next</Button>,
+        primaryAction: <Button onClick={() => setStep(2)} disabled={!step1Valid}>Next</Button>,
       }
     : {
-        secondaryAction: <Button variant="secondary" size="L" onClick={() => setStep(1)}>Previous</Button>,
-        primaryAction:   <Button variant="primary"   size="L" onClick={handleSubmit} disabled={!canSubmit}>Submit</Button>,
+        secondaryAction: <Button variant="outline" onClick={() => setStep(1)}>Previous</Button>,
+        primaryAction:   <Button onClick={handleSubmit} disabled={!canSubmit}>Submit</Button>,
       };
 
   return (
@@ -118,7 +118,7 @@ export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATION
       bodyClassName={styles.drawerBody}
       {...drawerProps}
     >
-      {/* Stepper — reads active vs done off the current step. Step 1 flips to
+      {/* Stepper: reads active vs done off the current step. Step 1 flips to
           "done" (checkmark) as soon as the user advances past it. */}
       <div className={styles.stepper}>
         <span className={`${styles.step} ${step === 1 ? styles.stepActive : styles.stepDone}`}>
@@ -142,7 +142,7 @@ export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATION
               <Select
                 id={`${uid}-ehr-instance`}
                 value={form.ehrInstance}
-                onChange={(v) => set('ehrInstance', v)}
+                onValueChange={(v) => set('ehrInstance', v)}
                 options={EHR_INSTANCES.map(e => ({ value: e, label: e }))}
               />
             </div>
@@ -169,7 +169,7 @@ export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATION
               </div>
               <div className={styles.section}>
                 <label className={styles.label} htmlFor={`${uid}-timezone`}>Select Timezone<span className={styles.required}>*</span></label>
-                <Select id={`${uid}-timezone`} value={form.timezone} onChange={(v) => set('timezone', v)} options={TIMEZONE_OPTIONS} searchable />
+                <Select id={`${uid}-timezone`} value={form.timezone} onValueChange={(v) => set('timezone', v)} options={TIMEZONE_OPTIONS} searchable />
               </div>
             </div>
 
@@ -198,7 +198,7 @@ export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATION
         ) : (
           <>
             <div className={styles.slotBar}>
-              <Button variant="secondary" size="S" leadingIcon="solar:add-circle-linear" onClick={addSlot}>Add Slots</Button>
+              <Button variant="outline" size="sm" leadingIcon="solar:add-circle-linear" onClick={addSlot}>Add Slots</Button>
             </div>
 
             {form.businessHours.map((slot, idx) => (
@@ -222,14 +222,14 @@ export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATION
                   <div style={{ minWidth: 200 }}>
                     <Select
                       value={slot.timezone}
-                      onChange={(v) => updateSlot(idx, 'timezone', v)}
+                      onValueChange={(v) => updateSlot(idx, 'timezone', v)}
                       options={TIMEZONE_OPTIONS}
                       searchable
                     />
                   </div>
                   <ActionButton
                     icon="solar:trash-bin-minimalistic-linear"
-                    size="S"
+                    size="sm"
                     tooltip="Remove slot"
                     onClick={() => removeSlot(idx)}
                     disabled={form.businessHours.length === 1}
@@ -256,7 +256,7 @@ export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATION
                     <span className={styles.label}>Location</span>
                     <Select
                       value={slot.locationId}
-                      onChange={(v) => updateSlot(idx, 'locationId', v)}
+                      onValueChange={(v) => updateSlot(idx, 'locationId', v)}
                       options={[{ value: '', label: 'This location' }, ...locationOptions]}
                       placeholder="This location"
                     />

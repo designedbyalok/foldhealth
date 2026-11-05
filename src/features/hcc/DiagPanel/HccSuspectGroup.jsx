@@ -18,15 +18,15 @@ import styles from './HccSuspectGroup.module.css';
 const EMPTY_DOS_LIST = [];
 
 /**
- * SuspectCard — one card per AI suspect / recapture ICD (Paper 1WXT; RA coder
+ * SuspectCard: one card per AI suspect / recapture ICD (Paper 1WXT; RA coder
  * workflow §B3; Figma ICD-Import 4278-67296; see docs/features/hcc-coding-
  * workflow.md). Rendered as a flat list under "Suspects and Recaptures" (no
  * per-HCC section header).
  *
  * Flow: the code can be **switched** to a corrected one via an in-dropdown ICD
  * search (WHO ICD-11); a **single DOS** is then chosen (from the document's
- * existing encounters, which supply Rendering Provider + POS); only then — with
- * both an ICD and a DOS selected — can the coder flag **Missed Opportunity** or
+ * existing encounters, which supply Rendering Provider + POS); only then, with
+ * both an ICD and a DOS selected, can the coder flag **Missed Opportunity** or
  * **Dismiss** it (primary, at the DOS level), or **Accept** / **Defer** from the
  * ⋯ menu. State uses the same per-(code × DOS) store the confirmed ICD card
  * uses, so both behave identically.
@@ -42,12 +42,12 @@ export function SuspectCard({ icd, dosList = EMPTY_DOS_LIST, member, reviewLocke
   const setDosAction = useAppStore(s => s.setHccGapDosAction);
   const dismissDos = useAppStore(s => s.dismissHccGapDos);
 
-  // ICD switch — the displayed code can be corrected via the in-dropdown search.
+  // ICD switch: the displayed code can be corrected via the in-dropdown search.
   const [override, setOverride] = useState(null); // { code, desc }
   const code = override?.code || icd.code;
   const desc = override?.desc || icd.desc;
 
-  // Live ICD-scoped counters — comments filtered by `icd`, activity by the
+  // Live ICD-scoped counters: comments filtered by `icd`, activity by the
   // `icds` array. Falls back to seeded fields while the DB slice is empty
   // so the pills never blank out mid-render.
   const memberActivity = useAppStore(s => (member?.name ? s.hccActivityLog[member.name] : null));
@@ -69,7 +69,7 @@ export function SuspectCard({ icd, dosList = EMPTY_DOS_LIST, member, reviewLocke
     if (!dos && dosList.length === 1) setDos(dosList[0]?.date || '');
   }, [dosList, dos]);
 
-  // Per-(code × DOS) action state — same store the confirmed ICD card uses.
+  // Per-(code × DOS) action state: same store the confirmed ICD card uses.
   const key = dos ? `${icd.code}|${dos}` : null;
   const action = key ? (dosActions[key] || null) : null;
   const meta = key ? (dosMeta[key] || null) : null;
@@ -78,7 +78,7 @@ export function SuspectCard({ icd, dosList = EMPTY_DOS_LIST, member, reviewLocke
   const [menuPos, setMenuPos] = useState(null);
   const moreRef = useRef(null);
 
-  // Bulk select only applies to associated ICD cards — while it's active this
+  // Bulk select only applies to associated ICD cards, while it's active this
   // card is inert (dimmed, no pointer events), so close anything it had open.
   useEffect(() => {
     if (bulkDisabled) {
@@ -89,7 +89,7 @@ export function SuspectCard({ icd, dosList = EMPTY_DOS_LIST, member, reviewLocke
 
   // Support can't work ICDs (that's the coder's job). QA / Compliance
   // consume the same lock as the ICD card (reviewLocked = Support not
-  // Completed) — but here we gate on user role directly since Suspect
+  // Completed): but here we gate on user role directly since Suspect
   // cards live in a shared section, not under a role-specific bucket.
   const hccUserRole = useAppStore(s => s.hccUserRole);
   const roleAllowsIcdActions = hccUserRole !== 'Support';
@@ -139,7 +139,7 @@ export function SuspectCard({ icd, dosList = EMPTY_DOS_LIST, member, reviewLocke
 
   const isRejected = action === 'rejected';
   // Clicking the whole card opens (or closes) the source-document preview
-  // for this ICD — matches the IcdDosCard behavior so Suspect / Recapture
+  // for this ICD: matches the IcdDosCard behavior so Suspect / Recapture
   // rows respond to click + keyboard the same way.
   const isSelected = diagActivityIcd === code;
   const toggleSelect = () => {
@@ -191,16 +191,16 @@ export function SuspectCard({ icd, dosList = EMPTY_DOS_LIST, member, reviewLocke
       </div>
 
       <div className={styles.chips}>
-        <Badge tone="grey" size="S" label={(icd.hcc || '').split(' - ')[0] || 'No HCC'} />
-        {icd.type && <Badge tone="primary" size="S" label={icd.type} />}
+        <Badge size="sm" label={(icd.hcc || '').split(' - ')[0] || 'No HCC'} />
+        {icd.type && <Badge tone="primary" size="sm" label={icd.type} />}
       </div>
 
       <div className={styles.dosRow}>
         <Select
           className={styles.dosSelect}
           options={dosList.map((d) => {
-            const provider = d.provider || member?.rp || '—';
-            const posCode = d.pos || d.posDesc || member?.pos || member?.posDesc || '—';
+            const provider = d.provider || member?.rp || '-';
+            const posCode = d.pos || d.posDesc || member?.pos || member?.posDesc || '-';
             return {
               value: d.date,
               triggerLabel: d.date,
@@ -214,13 +214,13 @@ export function SuspectCard({ icd, dosList = EMPTY_DOS_LIST, member, reviewLocke
             };
           })}
           value={dos}
-          onChange={(v) => setDos(v)}
+          onValueChange={(v) => setDos(v)}
           placeholder="Select DOS"
           disabled={!!action || singleDos || !roleAllowsIcdActions || reviewLocked}
         />
         {/* stopPropagation so ICD-action button clicks (Missed / Dismiss /
             More / Undo) don't bubble to the parent Suspect card's
-            toggleSelect handler — the card would otherwise switch the
+            toggleSelect handler: the card would otherwise switch the
             left panel to Documents even when Timeline / Comments is open. */}
         <div className={styles.dosActions} onClick={(e) => e.stopPropagation()}>
           {action ? (
@@ -242,8 +242,8 @@ export function SuspectCard({ icd, dosList = EMPTY_DOS_LIST, member, reviewLocke
                   Accept (primary tinted) / Dismiss (neutral) / more-menu shape. */}
               <Tooltip label={canAct ? 'Missed Opportunity' : (disabledReason || 'Select an ICD and DOS first')}>
                 <Button
-                  variant="alt"
-                  size="S"
+                  variant="outline" tone="primary"
+                  size="sm"
                   iconOnly
                   leadingIcon="solar:flag-linear"
                   aria-label="Missed Opportunity"
@@ -253,8 +253,8 @@ export function SuspectCard({ icd, dosList = EMPTY_DOS_LIST, member, reviewLocke
               </Tooltip>
               <Tooltip label={canAct ? 'Dismiss' : (disabledReason || 'Select an ICD and DOS first')}>
                 <Button
-                  variant="secondary"
-                  size="S"
+                  variant="outline"
+                  size="sm"
                   iconOnly
                   aria-label="Dismiss"
                   disabled={!canAct}
@@ -315,12 +315,12 @@ function ResolvedPill({ action }) {
     return <span className={styles.dismissedPill}><Icon name="solar:close-circle-linear" size={13} color="currentColor" /> Dismissed</span>;
   }
   if (action === 'missed') {
-    return <Badge size="S" tone="warning" icon="solar:flag-linear" label="Missed Opportunity" />;
+    return <Badge size="sm" tone="warning" icon="solar:flag-linear" label="Missed Opportunity" />;
   }
   return <span className={styles.deferredPill}><Icon name="solar:alarm-linear" size={13} color="currentColor" /> Deferred</span>;
 }
 
-// ── ICD combobox — shared Select in searchable mode, backed by the live
+// ── ICD combobox: shared Select in searchable mode, backed by the live
 // WHO ICD-11 API via useIcdSearch's external query control. The current
 // code is pre-selected and shown as the sole option until the user types.
 function IcdCombobox({ code, desc, onSelect, disabled = false }) {
@@ -343,7 +343,7 @@ function IcdCombobox({ code, desc, onSelect, disabled = false }) {
       className={styles.icdSelectWrap}
       options={options}
       value={code}
-      onChange={(v) => {
+      onValueChange={(v) => {
         const picked = list.find(r => r.code === v);
         if (picked) onSelect(picked);
       }}
@@ -380,7 +380,7 @@ function IcdComboPopover({ anchorRef, currentCode, currentDesc, onSelect, onClos
         // Anchor the popover's BOTTOM edge just above the trigger. Anchoring
         // by `top: r.top - estHeight - 6` used the ESTIMATED height, so a
         // short popover (single option, no search results) rendered hundreds
-        // of pixels above the trigger — the "opens in random places" bug.
+        // of pixels above the trigger: the "opens in random places" bug.
         // Bottom-anchor makes the popover hug the trigger regardless of the
         // actual content height it settles at.
         setPos({ bottom: vh - r.top + 6, left, width, maxHeight: Math.min(spaceAbove - 6, estHeight) });
@@ -459,7 +459,7 @@ function IcdComboPopover({ anchorRef, currentCode, currentDesc, onSelect, onClos
   );
 }
 
-// Portaled DOS picker — one radio per document encounter, showing the date with
+// Portaled DOS picker: one radio per document encounter, showing the date with
 // its Rendering Provider + POS (Figma 4278-67296 "Select DOS" dropdown).
 function DosDropdown({ anchorRef, dosList, member, selected, onSelect, onClose }) {
   const [pos, setPos] = useState(null);
@@ -505,8 +505,8 @@ function DosDropdown({ anchorRef, dosList, member, selected, onSelect, onClose }
         <div className={styles.dosMenuHead}>Select DOS</div>
         {dosList.length === 0 && <div className={styles.dosEmpty}>No encounters available</div>}
         {dosList.map((d) => {
-          const provider = d.provider || member?.rp || '—';
-          const posCode = d.pos || d.posDesc || member?.pos || member?.posDesc || '—';
+          const provider = d.provider || member?.rp || '-';
+          const posCode = d.pos || d.posDesc || member?.pos || member?.posDesc || '-';
           const active = selected === d.date;
           return (
             <button

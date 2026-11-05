@@ -121,7 +121,7 @@ export function useTasksView() {
     fetchTaskLabels();
     fetchTaskPools();
     if (!allPatients || allPatients.length === 0) fetchAllPatients();
-    // Intentionally excluding `allPatients` from deps — it's read inside a
+    // Intentionally excluding `allPatients` from deps: it's read inside a
     // conditional guard as of-mount state, not a re-run trigger. Including it
     // caused every fetchAllPatients resolution to change the reference and
     // re-fire every task fetch, which flipped `tasksLoading` false→true→false
@@ -133,7 +133,7 @@ export function useTasksView() {
    * `pendingAddTask` is a one-shot external signal from the store (another
    * feature sets it, we consume it and clear it). This matches the rule's
    * own "Subscribe for updates from external state, calling setState in a
-   * callback when it changes" carve-out — Zustand delivers the change via
+   * callback when it changes" carve-out: Zustand delivers the change via
    * re-render, and this branch is the callback that reacts.
    */
   useEffect(() => {
@@ -164,7 +164,7 @@ export function useTasksView() {
   const meId = currentUserProfile?.id || null;
   const meName = currentUserProfile?.name || null;
 
-  // Match on id OR display name — never id-else-name. `profiles` holds one row
+  // Match on id OR display name, never id-else-name. `profiles` holds one row
   // per email a person has signed up with, so the same human appears with
   // several ids; a task can carry any of those ids and still be theirs. Legacy
   // rows carry only a name (no id at all). Short-circuiting on `assigned_to_id`
@@ -178,7 +178,7 @@ export function useTasksView() {
   // CommentComposer) as well as the display name. Match on either: the id is
   // exact, and the name still covers rows written before ids were captured.
   // The name compare is case-insensitive because the legacy regex path stored
-  // whatever the user typed — real rows contain both "fold demo" and
+  // whatever the user typed: real rows contain both "fold demo" and
   // "Fold Demo", and the old exact compare silently missed the lowercase one.
   const matchMentioned = useCallback((t) => {
     if (meId && Array.isArray(t.mention_ids) && t.mention_ids.includes(meId)) return true;
@@ -328,9 +328,9 @@ export function useTasksView() {
         toast.success(`Task moved to ${targetGroupKey}`);
       } else {
         // updateTask kept the optimistic local mutation but Supabase rejected
-        // the write. Reveal that to the user — the row will still snap back
+        // the write. Reveal that to the user, the row will still snap back
         // on the next fetch.
-        toast.error(`Move saved locally but failed to sync — try again.`);
+        toast.error(`Move saved locally but failed to sync, try again.`);
       }
     } catch (err) {
       console.error('handleTaskMove error:', err);

@@ -1,6 +1,6 @@
 .strip { display: inline-flex; align-items: center; gap: 6px; }
 
-/* Program badge pill — ring + code (Figma 1837-16118). */
+/* Program badge pill: ring + code (Figma 1837-16118). */
 .badge,
 .badgeMore {
   display: inline-flex;
@@ -18,7 +18,17 @@
 }
 .badge:hover,
 .badgeMore:hover { border-color: var(--primary-300); }
+.clickable { cursor: pointer; }
 .badgeCode { font-size: var(--font-md); color: var(--neutral-400); }
+.badgeSub {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: var(--space-2);
+  border-left: 0.5px solid var(--primary-200);
+  font-size: var(--font-md);
+  color: var(--neutral-300);
+}
 .badgeMore { justify-content: center; }
 
 /* Hover card / list (Figma 1837-16264). */
@@ -37,6 +47,19 @@
 .detail { display: flex; flex-direction: column; gap: 6px; }
 .detail + .detail { margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--neutral-100); }
 .detailHead { display: flex; align-items: center; gap: 6px; }
+/* Title row as a button: opens that program. */
+.detailHeadBtn {
+  margin: calc(-1 * var(--space-1));
+  padding: var(--space-1);
+  border: none;
+  border-radius: var(--space-1);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.detailHeadBtn:hover { background: var(--neutral-50); }
+.detailHeadBtn:hover .detailCode { color: var(--primary-300); }
+.detailHeadBtn:focus-visible { outline: 1px solid var(--primary-300); }
 .detailCode { font-size: var(--font-base); font-weight: 500; color: var(--neutral-400); }
 .detailStatus { font-size: var(--font-md); font-weight: 500; margin-left: 2px; white-space: nowrap; }
 .detailRow { font-size: var(--font-md); color: var(--neutral-400); white-space: nowrap; }

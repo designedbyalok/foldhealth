@@ -4,7 +4,7 @@ import { renderEmailHtml } from './patchEmailHtml';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Input } from '../../components/Input/Input';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Select as SharedSelect } from '../../components/Select/Select';
@@ -64,22 +64,22 @@ export function DesignTabBlocksSecondary({ ctx }) {
           <Section>
             <div className={styles.fieldCol}>
               <span className={styles.fieldLabel}>Orientation</span>
-              <Toggle
+              <SegmentedControl
                 fullWidth
                 items={[
                   { key: 'horizontal', label: 'Horizontal' },
                   { key: 'vertical',   label: 'Vertical' },
                 ]}
-                active={props.orientation || 'horizontal'}
-                size="S"
-                onChange={v => update(['data', 'props', 'orientation'], v)}
+                value={props.orientation || 'horizontal'}
+                size="sm"
+                onValueChange={v => update(['data', 'props', 'orientation'], v)}
               />
             </div>
             <Row2>
               <ColorInput label="Line Color" value={props.lineColor} onChange={v => update(['data', 'props', 'lineColor'], v)} />
               <IconInput label="Thickness" suffix="px" value={props.lineHeight || 1} onChange={v => update(['data', 'props', 'lineHeight'], parseFloat(v) || 1)} />
             </Row2>
-            {/* Vertical dividers get an explicit Height field — without it
+            {/* Vertical dividers get an explicit Height field, without it
                 the bar collapses to its 24px min-height inside flex layouts. */}
             {props.orientation === 'vertical' && (
               <IconInput
@@ -90,44 +90,44 @@ export function DesignTabBlocksSecondary({ ctx }) {
             )}
             <div className={styles.fieldCol}>
               <span className={styles.fieldLabel}>Style</span>
-              <Toggle
+              <SegmentedControl
                 fullWidth
                 items={[
                   { key: 'solid', label: 'Solid' },
                   { key: 'dashed', label: 'Dashed' },
                 ]}
-                active={props.lineStyle || 'solid'}
-                size="S"
-                onChange={v => update(['data', 'props', 'lineStyle'], v)}
+                value={props.lineStyle || 'solid'}
+                size="sm"
+                onValueChange={v => update(['data', 'props', 'lineStyle'], v)}
               />
             </div>
             <Row2>
               <div className={styles.fieldCol}>
                 <span className={styles.fieldLabel}>Left End</span>
-                <Toggle
+                <SegmentedControl
                   fullWidth
                   items={[
-                    { key: 'none', label: '—' },
+                    { key: 'none', label: '-' },
                     { key: 'circle', label: '●' },
                     { key: 'arrow', label: '◄' },
                   ]}
-                  active={props.endLeft || 'none'}
-                  size="S"
-                  onChange={v => update(['data', 'props', 'endLeft'], v)}
+                  value={props.endLeft || 'none'}
+                  size="sm"
+                  onValueChange={v => update(['data', 'props', 'endLeft'], v)}
                 />
               </div>
               <div className={styles.fieldCol}>
                 <span className={styles.fieldLabel}>Right End</span>
-                <Toggle
+                <SegmentedControl
                   fullWidth
                   items={[
-                    { key: 'none', label: '—' },
+                    { key: 'none', label: '-' },
                     { key: 'circle', label: '●' },
                     { key: 'arrow', label: '►' },
                   ]}
-                  active={props.endRight || 'none'}
-                  size="S"
-                  onChange={v => update(['data', 'props', 'endRight'], v)}
+                  value={props.endRight || 'none'}
+                  size="sm"
+                  onValueChange={v => update(['data', 'props', 'endRight'], v)}
                 />
               </div>
             </Row2>
@@ -164,12 +164,12 @@ export function DesignTabBlocksSecondary({ ctx }) {
             </Row2>
             <div className={styles.fieldCol}>
               <span className={styles.fieldLabel}>Striped Rows</span>
-              <Toggle
+              <SegmentedControl
                 fullWidth
                 items={[{ key: 'on', label: 'On' }, { key: 'off', label: 'Off' }]}
-                active={props.stripedRows ? 'on' : 'off'}
-                size="S"
-                onChange={v => update(['data', 'props', 'stripedRows'], v === 'on')}
+                value={props.stripedRows ? 'on' : 'off'}
+                size="sm"
+                onValueChange={v => update(['data', 'props', 'stripedRows'], v === 'on')}
               />
             </div>
           </Section>
@@ -190,16 +190,16 @@ export function DesignTabBlocksSecondary({ ctx }) {
             </Row2>
             <div className={styles.fieldCol}>
               <span className={styles.fieldLabel}>Alignment</span>
-              <Toggle
+              <SegmentedControl
                 fullWidth
                 items={[
                   { key: 'left',   label: '', icon: <AlignLeftIcon /> },
                   { key: 'center', label: '', icon: <AlignCenterIcon /> },
                   { key: 'right',  label: '', icon: <AlignRightIcon /> },
                 ]}
-                active={props.alignment || 'center'}
-                size="S"
-                onChange={v => update(['data', 'props', 'alignment'], v)}
+                value={props.alignment || 'center'}
+                size="sm"
+                onValueChange={v => update(['data', 'props', 'alignment'], v)}
               />
             </div>
           </Section>
@@ -229,16 +229,16 @@ export function DesignTabBlocksSecondary({ ctx }) {
             </Row2>
             <div className={styles.fieldCol}>
               <span className={styles.fieldLabel}>Alignment</span>
-              <Toggle
+              <SegmentedControl
                 fullWidth
                 items={[
                   { key: 'left',   label: '', icon: <AlignLeftIcon /> },
                   { key: 'center', label: '', icon: <AlignCenterIcon /> },
                   { key: 'right',  label: '', icon: <AlignRightIcon /> },
                 ]}
-                active={props.alignment || 'center'}
-                size="S"
-                onChange={v => update(['data', 'props', 'alignment'], v)}
+                value={props.alignment || 'center'}
+                size="sm"
+                onValueChange={v => update(['data', 'props', 'alignment'], v)}
               />
             </div>
           </Section>
@@ -270,15 +270,15 @@ export function DesignTabBlocksSecondary({ ctx }) {
               />
               <div className={styles.fieldCol}>
                 <span className={styles.fieldLabel}>Direction</span>
-                <Toggle
+                <SegmentedControl
                   fullWidth
                   items={[
                     { key: 'row', label: '', icon: <DirectionRowIcon /> },
                     { key: 'column', label: '', icon: <DirectionColIcon /> },
                   ]}
-                  active={props.direction || 'row'}
-                  size="S"
-                  onChange={v => update(['data', 'props', 'direction'], v)}
+                  value={props.direction || 'row'}
+                  size="sm"
+                  onValueChange={v => update(['data', 'props', 'direction'], v)}
                 />
               </div>
             </Row2>
@@ -288,15 +288,15 @@ export function DesignTabBlocksSecondary({ ctx }) {
             </Row2>
             <div className={styles.fieldCol}>
               <span className={styles.fieldLabel}>Wrap</span>
-              <Toggle
+              <SegmentedControl
                 fullWidth
                 items={[
                   { key: 'nowrap', label: 'No Wrap' },
                   { key: 'wrap', label: 'Wrap' },
                 ]}
-                active={props.flexWrap || 'nowrap'}
-                size="S"
-                onChange={v => update(['data', 'props', 'flexWrap'], v)}
+                value={props.flexWrap || 'nowrap'}
+                size="sm"
+                onValueChange={v => update(['data', 'props', 'flexWrap'], v)}
               />
             </div>
             <div className={styles.fieldCol}>

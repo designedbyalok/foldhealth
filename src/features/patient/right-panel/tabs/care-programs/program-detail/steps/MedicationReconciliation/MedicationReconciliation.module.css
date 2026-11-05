@@ -10,7 +10,7 @@
   flex-direction: column;
   gap: var(--space-4);
   padding: var(--space-4);
-  /* Drives the .formGrid breakpoint below — width tracks whatever's actually
+  /* Drives the .formGrid breakpoint below, width tracks whatever's actually
      available, whether that's because the left gaps panel is open or the
      drawer itself resized, not one specific toggle. */
   container-type: inline-size;
@@ -25,7 +25,7 @@
 }
 
 /* Entrance for the "Add New" search/form panels and the discharge-upload
-   panel — a small fade + rise so opening one of those screens feels like a
+   panel: a small fade + rise so opening one of those screens feels like a
    deliberate transition, not a hard cut. */
 @keyframes panelEnter {
   from {
@@ -133,7 +133,7 @@
 }
 
 /* ── Extracted medications (from "Extract Meds") ──
-   Figma 3616:401998 "New Added" — a purple-tinted card holding one row per
+   Figma 3616:401998 "New Added", a purple-tinted card holding one row per
    extracted medication. */
 .extractedList {
   display: flex;
@@ -150,14 +150,14 @@
   padding: var(--space-2) var(--space-3);
   border-bottom: 0.5px solid var(--neutral-150);
 }
-/* Row exit — used when a discharge suggestion is dismissed and when a saved
+/* Row exit: used when a discharge suggestion is dismissed and when a saved
    medication is deleted. The row slides right, then collapses its own height
    so the rows below close the gap in the same beat instead of jumping once
    it's gone. The component removes it from state on animationend.
 
    `max-height` is the only way to animate an auto height here; the 120px cap
    is comfortably above a real row (even with a wrapped Sig), so it doesn't
-   clip mid-flight. Longer than --duration-slow on purpose — the slide reads
+   clip mid-flight. Longer than --duration-slow on purpose, the slide reads
    as a deliberate "this is leaving the list" beat. */
 @keyframes rowExit {
   0% {
@@ -182,7 +182,7 @@
 .extractedRowExiting,
 .medRowExiting {
   /* A <tr> is display: table-row, which ignores max-height / padding /
-     overflow — so the shared rowExit keyframes' collapse phase can't apply
+     overflow: so the shared rowExit keyframes' collapse phase can't apply
      here. Table rows fade and slide out over the same 450ms and are removed
      on animationend; the div-based discharge rows still collapse. */
   animation: rowExitFade 450ms var(--ease-out) forwards;
@@ -226,7 +226,7 @@
   color: var(--neutral-200);
 }
 
-/* "View Note" toggle on an extracted row — Figma 2556:46848. */
+/* "View Note" toggle on an extracted row: Figma 2556:46848. */
 .viewNoteLink {
   display: inline-flex;
   align-items: center;
@@ -246,10 +246,15 @@
 .viewNoteChevronOpen {
   transform: rotate(180deg);
 }
+/* Cancels the .extractedText gap so a closed note adds no space; the note's
+   own margin restores the same spacing when open. */
+.noteCollapse {
+  margin-top: calc(var(--space-1) * -1);
+}
 .noteLine {
   font-size: var(--font-base);
   color: var(--neutral-300);
-  margin-top: var(--space-1);
+  margin-top: calc(var(--space-1) * 2);
 }
 .noteLabel {
   color: var(--neutral-400);
@@ -303,7 +308,7 @@
   border-radius: 8px;
 }
 
-/* ── Medications card view — Figma 7211:452572 ── */
+/* ── Medications card view: Figma 7211:452572 ── */
 /* Owns the select-all → list spacing in one place. Without the wrapper the
    two sat as siblings under .container's 16px gap and stacked with the
    row's own bottom padding. */
@@ -365,7 +370,7 @@
   gap: var(--space-2);
   flex-shrink: 0;
 }
-/* "Stop | Continue" segmented pair — bordered container, divider between
+/* "Stop | Continue" segmented pair: bordered container, divider between
    the two buttons instead of a gap. */
 .medStopContinue {
   display: flex;
@@ -389,7 +394,7 @@
 .medStopContinue button:first-child {
   border-right: 0.5px solid var(--neutral-150);
 }
-/* Selected-state fills — Stop turns error-red once a medication is
+/* Selected-state fills: Stop turns error-red once a medication is
    actually stopped; Continue turns success-green once acknowledged.
    Selectors are scoped through `.medStopContinue button` so they outrank
    the `button:disabled` rule above: a stopped pill keeps its white-on-red
@@ -423,18 +428,18 @@
 .row {
   border-bottom: 0.5px solid var(--neutral-100);
 }
-/* Each cell owns its own 8/8px padding — column-gap alone collapsed when a
+/* Each cell owns its own 8/8px padding, column-gap alone collapsed when a
    cell's content (e.g. Sig wrapping to two lines, Status + Actions sitting
    close together) grew past its column width, so text touched the next
    column instead of stopping at a gutter. */
 /* Vertical padding keeps the row rhythm; horizontal matches WorklistShell's
-   own <th> (--space-3, and 10px on the checkbox — no token for 10) so headers
+   own <th> (--space-3, and 10px on the checkbox, no token for 10) so headers
    sit directly above their content. `display: flex` is gone from these cells:
    they're <td>s now, and flex on a table cell breaks column sizing. */
 .checkCell { padding: var(--space-2); vertical-align: middle; }
 .nameCell { vertical-align: middle; font-size: var(--font-base); color: var(--neutral-500); min-width: 0; padding: var(--space-2) var(--space-3); }
 /* Long compound names (Clinimix-style ingredient lists) would otherwise grow
-   the row indefinitely — clamp to two lines and hand the full text to a
+   the row indefinitely: clamp to two lines and hand the full text to a
    tooltip. Tooltip's own wrapper is inline-flex, so it needs min-width:0 to
    let the clamped child shrink inside the cell. */
 .nameTooltip {
@@ -452,10 +457,10 @@
 .sigCell { vertical-align: middle; font-size: var(--font-base); color: var(--neutral-300); min-width: 0; padding: var(--space-2) var(--space-3); }
 .statusCell { vertical-align: middle; font-size: var(--font-base); color: var(--neutral-300); min-width: 0; padding: var(--space-2) var(--space-3); }
 .actionsCell { min-width: 0; padding: var(--space-2) var(--space-3); vertical-align: middle; }
-/* Inner flex — `display: flex` on a <td> would break table column sizing. */
+/* Inner flex: `display: flex` on a <td> would break table column sizing. */
 .actionsInner { display: flex; align-items: center; gap: var(--space-2); }
 
-/* Pinned columns — checkbox + medication name hold the left edge, actions
+/* Pinned columns: checkbox + medication name hold the left edge, actions
    hold the right, while the middle (dates / sig / status) scrolls under
    them. Each needs its own opaque background or scrolling content shows
    through. */
@@ -512,7 +517,7 @@
 .cellEditStatus {
   width: 86px;
 }
-/* `min-width: 0` matters — DatePicker's own `.input` carries a 140px
+/* `min-width: 0` matters: DatePicker's own `.input` carries a 140px
    min-width that would otherwise beat `width: 100%` and spill the control
    into the next column. */
 .cellEditDate > *,
@@ -521,10 +526,10 @@
   min-width: 0;
 }
 
-/* ── Inline edit of a saved medication — Figma 2094:37808 ──
+/* ── Inline edit of a saved medication, Figma 2094:37808 ──
    The row is swapped for the shared form card while every other row blurs
    back, so the edit reads as a focused, temporary state. */
-/* Pairs with .addPanel, which supplies the white card chrome — this only
+/* Pairs with .addPanel, which supplies the white card chrome, this only
    adds the breathing room the surrounding rows would otherwise provide. */
 .medEditRow {
   margin: var(--space-2) 0;
@@ -541,7 +546,7 @@
   color: var(--neutral-300);
 }
 
-/* ── Inline note editor — Figma 2529:16692 ──
+/* ── Inline note editor: Figma 2529:16692 ──
    Expands under the medication row it belongs to, in both the card and table
    views. Full-bleed grey strip, indented to sit under the med name. */
 /* The note / full-row-edit strips are their own <tr> spanning every column. */
@@ -565,7 +570,7 @@
   left: 0;
 }
 /* The line that reads as the note strip's "top border" is actually the med
-   row's own bottom border — drop it while expanded so the row and its note
+   row's own bottom border: drop it while expanded so the row and its note
    read as one block. */
 .rowNoteOpen,
 .medCardRowNoteOpen {
@@ -606,10 +611,10 @@
   color: var(--neutral-300);
 }
 
-/* ── Bulk action bar — Figma 2570:46879 ──
+/* ── Bulk action bar: Figma 2570:46879 ──
    Same treatment as the Letters step. `position: absolute` resolves against
    the program content column (the nearest positioned ancestor), not
-   .container — so the bar stays pinned while the list scrolls under it.
+   .container, so the bar stays pinned while the list scrolls under it.
    left/right:0 + margin:auto rather than left:50% + translateX, or
    shrink-to-fit would cap the bar at half the column width. */
 .bulkBar {
@@ -686,7 +691,7 @@
 }
 
 /* ── Manual-add form card ──────────────────────────────────────
-   Figma 2086:24739 — white card, purple-200 border, 8px radius. Only
+   Figma 2086:24739, white card, purple-200 border, 8px radius. Only
    the form phase gets this treatment; the search phase (below) renders
    without a wrapping card so the search bar sits flush in the panel. */
 .addPanel {
@@ -723,7 +728,7 @@
 
 /* ── Form phase (a medication picked from search) ──────────────────
    Sits inside .addPanel, which already supplies the card's border/
-   background — this is just the internal layout. */
+   background: this is just the internal layout. */
 .formCard {
   display: flex;
   flex-direction: column;
@@ -761,7 +766,7 @@
   .formGrid { grid-template-columns: 1fr 1fr 1.4fr; }
   .formFieldWide { grid-column: auto; }
   /* Stopped adds Stop Date + Reason, pushing Sig to its own row with only
-     Reason ahead of it — span the rest of that row instead of one cell. */
+     Reason ahead of it: span the rest of that row instead of one cell. */
   .formFieldWideStopped { grid-column: 2 / -1; }
 }
 
@@ -823,7 +828,7 @@
   opacity: 0.5;
 }
 
-/* Inline date editor — the browser paints its own calendar glyph on
+/* Inline date editor: the browser paints its own calendar glyph on
    `type="date"`; hide it so only the Input's Solar trailing action shows.
    The field still opens the native picker via showPicker(). */
 .cellDateInput::-webkit-calendar-picker-indicator {

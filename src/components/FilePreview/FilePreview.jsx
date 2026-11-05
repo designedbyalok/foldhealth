@@ -4,9 +4,11 @@ import { Button } from '../Button/Button';
 import { sanitizeRichText } from '../../lib/sanitizeHtml';
 import { resolveFileKind } from './FilePreview.utils';
 import styles from './FilePreview.module.css';
+import { openSafeUrl } from '../../lib/openSafeUrl';
+import { useStorageUrl, parseStorageUrl } from '../../lib/storageUrl';
 
 /**
- * FilePreview — inline viewer for a document URL (object URL, Supabase
+ * FilePreview: inline viewer for a document URL (object URL, Supabase
  * Storage public URL, or bundled /charts asset). Routes by file type so a
  * preview NEVER turns into a browser download:
  *
@@ -14,7 +16,7 @@ import styles from './FilePreview.module.css';
  *   - pdf (incl. blob:)   → <iframe>
  *   - docx                → rendered to HTML client-side via mammoth
  *   - anything else (doc, xls, csv, tiff, …) → fallback card with an
- *     explicit "Open in new tab" action — the browser may download there,
+ *     explicit "Open in new tab" action: the browser may download there,
  *     but only on a deliberate click, never on preview open.
  *
  * Extension is resolved from `ext` → `name` → the URL's pathname, so
@@ -26,6 +28,7 @@ export function FilePreview({ src, file, name, ext, className, hideScrollbar = f
   const kind = resolveFileKind({ src: src || blobUrl, name, ext });
   const [docxHtml, setDocxHtml] = useState(null);
   const [docxError, setDocxError] = useState(false);
+  const signedSrc = useStorageUrl(src);
 
   useEffect(() => {
     if (!file) {
@@ -37,7 +40,10 @@ export function FilePreview({ src, file, name, ext, className, hideScrollbar = f
     return () => URL.revokeObjectURL(objectUrl);
   }, [file]);
 
-  const resolvedSrc = src || blobUrl;
+  const resolvedSrc = signedSrc || blobUrl;
+  // A private patient file is still being signed: wait rather than show the
+  // "wasn't uploaded" card.
+  const signing = !!parseStorageUrl(src) && !signedSrc;
 
   useEffect(() => {
     if (kind !== 'docx' || !resolvedSrc) return undefined;
@@ -61,6 +67,14 @@ export function FilePreview({ src, file, name, ext, className, hideScrollbar = f
   }, [kind, resolvedSrc]);
 
   const wrapClass = [styles.wrap, className || ''].filter(Boolean).join(' ');
+
+  if (signing && !blobUrl) {
+    return (
+      <div className={`${wrapClass} ${styles.center}`}>
+        <span className={styles.loadingText}>Loading document…</span>
+      </div>
+    );
+  }
 
   // A document row whose bytes never reached Storage (failed upload) has
   // nothing to show; say so instead of rendering a blank pane.
@@ -127,10 +141,10 @@ export function FilePreview({ src, file, name, ext, className, hideScrollbar = f
           This file type can&rsquo;t be previewed in the app.
         </div>
         <Button
-          variant="secondary"
-          size="S"
+          variant="outline"
+          size="sm"
           leadingIcon="solar:square-top-down-linear"
-          onClick={() => window.open(resolvedSrc, '_blank', 'noopener')}
+          onClick={() => openSafeUrl(src || resolvedSrc, 'noopener')}
         >
           Open in new tab
         </Button>

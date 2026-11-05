@@ -203,7 +203,7 @@
 }
 
 /* The whole right pane wraps the email card with a small gray gutter, matching
-   Figma node 964:184252 — Subject Line, Email Design label, and the rendered
+   Figma node 964:184252, Subject Line, Email Design label, and the rendered
    email all live inside ONE rounded white card. */
 .previewWrap {
   flex: 1;
@@ -260,7 +260,7 @@
   gap: 12px;
 }
 
-/* The email itself — fills the remaining height and scrolls internally. No
+/* The email itself: fills the remaining height and scrolls internally. No
    border or radius; the parent .previewCard provides those so the gradient
    header in the email visually butts up against the card edge. */
 .previewFrame {

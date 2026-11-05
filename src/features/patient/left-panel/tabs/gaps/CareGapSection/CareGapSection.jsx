@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
+import { ProfileTable } from '../../../../../../components/ProfileTable/ProfileTable';
 import { CareGapItem } from '../CareGapItem/CareGapItem.jsx';
+import { GAP_TABLE_COLUMNS } from '../gapTableColumns';
 import styles from './CareGapSection.module.css';
 
 export function CareGapSection({ section, selectedGaps, onToggleGap, onOpenGap }) {
@@ -9,15 +11,10 @@ export function CareGapSection({ section, selectedGaps, onToggleGap, onOpenGap }
   return (
     <div className={styles.wrapper}>
       <div className={styles.sectionLabel}>{section.title}</div>
-      <div className={styles.card}>
-        {/* Column header */}
-        <div className={styles.colHeader}>
-          <span className={styles.colTitle}>Title</span>
-          <span className={styles.colStatus}>Status</span>
-          <span className={styles.colActions} />
-        </div>
-        {/* Items */}
-        {section.items.map(item => (
+      <ProfileTable
+        columns={GAP_TABLE_COLUMNS}
+        rows={section.items}
+        renderRow={item => (
           <CareGapItem
             key={item.id}
             item={item}
@@ -25,8 +22,8 @@ export function CareGapSection({ section, selectedGaps, onToggleGap, onOpenGap }
             onSelect={onToggleGap}
             onOpen={onOpenGap}
           />
-        ))}
-      </div>
+        )}
+      />
     </div>
   );
 }

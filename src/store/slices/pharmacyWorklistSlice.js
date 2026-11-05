@@ -1,7 +1,7 @@
 import { supabase } from '../../lib/supabase';
 import { detachSaved, hydrateListFilters } from '../lib/worklistListFilters';
 import { applyPendingPickup, applyPickup, applyRecentFill, recomputeMeasure, withManualRecentFill } from '../../features/pharmacy-worklist/fillEvents';
-import { enrichPharmacyMember, reconcileMeasure, todayMdy } from '../../features/pharmacy-worklist/pharmacyWorklist.utils';
+import { OUTREACH_TONE_COLOR, addDaysMdy, callMatchesLog, enrichPharmacyMember, latestBarrierRecord, measureStatus, medLabel, outreachTone, parseMdy, reconcileMeasure, setPlanTimers, sortMeasures, todayMdy } from '../../features/pharmacy-worklist/pharmacyWorklist.utils';
 
 function rowToMember(r) {
   return {
@@ -31,10 +31,13 @@ function rowToMember(r) {
     callHistory: r.call_history || [],
     interventionLog: r.intervention_log || [],
     activityLog: r.activity_log || [],
-    measures: r.measures || [],
+    measures: sortMeasures(r.measures),
     patientId: r.patient_id,
     sourcePriority: r.source_priority ?? null,
+    comments: r.comments || [],
     otherCareGaps: r.other_care_gaps || [],
+    eligibilityStatus: r.eligibility_status || 'Active',
+    termDate: r.term_date ?? null,
   };
 }
 
@@ -59,7 +62,19 @@ const pickupToRow = (p) => ({
 const COLUMN_TO_FIELD = {
   status: 'status', status_manual: 'statusManual', assignee_id: 'assigneeId', assignee_name: 'assigneeName', assignee_initials: 'assigneeInitials',
   measures: 'measures', call_history: 'callHistory', intervention_log: 'interventionLog', barrier: 'barrier',
+  follow_up_due: 'followUpDue', comments: 'comments',
 };
+
+// A fill left on the shelf brings the follow-up forward to the next pickup
+// reminder (every 2–3 days). The follow-up stays its own date: one already
+// sooner is kept.
+const PICKUP_FOLLOW_UP_DAYS = 3;
+function withPickupFollowUp(m, date, changes) {
+  const due = addDaysMdy(date, PICKUP_FOLLOW_UP_DAYS);
+  if (m.followUpDue && parseMdy(m.followUpDue) <= parseMdy(due)) return m.followUpDue;
+  changes.push(`Follow-up due ${due} (pickup reminder)`);
+  return due;
+}
 
 const MED_FIELD_LABEL = {
   status: 'Status', sig: 'SIG', conditions: 'Conditions', nonAdherenceReason: 'Reason for non-adherence',
@@ -78,7 +93,7 @@ export function findPharmacyMember(members, patientId) {
   return (members || []).find(m => m.id === pid || String(m.memberId) === pid || m.patientId === pid) || null;
 }
 
-/** Pharmacy (Med Adherence) worklist — one row per member. Backed by pharmacy_worklist_members. */
+/** Pharmacy (Med Adherence) worklist: one row per member. Backed by pharmacy_worklist_members. */
 export function createPharmacyWorklistSlice(set, get) {
   // Keys already tried this session (in flight, or failed), so a re-render
   // can't start a second create or retry a failing insert on every update.
@@ -107,6 +122,54 @@ export function createPharmacyWorklistSlice(set, get) {
     persist(memberRowId, patch);
   };
 
+  // Takes barriers (`resolve`) and/or one intervention (`complete`) off a
+  // gap's active record, or one drug's (`medId`). A new log entry carries the
+  // record without them, so Active Barriers drops them, plus `resolved` /
+  // `completed` for History; a drug's Reason for Non-Adherence goes when it
+  // is one of the resolved barriers.
+  const closeOutBarrierItems = (memberRowId, { code, medId = null, resolve = [], complete = null }) => {
+    const m = get().pharmacyWorklistMembers.find(x => x.id === memberRowId);
+    const measure = m?.measures.find(x => x.code === code);
+    if (!measure) return;
+    const med = medId ? measure.medications.find(d => d.id === medId) : null;
+    const medName = med ? medLabel(med) : null;
+    const latest = latestBarrierRecord(m.interventionLog, code)?.rec || { barriers: [], interventions: [], result: null };
+    const strip = (r) => ({
+      ...r,
+      barriers: (r.barriers || []).filter(b => !resolve.includes(b)),
+      interventions: (r.interventions || []).filter(v => v !== complete?.intervention),
+    });
+    const medications = latest.medications?.map(r => (!medId || r.id === medId ? strip(r) : r));
+    const rec = medications
+      ? { ...latest, medications, barriers: [...new Set(medications.flatMap(r => r.barriers))], interventions: [...new Set(medications.flatMap(r => r.interventions))] }
+      : (medId ? latest : strip(latest));
+    const tag = { code, ...(medName ? { medication: medName } : {}) };
+    const entry = {
+      date: todayMdy(),
+      at: new Date().toISOString(),
+      by: get().currentUserProfile?.name || 'You',
+      ...(medName ? { medication: medName } : {}),
+      ...(resolve.length ? { resolved: resolve.map(barrier => ({ ...tag, barrier })) } : {}),
+      ...(complete ? { completed: [{ ...tag, ...complete }] } : {}),
+      measures: { [code]: rec },
+    };
+    const where = `${code}${medName ? ` · ${medName}` : ''}`;
+    const title = complete
+      ? `Intervention ${complete.outcome === 'Done' ? 'done' : "didn't work"} · ${where}`
+      : `Barrier resolved · ${where}`;
+    const note = [complete?.intervention, resolve.length ? `${complete ? 'Resolved: ' : ''}${resolve.join(', ')}` : null].filter(Boolean).join('\n');
+    update(memberRowId, x => ({
+      ...x,
+      measures: x.measures.map(g => (g.code !== code ? g : {
+        ...g,
+        medications: g.medications.map(d => ((!medId || d.id === medId) && resolve.includes(d.nonAdherenceReason) ? { ...d, nonAdherenceReason: null } : d)),
+      })),
+      interventionLog: [entry, ...(x.interventionLog || [])],
+      barrier: resolve.includes(x.barrier) ? null : x.barrier,
+    }), ['intervention_log', 'barrier', 'measures'], { t: 'note', title, note });
+  };
+
+
   // One pickup record per measure. Mock rows stay local, like their members.
   const recordPickups = (memberRowId, codes, date, source) => {
     const loggedAt = new Date().toISOString();
@@ -132,10 +195,13 @@ export function createPharmacyWorklistSlice(set, get) {
       if (get().pharmacyWorklistDidFetch) return;
       set({ pharmacyWorklistDidFetch: true, pharmacyWorklistLoading: true, pharmacyWorklistError: null });
 
-      const { data, error } = await supabase
-        .from('pharmacy_worklist_members')
-        .select('*')
-        .order('id', { ascending: true });
+      const [{ data, error }, timers] = await Promise.all([
+        supabase.from('pharmacy_worklist_members').select('*').order('id', { ascending: true }),
+        supabase.from('pharmacy_plan_timers').select('*'),
+      ]);
+      // Claim timers per plan; without the table the built-in defaults stay.
+      if (timers.error) console.warn('fetchPharmacyPlanTimers failed:', timers.error.message);
+      else if (timers.data?.length) setPlanTimers(timers.data);
 
       // A failed fetch is shown as an error with Retry, never papered over
       // with mock patients: staff must not act on rows that are not real.
@@ -149,7 +215,7 @@ export function createPharmacyWorklistSlice(set, get) {
       if (!data?.length) {
         if (import.meta.env.DEV && !get().pharmacyWorklistMembers.length) {
           const { PHARMACY_WORKLIST_MEMBERS } = await import('../../features/pharmacy-worklist/data/mock');
-          set({ pharmacyWorklistMembers: PHARMACY_WORKLIST_MEMBERS, pharmacyWorklistLoading: false, pharmacyWorklistIsMock: true });
+          set({ pharmacyWorklistMembers: PHARMACY_WORKLIST_MEMBERS.map(m => ({ ...m, measures: sortMeasures(m.measures) })), pharmacyWorklistLoading: false, pharmacyWorklistIsMock: true });
           get().fetchPharmacyPickups();
           return;
         }
@@ -183,8 +249,10 @@ export function createPharmacyWorklistSlice(set, get) {
     },
 
     // Click-to-dial on a prescriber or pharmacy number (Snapshot).
-    logPharmacyDial: (id, who, number) => {
-      update(id, m => m, [], { t: 'call', title: `Dialed ${who}`, note: number });
+    // `line`: the call line it went out on, so the next call can mark it
+    // Last Used.
+    logPharmacyDial: (id, who, number, line) => {
+      update(id, m => m, [], { t: 'call', title: `Dialed ${who}`, note: number, ...(line ? { lineId: line.id, lineName: line.name } : {}) });
     },
 
     // Recent Fill for one drug, edited in Medication Review or Gap Closure.
@@ -198,7 +266,7 @@ export function createPharmacyWorklistSlice(set, get) {
         ...m,
         measures: m.measures.map(y => (y.code !== code ? y : withManualRecentFill(y, medId, date || null))),
       }), ['measures'], {
-        t: 'note', title: `${code} recent fill edited · ${med.name}`, note: `${med.recentFill || '—'} → ${date || '—'}`,
+        t: 'note', title: `${code} recent fill edited · ${med.name}`, note: `${med.recentFill || '-'} → ${date || '-'}`,
       });
     },
 
@@ -232,14 +300,28 @@ export function createPharmacyWorklistSlice(set, get) {
       update(id, m => ({
         ...m,
         measures: m.measures.map(x => (x.code !== code ? x
-          : status ? { ...x, status, statusManual: true } : { ...x, statusManual: false })),
+          : status ? { ...x, status, statusManual: true, statusManualSince: todayMdy() } : { ...x, statusManual: false })),
       }), ['measures'], {
         t: 'status_change', title: status ? `${code} status changed` : `${code} status set from data`, from: prev, to,
       });
     },
 
-    // A fill confirmed in Fold whose claim did not match (none inside the
-    // plan's window, reversed, or billed to other coverage) needs rework.
+    // A PDC typed by the team wins until cleared; Fold keeps calculating it
+    // underneath (`value` null goes back to the calculated PDC).
+    setPharmacyPdcOverride: (id, code, value) => {
+      const by = get().currentUserProfile?.name || 'You';
+      update(id, m => ({
+        ...m,
+        measures: m.measures.map(x => (x.code !== code ? x
+          : value == null ? { ...x, pdcManual: null, pdcManualOn: null, pdcManualBy: null }
+          : { ...x, pdcManual: value, pdcManualOn: todayMdy(), pdcManualBy: by })),
+      }), ['measures'], {
+        t: 'note', title: value == null ? `${code} PDC override cleared` : `${code} PDC set to ${value}%`,
+      });
+    },
+
+    // A fill whose claim did not match (none inside the plan's window), was
+    // reversed, or was billed outside Part D needs rework.
     // Create that follow-up task once per fill; the marker on the measure
     // keeps it from being created again.
     // Runs when the worklist loads, in each viewer's browser; the tasks
@@ -250,7 +332,9 @@ export function createPharmacyWorklistSlice(set, get) {
       for (const row of get().pharmacyWorklistMembers) {
         for (const x of row.measures || []) {
           const recon = reconcileMeasure(x, row.healthPlan);
-          if (recon?.status !== 'Claim not matched') continue;
+          if (!recon?.rework) continue;
+          // Not savable gaps get no follow-up.
+          if (measureStatus(x, row).gap === 'Failed for Year') continue;
           const key = `pharm-claim-unmatched-${row.id}-${x.code}-${recon.medId}-${recon.fillDate}`;
           if (x.claimFollowUpTask?.key === key || claimTasksTried.has(key)) continue;
           claimTasksTried.add(key);
@@ -258,7 +342,7 @@ export function createPharmacyWorklistSlice(set, get) {
           // of racing the unique index.
           const { data: existing } = await supabase.from('tasks').select('id').eq('source_key', key).maybeSingle();
           const created = existing || await get().createTask({
-            name: `Rework: ${x.code} claim not matched`,
+            name: `Rework: ${x.code} ${recon.status.toLowerCase()}`,
             status: 'pending', priority: 'high', due_date: todayMdy(),
             assigned_to: row.assigneeName || null, assigned_to_id: row.assigneeId || null, member: row.name,
             labels: [], meta: '', pool: null, mentions: [], attachments: 0, comments: 0,
@@ -288,29 +372,67 @@ export function createPharmacyWorklistSlice(set, get) {
       });
     },
 
-    // Medication Review edits (status, SIG, condition, non-adherence reason,
-    // notes) live on the medication inside the member's measures jsonb.
-    updatePharmacyMedication: (memberRowId, medId, patch) => {
-      const med = get().pharmacyWorklistMembers.find(m => m.id === memberRowId)
-        ?.measures.flatMap(x => x.medications).find(d => d.id === medId);
-      update(memberRowId, m => ({
+    // Comments on the member (Pharmacy Gap Details > Comments), newest first.
+    // `comment`: { id, author, authorId, role, date, time, body, mentionIds }.
+    addPharmacyComment: (id, comment) => {
+      update(id, m => ({ ...m, comments: [comment, ...(m.comments || [])] }), ['comments'], {
+        t: 'comment', title: 'Comment added', note: comment.body,
+      });
+    },
+    editPharmacyComment: (id, commentId, body, mentionIds) => {
+      update(id, m => ({
         ...m,
-        // A status change (e.g. Discontinued) moves Next Fill Due and the
-        // projected PDC, so the gap is recomputed.
-        measures: m.measures.map(x => (!x.medications.some(d => d.id === medId) ? x : recomputeMeasure({
-          ...x,
-          medications: x.medications.map(d => (d.id === medId ? { ...d, ...patch } : d)),
-        }))),
-      }), ['measures'], {
-        t: 'note', title: `Medication updated · ${med?.name || ''}`,
-        note: Object.entries(patch).map(([k, v]) => `${MED_FIELD_LABEL[k] || k}: ${Array.isArray(v) ? v.join(', ') : (v || '—')}`).join(' · '),
+        comments: (m.comments || []).map(c => (c.id === commentId ? { ...c, body, mentionIds, edited: true } : c)),
+      }), ['comments'], { t: 'comment', title: 'Comment edited', note: body });
+    },
+    deletePharmacyComment: (id, commentId) => {
+      update(id, m => ({ ...m, comments: (m.comments || []).filter(c => c.id !== commentId) }), ['comments'], {
+        t: 'comment', title: 'Comment deleted',
       });
     },
 
-    // Outreach logged from the program's Outreach step — one call-history row
+    // Medication Review edits (status, SIG, condition, non-adherence reason,
+    // notes) live on the medication inside the member's measures jsonb.
+    updatePharmacyMedication: (memberRowId, medId, patch) => {
+      const member = get().pharmacyWorklistMembers.find(m => m.id === memberRowId);
+      const measure = member?.measures.find(x => x.medications.some(d => d.id === medId));
+      const med = measure?.medications.find(d => d.id === medId);
+      // A Reason for Non-Adherence picked on a drug is also its gap's barrier:
+      // a Barriers & Interventions entry that keeps the gap's latest
+      // interventions and result, so the gap's current state stays whole.
+      const reason = patch.nonAdherenceReason;
+      const logReason = !!(reason && med && reason !== med.nonAdherenceReason);
+      update(memberRowId, m => {
+        const next = {
+          ...m,
+          // A status change (e.g. Discontinued) moves Next Fill Due and the
+          // projected PDC, so the gap is recomputed.
+          measures: m.measures.map(x => (!x.medications.some(d => d.id === medId) ? x : recomputeMeasure({
+            ...x,
+            medications: x.medications.map(d => (d.id === medId ? { ...d, ...patch } : d)),
+          }))),
+        };
+        if (!logReason) return next;
+        const latest = (m.interventionLog || []).find(e => e.measures?.[measure.code])?.measures[measure.code];
+        const entry = {
+          date: todayMdy(),
+          at: new Date().toISOString(),
+          by: get().currentUserProfile?.name || 'You',
+          source: 'Medication review',
+          medication: med.name,
+          measures: { [measure.code]: { interventions: [], result: null, ...latest, barriers: [reason] } },
+        };
+        return { ...next, interventionLog: [entry, ...(m.interventionLog || [])] };
+      }, logReason ? ['measures', 'intervention_log'] : ['measures'], {
+        t: 'note', title: `Medication updated · ${med?.name || ''}`,
+        note: Object.entries(patch).map(([k, v]) => `${MED_FIELD_LABEL[k] || k}: ${Array.isArray(v) ? v.join(', ') : (v || '-')}`).join(' · '),
+      });
+    },
+
+    // Outreach logged from the program's Outreach step: one call-history row
     // per outreach. Pickup outcomes ripple into the record: the measure turns
     // pickup-confirmed and each medication's fill dates move (applyPickup);
-    // "Pending — Pick up" marks the measure pending pickup.
+    // "Pending: Pick up" marks the measure pending pickup.
     logPharmacyOutreach: (memberRowId, entry, { pickupCodes = [], pendingCodes = [], recentFillCodes = [], recentFillOutcome = null } = {}) => {
       if (pickupCodes.length) recordPickups(memberRowId, pickupCodes, entry.date, `${entry.contact || 'Pharmacy'} call`);
       update(memberRowId, m => {
@@ -318,19 +440,56 @@ export function createPharmacyWorklistSlice(set, get) {
         let changes = [];
         if (pickupCodes.length) ({ measures, changes } = applyPickup({ ...m, measures }, pickupCodes, entry.date, 'Pickup confirmed by call'));
         if (pendingCodes.length) measures = applyPendingPickup({ ...m, measures }, pendingCodes, entry.date);
-        // Pickups already added their fill above; refill approvals add theirs
-        // here. Either way only drugs with an older latest fill change.
+        // Pickups already added their fill above, so this only reaches drugs
+        // with an older latest fill.
         if (recentFillCodes.length) measures = applyRecentFill({ ...m, measures }, recentFillCodes, entry.date, recentFillOutcome, changes);
         // Any outreach puts the member In Progress. Gaps never close here; a
         // pickup is the gap's sub-status.
         const status = 'In Progress';
         if (status !== m.status) changes.push(`Status ${m.status} → ${status}`);
-        return { ...m, status, measures, callHistory: [entry, ...(m.callHistory || [])], _changes: changes };
-      }, ['status', 'call_history', 'measures'], (changes) => ({
+        const followUpDue = pendingCodes.length ? withPickupFollowUp(m, entry.date, changes) : m.followUpDue;
+        return { ...m, status, measures, followUpDue, callHistory: [entry, ...(m.callHistory || [])], _changes: changes };
+      }, ['status', 'call_history', 'measures', 'follow_up_due'], (changes) => ({
         t: 'outreach', title: `Outreach · ${entry.contact} (${(entry.measures || []).join(', ')})`,
-        outcome: entry.outcome, outcomeColor: entry.result === 'failed' ? 'var(--status-error)' : 'var(--status-success)',
+        outcome: entry.outcome, outcomeColor: OUTREACH_TONE_COLOR[outreachTone(entry.result)],
         note: [entry.note, ...changes].filter(Boolean).join('\n'),
       }));
+    },
+
+    // An outreach edited in the feed: the line (one measure of the call) is
+    // saved back to the member's call history and logged in Activity. When
+    // the call covered several measures with their own outcomes, only this
+    // measure's part changes. Locked calls are never edited.
+    editPharmacyOutreach: (memberRowId, logId, { measure, outcome, note, type, date, time }) => {
+      update(memberRowId, m => ({
+        ...m,
+        callHistory: (m.callHistory || []).map(c => {
+          if (c.locked || !callMatchesLog(c, logId)) return c;
+          const parts = (c.outcome || '').split('; ');
+          const perMeasure = (c.measures || []).length > 1 && parts.some(p => p.startsWith(`${measure}: `));
+          return {
+            ...c,
+            // An older call keyed by its content keeps that key once edited.
+            id: c.id || String(logId),
+            outcome: perMeasure ? parts.map(p => (p.startsWith(`${measure}: `) ? `${measure}: ${outcome}` : p)).join('; ') : outcome,
+            note, type, time,
+            date: date ? `${date}/${c.date.slice(6)}` : c.date,
+          };
+        }),
+      }), ['call_history'], { t: 'outreach', title: `Outreach edited (${measure})`, outcome, note });
+    },
+
+    // An outreach deleted from the feed: that measure leaves the call, and
+    // the call goes once no measure is left. Logged in Activity.
+    deletePharmacyOutreach: (memberRowId, logId, measures) => {
+      update(memberRowId, m => ({
+        ...m,
+        callHistory: (m.callHistory || []).flatMap(c => {
+          if (c.locked || !callMatchesLog(c, logId)) return [c];
+          const left = (c.measures || []).filter(x => !measures.includes(x));
+          return left.length ? [{ ...c, measures: left, logIds: (c.logIds || []).filter(id => id !== logId) }] : [];
+        }),
+      }), ['call_history'], { t: 'outreach', title: `Outreach deleted (${measures.join(', ')})` });
     },
 
     // Pharmacy verification call, locked: one call-history entry for every
@@ -349,37 +508,69 @@ export function createPharmacyWorklistSlice(set, get) {
           ...x,
           medications: x.medications.map(d => (refillsByMed[d.id] == null ? d : { ...d, refillsRemaining: refillsByMed[d.id] })),
         }));
-        return { ...m, status: status || m.status, measures, callHistory: [entry, ...(m.callHistory || [])], _changes: changes };
-      }, ['status', 'call_history', 'measures'], (changes) => ({
-        t: 'call', title: `Pharmacy verification · ${entry.contact} (locked)`,
+        const followUpDue = pendingCodes.length ? withPickupFollowUp(m, entry.date, changes) : m.followUpDue;
+        return { ...m, status: status || m.status, measures, followUpDue, callHistory: [entry, ...(m.callHistory || [])], _changes: changes };
+      }, ['status', 'call_history', 'measures', 'follow_up_due'], (changes) => ({
+        t: 'call', title: `Assessment · ${entry.party || 'Pharmacy'}: ${entry.contact} (locked)`,
+        verificationId: entry.id,
         outcome: entry.outcome, outcomeColor: entry.result === 'failed' ? 'var(--status-warning)' : 'var(--status-success)',
-        note: [entry.note, ...changes, status && status !== prevStatus ? `Status ${prevStatus} → ${status}` : null].filter(Boolean).join('\n'),
+        // What was answered for each drug, then the call note and what changed.
+        note: [
+          ...(entry.items || []).map(it => `${it.measure} · ${it.drug}: ${(it.steps || []).join(', ')}`),
+          entry.note, ...changes, status && status !== prevStatus ? `Status ${prevStatus} → ${status}` : null,
+        ].filter(Boolean).join('\n'),
       }));
     },
 
     // Barrier & Intervention log: one entry per call, recorded per measure
     // (barriers, interventions and result kept apart). The newest barrier
     // feeds the worklist's Barrier column.
-    logPharmacyInterventions: (memberRowId, entry) => {
+    // `clearReasons`: the gap's lists replace what was there (Update Barriers),
+    // so a gap saved with no barrier clears its drugs' reasons too. An outreach
+    // only adds what it found and leaves them.
+    logPharmacyInterventions: (memberRowId, entry, { clearReasons = false } = {}) => {
       update(memberRowId, m => {
         const firstBarrier = Object.values(entry.measures).flatMap(r => r.barriers)[0];
         // A measure's barrier is also each of its active medications' Reason
-        // for Non-Adherence (Medication Review).
+        // for Non-Adherence (Medication Review); set per medication, each
+        // drug takes its own first barrier, and a drug cleared there loses it.
         const measures = m.measures.map(x => {
-          const barrier = entry.measures[x.code]?.barriers?.[0];
-          if (!barrier) return x;
+          const rec = entry.measures[x.code];
+          if (!rec) return x;
+          const byMed = rec.medications ? Object.fromEntries(rec.medications.map(r => [r.id, r])) : null;
           return {
             ...x,
-            medications: x.medications.map(d => (d.status === 'Discontinued' ? d : { ...d, nonAdherenceReason: barrier })),
+            medications: x.medications.map(d => {
+              if (d.status === 'Discontinued') return d;
+              if (byMed?.[d.id]) return { ...d, nonAdherenceReason: byMed[d.id].barriers[0] || null };
+              const barrier = byMed ? null : rec.barriers?.[0];
+              if (barrier) return { ...d, nonAdherenceReason: barrier };
+              return clearReasons && !byMed ? { ...d, nonAdherenceReason: null } : d;
+            }),
           };
         });
-        return { ...m, measures, interventionLog: [entry, ...(m.interventionLog || [])], barrier: firstBarrier || m.barrier };
+        // `at`: when it was logged, so History and Activity can show the time.
+        return { ...m, measures, interventionLog: [{ at: new Date().toISOString(), ...entry }, ...(m.interventionLog || [])], barrier: firstBarrier || m.barrier };
       }, ['intervention_log', 'barrier', 'measures'], {
         t: 'note', title: `Barriers & interventions (${Object.keys(entry.measures).join(', ')})`,
         note: Object.entries(entry.measures)
-          .map(([code, r]) => `${code}: ${[...r.barriers, ...r.interventions, r.result].filter(Boolean).join(', ')}`)
+          .flatMap(([code, r]) => (r.medications
+            ? r.medications.map(d => `${code} · ${d.name}: ${[...d.barriers, ...d.interventions].join(', ') || 'Cleared'}`)
+            : [`${code}: ${[...r.barriers, ...r.interventions, r.result].filter(Boolean).join(', ')}`]))
           .join('\n'),
       });
+    },
+
+    // Resolves one barrier on a gap, or on one drug (`medId`).
+    resolvePharmacyBarrier: (memberRowId, { code, barrier, medId = null }) => {
+      closeOutBarrierItems(memberRowId, { code, medId, resolve: [barrier] });
+    },
+
+    // An intervention on a gap (or one drug) marked Done or Didn't work.
+    // Either way it leaves the active list; Done can resolve the barriers it
+    // addressed (`resolve`), Didn't work leaves them standing.
+    completePharmacyIntervention: (memberRowId, { code, intervention, outcome, medId = null, resolve = [] }) => {
+      closeOutBarrierItems(memberRowId, { code, medId, resolve: outcome === 'Done' ? resolve : [], complete: { intervention, outcome } });
     },
 
     // The gap a user opened from the worklist; the program's Medication
@@ -390,10 +581,15 @@ export function createPharmacyWorklistSlice(set, get) {
     pharmacyGapDrawer: null,
     // `medId` + view 'claims' opens straight to that drug's claim history,
     // with the Outreaches tab beside it (the "Claim not matched" rework).
-    openPharmacyGapDrawer: (memberId, code, { medId = null, view = null } = {}) => set({
-      pharmacyGapDrawer: { memberId, code, medId, view },
+    // `focus`: opened from one gap (its badge or rework flag), so the drawer
+    // starts scoped to that gap; otherwise to every gap that needs work.
+    openPharmacyGapDrawer: (memberId, code, { medId = null, view = null, focus = false } = {}) => set({
+      pharmacyGapDrawer: { memberId, code, medId, view, focus },
       pharmacyFocusGap: { memberId, code },
     }),
+    // The worklist's rows in screen order, for the drawer's previous / next.
+    pharmacyWorklistOrder: [],
+    setPharmacyWorklistOrder: (ids) => set({ pharmacyWorklistOrder: ids }),
     closePharmacyGapDrawer: () => set({ pharmacyGapDrawer: null }),
 
     pharmacyFilters: hydrateListFilters('Pharmacy'),
@@ -405,5 +601,9 @@ export function createPharmacyWorklistSlice(set, get) {
     }),
     // Clearing also deselects the applied saved filter, like the other lists.
     clearPharmacyFilters: () => set(s => ({ pharmacyFilters: {}, activeSavedIdByList: detachSaved(s.activeSavedIdByList, 'Pharmacy') })),
+    // Chips picked from More Filters (null: the primary set).
+    pharmacyVisibleFilterKeys: null,
+    setPharmacyVisibleFilterKeys: (keys) => set({ pharmacyVisibleFilterKeys: [...keys] }),
+    clearPharmacyVisibleFilters: () => set({ pharmacyVisibleFilterKeys: [] }),
   };
 }

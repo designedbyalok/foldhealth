@@ -1,21 +1,63 @@
+/* The tab is a fixed-height frame; each column scrolls inside it. */
 .overview {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
-  overflow-y: auto;
-  padding: var(--space-3);
+  min-height: 0;
+  overflow: hidden;
+  background: var(--neutral-50);
+  /* One type scale for every card: item titles 14, subtitles 13. */
+  --item-title-size: var(--font-base);
+  --item-meta-size: var(--font-md);
+  --insight-description-size: var(--font-md);
+  --insight-description-color: var(--neutral-200);
 }
 
-/* Columns are independent stacks (not grid rows), so a tall card in one
-   column never leaves a gap in the others. */
+/* The Recap pill, top left above the lanes. */
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-3) 0;
+}
+
 .grid {
   display: grid;
-  align-items: start;
+  flex: 1;
+  min-height: 0;
   gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) 0;
 }
 
 .column {
+  --fade-top: 0%;
+  --fade-end: 0%;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: var(--space-3);
+  /* Room for the scrollbar so it never covers card borders. */
+  scrollbar-gutter: stable;
+  /* Scroll edges instead of hard cuts: content softens out only where more
+     of it continues past the edge. */
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    var(--neutral-0) var(--fade-top),
+    var(--neutral-0) calc(100% - var(--fade-end)),
+    transparent 100%
+  );
+}
+
+.column[data-at-top="false"] { --fade-top: var(--space-4); }
+.column[data-at-end="false"] { --fade-end: var(--space-8); }
+
+/* Cards keep their natural height inside the scrolling column. */
+.column > * {
+  flex-shrink: 0;
 }

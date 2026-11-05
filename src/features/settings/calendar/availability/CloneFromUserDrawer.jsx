@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Drawer } from '../../../../components/Drawer/Drawer';
 import { Button } from '../../../../components/Button/Button';
 import { Select } from '../../../../components/Select/Select';
-import { Checkbox } from '../../../../components/ShadcnCheckbox/ShadcnCheckbox';
-import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
+import { Checkbox } from '../../../../components/Checkbox/Checkbox';
+import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { WorklistShell } from '../../../../components/WorklistShell/WorklistShell';
 import { Badge } from '../../../../components/Badge/Badge';
 import { Icon } from '../../../../components/Icon/Icon';
 import { Tooltip } from '../../../../components/Tooltip/Tooltip';
-import { InfoBar } from '../../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../../components/Banner/Banner';
 import { Avatar } from '../../../../components/Avatar/Avatar';
 import { ALL_TYPES, STATUS_LOOK, blockStatus, cadenceText, formatDate, slotTextTz } from './availabilityUtils';
 
@@ -90,7 +90,7 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
       dismissed={!!done}
       onClose={() => (done ? onImport(done) : onClose())}
       primaryAction={(
-        <Button variant="primary" size="L" disabled={!picked.length} onClick={() => setDone(pickedBlocks())}>
+        <Button disabled={!picked.length} onClick={() => setDone(pickedBlocks())}>
           {picked.length ? `Import ${picked.length} slot${picked.length === 1 ? '' : 's'}` : 'Import'}
         </Button>
       )}
@@ -113,14 +113,14 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
                     <span className={styles.cloneOptionName}>{u.name}</span>
                     {u.role && <span className={styles.cloneOptionRole}>{u.role}</span>}
                   </span>
-                  <Badge tone="grey" size="S" label={`${u.blocks.length} slot${u.blocks.length === 1 ? '' : 's'}`} />
+                  <Badge size="sm" label={`${u.blocks.length} slot${u.blocks.length === 1 ? '' : 's'}`} />
                 </span>
               ),
               triggerLabel: u.name,
               searchText: [u.name, u.email, u.role].filter(Boolean).join(' '),
             }))}
             value={names}
-            onChange={choose}
+            onValueChange={choose}
             placeholder="Select users"
             // Only users with active or upcoming slots are offered; say so when a search finds none.
             emptyText={(q) => (q ? 'No users match searched keyword.' : 'No other users have availability defined.')}
@@ -132,14 +132,14 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
           <span className={styles.cloneHeading}>Select availability slots</span>
           {!rows.length ? (
             <div className={styles.cloneEmpty}>
-              <RingEmptyState size="S" icon="solar:calendar-minimalistic-linear" label="Slots appear once a user is selected" />
+              <EmptyState size="sm" icon="solar:calendar-minimalistic-linear" title="Slots appear once a user is selected" />
             </div>
           ) : (
             <>
             {rows.some(noAccess) && (
-              <InfoBar variant="inline" className={styles.cloneAccessNote}>
+              <Banner size="sm" className={styles.cloneAccessNote}>
                 If selected, slots at locations you don't have access to will be added for your default location ({defaultLoc}).
-              </InfoBar>
+              </Banner>
             )}
             <div className={styles.cloneTable}>
               <WorklistShell
@@ -194,7 +194,7 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
                         </span>
                       </>)}
                       </td>
-                      <td className={`${styles.td} ${styles.cloneStatusTd}`}>{tip(<><Badge tone={status.tone} size="S" label={status.label} /></>)}</td>
+                      <td className={`${styles.td} ${styles.cloneStatusTd}`}>{tip(<><Badge tone={status.tone} size="sm" label={status.label} /></>)}</td>
                       <td className={styles.td}>
                         {moved ? (
                           // No access here: flagged in red, the reason on the icon.
@@ -223,7 +223,7 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
                         {tip(<>
                         <span className={styles.slot}>
                           <span className={styles.cloneDates}>{formatDate(b.startDate)} -</span>
-                          <span className={styles.cloneDates}>{b.endDate ? formatDate(b.endDate) : 'Present'}</span>
+                          <span className={styles.cloneDates}>{b.endDate ? formatDate(b.endDate) : 'Ongoing'}</span>
                         </span>
                       </>)}
                       </td>

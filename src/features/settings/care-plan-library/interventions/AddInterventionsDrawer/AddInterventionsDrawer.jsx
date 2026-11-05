@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../../../../components/Drawer/Drawer';
 import { Button } from '../../../../../components/Button/Button';
-import { Toggle } from '../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../components/SegmentedControl/SegmentedControl';
 import { Input } from '../../../../../components/Input/Input';
-import { Checkbox } from '../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../components/Checkbox/Checkbox';
 import { Badge } from '../../../../../components/Badge/Badge';
 import { Link } from '../../../../../components/Link/Link';
-import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../components/EmptyState/EmptyState';
 import { Icon } from '../../../../../components/Icon/Icon';
 import { AddIconMinimalist } from '../../../../../components/Icon/AddIconMinimalist';
 import { toast } from '../../../../../components/Toast/sonnerToast';
@@ -17,14 +17,14 @@ import { INTERVENTION_KIND_ORDER, KIND_LABELS } from '../shared/interventionKind
 import { CARE_PLAN_INTERVENTION_ICONS } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/carePlanInterventionMenu';
 import styles from './AddInterventionsDrawer.module.css';
 
-// Rows shown under "Recently Used" — the newest in the library. There is no
+// Rows shown under "Recently Used", the newest in the library. There is no
 // per-user usage log, so recency stands in for it.
 const RECENT_COUNT = 5;
 
 const TAB_TO_KIND = Object.fromEntries(INTERVENTION_KIND_ORDER.map(k => [KIND_LABELS[k], k]));
 
 /**
- * Add Interventions — the library picker behind a goal's Interventions "+".
+ * Add Interventions: the library picker behind a goal's Interventions "+".
  * Same shape as Add Goals: filter by type, search, tick what you want. The
  * tab you are on decides which kind "New Intervention" starts on.
  *
@@ -86,8 +86,6 @@ export function AddInterventionsDrawer({ onClose, onAdd, primaryLabel = 'Add' })
   const headerRight = (
     <>
       <Button
-        variant="primary"
-        size="L"
         disabled={selected.size === 0}
         onClick={() => onAdd?.(items.filter(i => selected.has(i.id)))}
       >
@@ -101,10 +99,10 @@ export function AddInterventionsDrawer({ onClose, onAdd, primaryLabel = 'Add' })
     <Drawer title="Add Interventions" onClose={onClose} headerRight={headerRight} noCloseDivider>
       <div className={styles.body}>
         <div className={styles.filterRow}>
-          <Toggle size="S" items={tabs} active={tab} onChange={setTab} />
+          <SegmentedControl size="sm" items={tabs} value={tab} onValueChange={setTab} />
           <Button
-            variant="tertiary"
-            size="S"
+            variant="soft"
+            size="sm"
             leadingIconElement={<AddIconMinimalist size={14} />}
             onClick={openCreate}
           >
@@ -125,10 +123,10 @@ export function AddInterventionsDrawer({ onClose, onAdd, primaryLabel = 'Add' })
           {showRecentLabel && <span className={styles.groupLabel}>Recently Used</span>}
           {rows.length === 0 ? (
             <div className={styles.emptyState}>
-            <RingEmptyState
+            <EmptyState
               icon="solar:clipboard-list-linear"
               iconSize={31}
-              label={items.length === 0
+              title={items.length === 0
                 ? 'No interventions in the library yet'
                 : 'No interventions match searched keyword'}
             >
@@ -138,7 +136,7 @@ export function AddInterventionsDrawer({ onClose, onAdd, primaryLabel = 'Add' })
                 <AddIconMinimalist size={14} color="currentColor" />
                 Create New
               </Link>
-            </RingEmptyState>
+            </EmptyState>
             </div>
           ) : rows.map(i => (
             <div key={i.id} className={styles.rowWrap}>
@@ -152,7 +150,7 @@ export function AddInterventionsDrawer({ onClose, onAdd, primaryLabel = 'Add' })
                   <span className={styles.rowTitle}>{i.title}</span>
                 </span>
                 <span className={styles.rowMeta}>
-                  <Badge tone="grey" size="S" label={KIND_LABELS[i.kind] || i.kind} />
+                  <Badge size="sm" label={KIND_LABELS[i.kind] || i.kind} />
                   <Icon
                     name={CARE_PLAN_INTERVENTION_ICONS[i.kind] || 'solar:clipboard-list-linear'}
                     size={16}
@@ -168,6 +166,7 @@ export function AddInterventionsDrawer({ onClose, onAdd, primaryLabel = 'Add' })
       {createKind && (
         <InterventionDrawer
           kind={createKind}
+          taskTemplate
           onKindChange={setCreateKind}
           onClose={() => setCreateKind(null)}
           onSave={async (values) => {

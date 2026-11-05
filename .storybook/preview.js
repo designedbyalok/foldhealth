@@ -5,9 +5,15 @@
 import '../src/styles/tailwind.css';
 import '../src/tokens/tokens.css';
 import '../src/index.css';
+import { createElement } from 'react';
+import { AppProviders } from '../src/features/AppProviders';
 
 /** @type { import('@storybook/react-vite').Preview } */
 const preview = {
+  // Stories render with the same app defaults the library gets in the app
+  // (OOO badges, worklist bulk actions, page size, activity entries, mentions).
+  decorators: [(Story) => createElement(AppProviders, null, createElement(Story))],
+
   parameters: {
     controls: {
       sort: 'none',

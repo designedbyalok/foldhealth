@@ -2,6 +2,9 @@
   "framework": "vite",
   "installCommand": "bunx bun@1.4.2 install",
   "buildCommand": "bunx bun@1.4.2 run build",
+  "git": {
+    "deploymentEnabled": false
+  },
   "redirects": [
     {
       "source": "/docs/",
@@ -21,6 +24,10 @@
     {
       "source": "/api/reference/allergies/substances",
       "destination": "/api/lookup?route=allergy-substances"
+    },
+    {
+      "source": "/api/patient-media-url",
+      "destination": "/api/lookup?route=patient-media-url"
     },
     {
       "source": "/api/send-test-email",
@@ -51,6 +58,10 @@
       "destination": "/api/account?route=auth-activity"
     },
     {
+      "source": "/api/patient-invite",
+      "destination": "/api/account?route=patient-invite"
+    },
+    {
       "source": "/api/pop-group-rule-from-nl",
       "destination": "/api/ai?route=pop-group-rule-from-nl"
     },
@@ -67,6 +78,22 @@
       "destination": "/api/ai?route=care-plan-individualized"
     },
     {
+      "source": "/api/patient-recap-summary",
+      "destination": "/api/ai?route=patient-recap-summary"
+    },
+    {
+      "source": "/api/template-optimization",
+      "destination": "/api/ai?route=template-optimization"
+    },
+    {
+      "source": "/api/clinical-protocol-parse",
+      "destination": "/api/ai?route=clinical-protocol-parse"
+    },
+    {
+      "source": "/api/care-plan-event-update",
+      "destination": "/api/ai?route=care-plan-event-update"
+    },
+    {
       "source": "/s/:section",
       "destination": "/api/share?s=:section"
     },
@@ -77,6 +104,37 @@
     {
       "source": "/docs/:match*",
       "destination": "https://fold-ab931789.subdirectory-docs.mintlify.me/docs/:match*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors 'self'"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(self), geolocation=(self), payment=(), usb=()"
+        }
+      ]
     }
   ]
 }

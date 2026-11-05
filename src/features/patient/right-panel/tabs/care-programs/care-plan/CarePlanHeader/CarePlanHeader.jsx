@@ -28,7 +28,7 @@ function fmtCarePlanDate(isoOrDisplay) {
   return d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 }
 
-// Care plan sign-menu — split button. The main half signs directly
+// Care plan sign-menu: split button. The main half signs directly
 // (Sign is the primary action), the chevron opens a menu with the
 // alternate path (send to a reviewer). Same split pattern the med-recon
 // signer uses so the two step surfaces read consistently.
@@ -50,6 +50,8 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
   const requestCarePlanPanel = useAppStore(s => s.requestCarePlanPanel);
   const carePlanBulkMode = useAppStore(s => s.carePlanBulkMode);
   const toggleCarePlanBulkMode = useAppStore(s => s.toggleCarePlanBulkMode);
+  const carePlanLayout = useAppStore(s => s.carePlanLayout);
+  const setCarePlanLayout = useAppStore(s => s.setCarePlanLayout);
   const carePlanSearchText = useAppStore(s => s.carePlanSearchText);
   const setCarePlanSearchText = useAppStore(s => s.setCarePlanSearchText);
   const carePlanFiltersOpen = useAppStore(s => s.carePlanFiltersOpen);
@@ -79,7 +81,7 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
     const plan = liveCarePlan?.plan;
     // Author and date come from the plan row itself. Plans created before the
     // author was recorded fall back to the earliest version's author, but only
-    // when that version was cut the same day the plan was created — a later
+    // when that version was cut the same day the plan was created, a later
     // signature says who signed, not who authored, and naming the wrong person
     // is worse than naming none.
     const sameDay = (a, b) => {
@@ -96,7 +98,7 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
     const usingMock = !plan;
     const signedBy = plan?.signedBy || null;
     const signedAt = plan?.signedAt || null;
-    // Look for a pending "review requested" audit entry — the newest
+    // Look for a pending "review requested" audit entry: the newest
     // review event that hasn't been overtaken by a `signed` event.
     // The audit slice is newest-first, so the first plan-level entry
     // we find determines the current state (signed → clears review,
@@ -135,21 +137,34 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
   const carePlanMoreItems = useMemo(() => {
     const items = [
       ...rightPanelItems,
-      { key: 'ai-plan', iconElement: <Icon name="custom:ai" size={16} />, label: 'Draft Individualized Plan' },
+      carePlanLayout === 'linkage'
+        ? { key: 'layout', icon: 'solar:list-linear', label: 'Table View' }
+        : { key: 'layout', icon: 'solar:link-linear', label: 'Linkage View' },
+      { key: 'ai-plan', iconElement: <Icon name="custom:ai" size={16} />, label: 'Recommend Care Plan' },
       ...(canPause ? [planPaused
         ? { key: 'resume', icon: 'solar:play-circle-linear', label: 'Resume Care Plan' }
         : { key: 'pause', icon: 'solar:pause-circle-linear', label: 'Pause Care Plan' }] : []),
       { key: 'template', icon: 'solar:bookmark-linear', label: 'Save as Template' },
       { key: 'note', icon: 'solar:notes-linear', label: 'Add Note' },
       { key: 'history', iconElement: <Icon name="custom:history" size={16} color="var(--neutral-400)" />, label: 'History' },
+      // Unsigned changes since the last signed version: discarding asks first.
+      ...(carePlanDraft.canDiscard ? [{
+        key: 'discard',
+        icon: 'solar:restart-linear',
+        label: 'Discard Changes',
+        danger: true,
+        disabled: !!viewedVersion,
+      }] : []),
     ];
     return items;
-  }, [rightPanelItems, canPause, planPaused]);
+  }, [rightPanelItems, carePlanLayout, canPause, planPaused, carePlanDraft.canDiscard, viewedVersion]);
 
   const handleCarePlanMoreSelect = (key) => {
     setCarePlanMoreMenu(null);
     if (rightPanel.select(key)) return;
-    if (key === 'bulk') toggleCarePlanBulkMode();
+    if (key === 'discard') setDiscardOpen(true);
+    else if (key === 'bulk') toggleCarePlanBulkMode();
+    else if (key === 'layout') setCarePlanLayout(carePlanLayout === 'linkage' ? 'tables' : 'linkage');
     else if (key === 'preview') requestCarePlanShare('preview');
     else requestCarePlanPanel(key);
   };
@@ -191,18 +206,18 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
               </button>
               {(() => {
                 // Meta row under the title. Responsive by container width:
-                //   • Narrow  — "Created by …" collapses into a compact
+                //   • Narrow: "Created by …" collapses into a compact
                 //               [•••] Badge (shared component) that reveals
                 //               the full text via the shared Tooltip.
-                //   • Wide    — the full "Created by …" text renders inline.
+                //   • Wide: the full "Created by …" text renders inline.
                 // Status tail (right of the bullet) prefers, in order:
-                //   1. "Sent for review to X on <date>" — warning, when a
+                //   1. "Sent for review to X on <date>", warning, when a
                 //      review is pending (unsigned).
                 //   2. "N unsigned changes since vN": warning, when the
                 //      draft differs from the signed version.
                 //   3. "Signed by X on <date>": green.
                 //   4. "Not signed": neutral grey.
-                // A plan with no recorded author reads "Created on <date>" —
+                // A plan with no recorded author reads "Created on <date>",
                 // naming nobody beats naming the wrong clinician.
                 const createdText = carePlanMeta.createdBy
                   ? `Created by ${carePlanMeta.createdBy} on ${carePlanMeta.createdDate}`
@@ -241,8 +256,7 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
                     <span className={styles.carePlanCreatedCollapsed}>
                       <Tooltip label={createdText}>
                         <Badge
-                          size="S"
-                          tone="grey"
+                          size="sm"
                           icon="solar:menu-dots-linear"
                           className={styles.carePlanCreatedDotsBadge}
                           aria-label={createdText}
@@ -278,7 +292,6 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
               {/* Same filter glyph and active tint as the worklist toolbar. */}
               <ActionButton
                 icon="custom:filter"
-                size="L"
                 tooltip="Filter"
                 className={carePlanFiltersOpen ? styles.iconActive : ''}
                 onClick={toggleCarePlanFiltersOpen}
@@ -289,8 +302,7 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
               {/* Templates moved to the plan's chip row, next to the
                   applied templates it manages. */}
               <Button
-                variant="secondary"
-                size="L"
+                variant="outline"
                 leadingIcon="solar:eye-linear"
                 aria-pressed={carePlanShareRequest === 'preview'}
                 onClick={() => requestCarePlanShare('preview')}
@@ -298,23 +310,7 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
                 Preview
               </Button>
               <span className={styles.headerDivider} aria-hidden="true" />
-              {carePlanDraft.canDiscard && (
-                <>
-                  <Button
-                    variant="secondary"
-                    size="L"
-                    leadingIcon="solar:restart-linear"
-                    disabled={!!viewedVersion}
-                    onClick={() => setDiscardOpen(true)}
-                  >
-                    Discard
-                  </Button>
-                  <span className={styles.headerDivider} aria-hidden="true" />
-                </>
-              )}
               <Button
-                variant="primary"
-                size="M"
                 leadingIcon="solar:pen-2-linear"
                 disabled={!signShareEnabled || !!viewedVersion}
                 onClick={signCarePlanDirect}
@@ -346,7 +342,6 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
               <span className={styles.headerDivider} aria-hidden="true" />
               <ActionButton
                 icon="solar:menu-dots-linear"
-                size="L"
                 tooltip="More"
                 onClick={(e) => setCarePlanMoreMenu({ rect: e.currentTarget.getBoundingClientRect() })}
               />

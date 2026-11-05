@@ -1,5 +1,5 @@
 -- ============================================================
--- hcc_chart_status — persist Fail reasons + comment
+-- hcc_chart_status: persist Fail reasons + comment
 -- ============================================================
 --
 -- The three chart-fail surfaces (UploadChartDrawer, DiagPanel
@@ -8,7 +8,7 @@
 -- Failed. Before this migration only the `status` string ('Passed' |
 -- 'Failed' | 'pending') was upserted to hcc_chart_status, so the pill
 -- correctly persisted red but reopening the picker always showed empty
--- checkboxes — reasons only survived inside the activity log's jsonb
+-- checkboxes: reasons only survived inside the activity log's jsonb
 -- payload, not on the doc's own row.
 --
 -- Adds two nullable columns so setChartDocStatus can persist the full

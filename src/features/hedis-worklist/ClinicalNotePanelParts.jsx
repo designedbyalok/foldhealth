@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useCan } from '../../lib/useCan';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { DownChevronIcon } from '../../components/Icon/DownChevronIcon';
@@ -12,7 +13,7 @@ import { DatePicker } from '../../components/DatePicker/DatePicker';
 import { RadioButton } from '../../components/RadioButton/RadioButton';
 import { CheckboxTick } from '../../components/CheckboxTick/CheckboxTick';
 import { UploadDropField } from '../../components/UploadDropField/UploadDropField';
-import { Alert } from '../../components/Alert/Alert';
+import { Banner } from '../../components/Banner/Banner';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { PatientBanner } from '../../components/PatientBanner/PatientBanner';
 import {
@@ -49,8 +50,8 @@ export function HeaderActions({
   // True when the CURRENT USER is the author of a note that is already
   // Pending Review (i.e. they submitted it, the reviewer hasn't signed
   // yet, and they've reopened it to edit). In that state the primary
-  // action becomes "Update and Save" — pushes the revised state back
-  // to the same reviewer via `onSubmitForReview` (which re-notifies) —
+  // action becomes "Update and Save", pushes the revised state back
+  // to the same reviewer via `onSubmitForReview` (which re-notifies),
   // and the chevron replaces "Submit for Review" (redundant, already
   // submitted) with the two sign-off escape hatches. Reviewers keep
   // their `primaryLabel` ("Sign & Save") and every other status keeps
@@ -58,10 +59,11 @@ export function HeaderActions({
   authorEditingSubmitted = false,
   // True when the reviewer is signing off a submitted note. Trims the
   // chevron menu to reviewer-appropriate actions only (Sign and Print)
-  // and drops the "Submit for Review" author action — the note is
+  // and drops the "Submit for Review" author action: the note is
   // already in review, the reviewer's job is to sign it.
   reviewerFlow = false,
 }) {
+  const can = useCan();
   const menuItems = reviewerFlow
     ? [
         { key: 'print', label: 'Sign and Print', icon: 'solar:printer-linear' },
@@ -75,6 +77,11 @@ export function HeaderActions({
           { key: 'submit', label: 'Submit for Review', icon: 'solar:upload-square-linear' },
           { key: 'print',  label: 'Sign and Print',    icon: 'solar:printer-linear' },
         ];
+  // Access Control "Sign and Amend EHR Notes": without it the sign actions
+  // go, an author's primary becomes Submit for Review, and a reviewer's
+  // primary stays visible but disabled with the reason.
+  const signAllowed = can('notes:sign');
+  const visibleMenu = signAllowed ? menuItems : menuItems.filter(i => i.key !== 'sign' && i.key !== 'print');
   const runMenu = (key) => {
     if (key === 'submit') onSubmitForReview();
     else if (key === 'sign') onSaveAndSign();
@@ -83,17 +90,20 @@ export function HeaderActions({
   // Reviewer primary is always Sign & Save → onSaveAndSign. Author
   // editing a submitted note routes primary to onSubmitForReview so
   // the reviewer is re-notified.
+  const authorWithoutSign = !signAllowed && !reviewerFlow && !authorEditingSubmitted;
   const effectivePrimaryLabel = reviewerFlow
     ? 'Sign & Save'
-    : authorEditingSubmitted ? 'Update and Save' : primaryLabel;
+    : authorEditingSubmitted ? 'Update and Save'
+      : authorWithoutSign ? 'Submit for Review' : primaryLabel;
   const primaryOnClick = reviewerFlow
     ? onSaveAndSign
-    : authorEditingSubmitted ? onSubmitForReview : onSaveAndSign;
+    : authorEditingSubmitted || authorWithoutSign ? onSubmitForReview : onSaveAndSign;
+  const primaryMenu = authorWithoutSign ? visibleMenu.filter(i => i.key !== 'submit') : visibleMenu;
+  const blockedReviewer = reviewerFlow && !signAllowed;
   return (
     <>
       <Button
-        variant="secondary"
-        size="L"
+        variant="outline"
         leadingIcon="solar:file-linear"
         onClick={onSaveDraft}
         disabled={!canSaveDraft}
@@ -101,12 +111,11 @@ export function HeaderActions({
         Save as Draft
       </Button>
       <Button
-        variant="primary"
-        size="L"
-        menuItems={menuItems}
+        menuItems={primaryMenu.length ? primaryMenu : undefined}
         onMenuSelect={runMenu}
         onClick={primaryOnClick}
-        disabled={!canSign}
+        disabled={!canSign || blockedReviewer}
+        disabledReason={blockedReviewer ? 'Your role can\'t sign notes' : undefined}
       >
         {effectivePrimaryLabel}
       </Button>
@@ -117,7 +126,7 @@ export function HeaderActions({
 export function TitleBlock({ title, statusLabel = 'In Progress', stacked = false, status = null }) {
   // Stacked variant is used by the sign-off review drawer so the title
   // reads the same way the read-only preview and the CareGap pane header
-  // do — main title on top, a small icon+text status row beneath —
+  // do: main title on top, a small icon+text status row beneath,
   // instead of an inline pill next to the title.
   if (stacked) {
     const stat = status === 'signed'
@@ -140,17 +149,17 @@ export function TitleBlock({ title, statusLabel = 'In Progress', stacked = false
   return (
     <span className={styles.titleBlock}>
       <span className={styles.titleText}>{title}</span>
-      <Badge tone="warning" size="S" dot label={statusLabel} />
+      <Badge tone="warning" size="sm" dot label={statusLabel} />
     </span>
   );
 }
 
-/* MultiUploadDropField — thin wrapper around UploadDropField that renders
+/* MultiUploadDropField: thin wrapper around UploadDropField that renders
    one completed-file card per uploaded document + one live Dropzone at
    the bottom for the next file. Each slot is its own UploadDropField
    instance (fresh `key` so its internal state is scoped to that slot).
    On the first successful upload we push another empty slot so the drop
-   area is always available. Clear a slot from its own trash icon —
+   area is always available. Clear a slot from its own trash icon,
    UploadDropField already handles that. */
 function MultiUploadDropField({ onFile }) {
   const [slots, setSlots] = useState([{ id: 0, hasFile: false }]);
@@ -178,7 +187,7 @@ function MultiUploadDropField({ onFile }) {
   );
 }
 
-/* AssigneeDisplay — read-only Avatar + full name used inside the
+/* AssigneeDisplay: read-only Avatar + full name used inside the
    ClinicalNotePanel's LHS Visit Notes table and the RHS active-gap
    header. Assignee changes on the clinical note itself aren't wired,
    so this replaces the interactive AssigneeChange chip: no hover, no
@@ -242,7 +251,7 @@ export function NoteContextPane({ v, member, year }) {
             <span className={styles.dosTitle}>
               Date of Service &amp; Telehealth Statement <span className={styles.required}>•</span>
             </span>
-            <Badge tone="info" size="S" label="Common for all gaps" />
+            <Badge tone="info" size="sm" label="Common for all gaps" />
           </div>
           <div className={styles.dosBody}>
             <div className={styles.fieldStack}>
@@ -319,7 +328,7 @@ function GapRow({ gap, data, ready, mandatoryComplete, assignee, isActive, onSel
           <span className={styles.gapName}>{gap.code} - {measureName}</span>
         </div>
         <div className={styles.gapRowMeta}>
-          <Badge size="S" variant="ai-care" label={gap.status} />
+          <Badge size="sm" tone="primary" label={gap.status} />
           {data && !!Object.keys(data).some(k => k !== 'manuallyOff' && data[k]) && (
             <span className={styles.gapRowUpdate}>
               <span className={styles.dot}>•</span> Last Updated Today, 09:15 AM <span className={styles.dot}>•</span> You
@@ -335,7 +344,7 @@ function GapRow({ gap, data, ready, mandatoryComplete, assignee, isActive, onSel
           checked={ready}
           disabled={!mandatoryComplete}
           onChange={onToggleReady}
-          ariaLabel={`Ready for review — ${gap.code}`}
+          ariaLabel={`Ready for review: ${gap.code}`}
         />
       </div>
     </div>
@@ -372,7 +381,7 @@ export function GapEvidencePane({ v }) {
             {gap.code} - {measureName}
           </span>
           <div className={styles.gapEvidenceStatusRow}>
-            <Badge size="S" variant="ai-care" label={gap.status} />
+            <Badge size="sm" tone="primary" label={gap.status} />
             <span className={styles.headerDivider} aria-hidden="true" />
             <AssigneeDisplay name={assignee} />
           </div>
@@ -385,7 +394,7 @@ export function GapEvidencePane({ v }) {
               if (next && !mandatoryComplete) return;
               v.updateGap(gap.code, { manuallyOff: !next });
             }}
-            ariaLabel={`Ready for review — ${gap.code}`}
+            ariaLabel={`Ready for review: ${gap.code}`}
           />
           <span className={styles.gapEvidenceReadyLabel}>
             Ready for Review
@@ -399,8 +408,8 @@ export function GapEvidencePane({ v }) {
           disabled
           options={[{ value: gap.code, label: `${gap.code} Evidence` }]}
           value={gap.code}
-          onChange={() => {}}
-          ariaLabel={`${gap.code} evidence type`}
+          onValueChange={() => {}}
+          aria-label={`${gap.code} evidence type`}
         />
         <Input
           aria-label="Evidence label"
@@ -434,10 +443,10 @@ export function GapEvidencePane({ v }) {
   );
 }
 
-/* ConsolidatedNoteBody — stacked authoring layout used when the author
+/* ConsolidatedNoteBody: stacked authoring layout used when the author
    clicks Edit on a Pending Review note (leftWorkspace mode
    'clinical-note-consolidated'). One shared DOS card at the top, then
-   one collapsible section per gap the submitted note bundled — each
+   one collapsible section per gap the submitted note bundled, each
    section reuses the same evidence-form component the single-gap
    workspace renders (EED, CBP, or the templated GenericEvidenceForm).
    Content hydrates from the submitted note's payload via
@@ -459,7 +468,7 @@ export function ConsolidatedNoteBody({ v }) {
   return (
     <div className={styles.consolidatedBody}>
       {/* Info banner is hoisted to CareGapDetailDrawer so it can sit as
-          a sibling of leftPaneBody — outside the padded, scrollable
+          a sibling of leftPaneBody: outside the padded, scrollable
           container. See the 'clinical-note-consolidated' branch there. */}
       <div ref={scrollRef} className={styles.consolidatedScroll}>
         <div className={styles.dosCard} data-section-id="dos">
@@ -467,7 +476,7 @@ export function ConsolidatedNoteBody({ v }) {
             <span className={styles.dosTitle}>
               Date of Service &amp; Telehealth Statement <span className={styles.required}>•</span>
             </span>
-            <Badge tone="info" size="S" label="Common for all gaps" />
+            <Badge tone="info" size="sm" label="Common for all gaps" />
           </div>
           <div className={styles.dosBody}>
             <div className={styles.fieldStack}>
@@ -528,7 +537,7 @@ export function ConsolidatedNoteBody({ v }) {
   );
 }
 
-/* Floating section jumper — pins to the bottom of the consolidated
+/* Floating section jumper: pins to the bottom of the consolidated
    authoring surface so the reviewer can hop between DOS and each gap
    section without hunting through a long scroll. Prev/Next arrows
    move one section at a time; the middle pill opens a MenuPopover
@@ -707,9 +716,9 @@ function EedEvidenceForm({ v, data, submitted }) {
           <Select
             options={EED_EXAM_TYPES}
             value={data.examType}
-            onChange={(v2) => onUpdate({ examType: v2 })}
+            onValueChange={(v2) => onUpdate({ examType: v2 })}
             placeholder="Select Exam Type"
-            variant={err('examType') ? 'error' : 'default'}
+            invalid={err('examType')}
           />
           {err('examType') && <FieldError>Exam type is required</FieldError>}
         </FieldStack>
@@ -731,7 +740,7 @@ function EedEvidenceForm({ v, data, submitted }) {
             value={data.examiningProvider}
             onChange={(e) => onUpdate({ examiningProvider: e.target.value })}
             placeholder="Enter Provider Name"
-            variant={err('examiningProvider') ? 'error' : undefined}
+            invalid={err('examiningProvider')}
           />
           {err('examiningProvider') && <FieldError>Provider is required</FieldError>}
         </FieldStack>
@@ -771,7 +780,7 @@ function EedEvidenceForm({ v, data, submitted }) {
               { value: 'right', label: 'Right eye' },
             ]}
             value={data.laterality}
-            onChange={(v2) => onUpdate({ laterality: v2 })}
+            onValueChange={(v2) => onUpdate({ laterality: v2 })}
             placeholder="Select Laterality"
           />
         </FieldStack>
@@ -785,9 +794,9 @@ function EedEvidenceForm({ v, data, submitted }) {
               { value: 'E11.9',   label: 'E11.9' },
             ]}
             value={data.icd10}
-            onChange={(v2) => onUpdate({ icd10: v2 })}
+            onValueChange={(v2) => onUpdate({ icd10: v2 })}
             placeholder="Select ICD"
-            variant={err('icd10') ? 'error' : 'default'}
+            invalid={err('icd10')}
           />
           {err('icd10') && <FieldError>ICD-10 is required</FieldError>}
         </FieldStack>
@@ -821,9 +830,9 @@ function EedEvidenceForm({ v, data, submitted }) {
               { value: 'lifestyle',         label: 'Lifestyle & glycemic control' },
             ]}
             value={data.patientCounseledOn}
-            onChange={(v2) => onUpdate({ patientCounseledOn: v2 })}
+            onValueChange={(v2) => onUpdate({ patientCounseledOn: v2 })}
             placeholder="Select"
-            variant={err('patientCounseledOn') ? 'error' : 'default'}
+            invalid={err('patientCounseledOn')}
           />
           {err('patientCounseledOn') && <FieldError>This field is required</FieldError>}
         </FieldStack>
@@ -831,13 +840,13 @@ function EedEvidenceForm({ v, data, submitted }) {
 
       <FieldStack>
         <FieldLabel>Upload Evidence (if available):</FieldLabel>
-        <MultiUploadDropField onFile={() => v.showToast('Attach evidence — coming soon')} />
+        <MultiUploadDropField onFile={() => v.showToast('Attach evidence: coming soon')} />
       </FieldStack>
     </div>
   );
 }
 
-/* CBP Visit Note — Controlling Blood Pressure evidence form.
+/* CBP Visit Note: Controlling Blood Pressure evidence form.
    Backed by the "CBP Visit Note" template row (form_type='Note') seeded in
    supabase/forms_type_column_and_cbp_visit_note_migration.sql. */
 function CbpEvidenceForm({ v, data, submitted }) {
@@ -846,7 +855,7 @@ function CbpEvidenceForm({ v, data, submitted }) {
   const priorReading = '156/78 mmHg on 06/04/2026';
   return (
     <div className={styles.evidenceForm}>
-      {/* Initial Blood Pressure card — date + BP reading + location. */}
+      {/* Initial Blood Pressure card: date + BP reading + location. */}
       <div className={styles.cbpCard}>
         <div className={styles.cbpCardTitle}>Initial Blood Pressure</div>
         <div className={styles.cbpBpBlock}>
@@ -936,7 +945,7 @@ function CbpEvidenceForm({ v, data, submitted }) {
 
       <FieldStack>
         <FieldLabel>Upload Evidence (if available):</FieldLabel>
-        <MultiUploadDropField onFile={() => v.showToast('Attach evidence — coming soon')} />
+        <MultiUploadDropField onFile={() => v.showToast('Attach evidence: coming soon')} />
       </FieldStack>
     </div>
   );
@@ -961,7 +970,7 @@ function CbpRadioGroup({ label, value, options, onChange, error }) {
   );
 }
 
-/* GenericEvidenceForm — renders any gap whose fields live in
+/* GenericEvidenceForm: renders any gap whose fields live in
    GAP_TEMPLATES (utils). Backed by the parallel "{CODE} Visit Note"
    template rows seeded in
    supabase/hedis_gap_clinical_note_templates_seed.sql. Field types map to
@@ -974,7 +983,7 @@ function GenericEvidenceForm({ code, v, data, submitted }) {
   // Settings → Content → Notes edits reach the app immediately; fall
   // back to the JS constant when the DB hasn't been synced yet
   // (fresh clone, migration not run, etc.). Same descriptor shape in
-  // both places — see scripts/sync-note-templates.mjs.
+  // both places: see scripts/sync-note-templates.mjs.
   const dbTemplate = useAppStore(s => s.noteTemplatesByGap?.[code]);
   const dbFields = Array.isArray(dbTemplate?.schema?.items) ? dbTemplate.schema.items : null;
   const allFields = dbFields && dbFields.length ? dbFields : GAP_TEMPLATES[code];
@@ -1027,14 +1036,16 @@ function GenericEvidenceForm({ code, v, data, submitted }) {
         )
       )}
       {consentMissing && submitted && (
-        <Alert
+        <Banner
+          variant="outline"
           tone="warning"
-          message="Verbal telehealth consent required. Tick Audio-only or Audio-video visit in the Date of Service card above."
-        />
+        >
+          Verbal telehealth consent required. Tick Audio-only or Audio-video visit in the Date of Service card above.
+        </Banner>
       )}
       <FieldStack>
         <FieldLabel>Upload Evidence (if available):</FieldLabel>
-        <MultiUploadDropField onFile={() => v.showToast('Attach evidence — coming soon')} />
+        <MultiUploadDropField onFile={() => v.showToast('Attach evidence: coming soon')} />
       </FieldStack>
     </div>
   );
@@ -1065,11 +1076,11 @@ function GenericField({ field, data, onUpdate, err, users }) {
           required={required}
           options={userSelectOptions(field, users)}
           value={value}
-          onChange={(v2) => onUpdate({ [key]: v2 })}
+          onValueChange={(v2) => onUpdate({ [key]: v2 })}
           placeholder={placeholder || `Select ${label}`}
           searchable
           searchPlaceholder="Search…"
-          variant={hasError ? 'error' : 'default'}
+          invalid={hasError}
         />
         {hasError && <FieldError>{errorText}</FieldError>}
       </FieldStack>
@@ -1123,9 +1134,9 @@ function GenericField({ field, data, onUpdate, err, users }) {
           required={required}
           options={options}
           value={value}
-          onChange={(v2) => onUpdate({ [key]: v2 })}
+          onValueChange={(v2) => onUpdate({ [key]: v2 })}
           placeholder={placeholder || `Select ${label}`}
-          variant={hasError ? 'error' : 'default'}
+          invalid={hasError}
         />
         {hasError && <FieldError>{errorText}</FieldError>}
       </FieldStack>
@@ -1160,7 +1171,7 @@ function GenericField({ field, data, onUpdate, err, users }) {
         onChange={(e) => onUpdate({ [key]: e.target.value })}
         placeholder={placeholder}
         trailingText={field.unit}
-        variant={hasError ? 'error' : undefined}
+        invalid={hasError}
       />
       {hasError && <FieldError>{errorText}</FieldError>}
     </FieldStack>
@@ -1184,7 +1195,7 @@ function FieldError({ children }) {
   return <div className={styles.fieldError}>{children}</div>;
 }
 
-/* Single-gap inline body — rendered inside CareGapDetailDrawer's left
+/* Single-gap inline body: rendered inside CareGapDetailDrawer's left
    workspace when the member has only one open gap. Reuses the DOS card and
    evidence form from the consolidated drawer; drops the visit-notes table
    and the "Common for all gaps" pill (both meaningless with one gap). */
@@ -1204,8 +1215,8 @@ export function ClinicalNoteWorkspaceBody({ v }) {
           disabled
           options={[{ value: gap.code, label: `${gap.code} Evidence` }]}
           value={gap.code}
-          onChange={() => {}}
-          ariaLabel={`${gap.code} evidence type`}
+          onValueChange={() => {}}
+          aria-label={`${gap.code} evidence type`}
         />
         <Input
           aria-label="Evidence label"

@@ -2,9 +2,9 @@
 // Source: "Medication Adherence Intervention Schema" PDF.
 //
 // Each stakeholder has:
-//   contactOutcomes — results of reaching (or not reaching) the contact.
-//   measureOutcomes — interventions logged against a measure. An entry with
-//                     `options` is picked as "Label — Option".
+//   contactOutcomes: results of reaching (or not reaching) the contact.
+//   measureOutcomes: interventions logged against a measure. An entry with
+//                     `options` is picked as "Label: Option".
 
 const MEMBER_CONTACT = [
   'Expired', 'In hospice', 'In LTC/SNF', 'Opt-Out', 'Termed', 'Out of state/country',
@@ -94,7 +94,7 @@ export function schemaOutcomeItems(status) {
     if (status !== 'Successful') labels.push(...s.contactOutcomes);
     if (status !== 'Unsuccessful') {
       for (const o of s.measureOutcomes) {
-        if (o.options) labels.push(...o.options.map(opt => `${o.label} — ${opt}`));
+        if (o.options) labels.push(...o.options.map(opt => `${o.label}: ${opt}`));
         else labels.push(o.label);
       }
     }

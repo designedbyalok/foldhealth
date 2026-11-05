@@ -20,7 +20,7 @@
 
 /* Collapse handle (SubnavToggle) is a 28px ActionButton-L. Shared worklist
    checkbox cells use 10px left padding + a 16px box, so the checkbox center
-   sits at 18px. 4px bar inset + 14px half-button = 18px — the handle then
+   sits at 18px. 4px bar inset + 14px half-button = 18px, the handle then
    stacks on the checkbox column on every worklist that passes leadingElement. */
 .tabBar.hasLeading {
   padding-left: 4px;
@@ -44,8 +44,8 @@
   position: relative;
 }
 
-/* Tab item, sliding underline, and notif dot now live in TabStrip.module.css
- * and are consumed via <TabStrip embedded> so a single source of truth owns
+/* Tab item, sliding underline, and notif dot now live in Tabs/Tabs.module.css
+ * and are consumed via <Tabs embedded> so a single source of truth owns
  * the tab paint. This module only keeps the wrappers unique to the
  * SectionTitleBar context (row layout, "More ▾" chip, dropdown). */
 
@@ -92,7 +92,7 @@
   border-color: var(--primary-200);
 }
 
-/* ── Tab overflow — "More ▾" dropdown ── */
+/* ── Tab overflow: "More ▾" dropdown ── */
 .moreWrap {
   position: relative;
   display: flex;

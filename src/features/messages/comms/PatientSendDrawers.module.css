@@ -1,12 +1,12 @@
-.to {
-  margin: 0 0 var(--space-3);
+/* A labelled field (Send Assessment's Send To), styled like the Select labels. */
+.field { display: flex; flex-direction: column; gap: var(--space-1); }
+.fieldLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   font-size: var(--font-base);
-  color: var(--neutral-300);
-}
-
-.to strong {
-  font-weight: 500;
-  color: var(--neutral-500);
+  line-height: 1.2;
+  color: var(--neutral-200);
 }
 
 .form {
@@ -15,25 +15,50 @@
   gap: var(--space-3);
 }
 
-/* Grey field card (Send Content). */
+/* Send Content, laid out like Add Intervention: label | value rows split by
+   light dividers. */
 .card {
   display: flex;
   flex-direction: column;
-  border: 0.5px solid var(--neutral-150);
-  border-radius: var(--space-2);
-  background: var(--neutral-25);
 }
 
 .row {
   display: grid;
   grid-template-columns: 10rem minmax(0, 1fr);
-  align-items: start;
+  align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 0.5px solid var(--neutral-150);
+  min-height: 2.75rem;
+  padding: var(--space-2) 0;
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+
+.priorityTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  justify-self: start;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  cursor: pointer;
 }
 
 .channelBody .row { border-bottom: none; padding: var(--space-2) 0; }
+
+/* Verify identity row: its parts sit on the row's own grid, so a long label
+   wraps beside Yes / No and the summary, and the settings start on their own
+   line under everything, full width. */
+.contents { display: contents; }
+.verifyRow { row-gap: var(--space-2); grid-template-columns: 10rem minmax(0, 1fr) auto; }
+/* Edit on the row's right, centred against Yes / No and the summary. */
+.verifyEdit { grid-column: 3; grid-row: 1 / span 2; align-self: center; }
+.verifyRow > .rowLabel { grid-row: 1 / span 2; align-self: start; }
+.verifyRow > .rowField { display: contents; }
+.verifyDetails { grid-column: 2; grid-row: 2; }
+.verifySettings { grid-column: 1 / -1; grid-row: 3; margin-top: var(--space-1); }
 
 .rowLabel {
   display: inline-flex;
@@ -62,8 +87,11 @@
 .channel {
   display: flex;
   flex-direction: column;
-  padding: var(--space-3) var(--space-4) var(--space-4);
+  /* No side padding, so it lines up with the rows above. */
+  padding: var(--space-3) 0 0;
 }
+/* The Email / SMS tab strip too: its first tab starts at the row edge. */
+.channel > :first-child { padding-left: 0; padding-right: 0; }
 
 .channelBody {
   display: flex;
@@ -93,3 +121,6 @@
   border-radius: var(--space-2);
   background: var(--neutral-0);
 }
+
+/* The (i) beside a label (e.g. Send To), with its explanation on hover. */
+.labelInfo { flex-shrink: 0; cursor: help; }

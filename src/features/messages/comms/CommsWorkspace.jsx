@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Button } from '../../../components/Button/Button';
 import { Input } from '../../../components/Input/Input';
+import { QuickViewPanel } from '../../../components/QuickViewDrawer/QuickViewDrawer';
 import { CommsListPanel } from './CommsListPanel';
 import { CommsThread } from './CommsThread';
 import { PatientEmailThread } from './PatientEmailThread';
 import { CommsPanelEmpty } from './CommsEmptyState';
-import { pollInboundSms } from './commsSend';
+import { pollInboundSms, SMS_VIA_GATEWAY } from './commsSend';
 import { patientFor, isMissedCall } from './commsUtils';
 import styles from './Comms.module.css';
 
@@ -35,20 +36,45 @@ export function CommsWorkspace({
   // Only open a conversation that belongs to this view: switching from Chat
   // to SMS must not leave the chat thread showing beside the SMS list.
   const selected = list.find(c => c.id === selectedId && !!c.archived === !!v.archived) || null;
-  const smsInView = view === 'sms' || view === 'all';
+  const smsInView = SMS_VIA_GATEWAY && (view === 'sms' || view === 'all');
+
+  // A member's profile docked beside the thread (P360 Revamp 1060:273126).
+  // Opening it folds the channels menu to its icons for room; closing puts
+  // the menu back the way it was. A different thread closes it.
+  const [profile, setProfile] = useState(null);
+  const [navWasOpen, setNavWasOpen] = useState(false);
+  const [profileThread, setProfileThread] = useState(selected?.id ?? null);
+  const closeProfile = () => {
+    setProfile(null);
+    if (navWasOpen && navCollapsed) onToggleNav?.();
+    setNavWasOpen(false);
+  };
+  const openProfile = (p) => {
+    if (!profile) setNavWasOpen(!navCollapsed);
+    if (!navCollapsed) onToggleNav?.();
+    setProfile(p);
+  };
+  if ((selected?.id ?? null) !== profileThread) {
+    setProfileThread(selected?.id ?? null);
+    if (profile) { setProfile(null); setNavWasOpen(false); }
+  }
+  // Expanding the channels menu again hands the room back: Quick View closes.
+  const [navWasCollapsed, setNavWasCollapsed] = useState(navCollapsed);
+  if (navCollapsed !== navWasCollapsed) {
+    setNavWasCollapsed(navCollapsed);
+    if (!navCollapsed && profile) { setProfile(null); setNavWasOpen(false); }
+  }
 
   useEffect(() => {
     if (!smsInView) return undefined;
     let stopped = false;
     let timer = null;
     const tick = async () => {
-      const { connected } = await pollInboundSms(patients);
+      const { connected } = await pollInboundSms();
       if (!stopped && connected) timer = setTimeout(tick, SMS_POLL_MS);
     };
     tick();
     return () => { stopped = true; clearTimeout(timer); };
-    // Patients only match numbers to names; a new list needn't restart polling.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [smsInView]);
 
   return (
@@ -70,7 +96,7 @@ export function CommsWorkspace({
         selected.channel === 'email' ? (
           <PatientEmailThread key={selected.id} conversation={selected} patient={patientFor(selected, patients)} me={me} onCompose={onCompose} />
         ) : (
-          <CommsThread key={selected.id} conversation={selected} patient={patientFor(selected, patients)} me={me} />
+          <CommsThread key={selected.id} conversation={selected} patient={patientFor(selected, patients)} me={me} onOpenProfile={openProfile} />
         )
       ) : (
         <CommsPanelEmpty
@@ -79,6 +105,7 @@ export function CommsWorkspace({
           onCreate={onCreateType}
         />
       )}
+      {profile && <QuickViewPanel key={profile.id} patient={profile} onClose={closeProfile} />}
     </>
   );
 }
@@ -98,7 +125,7 @@ function DialFooter({ onDial }) {
           wrapperClassName={styles.grow}
           onKeyDown={e => { if (e.key === 'Enter') onDial(number); }}
         />
-        <Button variant="secondary" size="L" iconOnly leadingIcon="solar:keyboard-linear" aria-label="Open dial pad" onClick={() => onDial(number)} />
+        <Button variant="outline" iconOnly leadingIcon="solar:keyboard-linear" aria-label="Open dial pad" onClick={() => onDial(number)} />
       </div>
     </div>
   );

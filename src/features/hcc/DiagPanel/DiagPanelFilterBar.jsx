@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import styles from './DiagPanelFilterBar.module.css';
 
-// Fixed vocabulary for status buckets — matches the values `addHccGap` and
+// Fixed vocabulary for status buckets: matches the values `addHccGap` and
 // the DOS-action reducer produce. Kept static so an empty ICD list still
 // exposes the full option set (Figma 9810:158181).
 const ICD_STATUS_OPTIONS = ['New', 'In Progress', 'Accepted', 'Dismissed'];
@@ -18,7 +18,7 @@ const parseDate = (mmddyyyy) => {
 const EMPTY_ICDS = [];
 
 /**
- * DiagPanelFilterBar — filter row shown under the DiagPanel toolbar when the
+ * DiagPanelFilterBar: filter row shown under the DiagPanel toolbar when the
  * Filter icon is active (Figma 9810:158181). Six FilterChips + Clear All.
  *
  * The parent owns `filters` state and passes each option list here; this
@@ -50,7 +50,7 @@ export function DiagPanelFilterBar({
       if (i.hcc) hccs.add((i.hcc || '').split(' - ')[0].trim());
       if (i.by)  byList.add(i.by);
     }
-    // Visit Type options come from the member's dos_list entries — the same
+    // Visit Type options come from the member's dos_list entries: the same
     // list of visit types the DOS row / worklist row show for this member.
     const vt = new Set(
       (member?.dos_list || []).flatMap(d => d?.vt ? [d.vt] : []),

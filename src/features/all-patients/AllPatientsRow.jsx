@@ -4,7 +4,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
 import { Badge } from '../../components/Badge/Badge';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { buildPatientRowMenuItems } from '../../components/MenuPopover/patientRowMenuItems';
 import { useAppStore } from '../../store/useAppStore';
@@ -30,35 +30,35 @@ const nameHash = (s) => {
 };
 const ageDisplayOf = (row) => {
   if (row.age == null || row.age === '') return null;
-  // Already "Ny Mm" (e.g. rows mirrored from TOC/HCC) — pass through.
+  // Already "Ny Mm" (e.g. rows mirrored from TOC/HCC), pass through.
   if (/y/.test(String(row.age))) return String(row.age);
   return `${row.age}y ${nameHash(row.name) % 12}m`;
 };
 
 function TagList({ tags, max = 2 }) {
-  if (!tags?.length) return <span className={styles.dash}>—</span>;
+  if (!tags?.length) return <span className={styles.dash}>-</span>;
   const shown = tags.slice(0, max);
   const overflow = tags.length - max;
   return (
     <div className={styles.tagList}>
       {shown.map((t, i) => (
-        <Badge key={i} variant="ai-care" label={t} />
+        <Badge key={i} tone="primary" label={t} />
       ))}
-      {overflow > 0 && <Badge variant="overflow" label={`+${overflow}`} />}
+      {overflow > 0 && <Badge label={`+${overflow}`} />}
     </div>
   );
 }
 
 function ConditionList({ conditions, max = 2 }) {
-  if (!conditions?.length) return <span className={styles.dash}>—</span>;
+  if (!conditions?.length) return <span className={styles.dash}>-</span>;
   const shown = conditions.slice(0, max);
   const overflow = conditions.length - max;
   return (
     <div className={styles.tagList}>
       {shown.map((c, i) => (
-        <Badge key={i} variant="ai-risk" label={c} />
+        <Badge key={i} tone="danger" label={c} />
       ))}
-      {overflow > 0 && <Badge variant="overflow" label={`+${overflow}`} />}
+      {overflow > 0 && <Badge label={`+${overflow}`} />}
     </div>
   );
 }
@@ -71,7 +71,7 @@ function AttributesCell({ row }) {
     row.tpa && ['TPA', row.tpa],
   ].filter(Boolean);
 
-  if (!pairs.length) return <span className={styles.dash}>—</span>;
+  if (!pairs.length) return <span className={styles.dash}>-</span>;
 
   return (
     <div className={styles.attrCell}>
@@ -94,7 +94,7 @@ export const PATIENT_APP_COLUMN = {
   renderCell: (row) => (
     row.patientAppActive
       ? <PatientAppActiveIndicator size={16} />
-      : <span className={styles.dash}>—</span>
+      : <span className={styles.dash}>-</span>
   ),
 };
 
@@ -106,11 +106,11 @@ const ALL_PATIENTS_BASE_COLUMNS = [
       <div className={styles.contactCell}>
         <span className={styles.contactLine}>
           <Icon name="solar:letter-linear" size={13} color="var(--neutral-300)" />
-          {row.email || <span className={styles.dash}>—</span>}
+          {row.email || <span className={styles.dash}>-</span>}
         </span>
         <span className={styles.contactLine}>
           <Icon name="solar:phone-linear" size={13} color="var(--neutral-300)" />
-          {row.phone || <span className={styles.dash}>—</span>}
+          {row.phone || <span className={styles.dash}>-</span>}
         </span>
       </div>
     ),
@@ -119,7 +119,7 @@ const ALL_PATIENTS_BASE_COLUMNS = [
     key: 'location',
     label: 'Location',
     renderCell: (row) => {
-      const location = row.city && row.state ? `${row.city}, ${row.state}` : (row.location || '—');
+      const location = row.city && row.state ? `${row.city}, ${row.state}` : (row.location || '-');
       return <span className={rowStyles.dateText}>{location}</span>;
     },
   },
@@ -148,22 +148,22 @@ const ALL_PATIENTS_BASE_COLUMNS = [
           <span style={{ fontSize: 'var(--font-md)' }}>{row.pcp}</span>
         </div>
       ) : (
-        <span className={styles.dash}>—</span>
+        <span className={styles.dash}>-</span>
       )
     ),
   },
   {
     key: 'lastVisit',
     label: 'Last Visit',
-    renderCell: (row) => <span className={rowStyles.dateText}>{row.lastVisit || '—'}</span>,
+    renderCell: (row) => <span className={rowStyles.dateText}>{row.lastVisit || '-'}</span>,
   },
   {
     key: 'activeCareProgram',
     label: 'Active Care Program',
     renderCell: (row) => (
       row.activeCareProgram
-        ? <Badge variant="toc-engaged" label={row.activeCareProgram} />
-        : <span className={styles.dash}>—</span>
+        ? <Badge tone="info" label={row.activeCareProgram} />
+        : <span className={styles.dash}>-</span>
     ),
   },
   {
@@ -173,7 +173,7 @@ const ALL_PATIENTS_BASE_COLUMNS = [
       const ccm = row.ccmConsent;
       return (
         <Badge
-          variant={ccm === true ? 'compliance-pass' : ccm === false ? 'compliance-fail' : 'compliance-na'}
+          tone={ccm === true ? 'success' : ccm === false ? 'danger' : 'neutral'}
           label={ccm === true ? 'Yes' : ccm === false ? 'No' : 'N/A'}
         />
       );
@@ -186,7 +186,7 @@ const ALL_PATIENTS_BASE_COLUMNS = [
       const apcm = row.apcmConsent;
       return (
         <Badge
-          variant={apcm === true ? 'compliance-pass' : apcm === false ? 'compliance-fail' : 'compliance-na'}
+          tone={apcm === true ? 'success' : apcm === false ? 'danger' : 'neutral'}
           label={apcm === true ? 'Yes' : apcm === false ? 'No' : 'N/A'}
         />
       );
@@ -261,7 +261,7 @@ export function AllPatientsRow({ row, columns, hiddenSet, isSelected, onSelect }
 
   const ageDisplay = ageDisplayOf(row);
 
-  // Same QuickView payload shape as WorklistRow (TOC) / HCC — age in the
+  // Same QuickView payload shape as WorklistRow (TOC) / HCC: age in the
   // displayed "Ny Mm" form so the drawer banner matches the row.
   const quickViewPayload = {
     id: row.id,
@@ -332,31 +332,27 @@ export function AllPatientsRow({ row, columns, hiddenSet, isSelected, onSelect }
         <div className={rowStyles.actionsCell}>
           <ActionButton
             icon="solar:letter-linear"
-            size="L"
             tooltip="Email"
-            onClick={() => showToast(`Email ${row.name} — coming soon`)}
+            onClick={() => showToast(`Email ${row.name}, coming soon`)}
           />
           <span className={rowStyles.actionDivider} />
           <ActionButton
             ref={callBtnRef}
             icon="solar:phone-linear"
-            size="L"
             tooltip="Call patient"
             onClick={openCall}
           />
           <span className={rowStyles.actionDivider} />
           <ActionButton
             icon="solar:chat-dots-linear"
-            size="L"
             tooltip="Chat"
-            onClick={() => showToast(`Chat with ${row.name} — coming soon`)}
+            onClick={() => showToast(`Chat with ${row.name}, coming soon`)}
           />
           <span className={rowStyles.actionDivider} />
           <div style={{ position: 'relative' }}>
             <ActionButton
               ref={dropBtnRef}
               icon="solar:menu-dots-linear"
-              size="L"
               tooltip="More options"
               onClick={handleDropdownToggle}
             />

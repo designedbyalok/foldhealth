@@ -2,7 +2,7 @@
 -- clinical_notes_origin_migration.sql
 --
 -- Audit gap (P1-3, schema half): `clinical_notes` only supports one
--- origin — HEDIS Care Gap — represented by `gap_codes text[]`. Other
+-- origin, HEDIS Care Gap, represented by `gap_codes text[]`. Other
 -- workflows that have an "Add Note" affordance (Care Plan Goal, Care
 -- Plan Intervention, Care Program, Diagnosis Gap, Task drawer, patient
 -- header) either write to unrelated tables (`care_plan_*`,
@@ -15,12 +15,12 @@
 -- the P360 Notes tab AND its origin (e.g. a Goal drawer can list its
 -- linked notes).
 --
---   origin_kind text — one of a fixed enum (see CHECK); nullable so
+--   origin_kind text: one of a fixed enum (see CHECK); nullable so
 --                      existing HEDIS-origin rows can be backfilled
 --                      lazily. HEDIS Care Gap notes should read
 --                      'care_gap' once wired.
 --
---   origin_ref  text — the id of the origin record. Left as text so we
+--   origin_ref  text: the id of the origin record. Left as text so we
 --                      don't have to pick between bigint (tasks.id) and
 --                      uuid (care-plan/goal ids); the calling code
 --                      knows the shape per kind.

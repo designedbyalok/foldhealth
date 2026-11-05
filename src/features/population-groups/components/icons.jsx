@@ -62,19 +62,19 @@ export const ExpandIcon = ({ size = 16, color = 'currentColor' }) => (
   </svg>
 );
 
-/* Replace / swap — circular two-arrow glyph; used to discard the uploaded file and re-pick */
+/* Replace / swap: circular two-arrow glyph; used to discard the uploaded file and re-pick */
 export const ReplaceIcon = ({ size = 16, color = 'var(--neutral-300)' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M3.68 11.33H3.18V11.33H3.68ZM3.68 13L3.33 13.35C3.52 13.55 3.84 13.55 4.03 13.35L3.68 13ZM5.71 11.69C5.91 11.49 5.91 11.18 5.71 10.98C5.52 10.79 5.2 10.78 5.01 10.98L5.36 11.33L5.71 11.69ZM2.35 10.98C2.16 10.78 1.84 10.79 1.65 10.98C1.45 11.18 1.45 11.49 1.65 11.69L2 11.33L2.35 10.98ZM18.83 7.26C18.97 7.5 19.28 7.57 19.52 7.43C19.75 7.28 19.825 6.97 19.68 6.74L19.25 7L18.83 7.26ZM20.31 11L20.67 10.64C20.47 10.45 20.16 10.45 19.96 10.64L20.31 11ZM18.28 12.31C18.08 12.51 18.08 12.82 18.27 13.02C18.47 13.21 18.78 13.22 18.98 13.02L18.63 12.67L18.28 12.31ZM21.65 13.02C21.845 13.22 22.16 13.21 22.36 13.02C22.55 12.82 22.548 12.51 22.35 12.31L22 12.67L21.65 13.02ZM5.11 16.74C4.96 16.5 4.65 16.43 4.42 16.57C4.18 16.72 4.11 17.03 4.25 17.26L4.68 17L5.11 16.74ZM12.08 3V2.5C7.17 2.5 3.18 6.45 3.18 11.33H3.68H4.18C4.18 7.01 7.71 3.5 12.08 3.5V3ZM3.68 11.33H3.18L3.18 13H3.68H4.18L4.18 11.33H3.68ZM3.68 13L4.03 13.35L5.71 11.69L5.36 11.33L5.01 10.98L3.33 12.65L3.68 13ZM3.68 13L4.03 12.65L2.35 10.98L2 11.33L1.65 11.69L3.33 13.35L3.68 13ZM19.25 7L19.68 6.74C18.118 4.2 15.3 2.5 12.08 2.5V3V3.5C14.94 3.5 17.44 5.01 18.83 7.26L19.25 7ZM11.88 21V21.5C16.81 21.5 20.81 17.55 20.81 12.67H20.31H19.81C19.81 16.99 16.27 20.5 11.88 20.5V21ZM20.31 12.67H20.81V11H20.31H19.81V12.67H20.31ZM20.31 11L19.96 10.64L18.28 12.31L18.63 12.67L18.98 13.02L20.67 11.36L20.31 11ZM20.31 11L19.96 11.36L21.65 13.02L22 12.67L22.35 12.31L20.67 10.64L20.31 11ZM4.68 17L4.25 17.26C5.82 19.8 8.65 21.5 11.88 21.5V21V20.5C9.01 20.5 6.5 18.99 5.11 16.74L4.68 17Z" fill={color}/>
   </svg>
 );
 
-/* 80×80 file illustration — Figma node 1433:10245 asset (public/file-error-illustration.svg) */
+/* 80×80 file illustration: Figma node 1433:10245 asset (public/file-error-illustration.svg) */
 export const FileErrorIllustration = ({ size = 80 }) => (
   <img src="/file-error-illustration.svg" alt="" width={size} height={size} style={{ display:'block', flexShrink:0 }} />
 );
 
-/* Solid green check-in-circle — matched-member indicator */
+/* Solid green check-in-circle: matched-member indicator */
 export const CheckRoundIcon = ({ size = 24, color = 'var(--status-success)' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="12" cy="12" r="12" fill={color}/>

@@ -1,7 +1,7 @@
 {
   "primary": {
     "400": { "$value": "#7B5AC4", "$type": "color" },
-    "300": { "$value": "#A57BEC", "$type": "color", "$description": "Main brand purple — brightened for AAA on dark." },
+    "300": { "$value": "#A57BEC", "$type": "color", "$description": "Main brand purple: brightened for AAA on dark." },
     "200": { "$value": "#9B7BD9", "$type": "color" },
     "100": { "$value": "#241B36", "$type": "color" },
     "50": { "$value": "#1A1428", "$type": "color" },
@@ -13,7 +13,7 @@
     "100": { "$value": "#3A1E10", "$type": "color" }
   },
   "neutral": {
-    "500": { "$value": "#EDEAE3", "$type": "color", "$description": "Highest-contrast text — warm, never pure white." },
+    "500": { "$value": "#EDEAE3", "$type": "color", "$description": "Highest-contrast text: warm, never pure white." },
     "400": { "$value": "#D4D1CB", "$type": "color", "$description": "Primary body text." },
     "300": { "$value": "#ADA9A2", "$type": "color" },
     "200": { "$value": "#7E7B74", "$type": "color" },
@@ -23,7 +23,7 @@
     "75": { "$value": "#2A2724", "$type": "color" },
     "50": { "$value": "#252320", "$type": "color" },
     "25": { "$value": "#1F1D1A", "$type": "color" },
-    "0": { "$value": "#1A1815", "$type": "color", "$description": "Page surface — warm near-black." }
+    "0": { "$value": "#1A1815", "$type": "color", "$description": "Page surface: warm near-black." }
   },
   "status": {
     "error": { "$value": "#F15B58", "$type": "color" },

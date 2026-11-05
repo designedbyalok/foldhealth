@@ -1,12 +1,12 @@
 /**
- * Returned status icon — orange disc with a white return-arrow.
+ * Returned status icon: orange disc with a white return-arrow.
  * Provided verbatim from Figma (Jan-Feb 2026 file). The disc fill comes
  * through as a prop so the icon stays in lockstep with the status spec's
  * `color` field (defaults to `--secondary-300`, the orange "Returned" tone).
  *
  * @param {object}  props
- * @param {number}  [props.size=12]            — Width & height in px
- * @param {string}  [props.color='#F47A3E']    — Disc fill (secondary orange)
+ * @param {number}  [props.size=12], Width & height in px
+ * @param {string}  [props.color='#F47A3E']: Disc fill (secondary orange)
  * @param {string}  [props.className]
  */
 export function ReturnedIcon({ size = 12, color = '#F47A3E', className, ...rest }) {

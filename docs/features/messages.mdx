@@ -9,30 +9,30 @@ Route: `#/messages`.
 
 ## Layout
 
-- **Left panel** — Conversation list with unread badges, group filters, and search.
-- **Right panel** — **Chat Header** (patient banner, group name, agent status), **Chat Messages List** (auto-scrolling), **Chat Input Area** (composer, attachments, agent handoff).
+- **Left panel**: Conversation list with unread badges, group filters, and search.
+- **Right panel**: **Chat Header** (patient banner, group name, agent status), **Chat Messages List** (auto-scrolling), **Chat Input Area** (composer, attachments, agent handoff).
 
-## Walkthrough — respond to a patient thread
+## Walkthrough: respond to a patient thread
 
 <Steps>
   <Step title="Open Messages">
     Click **Messages** in the sidebar. The badge next to the icon shows unread count.
   </Step>
   <Step title="Pick a thread">
-    Left panel — click a conversation. Unread threads bold; the most recent message preview is shown inline.
+    Left panel: click a conversation. Unread threads bold; the most recent message preview is shown inline.
   </Step>
   <Step title="Read the context">
     The header shows the patient's Quick View and which chat group the thread lives in. Rules that routed it here (from **Settings → Messages**) are shown as chips.
   </Step>
   <Step title="Reply">
-    Type in the composer. Templates and macros are available via `/` — start typing `/` and a picker appears with your saved snippets.
+    Type in the composer. Templates and macros are available via `/`, start typing `/` and a picker appears with your saved snippets.
   </Step>
   <Step title="Hand off to an agent (optional)">
-    Click **Handoff to Agent** in the input toolbar — the routing rules for this group determine which agent picks it up. The thread stays visible; you'll be notified if it escalates back.
+    Click **Handoff to Agent** in the input toolbar, the routing rules for this group determine which agent picks it up. The thread stays visible; you'll be notified if it escalates back.
   </Step>
 </Steps>
 
-## Walkthrough — start a new chat
+## Walkthrough: start a new chat
 
 <Steps>
   <Step title="New Chat modal">
@@ -53,12 +53,12 @@ Route: `#/messages`.
 
 Chat groups (Care Team, Billing, Consent, etc.) are configured in **Settings → Messages**:
 
-- **Chat Groups** — each group has routing rules (which agents can respond, on what intents).
-- **Business Hours** — off-hours fallback: a stock reply, escalation to on-call, or handoff to an agent.
-- **Agent Rules** — per-group conditional overrides — e.g. "if message contains 'appointment', route to the scheduling agent."
+- **Chat Groups**: each group has routing rules (which agents can respond, on what intents).
+- **Business Hours**: off-hours fallback: a stock reply, escalation to on-call, or handoff to an agent.
+- **Agent Rules**, per-group conditional overrides, e.g. "if message contains 'appointment', route to the scheduling agent."
 
 ## Tips
 
-- **Every thread is patient-scoped** — jumping to the patient profile from the header keeps context.
-- **Attachments** — the composer accepts images and PDFs; both are stored in Supabase Storage and rendered inline.
-- **Notifications** — assigned care managers get a browser + email notification on new inbound; toggle in **Settings → Account**.
+- **Every thread is patient-scoped**: jumping to the patient profile from the header keeps context.
+- **Attachments**: the composer accepts images and PDFs; both are stored in Supabase Storage and rendered inline.
+- **Notifications**: assigned care managers get a browser + email notification on new inbound; toggle in **Settings → Account**.

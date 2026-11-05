@@ -4,9 +4,10 @@ import { Badge } from '../../../../../components/Badge/Badge';
 import { Button } from '../../../../../components/Button/Button';
 import { Icon } from '../../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../../components/Icon/DownChevronIcon';
+import { CollapsibleContent } from '../../../../../components/Collapsible/Collapsible';
 import { Link } from '../../../../../components/Link/Link';
-import { Toggle } from '../../../../../components/Toggle/Toggle';
-import { Alert } from '../../../../../components/Alert/Alert';
+import { SegmentedControl } from '../../../../../components/SegmentedControl/SegmentedControl';
+import { Banner } from '../../../../../components/Banner/Banner';
 import { toast } from '../../../../../components/Toast/sonnerToast';
 import { TasksTab } from '../../../left-panel/tabs/tasks/TasksTab/TasksTab';
 import { groupTasksForTab } from '../../../left-panel/tabs/tasks/TasksTab/groupTasksForTab';
@@ -77,7 +78,7 @@ function ProgramCard({ program, defaultExpanded, onAction }) {
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
       >
-        <Badge tone="info" size="S" label={program.code} />
+        <Badge tone="info" size="sm" label={program.code} />
         <span className={styles.programName}>{program.name}</span>
         <span className={styles.programProgress}>{program.progress}</span>
         <span className={styles.programNext}>
@@ -89,25 +90,27 @@ function ProgramCard({ program, defaultExpanded, onAction }) {
           className={[styles.programChevron, expanded ? styles.programChevronOpen : ''].filter(Boolean).join(' ')}
         />
       </button>
-      {expanded && hasSteps && (
-        <div className={styles.steps}>
-          {program.steps.map((s, i) => (
-            <div key={i} className={[styles.step, styles[`step_${s.status}`]].filter(Boolean).join(' ')}>
-              <StepDot status={s.status} />
-              <div className={styles.stepBody}>
-                <span className={styles.stepLabel}>{s.label}</span>
-                {s.sub && <span className={styles.stepSub}>{s.sub}</span>}
+      {hasSteps && (
+        <CollapsibleContent open={expanded}>
+          <div className={styles.steps}>
+            {program.steps.map((s, i) => (
+              <div key={i} className={[styles.step, styles[`step_${s.status}`]].filter(Boolean).join(' ')}>
+                <StepDot status={s.status} />
+                <div className={styles.stepBody}>
+                  <span className={styles.stepLabel}>{s.label}</span>
+                  {s.sub && <span className={styles.stepSub}>{s.sub}</span>}
+                </div>
+                {s.meta && <span className={styles.stepMeta}>{s.meta}</span>}
+                {s.action && (
+                  <Button variant="outline" size="sm" onClick={() => onAction(s.action)}>
+                    <Icon name={s.action === 'Schedule' ? 'solar:calendar-linear' : 'solar:pen-2-linear'} size={13} />
+                    {s.action}
+                  </Button>
+                )}
               </div>
-              {s.meta && <span className={styles.stepMeta}>{s.meta}</span>}
-              {s.action && (
-                <Button variant="secondary" size="S" onClick={() => onAction(s.action)}>
-                  <Icon name={s.action === 'Schedule' ? 'solar:calendar-linear' : 'solar:pen-2-linear'} size={13} />
-                  {s.action}
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </CollapsibleContent>
       )}
     </div>
   );
@@ -218,7 +221,7 @@ export function MonitoringTab({ patient }) {
         <div className={styles.mainCol}>
           {data.bannerText && (
             <div className={styles.alertSlot}>
-              <Alert tone="error" message={data.bannerText} meta={data.bannerDue} className={styles.bannerAlert} />
+              <Banner variant="outline" tone="danger" meta={data.bannerDue} className={styles.bannerAlert}>{data.bannerText}</Banner>
             </div>
           )}
 
@@ -281,11 +284,11 @@ export function MonitoringTab({ patient }) {
         />
 
         <aside className={styles.rail} style={{ width: railWidth }}>
-          <Button variant="primary" onClick={() => soon('Start touch')}>
+          <Button onClick={() => soon('Start touch')}>
             <Icon name="solar:phone-calling-linear" size={14} />
             Start touch
           </Button>
-          <Button variant="secondary" onClick={openComprehensiveCarePlan}>
+          <Button variant="outline" onClick={openComprehensiveCarePlan}>
             <Icon name="solar:clipboard-list-linear" size={14} />
             Open care plan
           </Button>
@@ -382,12 +385,12 @@ function StorySection({ events }) {
     <div className={styles.story}>
       <div className={styles.storyHead}>
         <SectionLabel>Story</SectionLabel>
-        <Toggle
+        <SegmentedControl
           className={styles.storyFilters}
-          size="S"
+          size="sm"
           items={STORY_FILTERS}
-          active={filter}
-          onChange={setFilter}
+          value={filter}
+          onValueChange={setFilter}
         />
       </div>
 
@@ -418,7 +421,7 @@ function StorySection({ events }) {
                 <div className={styles.storyCard}>
                   <div className={styles.storyCardHead}>
                     <span className={styles.storyCardTitle}>{event.title}</span>
-                    <Badge tone={cat.tone} size="S" label={cat.label} />
+                    <Badge tone={cat.tone} size="sm" label={cat.label} />
                     <button
                       type="button"
                       className={styles.storyToggle}
@@ -432,8 +435,10 @@ function StorySection({ events }) {
                       />
                     </button>
                   </div>
-                  {!isCollapsed && event.body && (
-                    <p className={styles.storyCardBody}>{event.body}</p>
+                  {event.body && (
+                    <CollapsibleContent open={!isCollapsed}>
+                      <p className={styles.storyCardBody}>{event.body}</p>
+                    </CollapsibleContent>
                   )}
                 </div>
               </div>

@@ -2,23 +2,23 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { PatientBanner } from '../../../components/PatientBanner/PatientBanner';
 import { Icon } from '../../../components/Icon/Icon';
-import { Input } from '../../../components/Input/Input';
 import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../components/Banner/Banner';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { CIS_ANTIGEN_STATUS, CIS_DOSE_STATUS, evaluateCis } from './cisRules';
 import { isoToMdy } from './useCisTracker';
 import { CisStatusBadge } from './CisStatus';
 import { CisDoseProgress } from './CisDoseProgress';
 import { DOSE_BADGE, fmtDate, isGiven, seriesStartDate } from './cisStatusConfig';
 import { VaccineTimeline } from './VaccineTimeline';
+import { DoseNoteInput } from './DoseNoteInput';
 import { DoseDateField } from './DoseDateField';
 import { DoseAppointmentChip } from './DoseAppointmentChip';
 import { appointmentForDose } from './cisAppointments';
 import { CisMoreMenu } from './CisMoreMenu';
-import { CisSaveRecordButton } from './CisSaveRecordButton';
+import { CisSyncEhrButton } from './CisSyncEhrButton';
 import { SeriesDosesPicker } from './SeriesDosesPicker';
 import styles from './VaccineCalendarDialog.module.css';
 
@@ -34,7 +34,7 @@ const STATUS_ORDER = Object.values(CIS_DOSE_STATUS);
 // Doses whose reason shows as a full-width bar under the row: red when the
 // dose does not count, grey when it counts but was given late.
 const REASON_BAR = {
-  [CIS_DOSE_STATUS.notCounted]: { tone: 'error', icon: 'solar:danger-triangle-linear', quiet: false },
+  [CIS_DOSE_STATUS.notCounted]: { tone: 'danger', icon: 'solar:danger-triangle-linear', quiet: false },
   [CIS_DOSE_STATUS.completedLate]: { tone: 'info', icon: 'solar:history-linear', quiet: true },
 };
 const reasonBarFor = (r) => (r.reason ? REASON_BAR[r.status] : null);
@@ -77,7 +77,7 @@ export function VaccineCalendarDialog({ member, immunizations, savedNotes, measu
     [member?.dob, immunizations, measurementYear, seriesDoses],
   );
   const [statusFilter, setStatusFilter] = useState([]);
-  const [view, setView] = useState('table');
+  const [view, setView] = useState('timeline');
   // Table rows grouped by vaccine, or by the routine age the dose starts at.
   const [viewBy, setViewBy] = useState('vaccine');
   const [confirmRemove, setConfirmRemove] = useState(null);
@@ -150,13 +150,14 @@ export function VaccineCalendarDialog({ member, immunizations, savedNotes, measu
       width={1120}
       headerRight={(
         <>
-          <CisSaveRecordButton size="L" member={member} result={result} notes={savedNotes} onSaveEvidence={onSaveEvidence} />
+          <CisSyncEhrButton member={member} result={result} notes={savedNotes} onSaveEvidence={onSaveEvidence} />
           <span className={styles.headerDivider} aria-hidden="true" />
           <CisMoreMenu
             size="L"
             member={member}
             result={result}
             notes={savedNotes}
+            onSaveEvidence={onSaveEvidence}
           />
           <span className={styles.headerDivider} aria-hidden="true" />
         </>
@@ -185,11 +186,11 @@ export function VaccineCalendarDialog({ member, immunizations, savedNotes, measu
 
           <div className={styles.toolbar}>
             <span className={styles.toolbarStart}>
-              <Toggle
-                size="S"
-                items={[{ key: 'table', label: 'Table' }, { key: 'timeline', label: 'Timeline' }]}
-                active={view}
-                onChange={setView}
+              <SegmentedControl
+                size="sm"
+                items={[{ key: 'timeline', label: 'Timeline' }, { key: 'table', label: 'Table' }]}
+                value={view}
+                onValueChange={setView}
               />
               <span className={styles.toolbarCount}>
                 {statusFilter.length ? `${shownDoses} of ${totalDoses} doses` : `${totalDoses} doses across ${result.antigens.length} vaccines`}
@@ -211,7 +212,17 @@ export function VaccineCalendarDialog({ member, immunizations, savedNotes, measu
             </span>
           </div>
 
-          {view === 'timeline' && result.dob && <VaccineTimeline result={result} antigenOrder={order} statusFilter={statusFilter} appointments={appointments} />}
+          {view === 'timeline' && result.dob && (
+            <VaccineTimeline
+              result={result}
+              antigenOrder={order}
+              statusFilter={statusFilter}
+              appointments={appointments}
+              notes={savedNotes}
+              onDateChange={changeDate}
+              onNoteSave={saveNote}
+            />
+          )}
           <div className={styles.tableWrap} hidden={view === 'timeline' && !!result.dob}>
             <table className={`${styles.table} ${byAge ? styles.tableByAge : ''}`}>
               <thead>
@@ -304,7 +315,7 @@ export function VaccineCalendarDialog({ member, immunizations, savedNotes, measu
                             {row.reason && !bar && <span className={styles.reasonText}>{row.reason}</span>}
                           </td>
                           <td className={styles.noteCell}>
-                            <NoteInput
+                            <DoseNoteInput
                               key={savedNote}
                               saved={savedNote}
                               label={`${antigen.label} dose ${row.number} note`}
@@ -316,9 +327,9 @@ export function VaccineCalendarDialog({ member, immunizations, savedNotes, measu
                         {bar && (
                           <tr className={styles.reasonBarRow}>
                             <td colSpan={6}>
-                              <InfoBar tone={bar.tone} variant="inline" icon={bar.icon} className={`${styles.reasonBar} ${bar.quiet ? styles.reasonBarQuiet : ''}`}>
+                              <Banner tone={bar.tone} size="sm" icon={bar.icon} className={`${styles.reasonBar} ${bar.quiet ? styles.reasonBarQuiet : ''}`}>
                                 {row.status}: {row.reason}.
-                              </InfoBar>
+                              </Banner>
                             </td>
                           </tr>
                         )}
@@ -372,22 +383,5 @@ function AgeCell({ group }) {
       <span className={styles.vaccineMeta}>{fmtDate(group.items[0].row.start)}</span>
       <span className={styles.vaccineMeta}>{given} of {group.items.length} given</span>
     </>
-  );
-}
-
-// Note saves when the field loses focus (or on Enter), if it changed.
-function NoteInput({ saved, label, onSave }) {
-  const [text, setText] = useState(saved);
-  const commit = () => { if (text.trim() !== saved) onSave(text); };
-  return (
-    <Input
-      variant="quiet"
-      value={text}
-      onChange={(e) => setText(e.target.value)}
-      onBlur={commit}
-      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-      placeholder="Add a note"
-      aria-label={label}
-    />
   );
 }

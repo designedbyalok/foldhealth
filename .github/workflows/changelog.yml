@@ -1,7 +1,7 @@
 name: Changelog
 
 # On every push to main, inserts one changelog_entries row per qualifying
-# commit into Supabase — this feeds the in-app Help → "What's New" drawer
+# commit into Supabase: this feeds the in-app Help → "What's New" drawer
 # (src/components/WhatsNewDrawer). Mapping mirrors the backfill in
 # supabase/changelog_migration.sql's runner:
 #   feat → New · fix → Fixed · perf/refactor/style → Improved
@@ -31,7 +31,7 @@ jobs:
 
           key = os.environ.get("SERVICE_ROLE_KEY", "").strip()
           if not key:
-              print("SUPABASE_SERVICE_ROLE_KEY secret not set — skipping.")
+              print("SUPABASE_SERVICE_ROLE_KEY secret not set: skipping.")
               sys.exit(0)
 
           KIND = {"feat": "New", "fix": "Fixed", "perf": "Improved",
@@ -45,7 +45,7 @@ jobs:
                   continue
               m = re.match(r"^(\w+)(?:\([^)]*\))?!?:\s*(.+)$", subject)
               if m and m.group(1) not in KIND:
-                  continue  # chore/docs/test/ci/build — not user-facing
+                  continue  # chore/docs/test/ci/build: not user-facing
               title = (m.group(2) if m else subject)
               rows.append({
                   "title": title[:1].upper() + title[1:],
@@ -55,7 +55,7 @@ jobs:
                   "created_at": c.get("timestamp"),
               })
           if not rows:
-              print("No user-facing commits in this push — nothing to publish.")
+              print("No user-facing commits in this push, nothing to publish.")
               sys.exit(0)
 
           req = urllib.request.Request(

@@ -1,4 +1,4 @@
--- Backfill gender on the 100 'manual' all_patients rows — they seeded with
+-- Backfill gender on the 100 'manual' all_patients rows: they seeded with
 -- age but NULL gender, so the shared "(gender•age)" demo string next to the
 -- patient name (AllPatientsRow renders it exactly like the TOC/HCC rows)
 -- never showed. Assignment is by first name so it reads naturally; the two
@@ -26,7 +26,7 @@ SET gender = CASE split_part(name, ' ', 1)
   WHEN 'Opal'   THEN 'F' WHEN 'Petra'  THEN 'F' WHEN 'Priya'  THEN 'F'
   WHEN 'Riya'   THEN 'F' WHEN 'Sana'   THEN 'F' WHEN 'Tara'   THEN 'F'
   WHEN 'Vera'   THEN 'F'
-  -- neutral names (Wren, …) — deterministic parity on the numeric member id
+  -- neutral names (Wren, …), deterministic parity on the numeric member id
   ELSE CASE WHEN (NULLIF(regexp_replace(member_id, '\D', '', 'g'), '')::bigint % 2) = 0 THEN 'F' ELSE 'M' END
 END
 WHERE gender IS NULL;

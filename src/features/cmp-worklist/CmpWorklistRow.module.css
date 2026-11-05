@@ -1,0 +1,149 @@
+/* CMP worklist row: the shared row shell from WorklistShell's
+   WorklistRow.module.css, plus the CMP cells (status pill, care plan status,
+   next action due, task badge). */
+
+.row         { composes: row         from '../../components/WorklistShell/WorklistRow.module.css'; }
+.rowSelected { composes: rowSelected from '../../components/WorklistShell/WorklistRow.module.css'; }
+.stickyLeft  { composes: stickyLeft  from '../../components/WorklistShell/WorklistRow.module.css'; }
+.stickyRight { composes: stickyRight from '../../components/WorklistShell/WorklistRow.module.css'; }
+.td          { composes: td          from '../../components/WorklistShell/WorklistRow.module.css'; }
+.checkTd     { composes: checkTd     from '../../components/WorklistShell/WorklistRow.module.css'; }
+.membersTd   { composes: membersTd   from '../../components/WorklistShell/WorklistRow.module.css'; }
+
+.patientCell     { composes: patientCell     from '../../components/WorklistShell/WorklistRow.module.css'; }
+.patientName     { composes: patientName     from '../../components/WorklistShell/WorklistRow.module.css'; }
+.patientNameLink { composes: patientNameLink from '../../components/WorklistShell/WorklistRow.module.css'; }
+.patientDemo     { composes: patientDemo     from '../../components/WorklistShell/WorklistRow.module.css'; }
+.patientMeta     { composes: patientMeta     from '../../components/WorklistShell/WorklistRow.module.css'; }
+.foldId          { composes: foldId          from '../../components/WorklistShell/WorklistRow.module.css'; }
+.langBadge       { composes: langBadge       from '../../components/WorklistShell/WorklistRow.module.css'; }
+
+.outreachWl       { composes: outreachWl       from '../../components/WorklistShell/WorklistRow.module.css'; }
+.outreachWlMain   { composes: outreachWlMain   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.outreachWlText   { composes: outreachWlText   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.outreachWlDate   { composes: outreachWlDate   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.outreachWlNone   { composes: outreachWlNone   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.outreachWlFailed { composes: outreachWlFailed from '../../components/WorklistShell/WorklistRow.module.css'; }
+.dotsRow          { composes: dotsRow          from '../../components/WorklistShell/WorklistRow.module.css'; }
+.dot              { composes: dot              from '../../components/WorklistShell/WorklistRow.module.css'; }
+.success          { composes: success          from '../../components/WorklistShell/WorklistRow.module.css'; }
+.failed           { composes: failed           from '../../components/WorklistShell/WorklistRow.module.css'; }
+.pending          { composes: pending          from '../../components/WorklistShell/WorklistRow.module.css'; }
+
+.actionsCell   { composes: actionsCell   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.actionDivider { composes: actionDivider from '../../components/WorklistShell/WorklistRow.module.css'; }
+
+/* Bare button around the Program Sub Status badge (the badge owns its look). */
+.statusBtn {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.statusBtn:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+  border-radius: var(--space-1);
+}
+
+/* Care Plan Status: coloured text with an icon, as on SNP. */
+.carePlanStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-base);
+}
+.carePlanSigned { color: var(--status-success); }
+.carePlanDraft  { color: var(--status-warning); }
+.carePlanNone   { color: var(--neutral-300); }
+
+.dueCell {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+}
+.dueDate {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.dueLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  font-weight: 500;
+}
+.dueOverdue { color: var(--status-error); }
+.dueSoon    { color: var(--status-warning); }
+.dueLater   { color: var(--neutral-200); }
+
+.taskBadge {
+  display: inline-block;
+  min-width: var(--space-5);
+  padding: 0 calc(var(--space-1) * 1.5);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--primary-300);
+  background: var(--primary-50);
+  border: 0.5px solid var(--primary-200);
+  border-radius: 999px;
+  text-align: center;
+}
+.taskBadgeMuted {
+  font-size: var(--font-md);
+  color: var(--neutral-300);
+}
+
+/* ── One row per member: per-enrollment columns stack a line per sub-program
+   (as HEDIS stacks gaps). Fixed item height keeps the lines aligned across
+   columns. ── */
+.rowMulti > td { vertical-align: top; }
+/* Doubled class: beats the shared .td padding it composes. */
+.td.tdStack { padding: 0; vertical-align: top; white-space: nowrap; }
+.td.tdStackCenter { vertical-align: middle; }
+.stackItems { display: flex; flex-direction: column; }
+.stackItem {
+  height: calc(var(--space-12) + var(--space-1));
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+}
+.stackItem + .stackItem { border-top: 0.5px solid var(--neutral-150); }
+.stackFooter {
+  height: var(--space-6);
+  display: flex;
+  align-items: center;
+  border-top: 0.5px solid var(--neutral-150);
+}
+.viewMoreBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+  width: 100%;
+  padding: var(--space-1) var(--space-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-300);
+  text-align: left;
+}
+.viewMoreBtn:hover { color: var(--primary-300); }
+
+/* Sub Program name opens that sub-program. */
+.subProgramLink {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  text-align: left;
+}
+.subProgramLink:hover { color: var(--primary-300); text-decoration: underline; }

@@ -40,7 +40,7 @@ export function Dropzone({
     if (!file) return false;
     if (mimeSet.size === 0) return true;
     if (mimeSet.has(file.type)) return true;
-    // Some browsers report an empty MIME for drag-drop from certain sources —
+    // Some browsers report an empty MIME for drag-drop from certain sources,
     // fall back to extension matching against the `accept` attr.
     if (!accept) return false;
     const exts = accept.split(',').map(s => s.trim().toLowerCase().replace(/^\./, ''));

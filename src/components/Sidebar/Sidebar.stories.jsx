@@ -11,7 +11,7 @@ export default {
     docs: {
       description: {
         component:
-          'Global left-rail navigation. Store-driven — the active page, theme, nav style, ' +
+          'Global left-rail navigation. Store-driven, the active page, theme, nav style, ' +
           'and unread badge all come from `useAppStore`. The pill background slides between ' +
           'items on route change (spring-eased, ~360ms) and icons crossfade between the ' +
           'linear and bold Solar variants. Use the `theme` and `navStyle` controls below to ' +
@@ -39,11 +39,11 @@ export default {
 };
 
 /**
- * StoryFrame — pushes the story's chosen theme + navStyle into the store on
+ * StoryFrame: pushes the story's chosen theme + navStyle into the store on
  * mount and restores previous state on unmount, so switching stories doesn't
  * leak app-wide theme changes into the next preview. It also patches the
  * store's `requestNavigate` while the story is mounted so every nav item is
- * clickable inside Storybook — the real app gates "coming soon" pages, but
+ * clickable inside Storybook: the real app gates "coming soon" pages, but
  * for demo purposes we want the pill to slide anywhere the user clicks.
  */
 function StoryFrame({ theme, navStyle }) {
@@ -77,7 +77,7 @@ function StoryFrame({ theme, navStyle }) {
       <Sidebar />
       <div style={{ flex: 1, padding: 24, fontFamily: "'Inter', sans-serif", color: 'var(--neutral-400)' }}>
         <div style={{ fontSize: 'var(--font-base)', fontWeight: 500, color: 'var(--neutral-500)', marginBottom: 6 }}>
-          Sidebar preview — theme: {theme}, navStyle: {navStyle}
+          Sidebar preview: theme: {theme}, navStyle: {navStyle}
         </div>
         <p style={{ fontSize: 'var(--font-md)', color: 'var(--neutral-300)', lineHeight: 1.6, maxWidth: 520 }}>
           Click any nav item to see the pill glide to it (spring-eased ~360ms) and the icon

@@ -1,10 +1,10 @@
 /**
- * Custom scalpel icon — the Surgical History section and its empty state.
+ * Custom scalpel icon: the Surgical History section and its empty state.
  * No Solar glyph matches it (Solar has no scalpel or knife).
  *
  * Path and stroke are Figma's (P360 6111:268212) unchanged. The 1.27778 stroke
  * is 1px once drawn: the viewBox is ~31 units where Solar's is 24, so
- * 31/24 ≈ 1.2778 keeps it the weight of every other icon — same reasoning as
+ * 31/24 ≈ 1.2778 keeps it the weight of every other icon, same reasoning as
  * AllergyIcon.
  *
  * @param {object}  props

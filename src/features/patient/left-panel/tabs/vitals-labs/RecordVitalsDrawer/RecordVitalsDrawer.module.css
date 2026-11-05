@@ -1,0 +1,57 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.onRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.onLabel {
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+}
+.date { width: 15rem; }
+
+/* One vital: grey "Last Recorded" strip over the input row. */
+.card {
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  overflow: hidden;
+}
+.cardHead {
+  padding: var(--space-1) var(--space-2);
+  background: var(--neutral-50);
+  border-bottom: 0.5px solid var(--neutral-150);
+  font-size: var(--font-sm);
+  line-height: 1.2;
+  color: var(--neutral-300);
+}
+.cardRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+}
+.name {
+  width: 9.375rem;
+  flex-shrink: 0;
+  font-size: var(--font-base);
+  line-height: 1.2;
+  color: var(--neutral-400);
+}
+.part {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+/* Wide enough for "value" or a reading like 120.5 beside the stepper. */
+.num { width: 6rem; }
+.unit {
+  font-size: var(--font-base);
+  line-height: 1.2;
+  color: var(--neutral-400);
+}

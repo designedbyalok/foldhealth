@@ -63,9 +63,9 @@ export function TaskDatePicker({ value, onSelect, overdue, compact = false }) {
             onClick={e => e.stopPropagation()}
           >
             <div className={styles.calendarHeader}>
-              <ActionButton icon="solar:alt-arrow-left-linear" size="S" onClick={() => setViewDate(new Date(year, month - 1, 1))} />
+              <ActionButton icon="solar:alt-arrow-left-linear" size="sm" onClick={() => setViewDate(new Date(year, month - 1, 1))} />
               <span className={styles.calendarTitle}>{MONTH_NAMES[month]} {year}</span>
-              <ActionButton icon="solar:alt-arrow-right-linear" size="S" onClick={() => setViewDate(new Date(year, month + 1, 1))} />
+              <ActionButton icon="solar:alt-arrow-right-linear" size="sm" onClick={() => setViewDate(new Date(year, month + 1, 1))} />
             </div>
             <div className={styles.calendarGrid}>
               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <div key={i} className={styles.calendarDayLabel}>{d}</div>)}
@@ -182,7 +182,7 @@ export function DetailDropdown({ value, options, onSelect, renderOption, childre
           setOpen(v => !v);
         }}
       >
-        {children || value || '—'}
+        {children || value || '-'}
       </button>
       {open && !disabled && pos && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => { setOpen(false); setSearch(''); }}>
@@ -197,7 +197,7 @@ export function DetailDropdown({ value, options, onSelect, renderOption, childre
                 ? { bottom: Math.max(8, window.innerHeight - pos.top) }
                 : { top: pos.top }),
               // 'right' aligns the popover's right edge to the trigger's right
-              // edge so it opens leftward — used when the trigger sits near
+              // edge so it opens leftward: used when the trigger sits near
               // the right rail of a drawer and a left-anchored popover would
               // overflow the viewport (Figma 4523:*).
               ...(align === 'right'

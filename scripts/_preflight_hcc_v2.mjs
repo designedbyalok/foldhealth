@@ -1,6 +1,6 @@
 // Preflight check for supabase/hcc_schema_v2_types_and_normalization.sql
 // Confirms every row's text values will convert cleanly to the new types.
-// Read-only — makes no changes.
+// Read-only: makes no changes.
 
 import { readFileSync } from 'node:fs';
 import pg from 'pg';
@@ -22,7 +22,7 @@ console.log(`Connected to ${url.host}${url.pathname}\n`);
 
 const checks = [
   {
-    label: 'hcc_members.age — must match /(\\d+y)?\\s*(\\d+m)?/ and be non-empty',
+    label: 'hcc_members.age, must match /(\\d+y)?\\s*(\\d+m)?/ and be non-empty',
     sql: `
       SELECT id, name, age FROM hcc_members
        WHERE age IS NULL
@@ -30,7 +30,7 @@ const checks = [
     `,
   },
   {
-    label: "hcc_members.create_date — must be parseable as MM/DD/YYYY",
+    label: "hcc_members.create_date, must be parseable as MM/DD/YYYY",
     sql: `
       SELECT id, name, create_date FROM hcc_members
        WHERE create_date IS NOT NULL
@@ -38,7 +38,7 @@ const checks = [
     `,
   },
   {
-    label: 'hcc_members.raf_score — must parse as numeric',
+    label: 'hcc_members.raf_score, must parse as numeric',
     sql: `
       SELECT id, name, raf_score FROM hcc_members
        WHERE raf_score IS NOT NULL AND raf_score <> ''
@@ -46,7 +46,7 @@ const checks = [
     `,
   },
   {
-    label: 'hcc_members.raf_impact — must parse as numeric',
+    label: 'hcc_members.raf_impact, must parse as numeric',
     sql: `
       SELECT id, name, raf_impact FROM hcc_members
        WHERE raf_impact IS NOT NULL AND raf_impact <> ''
@@ -54,7 +54,7 @@ const checks = [
     `,
   },
   {
-    label: 'hcc_members.decile — must parse as integer',
+    label: 'hcc_members.decile, must parse as integer',
     sql: `
       SELECT id, name, decile FROM hcc_members
        WHERE decile IS NOT NULL AND decile <> ''
@@ -62,7 +62,7 @@ const checks = [
     `,
   },
   {
-    label: 'hcc_members.advillness — must parse as integer',
+    label: 'hcc_members.advillness, must parse as integer',
     sql: `
       SELECT id, name, advillness FROM hcc_members
        WHERE advillness IS NOT NULL AND advillness <> ''
@@ -70,7 +70,7 @@ const checks = [
     `,
   },
   {
-    label: 'hcc_members.frailty — must parse as integer',
+    label: 'hcc_members.frailty, must parse as integer',
     sql: `
       SELECT id, name, frailty FROM hcc_members
        WHERE frailty IS NOT NULL AND frailty <> ''
@@ -78,7 +78,7 @@ const checks = [
     `,
   },
   {
-    label: 'hcc_diagnosis_gaps.last_activity — must be MM/DD/YYYY or NULL',
+    label: 'hcc_diagnosis_gaps.last_activity, must be MM/DD/YYYY or NULL',
     sql: `
       SELECT id, member_name, last_activity FROM hcc_diagnosis_gaps
        WHERE last_activity IS NOT NULL AND last_activity <> ''
@@ -86,7 +86,7 @@ const checks = [
     `,
   },
   {
-    label: 'hcc_members.dos_list — entries with unparseable date field',
+    label: 'hcc_members.dos_list, entries with unparseable date field',
     sql: `
       SELECT m.id, m.name, elem->>'date' AS bad_date
         FROM hcc_members m
@@ -101,10 +101,10 @@ let anyIssues = false;
 for (const check of checks) {
   const { rows } = await client.query(check.sql);
   if (rows.length === 0) {
-    console.log(`  ok   — ${check.label}`);
+    console.log(`  ok: ${check.label}`);
   } else {
     anyIssues = true;
-    console.log(`\n  BAD  — ${check.label}`);
+    console.log(`\n  BAD: ${check.label}`);
     console.log(`         ${rows.length} row(s) will fail conversion:`);
     for (const r of rows.slice(0, 20)) {
       console.log('         ', r);

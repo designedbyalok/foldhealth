@@ -8,7 +8,7 @@ import styles from './RoleTooltip.module.css';
  * to whatever element wraps it via `children`; opens on `mouseenter`/focus
  * with a tiny 120ms delay, closes immediately on leave/blur.
  *
- * Mirrors Figma node 50:297369 — small white card, 24×24 colored initials
+ * Mirrors Figma node 50:297369, small white card, 24×24 colored initials
  * avatar on the left, two text lines on the right (name + role), 6px
  * arrow tail centred under the card pointing back at the trigger.
  *
@@ -79,7 +79,7 @@ function TooltipCard({ rect, name, role, initials, variant }) {
   // Tooltip floats just above the trigger, centred horizontally over it.
   // Width is dynamic but capped so long names wrap gracefully.
   const W_MAX = 260;
-  // Render off-screen first to measure (single render cycle) — simpler is to
+  // Render off-screen first to measure (single render cycle): simpler is to
   // just use a generous max-width and let the browser size it naturally.
   const triggerCenterX = rect.left + rect.width / 2;
   const triggerTop = rect.top;

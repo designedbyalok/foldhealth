@@ -6,7 +6,7 @@ export default {
   tags: ['autodocs'],
   parameters: {
     docs: {
-      description: { component: 'Stateful upload widget — wraps `Dropzone` and manages drop → uploading → uploaded states. Emits the picked file via `onChange`.' },
+      description: { component: 'Stateful upload widget: wraps `Dropzone` and manages drop → uploading → uploaded states. Emits the picked file via `onChange`.' },
     },
   },
   argTypes: {

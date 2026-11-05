@@ -1,0 +1,75 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.identityText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--font-lg);
+  color: var(--neutral-500);
+}
+
+.meta {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-2);
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.note {
+  margin: calc(-1 * var(--space-2)) 0 0;
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+.rule {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--neutral-100);
+}
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+}
+
+.consent label {
+  cursor: pointer;
+}
+
+.error {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--status-error);
+}

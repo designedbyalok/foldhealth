@@ -2,7 +2,7 @@ import { useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import styles from './EditableText.module.css';
 
 /**
- * Fold Health EditableText — text you edit where it stands. Unlike
+ * Fold Health EditableText: text you edit where it stands. Unlike
  * InlineEditable it never swaps to an input: the text itself becomes
  * editable (contentEditable, plain text only), so its size, weight and
  * colour stay exactly as they are. Enter or leaving it commits, Escape

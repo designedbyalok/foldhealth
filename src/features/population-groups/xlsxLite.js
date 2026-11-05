@@ -3,7 +3,7 @@
    ZIP central directory, inflate the needed parts with the browser-native
    DecompressionStream('deflate-raw'), then extract cell values from the first
    worksheet. Returns rows as string[][] (same shape as the CSV parser).
-   Only the first sheet is read — sufficient for the patient-list upload.
+   Only the first sheet is read, sufficient for the patient-list upload.
 */
 
 const td = new TextDecoder();

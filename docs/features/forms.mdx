@@ -3,7 +3,7 @@ title: "Forms"
 description: "Typeform-style form builder with conditional logic, a scoring engine, and validated instrument templates (PHQ-9, GAD-7, HRA)."
 ---
 
-**Forms** is a full-featured builder for the questionnaires care teams use daily — HRAs, PHQ-9, GAD-7, patient-intake, SDOH screeners. Forms live in **Settings → Content → Forms**, and every form has three surfaces: **Build**, **Preview**, **Analyze**.
+**Forms** is a full-featured builder for the questionnaires care teams use daily, HRAs, PHQ-9, GAD-7, patient-intake, SDOH screeners. Forms live in **Settings → Content → Forms**, and every form has three surfaces: **Build**, **Preview**, **Analyze**.
 
 ## What's included
 
@@ -18,11 +18,11 @@ description: "Typeform-style form builder with conditional logic, a scoring engi
     Weighted per-question scoring with typed scale definitions (`scoring/evaluate.js`).
   </Card>
   <Card title="Validated instruments" icon="clipboard-check">
-    PHQ-9, GAD-7, HRA, and other standard instruments pre-configured with scoring — pick from a template on new form.
+    PHQ-9, GAD-7, HRA, and other standard instruments pre-configured with scoring, pick from a template on new form.
   </Card>
 </CardGroup>
 
-## Walkthrough — build a form
+## Walkthrough: build a form
 
 <Steps>
   <Step title="Open Forms">
@@ -32,7 +32,7 @@ description: "Typeform-style form builder with conditional logic, a scoring engi
     Pick **Blank** or a validated instrument (PHQ-9, GAD-7, HRA, SDOH). Templates come pre-populated with questions and scoring.
   </Step>
   <Step title="Add questions in the Build tab">
-    Drag from the **Component Catalog** on the left. Each question has a settings panel on the right — label, help text, required, validation rules.
+    Drag from the **Component Catalog** on the left. Each question has a settings panel on the right, label, help text, required, validation rules.
   </Step>
   <Step title="Wire up logic">
     Switch to the **Logic** tab (`LogicPanel`). Add rules: "If Q3 = No, skip to Q8." Rules are expressed as human-readable IF/THEN and evaluated in order.
@@ -41,14 +41,14 @@ description: "Typeform-style form builder with conditional logic, a scoring engi
     Switch to the **Score** tab (`ScorePanel`). Assign per-answer weights, choose scale types, and define thresholds (e.g. PHQ-9: 5 mild, 10 moderate, 15 moderately severe, 20 severe). Watch computed scores in the live sample panel.
   </Step>
   <Step title="Preview">
-    Switch to the **Preview** tab — the form renders end-to-end with logic and scoring active, exactly as the patient will see it.
+    Switch to the **Preview** tab: the form renders end-to-end with logic and scoring active, exactly as the patient will see it.
   </Step>
   <Step title="Publish">
     Save and set status to **Active**. The form is now available to worklists, campaigns, and API consumers.
   </Step>
 </Steps>
 
-## Walkthrough — send a form to a patient
+## Walkthrough: send a form to a patient
 
 <Steps>
   <Step title="From a worklist row or patient profile">
@@ -69,10 +69,10 @@ description: "Typeform-style form builder with conditional logic, a scoring engi
 
 The engine (`scoring/evaluate.js`) supports:
 
-- **Per-answer weights** — different answers to the same question carry different scores.
-- **Typed scales** — sum, average, thresholded, or custom expressions.
-- **Named sub-scores** — a single form can produce multiple scores (e.g. PHQ-9 total + suicidality flag).
-- **Live evaluation** — the ScorePanel evaluates scores as you type in Preview.
+- **Per-answer weights**: different answers to the same question carry different scores.
+- **Typed scales**: sum, average, thresholded, or custom expressions.
+- **Named sub-scores**: a single form can produce multiple scores (e.g. PHQ-9 total + suicidality flag).
+- **Live evaluation**: the ScorePanel evaluates scores as you type in Preview.
 
 Sample validated instruments live in `validatedInstruments.js` with unit tests in `validatedInstruments.test.js`.
 
@@ -80,14 +80,14 @@ Sample validated instruments live in `validatedInstruments.js` with unit tests i
 
 Live renders use `FormRenderer.jsx` with:
 
-- **Layout engine** (`layout.js`) — sections, pagination, and progress bars.
-- **Flow engine** (`flow.js`) — evaluates logic rules turn-by-turn.
-- **Recall** (`recall.js`) — inline variable substitution (`Hello {{first_name}}`).
+- **Layout engine** (`layout.js`): sections, pagination, and progress bars.
+- **Flow engine** (`flow.js`): evaluates logic rules turn-by-turn.
+- **Recall** (`recall.js`): inline variable substitution (`Hello {{first_name}}`).
 
 Every engine has a companion `.test.js` that pins behavior.
 
 ## Tips
 
-- **Instruments come with citations.** Validated forms link to the source publication in the settings panel — useful for audit.
+- **Instruments come with citations.** Validated forms link to the source publication in the settings panel, useful for audit.
 - **Logic and scoring are independent.** A hidden question still contributes to score if it was answered before being hidden; configure exclusion in the Score panel if that's not what you want.
-- **Analytics is live.** Charts update as new responses land — no batch job.
+- **Analytics is live.** Charts update as new responses land, no batch job.

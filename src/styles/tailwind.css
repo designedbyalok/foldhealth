@@ -8,7 +8,7 @@
    The core semantic colors (--color-background, --color-popover,
    --color-foreground, etc.) flip automatically because they map
    to design tokens that are redefined under [data-theme="dark"]
-   in tokens.css — so most components need no `dark:` utilities.
+   in tokens.css, so most components need no `dark:` utilities.
    This variant exists for the few hand-written Tailwind utilities
    that need explicit dark overrides (e.g., overlay opacities).
    ═══════════════════════════════════════════════════════════ */

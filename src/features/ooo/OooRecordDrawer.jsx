@@ -5,10 +5,10 @@ import { Input } from '../../components/Input/Input';
 import { DateTimePicker } from '../../components/DateTimePicker/DateTimePicker';
 import { Select } from '../../components/Select/Select';
 import { Switch } from '../../components/Switch/Switch';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Icon } from '../../components/Icon/Icon';
 import { Textarea } from '../../components/Textarea/Textarea';
-import { InfoBar } from '../../components/InfoBar/InfoBar';
+import { Banner } from '../../components/Banner/Banner';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { useAppStore } from '../../store/useAppStore';
 import { appointmentsToReassign, capFirst, DEFAULT_AUTO_REPLY, overlapPlan, personKey, fromPickerValue, rangeChange, toPickerValue, validateOoo } from './oooUtils';
@@ -177,8 +177,8 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], onClo
 
   const headerRight = (
     <>
-      <Button variant="primary" size="L" disabled={(isEdit && !dirty) || saving || (touched && hasErrors)} onClick={save}>
-        {saving ? 'Saving…' : 'Save'}
+      <Button disabled={isEdit && !dirty || touched && hasErrors} onClick={save} loading={saving}>
+        Save
       </Button>
       <span className={styles.headerDivider} aria-hidden="true" />
     </>
@@ -202,10 +202,10 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], onClo
     >
       <div className={styles.form}>
         {!isEdit && (
-          <InfoBar tone="info" variant="inline">Mark users OOO by selecting date range below. Appointments (if any) will be reassigned next.</InfoBar>
+          <Banner tone="info" size="sm">Mark users OOO by selecting date range below. Appointments (if any) will be reassigned next.</Banner>
         )}
         {isEdit && change.extended && (
-          <InfoBar tone="warning" variant="inline">Appointments on the newly added dates can be reassigned once you save.</InfoBar>
+          <Banner icon="solar:info-circle-linear" tone="warning" size="sm">Appointments on the newly added dates can be reassigned once you save.</Banner>
         )}
 
         {user || isEdit ? (
@@ -220,7 +220,7 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], onClo
             options={pickable}
             value={values.userName ? personKey({ id: values.userId, name: values.userName }) : undefined}
             errorText={touched && !values.userName ? 'Pick a provider.' : undefined}
-            onChange={(key) => {
+            onValueChange={(key) => {
               const u = users.find(x => personKey(x) === key);
               if (u) set({ userName: u.name, userEmail: u.email || '', userRole: u.role || '', userId: u.id || null });
             }}
@@ -277,10 +277,10 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], onClo
             <div className={styles.overlapBody}>
               <p className={styles.overlapText}>Extend that record to cover the rest, or create a new one for the remaining dates.</p>
               <div className={styles.overlapActions}>
-                <Button variant="primary" size="S" disabled={saving || !overlap.extend.length} onClick={editExisting}>Edit Existing</Button>
+                <Button size="sm" disabled={saving || !overlap.extend.length} onClick={editExisting}>Edit Existing</Button>
                 <Button
-                  variant="secondary"
-                  size="S"
+                  variant="outline"
+                  size="sm"
                   disabled={saving || !freeTime}
                   onClick={() => set({ startAt: new Date(freeTime.from).toISOString(), endAt: new Date(freeTime.to).toISOString() })}
                 >
@@ -339,7 +339,7 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], onClo
                 rows={3}
                 value={values.autoReplyMessage}
                 maxLength={500}
-                onChange={(value) => set({ autoReplyMessage: value })}
+                onValueChange={(value) => set({ autoReplyMessage: value })}
                 aria-label="Auto reply message"
               />
               {err('autoReplyMessage') && <span className={styles.fieldError}>{err('autoReplyMessage')}</span>}

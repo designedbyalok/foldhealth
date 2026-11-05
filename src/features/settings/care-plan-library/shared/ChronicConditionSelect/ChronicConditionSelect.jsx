@@ -3,7 +3,7 @@ import { Select } from '../../../../../components/Select/Select';
 
 const CONDITIONS_API = 'https://clinicaltables.nlm.nih.gov/api/conditions/v3/search';
 
-// Select takes { value, label } pairs — plain strings render blank rows.
+// Select takes { value, label } pairs, plain strings render blank rows.
 const asOptions = (list) => (list || []).map(v => ({ value: v, label: v }));
 
 /**
@@ -59,7 +59,7 @@ export function ChronicConditionSelect({ value, onChange, label = 'Chronic condi
       label={label}
       options={options}
       value={value}
-      onChange={onChange}
+      onValueChange={onChange}
       multiple={multiple}
       checkboxes={multiple}
       badges={multiple}

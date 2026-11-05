@@ -15,9 +15,9 @@ import {
 } from './ChartDetailDrawer.utils';
 
 // Canonical engine status (statusSpec.js keys) → drawer UI status key.
-// Used by effectiveStatus so a change on any surface — DiagPanel status
+// Used by effectiveStatus so a change on any surface, DiagPanel status
 // menu, engine cascade (Records Requested / Returned), or this drawer's
-// own dropdown — flows into the pill on the next render.
+// own dropdown: flows into the pill on the next render.
 const ENGINE_TO_UI = {
   'Completed':    'completed',
   'Insufficient': 'insufficient',
@@ -84,12 +84,12 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   // Per-document "More actions" menu. Anchored on the clicked doc's ⋯
   // button; holds { docId, top, left }.
   const [moreMenu, setMoreMenu] = useState(null);
-  // Fail-reason prompt — { id, name } | null. Set by failDoc; confirming
+  // Fail-reason prompt: { id, name } | null. Set by failDoc; confirming
   // logs the reason and applies the Fail status.
   const [failPrompt, setFailPrompt] = useState(null);
   // Per-doc fail metadata captured by the inline Fail prompt. Keyed by doc id
   // so the hover tooltip on each row's "Failed" badge can render the reasons
-  // + comment. Doesn't clear on Undo — the entry is stale until the doc is
+  // + comment. Doesn't clear on Undo: the entry is stale until the doc is
   // failed again, which overwrites it, so we drop it on `undoDoc`.
   // Lazily seeded from the persisted hccChartFailDetails slice so reopening
   // this drawer on a previously-failed doc restores the reason checkboxes
@@ -99,12 +99,12 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   );
   // Confirmation dialogs for the destructive actions on the per-doc menu.
   const [confirmDeleteDoc, setConfirmDeleteDoc] = useState(null);
-  // Inline edit — when set to a doc id, the doc card renders an inline
+  // Inline edit: when set to a doc id, the doc card renders an inline
   // Caption + Document Type editor below its header, in place of the
   // per-row Pass/Fail/⋯ actions. Doesn't reuse UploadChartDrawer here
   // because that drawer's z-index would sit behind this ChartDetailDrawer.
   const [editingDocId, setEditingDocId] = useState(null);
-  // Review Progress popover state — hover-open + click-to-pin (mirrors the
+  // Review Progress popover state: hover-open + click-to-pin (mirrors the
   // DiagPanel status-pill treatment). Anchored on the "Support Team" badge
   // in the drawer header so a reviewer can peek at the four-stage timeline
   // without leaving the drawer.
@@ -155,7 +155,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
     }
   };
 
-  // Support-scoped toolbar state — search over the doc list, filter row
+  // Support-scoped toolbar state: search over the doc list, filter row
   // toggle, and the responsive More overflow menu. Mirrors DiagPanel's
   // toolbar so the two review surfaces look and behave identically.
   // `docFilters` matches the shared FilterChip shape (array per key) so
@@ -183,7 +183,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   const actionRef = useRef(null);
   const [manualStatus, setManualStatus] = useState(null);
   const [actionPos, setActionPos] = useState(null);
-  // Insufficient confirmation modal — non-null when open. Selecting
+  // Insufficient confirmation modal: non-null when open. Selecting
   // Insufficient in the status menu opens this instead of applying the
   // status directly, so support has to name a reason (and can drop a note)
   // before the record is flagged as unusable evidence.
@@ -194,7 +194,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   const removeChartDoc = useAppStore(s => s.removeChartDoc);
   const updateChartDocMeta = useAppStore(s => s.updateChartDocMeta);
   const addActivityEntry = useAppStore(s => s.addActivityEntry);
-  // Workflow-engine writers — these keep the Support assignee + status in sync
+  // Workflow-engine writers: these keep the Support assignee + status in sync
   // with the worklist Support column and the Diagnosis Gaps Details view.
   const hccReassignRole = useAppStore(s => s.hccReassignRole);
   const hccSetRoleStatus = useAppStore(s => s.hccSetRoleStatus);
@@ -208,7 +208,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   const liveMember = useAppStore(s => s.hccMembers.find(x => x.id === member?.id));
   const m = liveMember || member;
 
-  // Ensure the engine has seeded per-DOS assignments for this patient — the
+  // Ensure the engine has seeded per-DOS assignments for this patient, the
   // Chart Review drawer can open from the worklist without the Diagnosis Gaps
   // drawer having run its own initializeHccPatient effect, and without this
   // the badge + assignee lookups would read `null` from `hccDosAssignments`.
@@ -227,7 +227,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   const [upVisitType, setUpVisitType] = useState('');
   const [uploadKey, setUploadKey] = useState(0); // remount UploadDropField to reset it
   // Once a file lands in the drop zone, seed the Caption with the file's
-  // name (extension stripped) so the user has a sensible default — unless
+  // name (extension stripped) so the user has a sensible default, unless
   // they've already typed their own caption. Seeded here, at the drop, rather
   // than from an effect that re-derives it on every render.
   const setUpFile = (file) => {
@@ -271,7 +271,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
 
   const isEmpty = docs.length === 0;
   // While the left pane is on Comments/Timeline the doc list has no
-  // "selected" card — clearing `selected` (not just `selectedId`) is
+  // "selected" card: clearing `selected` (not just `selectedId`) is
   // what drops the highlight ring on the right-hand doc rows. The
   // fallback to docs[0] only kicks in when a doc IS supposed to be
   // active (PDF preview mode), so the strip doesn't render blank.
@@ -286,7 +286,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
     ? m.dos_list
     : (m?.dos ? [{ date: m.dos }] : []);
   // Support-only DOS deletion. Available only while Support still owns the
-  // record — the moment support marks Completed/Rejected the record moves
+  // record: the moment support marks Completed/Rejected the record moves
   // downstream to the Coder and Delete disappears.
   const canDeleteDos = hccUserRole === 'Support'
     && !['Completed', 'Rejected'].includes(m?.supS);
@@ -304,7 +304,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
     if (r) setAssignPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
   };
 
-  // Current Support assignee, read live from the store — must match the
+  // Current Support assignee, read live from the store, must match the
   // worklist RoleStatusCell rule: a lingering name with no real status (or
   // status 'Assign') still counts as UNASSIGNED. Only a name + concrete
   // status shows an owner.
@@ -316,7 +316,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
 
   // DOS anchor for engine writes + reads. Mirrors DiagPanel's `currentDos`
   // rule (`dos_list[0]`) so the Chart Review and Diagnosis Gaps drawers
-  // always target the same engine record for the same member — otherwise
+  // always target the same engine record for the same member, otherwise
   // Support/Coder status would visibly diverge between the two views.
   // Falls back to `member.dos` / `member.date` when a member has no
   // `dos_list` (older seed data).
@@ -359,7 +359,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   };
 
   // Pass/Fail writes the doc status through to the store (worklist evidence
-  // cell) AND — because changing a document's status is a Support action —
+  // cell) AND: because changing a document's status is a Support action,
   // assigns the acting user and syncs the derived Support status everywhere.
   // failMeta { reasons, note } is only meaningful when action === 'fail'; on
   // pass/undo the store clears any previously persisted fail_reasons + fail_note
@@ -369,7 +369,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
       ? { ...docActions, [id]: action }
       : (() => { const n = { ...docActions }; delete n[id]; return n; })();
     setDocActions(next);
-    // Persist the per-doc mark immediately so a crash doesn't lose it —
+    // Persist the per-doc mark immediately so a crash doesn't lose it,
     // this write is scoped to hcc_chart_status and does NOT flip the
     // record's Support status by itself. `deferSync` suppresses the
     // store's all-failed → Insufficient cascade; the drawer syncs the
@@ -385,7 +385,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
       },
     );
     if (action) ensureSupportAssignee();
-    // Defer the Support-member status sync to drawer close — flipping
+    // Defer the Support-member status sync to drawer close, flipping
     // it here would move the record out of the "New / In Progress"
     // filter and unmount the row (and this drawer with it) before the
     // user finishes reviewing.
@@ -399,7 +399,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
     if (!wasAllReviewed && isAllReviewed) showToast('Support Task is Completed');
   };
   const passDoc = (id) => {
-    // Passing a doc supersedes any open Fail form on the same doc — close it
+    // Passing a doc supersedes any open Fail form on the same doc, close it
     // so the reason list + comment field don't linger over a Passed doc.
     if (failPrompt?.id === id) setFailPrompt(null);
     applyDocAction(id, 'pass');
@@ -435,13 +435,13 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
       _memberId: member?.id,
       t: 'doc-status', by: 'You', role: 'Support Team',
       headline: `Marked "${doc?.n || failPrompt.name}" as Failed`,
-      details: [{ note: note ? `${reasonText} — ${note}` : reasonText }],
+      details: [{ note: note ? `${reasonText}: ${note}` : reasonText }],
     });
     showToast(`Marked ${failPrompt.name} failed`);
     setFailPrompt(null);
   };
 
-  // Count of comments the shared `hccDiagComments` store holds — used to
+  // Count of comments the shared `hccDiagComments` store holds: used to
   // show a numeric badge on the header Comment action so support can see at
   // a glance how much discussion is on the record without opening the panel.
   // Same slice DiagPanel's Comments tab reads, so the two counts agree.
@@ -457,7 +457,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   // the Review Progress popover in realtime (see teamReviewStages).
   const baseReviewStages = buildReviewStages(member, dosStateForBadge);
   // Once Support has handed off (marked Completed) and a Coder is on the DOS,
-  // the Support assignee is no longer editable from this drawer — reassigning
+  // the Support assignee is no longer editable from this drawer, reassigning
   // would break the linear Support → Coder pipeline the engine enforces.
   // Falls back to the member-level `sup/supS/cdr` fields because the drawer's
   // primary-DOS lookup can miss the engine record when member.rp/pos don't
@@ -469,7 +469,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   const supportLocked = supportCompletedFlag && coderAssignedFlag;
 
   // While the Coder is actively working the record (any status other than
-  // "Record Requested"), Support has already handed off — so record status
+  // "Record Requested"), Support has already handed off, so record status
   // AND per-doc Pass/Fail/Undo actions freeze. When the Coder flips to
   // "Record Requested" they're explicitly bouncing docs back to Support, so
   // every action unlocks again.
@@ -477,7 +477,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   const coderEngaged = !!coderStatus && coderStatus !== 'Assign';
   const supportActionsLocked = supportCompletedFlag && coderEngaged
     && coderStatus !== 'Record Requested';
-  const supportLockedTip = 'Coder is reviewing this record — Support actions unlock when the Coder requests records.';
+  const supportLockedTip = 'Coder is reviewing this record: Support actions unlock when the Coder requests records.';
 
   const onTeamPillEnter = () => {
     if (teamCloseTimer.current) { clearTimeout(teamCloseTimer.current); teamCloseTimer.current = null; }
@@ -575,7 +575,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
       _memberId: member?.id,
       t: 'doc-status', by: 'You', role: 'Support Team',
       headline: 'Marked record Insufficient',
-      details: [{ note: note ? `${reasonText} — ${note}` : reasonText }],
+      details: [{ note: note ? `${reasonText}: ${note}` : reasonText }],
     });
     showToast('Record marked Insufficient.');
   };
@@ -585,7 +585,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   // Bidirectional sync: the engine's `support.status` is the source of truth.
   // Any state change the ChartDetailDrawer applies flows through
   // `syncSupportStatus` → engine, and the drawer re-reads engine on next
-  // render — so if the DiagPanel (or any other surface) changes the Support
+  // render: so if the DiagPanel (or any other surface) changes the Support
   // status, this pill reflects it automatically. Only when the engine has
   // no definitive state (Awaiting / New / null) do we fall back to the
   // doc-derived value.
@@ -596,7 +596,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
     : (engineUiStatus || manualStatus || derivedStatus);
   // Trigger label lookup: "Action Needed" is a derived-only state so it's
   // not in the dropdown, but the trigger still renders it when nothing has
-  // been reviewed yet — hence the explicit fallback here. "Returned" is
+  // been reviewed yet: hence the explicit fallback here. "Returned" is
   // also read-only (set when a records request comes to Support), so we
   // render a label outside STATUS_OPTIONS.
   const currentStatus = STATUS_OPTIONS.find(s => s.key === effectiveStatus)
@@ -605,12 +605,12 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
         : { key: 'action-needed', label: 'Action Needed' });
   const currentBadge = STATUS_BADGE[effectiveStatus] || STATUS_BADGE['action-needed'];
 
-  // Review Progress popover — the Support stage mirrors the drawer's LIVE
+  // Review Progress popover: the Support stage mirrors the drawer's LIVE
   // status (effectiveStatus), so passing a doc flips it to Completed (etc.)
   // in realtime instead of lingering on "Action Needed" until the drawer
   // closes. effectiveStatus already reconciles engine precedence + the
-  // doc-derived value, so this keeps the popover, the header pill, and — once
-  // the on-close sync persists it — the DiagPanel all showing the same thing.
+  // doc-derived value, so this keeps the popover, the header pill, and, once
+  // the on-close sync persists it: the DiagPanel all showing the same thing.
   const UI_TO_ENGINE_STATUS = {
     completed: 'Completed', 'in-progress': 'In Progress', insufficient: 'Insufficient',
     rejected: 'Reject', returned: 'Returned', 'action-needed': 'Awaiting',
@@ -632,7 +632,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   const gender = member?.g === 'F' ? 'Female' : 'Male';
   const overdue = /overdue/i.test(member?.due || '');
   // Only surface the "Completed Document Review Task" banner when the overall
-  // status is Completed — not when it's manually set to anything else.
+  // status is Completed: not when it's manually set to anything else.
   const showReviewBanner = effectiveStatus === 'completed';
 
   const resetUpload = () => {

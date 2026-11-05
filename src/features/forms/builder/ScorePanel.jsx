@@ -1,5 +1,5 @@
 /**
- * Score tab — manage the form's scores and their interpretation bands. Forms
+ * Score tab: manage the form's scores and their interpretation bands. Forms
  * can hold several scores: validated instruments register locked scores on
  * drop, and the user can add custom scores over any scorable fields.
  *
@@ -109,7 +109,7 @@ export function ScorePanel({ fields, scoring, onChange }) {
             {locked ? (
               <div className={styles.lockedBanner}>
                 <Icon name="solar:lock-keyhole-minimalistic-linear" size={14} color="var(--status-success)" />
-                Validated &amp; locked — cutoffs can’t be edited.
+                Validated &amp; locked, cutoffs can’t be edited.
               </div>
             ) : null}
             <label className={styles.propLabel} htmlFor={`${uid}-score-name`}>Score name</label>
@@ -121,7 +121,7 @@ export function ScorePanel({ fields, scoring, onChange }) {
               value={selected.aggregation}
               disabled={locked}
               options={AGG_OPTIONS.map((a) => ({ value: a, label: a }))}
-              onChange={setAgg}
+              onValueChange={setAgg}
             />
             <div className={styles.rangePill}>Possible range <strong>{range.min}–{range.max}</strong></div>
             <div className={styles.scoreSourcesRow}>
@@ -134,7 +134,7 @@ export function ScorePanel({ fields, scoring, onChange }) {
 
       {/* Interpretations */}
       <section className={styles.scoreCol}>
-        <div className={styles.scoreColHead}>Result — Interpretations</div>
+        <div className={styles.scoreColHead}>Result: Interpretations</div>
         {!selected ? (
           <div className={styles.scoreEmpty}>
             <Icon name="solar:ranking-linear" size={28} color="var(--neutral-150)" />
@@ -153,7 +153,7 @@ export function ScorePanel({ fields, scoring, onChange }) {
                   value={b.severity}
                   disabled={locked}
                   options={SEVERITIES.map((s) => ({ value: s, label: s }))}
-                  onChange={(v) => setBand(i, { severity: v })}
+                  onValueChange={(v) => setBand(i, { severity: v })}
                 />
                 {!locked ? (
                   <CloseButton size={16} onClick={() => removeBand(i)} className={styles.optRemove} label="Remove band" />

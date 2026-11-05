@@ -34,7 +34,7 @@
 /* Opt-in: let the pill fill its parent width instead of the fixed 140px.
    Used by table rows where the containing cell owns the column width.
    Bare `.fillContainer` rule ensures the class name is exported by the
-   CSS module — compound selectors alone don't guarantee that. */
+   CSS module: compound selectors alone don't guarantee that. */
 .fillContainer {
   width: 100%;
   max-width: 100%;
@@ -51,13 +51,13 @@
 
 /* Size tokens (Figma Fold-Pixel-1.0 node 8629:178). The pill hugs its
    content on both sides so the avatar sits close to the left edge and the
-   chevron sits close to the right — matches the Figma tight-pill spec. */
+   chevron sits close to the right, matches the Figma tight-pill spec. */
 .sizeM { padding: 2px 4px; }
 .sizeS { padding: 2px 4px; }
 .sizeS .name { font-size: var(--font-sm); }
 .sizeS .textLabel { font-size: var(--font-sm); }
 
-/* Avatar-only mode — no name/role text; the pill hugs the avatar + chevron.
+/* Avatar-only mode: no name/role text; the pill hugs the avatar + chevron.
    Per Figma nodes 8629:393 / 8629:419, the inner Avatar is always WHITE
    (not the default peach/grey fill), and the OUTER pill carries the tint:
      • assigned   default → secondary-100 (peach halo)
@@ -65,7 +65,7 @@
      • unassigned default → transparent  (white tile with neutral-150 border)
      • unassigned hover   → neutral-150   (deeper grey halo)
      • disabled   any     → neutral-75    (uniform dim)
-   Chevron is always visible in this mode — it's the only affordance
+   Chevron is always visible in this mode, it's the only affordance
    signaling the pill is a trigger. */
 .avatarOnly {
   width: fit-content;
@@ -84,7 +84,7 @@
 .avatarOnly.assigned:focus-visible {
   background: var(--secondary-200);
 }
-/* Patient variant — base + hover fills swap the default secondary
+/* Patient variant: base + hover fills swap the default secondary
    tokens for their primary counterparts so a member pill reads as
    one cohesive purple surface (primary-100 idle, primary-200 hover).
    Overrides both `.avatarOnly.assigned` rules above. */
@@ -106,7 +106,7 @@
   background: var(--neutral-75);
 }
 
-/* Disabled — non-interactive: no hover halo, no chevron slot, and the
+/* Disabled: non-interactive: no hover halo, no chevron slot, and the
    name renders at full opacity so a member-locked assignee stays legible. */
 .disabled {
   cursor: default;
@@ -117,7 +117,7 @@
 }
 .disabled .chevron { display: none; }
 
-/* Assigned — text column between the avatar and the chevron. min-width:0 lets
+/* Assigned: text column between the avatar and the chevron. min-width:0 lets
    the name and role shrink so `text-overflow: ellipsis` actually engages. */
 .textBody {
   display: inline-flex;
@@ -152,7 +152,7 @@
 }
 
 /* Chevron always occupies its layout slot so the pill's width and the
-   text column stay stable across hover — no reflow / no flicker. At rest
+   text column stay stable across hover, no reflow / no flicker. At rest
    we fade it out; hover / focus fades it back in. Flex will still let a
    short name use the remaining space without visible truncation. */
 .chevron {

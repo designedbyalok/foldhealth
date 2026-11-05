@@ -14,7 +14,7 @@ import { VISIT_TYPES } from './reference/visitTypes';
 import styles from './UploadChartDrawer.module.css';
 
 /**
- * UploadChartDrawer — right-side drawer used by the HCC worklist to upload a
+ * UploadChartDrawer: right-side drawer used by the HCC worklist to upload a
  * chart document for a single member. Mounted in `AppLayout` and driven by
  * `hccUploadMember` store state.
  *
@@ -93,7 +93,7 @@ export function UploadChartDrawer() {
 
   if (!member) return null;
 
-  // In edit mode a file isn't required — the user is only changing metadata.
+  // In edit mode a file isn't required: the user is only changing metadata.
   // Review Status is now mandatory (reviewer roles only): Pass, or Failed
   // with at least one reason. If "Other" is checked, a comment is required
   // too so the downstream reviewer has something to act on.
@@ -141,7 +141,7 @@ export function UploadChartDrawer() {
       addActivityEntry({
         t: 'doc-status', by: 'You', role: useAppStore.getState().hccUserRole || 'Coder',
         headline: `Marked "${doc.n}" as Failed`,
-        details: [{ note: failDetails.note ? `${reasonText} — ${failDetails.note}` : reasonText }],
+        details: [{ note: failDetails.note ? `${reasonText}: ${failDetails.note}` : reasonText }],
         docId: doc.id,
       });
     } else if (initialStatus === 'Passed') {
@@ -188,7 +188,7 @@ export function UploadChartDrawer() {
   };
   const handleFailClick = () => {
     if (initialStatus === 'Failed') {
-      // Second Fail click collapses the picker without clearing details —
+      // Second Fail click collapses the picker without clearing details,
       // the reviewer may want to keep their in-progress selection while
       // adjusting other fields.
       setFailInline(v => !v);
@@ -196,7 +196,7 @@ export function UploadChartDrawer() {
     }
     // Flip status to Failed immediately (red pill) and open the picker so
     // the reviewer can enter reasons. Save happens on the top-right Upload
-    // button — no Confirm inside the picker.
+    // button: no Confirm inside the picker.
     setInitialStatus('Failed');
     setFailDetails({ reasons: [], note: '' });
     setFailInline(true);
@@ -209,13 +209,13 @@ export function UploadChartDrawer() {
       className={`${styles.drawer} ${previewOpen ? styles.drawerWide : ''}`}
       bodyClassName={styles.body}
       headerRight={
-        <Button variant="primary" size="M" disabled={!ok} onClick={handleUpload}>
+        <Button disabled={!ok} onClick={handleUpload}>
           {isEdit ? 'Save' : 'Upload'}
         </Button>
       }
     >
       <div className={`${styles.layout} ${previewOpen ? styles.layoutSplit : ''}`}>
-        {/* Left — inline file preview. Opens when the user clicks the eye
+        {/* Left: inline file preview. Opens when the user clicks the eye
             icon on the uploaded-file card; drawer widens to make room. */}
         {previewOpen && file && (
           <div className={styles.leftPane}>
@@ -230,7 +230,7 @@ export function UploadChartDrawer() {
         )}
 
         <div className={styles.rightPane}>
-          {/* Shared patient banner — matches Diagnosis Gaps Details. */}
+          {/* Shared patient banner: matches Diagnosis Gaps Details. */}
           <PatientBanner
             initials={member.in || member.name?.split(' ').map(p => p[0]).slice(0, 2).join('')}
             name={member.name}
@@ -269,7 +269,7 @@ export function UploadChartDrawer() {
               />
             </div>
 
-            {/* Document Type + Visit Type share one row — Visit Type
+            {/* Document Type + Visit Type share one row, Visit Type
                 mirrors the HCC worklist's Visit Type column so a document
                 uploaded from here can be linked back to the same encounter
                 categories the DOS rows show. Visit Type is optional. */}
@@ -283,7 +283,7 @@ export function UploadChartDrawer() {
                   className={styles.select}
                   options={DOC_TYPES.map((t) => ({ value: t, label: t }))}
                   value={docType}
-                  onChange={setDocType}
+                  onValueChange={setDocType}
                   placeholder="Select Type"
                 />
               </div>
@@ -294,16 +294,16 @@ export function UploadChartDrawer() {
                   className={styles.select}
                   options={VISIT_TYPES.map((vt) => ({ value: vt, label: vt }))}
                   value={visitType}
-                  onChange={setVisitType}
+                  onValueChange={setVisitType}
                   placeholder="Select Visit Type"
                 />
               </div>
             </div>
 
-            {/* Review Status — reviewer roles must pick Pass or Fail before
+            {/* Review Status: reviewer roles must pick Pass or Fail before
                 the doc can be uploaded (required field). Fail flips the pill
                 red and expands the shared reason picker in-place; there is
-                no Confirm/Cancel — the picker binds directly to state and
+                no Confirm/Cancel: the picker binds directly to state and
                 the outer Upload button saves everything on click. */}
             {canSetStatus && (
               <div className={styles.field}>

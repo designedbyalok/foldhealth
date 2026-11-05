@@ -1,25 +1,26 @@
 /**
  * POST /api/care-plan-summary
  *
- * Server-side proxy for Google's Gemini (Generative Language) API. Keeps
- * GOOGLE_AI_API_KEY off the client — the browser posts the plan data, this
- * function builds the prompt, calls Gemini, and returns a structured summary
- * the UI renders as { intro, points:[{title, body}], actions:[string] }.
+ * Server-side AI summary (OpenAI; see _lib/aiJson.js). Keeps the AI keys
+ * off the client: the browser posts the plan data, this function builds the
+ * prompt, calls the model, and returns a structured summary
+ * the UI renders as { intro, points:[{title, body}], actions:[{text, refType, refId}] }.
+ * Each action names the goal, intervention or barrier it is about (refType +
+ * refId, from the ids sent), or refType 'plan' for the plan as a whole, so the
+ * care plan screen can open that item.
  *
  * Body: { patientName, programs, conditions, goals, interventions, barriers }
- * where each list item is a small { title, status, progress?, ... } object.
+ * where each list item is a small { id?, title, status, progress?, ... } object.
  *
  * Always keeps the API key server-side. Errors return a soft message the
  * client can toast; upstream error bodies stay in the server log.
  */
 
 import { requireUser } from '../_lib/requireUser.js';
+import { bodyWithinLimit } from '../_lib/limits.js';
+import { aiBusy, aiConfigured, generateJson } from '../_lib/aiJson.js';
 
-const MODEL = process.env.GOOGLE_AI_MODEL || 'gemini-3.8-flash';
-const ENDPOINT = (key) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`;
-
-// Force Gemini to answer in exactly the shape the SummaryCard renders.
+// Force the model to answer in exactly the shape the SummaryCard renders.
 const RESPONSE_SCHEMA = {
   type: 'object',
   properties: {
@@ -32,7 +33,18 @@ const RESPONSE_SCHEMA = {
         required: ['title', 'body'],
       },
     },
-    actions: { type: 'array', items: { type: 'string' } },
+    actions: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          text: { type: 'string' },
+          refType: { type: 'string', enum: ['goal', 'intervention', 'barrier', 'plan'] },
+          refId: { type: 'string' },
+        },
+        required: ['text', 'refType', 'refId'],
+      },
+    },
   },
   required: ['intro', 'points', 'actions'],
 };
@@ -107,7 +119,11 @@ function buildPrompt(plan) {
     '  progressing; Interventions (what the care team is doing); Barriers',
     '  getting in the way; and Program coverage. Skip any section with no data.',
     '- actions: 2 to 5 specific next steps the care team should take, focused on',
-    '  what is stalled, overdue, not started, or blocked by a barrier.',
+    '  what is stalled, overdue, not started, or blocked by a barrier. Each one',
+    '  is a short instruction (text) about ONE goal, intervention or barrier:',
+    '  set refType to "goal", "intervention" or "barrier" and refId to that',
+    '  item\'s "id" exactly as given. Only when a step is about the whole plan,',
+    '  set refType to "plan" and refId to "".',
     '',
     'Patient care plan data (JSON):',
     JSON.stringify(payload),
@@ -121,63 +137,46 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: { message: 'Method not allowed' } });
   }
 
-  const key = process.env.GOOGLE_AI_API_KEY;
-  if (!key) {
-    return res.status(500).json({
-      error: {
-        message:
-          'GOOGLE_AI_API_KEY is not set. Add it to your Vercel project env vars ' +
-          '(Production + Preview + Development) and to .env for local dev.',
-      },
-    });
+  if (!aiConfigured()) {
+    console.error('[care-plan-summary] no AI key is set');
+    return res.status(500).json({ error: { message: 'AI summaries are not set up on this deployment.' } });
   }
 
+  // Roughly 170 rows per list fit well under this; the prompt caps them anyway.
+  if (!bodyWithinLimit(req, res, 200 * 1024)) return;
   const plan = req.body && typeof req.body === 'object' ? req.body : null;
   if (!plan) {
     return res.status(400).json({ error: { message: 'Missing or invalid plan body' } });
   }
 
-  const requestBody = JSON.stringify({
-    contents: [{ role: 'user', parts: [{ text: buildPrompt(plan) }] }],
-    generationConfig: {
-      temperature: 0.4,
-      responseMimeType: 'application/json',
-      responseSchema: RESPONSE_SCHEMA,
-    },
-  });
-
   try {
-    // Gemini intermittently returns 503 (overloaded) / 429 (rate limit); a
-    // couple of short backoff retries turn most of those into a clean result.
-    let upstream;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      upstream = await fetch(ENDPOINT(key), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      });
-      if (upstream.ok || (upstream.status !== 503 && upstream.status !== 429)) break;
-      await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
-    }
-
-    if (!upstream.ok) {
-      const detail = await upstream.text();
-      console.error('[care-plan-summary] gemini error', upstream.status, detail);
-      const msg = upstream.status === 503 || upstream.status === 429
+    const ai = await generateJson({
+      prompt: buildPrompt(plan),
+      schema: RESPONSE_SCHEMA,
+      name: 'care_plan_summary',
+      temperature: 0.4,
+      logTag: 'care-plan-summary',
+      timeoutMs: 30000,
+      deadlineMs: 60000,
+    });
+    if (!ai.ok) {
+      const msg = aiBusy(ai.status)
         ? 'The AI service is busy right now. Please try again in a moment.'
-        : `AI service returned ${upstream.status}. Please try again.`;
+        : `AI service returned ${ai.status}. Please try again.`;
       return res.status(502).json({ error: { message: msg } });
     }
-
-    const json = await upstream.json();
-    const text = json?.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
-    let summary;
-    try {
-      summary = JSON.parse(text);
-    } catch {
-      console.error('[care-plan-summary] non-JSON model output:', text.slice(0, 500));
-      return res.status(502).json({ error: { message: 'AI returned an unreadable summary. Please try again.' } });
-    }
+    const summary = ai.data;
+    // An action's item must be one that was sent, else it is about the plan.
+    const ids = {
+      goal: new Set((plan.goals || []).map(g => String(g?.id ?? ''))),
+      intervention: new Set((plan.interventions || []).map(i => String(i?.id ?? ''))),
+      barrier: new Set((plan.barriers || []).map(b => String(b?.id ?? ''))),
+    };
+    const action = (a) => {
+      if (typeof a === 'string') return { text: a, refType: 'plan', refId: '' };
+      const known = ids[a?.refType]?.has(String(a?.refId ?? '')) && String(a.refId) !== '';
+      return { text: String(a?.text || ''), refType: known ? a.refType : 'plan', refId: known ? String(a.refId) : '' };
+    };
 
     // Guard the shape so the client never renders undefined.
     const safe = {
@@ -185,7 +184,7 @@ export default async function handler(req, res) {
       points: Array.isArray(summary.points)
         ? summary.points.filter(p => p && p.title && p.body).map(p => ({ title: String(p.title), body: String(p.body) }))
         : [],
-      actions: Array.isArray(summary.actions) ? summary.actions.filter(Boolean).map(String) : [],
+      actions: Array.isArray(summary.actions) ? summary.actions.filter(Boolean).map(action).filter(a => a.text) : [],
     };
 
     return res.status(200).json({ summary: safe });

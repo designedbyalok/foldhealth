@@ -7,7 +7,7 @@
 -- with a synthetic `id` (snpw-001, ccmw-002, ap-004, FOLD100001, …) taken from
 -- the mock data, while `member_id` resolves to the Fold ID. So each seed run
 -- inserts a second, synthetic-id row for a patient who already has a canonical
--- `id = member_id` row — a duplicate that shows in the worklist.
+-- `id = member_id` row: a duplicate that shows in the worklist.
 --
 -- SAFE DEDUP RULE
 -- A row is a duplicate iff `id <> member_id` AND a same-name canonical row
@@ -15,7 +15,7 @@
 -- Verified before writing this: every such synthetic row has a NULL patient_id
 -- and no care programs of its own (its member_id's programs, if any, belong to
 -- the surviving canonical row), so nothing real is lost. member_id is NOT used
--- as the key — it is not unique here (e.g. '10003' is shared by an "Annette
+-- as the key: it is not unique here (e.g. '10003' is shared by an "Annette
 -- Brave" and a "Ralph Halvorson" leftover), so a member_id delete would take an
 -- unrelated patient with it.
 --
@@ -26,7 +26,7 @@ BEGIN;
 CREATE SCHEMA IF NOT EXISTS worklist_bak;
 
 -- One helper per table: snapshot the synthetic duplicates, then delete them.
--- (No dynamic SQL — each worklist table is spelled out so the snapshot schema
+-- (No dynamic SQL: each worklist table is spelled out so the snapshot schema
 --  is explicit and reviewable.)
 
 -- SNP

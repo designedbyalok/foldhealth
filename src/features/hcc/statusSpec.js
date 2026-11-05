@@ -16,11 +16,11 @@
 //   Completed           → success (green)
 //
 // Each entry exposes:
-//   icon         — Iconify name
-//   color        — text + icon color (CSS variable)
-//   bg           — soft tinted background for the pill
-//   border       — pill border color (matches color at ~20% alpha)
-//   legendOrder  — display order in the StatusLegend strip
+//   icon: Iconify name
+//   color: text + icon color (CSS variable)
+//   bg: soft tinted background for the pill
+//   border: pill border color (matches color at ~20% alpha)
+//   legendOrder: display order in the StatusLegend strip
 
 export const STATUS_SPEC = {
   New: {
@@ -32,7 +32,7 @@ export const STATUS_SPEC = {
     legendOrder: 0,
   },
   Awaiting: {
-    // Sun-burst — warning amber
+    // Sun-burst: warning amber
     icon: 'solar:sun-bold',
     color: 'var(--status-warning)',
     bg: 'var(--status-warning-light)',
@@ -40,7 +40,7 @@ export const STATUS_SPEC = {
     legendOrder: 1,
   },
   'In Progress': {
-    // Custom 50% pie chart (see StatusIcon — Figma-provided InProgressIcon).
+    // Custom 50% pie chart (see StatusIcon: Figma-provided InProgressIcon).
     // The `icon` Solar name is kept as a fallback for any consumer that
     // hasn't been switched to StatusIcon yet.
     icon: 'solar:half-circle-bold',
@@ -111,7 +111,7 @@ export const STATUS_SPEC = {
     border: 'rgba(0, 155, 83, 0.2)',
     legendOrder: 8,
   },
-  // Special states — referenced by code, not surfaced in the legend.
+  // Special states: referenced by code, not surfaced in the legend.
   // Unassigned uses the neutral palette since it's an absence-of-state.
   Unassigned: {
     icon: 'solar:user-plus-rounded-linear',
@@ -157,7 +157,7 @@ export const STATUS_SPEC = {
     border: 'rgba(0, 155, 83, 0.2)',
     legendOrder: null,
   },
-  // Post-billing terminal state — the ASM has been submitted / paid, so
+  // Post-billing terminal state: the ASM has been submitted / paid, so
   // the DOS is read-only across every role (same treatment as Reject,
   // but with a green success tone since nothing went wrong). Dollar-in-
   // circle stays legible next to "Completed" (check-circle) and
@@ -176,7 +176,7 @@ export const STATUS_SPEC = {
 // statuses that aren't part of the coding workflow (e.g. AWV outreach states).
 export const hasStatusSpec = (status) => !!STATUS_SPEC[canonicalStatus(status)];
 
-// Some Supabase rows + the prototype use plural names — map them to the
+// Some Supabase rows + the prototype use plural names, map them to the
 // canonical singular keys above so the spec lookup keeps working without
 // us having to migrate every row.
 const ALIAS = {
@@ -191,7 +191,7 @@ export const canonicalStatus = (label) => ALIAS[label] || label;
 export const getStatusSpec = (status) =>
   STATUS_SPEC[canonicalStatus(status)] || STATUS_SPEC.Unassigned;
 
-// Display-label overrides — the value stored on the row (what the engine
+// Display-label overrides: the value stored on the row (what the engine
 // keys on) vs. what the coder sees in the UI. Support's default 'Awaiting'
 // reads as "Action Needed"; 'Reject' reads as "Rejected".
 const STATUS_DISPLAY = {
@@ -214,7 +214,7 @@ export const statusDisplayLabel = (value) => {
 // Support "Completed" → Coder "Record Received", plus the QA/Compliance
 // variant) are driven by the assignment engine (assignment/lifecycle.js),
 // not this list.
-// NOTE: "Skipped" is NOT user-selectable — the assignment engine applies it
+// NOTE: "Skipped" is NOT user-selectable: the assignment engine applies it
 // automatically when a later role completes ahead of an earlier one
 // (autoSkipEarlierRoles in lifecycle.js). It only appears as a rendered status,
 // never as a menu option.

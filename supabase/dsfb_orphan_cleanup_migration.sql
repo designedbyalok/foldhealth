@@ -9,10 +9,10 @@
 --
 -- This migration removes every `source: fold-native` DSF-B gap on a
 -- member whose paired DSF-A isn't `Completed`. Standalone DSF-B rows
--- from Astrana (`source: astrana`) are untouched — those are
+-- from Astrana (`source: astrana`) are untouched: those are
 -- ingestions the seed sets up on purpose.
 --
--- Idempotent — a re-run finds no matching rows and is a no-op.
+-- Idempotent: a re-run finds no matching rows and is a no-op.
 --
 -- Ask Alok Kumar to run this migration on Supabase.
 

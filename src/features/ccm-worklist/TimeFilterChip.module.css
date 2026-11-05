@@ -1,5 +1,5 @@
 /* Popover body for the CCM worklist's Billable Mins / Unlogged Mins
-   filters — mounted via FilterChip's renderPopover slot, so the outer
+   filters: mounted via FilterChip's renderPopover slot, so the outer
    chip button uses the shared design-system styles.  These rules cover
    only the popover contents (user selector + threshold radios). */
 

@@ -3,9 +3,9 @@ import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { AddIconMinimalist } from '../../../../../../../../components/Icon/AddIconMinimalist';
 import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChevronIcon';
 import { Button } from '../../../../../../../../components/Button/Button';
-import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../../../components/SegmentedControl/SegmentedControl';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { WorklistShell } from '../../../../../../../../components/WorklistShell/WorklistShell';
 import { REFERRAL_REVIEW_MOCK } from '../../../../../../data/referralReviewMock';
 import styles from './ReferralReview.module.css';
@@ -42,15 +42,15 @@ export function ReferralReview() {
     <div className={styles.container}>
       {/* Toolbar */}
       <div className={styles.toolbar}>
-        <ActionButton icon="solar:magnifer-linear" size="S" tooltip="Search" />
+        <ActionButton icon="solar:magnifer-linear" size="sm" tooltip="Search" />
         <span className={styles.tabDivider} />
-        <Toggle size="S" items={SUB_TABS} active={activeTab} onChange={setActiveTab} />
+        <SegmentedControl size="sm" items={SUB_TABS} value={activeTab} onValueChange={setActiveTab} />
         <div className={styles.spacer} />
-        <Button variant="tertiary" size="S" leadingIconElement={<AddIconMinimalist size={14} />} trailingIconElement={<DownChevronIcon size={14} />}>
+        <Button variant="soft" size="sm" leadingIconElement={<AddIconMinimalist size={14} />} trailingIconElement={<DownChevronIcon size={14} />}>
           New Order
         </Button>
         <span className={styles.tabDivider} />
-        <ActionButton icon="solar:filter-linear" size="S" tooltip="Filter" />
+        <ActionButton icon="solar:filter-linear" size="sm" tooltip="Filter" />
       </div>
 
       {/* Table */}
@@ -83,7 +83,7 @@ export function ReferralReview() {
                   <Icon name="solar:paperclip-linear" size={14} color="var(--neutral-300)" />
                   {r.attachments} Attachment{r.attachments === 1 ? '' : 's'}
                 </span>
-              ) : <span className={styles.muted}>—</span>}
+              ) : <span className={styles.muted}>-</span>}
             </td>
             <td className={styles.createdCell}>{r.createdOn}</td>
           </tr>

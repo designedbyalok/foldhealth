@@ -25,11 +25,11 @@ export function useAgentCanvas() {
   const bumpBuilderValidationAttempt = useAppStore(s => s.bumpBuilderValidationAttempt);
   const showToast = useAppStore(s => s.showToast);
 
-  // Undo/redo history (local — applied via setNodes/setEdges).
+  // Undo/redo history (local: applied via setNodes/setEdges).
   // `past` holds previous flow snapshots; `future` holds states unwound by undo.
   const [history, setHistory] = useState({ past: [], future: [] });
   // Mirror of `history` so undo/redo can read the latest value without a
-  // functional updater — keeps the updater pure (no side effects inside).
+  // functional updater: keeps the updater pure (no side effects inside).
   const historyRef = useRef(history);
   useEffect(() => { historyRef.current = history; });
   const skipHistory = useRef(false);
@@ -177,7 +177,7 @@ export function useAgentCanvas() {
     let nodeType, label;
     try {
       ({ nodeType, label } = JSON.parse(raw));
-    } catch { return; } // malformed drag payload — ignore the drop
+    } catch { return; } // malformed drag payload, ignore the drop
     const instance = reactFlowInstance.current;
     if (!instance) return;
 
@@ -304,7 +304,7 @@ export function useAgentCanvas() {
   };
 
   // Auto-save: debounced silent saveFlow on flow changes. No toast, no
-  // version bump — just keeps the draft on disk so a reload doesn't
+  // version bump: just keeps the draft on disk so a reload doesn't
   // lose work. Skipped while loading and while an explicit save is in
   // flight to avoid racing.
   //
@@ -337,7 +337,7 @@ export function useAgentCanvas() {
   }, [nodes, edges, builderFlow, saving, saveFlow]);
 
   // "Saved" is a transient badge that decays back to idle. It lives in its own
-  // effect so the timer is created and cleared in the same scope — previously
+  // effect so the timer is created and cleared in the same scope, previously
   // it was spawned inside the async save callback, where the enclosing
   // effect's cleanup had already run by the time it existed.
   useEffect(() => {
@@ -346,7 +346,7 @@ export function useAgentCanvas() {
     return () => clearTimeout(t);
   }, [autoSaveStatus]);
 
-  // Undo / Redo — pop from past/future and apply via setNodes/setEdges.
+  // Undo / Redo: pop from past/future and apply via setNodes/setEdges.
   // skipHistory prevents the resulting state change from re-recording.
   const handleUndo = useCallback(() => {
     const h = historyRef.current;
@@ -380,10 +380,10 @@ export function useAgentCanvas() {
   const canRedo = history.future.length > 0;
 
   // Keyboard shortcuts:
-  //   ⌘/Ctrl+Z       — undo
-  //   ⌘/Ctrl+⇧+Z / Y — redo
-  //   V              — switch to Select tool
-  //   H              — switch to Hand (Pan) tool
+  //   ⌘/Ctrl+Z: undo
+  //   ⌘/Ctrl+⇧+Z / Y: redo
+  //   V: switch to Select tool
+  //   H: switch to Hand (Pan) tool
   useEffect(() => {
     const onKey = (e) => {
       // Skip when user is typing in an input/textarea

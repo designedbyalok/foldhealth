@@ -1,6 +1,6 @@
 import { CommentComposer } from '../../components/CommentComposer/CommentComposer';
-import { Toggle } from '../../components/Toggle/Toggle';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
+import { Tabs } from '../../components/Tabs/Tabs';
 import { ActivityLog } from '../../components/ActivityLog/ActivityLog';
 import styles from './TasksView.module.css';
 
@@ -12,36 +12,36 @@ export function TaskDetailDrawerActivity({
         {/* Activity */}
         <div className={styles.drawerSection}>
           <div className={styles.activityHeader}>
-            <Toggle
+            <SegmentedControl
               items={['Activity', 'Automations']}
-              active={activityToggle}
-              onChange={setActivityToggle}
-              size="S"
+              value={activityToggle}
+              onValueChange={setActivityToggle}
+              size="sm"
             />
           </div>
-          {/* Sticky tab strip — pins the All/Comments/History row to the
+          {/* Sticky tab strip: pins the All/Comments/History row to the
               top of the drawer body while the log scrolls beneath. The
               Toggle above stays in normal flow and scrolls away. Wrap
               bleeds to the drawer edges + matches SectionTitleBar's 48px
               min-height + 16px horizontal padding so the row reads with
               the same rhythm as the page-level tab bar. */}
           <div className={styles.activityStickyHead}>
-            <TabStrip
+            <Tabs
               items={[
                 { key: 'All', label: 'All' },
                 { key: 'Comments', label: 'Comments' },
                 { key: 'History', label: 'History' },
               ]}
-              activeKey={activityTab}
-              onChange={setActivityTab}
+              value={activityTab}
+              onValueChange={setActivityTab}
               embedded
             />
           </div>
 
-          {/* Comment input — supports @mentions */}
+          {/* Comment input: supports @mentions */}
           <CommentComposer onSubmit={handleAddComment} />
 
-          {/* Activity log — real audit entries, rendered by the shared
+          {/* Activity log: real audit entries, rendered by the shared
               ActivityLog primitive so date • time • by meta line and the
               typed entry variants (comment / status change / assignee change)
               match the HCC / HEDIS drawers. */}

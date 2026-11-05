@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  monthsBetween, addMonths, periodOf, rangeLabel, indexRows,
+  monthsBetween, addMonths, periodOf, rangeLabel, indexRows, mondaysOf, weeksBetween, weekLabel,
   buildSeriesData, buildStats, buildSavings, buildDuration, buildSatisfaction, surveyForms, toCsv,
 } from './employerImpactData';
 
@@ -22,6 +22,43 @@ describe('months', () => {
   });
 });
 
+describe('weeks', () => {
+  it('gives a month the weeks whose Monday falls in it', () => {
+    // Nov 2026 starts on a Sunday; its last Monday is the 30th.
+    expect(mondaysOf('2026-11')).toEqual(['2026-11-02', '2026-11-09', '2026-11-16', '2026-11-23', '2026-11-30']);
+    expect(mondaysOf('2026-06')).toEqual(['2026-06-01', '2026-06-08', '2026-06-15', '2026-06-22', '2026-06-29']);
+  });
+  it('lists a quarter of weeks, labelled by Monday', () => {
+    const weeks = weeksBetween('2026-10', '2026-12');
+    expect(weeks).toHaveLength(13);
+    expect(weeks[0]).toBe('2026-10-05');
+    expect(weekLabel(weeks[0])).toBe('Oct 5');
+  });
+  it('charts weeks from the weekly index when the context has them', () => {
+    const events = { metric: 'calls', x: 'month', agg: 'sum', series: [{ key: 'in' }] };
+    const weekIdx = indexRows([row('calls', 'in', '2026-11-02', 4), row('calls', 'in', '2026-11-09', 6)]);
+    const ctx = { months: ['2026-11'], timeFrame: 'Month', weeks: mondaysOf('2026-11'), weekIdx };
+    const { data, hasData } = buildSeriesData(new Map(), events, ctx);
+    expect(hasData).toBe(true);
+    expect(data.map(r => r.x)).toEqual(['Nov 2', 'Nov 9', 'Nov 16', 'Nov 23', 'Nov 30']);
+    expect(data.map(r => r.in)).toEqual([4, 6, null, null, null]);
+  });
+});
+
+describe('weekly seed', () => {
+  it('splits each month over its weeks so they add back up to it', async () => {
+    const { employerImpactRows, employerImpactWeeklyRows } = await import('./employerImpactSeed');
+    const monthly = employerImpactRows('2026-11').filter(r => r.month === '2026-11-01' && r.employer_id === 'emp-harbor');
+    const weekly = employerImpactWeeklyRows(monthly);
+    const revenue = monthly.find(r => r.metric === 'membership_revenue');
+    const weeks = weekly.filter(r => r.metric === 'membership_revenue' && r.patient_location === revenue.patient_location && r.visit_location === revenue.visit_location);
+    expect(weeks).toHaveLength(5);
+    expect(weeks.reduce((a, r) => a + r.value, 0)).toBe(revenue.value);
+    // Categorical metrics stay monthly only.
+    expect(weekly.some(r => r.metric === 'calls_by_hour')).toBe(false);
+  });
+});
+
 describe('buildSeriesData', () => {
   const months = ['2026-01', '2026-02', '2026-03', '2026-04'];
   const events = { metric: 'calls', x: 'month', agg: 'sum', series: [{ key: 'in' }, { key: 'out' }] };
@@ -32,10 +69,12 @@ describe('buildSeriesData', () => {
     row('members', 'n', '2026-01', 100), row('members', 'n', '2026-02', 110), row('members', 'n', '2026-03', 120),
   ]);
 
-  it('gives one row per month, zero where a month has no rows', () => {
+  it('gives one row per month, a gap where a month has no rows', () => {
     const { data, hasData } = buildSeriesData(idx, events, { months, timeFrame: 'Month' });
     expect(hasData).toBe(true);
-    expect(data.map(r => r.in)).toEqual([10, 20, 0, 5]);
+    expect(data.map(r => r.in)).toEqual([10, 20, null, 5]);
+    // A series with no rows in a month that has others' rows is a real zero.
+    expect(data[1].out).toBe(0);
     expect(data[0]).toMatchObject({ x: 'Jan 26', in: 10, out: 1 });
   });
   it('sums events within a quarter', () => {

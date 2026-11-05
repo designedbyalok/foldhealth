@@ -1,6 +1,6 @@
 // Care Plan Barriers Library (structured, reusable)
 // Generated from structured_care_plan_goals_library.md. Upserted by
-// `bun run seed` (onConflict: 'id'). Do not hand-edit — regenerate instead.
+// `bun run seed` (onConflict: 'id'). Do not hand-edit, regenerate instead.
 
 export const CARE_PLAN_BARRIER_STRUCTURED_LIBRARY = [
   {

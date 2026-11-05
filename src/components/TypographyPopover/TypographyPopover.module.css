@@ -1,15 +1,8 @@
 /* Figma Jan–Present 1119:10152 */
 .popover {
-  position: fixed;
-  z-index: 9300;
   min-width: 420px;
   display: flex;
   flex-direction: column;
-  background: var(--neutral-0);
-  border: 0.5px solid var(--neutral-150);
-  border-radius: 8px;
-  box-shadow: var(--shadow-popover);
-  overflow: hidden;
 }
 .head {
   display: flex;

@@ -105,8 +105,7 @@ export function TokenPicker() {
   return (
     <span ref={anchorRef} style={{ position: 'relative', display: 'inline-flex' }}>
       <Button
-        variant="secondary"
-        size="L"
+        variant="outline"
         leadingIcon="solar:tag-linear"
         onClick={() => setOpen(o => !o)}
       >

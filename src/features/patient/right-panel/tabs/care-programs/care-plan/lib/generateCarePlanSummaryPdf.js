@@ -15,7 +15,7 @@ import { matchesShareConditionFilter } from './carePlanShareFilters';
  *   Last       Open Interventions: those on no goal, by problem
  *
  * Every page after the first repeats a patient strip under the header. A
- * field with no value prints "—": nothing is filled in.
+ * field with no value prints "-": nothing is filled in.
  */
 const PAGE = { w: 595, h: 842 };
 const M = 24;
@@ -33,7 +33,7 @@ const C = {
   white: [255, 255, 255],
 };
 
-const DASH = '—';
+const DASH = '-';
 const KIND_LABEL = Object.fromEntries(CARE_PLAN_INTERVENTION_KINDS.map(i => [i.key, i.label]));
 
 function fmtDate(value) {
@@ -63,13 +63,15 @@ function goalTitle(g, n) {
  * @param {object} meta     { patientName, date, plan: { createdBy, createdAt, signedBy, signedAt, progress },
  *                            carePlanNote: { detail, actor, createdAt } | null, patient: { dob, age, gender, memberId } }
  * @param {object} selection { conditions, goals, interventions, barriers }
- * @param {object} options  { detail: 'compact' | 'detailed', demographics, header, footer, logo, fonts, showCarePlanNote }
+ * @param {object} options  { detail: 'compact' | 'detailed', demographics, header, footer, logo, fonts, showCarePlanNote,
+ *                            sections (labs / medications / history, from carePlanPrintContent) }
  * @returns {Blob}
  */
 export function generateCarePlanSummaryPdf(meta, selection, options = {}) {
   const {
     detail = 'compact',
     demographics = [],
+    sections = [],
     header,
     footer: footerImage,
     logo = null,
@@ -232,7 +234,7 @@ export function generateCarePlanSummaryPdf(meta, selection, options = {}) {
 
   const intvCols = [{ label: 'Interventions', w: 323 }, { label: 'Adherence', w: 104 }, { label: 'Status', w: CONTENT_W - 427 }];
   const intvRow = i => [
-    { title: i.title, sub: interventionMeta(i), body: detailed ? descriptionOf(i) : '', note: noteOf(i) },
+    { title: i.title, sub: [i.changeTag, interventionMeta(i)].filter(Boolean).join(' | '), body: detailed ? descriptionOf(i) : '', note: noteOf(i) },
     i.adherence && i.adherence !== '-' ? String(i.adherence) : DASH,
     i.status || DASH,
   ];
@@ -257,6 +259,12 @@ export function generateCarePlanSummaryPdf(meta, selection, options = {}) {
     y += 34;
   };
   versionBand();
+  if (meta.changesNote) {
+    font('regular', 8, C.muted);
+    const text = lines(meta.changesNote, CONTENT_W);
+    doc.text(text, M, y);
+    y += text.length * 11 + 8;
+  }
 
   doc.setDrawColor(...C.rule);
   doc.setLineWidth(0.5);
@@ -303,7 +311,7 @@ export function generateCarePlanSummaryPdf(meta, selection, options = {}) {
     if (detailed && idx === 0) sectionTitle('Goals');
     ensure(110);
     font('medium', 10, C.ink);
-    const t = lines(goalTitle(g, idx + 1), CONTENT_W);
+    const t = lines(`${goalTitle(g, idx + 1)}${g.changeTag ? ` (${g.changeTag})` : ''}`, CONTENT_W);
     doc.text(t, M, y);
     y += t.length * 13 + 6;
     const target = [formatGoalTarget(g), g.duration ? `in ${formatGoalDuration(g)}` : ''].filter(Boolean).join(' ');
@@ -331,7 +339,7 @@ export function generateCarePlanSummaryPdf(meta, selection, options = {}) {
       y += 10;
     }
     if (intv.length) table(intvCols, intv.map(intvRow));
-    if (bars.length) table(barrierCols, bars.map(b => [{ title: b.title }, b.status || DASH]));
+    if (bars.length) table(barrierCols, bars.map(b => [{ title: b.title, sub: b.changeTag }, b.status || DASH]));
     const gNote = noteOf(g);
     if (gNote) {
       ensure(30);
@@ -365,7 +373,20 @@ export function generateCarePlanSummaryPdf(meta, selection, options = {}) {
   }
   if (openBarriers.length) {
     sectionTitle('Open Barriers');
-    table(barrierCols, openBarriers.map(b => [{ title: b.title }, b.status || DASH]));
+    table(barrierCols, openBarriers.map(b => [{ title: b.title, sub: b.changeTag }, b.status || DASH]));
+  }
+
+  // ── Content sections: labs, medications, history ──
+  for (const section of sections) {
+    sectionTitle(section.title);
+    if (!section.rows.length) {
+      ensure(20);
+      font('regular', 8, C.muted);
+      doc.text(section.empty, M, y);
+      y += 20;
+      continue;
+    }
+    table(section.cols.map(c => ({ label: c.label, w: c.w * CONTENT_W })), section.rows);
   }
 
   // ── Header and footer on every page, now the page count is known ──

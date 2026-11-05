@@ -1,5 +1,5 @@
 /**
- * Form scoring engine — the pure evaluate() function.
+ * Form scoring engine: the pure evaluate() function.
  *
  * Spec: docs/forms-scoring-engine.md. Build the dependency DAG, topologically
  * sort it, then walk nodes once. Because branch reveals always target nodes

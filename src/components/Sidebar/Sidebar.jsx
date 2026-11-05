@@ -2,8 +2,12 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { Icon } from '../Icon/Icon';
 import { HelpPopover } from '../HelpPopover/HelpPopover';
 import { WhatsNewDrawer } from '../WhatsNewDrawer/WhatsNewDrawer';
+import { FeatureReviewsDrawer } from '../FeatureReviewsDrawer/FeatureReviewsDrawer';
+import { useMyPendingReviewCount } from '../FeatureReviewsDrawer/featureReviewHooks';
 import { useAppStore } from '../../store/useAppStore';
 import { formatBadgeCount } from '../../lib/formatBadgeCount';
+import { useCan } from '../../lib/useCan';
+import { navPermissionKey } from '../../lib/accessControl';
 import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
@@ -11,7 +15,7 @@ const NAV_ITEMS = [
   { icon: 'solar:users-group-rounded-linear', filledIcon: 'solar:users-group-rounded-bold', label: 'Population', page: 'population' },
   { icon: 'solar:calendar-linear', filledIcon: 'solar:calendar-bold', label: 'Calendar', page: 'calendar' },
   { icon: 'solar:checklist-minimalistic-linear', filledIcon: 'solar:checklist-minimalistic-bold', label: 'Tasks', page: 'tasks' },
-  // No hardcoded `badge` here any more — Messages and Tasks both read live
+  // No hardcoded `badge` here any more: Messages and Tasks both read live
   // counts (see navBadges below). The old `badge: 8` was already unreachable
   // once Messages switched to the store count, and read as a real number.
   { icon: 'solar:chat-round-dots-linear', filledIcon: 'solar:chat-round-dots-bold', label: 'Comms', page: 'messages' },
@@ -23,6 +27,7 @@ const NAV_ITEMS = [
 ];
 
 const BOTTOM_ITEMS = [
+  { icon: 'solar:clipboard-check-linear', filledIcon: 'solar:clipboard-check-bold', label: 'Signoff', action: 'reviews' },
   { icon: 'solar:question-circle-linear', filledIcon: 'solar:question-circle-bold', label: 'Help', action: 'help' },
 ];
 
@@ -37,6 +42,7 @@ function openFeedbackPortal() {
 
 export function Sidebar() {
   const activePage = useAppStore(s => s.activePage);
+  const can = useCan();
   const theme = useAppStore(s => s.theme);
   const navStyle = useAppStore(s => s.navStyle);
   const requestNavigate = useAppStore(s => s.requestNavigate);
@@ -45,6 +51,13 @@ export function Sidebar() {
   const setMemberLeadsTab = useAppStore(s => s.setMemberLeadsTab);
   const [helpOpen, setHelpOpen] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+  const reviewsDrawer = useAppStore(s => s.featureReviewsDrawer);
+  const openReviews = useAppStore(s => s.openFeatureReviewsDrawer);
+  const closeReviews = useAppStore(s => s.closeFeatureReviewsDrawer);
+  const reviewsOpen = !!reviewsDrawer;
+  const fetchFeatureReviews = useAppStore(s => s.fetchFeatureReviews);
+  const myPendingReviews = useMyPendingReviewCount();
+  useEffect(() => { fetchFeatureReviews(); }, [fetchFeatureReviews]);
 
   // In-house changelog (Supabase-backed). Fetched when the user reaches for
   // Help rather than on mount: `changelogUnread` is only ever read inside
@@ -61,7 +74,7 @@ export function Sidebar() {
   // The Featurebase JWT rides along for the same reason as the changelog:
   // "Give Feedback" reads it synchronously (window.open cannot survive an
   // await without tripping popup blockers), so it has to already be in the
-  // store by the time that item is clicked — but minting it at login cost an
+  // store by the time that item is clicked, but minting it at login cost an
   // Edge Function call on every page load. Hovering Help, then reading the
   // popover, then clicking is comfortably longer than the ~0.5 s mint. If a
   // user does beat it, openFeedbackPortal falls back to the anonymous portal,
@@ -93,12 +106,12 @@ export function Sidebar() {
   // rect from the active <a>'s ref on every change. CSS transitions
   // `top` / `height` so the purple background glides between items
   // instead of snapping. We measure with useLayoutEffect (pre-paint) so
-  // the very first render already positions the pill correctly — no
+  // the very first render already positions the pill correctly, no
   // flash from origin.
   const navItemsRef = useRef(null);
   // Ref map keyed by nav-item label. Points at the inner .itemInner card
-  // (not the outer <a> tile) so the pill exactly overlays the 60×60 card
-  // — 1:1 aspect — instead of the 64×64 tile which includes 2px padding.
+  // (not the outer <a> tile) so the pill exactly overlays the 60×60 card,
+  // 1:1 aspect, instead of the 64×64 tile which includes 2px padding.
   const innerRefs = useRef({});
   const [pill, setPill] = useState(null); // { top, left, width, height } | null
   const [pillReady, setPillReady] = useState(false); // gate first-paint transition
@@ -110,7 +123,7 @@ export function Sidebar() {
     const inner = activeItem ? innerRefs.current[activeItem.label] : null;
     const container = navItemsRef.current;
     if (!inner || !container) { setPill(null); return; }
-    // .itemInner sits inside an .item that has position:relative — its
+    // .itemInner sits inside an .item that has position:relative, its
     // offsetParent is that anchor, so total top = anchor.offsetTop +
     // inner.offsetTop (the 2px padding). Width/height come straight
     // from the inner card so the pill is always a perfect square.
@@ -130,7 +143,7 @@ export function Sidebar() {
     const raf = requestAnimationFrame(() => setPillReady(true));
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePage]);
+  }, [activePage, can]); // `can`: a hidden item above shifts the active one
 
   // Re-measure on resize (font swap can change tile height, scrollbar
   // appearing can shift layout) so the pill never desyncs.
@@ -188,7 +201,7 @@ export function Sidebar() {
             aria-hidden="true"
           />
         )}
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter(item => can(navPermissionKey(item.page))).map((item) => {
           const isActive = activePage === item.page || (item.page === 'settings' && activePage === 'builder');
           return (
             <button
@@ -211,7 +224,7 @@ export function Sidebar() {
                 className={styles.itemInner}
               >
                 {/* Crossfade linear ↔ bold. Wrap each Icon in a positioned
-                    span so the layer classes attach to a stable element —
+                    span so the layer classes attach to a stable element,
                     the Icon component intercepts some solar:* names and
                     renders a custom SVG that ignores className, which would
                     leave the linear icon visible behind the bold. */}
@@ -232,7 +245,8 @@ export function Sidebar() {
       <div className={styles.bottomSection}>
         {BOTTOM_ITEMS.map((item) => {
           const isHelp = item.action === 'help';
-          const isActive = isHelp && helpOpen;
+          const isReviews = item.action === 'reviews';
+          const isActive = (isHelp && helpOpen) || (isReviews && reviewsOpen);
           return (
             <button
               type="button"
@@ -243,8 +257,14 @@ export function Sidebar() {
               onFocus={isHelp ? warmHelpMenu : undefined}
               onClick={() => {
                 if (isHelp) { warmHelpMenu(); setHelpOpen(v => !v); }
+                if (isReviews) openReviews();
               }}
             >
+              {isReviews && myPendingReviews > 0 && (
+                <span className={styles.badge} aria-label={`${myPendingReviews} awaiting your signoff`}>
+                  {formatBadgeCount(myPendingReviews)}
+                </span>
+              )}
               <div className={styles.itemInner}>
                 {/* Same crossfade pattern as the primary nav so Help
                     picks up the filled variant when its popover is open. */}
@@ -273,6 +293,7 @@ export function Sidebar() {
         />
       )}
       {whatsNewOpen && <WhatsNewDrawer onClose={() => setWhatsNewOpen(false)} />}
+      {reviewsDrawer && <FeatureReviewsDrawer key={reviewsDrawer.focusId || 'all'} focusId={reviewsDrawer.focusId} onClose={closeReviews} />}
     </nav>
   );
 }

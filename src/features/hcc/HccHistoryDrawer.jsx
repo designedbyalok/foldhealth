@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { Icon } from '../../components/Icon/Icon';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
+import { Tabs } from '../../components/Tabs/Tabs';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { useAppStore } from '../../store/useAppStore';
 import { EVENTS } from './activityLog';
 // Reuse the shared HistoryTimeline primitive so every visual (rail /
 // icon bubble / transition pills / file card / avatar swap) renders
-// identically to the per-encounter timeline shown in the DiagPanel —
+// identically to the per-encounter timeline shown in the DiagPanel,
 // per spec §2 we want one timeline component, four views.
 import {
   HistoryTimelineEntry,
@@ -80,7 +80,7 @@ const EVENT_ICON = {
   'patient.field_edited':           { icon: 'solar:settings-linear',            tone: 'warning' },
 };
 
-// Visual params for the icon bubble — mirrors the shared ACT_ICON table
+// Visual params for the icon bubble, mirrors the shared ACT_ICON table
 // so the bubble looks identical across every timeline view.
 const TONE = {
   success: { bg: 'var(--status-success-light)', color: 'var(--status-success)', border: 'rgba(0,155,83,0.2)' },
@@ -150,7 +150,7 @@ function matchesDatePreset(d, preset) {
   return true;
 }
 
-// Multi-select filters — every chip carries a string[] of selected values.
+// Multi-select filters: every chip carries a string[] of selected values.
 // Empty array means "no filter"; any non-empty array matches ANY of its
 // values (OR within a chip, AND across chips).
 function rowMatchesFilters(row, filters) {
@@ -269,7 +269,7 @@ export function HccHistoryDrawer() {
   // Tab toggle: 'activity' (timeline) vs 'documents' (one card per upload).
   const [tab, setTab] = useState('activity');
 
-  // FilterChip state — each key is a string[] of selected values ([] = unset).
+  // FilterChip state: each key is a string[] of selected values ([] = unset).
   // Matches the multi-select pattern used by the worklist's FilterChipBar so
   // the drawer's filters behave the same way (pick multiple DOSes, multiple
   // patients, etc.).
@@ -278,7 +278,7 @@ export function HccHistoryDrawer() {
   const clearAll = () => setFilters({ dos: [], patient: [], by: [], category: [], date: [] });
   const hasAnyFilter = Object.values(filters).some(v => Array.isArray(v) && v.length > 0);
 
-  // Collapsible month groups — empty set = everything expanded.
+  // Collapsible month groups: empty set = everything expanded.
   const [collapsed, setCollapsed] = useState(() => new Set());
   const toggleGroup = (label) => setCollapsed(prev => {
     const next = new Set(prev);
@@ -317,16 +317,16 @@ export function HccHistoryDrawer() {
 
   return (
     <Drawer title="HCC Activity History" onClose={close}>
-      {/* Tab toggle — Activity timeline vs Documents (one card per upload).
+      {/* Tab toggle: Activity timeline vs Documents (one card per upload).
           Uses the shared TabStrip primitive so tab styling matches the app's
           top-level TabBar. Bleeds edge-to-edge inside the drawer body. */}
-      <TabStrip
+      <Tabs
         items={[
           { key: 'activity',  label: 'Activity',  icon: 'solar:history-linear' },
           { key: 'documents', label: 'Documents', icon: 'solar:document-text-linear' },
         ]}
-        activeKey={tab}
-        onChange={setTab}
+        value={tab}
+        onValueChange={setTab}
       />
       {tab === 'documents' ? (
         <DocumentsTab
@@ -346,7 +346,7 @@ export function HccHistoryDrawer() {
         />
       ) : (
       <>
-      {/* Filter row — DOS · Patient · Category · Recorded By · Date + Clear All.
+      {/* Filter row: DOS · Patient · Category · Recorded By · Date + Clear All.
           Uses the shared multi-select FilterChip so behaviour matches the
           worklist's FilterChipBar. Sits at a 0px gap directly under the
           TabStrip and bleeds edge-to-edge inside the drawer. */}
@@ -424,7 +424,7 @@ export function HccHistoryDrawer() {
 }
 
 /**
- * DocumentsTab — one card per upload batch.
+ * DocumentsTab: one card per upload batch.
  *
  * Reads the activity feed and groups rows by `scope.batchId`. Each batch
  * card surfaces: filename + uploaded-by + when, total encounters
@@ -461,7 +461,7 @@ function DocumentsTab({ feed, loading, onReopenReview }) {
     return merged;
   }, [feed, sftpBatches]);
 
-  // Spec D — uploader filter. Build the unique uploader list from
+  // Spec D: uploader filter. Build the unique uploader list from
   // the batches array so the dropdown only ever shows people who
   // have actually uploaded something.
   const uploaders = useMemo(() => {
@@ -507,7 +507,7 @@ function DocumentsTab({ feed, loading, onReopenReview }) {
 
   return (
     <div className={hccStyles.docsTab}>
-      {/* Summary strip + uploader filter chip — Figma compliance for
+      {/* Summary strip + uploader filter chip, Figma compliance for
           spec D (filter by uploader). */}
       <div className={hccStyles.docsHeaderRow}>
         <div className={hccStyles.docsSummary}>
@@ -575,7 +575,7 @@ function DocumentRow({ batch, onReopen }) {
         <span className={[hccStyles.docStatus, statusCls].join(' ')}>{statusLabel}</span>
       </div>
 
-      {/* Counters strip — Added vs Skipped, color-coded so partial docs
+      {/* Counters strip: Added vs Skipped, color-coded so partial docs
           read at a glance. */}
       <div className={hccStyles.docCounters}>
         <span className={hccStyles.docCounter}>

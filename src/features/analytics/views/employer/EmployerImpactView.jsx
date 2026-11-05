@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../../../../store/useAppStore';
-import { Toggle } from '../../../../components/Toggle/Toggle';
-import { SubTabs } from '../../../../components/SubTabs/SubTabs';
+import { SegmentedControl } from '../../../../components/SegmentedControl/SegmentedControl';
+import { Tabs } from '../../../../components/Tabs/Tabs';
 import { Button } from '../../../../components/Button/Button';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
 import { MonthPickerPopover } from '../../../../components/MonthPickerPopover/MonthPickerPopover';
 import { Select } from '../../../../components/Select/Select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../../components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../../components/Dialog/Dialog';
 import { ChartSkeleton, KpiSkeleton } from '../shared';
 import { ChartContainer } from '../../../../components/ChartContainer/ChartContainer';
 import { StackedBars, Lines, HBars, Donut, ChartLegend, CostComparisonBars } from './EmployerCharts';
@@ -16,7 +16,7 @@ import {
   SECTIONS, WIDGETS, SAVINGS_CATEGORIES, SAVINGS_METRIC, TIME_FRAMES, SCOPE_OPTIONS,
 } from './employerImpactConfig';
 import {
-  monthsBetween, rangeLabel, frameRange, rangeFromStart, toMonthKey, indexRows,
+  monthsBetween, weeksBetween, rangeLabel, frameRange, rangeFromStart, toMonthKey, indexRows,
   buildSeriesData, buildStats, buildSavings, buildSavingsSummary, buildDuration, buildSatisfaction, surveyForms, toCsv,
 } from './employerImpactData';
 import { VIEW_TITLES } from '../../analyticsData';
@@ -54,6 +54,9 @@ const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)
  * always agree.
  */
 function widgetModel(widget, idx, ctx, extra) {
+  // Time-series charts plot weeks for Month and Quarter.
+  const weekly = !!ctx.weeks && (widget.x === 'month' || widget.type === 'satisfaction');
+  const xLabel = weekly ? 'Weeks' : widget.xLabel;
   if (widget.type === 'stats') {
     const stats = buildStats(idx, widget.stats, ctx);
     return {
@@ -72,18 +75,18 @@ function widgetModel(widget, idx, ctx, extra) {
     const form = forms.includes(extra?.form) ? extra.form : forms[0];
     const s = form ? buildSatisfaction(idx, widget.metric, form, ctx) : { hasData: false, data: [] };
     return {
-      ...s, forms, form,
+      ...s, forms, form, xLabel, weekly,
       rows: s.data,
       columns: [{ key: 'x', label: 'Period' }, { key: 'responded', label: 'Responded %' }, { key: 'not_responded', label: 'Not Responded %' }],
     };
   }
   const { data, hasData } = buildSeriesData(idx, widget, ctx);
   const columns = [
-    { key: 'x', label: widget.type === 'hbar' ? (widget.yLabel || 'Category') : (widget.xLabel || 'Category') },
+    { key: 'x', label: widget.type === 'hbar' ? (widget.yLabel || 'Category') : (xLabel || 'Category') },
     ...widget.series.map(s => ({ key: s.key, label: s.label })),
     ...(widget.line ? [{ key: widget.line.key, label: widget.line.label }] : []),
   ];
-  return { data, hasData, rows: data, columns };
+  return { data, hasData, rows: data, columns, xLabel, weekly };
 }
 
 // ── Widget bodies ────────────────────────────────────────────────────────
@@ -132,7 +135,7 @@ function WidgetChart({ widget, model, hidden, onToggle, height }) {
 
   const legend = <ChartLegend series={widget.series} hidden={hidden} onToggle={onToggle} line={widget.line} />;
   const chart = widget.type === 'line'
-    ? <Lines data={model.data} series={widget.series} hidden={hidden} yLabel={widget.yLabel} xLabel={widget.xLabel} format={widget.format} height={height} />
+    ? <Lines data={model.data} series={widget.series} hidden={hidden} yLabel={widget.yLabel} xLabel={model.xLabel} format={widget.format} height={height} thinX={model.weekly} />
     : (
       <StackedBars
         data={model.data}
@@ -140,10 +143,11 @@ function WidgetChart({ widget, model, hidden, onToggle, height }) {
         line={widget.line}
         hidden={hidden}
         yLabel={widget.yLabel}
-        xLabel={widget.xLabel}
+        xLabel={model.xLabel}
         format={widget.format}
         height={height}
         denseX={widget.x === 'hour'}
+        thinX={model.weekly}
       />
     );
 
@@ -167,7 +171,7 @@ function SatisfactionBody({ widget, model, onForm, hidden, onToggle, height }) {
           portal
           options={model.forms.map(f => ({ value: f, label: f }))}
           value={model.form}
-          onChange={onForm}
+          onValueChange={onForm}
         />
         <div className={styles.satBox}>
           <span className={styles.statLabel}>Average Score</span>
@@ -203,9 +207,10 @@ function SatisfactionBody({ widget, model, onForm, hidden, onToggle, height }) {
             series={[{ key: 'responded', label: 'Responded' }, { key: 'not_responded', label: 'Not Responded' }]}
             hidden={hidden}
             yLabel={widget.yLabel}
-            xLabel={widget.xLabel}
+            xLabel={model.xLabel}
             format="percent"
             height={height}
+            thinX={model.weekly}
           />
         </div>
       </div>
@@ -332,6 +337,10 @@ export function EmployerImpactView({ snapshot = null } = {}) {
   const [timeFrame, setTimeFrame] = useState(saved?.timeFrame || 'Quarter');
   const [pickedStart, setPickedStart] = useState(saved?.range?.from ?? null); // 'YYYY-MM'
   const [rows, setRows] = useState(null);
+  // Month and Quarter chart weeks; Year charts months. `rows: null` means
+  // the weekly table isn't there, and the charts fall back to months.
+  const weekly = timeFrame !== 'Year';
+  const [weekRows, setWeekRows] = useState(null);
   // One saved layout per location view; `dashboard` is the one on screen.
   const [layouts, setLayouts] = useState(() => (saved?.layouts ? normalizeLayouts(saved.layouts) : readLayouts()));
   const dashboard = layouts[scope];
@@ -378,16 +387,25 @@ export function EmployerImpactView({ snapshot = null } = {}) {
   useEffect(() => {
     if (!filtersLoaded) return undefined;
     let cancelled = false;
-    fetchRollup({ from: effectiveRange.from, to: effectiveRange.to, employer: employerId, scope, location })
+    const filters = { from: effectiveRange.from, to: effectiveRange.to, employer: employerId, scope, location };
+    fetchRollup(filters)
       .then(r => { if (!cancelled) setRows({ key: requestKey, rows: r || [] }); });
+    if (weekly) {
+      fetchRollup({ ...filters, weekly: true })
+        .then(r => { if (!cancelled) setWeekRows({ key: requestKey, rows: r }); });
+    }
     return () => { cancelled = true; };
-  }, [filtersLoaded, fetchRollup, requestKey, effectiveRange.from, effectiveRange.to, employerId, scope, location]);
+  }, [filtersLoaded, fetchRollup, requestKey, weekly, effectiveRange.from, effectiveRange.to, employerId, scope, location]);
 
-  const loading = rows?.key !== requestKey;
+  const loading = rows?.key !== requestKey || (weekly && weekRows?.key !== requestKey);
   const idx = useMemo(() => indexRows(loading ? [] : rows.rows), [rows, loading]);
+  const weekIdx = useMemo(() => (weekly && !loading && weekRows.rows ? indexRows(weekRows.rows) : null), [weekly, loading, weekRows]);
   const months = useMemo(() => monthsBetween(effectiveRange.from, effectiveRange.to), [effectiveRange.from, effectiveRange.to]);
-  // Charts always show months; Time Frame only sets how long the range is.
-  const ctx = useMemo(() => ({ months, timeFrame: 'Month' }), [months]);
+  // Charts show weeks for Month and Quarter (when the weekly table is
+  // there) and months for Year; Time Frame also sets how long the range is.
+  const ctx = useMemo(() => (weekIdx
+    ? { months, timeFrame: 'Month', weeks: weeksBetween(effectiveRange.from, effectiveRange.to), weekIdx }
+    : { months, timeFrame: 'Month' }), [months, weekIdx, effectiveRange.from, effectiveRange.to]);
   const rangeText = rangeLabel(effectiveRange.from, effectiveRange.to);
 
   const models = useMemo(() => {
@@ -571,10 +589,10 @@ export function EmployerImpactView({ snapshot = null } = {}) {
         <div className={styles.titleRow}>
           <div className={layout.viewTitle}>{VIEW_TITLES.employer.title}</div>
           {!readOnly && (
-            <Toggle
+            <SegmentedControl
               items={SCOPE_OPTIONS}
-              active={scope}
-              onChange={(k) => { setScope(k); setLocation(null); }}
+              value={scope}
+              onValueChange={(k) => { setScope(k); setLocation(null); }}
             />
           )}
         </div>
@@ -582,7 +600,7 @@ export function EmployerImpactView({ snapshot = null } = {}) {
         {!readOnly && (
         <div className={styles.headerActions}>
           {/* Tooltips open below: above, the page's top bar clips them. */}
-          <Button variant="secondary" size="L" leadingIcon="solar:download-minimalistic-linear" onClick={() => setPrintOpen(true)}>
+          <Button variant="outline" leadingIcon="solar:download-minimalistic-linear" onClick={() => setPrintOpen(true)}>
             Export
           </Button>
           <span className={styles.actionDivider} aria-hidden="true" />
@@ -614,10 +632,11 @@ export function EmployerImpactView({ snapshot = null } = {}) {
           has a single section, so it has none. */}
       {scope !== 'visit' && (
         <nav className={styles.quickJump} aria-label="Report sections">
-          <SubTabs
-            tabs={sectionsInOrder.map(sec => ({ key: sec.id, label: sec.title }))}
-            activeKey={activeSection}
-            onChange={jumpTo}
+          <Tabs
+            variant="pill"
+            items={sectionsInOrder.map(sec => ({ key: sec.id, label: sec.title }))}
+            value={activeSection}
+            onValueChange={jumpTo}
           />
         </nav>
       )}
@@ -676,6 +695,7 @@ export function EmployerImpactView({ snapshot = null } = {}) {
             state: { scope, employerName, location, timeFrame, range: effectiveRange, layouts },
             filters: filterOptions,
             rows: loading ? [] : rows.rows,
+            weekRows: loading || !weekly ? null : weekRows.rows,
           })}
           range={rangeText}
           employerName={employerName}

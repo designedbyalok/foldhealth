@@ -1,4 +1,4 @@
-// PHQ-9 not complete — surfaced when the Coordinator tries to leave a
+// PHQ-9 not complete: surfaced when the Coordinator tries to leave a
 // DSF-B note with unanswered PHQ-9 items. Copy is verbatim per user
 // story Section 5 (exact strings, actual calendar due date).
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
@@ -30,7 +30,7 @@ export function Phq9ExitDialog({
   const days = daysUntil(dueDateISO);
 
   if (mode === 'save-draft') {
-    // Save-as-Draft branch — reached from the header's Save as Draft
+    // Save-as-Draft branch: reached from the header's Save as Draft
     // button. This is a neutral confirmation (not a warning): the
     // draft is a safe stopping point. Primary action is Save as Draft
     // (what the user just asked for); secondary is Keep editing.

@@ -1,5 +1,5 @@
 // Care Plan step content for the program window (Figma 482:253058).
-// Local demo data — Goals + Interventions tables and the condition chip row.
+// Local demo data: Goals + Interventions tables and the condition chip row.
 export const CARE_PLAN_MOCK = {
   createdBy: 'Ivy Ralph',
   createdDate: '09/11/24',
@@ -25,7 +25,7 @@ export const CARE_PLAN_MOCK = {
     { id: 'i2', priority: 'high', icon: 'solar:clipboard-list-linear', title: 'Measure blood pressure everyday', duration: '9D', links: 3, assignee: { name: 'Terri Schuster', initials: 'TS' }, adherence: '-', status: 'Not Started' },
   ],
   barriers: [
-    { id: 'b1', priority: 'high', title: 'Transportation — no reliable ride to clinic', description: 'Patient reports missing appointments due to bus schedule.', status: 'Not Started' },
-    { id: 'b2', priority: 'medium', title: 'Health Literacy — confused about medication schedule', description: 'Needs simplified dosing calendar.', status: 'In Progress' },
+    { id: 'b1', priority: 'high', title: 'Transportation: no reliable ride to clinic', description: 'Patient reports missing appointments due to bus schedule.', status: 'Not Started' },
+    { id: 'b2', priority: 'medium', title: 'Health Literacy: confused about medication schedule', description: 'Needs simplified dosing calendar.', status: 'In Progress' },
   ],
 };

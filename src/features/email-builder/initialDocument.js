@@ -1,6 +1,6 @@
 import { HEADER_PRESETS, FOOTER_PRESETS } from './headerFooterLibrary';
 
-// Default email template — every new template gets a Header preset on top and
+// Default email template: every new template gets a Header preset on top and
 // a Footer preset on the bottom (auto-loaded; the user can change either via
 // the Header/Footer dropdowns in the components panel).
 

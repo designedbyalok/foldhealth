@@ -4,10 +4,10 @@
 --   "Refer to" recipients are the practice's system users (profiles:
 --   fax / mobile / email columns; chat reaches any active user). No
 --   separate provider directory.
---   referral_sender_lines  — the practice's own eFax numbers / email
+--   referral_sender_lines: the practice's own eFax numbers / email
 --                            addresses / SMS numbers ("Select Your eFax
 --                            Number" etc.). Chat needs no sender line.
---   caregap_referrals      — every referral sent from a care gap. The
+--   caregap_referrals: every referral sent from a care gap. The
 --                            Referrals tab lists these; each send is also
 --                            logged to caregap_activity by the app.
 --

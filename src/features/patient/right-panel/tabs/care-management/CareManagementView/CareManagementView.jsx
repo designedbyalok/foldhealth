@@ -4,8 +4,10 @@ import { Button } from '../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
 import { Drawer } from '../../../../../../components/Drawer/Drawer';
 import { Textarea } from '../../../../../../components/Textarea/Textarea';
+import { RadioOptionGroup } from '../../../../../../components/RadioOptionGroup/RadioOptionGroup';
+import { isProgramClosed } from '../../../../data/programStatus';
 import { FilterChip } from '../../../../../../components/FilterChip/FilterChip';
-import { SubTabs } from '../../../../../../components/SubTabs/SubTabs';
+import { Tabs } from '../../../../../../components/Tabs/Tabs';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { CareProgramsTab } from '../../care-programs/CareProgramsTab/CareProgramsTab';
 import { CarePlanSummaryView } from '../../care-programs/care-plan/summary/CarePlanSummaryView/CarePlanSummaryView.jsx';
@@ -16,6 +18,7 @@ import { stepsFor, flatSteps } from '../../care-programs/program-detail/ProgramD
 import { CareManagementToolbar } from '../CareManagementToolbar/CareManagementToolbar';
 import { PatientCarePlanPane } from '../PatientCarePlanPane/PatientCarePlanPane';
 import { RollupSignButton } from '../../care-programs/care-plan/summary/RollupSignButton';
+import { SummarizeButton } from '../../care-programs/care-plan/summary/CarePlanAiSummary/CarePlanAiSummary';
 import { showsPatientCarePlan } from '../../care-programs/care-plan/lib/carePlanMode';
 import { ProgramActivityDay } from '../ProgramActivityCard/ProgramActivityCard.jsx';
 import { carePlanActivityEntries, filterProgramActivity, groupProgramActivity, activityTypeLabel } from '../programActivity';
@@ -25,8 +28,9 @@ import { GoalPreviewDrawer } from '../../care-programs/care-plan/drawers/GoalPre
 import { InterventionPreviewDrawer } from '../../care-programs/care-plan/drawers/InterventionPreviewDrawer/InterventionPreviewDrawer';
 import { BarrierDetailDrawer } from '../../care-programs/care-plan/drawers/BarrierDetailDrawer/BarrierDetailDrawer';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import { resolvePatientStoreId } from '../../../../../../lib/resolvePatientStoreId';
 import styles from './CareManagementView.module.css';
 
@@ -35,28 +39,39 @@ import styles from './CareManagementView.module.css';
 const CM_TABS_PROGRAM = ['Care Programs', 'Comprehensive Care Plan', 'Program Activity Log'];
 const CM_TABS_PATIENT = ['Care Programs', 'Care Plan', 'Program Activity Log'];
 
-/** "Add Care Note" drawer for the Comprehensive Care Plan pane.
- *  Composer only for now —
- *  hands the note body back to the caller, which decides how to
- *  persist it (toast placeholder until the patient-level notes API
- *  ships). */
-function AddCareNoteDrawer({ onClose, onSave }) {
+/** "Add Care Note" drawer for the Comprehensive Care Plan pane: one note for
+ *  every active program, or for the ones picked. Each program gets the note
+ *  as its own Care Note (a live audit row, so no plan version changes). */
+function AddCareNoteDrawer({ programs, onClose, onSave }) {
   const [body, setBody] = useState('');
-  const canSave = body.trim().length > 0;
+  const [scope, setScope] = useState('all');
+  const targets = scope === 'all' ? programs : programs.filter(p => p.id === scope);
+  const canSave = body.trim().length > 0 && targets.length > 0;
   return (
     <Drawer
       title="Add Care Note"
       onClose={onClose}
       primaryAction={(
-        <Button variant="primary" size="L" disabled={!canSave} onClick={() => onSave?.(body.trim())}>
+        <Button disabled={!canSave} onClick={() => onSave?.(body.trim(), targets)}>
           Add Note
         </Button>
       )}
       secondaryAction={(
-        <Button variant="secondary" size="L" onClick={onClose}>Cancel</Button>
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
       )}
     >
       <div className={styles.addNoteBody}>
+        <RadioOptionGroup
+          name="care-note-scope"
+          label="Add to"
+          orientation="horizontal"
+          value={scope}
+          onChange={setScope}
+          options={[
+            { value: 'all', label: 'All programs' },
+            ...programs.map(p => ({ value: p.id, label: p.code })),
+          ]}
+        />
         <label className={styles.addNoteLabel} htmlFor="care-note-body">Note</label>
         <Textarea
           id="care-note-body"
@@ -66,12 +81,13 @@ function AddCareNoteDrawer({ onClose, onSave }) {
           placeholder="e.g. Reviewed care plan with patient; increased dietary check-ins."
           rows={6}
         />
+        <span className={styles.addNoteHint}>Shows as the program&apos;s Care Note. It doesn&apos;t change any signed care plan.</span>
       </div>
     </Drawer>
   );
 }
 
-/** Comprehensive Care Plan pane — read-only cross-program snapshot with its own
+/** Comprehensive Care Plan pane: read-only cross-program snapshot with its own
  *  search + (program) filter and a Download CTA. */
 function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpenProgramStep, editable = false }) {
   const showToast = useAppStore(s => s.showToast);
@@ -79,6 +95,15 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpe
   const patientCarePlans = useSignedCarePlans();
   const carePlanTemplates = useAppStore(s => s.carePlanTemplates) || [];
   const [addNoteOpen, setAddNoteOpen] = useState(false);
+  // Summarize sits in this toolbar; the AI Summary section shows once it has run.
+  const [summarizeRequest, setSummarizeRequest] = useState(0);
+  const [summaryState, setSummaryState] = useState('idle');
+  const logCarePlanAudit = useAppStore(s => s.logCarePlanAudit);
+  // A care note goes on an open program that has a care plan.
+  const notePrograms = useMemo(
+    () => programs.filter(p => !isProgramClosed(p.status) && patientCarePlans[`${patientId}::${p.id}`]),
+    [programs, patientCarePlans, patientId],
+  )
   const [searchMode, setSearchMode] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -90,7 +115,7 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpe
   const [createdDateFilter, setCreatedDateFilter] = useState([]);
 
   const programCodes = useMemo(() => [...new Set(programs.map(p => p.code))], [programs]);
-  // Option lists — only surface template / status / priority values
+  // Option lists: only surface template / status / priority values
   // that actually appear on this patient's plans, so the popovers
   // never show empty rows.
   const snapshot = useMemo(
@@ -165,9 +190,14 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpe
              hug the toolbar's right edge like the rest of the app's
              icon actions. */
           <div className={styles.ctaCluster}>
+            <SummarizeButton
+              state={summaryState}
+              onClick={() => setSummarizeRequest(n => n + 1)}
+              idleLabel="Summarize active programs"
+            />
+            <span className={styles.ctaDivider} aria-hidden="true" />
             <ActionButton
               icon="solar:notes-linear"
-              size="L"
               tooltip="Add care note"
               tooltipBelow
               tooltipLeft
@@ -176,7 +206,6 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpe
             <span className={styles.ctaDivider} aria-hidden="true" />
             <ActionButton
               icon="solar:download-minimalistic-linear"
-              size="L"
               tooltip="Download"
               tooltipBelow
               tooltipLeft
@@ -224,14 +253,18 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpe
           createdDateFilter={createdDateFilter}
           onClose={onClose}
           onOpenProgramStep={onOpenProgramStep}
+          summarizeRequest={summarizeRequest}
+          onSummaryState={setSummaryState}
         />
       </div>
       {addNoteOpen && (
         <AddCareNoteDrawer
+          programs={notePrograms}
           onClose={() => setAddNoteOpen(false)}
-          onSave={(body) => {
+          onSave={async (body, targets) => {
             setAddNoteOpen(false);
-            showToast?.(`Care note saved${body ? '' : ''}`);
+            await Promise.all(targets.map(p => logCarePlanAudit(patientId, p, { entityType: 'plan', action: 'note', summary: 'Note added', detail: body })));
+            showToast?.(targets.length === 1 ? `Care note added to ${targets[0].code}` : `Care note added to ${targets.length} programs`);
           }}
         />
       )}
@@ -246,7 +279,7 @@ const shortDate = (iso) => {
     : iso;
 };
 
-/** Program Activity Log — every care program's activity on one monthly
+/** Program Activity Log: every care program's activity on one monthly
  *  timeline (program events plus each care plan's own history), with search
  *  and Activity Type / Program / Date / Activity By filters. `active` is true
  *  while the tab is showing. */
@@ -388,7 +421,7 @@ function ProgramActivityLog({ header, programs = [], active = false }) {
         {loading ? (
           <CardSkeleton count={4} />
         ) : months.length === 0 ? (
-          <RingEmptyState icon="solar:clipboard-list-linear" label={filtering ? 'No matching activity' : 'No program activity yet'} />
+          <EmptyState icon="solar:clipboard-list-linear" title={filtering ? 'No matching activity' : 'No program activity yet'} />
         ) : (
           months.map(month => {
             const collapsed = !!collapsedMonths[month.key];
@@ -407,9 +440,11 @@ function ProgramActivityLog({ header, programs = [], active = false }) {
                     className={`${styles.monthChevron} ${collapsed ? styles.monthChevronClosed : ''}`}
                   />
                 </button>
-                {!collapsed && month.days.map(day => (
-                  <ProgramActivityDay key={day.key} day={day} onOpenVersion={openCarePlanVersion} versionGlance={versionGlance} onOpenItem={openPlanItem} />
-                ))}
+                <CollapsibleContent open={!collapsed}>
+                  {month.days.map(day => (
+                    <ProgramActivityDay key={day.key} day={day} onOpenVersion={openCarePlanVersion} versionGlance={versionGlance} onOpenItem={openPlanItem} />
+                  ))}
+                </CollapsibleContent>
               </div>
             );
           })
@@ -460,7 +495,7 @@ function ProgramActivityLog({ header, programs = [], active = false }) {
 }
 
 /**
- * Care Management — a secondary switch (SubTabs) over the three program views.
+ * Care Management: a secondary switch (SubTabs) over the three program views.
  * Every tab shares the same toolbar layout (search · sub-tabs · CTA · filter);
  * only the CTA changes per tab. Each pane reuses its existing, data-backed view.
  */
@@ -505,10 +540,10 @@ export function CareManagementView() {
 
   // The sub-tab switch is a controlled element owned here, handed to each pane
   // so it renders inline in that pane's shared toolbar row.
-  const subTabBar = <SubTabs tabs={cmTabs} activeKey={subTab} onChange={setSubTab} />;
+  const subTabBar = <Tabs variant="pill" items={cmTabs} value={subTab} onValueChange={setSubTab} />;
 
   // Keep all three panes mounted and toggle visibility, so switching only
-  // shows/hides a pane instead of unmounting + remounting it — no re-fetch,
+  // shows/hides a pane instead of unmounting + remounting it, no re-fetch,
   // no re-animation, no reflow. The result is a flicker-free switch.
   return (
     <div className={styles.container}>

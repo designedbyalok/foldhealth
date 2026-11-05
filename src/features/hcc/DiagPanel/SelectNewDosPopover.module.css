@@ -1,10 +1,10 @@
-/* Select New DOS calendar popover — the second view of the DOS Select in
+/* Select New DOS calendar popover: the second view of the DOS Select in
    the +ICD flow. Anchored below the DOS field, slides in from the right so
    it visually replaces the Select's list. Back arrow returns to the list.
    Layout mirrors Figma: back+title header, month nav, day-of-week strip,
    6×7 day grid. */
 
-/* Soft slide-in from the right — no bounce, gentle decelerating curve so
+/* Soft slide-in from the right: no bounce, gentle decelerating curve so
    the calendar settles into place instead of snapping. Distance is small
    (8px) so the eye reads it as the calendar "taking over" the Select's
    footprint rather than swooshing across the drawer. */
@@ -29,7 +29,7 @@
   will-change: transform, opacity;
 }
 
-/* Header — back arrow + "Select New DOS". Back arrow sits flush left to
+/* Header: back arrow + "Select New DOS". Back arrow sits flush left to
    mirror standard multi-view dialog patterns. */
 .header {
   display: flex;
@@ -61,7 +61,7 @@
   line-height: var(--leading-tight);
 }
 
-/* Month nav — [<] "January 2026" [>]. Centered label so it reads as a
+/* Month nav: [<] "January 2026" [>]. Centered label so it reads as a
    heading rather than a range. */
 .monthNav {
   display: flex;
@@ -78,7 +78,7 @@
   text-align: center;
 }
 
-/* Day-of-week strip — muted, all-caps not needed at this weight. */
+/* Day-of-week strip: muted, all-caps not needed at this weight. */
 .dowRow {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -95,7 +95,7 @@
   line-height: var(--leading-tight);
 }
 
-/* Day grid — square-ish cells, hover tint, today highlighted with a purple
+/* Day grid: square-ish cells, hover tint, today highlighted with a purple
    coin (Figma reference). */
 .grid {
   display: grid;

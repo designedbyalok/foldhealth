@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { Popover } from '../Popover/Popover';
+import { Listbox } from '../Listbox/Listbox';
 import { Avatar } from '../Avatar/Avatar';
 import { Icon } from '../Icon/Icon';
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
 import styles from './UserPickerPopover.module.css';
 
 const initialsOf = (name) => String(name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
@@ -26,25 +27,31 @@ const initialsOf = (name) => String(name || '?').trim().split(/\s+/).map(w => w[
  *   (opening leftward, for triggers at the right of a panel)
  * @param {boolean}  [props.multiple]     – Checkbox rows (Figma Eventus 16978:128250): `selected` is
  *   an array of ids/names, each click toggles one and calls `onSelect(nextArray)`, and the menu stays open
+ * @param {{ label: string, keys: string[] }} [props.pinned] – Users (by id/name) listed first under their
+ *   own section header, the rest after a divider under `restLabel`. The group is fixed when the menu
+ *   opens, so rows don't jump as they're ticked.
+ * @param {string}   [props.restLabel='All Users'] – Header for the users after the pinned group
  */
 const NO_USERS = [];
 
-export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSelect, onUnassign, onClose, title = 'Select User', emptyText = 'No users available.', align = 'left', multiple = false }) {
-  const ref = useRef(null);
+export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSelect, onUnassign, onClose, title = 'Select User', emptyText = 'No users available.', align = 'left', multiple = false, pinned = null, restLabel = 'All Users' }) {
+  const [pinnedKeys] = useState(() => (pinned?.keys || []).map(String));
   const searchRef = useRef(null);
   const [query, setQuery] = useState('');
   useEffect(() => { searchRef.current?.focus(); }, []);
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    const onDown = (e) => { if (!ref.current?.contains(e.target)) onClose(); };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('mousedown', onDown);
-    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onDown); };
-  }, [onClose]);
 
   const q = query.trim().toLowerCase();
   const shown = useMemo(() => users.filter(u => !q || `${u.name} ${u.role || ''}`.toLowerCase().includes(q)), [users, q]);
   const keyOf = (u) => (u.id != null ? String(u.id) : u.name);
+  // Pinned first, in the order given; everyone else keeps the caller's order.
+  const groups = useMemo(() => {
+    if (!pinnedKeys.length) return null;
+    const rank = new Map(pinnedKeys.map((k, i) => [k, i]));
+    const rankOf = (u) => rank.get(u.id != null ? String(u.id) : u.name) ?? rank.get(u.name);
+    const top = shown.filter(u => rankOf(u) != null).sort((a, b) => rankOf(a) - rankOf(b));
+    const rest = shown.filter(u => rankOf(u) == null);
+    return top.length ? { top, rest } : null;
+  }, [shown, pinnedKeys]);
   const pickedSet = new Set(multiple ? (selected || []).map(String) : []);
   const isPicked = (u) => (multiple
     ? pickedSet.has(keyOf(u)) || pickedSet.has(u.name)
@@ -54,16 +61,21 @@ export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSe
     const next = isPicked(u) ? [...pickedSet].filter(x => x !== k && x !== u.name) : [...pickedSet, k];
     onSelect(next);
   };
+  const ordered = groups ? [...groups.top, ...groups.rest] : shown;
+  const topKeys = new Set(groups ? groups.top.map(keyOf) : []);
   if (!anchorRect) return null;
-  // Opens below the trigger, or above it near the bottom of the window.
-  const width = 280;
-  const want = align === 'right' ? anchorRect.right - width : anchorRect.left;
-  const left = Math.max(8, Math.min(want, window.innerWidth - width - 8));
-  const below = anchorRect.bottom + 320 < window.innerHeight;
-  const style = below ? { top: anchorRect.bottom + 4, left } : { bottom: window.innerHeight - anchorRect.top + 4, left };
 
-  return createPortal(
-    <div ref={ref} className={styles.menu} style={style} role="menu" onClick={(e) => e.stopPropagation()}>
+  return (
+    <Popover
+      anchor={anchorRect}
+      onOpenChange={() => onClose()}
+      placement={align === 'right' ? 'bottom-end' : 'bottom-start'}
+      width={280}
+      listNavigation
+      role="dialog"
+      aria-label={title}
+      className={styles.menu}
+    >
       <span className={styles.title}>{title}</span>
       <label className={styles.search}>
         <Icon name="solar:magnifer-linear" size={16} color="var(--neutral-300)" />
@@ -101,33 +113,33 @@ export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSe
       })()}
       <div className={styles.list}>
         {onUnassign && !q && (
-          <button type="button" role="menuitem" className={styles.row} onClick={() => { onUnassign(); onClose(); }}>
+          <button type="button" className={styles.row} onClick={() => { onUnassign(); onClose(); }}>
             <Avatar type="icon" variant="others" iconName="solar:user-linear" size="M" />
             <span className={styles.name}>Unassign</span>
           </button>
         )}
-        {shown.length === 0 ? (
-          <span className={styles.empty}>{q ? 'No users match your search.' : emptyText}</span>
-        ) : shown.map(u => (
-          <button
-            key={u.id || u.name}
-            type="button"
-            role={multiple ? 'menuitemcheckbox' : 'menuitem'}
-            aria-checked={multiple ? isPicked(u) : undefined}
-            className={[styles.row, multiple ? styles.rowMulti : '', isPicked(u) && !multiple ? styles.rowActive : ''].filter(Boolean).join(' ')}
-            onClick={() => (multiple ? toggle(u) : (onSelect(u), onClose()))}
-          >
-            {multiple && <Checkbox checked={isPicked(u)} tabIndex={-1} aria-hidden="true" className={styles.check} />}
-            <Avatar variant="staff" initials={u.initials || initialsOf(u.name)} size="M" />
-            <span className={styles.text}>
-              <span className={styles.name}>{u.name}</span>
-              {u.role && <span className={styles.role}>{u.role}</span>}
-            </span>
-            {isPicked(u) && !multiple && <Icon name="solar:check-circle-linear" size={16} color="var(--primary-300)" />}
-          </button>
-        ))}
+        <Listbox
+          aria-label={title}
+          size="lg"
+          dividers
+          multiple={multiple}
+          indicator={multiple ? 'checkbox' : 'check'}
+          options={ordered.map(u => ({
+            value: keyOf(u),
+            label: u.name,
+            description: u.role,
+            leading: <Avatar variant="staff" initials={u.initials || initialsOf(u.name)} size="M" />,
+            section: groups ? (topKeys.has(keyOf(u)) ? pinned.label : restLabel) : undefined,
+          }))}
+          value={multiple ? ordered.filter(isPicked).map(keyOf) : (ordered.find(isPicked) ? keyOf(ordered.find(isPicked)) : null)}
+          onSelect={(o) => {
+            const u = ordered.find(x => keyOf(x) === o.value);
+            if (multiple) toggle(u);
+            else { onSelect(u); onClose(); }
+          }}
+          emptyText={q ? 'No users match your search.' : emptyText}
+        />
       </div>
-    </div>,
-    document.body,
+    </Popover>
   );
 }

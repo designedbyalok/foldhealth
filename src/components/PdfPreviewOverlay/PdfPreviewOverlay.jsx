@@ -6,7 +6,7 @@ import styles from './PdfPreviewOverlay.module.css';
 /**
  * Full-screen overlay that previews a PDF Blob in an iframe.
  *
- * The browser renders the PDF natively via a blob: URL — no pdfjs-dist
+ * The browser renders the PDF natively via a blob: URL, no pdfjs-dist
  * canvas rendering needed for a basic viewer. Download button is provided
  * for users who want a local copy.
  *

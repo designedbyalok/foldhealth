@@ -1,0 +1,291 @@
+---
+title: Component Library Contract
+description: Layers, import boundaries and the prop vocabulary every component in src/components follows.
+---
+
+`src/components` is on its way to becoming a standalone library that other
+projects can install. This page is the contract that gets it there. New
+components follow it from day one; existing ones are migrated in phases (see
+[Migration status](#migration-status)).
+
+## Layers
+
+Every folder in `src/components` belongs to exactly one layer, recorded in
+[`src/components/layers.json`](https://github.com/designedbyalok/foldhealth/blob/main/src/components/layers.json).
+
+| Layer | What belongs here | May import | Examples |
+|---|---|---|---|
+| **primitives** | A single control or display element with no product vocabulary. Works in any React app. | Other primitives, `react`, `src/lib` utilities, `src/tokens` | `Button`, `Input`, `Select`, `Badge`, `Drawer`, `Tooltip`, `Tabs` |
+| **patterns** | A generic composition of primitives. Still product-agnostic, but opinionated about layout. | Primitives and other patterns | `WorklistShell`, `FilterBar`, `PanelSection`, `SectionTitleBar`, `ActivityLog` |
+| **app** | Fold app chrome and app-wide singletons. Free to read the store. | Anything | `Sidebar`, `TopBar`, `ThemePicker`, `NotificationsPopover` |
+| **domain** | Healthcare or Fold product concepts. Free to read the store. | Anything | `PatientBanner`, `ScheduleDrawer`, `Outreach*`, `CallPopover`, `Unity*` |
+
+Primitives and patterns together form **the library**. App and domain
+components stay with the Fold app and will move into `src/features` over time.
+
+### Picking a layer for a new component
+
+Ask in order, and stop at the first yes:
+
+1. Does it read `useAppStore`, Supabase or a feature module, or render app chrome? **app**
+2. Does its name, props or copy mention a patient, program, outreach, call, care plan, HCC or any other Fold concept? **domain**
+3. Is it a composition of several primitives with a fixed layout (a toolbar, a table shell, a section header)? **patterns**
+4. Otherwise: **primitives**
+
+If the honest answer is "domain, but it would be generic if one prop were a
+slot", make it generic and put it in the library. That is the outcome we want.
+
+## Import boundaries
+
+Enforced by `no-restricted-imports` in `eslint.config.js`, generated from
+`layers.json`:
+
+- Library components must not import `store/`, `features/`, `layouts/`,
+  `lib/supabase` or `lib/apiFetch`. Take data as props and put the connected
+  wrapper next to the feature that owns the data.
+- A primitive must not import a pattern, app or domain component.
+- A pattern must not import an app or domain component.
+- Stories (`*.stories.jsx`) are exempt, so a story may show a primitive inside
+  a domain context.
+
+`scripts/ds-guardrails.mjs` promotes these to blocking on the lines a change
+touches (pre-commit and the **Design System Guardrails** CI check), the same
+way it treats hardcoded colors. It also fails if a folder in
+`src/components` is missing from `layers.json`.
+
+When the store or a feature is genuinely needed, invert the dependency:
+
+```jsx
+// Before: the primitive looks the record up in the store
+export function Avatar({ userName, userId, ooo, ...props }) {
+  const found = useAppStore(s => activeOooFor(s.oooRecords, { id: userId, name: userName }));
+  ...
+}
+
+// After: the primitive only takes the record
+export function Avatar({ ooo, ...props }) { ... }
+
+// src/features/ooo/StaffAvatar.jsx: the feature connects it
+export function StaffAvatar({ userName, userId, ...props }) {
+  const ooo = useAppStore(s => activeOooFor(s.oooRecords, { id: userId, name: userName }));
+  return <Avatar ooo={ooo} userName={userName} {...props} />;
+}
+```
+
+## Prop vocabulary
+
+Every library component uses the same names for the same idea. If a
+component needs one of these concepts, it uses exactly this prop.
+
+### Appearance
+
+| Prop | Meaning | Values |
+|---|---|---|
+| `variant` | Visual emphasis only. Never encodes color or meaning. | `solid`, `soft`, `outline`, `ghost`, `link` (a component supports the subset that makes sense) |
+| `tone` | Semantic intent: what the color *means*. | `neutral`, `primary`, `success`, `warning`, `danger`, `info` |
+| `size` | One shared scale. Pixel values are per component family and listed in its story. | `xs`, `sm`, `md`, `lg`. Default `md`. |
+
+`variant` and `tone` are independent axes, so `<Button variant="soft" tone="danger">`
+and `<Badge variant="outline" tone="success">` both work without a new class
+per combination.
+
+A component's default tone may follow its variant. `Button` is the model:
+`solid` and `soft` default to `primary`, `outline` and `ghost` to `neutral`,
+so the common buttons need one prop:
+
+| Old `Button` variant | Now |
+|---|---|
+| `primary` | (default) |
+| `secondary` | `variant="outline"` |
+| `tertiary` | `variant="soft"` |
+| `ghost` | `variant="ghost"` |
+| `alt` | `variant="outline" tone="primary"` |
+| `success` | `variant="soft" tone="success"` |
+| `danger` | `variant="soft" tone="danger"` |
+| `dangerFilled` | `tone="danger"` |
+| `info` | `tone="info"` |
+
+`Badge` follows the same split. Its tones are the Figma Badge types plus three
+accents (`secondary` orange, `magenta` Out of Office, `unity` AI gradient);
+its variants are `soft` (default), `outline`, `ghost` and `solid`. The old
+`grey`, `white`, `ghost`, `error` and `disabled` tones became
+`tone="neutral"`, `variant="outline"`, `variant="ghost"`, `tone="danger"` and
+the `disabled` prop. The 60-odd feature looks (`toc-enrolled`,
+`compliance-pass`, …) are gone from the primitive; each feature now maps its
+statuses to a tone in its own table, and `scripts/codemods/badge-tones.mjs`
+did that move.
+
+Text fields follow the same idea. `Input`, `Select` and `Textarea` take
+`invalid` for the error look (it was `variant="error"`), `variant` is
+`outline` (default) or `ghost` (Input's old `quiet`; Input and Select only),
+and Input and Select take `size` `md` (32px) or `sm` (28px). Their change
+callback is `onValueChange(value)`; Input and Textarea keep the native
+`onChange(event)` beside it, and a rich-text Textarea, which has no native
+event, reports `onValueChange(html, plain)`. `Tabs` and `SegmentedControl`
+take `value` / `defaultValue` / `onValueChange` and `size` `sm` / `md`. Select now
+forwards `ref` and spreads its other props onto the trigger, so `aria-label`
+lands on the control. `scripts/codemods/form-controls.mjs` did the move.
+
+`scripts/codemods/button-variants.mjs` rewrites `Button` and `ActionButton`
+call sites (run it on a branch that predates the change). The old names still
+work at runtime with a one-time warning in development, and the guardrails
+block them on changed lines.
+
+Feature-specific looks are **not** variants of a primitive. A status like
+"AWV due" or "Outreach attempted" lives in a domain component that maps the
+status to a `tone`:
+
+```jsx
+// domain layer
+const TONE = { due: 'warning', done: 'success', missed: 'danger' };
+export const AwvStatusBadge = ({ status }) => (
+  <Badge tone={TONE[status]} variant="soft">{LABEL[status]}</Badge>
+);
+```
+
+### State
+
+| Prop | Meaning |
+|---|---|
+| `disabled` | Not interactive. Also sets `aria-disabled` or the native attribute. |
+| `loading` | Busy. Keeps its size, shows a spinner, blocks repeat clicks. `Button` and `ActionButton` also set it on their own while a promise returned from `onClick` is pending, so an async handler needs no extra state. |
+| `invalid` | Fails validation. Sets `aria-invalid`. Pair with an `error` message prop on form fields. |
+| `readOnly` | Shows a value that cannot be edited. |
+
+State is also exposed as `data-*` attributes on the root (`data-disabled`,
+`data-invalid`, `data-state="open|closed"`, `data-active`) so CSS can style
+it without extra class names.
+
+### Values and open state
+
+Every stateful component works both controlled and uncontrolled, the same way
+Radix and Base UI do:
+
+| Concern | Controlled | Uncontrolled | Change callback |
+|---|---|---|---|
+| A value (input, select, tabs, toggle, slider) | `value` | `defaultValue` | `onValueChange(value)` |
+| A checked state (checkbox, switch) | `checked` | `defaultChecked` | `onCheckedChange(checked)` |
+| Open state (popover, drawer, dialog, menu, collapsible) | `open` | `defaultOpen` | `onOpenChange(open)` |
+
+The callback always receives the **value**, never a DOM event. Text inputs may
+keep a native `onChange(event)` in addition, because consumers expect it there.
+
+### Plumbing every component provides
+
+- **`ref`** reaches the root DOM element (`forwardRef` until we drop React 18 support, then a plain `ref` prop).
+- **`className`** is merged onto the root, never replacing the component's own classes.
+- **`...rest`** is spread onto the root, so `id`, `aria-*`, `data-*` and event handlers pass through.
+- **Slots over booleans**: prefer `leading`, `trailing`, `icon`, `actions` that accept a node over a growing list of `showX` / `hideY` flags.
+
+### Naming
+
+- Name a component for its role, not its implementation: `Checkbox`, `Dialog`,
+  `Slider`, not `ShadcnCheckbox`.
+- When a component is renamed or merged, its old folder keeps a one-line
+  re-export and is listed under `$deprecated` in `layers.json` (old name to
+  new). Open branches keep building, lint flags new imports of the old path,
+  and the folder is deleted once nothing imports it.
+- Name variants for the look, not the screen that first used them: `soft`,
+  not `outreachChip`.
+- Popovers that pick a value are named for the value (`DatePicker`,
+  `UserPicker`); the floating surface itself is just `Popover`.
+
+## Overlays
+
+Anything that floats next to a trigger is built on
+[`Popover`](https://github.com/designedbyalok/foldhealth/blob/main/src/components/Popover/Popover.jsx),
+never on `createPortal` and hand-written coordinates. `Popover` owns the parts
+that were reimplemented in every picker:
+
+| Concern | What `Popover` does |
+|---|---|
+| Position | Floating UI: flips to the side with room, shifts to stay 8px inside the viewport, caps its height to the space available, and follows an element anchor on scroll and resize |
+| Stacking | One layer (z-index 10000) for every popover; the one opened last sits on top, so a menu opened inside a picker is never hidden behind it |
+| Dismissal | Escape closes only the top popover and stops there, so a drawer or dialog underneath stays open. An outside click closes it; with `overlay` (default) the click is absorbed, with `overlay={false}` it also reaches what was clicked (right for form pickers) |
+| Focus | Moves into the panel on open unless content already took it (`autoFocus`), returns to the trigger on close. Pass `initialFocus={false}` when the trigger is a text field the user keeps typing in |
+| Keyboard | `listNavigation`: Arrow Up/Down move between the panel's controls (wrapping), Home/End jump to the ends. On for menus and pick lists; off for content that uses arrows itself (sliders, calendars, drag handles) |
+| Events | Clicks inside don't bubble to rows or parent popovers |
+| Surface | One background, 0.5px border, 8px radius and `--shadow-popover`; `unstyled` drops it |
+
+```jsx
+<Popover
+  anchor={triggerRef}            // an element, a ref, or a DOMRect
+  open={open}
+  onOpenChange={setOpen}
+  placement="bottom-end"
+  width={240}
+  role="menu"
+  aria-label="Row actions"
+>
+  …
+</Popover>
+```
+
+`Drawer` is a modal dialog: `role="dialog"`, `aria-modal`, labelled by its
+title, focus moves in on open and back on close, and Tab wraps inside it.
+Escape closes the top drawer (through `beforeClose`, so unsaved-changes
+guards still ask first) unless something else answered the key first: an
+inline dropdown closing, an edit being cancelled, a popover or dialog on top,
+or a handler calling `preventDefault`. Pass `closeOnEscape={false}` to opt
+out.
+
+## Definition of done for a library component
+
+- [ ] Listed under `primitives` or `patterns` in `layers.json`
+- [ ] Uses only the prop vocabulary above, with defaults stated in JSDoc
+- [ ] Forwards `ref`, merges `className`, spreads `...rest`
+- [ ] Keyboard operable with a visible focus ring; overlays trap focus and close on Escape
+- [ ] Colors, spacing, radius and type come from `src/tokens/tokens.css`
+- [ ] Folder has `Name.jsx`, `Name.module.css` and `Name.stories.jsx`
+- [ ] Story uses `tags: ['autodocs']`, declares `argTypes` for every `variant`, `tone` and `size`, and has a story that renders the full variant matrix
+
+## Migration status
+
+The boundary rule is enforced now for new and changed lines. The items below
+are existing debt, fixed in later phases rather than blocking anyone today.
+
+### How the library gets app data
+
+No primitive or pattern imports the store, features, layouts or the network.
+Where a component used to reach for app data, it now takes props, or reads a
+small context the library defines with an empty default, and the app fills
+it in. `src/features/AppProviders.jsx` mounts every one of them around the app
+and around each Storybook story.
+
+| Component | Gets | From |
+|---|---|---|
+| `Avatar` | Out of Office record for `userName` / `userId` | `AvatarOooLookup` (`features/ooo/AvatarOooProvider`) |
+| `BulkBar` | Selection and the standard worklist actions when the caller passes none | `BulkBarDefaults` (`features/worklists/BulkBarDefaultsProvider`) |
+| `Pagination` | The user's page size (auto or fixed, saved) | `PageSizePreference` (`features/worklists/PageSizePreferenceProvider`); page state is props |
+| `ActivityLog` | Note, task, appointment and referral entries; the viewer's name | `ActivityLogRenderers` (`features/activity`) |
+| `CommentComposer` | Default @-mention roster | `MentionRoster` (`features/activity/MentionRosterProvider`) |
+| `ProductTour` | Whether a tour was seen | `store` prop; the app's `features/tours/ProductTour` passes the synced one |
+| `WorklistShell` | Saved column order and hidden set | `columnPrefs` prop; `features/worklists/WorklistShell` takes a `worklistKey` |
+| `FilterBar` | The worklist filters, options and saved views when not passed | `features/worklists/FilterBar` |
+| `EmailComposer` | Drafting help | `assistant` slot (e.g. a `UnityAIBar`) |
+| `HoverCard` | Hover intent | its own `useHoverIntent` (`PatientHoverCard` reuses it) |
+
+The TOC worklist's filter definitions live in `features/toc/tocFilters`, which
+the app's `FilterBar` reads; the library's `filterBarUtils` keeps only `mergeRefs`.
+
+### Overlays not yet on Popover
+
+Built on `Popover`: `MenuPopover`, `AnchoredPopover`, `CheckboxListPopover`,
+`RadioListPopover`, `SearchListPopover`, `SortPopover`, `MonthPickerPopover`,
+`RangeSliderPopover`, `DateRangePopover`, `DatePickerPopover`,
+`UserPickerPopover`, `ColumnConfigPopover`, `RenamePopover`,
+`TypographyPopover`.
+
+Still positioning themselves:
+
+| Layer | Components |
+|---|---|
+| primitives | `Select`, `Tooltip`, `HoverCard`, `TimePicker`, `DateTimePicker`, `Coachmark`, `Textarea` (mention menu), `OverflowTabs` (More menu) |
+| patterns | `SectionTitleBar`, `CommentComposer` (mention menu), `AssigneeChange` |
+| app, domain | `CreateNewPopover`, `HelpPopover`, `NotificationsPopover`, `ConsentPopover`, `OutreachPopover`, `VoicePreviewPopover`, `CallPopover`, `PatientHoverCard`, `IcdSearch`, the `ScheduleDrawer` pickers |
+
+### Prop names that diverge from the vocabulary
+
+| Component | Today | Target |
+|---|---|---|
+| `CheckboxTick`, `Switch` | Numeric `size` / `labelGap` | `size` scale; spacing from tokens |

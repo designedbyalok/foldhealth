@@ -1,4 +1,4 @@
-/* Population Groups row — composes the shared worklist row shell from
+/* Population Groups row: composes the shared worklist row shell from
    WorklistShell's WorklistRow.module.css (row divider, hover tint, sticky
    columns, cell padding, actions divider) so the groups table reads as the
    same visual system as TOC / AWV / HCC.

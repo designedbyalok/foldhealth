@@ -1,12 +1,12 @@
 /**
- * Validated clinical instruments — locked Health Components.
+ * Validated clinical instruments: locked Health Components.
  *
  * Each instrument is published, evidence-based screening content: fixed items,
  * fixed per-option point values, and fixed interpretation cutoffs. Dropping one
  * onto the canvas adds its fields AND registers its score + critical triggers,
  * all marked `locked: true` so the points/cutoffs can't be edited in the UI.
  *
- * ⚠ CLINICAL CONTENT — verify against the cited source before production use.
+ * ⚠ CLINICAL CONTENT: verify against the cited source before production use.
  * Cutoffs are asserted in validatedInstruments.test.js (the review trail).
  *
  * Scoring uses explicit per-option scores (no reverse-score mechanic), so
@@ -39,9 +39,9 @@ export const INSTRUMENTS = [
       { code: 'q3', text: 'Trouble falling or staying asleep, or sleeping too much' },
       { code: 'q4', text: 'Feeling tired or having little energy' },
       { code: 'q5', text: 'Poor appetite or overeating' },
-      { code: 'q6', text: 'Feeling bad about yourself — or that you are a failure or have let yourself or your family down' },
+      { code: 'q6', text: 'Feeling bad about yourself: or that you are a failure or have let yourself or your family down' },
       { code: 'q7', text: 'Trouble concentrating on things, such as reading the newspaper or watching television' },
-      { code: 'q8', text: 'Moving or speaking so slowly that other people could have noticed — or the opposite, being so fidgety or restless that you have been moving around a lot more than usual' },
+      { code: 'q8', text: 'Moving or speaking so slowly that other people could have noticed, or the opposite, being so fidgety or restless that you have been moving around a lot more than usual' },
       { code: 'q9', text: 'Thoughts that you would be better off dead, or of hurting yourself in some way' },
     ],
     score: {
@@ -58,7 +58,7 @@ export const INSTRUMENTS = [
     critical: [{
       code: 'q9',
       condition: { operator: OPERATOR.GT, value: 0 },
-      alert: 'Positive response to self-harm item (Q9) — assess suicide risk immediately.',
+      alert: 'Positive response to self-harm item (Q9): assess suicide risk immediately.',
       severity: SEVERITY.CRITICAL,
       actions: [{ type: ACTION_TYPE.FLAG, label: 'Suicide risk', severity: SEVERITY.CRITICAL }],
     }],
@@ -80,7 +80,7 @@ export const INSTRUMENTS = [
       aggregation: AGGREGATION.SUM,
       interpretations: [
         { min: 0, max: 2, label: 'Negative screen', severity: SEVERITY.NEUTRAL },
-        { min: 3, max: 6, label: 'Positive — administer PHQ-9', severity: SEVERITY.WARNING },
+        { min: 3, max: 6, label: 'Positive: administer PHQ-9', severity: SEVERITY.WARNING },
       ],
     },
   },
@@ -129,7 +129,7 @@ export const INSTRUMENTS = [
       aggregation: AGGREGATION.SUM,
       interpretations: [
         { min: 0, max: 2, label: 'Negative screen', severity: SEVERITY.NEUTRAL },
-        { min: 3, max: 6, label: 'Positive — administer GAD-7', severity: SEVERITY.WARNING },
+        { min: 3, max: 6, label: 'Positive: administer GAD-7', severity: SEVERITY.WARNING },
       ],
     },
   },
@@ -160,10 +160,10 @@ export const INSTRUMENTS = [
       label: 'AUDIT-C Total',
       aggregation: AGGREGATION.SUM,
       // Sex-specific cutoffs apply (≥4 men, ≥3 women); bands use the more
-      // sensitive ≥3 threshold and note this — confirm against local policy.
+      // sensitive ≥3 threshold and note this, confirm against local policy.
       interpretations: [
         { min: 0, max: 2, label: 'Low risk', severity: SEVERITY.NEUTRAL },
-        { min: 3, max: 12, label: 'Positive — at-risk drinking (≥3 women / ≥4 men)', severity: SEVERITY.WARNING },
+        { min: 3, max: 12, label: 'Positive: at-risk drinking (≥3 women / ≥4 men)', severity: SEVERITY.WARNING },
       ],
     },
   },

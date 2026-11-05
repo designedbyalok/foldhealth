@@ -51,7 +51,7 @@ try {
   console.log('Post-migration verification:');
   console.log(checks.rows[0]);
 
-  // View sanity — fetch one row through it
+  // View sanity: fetch one row through it
   const sample = await client.query(`
     SELECT id, name, date_of_birth, create_date, raf_score, decile,
            jsonb_array_length(dos_list) AS dos_ct,
@@ -64,7 +64,7 @@ try {
   for (const r of sample.rows) console.log(' ', r);
 
 } catch (e) {
-  console.error('MIGRATION FAILED — transaction rolled back.\n', e.message);
+  console.error('MIGRATION FAILED: transaction rolled back.\n', e.message);
   process.exit(1);
 } finally {
   await client.end();

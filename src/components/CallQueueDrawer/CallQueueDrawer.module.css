@@ -1,6 +1,6 @@
 /* ── Call Queue Drawer ── */
 
-/* Override Drawer body padding — content goes edge-to-edge per Figma */
+/* Override Drawer body padding: content goes edge-to-edge per Figma */
 .drawerBody {
   padding: 0 !important;
   display: flex;
@@ -495,7 +495,7 @@
   padding: 0;
 }
 
-/* Date group — timeline trail + compact inner header per Figma 263:20070 */
+/* Date group: timeline trail + compact inner header per Figma 263:20070 */
 .dateGroup {
   display: flex;
   gap: 0;
@@ -540,7 +540,7 @@
   padding: 6px 0;
 }
 
-/* The <button> expander for the group — cursor lives here, not on the header
+/* The <button> expander for the group: cursor lives here, not on the header
    row, so the pointer only appears over what is actually clickable. */
 .dateGroupInfo {
   flex: 1;
@@ -612,7 +612,7 @@
   table-layout: auto;
 }
 
-/* Column widths — Status & Actions fit content, Member Name takes remaining */
+/* Column widths: Status & Actions fit content, Member Name takes remaining */
 .callLogTable {
   table-layout: auto !important;
 }
@@ -625,7 +625,7 @@
 .callLogTable td:nth-child(4) { width: 1%; white-space: nowrap; }
 
 .dateGroupTableScroll {
-  /* No inner scroll — outer tableWrap handles scrolling */
+  /* No inner scroll: outer tableWrap handles scrolling */
 }
 
 /* Call log rows */
@@ -661,7 +661,7 @@
   to { transform: translateX(0); opacity: 1; }
 }
 
-/* Patient banner is now a shared component — see PatientBanner/ */
+/* Patient banner is now a shared component, see PatientBanner/ */
 
 /* ── Resizable Dragger ── */
 .dragger {

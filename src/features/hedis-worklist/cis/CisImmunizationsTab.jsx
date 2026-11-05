@@ -3,7 +3,7 @@ import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
 import { Input } from '../../../components/Input/Input';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { SearchBar } from '../../../components/SearchBar/SearchBar';
 import { Switch } from '../../../components/Switch/Switch';
 import { Badge } from '../../../components/Badge/Badge';
@@ -11,7 +11,7 @@ import { DatePickerPopover } from '../../../components/DatePicker/DatePickerPopo
 import { Icon } from '../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../components/Icon/DownChevronIcon';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../components/Banner/Banner';
 import { CisTabSkeleton } from './CisTabSkeleton';
 import { CIS_ANTIGENS, CIS_ANTIGEN_STATUS, CIS_DOSE_STATUS, CIS_EVALUATION, evaluateCis } from './cisRules';
 import { isoToMdy } from './useCisTracker';
@@ -23,7 +23,7 @@ import { CisDoseProgress } from './CisDoseProgress';
 import { DoseAppointmentChip } from './DoseAppointmentChip';
 import { appointmentForDose, apptDate } from './cisAppointments';
 import { CisMoreMenu } from './CisMoreMenu';
-import { CisSaveRecordButton } from './CisSaveRecordButton';
+import { CisSyncEhrButton } from './CisSyncEhrButton';
 import { SeriesDosesPicker } from './SeriesDosesPicker';
 import styles from './CisImmunizationsTab.module.css';
 
@@ -134,7 +134,7 @@ export function CisImmunizationsTab({ member, immunizations, savedNotes, loading
   // Right side of the list bar: search, calendar, download, expand/collapse.
   const listToolbar = (
     <span className={styles.listToolbar}>
-      <CisSaveRecordButton member={member} result={result} notes={savedNotes} onSaveEvidence={onSaveEvidence} />
+      <CisSyncEhrButton member={member} result={result} notes={savedNotes} onSaveEvidence={onSaveEvidence} />
       <span className={styles.toolbarDivider} aria-hidden="true" />
       {searchOpen ? (
         <SearchBar
@@ -145,10 +145,10 @@ export function CisImmunizationsTab({ member, immunizations, savedNotes, loading
           onClose={() => { setSearchOpen(false); setSearch(''); }}
         />
       ) : (
-        <ActionButton size="S" icon="solar:magnifer-linear" tooltip="Search" onClick={() => setSearchOpen(true)} />
+        <ActionButton size="sm" icon="solar:magnifer-linear" tooltip="Search" onClick={() => setSearchOpen(true)} />
       )}
       <span className={styles.toolbarDivider} aria-hidden="true" />
-      <ActionButton size="S" icon="solar:calendar-linear" tooltip="Vaccine Calendar" onClick={openCalendar} />
+      <ActionButton size="sm" icon="solar:calendar-linear" tooltip="Vaccine Calendar" onClick={openCalendar} />
       <span className={styles.toolbarDivider} aria-hidden="true" />
       <Switch checked={allOpen} onChange={setAllOpen} label="Expand all" labelGap={6} />
       <span className={styles.toolbarDivider} aria-hidden="true" />
@@ -156,6 +156,7 @@ export function CisImmunizationsTab({ member, immunizations, savedNotes, loading
         member={member}
         result={result}
         notes={savedNotes}
+        onSaveEvidence={onSaveEvidence}
       />
     </span>
   );
@@ -199,7 +200,7 @@ export function CisImmunizationsTab({ member, immunizations, savedNotes, loading
         {/* Why there is nothing to track (aged out / no DOB). */}
         {!trackable && (
           <div className={styles.notEligible}>
-            <CisStatusBadge map={EVALUATION_BADGE} status={result.evaluation} size="M" />
+            <CisStatusBadge map={EVALUATION_BADGE} status={result.evaluation} size="md" />
             <p className={styles.reason}>{result.reason}</p>
           </div>
         )}
@@ -215,11 +216,11 @@ export function CisImmunizationsTab({ member, immunizations, savedNotes, loading
       {trackable && (
         <section className={styles.vaccines} aria-label="Combination 10 vaccines">
           <div className={styles.listBar}>
-            <Toggle
-              size="S"
+            <SegmentedControl
+              size="sm"
               items={[{ key: 'vaccine', label: 'Vaccine' }, { key: 'age', label: 'Age' }]}
-              active={viewBy}
-              onChange={setViewBy}
+              value={viewBy}
+              onValueChange={setViewBy}
             />
             {listToolbar}
           </div>
@@ -601,15 +602,15 @@ function DoseRow({ antigen, row, note, onDateChange, onNoteSave, dob, highlight,
         <span role="cell">
           {row.status === CIS_DOSE_STATUS.completedLate ? (
             <Tooltip label={row.reason} variant="light" maxWidth={240}>
-              <CisStatusBadge map={DOSE_BADGE} status={row.status} size="M" hideIcon />
+              <CisStatusBadge map={DOSE_BADGE} status={row.status} size="md" hideIcon />
             </Tooltip>
-          ) : <CisStatusBadge map={DOSE_BADGE} status={row.status} size="M" hideIcon />}
+          ) : <CisStatusBadge map={DOSE_BADGE} status={row.status} size="md" hideIcon />}
 
         </span>
         <span role="cell" className={styles.noteCol}>
           <ActionButton
             icon="solar:chat-round-line-linear"
-            size="S"
+            size="sm"
             tooltip={note ? note : 'Add a note'}
             tooltipLeft
             dot={!!note}
@@ -626,10 +627,9 @@ function DoseRow({ antigen, row, note, onDateChange, onNoteSave, dob, highlight,
             aria-label={`${antigen.label} dose ${row.number} note`}
             autoFocus
           />
-          <Button variant="secondary" size="S" onClick={() => setNoteOpen(false)}>Cancel</Button>
+          <Button variant="outline" size="sm" onClick={() => setNoteOpen(false)}>Cancel</Button>
           <Button
-            variant="primary"
-            size="S"
+            size="sm"
             disabled={draft.trim() === note}
             onClick={() => { onNoteSave(antigen, row, draft); setNoteOpen(false); }}
           >
@@ -639,9 +639,9 @@ function DoseRow({ antigen, row, note, onDateChange, onNoteSave, dob, highlight,
       )}
       {notCounted && row.reason && (
         <div className={styles.doseError}>
-          <InfoBar tone="error" variant="inline" icon="solar:danger-triangle-linear" className={styles.doseErrorBar}>
+          <Banner tone="danger" size="sm" icon="solar:danger-triangle-linear" className={styles.doseErrorBar}>
             Does Not Count: {row.reason}.
-          </InfoBar>
+          </Banner>
         </div>
       )}
     </div>

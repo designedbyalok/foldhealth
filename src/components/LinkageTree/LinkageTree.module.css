@@ -1,0 +1,253 @@
+/* LinkageTree: parent rows with their children indented beneath them and
+   joined by 1px connecting lines that start under the parent's icon. */
+.tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-1) 0;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+/* While a child is dragged, every other group reads as a place to drop it. */
+.droppable {
+  border-style: dashed;
+}
+
+.over {
+  border-color: var(--primary-300);
+  background: var(--primary-50);
+}
+
+/* ── Rows ── */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  padding: var(--space-1) var(--space-3);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--space-1);
+  background: var(--neutral-50);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Only as wide as its text, so the rest of the row stays a drag surface. */
+.title {
+  align-self: flex-start;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--font-md);
+  font-weight: 400;
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+button.title {
+  cursor: pointer;
+}
+
+button.title:hover {
+  color: var(--primary-300);
+}
+
+.parent .title {
+  font-weight: 500;
+}
+
+.meta {
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trailing,
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* Row actions and the grip show on hover or keyboard focus. */
+.actions,
+.handle {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.item:hover .actions,
+.item:hover .handle,
+.item:focus-within .actions,
+.item:focus-within .handle {
+  opacity: 1;
+}
+
+.handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--space-1);
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+
+.handle:hover { background: var(--neutral-50); }
+.handle:active { cursor: grabbing; }
+.handle:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; }
+
+.item {
+  position: relative;
+  list-style: none;
+}
+
+.item:hover > .row {
+  background: var(--neutral-25);
+}
+
+.itemDragging {
+  opacity: 0.4;
+}
+
+/* ── Nested children with connecting lines ──
+   The trunk sits under the centre of the parent's icon: the row's inline
+   padding plus half the icon box. */
+.children {
+  margin: 0 0 0 calc(var(--space-3) + var(--space-3));
+  padding: 0;
+}
+
+.children > .item > .row {
+  padding-left: var(--space-5);
+  border-radius: 0 var(--space-1) var(--space-1) 0;
+}
+
+/* Trunk: full height for every child but the last. */
+.children > .item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-left: 1px solid var(--neutral-150);
+}
+
+/* Branch into the child's icon. */
+.children > .item::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: var(--space-4);
+  border-top: 1px solid var(--neutral-150);
+}
+
+/* The last child ends the trunk with a rounded elbow. */
+.children > .item:last-child::before {
+  bottom: 50%;
+  width: var(--space-4);
+  border-bottom: 1px solid var(--neutral-150);
+  border-bottom-left-radius: var(--space-2);
+}
+
+.children > .item:last-child::after {
+  content: none;
+}
+
+.empty {
+  margin: 0 0 var(--space-1) calc(var(--space-3) + var(--space-6) + var(--space-2));
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-200);
+}
+
+/* ── Unlinked group ── */
+.unlinked {
+  background: var(--neutral-25);
+}
+
+.unlinkedHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+
+.unlinkedTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+
+.count {
+  min-width: var(--space-4);
+  padding: 0 var(--space-1);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-1);
+  font-size: var(--font-xs);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+  text-align: center;
+}
+
+.flatList {
+  margin: 0;
+  padding: 0;
+}
+
+.flatList > .item + .item {
+  border-top: 0.5px solid var(--neutral-100);
+}
+
+.emptyFlat {
+  margin: 0;
+  padding: 0 var(--space-3) var(--space-2);
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-200);
+}
+
+/* The card that follows the pointer while dragging. */
+.overlay {
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-popover);
+  cursor: grabbing;
+}

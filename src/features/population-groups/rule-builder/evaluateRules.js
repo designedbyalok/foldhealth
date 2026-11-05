@@ -1,7 +1,7 @@
 import { FIELD_BY_KEY, RULE_FIELDS } from './fieldCatalog';
 import { parseLocalDate, localDateMs } from '../../../lib/localDate';
 
-/* Pure rule evaluation — no React, no Supabase — so the same logic runs in
+/* Pure rule evaluation, no React, no Supabase, so the same logic runs in
    the browser (useQualifiedMembers) and in node scripts
    (scripts/backfill-popgroup-counts.js keeps the table's Active/Inactive
    columns honest). */
@@ -195,7 +195,7 @@ export function evaluate(profiles, query) {
   return profiles.filter(p => matchesNode(p, query));
 }
 
-/* Active/Inactive split for a set of qualified profiles — the numbers the
+/* Active/Inactive split for a set of qualified profiles, the numbers the
    Population Groups table's two member columns show. */
 export function memberCounts(qualifiedProfiles) {
   const inactive = qualifiedProfiles.filter(p => norm(p.membership_status) === 'inactive').length;

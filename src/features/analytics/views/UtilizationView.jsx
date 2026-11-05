@@ -21,8 +21,8 @@ const DEFAULT_LAYOUT = [
 
 const TCM_FALLBACK_BARS = [
   { label: 'Readmit w/ TCM Follow-Up', value: '11%', pct: 22, color: 'green', sub: '62% below threshold ✓' },
-  { label: 'Readmit w/o TCM Follow-Up', value: '31%', pct: 74, color: 'red', sub: '2.8x higher — urgent gap' },
-  { label: 'TCM Completion Rate', value: '72%', pct: 72, color: 'teal', sub: 'Target 80% — 8pp gap' },
+  { label: 'Readmit w/o TCM Follow-Up', value: '31%', pct: 74, color: 'red', sub: '2.8x higher, urgent gap' },
+  { label: 'TCM Completion Rate', value: '72%', pct: 72, color: 'teal', sub: 'Target 80%: 8pp gap' },
   { label: 'TCM Within 7 Days', value: '58%', pct: 58, color: 'amber', sub: 'Target 70%' },
 ];
 
@@ -34,15 +34,15 @@ function renderUtilizationDeepDive() {
       <div className={s.g2}>
         <div>
           <div style={{ fontSize: 'var(--font-sm)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.5px', color: 'var(--neutral-200)', marginBottom: '0.5rem' }}>By DRG</div>
-          <ProgressBar label="DRG 291 — Heart Failure" value="8 readmits" pct={80} color="red" sub="18.7% readmit rate" />
-          <ProgressBar label="DRG 193 — COPD" value="5 readmits" pct={50} color="amber" sub="17.9%" />
-          <ProgressBar label="DRG 690 — UTI w/ MCC" value="4 readmits" pct={40} color="amber" sub="16.7%" />
+          <ProgressBar label="DRG 291: Heart Failure" value="8 readmits" pct={80} color="red" sub="18.7% readmit rate" />
+          <ProgressBar label="DRG 193: COPD" value="5 readmits" pct={50} color="amber" sub="17.9%" />
+          <ProgressBar label="DRG 690: UTI w/ MCC" value="4 readmits" pct={40} color="amber" sub="16.7%" />
         </div>
         <div>
           <div style={{ fontSize: 'var(--font-sm)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.5px', color: 'var(--neutral-200)', marginBottom: '0.5rem' }}>By Avg LOS Before Readmit</div>
-          <ProgressBar label="0–7 days post-discharge" value="42%" pct={84} color="red" sub="Very early — TCM critical" />
+          <ProgressBar label="0–7 days post-discharge" value="42%" pct={84} color="red" sub="Very early: TCM critical" />
           <ProgressBar label="8–14 days" value="31%" pct={62} color="amber" sub="TCM + SNF coordination" />
-          <ProgressBar label="15–30 days" value="27%" pct={54} color="green" sub="Late readmit — SNF quality" />
+          <ProgressBar label="15–30 days" value="27%" pct={54} color="green" sub="Late readmit: SNF quality" />
         </div>
       </div>
     </Card>
@@ -86,7 +86,7 @@ export function UtilizationView({ showToast, editing = false, resetTick = 0 }) {
         <div style={{ fontWeight: 500, fontSize: 'var(--font-base)', color: 'var(--status-error)' }}>Live ADT Alert &mdash; Manager View</div>
         <div style={{ fontSize: 'var(--font-sm)', color: 'var(--status-error)', marginTop: 2 }}>James M. (Tier 5) discharged to Valley SNF. 34% readmit risk. TCM: Maria Chen, RN.</div>
       </div>
-      <Button variant="primary" size="S" style={{ fontSize: 'var(--font-sm)' }} onClick={() => showToast?.('Opening ADT detail for James M.')}>View &rarr;</Button>
+      <Button size="sm" style={{ fontSize: 'var(--font-sm)' }} onClick={() => showToast?.('Opening ADT detail for James M.')}>View &rarr;</Button>
     </div>
   );
 
@@ -127,7 +127,7 @@ export function UtilizationView({ showToast, editing = false, resetTick = 0 }) {
       {tcmFallback.map(b => (
         <ProgressBar key={b.label} label={b.label} value={b.value} pct={b.pct} color={b.color} sub={b.sub} />
       ))}
-      <Button variant="primary" size="S" style={{ marginTop: 8, width: '100%', justifyContent: 'center' }} onClick={() => showToast?.('Creating post-discharge TCM cohort for 48 members')}>
+      <Button size="sm" style={{ marginTop: 8, width: '100%', justifyContent: 'center' }} onClick={() => showToast?.('Creating post-discharge TCM cohort for 48 members')}>
         Create Post-Discharge TCM Cohort (48)
       </Button>
     </Card>

@@ -80,14 +80,14 @@ export function PatientEmailThread({ conversation, patient, me, onCompose }) {
         <div className={listStyles.chatHeaderActions}>
           <ActionButton
             icon={conversation.pinned ? 'solar:pin-bold' : 'solar:pin-linear'}
-            size="S"
+            size="sm"
             tooltip={conversation.pinned ? 'Unpin' : 'Pin'}
             onClick={() => updateConversation(conversation.id, { pinned: !conversation.pinned })}
           />
           <div className={listStyles.divider} />
           <ActionButton
             icon="solar:archive-linear"
-            size="S"
+            size="sm"
             tooltip={conversation.archived ? 'Unarchive' : 'Archive'}
             onClick={() => updateConversation(conversation.id, { archived: !conversation.archived })}
           />
@@ -138,10 +138,10 @@ export function PatientEmailThread({ conversation, patient, me, onCompose }) {
         />
       ) : (
         <div className={styles.actions}>
-          <Button variant="primary" size="L" leadingIcon="solar:reply-linear" onClick={() => reply(false)}>Reply</Button>
-          <Button variant="secondary" size="L" leadingIcon="solar:reply-2-linear" onClick={() => reply(true)}>Reply All</Button>
-          <Button variant="secondary" size="L" leadingIcon="solar:forward-linear" onClick={() => forward()}>Forward</Button>
-          <Button variant="secondary" size="L" leadingIcon="solar:lock-keyhole-minimalistic-linear" onClick={() => setNoteOpen(true)}>Internal note</Button>
+          <Button leadingIcon="solar:reply-linear" onClick={() => reply(false)}>Reply</Button>
+          <Button variant="outline" leadingIcon="solar:reply-2-linear" onClick={() => reply(true)}>Reply All</Button>
+          <Button variant="outline" leadingIcon="solar:forward-linear" onClick={() => forward()}>Forward</Button>
+          <Button variant="outline" leadingIcon="solar:lock-keyhole-minimalistic-linear" onClick={() => setNoteOpen(true)}>Internal note</Button>
         </div>
       )}
     </div>
@@ -180,7 +180,7 @@ function EmailCard({ message: m, open, onToggle, onReply, onReplyAll, onForward 
             </span>
           </span>
         </button>
-        <ActionButton icon="solar:menu-dots-bold" size="S" tooltip="More" onClick={e => setMenu(e.currentTarget.getBoundingClientRect())} />
+        <ActionButton icon="solar:menu-dots-bold" size="sm" tooltip="More" onClick={e => setMenu(e.currentTarget.getBoundingClientRect())} />
         {menu && (
           <MenuPopover
             anchorRect={menu}

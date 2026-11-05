@@ -9,6 +9,13 @@
       "autoPort": true
     },
     {
+      "name": "Patient App",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "export PATH=$HOME/.bun/bin:/opt/homebrew/bin:$PATH && bun --bun run dev:patient -- --port $PORT"],
+      "port": 5175,
+      "autoPort": true
+    },
+    {
       "name": "Storybook",
       "runtimeExecutable": "/bin/sh",
       "runtimeArgs": ["-c", "export PATH=$HOME/.local/node/bin:$HOME/.bun/bin:/opt/homebrew/bin:$PATH && bun run storybook -- --port $PORT --no-open"],

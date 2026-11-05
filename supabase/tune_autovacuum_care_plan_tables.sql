@@ -1,7 +1,7 @@
 -- Free-tier Disk IO relief, round two: care-plan tables.
 --
 -- The Aug 21 tuning (supabase/tune_autovacuum_free_tier.sql) fixed 17 tiny
--- hot tables. That set is holding — every one of them still carries the
+-- hot tables. That set is holding, every one of them still carries the
 -- reloptions today and dead_pct is well under 30%.
 --
 -- What changed since then:
@@ -21,7 +21,7 @@
 --   patient_care_plan_barriers             126    72    57.1%   Sep 14
 --   patient_care_plan_barrier_goals        166    74    44.6%   Sep 14
 --
--- The last two are already firing autovacuum, but only marginally — the
+-- The last two are already firing autovacuum, but only marginally, the
 -- write rate outpaces the default threshold and dead_pct grows between
 -- runs. Tightening the thresholds keeps them under 20%.
 --
@@ -67,7 +67,7 @@ end $$;
 
 commit;
 
--- Reset the accumulated bloat now. Regular VACUUM (not FULL) — concurrent
+-- Reset the accumulated bloat now. Regular VACUUM (not FULL): concurrent
 -- with reads and writes, no exclusive lock. Cannot run inside a transaction,
 -- so these follow the COMMIT above as top-level statements.
 
@@ -99,7 +99,7 @@ vacuum (analyze) public.population_groups;
 -- Dashboard: watch Reports → Database → Disk IO over the next 24-48 hours.
 -- Between this and the app-side diff-based join sync, the free-tier budget
 -- should stop depleting. If it does not, the next levers are the tasks
--- (8332 upd / 67 rows) and profiles (7391 upd / 67 rows) write storms —
+-- (8332 upd / 67 rows) and profiles (7391 upd / 67 rows) write storms,
 -- both need product-level triage, not schema tuning.
 --
 -- Rollback

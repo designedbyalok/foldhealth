@@ -3,7 +3,7 @@ name: CVX Sync
 # Keeps the cached CDC CVX code set current.
 #
 # /api/reference/immunizations answers entirely from
-# api/_lib/cvxCodes.generated.js — no API key, no upstream call at request
+# api/_lib/cvxCodes.generated.js, no API key, no upstream call at request
 # time. That makes the endpoint dependable but means the data is only as fresh
 # as the last sync, and CVX does move: vaccines are added, and codes flip to
 # Inactive when a product is withdrawn. Rather than depend on someone
@@ -16,7 +16,7 @@ name: CVX Sync
 on:
   schedule:
     # Mondays, 07:00 UTC. The CDC publishes on no fixed cadence, so the day is
-    # arbitrary — early in the week just means a change is noticed on a workday.
+    # arbitrary: early in the week just means a change is noticed on a workday.
     - cron: '0 7 * * 1'
   workflow_dispatch:
 

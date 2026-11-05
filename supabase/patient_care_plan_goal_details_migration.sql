@@ -1,7 +1,7 @@
--- Patient Care Plan — Goal Details drawer (Figma SNP-Story "Goal Details").
+-- Patient Care Plan: Goal Details drawer (Figma SNP-Story "Goal Details").
 --
 -- WHY: The goal row's preview drawer is being expanded into the full "Goal
--- Details" panel — progress, a manual measurement history ("Last 5 Values"),
+-- Details" panel: progress, a manual measurement history ("Last 5 Values"),
 -- and per-goal automations. Two of those (measurement history, automations)
 -- have no home in the existing patient_care_plan_* tables, and goals had no
 -- progress column. This migration closes that gap. Everything is manual +
@@ -11,11 +11,11 @@
 -- WHAT:
 --   1. patient_care_plan_goals gains `progress` (0-100) and `updated_by` (the
 --      staff name shown in the "Last Update … by <name>" meta line).
---   2. patient_care_plan_goal_measurements — one row per recorded value on a
+--   2. patient_care_plan_goal_measurements: one row per recorded value on a
 --      goal (e.g. "145/90"). `favorable` drives the green/red colour in the
 --      table; `taken_at` drives the relative "1mo / 18d / 7d" label and the
 --      sparkline order. Cascades with its goal.
---   3. patient_care_plan_automations — one row per automation on the plan.
+--   3. patient_care_plan_automations: one row per automation on the plan.
 --      goal_id is optional (an automation may target a goal or the whole plan),
 --      ON DELETE SET NULL keeps it if the goal is removed.
 --

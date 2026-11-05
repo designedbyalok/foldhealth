@@ -2,10 +2,29 @@ import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState }
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
 import { DownChevronIcon } from '../Icon/DownChevronIcon';
+import { Spinner } from '../Spinner/Spinner';
+import { usePendingClick } from '../Button/usePendingClick';
 import styles from './ActionButton.module.css';
 
+const SIZE_CLASS = { sm: 'sizeS', md: 'sizeL', lg: 'sizeXL' };
+const ICON_SIZE = { sm: 16, md: 20, lg: 32 };
+const LEGACY_SIZE = { S: 'sm', M: 'md', L: 'md', XL: 'lg' };
+
+const warned = new Set();
+function warnLegacy(size, state) {
+  if (!import.meta.env?.DEV) return;
+  const notes = [
+    LEGACY_SIZE[size] && `size="${size}" → size="${LEGACY_SIZE[size]}"`,
+    state === 'disabled' && 'state="disabled" → disabled',
+    state === 'error' && 'state="error" → tone="danger"',
+    state === 'active' && 'state="active" → (remove it)',
+  ].filter(note => note && !warned.has(note));
+  notes.forEach(note => warned.add(note));
+  if (notes.length) console.warn(`ActionButton: deprecated props; ${notes.join(', ')}. See docs/components/library-contract.mdx.`);
+}
+
 /**
- * Fold Health ActionButton — square icon-only toolbar/action button.
+ * Fold Health ActionButton: square icon-only toolbar/action button.
  *
  * Matches Figma Fold-Pixel-1.0 node 25:25238 exactly.
  *
@@ -15,8 +34,12 @@ import styles from './ActionButton.module.css';
  * @param {object}   props
  * @param {string}   [props.icon]                      – Solar icon name (e.g. "custom:filter")
  * @param {React.ReactNode} [props.children]            – Custom icon element (used instead of icon prop)
- * @param {'S'|'L'|'XL'} [props.size='L']              – S=16px icon, L=20px icon, XL=32px icon
- * @param {'active'|'disabled'|'error'} [props.state='active']
+ * @param {'sm'|'md'|'lg'} [props.size='md']          – sm=16px icon, md=20px icon, lg=32px icon
+ * @param {'neutral'|'danger'} [props.tone='neutral']  – danger paints the icon red (destructive actions)
+ * @param {boolean}  [props.disabled=false]
+ * @param {boolean}  [props.loading=false]          – Busy: a spinner replaces the icon and clicks are
+ *                                                    ignored. Set automatically while a promise returned
+ *                                                    from `onClick` is pending.
  * @param {string}   [props.tooltip]                    – Tooltip text (styled bubble on hover or keyboard
  *   focus). It renders on the page, not inside the button, so no scrolling or clipped container
  *   cuts it off; it flips below when there's no room above and stays inside the window.
@@ -38,8 +61,12 @@ import styles from './ActionButton.module.css';
 export const ActionButton = forwardRef(function ActionButton({
   icon,
   children,
-  size = 'L',
-  state = 'active',
+  size: sizeProp = 'md',
+  tone: toneProp = 'neutral',
+  // Deprecated: 'disabled' → `disabled`, 'error' → tone="danger".
+  state,
+  disabled: disabledProp = false,
+  loading = false,
   tooltip,
   notification = false,
   count,
@@ -59,6 +86,7 @@ export const ActionButton = forwardRef(function ActionButton({
   onPointerLeave,
   onFocus,
   onBlur,
+  onClick,
   ...rest
 }, ref) {
   const btnRef = useRef(null);
@@ -77,15 +105,21 @@ export const ActionButton = forwardRef(function ActionButton({
     return () => window.removeEventListener('scroll', hide, true);
   }, [anchor]);
 
-  // A plain `disabled` from callers dims the button like state="disabled".
-  if (rest.disabled) state = 'disabled';
-  const iconSize = size === 'S' ? 16 : size === 'XL' ? 32 : 20;
-  const sizeClass = size === 'S' ? styles.sizeS : size === 'XL' ? styles.sizeXL : styles.sizeL;
-  const stateClass = state === 'disabled' ? styles.disabled : state === 'error' ? styles.error : styles.active;
+  const size = LEGACY_SIZE[sizeProp] ?? (ICON_SIZE[sizeProp] ? sizeProp : 'md');
+  const [pending, handleClick] = usePendingClick(onClick, loading);
+  const busy = loading || pending;
+  // Busy wins over disabled: callers often disable while saving, and the
+  // spinner should still show that the click is being worked on.
+  const disabled = (disabledProp || state === 'disabled') && !busy;
+  const tone = state === 'error' ? 'danger' : toneProp;
+  warnLegacy(sizeProp, state);
+  const iconSize = ICON_SIZE[size];
+  const sizeClass = styles[SIZE_CLASS[size]];
+  const stateClass = disabled ? styles.disabled : tone === 'danger' ? styles.error : styles.active;
 
   const resolvedColor = iconColor || (
-    state === 'disabled' ? 'var(--neutral-150)'
-    : state === 'error' ? 'var(--status-error)'
+    disabled ? 'var(--neutral-150)'
+    : tone === 'danger' ? 'var(--status-error)'
     : 'var(--neutral-300)'
   );
 
@@ -93,6 +127,7 @@ export const ActionButton = forwardRef(function ActionButton({
     styles.root,
     sizeClass,
     stateClass,
+    busy ? styles.loading : '',
     className || '',
   ].filter(Boolean).join(' ');
 
@@ -101,15 +136,20 @@ export const ActionButton = forwardRef(function ActionButton({
       type="button"
       ref={setRefs}
       className={cls}
-      disabled={state === 'disabled'}
+      disabled={disabled}
       aria-label={tooltip}
       aria-pressed={active || undefined}
+      aria-busy={busy || undefined}
+      aria-disabled={busy || undefined}
+      data-tone={tone}
+      onClick={handleClick}
       onPointerEnter={(e) => { show(); onPointerEnter?.(e); }}
       onPointerLeave={(e) => { hide(); onPointerLeave?.(e); }}
       onFocus={(e) => { if (e.currentTarget.matches(':focus-visible')) show(); onFocus?.(e); }}
       onBlur={(e) => { hide(); onBlur?.(e); }}
       {...rest}
     >
+      {busy && <span className={styles.spinnerSlot}><Spinner size={Math.round(iconSize * 0.8)} /></span>}
       {children || <Icon name={icon} size={iconSize} color={resolvedColor} />}
 
       {tooltip && anchor && <ActionTooltip text={tooltip} anchor={anchor} below={tooltipBelow} alignRight={tooltipLeft} />}

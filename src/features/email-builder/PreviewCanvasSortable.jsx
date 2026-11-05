@@ -168,7 +168,7 @@ function SortableBlock({ id, ctx }) {
           <span className={styles.blockToolbarDivider} />
           <ActionButton
             icon="solar:undo-left-round-linear"
-            size="S"
+            size="sm"
             tooltip="Select parent (⇧↵)"
             className={styles.blockToolbarAction}
             iconColor="currentColor"
@@ -178,7 +178,7 @@ function SortableBlock({ id, ctx }) {
           <span className={styles.blockToolbarDivider} />
           <ActionButton
             icon="solar:copy-linear"
-            size="S"
+            size="sm"
             tooltip="Duplicate"
             className={styles.blockToolbarAction}
             iconColor="currentColor"
@@ -188,7 +188,7 @@ function SortableBlock({ id, ctx }) {
           <span className={styles.blockToolbarDivider} />
           <ActionButton
             icon="solar:trash-bin-trash-linear"
-            size="S"
+            size="sm"
             tooltip="Delete"
             className={styles.blockToolbarAction}
             iconColor="currentColor"

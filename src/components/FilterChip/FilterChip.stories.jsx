@@ -77,15 +77,15 @@ export const Playground = {
 export const Sizes = {
   render: () => (
     <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <Row title="Regular (M) — 32px, 14px font, 16px icons">
+      <Row title="Regular (M): 32px, 14px font, 16px icons">
         <Wrapper label="Status" options={['New', 'In Progress', 'Under Review', 'Closed']} size="M" />
         <Wrapper label="Status" options={['New', 'In Progress', 'Under Review', 'Closed']} selected={['New', 'In Progress', 'Under Review']} size="M" />
       </Row>
-      <Row title="Small (S) — 28px, 12px font, 14px icons">
+      <Row title="Small (S): 28px, 12px font, 14px icons">
         <Wrapper label="Status" options={['New', 'In Progress', 'Under Review', 'Closed']} size="S" />
         <Wrapper label="Status" options={['New', 'In Progress', 'Under Review', 'Closed']} selected={['New', 'In Progress', 'Under Review']} size="S" />
       </Row>
-      <Row title="Extra small (XS) — 20px, 12px font, 12px icons">
+      <Row title="Extra small (XS): 20px, 12px font, 12px icons">
         <Wrapper label="Status" options={['New', 'In Progress', 'Under Review', 'Closed']} size="XS" />
         <Wrapper label="Status" options={['New', 'In Progress', 'Under Review', 'Closed']} selected={['New', 'In Progress', 'Under Review']} size="XS" />
       </Row>

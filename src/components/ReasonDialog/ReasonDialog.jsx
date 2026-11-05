@@ -1,12 +1,13 @@
 import { useId, useState } from 'react';
-import { Dialog, DialogContent } from '../ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent } from '../Dialog/Dialog';
 import { Select } from '../Select/Select';
+import { RadioOptionGroup } from '../RadioOptionGroup/RadioOptionGroup';
 import { Textarea } from '../Textarea/Textarea';
 import { Button } from '../Button/Button';
 import styles from './ReasonDialog.module.css';
 
 /**
- * ReasonDialog — captures a mandatory reason for a manual compliance
+ * ReasonDialog: captures a mandatory reason for a manual compliance
  * decision (pass or fail). Spec: every Support override carries a
  * reason for HCC submission audits.
  *
@@ -22,14 +23,21 @@ import styles from './ReasonDialog.module.css';
  * @param {'pass'|'fail'} props.decision   – Which action triggered the dialog
  * @param {string[]} props.standardReasons – Per-check list of canonical reasons
  * @param {string}   props.confirmLabel     – Overrides the decision's label
- * @param {string}   props.confirmVariant   – Overrides the decision's button variant
+ * @param {'primary'|'danger'} props.confirmTone – Overrides the decision's button tone
+ *   (fail defaults to danger, pass to primary)
  * @param {boolean}  props.confirmDisabled  – A gate the caller owns, on top of
  *   the reason being filled in (e.g. one of `children` is invalid)
  * @param {boolean}  props.notes            – Set false where a canonical reason
  *   is the whole record and free text has nothing to add; the standard reason
  *   then becomes mandatory, since it is the only input left
  * @param {string}   [props.notesPlaceholder] – Placeholder for the notes box
+ * @param {boolean}  [props.required=true]  – False lets the dialog confirm with
+ *   neither a reason nor a note (the reason is asked for, not demanded)
+ * @param {'select'|'radio'} [props.reasonInput='select'] – How the standard
+ *   reasons are picked: a dropdown, or a radio list ("Other" stays picked)
  * @param {node}     props.children         – Extra fields, above the reason
+ *   (or below the notes with `childrenBelow`)
+ * @param {boolean}  [props.childrenBelow=false]
  * @param {function} props.onCancel
  * @param {function} props.onSubmit        – Called with ({ code, freeText })
  */
@@ -39,19 +47,23 @@ export function ReasonDialog({
   decision = 'fail',
   standardReasons = [],
   confirmLabel,
-  confirmVariant,
+  confirmTone,
   confirmDisabled = false,
   notes = true,
   notesPlaceholder,
+  reasonInput = 'select',
+  required = true,
   children,
+  childrenBelow = false,
   onCancel,
   onSubmit,
 }) {
   const uid = useId();
-  const [code, setCode] = useState('');
+  const [choice, setChoice] = useState('');
+  const code = choice === '__other__' ? '' : choice;
   const [freeText, setFreeText] = useState('');
 
-  const valid = (!!code || (notes && freeText.trim().length > 0)) && !confirmDisabled;
+  const valid = (!required || !!code || (notes && freeText.trim().length > 0)) && !confirmDisabled;
 
   const submit = () => {
     if (!valid) return;
@@ -72,23 +84,33 @@ export function ReasonDialog({
           <h3 className={styles.title}>{title}</h3>
           {description && <p className={styles.description}>{description}</p>}
 
-          {children}
+          {!childrenBelow && children}
 
-          <Select
-            id={`${uid}-reason-code`}
-            label="Standard reason"
-            required={!notes}
-            options={options}
-            value={code === null ? '' : code}
-            onChange={(v) => setCode(v === '__other__' ? '' : v)}
-            placeholder="Select a reason…"
-          />
+          {reasonInput === 'radio' ? (
+            <RadioOptionGroup
+              name={`${uid}-reason-code`}
+              label="Reason"
+              options={options.filter(o => o.value)}
+              value={choice}
+              onChange={setChoice}
+            />
+          ) : (
+            <Select
+              id={`${uid}-reason-code`}
+              label="Standard reason"
+              required={required && !notes}
+              options={options}
+              value={code}
+              onValueChange={(v) => setChoice(v === '__other__' ? '' : v)}
+              placeholder="Select a reason…"
+            />
+          )}
 
           {notes && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor={`${uid}-reason-notes`}>
-                <span>Additional notes{code ? ' (optional)' : ''}</span>
-                {!code && <span className={styles.required} aria-hidden="true" />}
+                <span>Additional notes{code || !required ? ' (optional)' : ''}</span>
+                {!code && required && <span className={styles.required} aria-hidden="true" />}
               </label>
               <Textarea
                 id={`${uid}-reason-notes`}
@@ -102,12 +124,14 @@ export function ReasonDialog({
             </div>
           )}
 
+          {childrenBelow && children}
+
           <div className={styles.footer}>
-            <Button variant="secondary" size="L" fullWidth onClick={onCancel}>Cancel</Button>
+            <Button variant="outline" fullWidth onClick={onCancel}>Cancel</Button>
             <Button
               fullWidth
-              variant={confirmVariant || (decision === 'fail' ? 'danger' : 'primary')}
-              size="L"
+              variant={(confirmTone || (decision === 'fail' ? 'danger' : 'primary')) === 'danger' ? 'soft' : 'solid'}
+              tone={confirmTone || (decision === 'fail' ? 'danger' : 'primary')}
               disabled={!valid}
               onClick={submit}
             >

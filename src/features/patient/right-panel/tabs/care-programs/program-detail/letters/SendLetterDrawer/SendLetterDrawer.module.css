@@ -41,7 +41,7 @@
   flex-shrink: 0;
 }
 
-/* Date field — calendar affordance pinned to the right edge. */
+/* Date field: calendar affordance pinned to the right edge. */
 .dateField {
   position: relative;
 }

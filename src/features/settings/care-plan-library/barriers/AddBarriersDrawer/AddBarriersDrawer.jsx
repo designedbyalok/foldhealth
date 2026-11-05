@@ -4,7 +4,7 @@ import { Button } from '../../../../../components/Button/Button';
 import { Input } from '../../../../../components/Input/Input';
 import { Badge } from '../../../../../components/Badge/Badge';
 import { Icon } from '../../../../../components/Icon/Icon';
-import { Checkbox } from '../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../components/Checkbox/Checkbox';
 import { Link } from '../../../../../components/Link/Link';
 import { AddIconMinimalist } from '../../../../../components/Icon/AddIconMinimalist';
 import { toast } from '../../../../../components/Toast/sonnerToast';
@@ -20,7 +20,7 @@ function normTitle(value) {
 }
 
 /**
- * Add Barriers — barrier picker for the Care Plan GBI table.
+ * Add Barriers: barrier picker for the Care Plan GBI table.
  * Figma SNP-Story 7550:489275.
  */
 /**
@@ -40,7 +40,7 @@ export function AddBarriersDrawer({
   const saveCarePlanBarrier = useAppStore(s => s.saveCarePlanBarrier);
   // Plan picker: "Create New Barrier" authors a library barrier in the shared
   // BarrierDrawer (same as Add Goals → Create New Goal), then checks it.
-  // null | { title } — the prefill.
+  // null | { title }: the prefill.
   const [createDraft, setCreateDraft] = useState(null);
   const libraryDidFetch = useAppStore(s => s.carePlanLibraryDidFetch);
   const fetchCarePlanLibrary = useAppStore(s => s.fetchCarePlanLibrary);
@@ -142,8 +142,6 @@ export function AddBarriersDrawer({
   const headerRight = (
     <>
       <Button
-        variant="primary"
-        size="L"
         disabled={selectable ? selected.size === 0 : !canCreate}
         onClick={selectable ? handleAddThisPlan : handleCreate}
       >
@@ -164,7 +162,7 @@ export function AddBarriersDrawer({
           />
         )}
         <span className={styles.rowText}>{barrier.title}</span>
-        {selectable && added ? <Badge tone="grey" size="M" label="Added" /> : null}
+        {selectable && added ? <Badge size="md" label="Added" /> : null}
       </label>
     </div>
   );

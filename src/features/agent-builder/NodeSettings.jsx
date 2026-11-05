@@ -102,7 +102,7 @@ export function NodeSettings({ node, allNodes, onSave, onClose, onDelete }) {
     if (activeTransition === from) setActiveTransition(to);
   };
 
-  // promptExpanded removed — textarea now auto-resizes
+  // promptExpanded removed: textarea now auto-resizes
 
   return (
     <div className={styles.panel}>
@@ -119,7 +119,7 @@ export function NodeSettings({ node, allNodes, onSave, onClose, onDelete }) {
       />
 
       {isEndNode ? (
-        /* End node: simplified view — no transitions, just a description */
+        /* End node: simplified view, no transitions, just a description */
         <div className={styles.section}>
           <div className={styles.endNodeInfo}>
             <Icon name="solar:info-circle-linear" size={16} color="var(--neutral-300)" />

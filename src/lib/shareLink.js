@@ -20,7 +20,7 @@ const LIST_TO_SLUG = {
 };
 
 /**
- * Derive the best share slug for the current store state — mirrors the routing
+ * Derive the best share slug for the current store state, mirrors the routing
  * in `src/lib/router.js` so the shared link lands where the user is.
  */
 export function sectionSlugFromState(state) {

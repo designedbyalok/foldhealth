@@ -55,7 +55,7 @@ try {
   console.log('\nSample rows via hcc_members_v2:');
   for (const r of sample.rows) console.log(' ', r);
 } catch (e) {
-  console.error('MIGRATION FAILED — transaction rolled back.\n', e.message);
+  console.error('MIGRATION FAILED: transaction rolled back.\n', e.message);
   process.exit(1);
 } finally {
   await client.end();

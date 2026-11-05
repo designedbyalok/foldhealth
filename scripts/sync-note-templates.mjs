@@ -5,7 +5,7 @@
  * `src/features/hedis-worklist/ClinicalNotePanel.utils.js` is the
  * canonical, hand-written source for every HEDIS Care Gap Note
  * Template's field descriptors. Until P2-1 no schema had ever been
- * persisted — `forms` rows held only name + description. This script
+ * persisted: `forms` rows held only name + description. This script
  * upserts each gap's field schema into the matching `forms` row so the
  * app can eventually read templates from the DB (and Settings →
  * Content → Notes can render them for edit).
@@ -20,7 +20,7 @@
  *       status = 'active', field_kind = 'note'.
  *   • Rows outside GAP_TEMPLATES (e.g. Consolidated Clinical Note)
  *     are untouched.
- *   • The pump is idempotent — the same JS input produces the same
+ *   • The pump is idempotent: the same JS input produces the same
  *     JSONB output every run.
  *
  * Run:
@@ -58,7 +58,7 @@ async function upsertTemplate(gapCode, fields) {
     .eq('form_type', 'Note')
     .maybeSingle();
   if (selectErr && selectErr.code !== 'PGRST116') {
-    console.error(`  ${gapCode}: select failed —`, selectErr.message);
+    console.error(`  ${gapCode}: select failed -`, selectErr.message);
     return { code: gapCode, status: 'error' };
   }
 
@@ -76,10 +76,10 @@ async function upsertTemplate(gapCode, fields) {
   if (existing?.id) {
     const { error } = await supabase.from('forms').update(payload).eq('id', existing.id);
     if (error) {
-      console.error(`  ${gapCode}: update failed —`, error.message);
+      console.error(`  ${gapCode}: update failed -`, error.message);
       return { code: gapCode, status: 'error' };
     }
-    console.log(`  ✓ ${gapCode} — updated (id ${existing.id}, ${fields.length} fields)`);
+    console.log(`  ✓ ${gapCode}: updated (id ${existing.id}, ${fields.length} fields)`);
     return { code: gapCode, status: 'updated', id: existing.id };
   }
 
@@ -89,10 +89,10 @@ async function upsertTemplate(gapCode, fields) {
     .select('id')
     .single();
   if (insertErr) {
-    console.error(`  ${gapCode}: insert failed —`, insertErr.message);
+    console.error(`  ${gapCode}: insert failed -`, insertErr.message);
     return { code: gapCode, status: 'error' };
   }
-  console.log(`  ✓ ${gapCode} — inserted (id ${inserted.id}, ${fields.length} fields)`);
+  console.log(`  ✓ ${gapCode}: inserted (id ${inserted.id}, ${fields.length} fields)`);
   return { code: gapCode, status: 'inserted', id: inserted.id };
 }
 

@@ -5,7 +5,7 @@ import { CloseButton } from '../CloseButton/CloseButton';
 import styles from './DocumentUploader.module.css';
 
 /**
- * Inline document uploader — a reusable, store-agnostic version of the widget
+ * Inline document uploader: a reusable, store-agnostic version of the widget
  * first built for the HCC Diagnosis panel (Figma 278:162482).
  *
  * Three-phase flow:
@@ -28,7 +28,7 @@ import styles from './DocumentUploader.module.css';
  *  - readyContent (fn)       Escape hatch for callers whose "ready" phase
  *                            isn't a caption/category form (e.g. an extract-
  *                            from-document flow). When set, it fully replaces
- *                            the ready-phase render — called with
+ *                            the ready-phase render: called with
  *                            `{ file, onRemove }`. Empty/uploading phases are
  *                            unaffected.
  */
@@ -66,7 +66,7 @@ export function DocumentUploader({
   const [category, setCategory] = useState(categories[0]);
   const [caption, setCaption] = useState('');
 
-  // Simulated upload — progress 0→100 in ~1.2s, then phase='ready'.
+  // Simulated upload: progress 0→100 in ~1.2s, then phase='ready'.
   useEffect(() => {
     if (phase !== 'uploading') return undefined;
     let p = 0;
@@ -79,7 +79,7 @@ export function DocumentUploader({
   }, [phase]);
 
   // The hand-off to 'ready' lives in its own effect so its timer is created and
-  // cleared in the same scope — spawned inside the interval callback above, it
+  // cleared in the same scope: spawned inside the interval callback above, it
   // outlived the effect's cleanup and could fire after unmount.
   useEffect(() => {
     if (phase !== 'uploading' || progress < 100) return undefined;
@@ -95,7 +95,7 @@ export function DocumentUploader({
   const startUpload = (f) => {
     if (!f) return;
     if (f.size > maxBytes) { setError(`File exceeds ${formatBytes(maxBytes)}.`); return; }
-    // Pre-fill the caption with the file name — but never clobber a caption
+    // Pre-fill the caption with the file name, but never clobber a caption
     // the user already typed (swapping files updates an auto-filled one).
     setCaption(prev => (!prev.trim() || prev === file?.name) ? f.name : prev);
     setError(''); setFile(f); setProgress(0); setPhase('uploading');
@@ -196,10 +196,10 @@ export function DocumentUploader({
       {error && <div className={styles.error}>{error}</div>}
 
       <div className={styles.actions}>
-        <Button variant="primary" size="S" disabled={!canSubmit} onClick={handleSubmit}>
+        <Button size="sm" disabled={!canSubmit} onClick={handleSubmit}>
           Upload
         </Button>
-        <Button variant="secondary" size="S" onClick={handleCancel}>Cancel</Button>
+        <Button variant="outline" size="sm" onClick={handleCancel}>Cancel</Button>
       </div>
     </div>
   );
@@ -208,7 +208,7 @@ export function DocumentUploader({
 // File-row sub-component used in both 'uploading' (with progress bar + X) and
 // 'ready' (with refresh + X) phases. Exported so callers with a custom ready
 // phase (via DocumentUploader's `readyContent`) can reuse the same file
-// icon/name/size chrome — pass `actions` to replace the default refresh+close
+// icon/name/size chrome: pass `actions` to replace the default refresh+close
 // pair with something else (e.g. an "Extract Meds" CTA).
 export function FileRow({ file, phase, progress, onRefresh, onRemove, actions }) {
   if (!file) return null;

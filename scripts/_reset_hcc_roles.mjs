@@ -1,13 +1,13 @@
 // Reset HCC role assignments and clear activity history.
 //
-// Usage — from the repo root:
+// Usage: from the repo root:
 //   bun run scripts/_reset_hcc_roles.mjs        (or: node scripts/_reset_hcc_roles.mjs)
 //
 // Requirements:
 //   - SUPABASE_DB_PASSWORD in .env
 //   - supabase/.temp/pooler-url populated by `supabase link`
 //
-// What it does — inside a single BEGIN/COMMIT:
+// What it does: inside a single BEGIN/COMMIT:
 //   - probes which of the referenced tables exist (some envs never ran the
 //     hcc_activity_log migration and its siblings, and a missing table would
 //     abort the whole transaction),
@@ -46,7 +46,7 @@ const { rows: existing } = await client.query(
 );
 const have = new Set(existing.map(r => r.table_name));
 if (!have.has('hcc_members')) {
-  console.error('hcc_members not found — nothing to reset.');
+  console.error('hcc_members not found: nothing to reset.');
   await client.end();
   process.exit(1);
 }

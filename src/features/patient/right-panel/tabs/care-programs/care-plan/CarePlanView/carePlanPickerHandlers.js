@@ -135,8 +135,8 @@ export async function addBarriersFromPicker({
     const scopeCopy = {
       thisPlan: `Added ${added} barrier${added === 1 ? '' : 's'} to this plan`,
       thisPlanAllGoals: `Added ${added} barrier${added === 1 ? '' : 's'} to every goal on this plan`,
-      allPlans: `Added ${added} barrier${added === 1 ? '' : 's'} — cross-plan fan-out is pending, saved to this plan for now`,
-      allPlansAllGoals: `Added ${added} barrier${added === 1 ? '' : 's'} — cross-plan fan-out is pending, saved to every goal on this plan`,
+      allPlans: `Added ${added} barrier${added === 1 ? '' : 's'}: cross-plan fan-out is pending, saved to this plan for now`,
+      allPlansAllGoals: `Added ${added} barrier${added === 1 ? '' : 's'}: cross-plan fan-out is pending, saved to every goal on this plan`,
     };
     showToast(scopeCopy[target] || scopeCopy.thisPlan);
     refreshCarePlanDuplicates(patientId, program);

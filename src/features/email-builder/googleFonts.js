@@ -76,7 +76,7 @@ export function resolveFont(value) {
   return BY_VALUE.get('Inter');
 }
 
-// CSS font stack for a stored value — used by InlineEditable + patchEmailHtml.
+// CSS font stack for a stored value, used by InlineEditable + patchEmailHtml.
 export function getFontStack(value) {
   return resolveFont(value).stack;
 }

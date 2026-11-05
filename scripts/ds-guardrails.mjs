@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Design-system guardrails — CHANGED-LINES-ONLY enforcement.
+ * Design-system guardrails: CHANGED-LINES-ONLY enforcement.
  *
  * The repo carries thousands of pre-existing hardcoded values, so we never
  * lint whole files. Instead we run ESLint (JS/JSX) + Stylelint (CSS) on the
@@ -15,29 +15,36 @@
  * Exit 1 if any design-system violation falls on a changed line.
  *
  * Blocking ESLint rules: only design-system rules (see DS_ESLINT_RULES).
- * Generic lint noise (unused vars, hooks deps, …) never blocks here — that's
+ * Generic lint noise (unused vars, hooks deps, …) never blocks here, that's
  * what `bun run lint` is for.
  * Blocking Stylelint rules: all of them (the stylelint config is DS-only).
  */
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
+import { readFileSync, readdirSync } from 'node:fs';
 
 const MODE = process.argv.includes('--staged') ? 'staged' : 'base';
 const baseIdx = process.argv.indexOf('--base');
 const BASE_REF = baseIdx !== -1 ? process.argv[baseIdx + 1] : null;
 
 // ESLint ruleIds that represent design-system violations. Our DS JSX checks
-// are all implemented via `no-restricted-syntax`, so that single id is the
-// design-system gate. Everything else ESLint reports is informational here.
-const DS_ESLINT_RULES = new Set(['no-restricted-syntax']);
+// are implemented via `no-restricted-syntax`; `no-restricted-imports` carries
+// the component-layer boundaries (src/components/layers.json). Everything
+// else ESLint reports is informational here.
+const DS_ESLINT_RULES = new Set(['no-restricted-syntax', 'no-restricted-imports']);
 
 const JS_EXT = new Set(['.js', '.jsx']);
 const CSS_EXT = new Set(['.css']);
 
 // Files that legitimately contain raw values and must never be gated:
 //   tokens.css defines the color tokens (hex is the whole point);
-//   index.css holds global resets / @font-face.
+//   index.css holds global resets / @font-face;
+//   the review-kit package's theme.css is its own token file (it must work
+//   outside Fold, so it can't use Fold's tokens).
 const CSS_IGNORE = new Set(['src/tokens/tokens.css', 'src/index.css']);
+// Standalone packages ship their own theme tokens for other apps, so Fold's
+// token rules don't apply to them.
+const CSS_IGNORE_PREFIX = 'packages/';
 
 function sh(cmd, args) {
   const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
@@ -71,7 +78,7 @@ function changedLines() {
       map.get(file).add(newLine);
       newLine += 1;
     } else if (line.startsWith('-') && !line.startsWith('---')) {
-      // removed line — does not advance the new-file counter
+      // removed line: does not advance the new-file counter
     } else if (!line.startsWith('\\')) {
       newLine += 1; // shouldn't occur with --unified=0, but stay safe
     }
@@ -124,16 +131,35 @@ function runStylelint(files) {
   return out;
 }
 
+// Every src/components folder must be classified in layers.json, or the
+// layer boundaries silently stop covering it.
+function unclassifiedComponents() {
+  const root = 'src/components';
+  const layers = JSON.parse(readFileSync(path.join(root, 'layers.json'), 'utf8'));
+  const known = new Set(Object.entries(layers).filter(([k]) => !k.startsWith('$')).flatMap(([, v]) => v));
+  for (const old of Object.keys(layers.$deprecated || {})) if (!old.startsWith('$')) known.add(old);
+  return readdirSync(root, { withFileTypes: true })
+    .filter(d => d.isDirectory() && !known.has(d.name))
+    .map(d => d.name);
+}
+
 function main() {
   if (MODE === 'base' && !BASE_REF) {
     console.error('ds-guardrails: --base <ref> is required (or use --staged)');
     process.exit(2);
   }
 
+  const unclassified = unclassifiedComponents();
+  if (unclassified.length) {
+    console.error(`\n✖ Add these to a layer in src/components/layers.json: ${unclassified.join(', ')}`);
+    console.error('  See docs/components/library-contract.mdx for how to pick one.\n');
+    process.exit(1);
+  }
+
   const changed = changedLines();
   const files = [...changed.keys()];
   const jsFiles = files.filter(f => JS_EXT.has(path.extname(f)));
-  const cssFiles = files.filter(f => CSS_EXT.has(path.extname(f)) && !CSS_IGNORE.has(f));
+  const cssFiles = files.filter(f => CSS_EXT.has(path.extname(f)) && !CSS_IGNORE.has(f) && !f.startsWith(CSS_IGNORE_PREFIX));
 
   const violations = [...runEslint(jsFiles), ...runStylelint(cssFiles)]
     .filter(v => changed.get(v.file)?.has(v.line));
@@ -143,7 +169,7 @@ function main() {
     process.exit(0);
   }
 
-  console.error('\n✖ Design-system guardrails failed — fix these on the lines you changed:\n');
+  console.error('\n✖ Design-system guardrails failed: fix these on the lines you changed:\n');
   const byFile = new Map();
   for (const v of violations) {
     if (!byFile.has(v.file)) byFile.set(v.file, []);

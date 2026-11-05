@@ -1,6 +1,6 @@
 ---
 title: "Settings"
-description: "One workspace for every platform control — agents, goals, knowledge base, escalations, embedded components, chat groups, forms, and audit logs."
+description: "One workspace for every platform control, agents, goals, knowledge base, escalations, embedded components, chat groups, forms, and audit logs."
 ---
 
 **Settings** is where administrators configure how the platform behaves. It's organized into top-level tabs, and every change is audit-logged.
@@ -12,7 +12,7 @@ description: "One workspace for every platform control — agents, goals, knowle
     AI agents, goals, knowledge base, compliance policies, feature toggles, and per-agent tools.
   </Card>
   <Card title="Content" icon="folder-open">
-    Emails and Forms — the shared library that campaigns and worklists draw from.
+    Emails and Forms: the shared library that campaigns and worklists draw from.
   </Card>
   <Card title="Embedded Components" icon="code">
     iFrame allowlist, embeddable components (Prior Auth, Risk Dashboard, HEDIS Tracker), and JWT scoping.
@@ -35,12 +35,12 @@ description: "One workspace for every platform control — agents, goals, knowle
 
 The Agents tab is a table of every AI agent in your org with: name, use case, version, voice configuration, last update, and status.
 
-- **Row click** — opens the [Agent Builder](/features/agent-builder).
-- **Call Queue** — opens the Call Queue drawer for the agent (Ongoing / In Queue / Log).
-- **Call Analytics** — jumps to the agent's slice of the AI Analytics dashboard.
-- **⋯ menu** — Duplicate, Delete, Audit Log.
+- **Row click**: opens the [Agent Builder](/features/agent-builder).
+- **Call Queue**: opens the Call Queue drawer for the agent (Ongoing / In Queue / Log).
+- **Call Analytics**: jumps to the agent's slice of the AI Analytics dashboard.
+- **⋯ menu**: Duplicate, Delete, Audit Log.
 
-### Walkthrough — configure a new agent end-to-end
+### Walkthrough: configure a new agent end-to-end
 
 <Steps>
   <Step title="Create the agent">
@@ -56,7 +56,7 @@ The Agents tab is a table of every AI agent in your org with: name, use case, ve
     Open **Knowledge Base**. Add question/answer pairs the agent should reference during conversations. Group them by topic for faster retrieval.
   </Step>
   <Step title="Set escalation rules">
-    Open **Compliance Policies**. Define what triggers a transfer to a live human — patient distress, explicit request, PHI concern, unresolved intent after N turns.
+    Open **Compliance Policies**. Define what triggers a transfer to a live human, patient distress, explicit request, PHI concern, unresolved intent after N turns.
   </Step>
   <Step title="Assign to a worklist">
     Go to the appropriate worklist (TOC, HEDIS, etc.). In the row's **Agent Assigned** column, pick your new agent. It's now live.
@@ -65,30 +65,30 @@ The Agents tab is a table of every AI agent in your org with: name, use case, ve
 
 ## Content
 
-- **Emails** — the shared email library. Every campaign email lives here; edit inline or open the [Email Builder](/features/campaigns).
-- **Forms** — the shared form library. See the [Forms doc](/features/forms) for the full builder walkthrough.
+- **Emails**: the shared email library. Every campaign email lives here; edit inline or open the [Email Builder](/features/campaigns).
+- **Forms**: the shared form library. See the [Forms doc](/features/forms) for the full builder walkthrough.
 
 ## Embedded Components
 
 For teams embedding Fold surfaces inside another EHR or portal.
 
-- **Domain Registry** — whitelist domains that can iFrame Fold. Each row shows HIPAA-compliance status and a per-domain audit log.
-- **Component Library** — configure which components are embeddable (Prior Auth, Risk Dashboard, HEDIS Tracker, more). Each component has a 4-step wizard: **Identity → Surfaces → Context → Preview**. Surfaces pick where it renders (Fold Web, Sidecar, Mobile); Context defines the JWT payload the host must sign.
-- **Audit Log** — timeline of every allowlist / component change, grouped by month with color-coded action types.
+- **Domain Registry**: whitelist domains that can iFrame Fold. Each row shows HIPAA-compliance status and a per-domain audit log.
+- **Component Library**: configure which components are embeddable (Prior Auth, Risk Dashboard, HEDIS Tracker, more). Each component has a 4-step wizard: **Identity → Surfaces → Context → Preview**. Surfaces pick where it renders (Fold Web, Sidecar, Mobile); Context defines the JWT payload the host must sign.
+- **Audit Log**: timeline of every allowlist / component change, grouped by month with color-coded action types.
 
 ## Messages
 
 Chat groups (patient ↔ care team threads) are configured here.
 
-- **Chat Groups** — each group has a routing rule (which agents can respond, on what intents) and optional business hours.
-- **Business Hours** — off-hours coverage: fallback message, escalation to on-call, or handoff to an agent.
-- **Agent Rules** — per-group conditional rules that override the default routing.
+- **Chat Groups**: each group has a routing rule (which agents can respond, on what intents) and optional business hours.
+- **Business Hours**: off-hours coverage: fallback message, escalation to on-call, or handoff to an agent.
+- **Agent Rules**: per-group conditional rules that override the default routing.
 
 ## Account, Billing, Member Leads
 
-- **Account → Users** — the user table, invite flow (single-email confirmation), and role assignment.
-- **Billing** — plan, monthly usage, invoices.
-- **Member Leads → Care Team** — the roster used for pre-enrollment outreach and lead assignment.
+- **Account → Users**: the user table, invite flow (single-email confirmation), and role assignment.
+- **Billing**: plan, monthly usage, invoices.
+- **Member Leads → Care Team**: the roster used for pre-enrollment outreach and lead assignment.
 
 ## Audit Log
 

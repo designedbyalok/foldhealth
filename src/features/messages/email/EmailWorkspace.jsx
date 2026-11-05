@@ -3,10 +3,11 @@ import { Icon } from '../../../components/Icon/Icon';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Badge } from '../../../components/Badge/Badge';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { SearchBar } from '../../../components/SearchBar/SearchBar';
 import { useAppStore } from '../../../store/useAppStore';
 import { formatTime } from '../messageUtils';
+import { openStoredLink } from '../../../lib/openSafeUrl';
 import { useReferralEmails } from './useReferralEmails';
 import { useCommsConversations, useCommsMessagesFor } from '../comms/useComms';
 import { PatientEmailThread } from '../comms/PatientEmailThread';
@@ -17,7 +18,7 @@ import { CommsListHeader } from '../comms/CommsListHeader';
 import { markConversationRead, updateConversation } from '../comms/commsRepo';
 import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { BulkBar } from '../../../components/BulkBar/BulkBar';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import commsStyles from '../comms/Comms.module.css';
 
 const ACTIVITY_FILTER = { Today: 1, 'Last 7 days': 7, 'Last 30 days': 30 };
@@ -163,11 +164,11 @@ export function EmailWorkspace({ onCompose, selectConversationId, onSelectedConv
           onFilter={() => setFilterOpen(v => !v)}
         />
         <div className={listStyles.convTabs}>
-          <Toggle
+          <SegmentedControl
             items={[{ key: 'inbox', label: 'Inbox' }, { key: 'draft', label: 'Draft' }, { key: 'sent', label: 'Sent' }]}
-            active={folder}
-            onChange={setFolder}
-            size="S"
+            value={folder}
+            onValueChange={setFolder}
+            size="sm"
           />
         </div>
         {filterOpen && (
@@ -229,8 +230,8 @@ export function EmailWorkspace({ onCompose, selectConversationId, onSelectedConv
             onClear={() => setPicked([])}
             noun={picked.length === 1 ? 'Email Thread' : 'Email Threads'}
             actions={[
-              { label: 'Mark as Read', icon: 'solar:check-read-linear', variant: 'secondary', onClick: (ids) => { ids.forEach(id => markConversationRead(emailConvs.find(c => c.id === id))); setPicked([]); } },
-              { label: 'Archive', icon: 'solar:archive-linear', variant: 'primary', onClick: (ids) => { ids.forEach(id => updateConversation(id, { archived: true })); setPicked([]); } },
+              { label: 'Mark as Read', icon: 'solar:check-read-linear', variant: 'outline', onClick: (ids) => { ids.forEach(id => markConversationRead(emailConvs.find(c => c.id === id))); setPicked([]); } },
+              { label: 'Archive', icon: 'solar:archive-linear', variant: 'solid', onClick: (ids) => { ids.forEach(id => updateConversation(id, { archived: true })); setPicked([]); } },
             ]}
           />
         )}
@@ -255,7 +256,7 @@ function EmailThread({ email }) {
     <div className={listStyles.chatPanel}>
       <div className={styles.subjectBar}>
         <span>Subject : {email.emailSubject || '(no subject)'}</span>
-        {email.status === 'Draft' && <Badge tone="warning" size="S" label="Draft" />}
+        {email.status === 'Draft' && <Badge tone="warning" size="sm" label="Draft" />}
       </div>
       {email.status === 'Draft' && (
         <div className={styles.draftNotice}>
@@ -294,7 +295,7 @@ function EmailThread({ email }) {
                 {attachments.map(a => (
                   <li key={a.documentId || a.storagePath || a.name}>
                     {a.url ? (
-                      <a className={styles.attachment} href={a.url} target="_blank" rel="noopener noreferrer">
+                      <a className={styles.attachment} href={a.url} target="_blank" rel="noopener noreferrer" onClick={e => openStoredLink(e, a.url)}>
                         <Icon name="solar:paperclip-linear" size={14} color="var(--neutral-300)" />
                         {a.name}
                       </a>

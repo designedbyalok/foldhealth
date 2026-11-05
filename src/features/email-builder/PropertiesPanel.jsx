@@ -3,10 +3,10 @@ import { renderEmailHtml } from './patchEmailHtml';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Button } from '../../components/Button/Button';
 import { Input } from '../../components/Input/Input';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
+import { Tabs } from '../../components/Tabs/Tabs';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog';
 import { Textarea } from '../../components/Textarea/Textarea';
@@ -99,10 +99,10 @@ export function PropertiesPanel() {
       </div>
 
       <div className={styles.panelTabBar}>
-        <TabStrip
+        <Tabs
           items={TABS.map((t) => ({ key: t.id, label: t.label, icon: t.icon }))}
-          activeKey={tab}
-          onChange={setTab}
+          value={tab}
+          onValueChange={setTab}
           embedded
           fullWidth={false}
           balanceTabs
@@ -183,7 +183,7 @@ function TemplateTab({ block }) {
     // Detect whether the currently-selected header/footer matches an existing
     // built-in or user preset byte-for-byte. If it does, hiding the Save
     // button avoids creating duplicate library entries. Read `doc` via the
-    // *prop* (`block`) so this recomputes whenever the doc mutates — using
+    // *prop* (`block`) so this recomputes whenever the doc mutates, using
     // useAppStore.getState() here would skip re-runs since it doesn't sub.
     let currentFingerprint = '';
     if (block?.data?.role === role) {
@@ -225,14 +225,14 @@ function TemplateTab({ block }) {
       <div className={styles.templateScroll}>
         <SectionHeading>{`Change ${label}`}</SectionHeading>
 
-        {/* Save current as preset — only when the current header/footer
+        {/* Save current as preset: only when the current header/footer
             differs from every known preset. Avoids creating duplicates. */}
         {canSavePreset && (
         <div className={styles.presetSaveBar}>
           {!saveOpen ? (
             <Button
-              variant="tertiary"
-              size="S"
+              variant="soft"
+              size="sm"
               fullWidth
               leadingIcon="solar:bookmark-linear"
               className={styles.presetSaveBtn}
@@ -259,11 +259,11 @@ function TemplateTab({ block }) {
                 maxLength={120}
               />
               <div className={styles.presetSaveActions}>
-                <Button variant="secondary" size="S" onClick={() => setSaveOpen(false)}>
+                <Button variant="outline" size="sm" onClick={() => setSaveOpen(false)}>
                   Cancel
                 </Button>
-                <Button variant="primary" size="S" onClick={handleSave} disabled={saving}>
-                  {saving ? 'Saving…' : 'Save'}
+                <Button size="sm" onClick={handleSave} loading={saving}>
+                  Save
                 </Button>
               </div>
             </div>
@@ -340,7 +340,7 @@ function TemplateTab({ block }) {
 // ── Column width ratio bar ──────────────────────────────────────────────────
 
 
-// Header/footer preset card — live preview + meta. User presets show edit /
+// Header/footer preset card: live preview + meta. User presets show edit /
 // delete actions on hover; built-in presets are apply-only. Shares the same
 // CSS classes as the ComponentsPanel PresetCard so the picker and the right-
 // panel list stay visually identical.
@@ -397,8 +397,8 @@ function TemplatePresetCard({
             maxLength={120}
           />
           <div className={styles.presetCardEditActions}>
-            <Button variant="secondary" size="S" onClick={onCancelRename}>Cancel</Button>
-            <Button variant="primary" size="S" onClick={onCommitRename}>Save</Button>
+            <Button variant="outline" size="sm" onClick={onCancelRename}>Cancel</Button>
+            <Button size="sm" onClick={onCommitRename}>Save</Button>
           </div>
         </div>
       )}
@@ -406,7 +406,7 @@ function TemplatePresetCard({
         <div className={styles.presetCardActions}>
           <ActionButton
             icon="solar:pen-2-linear"
-            size="S"
+            size="sm"
             tooltip="Rename"
             className={styles.presetCardActionBtn}
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
@@ -414,9 +414,9 @@ function TemplatePresetCard({
           />
           <ActionButton
             icon="solar:trash-bin-minimalistic-linear"
-            size="S"
+            size="sm"
             tooltip="Delete"
-            state="error"
+            tone="danger"
             className={styles.presetCardActionBtn}
             onClick={(e) => { e.stopPropagation(); setDeleteOpen(true); }}
             aria-label="Delete preset"
@@ -469,22 +469,22 @@ function TemplatePresetCard({
 // inputs short-circuit so we don't hit jsdom in tests.
 
 
-// Link input — inline collapsible row. Shows a "+ Add link" affordance when
+// Link input: inline collapsible row. Shows a "+ Add link" affordance when
 // no link is set, expands to an Input that captures the href and a checkbox
 // to toggle target="_blank" (defaults to true to match prior behaviour).
 
-// Padding control — three modes:
+// Padding control: three modes:
 //  • uniform:   one value for all four sides (1 input)
 //  • symmetric: top/bottom + left/right (2 inputs)
 //  • per-side:  four independent values (4 inputs)
 // The mode auto-detects from current values so something else editing
 // padding can't strand the UI in the wrong mode.
 
-// Border control — uses the same +/− toggle pattern as LinkInput so the
+// Border control: uses the same +/− toggle pattern as LinkInput so the
 // builder UI is consistent. Collapsed when no border values are set;
 // expanding applies sensible defaults.
 
-// ── Independent decoration toggles — bold/italic/underline/strike can combine ─
+// ── Independent decoration toggles: bold/italic/underline/strike can combine ─
 // The leading "none" button is a one-click clear that turns every decoration
 // off in a single tap (matches the Figma reference).
 
@@ -493,11 +493,11 @@ function TemplatePresetCard({
 // Uniform / Symmetric (vertical bars) / Per-side mode icons. Symmetric is a
 // square with two vertical guides hinting at independent top/bottom only.
 
-// PadAllSidesIcon — used as the input-field icon when padding is in
+// PadAllSidesIcon: used as the input-field icon when padding is in
 // uniform mode. Two concentric squares clearly read as "padding on all
 // sides" and avoid clashing with RadiusIcon (rounded-corner glyph).
 
-// Symmetric input icons — vertical & horizontal axes.
+// Symmetric input icons: vertical & horizontal axes.
 
 
 // Vertical-align icons for the fixed-height container Position toggle.

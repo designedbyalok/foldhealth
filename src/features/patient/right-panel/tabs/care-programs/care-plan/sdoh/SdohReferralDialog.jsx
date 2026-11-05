@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent } from '../../../../../../../components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent } from '../../../../../../../components/Dialog/Dialog';
 import { Input } from '../../../../../../../components/Input/Input';
 import { Select } from '../../../../../../../components/Select/Select';
 import { Textarea } from '../../../../../../../components/Textarea/Textarea';
@@ -35,8 +35,7 @@ export function SdohReferralDialog({ partner, barrier, zip, onCancel, onSubmit }
           </p>
           {url && (
             <Button
-              variant="secondary"
-              size="L"
+              variant="outline"
               leadingIcon="solar:square-top-down-linear"
               onClick={() => window.open(url, '_blank', 'noopener')}
             >
@@ -49,7 +48,7 @@ export function SdohReferralDialog({ partner, barrier, zip, onCancel, onSubmit }
             onChange={e => setProgram(e.target.value.slice(0, 120))}
             placeholder="e.g. Eastside Community Food Bank"
           />
-          <Select label="Referral status" options={STATUS_OPTIONS} value={status} onChange={setStatus} />
+          <Select label="Referral status" options={STATUS_OPTIONS} value={status} onValueChange={setStatus} />
           <Textarea
             value={note}
             onChange={e => setNote(e.target.value)}
@@ -58,9 +57,8 @@ export function SdohReferralDialog({ partner, barrier, zip, onCancel, onSubmit }
             aria-label="Referral notes"
           />
           <div className={styles.footer}>
-            <Button variant="secondary" size="L" fullWidth onClick={onCancel}>Cancel</Button>
+            <Button variant="outline" fullWidth onClick={onCancel}>Cancel</Button>
             <Button
-              size="L"
               fullWidth
               disabled={!program.trim()}
               onClick={() => onSubmit?.({ partner, program, note, status })}

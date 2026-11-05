@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { ColumnConfigPopover } from '../ColumnConfigPopover/ColumnConfigPopover';
-import { toPopoverColumns } from './useWorklistColumns';
+import { toPopoverColumns } from './useColumnLayout';
 import styles from './ColumnsHeaderButton.module.css';
 
 /**
@@ -34,7 +34,7 @@ export function ColumnsHeaderButton({
   };
 
   // When the caller passes an empty label (or opts out with showLabel),
-  // drop the label span entirely and center the icon in the cell —
+  // drop the label span entirely and center the icon in the cell,
   // otherwise `justify-content: space-between` on the wrap pins a bare
   // icon to the right edge instead of centering it.
   const hasLabel = showLabel && !!label;
@@ -70,7 +70,7 @@ export function ColumnsHeaderButton({
   );
 }
 
-// Column icon — 3-panel rectangle glyph. Verbatim copy of the HCC
+// Column icon: 3-panel rectangle glyph. Verbatim copy of the HCC
 // worklist's `ColumnsIcon` (HccWorklistTableParts.jsx) so every
 // worklist's Actions header shares one glyph. Uses a filled path (not
 // stroked <rect>/<line>) so the hairlines match the HCC treatment at

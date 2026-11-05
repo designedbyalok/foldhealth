@@ -24,7 +24,7 @@ function AddTaskDrawerInner({ onClose, defaultStatus, initialMember, initialAssi
         beforeClose={drawer.guardClose}
         className={className}
         headerRight={
-          <Button variant="primary" size="L" disabled={!drawer.canSave} onClick={drawer.handleSave}>
+          <Button disabled={!drawer.canSave} onClick={drawer.handleSave}>
             Save Task
           </Button>
         }

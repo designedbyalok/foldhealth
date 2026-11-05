@@ -1,6 +1,6 @@
-# Supabase project config — source of truth for `supabase config push`.
+# Supabase project config: source of truth for `supabase config push`.
 #
-# ⚠️  IMPORTANT: `supabase config push` pushes the FULL auth config — any
+# ⚠️  IMPORTANT: `supabase config push` pushes the FULL auth config: any
 # field NOT declared here gets reset to the CLI default on the remote.
 # Every remote setting that differs from CLI defaults MUST be declared in
 # this file. (Learned the hard way: a minimal config wiped site_url etc.)
@@ -9,7 +9,7 @@
 # instead of the default {{ .ConfirmationURL }} (*.supabase.co), because:
 #   1. corporate firewalls block *.supabase.co links outright, and
 #   2. mail-security scanners prefetch links, consuming one-time verify
-#      tokens — with token_hash links the token is only redeemed when the
+#      tokens: with token_hash links the token is only redeemed when the
 #      user submits the Set Password form (see ResetPasswordPage.jsx).
 #
 # ── If you ever re-enable Supabase Branching, read this first ──────────────
@@ -22,7 +22,7 @@
 # That failed every PR that touched supabase/ until branching was turned off
 # (see PRs #179/#181/#184/#185). The fix is to move paid-tier-only settings
 # under a [remotes.production] block, which targets the production project
-# ref only — but verify afterwards that `supabase config push` still applies
+# ref only: but verify afterwards that `supabase config push` still applies
 # them to production, since the CLI's merge order for [remotes] is not
 # documented and a miss would silently reset these templates to defaults.
 #
@@ -33,7 +33,7 @@
 
 project_id = "osnihfqqrcchsaqhagcx"
 
-# CLI default is enabled=true, but vector buckets are a paid-tier feature —
+# CLI default is enabled=true, but vector buckets are a paid-tier feature,
 # without this override every push 402s on the Storage step (free tier).
 [storage.vector]
 enabled = false
@@ -43,6 +43,12 @@ site_url = "https://foldhealth.org/"
 additional_redirect_urls = [
   "https://foldhealth.org/",
   "https://foldhealth.org/**",
+  "https://preview.foldhealth.org/",
+  "https://preview.foldhealth.org/**",
+  # Patient app (patients.foldhealth.org): Google sign-in and reset links
+  # return here, not to the Site URL.
+  "https://patients.foldhealth.org/",
+  "https://patients.foldhealth.org/**",
   "https://foldhealth-alokfold.vercel.app/",
   "https://foldhealth-alokfold.vercel.app/**",
   "https://foldhealth-*-alokfold.vercel.app",

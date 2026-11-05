@@ -72,7 +72,6 @@ export function DiagPanelView(props) {
           <>
             <ActionButton
               icon="solar:minimize-square-minimalistic-linear"
-              size="L"
               tooltip="Open as Drawer"
               onClick={returnDiagToDrawer}
             />
@@ -82,14 +81,13 @@ export function DiagPanelView(props) {
           <>
             <ActionButton
               icon="solar:sidebar-minimalistic-linear"
-              size="L"
               tooltip="Open in Side Panel"
               onClick={openDiagInSidePanel}
             />
             <span className={styles.titleDivider} />
           </>
         )}
-        <ActionButton size="L" tooltip="Close" onClick={closeDiagPanel}>
+        <ActionButton tooltip="Close" onClick={closeDiagPanel}>
           <CloseIcon size={20} color="var(--neutral-300)" />
         </ActionButton>
       </div>
@@ -131,8 +129,8 @@ export function DiagPanelView(props) {
                 { label: 'Add comment', icon: 'solar:chat-round-line-linear', onClick: () => setDiagLeftPanel('comments') },
               ]}
               actions={[
-                { label: 'Accept', icon: 'solar:check-read-linear', variant: 'primary', onClick: () => bulkApply('accepted') },
-                { label: 'Dismiss', icon: 'solar:close-circle-linear', variant: 'secondary', onClick: () => bulkApply('rejected') },
+                { label: 'Accept', icon: 'solar:check-read-linear', variant: 'solid', onClick: () => bulkApply('accepted') },
+                { label: 'Dismiss', icon: 'solar:close-circle-linear', variant: 'outline', onClick: () => bulkApply('rejected') },
               ]}
               moreActions={[
                 { label: 'Missed Opportunity', icon: 'solar:flag-linear', onClick: () => bulkApply('missed') },

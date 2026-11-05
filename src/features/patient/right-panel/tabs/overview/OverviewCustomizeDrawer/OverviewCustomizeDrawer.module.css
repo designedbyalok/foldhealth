@@ -1,0 +1,6 @@
+.intro {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}

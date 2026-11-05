@@ -6,7 +6,7 @@ import { Badge } from '../../../components/Badge/Badge';
 import { Icon } from '../../../components/Icon/Icon';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { Link } from '../../../components/Link/Link';
 import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
 import { FoldIdTag } from '../../../components/FoldIdTag/FoldIdTag';
@@ -40,7 +40,7 @@ const PULSE = [
 const LENS = ['All', 'CCM', 'TCM', 'BHI', 'AWV', 'DM'];
 const LENS_TABS = LENS.map((p) => ({ key: p, label: p }));
 
-const RISK_TONE = { High: 'error', Rising: 'warning', Moderate: 'info' };
+const RISK_TONE = { High: 'danger', Rising: 'warning', Moderate: 'info' };
 
 function initials(name) {
   return name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
@@ -78,7 +78,7 @@ function bindScenarios(scenarios, patients) {
       age: p?.age ?? sc.fallbackAge,
       payer: p?.coverageType || sc.fallbackPayer,
       provider: p?.pcp || sc.fallbackProvider,
-      // Member-cell identity — mirrors the toc worklist row.
+      // Member-cell identity: mirrors the toc worklist row.
       gender: p?.gender || 'F',
       memberId: p?.memberId || '',
       language: p?.language || 'en',
@@ -140,7 +140,7 @@ function AdherenceCard({ onOpen }) {
   );
 }
 
-// Member cell — identical structure to the toc worklist row (Avatar + name
+// Member cell: identical structure to the toc worklist row (Avatar + name
 // link + (gender•age) DOB tooltip + FoldId • language badge), composing the
 // shared WorklistRow member-cell classes.
 function MemberCell({ item, onOpen, showToast }) {
@@ -196,7 +196,7 @@ function TodayRow({ item, onSnooze, onOpen, showToast }) {
 
       <td className={styles.programsTd}>
         <div className={styles.programList}>
-          {item.programs.map((p) => <Badge key={p} tone="grey" size="S" label={p} />)}
+          {item.programs.map((p) => <Badge key={p} size="sm" label={p} />)}
         </div>
       </td>
 
@@ -216,17 +216,17 @@ function TodayRow({ item, onSnooze, onOpen, showToast }) {
       </td>
 
       <td className={styles.statusTd}>
-        <Badge tone={RISK_TONE[item.riskTier] || 'grey'} size="M" label={item.riskTier} />
+        <Badge tone={RISK_TONE[item.riskTier] || 'neutral'} size="md" label={item.riskTier} />
       </td>
 
       <td className={`${styles.actionsTd} ${styles.stickyRight}`} onClick={e => e.stopPropagation()}>
         <div className={styles.actionsCell}>
-          <ActionButton size="S" icon="solar:phone-calling-linear" tooltip="Call" onClick={() => showTouchModeSoon('Call')} />
+          <ActionButton size="sm" icon="solar:phone-calling-linear" tooltip="Call" onClick={() => showTouchModeSoon('Call')} />
           <span className={styles.actionDivider} />
-          <ActionButton size="S" icon="solar:chat-round-linear" tooltip="Text" onClick={() => showTouchModeSoon('Text')} />
+          <ActionButton size="sm" icon="solar:chat-round-linear" tooltip="Text" onClick={() => showTouchModeSoon('Text')} />
           <span className={styles.actionDivider} />
           <span style={{ position: 'relative', display: 'inline-flex' }}>
-            <ActionButton ref={moreRef} size="S" icon="solar:menu-dots-linear" tooltip="More" onClick={() => setMenuOpen((v) => !v)} />
+            <ActionButton ref={moreRef} size="sm" icon="solar:menu-dots-linear" tooltip="More" onClick={() => setMenuOpen((v) => !v)} />
             {menuOpen && (
               <MenuPopover
                 anchorRef={moreRef}
@@ -301,7 +301,7 @@ export function TodayView() {
 
   return (
     <div className={styles.today}>
-      {/* Fixed top region — greeting + Panel Pulse in a bordered container,
+      {/* Fixed top region: greeting + Panel Pulse in a bordered container,
           then the full-width tab strip flush to the table. Only the table
           below scrolls. */}
       <div className={styles.headerRegion}>
@@ -317,7 +317,7 @@ export function TodayView() {
           <span><b>{PANEL_TODAY.minutesTotal}</b> min logged today</span>
         </div>
         {startName && (
-          <Button variant="primary" onClick={() => openPatient(startRow)}>
+          <Button onClick={() => openPatient(startRow)}>
             Start next: {startName}
             <Icon name="solar:arrow-right-linear" size={14} />
           </Button>
@@ -339,12 +339,12 @@ export function TodayView() {
       </div>
       </div>
 
-      {/* Program lens — full-width tab strip, flush to the table below */}
+      {/* Program lens: full-width tab strip, flush to the table below */}
       <div className={styles.tabBar}>
-        <TabStrip items={LENS_TABS} activeKey={lens} onChange={setLens} fullWidth={false} />
+        <Tabs items={LENS_TABS} value={lens} onValueChange={setLens} fullWidth={false} />
       </div>
 
-      {/* Scrolling table — Member | Programs | Next Best Action | Status | Actions */}
+      {/* Scrolling table: Member | Programs | Next Best Action | Status | Actions */}
       <div className={styles.tableRegion}>
         <WorklistShell
           header={null}

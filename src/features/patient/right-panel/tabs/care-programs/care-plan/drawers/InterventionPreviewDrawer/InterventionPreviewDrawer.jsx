@@ -9,7 +9,7 @@ import { Input } from '../../../../../../../../components/Input/Input';
 import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
 import { Avatar } from '../../../../../../../../components/Avatar/Avatar';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
-import { Slider } from '../../../../../../../../components/ShadcnSlider/ShadcnSlider';
+import { Slider } from '../../../../../../../../components/Slider/Slider';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
 import { CarePlanActivityBlock } from '../CarePlanActivityBlock/CarePlanActivityBlock';
 import { useCarePlanItemActivity } from '../../lib/useCarePlanItemActivity';
@@ -36,6 +36,7 @@ import barrierStyles from '../BarrierDetailDrawer/BarrierDetailDrawer.module.css
 import { parseLocalDate } from '../../../../../../../../lib/localDate';
 
 import { GBI_STATUSES, gbiStatusMeta } from '../../lib/gbiStatus';
+import { confirmStatusChange, statusReasonPatch } from '../../lib/confirmStatusChange';
 
 function adherenceNum(value) {
   const n = Number(value);
@@ -43,7 +44,7 @@ function adherenceNum(value) {
 }
 
 // Adherence uses the 3-band scheme (Poor / Moderate / Good) from the
-// shared lib — intervention adherence is a distinct metric from goal
+// shared lib: intervention adherence is a distinct metric from goal
 // progress, which stays on 5 bands. Local aliases keep the render calls
 // short without re-declaring the logic.
 const progressBand = adherenceBand;
@@ -80,14 +81,14 @@ function AccordionHead({ title, open, onToggle, onAdd, addTooltip, canEdit }) {
         <span className={styles.accTitle}>{title}</span>
       </button>
       {canEdit && onAdd && (
-        <ActionButton icon="solar:add-linear" size="S" tooltip={addTooltip} onClick={onAdd} />
+        <ActionButton icon="solar:add-linear" size="sm" tooltip={addTooltip} onClick={onAdd} />
       )}
     </div>
   );
 }
 
 /**
- * Intervention details — Paper 35-0. Mirrors Goal Details layout with
+ * Intervention details: Paper 35-0. Mirrors Goal Details layout with
  * adherence, linked goals, automations, notes, and activity feed.
  */
 export function InterventionPreviewDrawer({ intervention, patientId, program, onClose, onEdit, onOpenGoal, consolidated = false, signedView = false, focusSection = null, readOnly = false, snapshot = null }) {
@@ -125,7 +126,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
       || (s.allPatients || []).find(x => x.id === patientId);
     return p?.name;
   });
-  // Content lookup — a Patient Education intervention stores the linked
+  // Content lookup: a Patient Education intervention stores the linked
   // material id as `config.content` (prefixed `email:<id>` / `form:<id>`);
   // Send Form stores it as `config.form`. Resolve to a name so the
   // reader can see which content was shared without opening the editor.
@@ -179,7 +180,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
   useEffect(() => { setPct(adherenceNum(live?.adherence)); }, [live?.id, live?.adherence]);
   useEffect(() => { if (patientId && program) fetchCarePlanAudit(patientId, program.id); }, [patientId, program, fetchCarePlanAudit]);
 
-  // Lazy-load the content library only for the kinds that need it — so the
+  // Lazy-load the content library only for the kinds that need it, so the
   // Linked Education / Linked Form row can render a name instead of the raw
   // id when the drawer is opened cold (e.g. no library visit yet this
   // session).
@@ -264,9 +265,11 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
     saveLive({ adherence: String(next) });
   };
 
-  const changeStatus = (status) => {
+  const changeStatus = async (status) => {
     if (!canDocument || status === live.status) return;
-    saveLive({ status });
+    const why = await confirmStatusChange([{ type: 'intervention', item: live }], status);
+    if (!why) return;
+    saveLive({ status, ...statusReasonPatch(live, why) });
   };
 
 
@@ -285,7 +288,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
   const recurringLabel = hasRepeat ? formatRecurrenceLabel(live) : null;
 
   // Primary line: everything the reviewer needs at a glance about
-  // scheduling — start, due, duration, recurrence. Audit line
+  // scheduling: start, due, duration, recurrence. Audit line
   // (Last Update) drops to its own row so the primary line stays
   // scannable at any width.
   // Same ownership rule as the plan table: member tasks belong to the patient.
@@ -312,7 +315,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
           <Select
             options={GBI_STATUSES.map(s => ({ value: s, label: s, icon: gbiStatusMeta(s).icon }))}
             value={live.status}
-            onChange={changeStatus}
+            onValueChange={changeStatus}
             disabled={!canDocument}
             portal
             className={styles.statusSelect}
@@ -323,7 +326,6 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
               <>
                 <ActionButton
                   icon="solar:pen-linear"
-                  size="L"
                   tooltip="Edit Intervention"
                   disabled={!canEdit}
                   onClick={() => {
@@ -338,7 +340,6 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
                 <ActionButton
                   ref={moreBtnRef}
                   icon="solar:menu-dots-linear"
-                  size="L"
                   tooltip="More"
                   disabled={!canEdit}
                   onClick={(e) => setMoreMenu(e.currentTarget.getBoundingClientRect())}
@@ -406,8 +407,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
               ))}
               {live.duration && (
                 <Badge
-                  tone="grey"
-                  size="S"
+                  size="sm"
                   icon="solar:clock-circle-linear"
                   label={live.duration}
                   trailingIcon={hasRepeat ? 'solar:refresh-linear' : undefined}
@@ -445,7 +445,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
               />
             </div>
             <Badge
-              size="S"
+              size="sm"
               tone={progressTone(progressBand(pct))}
               label={`${pct}% • ${progressBand(pct)}`}
             />
@@ -453,7 +453,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
         </section>
 
         {(() => {
-          // Schedule — the dates this intervention is due (each occurrence of a
+          // Schedule: the dates this intervention is due (each occurrence of a
           // recurring one). Per-day completion isn't recorded anywhere, so rows
           // say only where a date falls relative to today; a Met intervention
           // gets one "Met on" line from the audit trail instead of per-day ticks.
@@ -499,7 +499,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
                       return (
                         <li key={ymd} className={styles.scheduleRow}>
                           <span className={styles.scheduleDate}>{fmtDate(ymd)}</span>
-                          <Badge size="S" tone={when === 'Due today' ? 'warning' : 'grey'} label={when} />
+                          <Badge size="sm" tone={when === 'Due today' ? 'warning' : 'neutral'} label={when} />
                         </li>
                       );
                     })}
@@ -511,7 +511,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
           );
         })()}
 
-        {/* Linked Goals section — hidden entirely in the Comprehensive
+        {/* Linked Goals section: hidden entirely in the Comprehensive
             Care Plan view when nothing is linked (user can't link new
             goals here); otherwise shown read-only (Link/Unlink hidden). */}
         {(!ro || linkedGoals.length > 0) && (
@@ -533,7 +533,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
             {canEdit && !ro && (
               <ActionButton
                 icon="solar:add-linear"
-                size="S"
+                size="sm"
                 tooltip="Link goal"
                 onClick={() => setLinkGoalOpen(true)}
               />
@@ -564,7 +564,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
                       <span className={barrierStyles.linkActionsDivider} aria-hidden style={{ margin: 0 }} />
                       <ActionButton
                         icon="solar:arrow-right-up-linear"
-                        size="S"
+                        size="sm"
                         tooltip="Open goal"
                         onClick={() => onOpenGoal?.(g)}
                       />
@@ -573,7 +573,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
                           <span className={barrierStyles.linkActionsDivider} aria-hidden style={{ margin: 0 }} />
                           <ActionButton
                             icon="solar:link-broken-minimalistic-linear"
-                            size="S"
+                            size="sm"
                             tooltip="Unlink"
                             onClick={() => savePatientCarePlanIntervention(patientId, program, { ...live, goalId: null }, live.id)}
                           />
@@ -588,7 +588,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
         </section>
         )}
 
-        {/* Automations section — hidden entirely in the Comprehensive
+        {/* Automations section: hidden entirely in the Comprehensive
             Care Plan view when nothing is set up (user can't add new
             automations from that surface); otherwise shown read-only. */}
         {(!ro || automations.length > 0) && (
@@ -610,7 +610,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
             {canEdit && !!live.goalId && !ro && (
               <ActionButton
                 icon="solar:add-linear"
-                size="S"
+                size="sm"
                 tooltip="Add automation"
                 onClick={() => expandAnd('automations', () => setAddingAutomation(v => !v))}
               />
@@ -627,7 +627,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
                     onKeyDown={e => { if (e.key === 'Enter') submitAutomation(); }}
                     aria-label="Automation title"
                   />
-                  <Button variant="primary" size="S" onClick={submitAutomation} disabled={!automationTitle.trim()}>Save</Button>
+                  <Button size="sm" onClick={submitAutomation} disabled={!automationTitle.trim()}>Save</Button>
                 </div>
               )}
               {automations.length === 0 ? (
@@ -646,7 +646,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
                         <div className={barrierStyles.linkActions}>
                           <ActionButton
                             icon="solar:link-broken-minimalistic-linear"
-                            size="S"
+                            size="sm"
                             tooltip="Remove automation"
                             onClick={() => deleteCarePlanAutomation(patientId, program.id, a.id)}
                           />

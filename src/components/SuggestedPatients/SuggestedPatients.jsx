@@ -4,8 +4,9 @@ import { ActionButton } from '../ActionButton/ActionButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Avatar } from '../Avatar/Avatar';
 import { Link } from '../Link/Link';
-import { Collapse } from '../Collapse/Collapse';
-import { RingEmptyState } from '../RingEmptyState/RingEmptyState';
+import { Skeleton } from '../Skeleton/Skeleton';
+import { CollapsibleContent } from '../Collapsible/Collapsible';
+import { EmptyState } from '../EmptyState/EmptyState';
 import { initialsOf } from './patientMatch';
 import { PatientMeta } from './PatientMeta';
 import styles from './SuggestedPatients.module.css';
@@ -102,15 +103,15 @@ export function SuggestedPatients({ items, onAdd, title = 'Suggested Members', m
         {action}
       </div>
       {/* In a drawer the rows ease open and shut (View all / Hide all). */}
-      <Collapse open={showRows}>
+      <CollapsibleContent open={showRows}>
         {loading ? (
           <div className={styles.row} aria-busy="true">
-            <span className={styles.bone} />
-            <span className={`${styles.bone} ${styles.boneShort}`} />
+            <Skeleton className={styles.boneLine} />
+            <Skeleton className={`${styles.boneLine} ${styles.boneShort}`} />
           </div>
         ) : items.length === 0 ? (
           <div className={styles.empty}>
-            <RingEmptyState size="XS" icon="solar:users-group-rounded-linear" />
+            <EmptyState size="xs" icon="solar:users-group-rounded-linear" />
             <span className={styles.emptyText}>
               <span className={styles.emptyTitle}>No Matches Found</span>
               {emptyHint && <span className={styles.emptyHint}>{emptyHint}</span>}
@@ -126,10 +127,10 @@ export function SuggestedPatients({ items, onAdd, title = 'Suggested Members', m
               </span>
               <PatientMeta className={styles.meta} patient={it.patient} />
             </span>
-            <ActionButton icon="custom:add" size="S" tooltip="Add to Patient Context" onClick={() => onAdd(it)} />
+            <ActionButton icon="custom:add" size="sm" tooltip="Add to Patient Context" onClick={() => onAdd(it)} />
           </div>
         ))}
-      </Collapse>
+      </CollapsibleContent>
     </div>
   );
 }

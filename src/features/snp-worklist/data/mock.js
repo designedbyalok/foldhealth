@@ -2,7 +2,7 @@
 // Program Sub Status · Care Plan Status · Next Action Due · Outreach ·
 // Assignee · Trigger Date · Last Admission · Trigger · Risk IQ · Tags · Tasks.
 //
-// outreach: null renders the muted "—" phone cell. When present:
+// outreach: null renders the muted "-" phone cell. When present:
 //   kind   'call' | 'letter'  (icon)
 //   status 'Failed' (red label) + date
 //   dots   attempt indicators, each 'red' | 'blue' | 'grey'

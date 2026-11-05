@@ -9,8 +9,8 @@
     "25": { "$value": "#FDFDFF", "$type": "color" }
   },
   "secondary": {
-    "300": { "$value": "#F47A3E", "$type": "color", "$description": "Do NOT pair with white text — use neutral-500 text." },
-    "300-fg": { "$value": "#A94B1B", "$type": "color", "$description": "Orange for text on light surfaces — passes AA." },
+    "300": { "$value": "#F47A3E", "$type": "color", "$description": "Do NOT pair with white text, use neutral-500 text." },
+    "300-fg": { "$value": "#A94B1B", "$type": "color", "$description": "Orange for text on light surfaces, passes AA." },
     "200": { "$value": "#FBCEB7", "$type": "color" },
     "100": { "$value": "#FEEEE7", "$type": "color" },
     "50": { "$value": "#FFF8F5", "$type": "color" }
@@ -18,9 +18,9 @@
   "neutral": {
     "500": { "$value": "#16181D", "$type": "color" },
     "400": { "$value": "#3A485F", "$type": "color", "$description": "Primary body text." },
-    "300": { "$value": "#4F5A70", "$type": "color", "$description": "Muted body text — passes AA on white and neutral-50." },
-    "200": { "$value": "#5F6A7E", "$type": "color", "$description": "Hint/disabled text — passes AA." },
-    "placeholder-text": { "$value": "#8A94A8", "$type": "color", "$description": "Input placeholders — lighter grey, exempt from AA body-text ratio." },
+    "300": { "$value": "#4F5A70", "$type": "color", "$description": "Muted body text: passes AA on white and neutral-50." },
+    "200": { "$value": "#5F6A7E", "$type": "color", "$description": "Hint/disabled text: passes AA." },
+    "placeholder-text": { "$value": "#8A94A8", "$type": "color", "$description": "Input placeholders: lighter grey, exempt from AA body-text ratio." },
     "150": { "$value": "#D0D6E1", "$type": "color", "$description": "Hairline dividers (drawer header divider)." },
     "100": { "$value": "#E9ECF1", "$type": "color" },
     "75": { "$value": "#F3F4F7", "$type": "color" },
@@ -53,7 +53,7 @@
     "overlay-heavy": { "$value": "rgba(0, 0, 0, 0.8)", "$type": "color", "$description": "Full-bleed media viewer scrim." }
   },
   "media-viewer": {
-    "chrome": { "$value": "#1B1B1D", "$type": "color", "$description": "Theme-independent — stays dark in all themes." },
+    "chrome": { "$value": "#1B1B1D", "$type": "color", "$description": "Theme-independent: stays dark in all themes." },
     "chrome-hover": { "$value": "#2A2A2D", "$type": "color" },
     "chrome-fg": { "$value": "#FFFFFF", "$type": "color" }
   },
@@ -108,7 +108,7 @@
     "pink": { "$value": "#FDE8EF", "$type": "color" }
   },
   "font": {
-    "2xs": { "$value": 10, "$type": "number", "$description": "Micro labels — sparingly." },
+    "2xs": { "$value": 10, "$type": "number", "$description": "Micro labels: sparingly." },
     "xs": { "$value": 11, "$type": "number", "$description": "Captions, timestamps." },
     "sm": { "$value": 12, "$type": "number", "$description": "Secondary text, table metadata." },
     "md": { "$value": 13, "$type": "number", "$description": "Compact body (table cells)." },

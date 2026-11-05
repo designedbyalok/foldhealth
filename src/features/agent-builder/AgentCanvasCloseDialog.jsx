@@ -1,5 +1,5 @@
 import { Button } from '../../components/Button/Button';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../components/Dialog/Dialog';
 
 export function AgentCanvasCloseDialog({ open, onOpenChange, onDiscard, onSaveAndClose }) {
   return (
@@ -16,10 +16,10 @@ export function AgentCanvasCloseDialog({ open, onOpenChange, onDiscard, onSaveAn
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, padding: 12 }}>
-          <Button variant="secondary" size="L" fullWidth style={{ flex: 1, minWidth: 0 }} onClick={onDiscard}>
+          <Button variant="outline" fullWidth style={{ flex: 1, minWidth: 0 }} onClick={onDiscard}>
             Discard
           </Button>
-          <Button variant="primary" size="L" fullWidth style={{ flex: 1, minWidth: 0 }} onClick={onSaveAndClose}>
+          <Button fullWidth style={{ flex: 1, minWidth: 0 }} onClick={onSaveAndClose}>
             Save & Close
           </Button>
         </div>

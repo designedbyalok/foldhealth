@@ -1,6 +1,6 @@
 .wrapper {
   /* Grow to content and let the profile panel (.scrollContent) own the single
-     vertical scroll — a height:100% + overflow-y:auto here would nest a second
+     vertical scroll: a height:100% + overflow-y:auto here would nest a second
      scroller inside the panel's, giving the tab a double scrollbar. */
   background: var(--neutral-0);
   padding: 12px;
@@ -61,42 +61,19 @@
   margin: 0 8px;
 }
 
-.colHeader {
-  display: flex;
-  align-items: center;
-  height: 28px;
-  padding: 0;
-  border-bottom: 0.5px solid var(--neutral-100);
-}
+.nameTd { vertical-align: top; }
 
-.colNameLabel {
-  width: 150px;
-  flex-shrink: 0;
-  font-size: var(--font-sm);
-  color: var(--neutral-300);
+/* An unpinned row's pin shows on hover or focus; a pinned one stays. */
+.pinBtn {
+  display: inline-flex;
+  opacity: 0;
+  transition: opacity .1s;
 }
-
-.colValuesLabel {
-  flex: 1;
-  font-size: var(--font-sm);
-  color: var(--neutral-300);
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  border-bottom: 0.5px solid var(--neutral-100);
-  padding: 8px 0;
-  min-height: 52px;
-  transition: background 0.1s;
-  cursor: pointer;
-}
-.row:last-child { border-bottom: none; }
-.row:hover { background: var(--primary-25); }
+.pinBtnOn,
+tr:hover .pinBtn,
+.pinBtn:focus-within { opacity: 1; }
 
 .nameCell {
-  width: 150px;
-  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -110,7 +87,7 @@
 
 .rowName {
   font-size: var(--font-base);
-  font-weight: 500;
+  font-weight: 400;
   color: var(--neutral-500);
   line-height: 1.2;
 }
@@ -264,14 +241,6 @@
   padding: 4px 12px 0;
   display: flex;
   flex-direction: column;
-}
-
-.xAxisLabel {
-  font-size: var(--font-xs);
-  color: var(--neutral-300);
-  text-align: center;
-  margin-top: 4px;
-  padding-bottom: 4px;
 }
 
 /* ── Stats bar below each chart ── */

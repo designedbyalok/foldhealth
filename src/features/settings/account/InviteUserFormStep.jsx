@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { useRoleOptions } from './access-control/useRoleOptions';
 import { DownChevronIcon } from '../../../components/Icon/DownChevronIcon';
 import { Button } from '../../../components/Button/Button';
 import { Drawer } from '../../../components/Drawer/Drawer';
@@ -10,25 +11,25 @@ import {
   ADMIN_ROLES,
   GENDER_OPTIONS,
   LANGUAGE_OPTIONS,
-  MOCK_ROLES,
 } from './InviteUserDrawer.utils';
 import { useLocationNames, TagInput, MultiSelectField } from './AccountPanelParts';
 import styles from './AccountPanel.module.css';
 
 export function InviteUserFormStep({ onClose, form, set, showAdditional, setShowAdditional, sending, onSendInvite }) {
+  const roleOptions = useRoleOptions();
   const uid = useId();
   const locationNames = useLocationNames();
 
   return (
     <Drawer title="Invite User" onClose={onClose} bodyClassName={styles.inviteDrawerBody} headerRight={
-      <Button variant="primary" size="L" onClick={onSendInvite} disabled={sending}>{sending ? 'Sending...' : 'Send Invite'}</Button>
+      <Button onClick={onSendInvite} loading={sending}>Send Invite</Button>
     }>
       <div className={styles.inviteFormScroll}>
         <h4 className={styles.formSectionTitle} style={{ borderTop: 'none', paddingTop: 0, marginTop: 0 }}>Basic Info</h4>
         <div className={styles.formGrid}>
           <div className={styles.formField}>
             <label className={styles.formLabel} htmlFor={`${uid}-first-name`}>First Name <span className={styles.required}>*</span></label>
-            <Input id={`${uid}-first-name`} value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="First Name" variant={form.first_name && !isCapitalizedName(form.first_name) ? 'error' : 'default'} />
+            <Input id={`${uid}-first-name`} value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="First Name" invalid={form.first_name && !isCapitalizedName(form.first_name)} />
             {form.first_name && !isCapitalizedName(form.first_name) && <span className={styles.fieldError}>Must start with a capital letter</span>}
           </div>
           <div className={styles.formField}>
@@ -37,7 +38,7 @@ export function InviteUserFormStep({ onClose, form, set, showAdditional, setShow
           </div>
           <div className={styles.formField}>
             <label className={styles.formLabel} htmlFor={`${uid}-last-name`}>Last Name <span className={styles.required}>*</span></label>
-            <Input id={`${uid}-last-name`} value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Last Name" variant={form.last_name && !isCapitalizedName(form.last_name) ? 'error' : 'default'} />
+            <Input id={`${uid}-last-name`} value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Last Name" invalid={form.last_name && !isCapitalizedName(form.last_name)} />
             {form.last_name && !isCapitalizedName(form.last_name) && <span className={styles.fieldError}>Must start with a capital letter</span>}
           </div>
           <div className={styles.formField}>
@@ -59,7 +60,7 @@ export function InviteUserFormStep({ onClose, form, set, showAdditional, setShow
         <div className={styles.formSection}>
           <span className={styles.formLabel}>Clinical & Operational Roles <span className={styles.required}>*</span></span>
           <p className={styles.formHint}>Select at least one role if the user interacts with patients or schedules appointments.</p>
-          <MultiSelectField label="" options={MOCK_ROLES} value={form.clinical_roles} onChange={v => set('clinical_roles', v)} />
+          <MultiSelectField label="" options={roleOptions} value={form.clinical_roles} onChange={v => set('clinical_roles', v)} />
         </div>
 
         <button className={styles.additionalToggle} onClick={() => setShowAdditional(v => !v)}>
@@ -75,7 +76,7 @@ export function InviteUserFormStep({ onClose, form, set, showAdditional, setShow
               </div>
               <div className={styles.formField}>
                 <label className={styles.formLabel} htmlFor={`${uid}-gender`}>Gender <span className={styles.required}>*</span></label>
-                <Select id={`${uid}-gender`} options={GENDER_OPTIONS.map(g => ({ value: g, label: g }))} value={form.gender || undefined} onChange={v => set('gender', v)} placeholder="Select gender" />
+                <Select id={`${uid}-gender`} options={GENDER_OPTIONS.map(g => ({ value: g, label: g }))} value={form.gender || undefined} onValueChange={v => set('gender', v)} placeholder="Select gender" />
               </div>
             </div>
 

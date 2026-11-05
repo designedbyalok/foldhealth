@@ -1,9 +1,9 @@
-/* The card is inset 8px from the viewport and sits flush beside the app rail
-   (Figma node 14108:294861 carries p-8 + the dropdown shadow). */
+/* Fills the body slot beside the app rail. The floating shell stays bare
+   here, so this card is the pane, no extra inset inside it. */
 .view {
   flex: 1;
+  min-width: 0;
   min-height: 0;
-  margin: var(--space-2);
   display: flex;
   align-items: stretch;
   background: var(--neutral-0);
@@ -71,11 +71,6 @@
 }
 
 
-.radioGroup {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
 
 /* ── Right: goals ── */
 .goalsPane {
@@ -108,11 +103,18 @@
   min-height: 0;
   overflow-y: auto;
   padding: var(--space-6);
-  /* The card hugs its content at the top of the pane rather than stretching —
+  /* The card hugs its content at the top of the pane rather than stretching,
      goals will stack below it as they're added. */
   display: flex;
   flex-direction: column;
   align-items: stretch;
+}
+/* Common / category switch and the open category's criteria. */
+.categories {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 .goalsEmpty {
   display: flex;

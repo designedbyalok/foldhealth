@@ -13,14 +13,14 @@ import { Tooltip } from '../../../../../../components/Tooltip/Tooltip';
 import { CloseIcon } from '../../../../../../components/Icon/CloseIcon';
 import { AddIconMinimalist } from '../../../../../../components/Icon/AddIconMinimalist';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { toast } from '../../../../../../components/Toast/sonnerToast';
 import { MedicationSelect } from './MedicationSelect';
 import { StopMedicationDialog } from './StopMedicationDialog';
 import { MEDICATION_STOP_REASONS } from './medicationStopReasons';
 import { todayIso, toIsoDate, formatClinicalDate } from '../../../../../../lib/clinicalDates';
-import { Collapse } from '../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import styles from '../AddProblemsDrawer/AddProblemsDrawer.module.css';
 
 // `Stopped` is what Medication Reconciliation writes to this same table, so
@@ -80,22 +80,22 @@ function MedicationRow({ med, onStatusChange, onEdit, dimmed }) {
           portal
           options={statusOptions}
           value={med.status || 'Active'}
-          onChange={v => onStatusChange(med, v)}
+          onValueChange={v => onStatusChange(med, v)}
           className={styles.statusSelect}
         />
         <span className={styles.rowDivider} aria-hidden="true" />
         <ActionButton
           icon="solar:pen-linear"
-          size="S"
+          size="sm"
           tooltip="Edit"
           aria-label={`Edit ${med.name}`}
           onClick={() => onEdit(med)}
         />
       </div>
       {med.note && (
-        <Collapse open={noteOpen}>
+        <CollapsibleContent open={noteOpen}>
           <p className={styles.rowNote}><span className={styles.rowNoteLabel}>Note:</span> {med.note}</p>
-        </Collapse>
+        </CollapsibleContent>
       )}
     </div>
   );
@@ -103,7 +103,7 @@ function MedicationRow({ med, onStatusChange, onEdit, dimmed }) {
 
 /**
  * The picked medication, before it joins the list: when it starts, how it is
- * taken, and — once it is stopped — when and why.
+ * taken, and, once it is stopped, when and why.
  */
 function MedicationDraft({ title, eyebrow, initial, onSave, onCancel }) {
   const [status, setStatus] = useState(initial?.status || 'Active');
@@ -111,6 +111,9 @@ function MedicationDraft({ title, eyebrow, initial, onSave, onCancel }) {
   const [stop, setStop] = useState(initial?.stop || '');
   const [stopReason, setStopReason] = useState(initial?.stopReason || '');
   const [sig, setSig] = useState(initial?.sig || '');
+  // Optional; together they tell the Overview when a refill is due.
+  const [lastFilledOn, setLastFilledOn] = useState(initial?.lastFilledOn || '');
+  const [daysSupply, setDaysSupply] = useState(initial?.daysSupply ?? '');
   const [note, setNote] = useState(initial?.note || '');
   const [noteOpen, setNoteOpen] = useState(!!initial?.note);
   const [saving, setSaving] = useState(false);
@@ -135,6 +138,8 @@ function MedicationDraft({ title, eyebrow, initial, onSave, onCancel }) {
         // A medication that is running has no stop date or reason to record.
         stop: stopped ? stop : '',
         stopReason: stopped ? stopReason : '',
+        lastFilledOn: stopped ? '' : lastFilledOn,
+        daysSupply: !stopped && Number(daysSupply) > 0 ? Math.round(Number(daysSupply)) : null,
       });
     } finally {
       setSaving(false);
@@ -148,7 +153,7 @@ function MedicationDraft({ title, eyebrow, initial, onSave, onCancel }) {
         <span className={styles.draftTitle}>{title}</span>
       </div>
       <div className={[styles.draftFields, styles.draftFieldsPair].join(' ')}>
-        <Select portal label="Status" required options={STATUS_OPTIONS} value={status} onChange={setStatus} />
+        <Select portal label="Status" required options={STATUS_OPTIONS} value={status} onValueChange={setStatus} />
         <Input label="Start Date" required type="date" value={start} onChange={e => setStart(e.target.value)} />
         {stopped && (
           <>
@@ -167,13 +172,19 @@ function MedicationDraft({ title, eyebrow, initial, onSave, onCancel }) {
               required
               options={STOP_REASON_OPTIONS}
               value={stopReason}
-              onChange={setStopReason}
+              onValueChange={setStopReason}
               placeholder="Select a reason"
             />
           </>
         )}
       </div>
       <Input label="Sig" required value={sig} onChange={e => setSig(e.target.value)} placeholder="Enter Sig" />
+      {!stopped && (
+        <div className={[styles.draftFields, styles.draftFieldsPair].join(' ')}>
+          <Input label="Last Filled" type="date" value={lastFilledOn} min={start || undefined} onChange={e => setLastFilledOn(e.target.value)} />
+          <Input label="Days Supply" type="number" min={1} value={daysSupply} onChange={e => setDaysSupply(e.target.value)} placeholder="e.g. 30" />
+        </div>
+      )}
       {!noteOpen && (
         <Link className={styles.draftAddNote} onClick={() => setNoteOpen(true)}>
           <AddIconMinimalist size={14} color="var(--primary-300)" />
@@ -184,7 +195,7 @@ function MedicationDraft({ title, eyebrow, initial, onSave, onCancel }) {
         <div className={styles.draftNote}>
           <div className={styles.draftNoteHead}>
             <span className={styles.draftNoteLabel}>Note</span>
-            <ActionButton size="S" tooltip="Discard note" aria-label="Discard note" onClick={() => { setNote(''); setNoteOpen(false); }}>
+            <ActionButton size="sm" tooltip="Discard note" aria-label="Discard note" onClick={() => { setNote(''); setNoteOpen(false); }}>
               <CloseIcon size={14} color="var(--neutral-300)" />
             </ActionButton>
           </div>
@@ -192,7 +203,7 @@ function MedicationDraft({ title, eyebrow, initial, onSave, onCancel }) {
         </div>
       )}
       <div className={styles.draftActions}>
-        <Button variant="primary" size="M" disabled={saving || !canSave} onClick={save}>Save</Button>
+        <Button disabled={saving || !canSave} onClick={save}>Save</Button>
         <span className={styles.draftDivider} aria-hidden="true" />
         <Link variant="secondary" onClick={onCancel}>Cancel</Link>
       </div>
@@ -207,7 +218,7 @@ const Section = forwardRef(function Section({ title, count, open, onToggle, chil
         type="button"
         className={[styles.sectionHead, dimmed ? styles.dimmed : ''].filter(Boolean).join(' ')} onClick={onToggle} aria-expanded={open}>
         <span className={styles.sectionTitle}>{title}</span>
-        {count > 0 && <Badge tone="grey" size="S" label={String(count)} className={styles.countBadge} />}
+        {count > 0 && <Badge size="sm" label={String(count)} className={styles.countBadge} />}
         <DownChevronIcon size={14} className={open ? styles.chevron : styles.chevronClosed} />
       </button>
       <div className={[styles.sectionBody, open ? styles.sectionBodyOpen : ''].filter(Boolean).join(' ')}>
@@ -218,7 +229,7 @@ const Section = forwardRef(function Section({ title, count, open, onToggle, chil
 });
 
 /**
- * Add Medications — the PAMI/Hx Medications section's `+` opens this.
+ * Add Medications: the PAMI/Hx Medications section's `+` opens this.
  * Mirrors Add Problems: search at the top, the patient's list below, split by
  * status, with add and edit sharing one card.
  */
@@ -270,6 +281,8 @@ export function AddMedicationsDrawer({ patientId, focus, onClose }) {
       stopReason: med.stopReason || '',
       sig: med.sig || '',
       note: med.note || '',
+      lastFilledOn: toIsoDate(med.lastFilledOn) || '',
+      daysSupply: med.daysSupply ?? '',
     },
   });
 
@@ -290,7 +303,7 @@ export function AddMedicationsDrawer({ patientId, focus, onClose }) {
   };
 
   const confirmStop = async ({ stop, stopReason }) => {
-    // What the row held before, so Undo can put it all back — the stop date
+    // What the row held before, so Undo can put it all back, the stop date
     // and reason as well as the status.
     const med = stopping;
     const before = { status: med.status || 'Active', stop: med.stop || '', stopReason: med.stopReason || '' };
@@ -352,7 +365,7 @@ export function AddMedicationsDrawer({ patientId, focus, onClose }) {
             >
               {active.length === 0 ? (
                 <div className={styles.emptyCard}>
-                  <RingEmptyState icon="solar:pill-linear" label="No Active Medications" iconSize={31} />
+                  <EmptyState icon="solar:pill-linear" title="No Active Medications" iconSize={31} />
                 </div>
               ) : active.map(m => renderRow(m))}
             </Section>

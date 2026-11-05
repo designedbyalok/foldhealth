@@ -3,7 +3,7 @@ import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { Input } from '../../../../../../../../components/Input/Input';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { toast } from '../../../../../../../../components/Toast/sonnerToast';
 import styles from './SendLetterDrawer.module.css';
 
@@ -20,7 +20,7 @@ function Field({ label, required, filled, children }) {
 }
 
 /**
- * SendLetterDrawer — right-side send form for a program letter (Figma 851:37792).
+ * SendLetterDrawer: right-side send form for a program letter (Figma 851:37792).
  * Member/company details come prefilled; the mailing address + options are
  * editable before sending.
  *
@@ -52,7 +52,7 @@ export function SendLetterDrawer({ letterName = 'Letter', memberName, memberId, 
 
   const headerRight = (
     <>
-      <Button variant="primary" size="L" onClick={handleSend}>Send</Button>
+      <Button onClick={handleSend}>Send</Button>
       <span className={styles.headerDivider} />
     </>
   );

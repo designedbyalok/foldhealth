@@ -1,5 +1,5 @@
 /**
- * ID Card Icon — used in Insurance Plans empty state.
+ * ID Card Icon: used in Insurance Plans empty state.
  * Custom SVG asset, 46×46 viewBox.
  */
 export function IdIcon({ size = 46, color = 'var(--neutral-200)', className, style }) {

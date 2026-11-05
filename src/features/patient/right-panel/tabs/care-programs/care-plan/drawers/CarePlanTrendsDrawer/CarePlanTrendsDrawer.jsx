@@ -10,7 +10,7 @@ const sparkNum = (v) => {
 
 function Sparkline({ values }) {
   const nums = values.map(sparkNum).filter(n => !Number.isNaN(n));
-  if (nums.length < 2) return <span className={styles.sparkEmpty}>—</span>;
+  if (nums.length < 2) return <span className={styles.sparkEmpty}>-</span>;
   const min = Math.min(...nums);
   const max = Math.max(...nums);
   const span = max - min || 1;
@@ -33,17 +33,17 @@ function Sparkline({ values }) {
 }
 
 function TrendBadge({ trend }) {
-  if (!trend || trend === '-') return <span className={styles.dash}>—</span>;
-  const tone = trend === '↑' ? 'success' : trend === '↓' ? 'error' : 'grey';
+  if (!trend || trend === '-') return <span className={styles.dash}>-</span>;
+  const tone = trend === '↑' ? 'success' : trend === '↓' ? 'danger' : 'neutral';
   const icon = trend === '↑' ? 'solar:arrow-up-linear' : trend === '↓' ? 'solar:arrow-down-linear' : 'solar:minus-circle-linear';
-  return <Badge tone={tone} size="S" icon={icon} />;
+  return <Badge tone={tone} size="sm" icon={icon} />;
 }
 
 const EMPTY_GOALS = [];
 const EMPTY_MEASUREMENTS = [];
 
 /**
- * Goal Trends — a read-only roll-up of every goal's recorded readings across the
+ * Goal Trends: a read-only roll-up of every goal's recorded readings across the
  * plan, so a clinician can scan progress without opening each goal. Readings
  * come from patient_care_plan_goal_measurements (persisted).
  */

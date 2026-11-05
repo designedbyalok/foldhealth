@@ -4,7 +4,7 @@
 // We render the HTML into a hidden iframe first and read getComputedStyle so
 // classes defined in <style> blocks, shorthand `background`, the inherited
 // `color`/`font-family` chain, etc. are all resolved. Walking the parsed
-// `style` attribute alone misses everything that isn't inline — which is
+// `style` attribute alone misses everything that isn't inline: which is
 // most of what designers use.
 
 import { GOOGLE_FONTS } from './googleFonts';
@@ -55,7 +55,7 @@ function readPadding(cs) {
 function readBackgroundImage(cs) {
   const bg = cs.backgroundImage;
   if (!bg || bg === 'none') return null;
-  // Capture gradient values verbatim — our renderer accepts gradient strings.
+  // Capture gradient values verbatim: our renderer accepts gradient strings.
   if (bg.startsWith('linear-gradient') || bg.startsWith('radial-gradient')) return bg;
   const m = bg.match(/url\((['"]?)([^'")]+)\1\)/);
   return m ? m[2] : null;
@@ -112,7 +112,7 @@ function extractStyle(el, win) {
   const br = parsePxNumber(cs.borderTopLeftRadius);
   if (br != null && br > 0) out.borderRadius = br;
 
-  // Border — take the top side as representative; if any side differs the
+  // Border: take the top side as representative; if any side differs the
   // user can refine inside the builder. Width 0 = no border.
   const bw = parsePxNumber(cs.borderTopWidth);
   if (bw != null && bw > 0) {
@@ -218,7 +218,7 @@ function isColumnsRow(el) {
 }
 
 // Map a parsed anchor-button into the exact block shape the Button renderer
-// expects — color/shape/size live on `props`, only padding/textAlign and an
+// expects: color/shape/size live on `props`, only padding/textAlign and an
 // optional borderRadius override stay on `style`. Without this normalization
 // the renderer's `props.buttonBackgroundColor || '#7C5CFA'` falls back to
 // the builder's default purple, ignoring the parsed value entirely.
@@ -233,7 +233,7 @@ function inferButtonSize(padding) {
 
 function extractButtonBlock(el, win) {
   const raw = extractStyle(el, win);
-  // Gradient strings on Button don't round-trip through the renderer —
+  // Gradient strings on Button don't round-trip through the renderer,
   // drop them so the renderer falls back cleanly. Solid hex passes through.
   const bg = raw.backgroundColor && !/^(linear|radial)-gradient/.test(raw.backgroundColor)
     ? raw.backgroundColor
@@ -275,7 +275,7 @@ function makeIdGen() {
 
 // Pull family names out of any `<link href="…fonts.googleapis.com/css2?
 // family=A+B:wght@400&family=C:wght@500">` tags in the head. Used to tell
-// the substitution dialog "these are loaded externally — don't flag them
+// the substitution dialog "these are loaded externally: don't flag them
 // as unknowns." Returns an array of human-readable family names with
 // spaces (e.g. "IBM Plex Serif"), de-duped.
 function extractLinkedGoogleFonts(idoc) {
@@ -296,7 +296,7 @@ function extractLinkedGoogleFonts(idoc) {
 
 // Walk the body into a flat blocks map + root child list. The walker
 // (`walk`) returns an array of block IDs the caller should treat as the
-// element's contribution to its parent's child list — usually one ID, but
+// element's contribution to its parent's child list: usually one ID, but
 // pass-through wrappers can return their children's IDs directly so we
 // don't generate empty Containers.
 function buildDocFromDom(idoc, win) {
@@ -304,7 +304,7 @@ function buildDocFromDom(idoc, win) {
   const genId = makeIdGen();
   const body = idoc.body;
 
-  // Capture linked Google Fonts BEFORE we strip the head (well — body links;
+  // Capture linked Google Fonts BEFORE we strip the head (well: body links;
   // head links survive `body.querySelectorAll` but we still want the read to
   // happen up-front in case a future change moves the strip).
   const linkedFonts = extractLinkedGoogleFonts(idoc);
@@ -317,7 +317,7 @@ function buildDocFromDom(idoc, win) {
   const rootFontFamily = firstFontFamily(bodyCs.fontFamily);
   const rootTextColor = rgbToHex(bodyCs.color) || '#3A485F';
 
-  // Find the inner email container — usually a single child of body or the
+  // Find the inner email container: usually a single child of body or the
   // first table/.email-container. Its background is the canvas color.
   let canvasColor = '#FFFFFF';
   const wrapper = body.querySelector('table[role="presentation"], .email-container, .container, [class*="email"]');
@@ -361,7 +361,7 @@ function buildDocFromDom(idoc, win) {
       return [id];
     }
 
-    // Inline SVG — preserved as an Image block with the raw markup. Common
+    // Inline SVG: preserved as an Image block with the raw markup. Common
     // for logo squares, icon bubbles, and social-bar glyphs in production
     // emails. Without this branch the SVG element would either fall through
     // to the text-leaf branch (where it gets stripped) or be inlined as
@@ -462,7 +462,7 @@ function buildDocFromDom(idoc, win) {
         }
         // Capture per-cell styling so the ColumnsContainer renderer can
         // paint backgrounds, padding, alignment, and fixed widths on each
-        // column. Common in production emails — the principle-rows in the
+        // column. Common in production emails, the principle-rows in the
         // NodeOps template use a 3px coloured bar as column 1.
         const colCs = win.getComputedStyle(col);
         const colInfo = { childrenIds };
@@ -480,7 +480,7 @@ function buildDocFromDom(idoc, win) {
         const wAttr = col.getAttribute('width');
         const wPx = parsePxNumber(wAttr) || parsePxNumber(colCs.width);
         if (wAttr && /^\d+$/.test(wAttr)) {
-          // numeric attribute (no `px`) is per-table-width — treat as px
+          // numeric attribute (no `px`) is per-table-width: treat as px
           colInfo.customWidth = wPx;
         }
         return colInfo;
@@ -517,14 +517,14 @@ function buildDocFromDom(idoc, win) {
 
     // Anchor-button wrapped in a single-child <p>/<div>. Without this
     // shortcut the walker falls into the text-leaf branch below and inlines
-    // the anchor as raw HTML in a Text block — visually fine, but the user
+    // the anchor as raw HTML in a Text block, visually fine, but the user
     // can't edit it as a Button. Hoist the inner Button block up.
     if (['P', 'DIV', 'TD'].includes(el.tagName) && elementChildren.length === 1) {
       const only = elementChildren[0];
       const textNodeCount = Array.from(el.childNodes).filter(n => n.nodeType === 3 && n.textContent.trim()).length;
       if (textNodeCount === 0 && only.tagName === 'A') {
         const onlyCs = win.getComputedStyle(only);
-        // Pattern A — the anchor itself is button-styled (background +
+        // Pattern A: the anchor itself is button-styled (background +
         // padding on the <a>). Common in MJML/Hubspot output.
         if (isAnchorButton(only, onlyCs)) {
           const id = genId();
@@ -532,7 +532,7 @@ function buildDocFromDom(idoc, win) {
           blocks[id] = extractButtonBlock(only, win);
           return [id];
         }
-        // Pattern B — the wrapper carries the styling (bg + radius), the
+        // Pattern B: the wrapper carries the styling (bg + radius), the
         // anchor is just a styled text label inside. This is the classic
         // production email CTA: <td bgcolor="#1C1917" style="border-radius:
         // 9999px"><a href="#" style="padding:12px 22px;color:#fff">…</a></td>
@@ -577,7 +577,7 @@ function buildDocFromDom(idoc, win) {
           const txt = node.textContent.trim();
           if (txt) {
             const tid = genId();
-            // No element to tag for bare text nodes — they get inline-edited
+            // No element to tag for bare text nodes, they get inline-edited
             // via the parent's contenteditable.
             blocks[tid] = {
               type: 'Text',
@@ -593,7 +593,7 @@ function buildDocFromDom(idoc, win) {
       if (!childrenIds.length) return [];
 
       const style = extractStyle(el, win);
-      // Pass-through wrappers (no visual style, single child) — hoist the
+      // Pass-through wrappers (no visual style, single child), hoist the
       // child up so we don't create a stack of nested empty Containers.
       if (!hasVisualStyle(style) && childrenIds.length === 1) {
         return childrenIds;
@@ -624,7 +624,7 @@ function buildDocFromDom(idoc, win) {
       return [id];
     }
 
-    // Final fallback — recurse into children, dropping the wrapper.
+    // Final fallback: recurse into children, dropping the wrapper.
     const all = [];
     Array.from(el.children).forEach(c => {
       const ids = walk(c);
@@ -693,7 +693,7 @@ export function parseHtmlToDocument(html) {
     };
     const finish = (value) => { cleanup(); resolve(value); };
     // Append first so contentDocument exists, then write the HTML via
-    // document.open/write/close — this is more reliable than `srcdoc`,
+    // document.open/write/close, this is more reliable than `srcdoc`,
     // which fires an extra `load` event for the initial empty document.
     document.body.appendChild(iframe);
     const idoc = iframe.contentDocument;
@@ -740,7 +740,7 @@ const KNOWN_FONT_LABELS = new Set(GOOGLE_FONTS.map(f => f.label.toLowerCase()));
 export function collectUnknownFonts(doc) {
   if (!doc) return [];
   const found = new Set();
-  // Treat any font the source HTML linked from Google Fonts as known —
+  // Treat any font the source HTML linked from Google Fonts as known,
   // the iframe parser already loaded them and we'll preserve the family
   // name. The substitution dialog should only nag about families we
   // truly can't render.
@@ -762,7 +762,7 @@ export function collectUnknownFonts(doc) {
   return Array.from(found);
 }
 
-// Apply font substitutions to a parsed doc — `mappings` is `{ original: target }`.
+// Apply font substitutions to a parsed doc, `mappings` is `{ original: target }`.
 // Returns a new doc with every fontFamily replaced according to the map.
 export function applyFontMappings(doc, mappings) {
   if (!doc || !mappings) return doc;

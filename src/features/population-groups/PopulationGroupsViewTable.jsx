@@ -4,14 +4,14 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Badge } from '../../components/Badge/Badge';
 import { SearchIconButton } from '../../components/SearchIconButton/SearchIconButton';
 import { SubnavToggle } from '../../components/SubnavToggle/SubnavToggle';
-import { WorklistShell } from '../../components/WorklistShell/WorklistShell';
+import { WorklistShell } from '../worklists/WorklistShell';
 import { PopulationGroupsRow } from './PopulationGroupsRow.jsx';
 import { BulkSelectIcon } from './PopulationGroupsViewPanels.jsx';
 import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog';
 import { ImportRuleDrawer } from './ImportRuleDrawer';
 import { FOLD_DB_MAP } from './data/fold-db.js';
 
-/* Export a group's members as CSV — same columns the edit drawer's download
+/* Export a group's members as CSV: same columns the edit drawer's download
    produces, so a list exported here can be re-uploaded by the create flow. */
 function downloadMemberList(group, showToast) {
   const members = (group.memberIds || []).flatMap(id => {
@@ -37,11 +37,11 @@ function downloadMemberList(group, showToast) {
 
 const Input = (props) => <FoldInput {...props} />;
 
-// WorklistShell column defs — sticky checkbox + Group Name on the left,
+// WorklistShell column defs: sticky checkbox + Group Name on the left,
 // sticky Action column on the right, sortable member counts + dates.
 // Same shape TOC / AWV use so the sticky-column scroll behaviour matches.
 // Group names are long enough to wrap to the clamped second line, so the name
-// column takes the width freed by the member-count columns — those hold 2–3
+// column takes the width freed by the member-count columns, those hold 2–3
 // digits and only need room for their own headers. Dates are date-only now,
 // so they need less than the old timestamp width too.
 const POP_COLUMNS = [
@@ -60,7 +60,7 @@ const POP_COLUMNS = [
     renderCell: (g) => (
       <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         {g.type}
-        {g.status === 'draft' && <Badge tone="warning" size="S" label="Draft" />}
+        {g.status === 'draft' && <Badge tone="warning" size="sm" label="Draft" />}
       </span>
     ),
   },
@@ -106,7 +106,7 @@ export function PopulationGroupsViewTable({ vm, onImportRule }) {
       </div>
 
       <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0, marginLeft:'auto' }}>
-        {/* ── Search groups — icon expands to a text field on click (same as app-wide search) ── */}
+        {/* ── Search groups: icon expands to a text field on click (same as app-wide search) ── */}
         {searchOpen ? (
           <Input
             autoFocus
@@ -122,18 +122,18 @@ export function PopulationGroupsViewTable({ vm, onImportRule }) {
 
         <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
 
-        {/* ── Create Group — opens the file-upload workflow (error card / all-matched review) ── */}
-        <Button variant="secondary" size="L" leadingIcon="solar:add-circle-linear" onClick={openNewModal}>Create Group</Button>
+        {/* ── Create Group: opens the file-upload workflow (error card / all-matched review) ── */}
+        <Button variant="outline" leadingIcon="solar:add-circle-linear" onClick={openNewModal}>Create Group</Button>
 
         <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
 
-        {/* Import Rule — opens the templates drawer */}
-        <Button variant="secondary" size="L" onClick={onImportRule}>Import Rule</Button>
+        {/* Import Rule: opens the templates drawer */}
+        <Button variant="outline" onClick={onImportRule}>Import Rule</Button>
 
         <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
 
-        {/* Bulk actions icon — matches Settings → Content bulk-select icon (neutral-300) */}
-        <ActionButton size="L" tooltip="Bulk actions" style={{ color: 'var(--neutral-300)' }}><BulkSelectIcon /></ActionButton>
+        {/* Bulk actions icon: matches Settings → Content bulk-select icon (neutral-300) */}
+        <ActionButton tooltip="Bulk actions" style={{ color: 'var(--neutral-300)' }}><BulkSelectIcon /></ActionButton>
       </div>
     </div>
   );
@@ -170,7 +170,7 @@ export function PopulationGroupsViewTable({ vm, onImportRule }) {
       onSelectAll={handleSelectAll}
       onClearSelection={() => setCheckedRows(new Set())}
       bulkActions={[
-        { label: 'Run Automation', icon: 'solar:bolt-linear', onClick: () => showToast('Run Automation — coming soon') },
+        { label: 'Run Automation', icon: 'solar:bolt-linear', onClick: () => showToast('Run Automation: coming soon') },
         { label: 'Delete', icon: 'solar:trash-bin-minimalistic-linear', variant: 'destructive', onClick: () => setDeleteTargets(pagedGroups.filter(g => checkedRows.has(g.id))) },
       ]}
       page={safePg}

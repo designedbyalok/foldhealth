@@ -8,7 +8,7 @@ export function CodeTabHtmlOverrideBanner({ doc, htmlPreviewOverride, setEmailDo
   return (
     <div className={styles.codeBanner}>
       <Icon name="solar:info-circle-linear" size={12} color="currentColor" />
-      <span style={{ flex: 1 }}>Previewing edited HTML — choose how to import.</span>
+      <span style={{ flex: 1 }}>Previewing edited HTML: choose how to import.</span>
       <button
         type="button"
         className={styles.codeBannerBtn}
@@ -27,7 +27,7 @@ export function CodeTabHtmlOverrideBanner({ doc, htmlPreviewOverride, setEmailDo
             },
           });
         }}
-        title="Render the HTML verbatim in an editable iframe — no block conversion"
+        title="Render the HTML verbatim in an editable iframe, no block conversion"
       >
         <Icon name="solar:code-linear" size={13} color="currentColor" />
         Keep as raw HTML

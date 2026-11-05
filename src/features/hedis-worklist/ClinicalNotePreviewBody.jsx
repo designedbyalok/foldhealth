@@ -19,11 +19,12 @@ import { resolvePerformedByLabel, LOCATION_OPTIONS as DSF_LOCATIONS } from './ds
 import { getItems, getResponseScale, totalScore, isPhq2Positive, phq9Branch, phq9BandLabel } from './dsf/dsfScoring';
 import { DSF_CARE_PLANS } from './dsf/dsfCarePlans';
 import styles from './ClinicalNotePreviewBody.module.css';
+import { openSafeUrl } from '../../lib/openSafeUrl';
 
 // Platform-wide date display is MM/DD/YYYY. Values come off the form as
 // either an ISO YYYY-MM-DD string (native <input type="date">) or a Date-
 // parseable string; anything else falls back to the raw value so the
-// reader still sees SOMETHING rather than a silent "—". Split the ISO
+// reader still sees SOMETHING rather than a silent "-". Split the ISO
 // path manually so timezone doesn't shift the day boundary.
 function formatMDY(value) {
   if (value == null || value === '') return value;
@@ -37,15 +38,15 @@ function formatMDY(value) {
 }
 
 /**
- * ClinicalNotePreviewBody — read-only signed-note summary.
+ * ClinicalNotePreviewBody: read-only signed-note summary.
  *
  * Rendered inside the CareGapDetailDrawer's left workspace slot when the
  * user clicks the eye affordance on a Signed note. Mirrors Figma
- * 511:105429 — sectioned key/value rows plus an Amend affordance that
+ * 511:105429, sectioned key/value rows plus an Amend affordance that
  * routes back to the editable workspace.
  *
  * The payload it renders is whatever `upsertClinicalNote` persisted for
- * this member/gap — currently `{ dateOfService, audioOnly, audioVideo,
+ * this member/gap: currently `{ dateOfService, audioOnly, audioVideo,
  * gaps: { <code>: <gapState> } }`. Unknown fields are skipped so future
  * form additions surface without touching this component.
  */
@@ -73,9 +74,9 @@ export function ClinicalNotePreviewBody({ memberId, gapCode, noteId }) {
   const payload = note.payload || {};
   const gapCodes = (note.gapCodes && note.gapCodes.length ? note.gapCodes : [gapCode]).filter(Boolean);
   const gapsPayload = payload.gaps || {};
-  const telehealth = payload.audioOnly ? 'Audio-only visit — Verbal consent obtained.'
-    : payload.audioVideo ? 'Audio-video visit — Verbal consent obtained.'
-    : '—';
+  const telehealth = payload.audioOnly ? 'Audio-only visit: Verbal consent obtained.'
+    : payload.audioVideo ? 'Audio-video visit: Verbal consent obtained.'
+    : '-';
   // Non-Visit Notes carry either a free-form title/body (legacy shape)
   // or a template-driven `{ formId, answers }` shape. Normal Notes use
   // the same template-driven shape but a different formType tag; both
@@ -96,7 +97,7 @@ export function ClinicalNotePreviewBody({ memberId, gapCode, noteId }) {
           </Section>
         ) : (
           <Section title={payload.title || 'Note'}>
-            <div className={styles.nonVisitBody}>{payload.body || '—'}</div>
+            <div className={styles.nonVisitBody}>{payload.body || '-'}</div>
           </Section>
         )}
         {gapCodes.length > 0 && (
@@ -104,7 +105,7 @@ export function ClinicalNotePreviewBody({ memberId, gapCode, noteId }) {
             <div className={styles.nonVisitChipRow}>
               {gapCodes.map(c => (
                 <span key={c} className={styles.nonVisitChip}>
-                  {c} — {MEASURE_NAMES[c] ?? c}
+                  {c}: {MEASURE_NAMES[c] ?? c}
                 </span>
               ))}
             </div>
@@ -118,7 +119,7 @@ export function ClinicalNotePreviewBody({ memberId, gapCode, noteId }) {
   return (
     <div className={styles.wrap}>
       {/* Title + signer/reviewer subtitle are rendered by the pane header
-          in CareGapDetailDrawer — the body focuses on section content only. */}
+          in CareGapDetailDrawer: the body focuses on section content only. */}
       <Section title="Date of Service & Telehealth Statement">
         <KV label="DOS" value={formatMDY(payload.dateOfService)} />
         <KV label="Telehealth Statement" value={telehealth} wide />
@@ -142,7 +143,7 @@ export function ClinicalNotePreviewBody({ memberId, gapCode, noteId }) {
             <div key={doc.id || i} className={styles.docRow}>
               <Icon name="solar:document-text-linear" size={16} color="var(--neutral-300)" />
               <span className={styles.docName}>{doc.filename || 'Uploaded Document'}</span>
-              <button type="button" className={styles.docAction} onClick={() => { const w = window.open(doc.url, '_blank'); try { w?.focus(); } catch {} }}>
+              <button type="button" className={styles.docAction} onClick={() => openSafeUrl(doc.url)}>
                 <Icon name="solar:eye-linear" size={16} color="var(--neutral-400)" />
               </button>
             </div>
@@ -165,7 +166,7 @@ function Section({ title, children }) {
 }
 
 function KV({ label, value, wide, stacked }) {
-  const display = value == null || value === '' ? '—' : String(value);
+  const display = value == null || value === '' ? '-' : String(value);
   if (stacked) {
     // Long-form questions (PHQ items) render label above answer so
     // neither has to fight a nowrap constraint. Kept inline in this
@@ -207,7 +208,7 @@ function NonVisitAnswers({ fields, answers }) {
 
 function GenericRows({ code, data: saved }) {
   const fields = GAP_TEMPLATES[code];
-  if (!fields?.length) return <KV label="Evidence" value="—" wide />;
+  if (!fields?.length) return <KV label="Evidence" value="-" wide />;
   const data = savedGapData(code, saved) || {};
   const hasAnyValue = fields.some(f => f.type !== 'content' && data[f.key] != null && data[f.key] !== '');
   if (!hasAnyValue) return <LegacyRows data={data} />;
@@ -242,11 +243,11 @@ function GenericRows({ code, data: saved }) {
 }
 
 // A note saved against an earlier version of the template: show whatever
-// was stored, labelled from its keys, rather than an empty "—".
+// was stored, labelled from its keys, rather than an empty "-".
 function LegacyRows({ data, hideEmpty }) {
   const entries = Object.entries(data || {})
     .filter(([k, v]) => k !== 'evidenceLabel' && k !== 'manuallyOff' && v !== '' && v != null && v !== false && typeof v !== 'object');
-  if (!entries.length) return hideEmpty ? null : <KV label="Evidence" value="—" wide />;
+  if (!entries.length) return hideEmpty ? null : <KV label="Evidence" value="-" wide />;
   return entries.map(([k, v]) => (
     <KV
       key={k}
@@ -320,7 +321,7 @@ function DsfaRows({ data }) {
   const phq2 = data.phq2 || {};
   const items = getItems('phq2');
   const scale = getResponseScale('phq2');
-  const answerLabel = (v) => (v == null ? '—' : scale.find(o => o.score === Number(v))?.value ?? String(v));
+  const answerLabel = (v) => (v == null ? '-' : scale.find(o => o.score === Number(v))?.value ?? String(v));
   const values = [phq2.item1, phq2.item2];
   const total = totalScore(values);
   const scoreLine = total === null
@@ -370,7 +371,7 @@ function DsfbRows({ data }) {
   const provider = resolvePerformedByLabel(data.performedBy, users);
   const items = getItems('phq9');
   const scale = getResponseScale('phq9');
-  const answerLabel = (v) => (v == null ? '—' : scale.find(o => o.score === Number(v))?.value ?? String(v));
+  const answerLabel = (v) => (v == null ? '-' : scale.find(o => o.score === Number(v))?.value ?? String(v));
   const values = data.phq9?.items || [];
   const total = totalScore(values.length === 9 ? values : []);
   const bandLabel = total === null ? null : phq9BandLabel(phq9Branch(total));
@@ -393,7 +394,7 @@ function DsfbRows({ data }) {
         />
       )}
       {/* Care Plan surfaces once the score is committed AND a branch
-          resolves — decline always wins, then the band-driven plan
+          resolves: decline always wins, then the band-driven plan
           picks up. Outreach Notes render inside the panel (not as a
           separate KV) so the reviewer reads the plan and its notes as
           a single unit, matching the edit surface. */}

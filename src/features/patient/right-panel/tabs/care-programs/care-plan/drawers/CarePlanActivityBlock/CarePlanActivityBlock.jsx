@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { TabStrip } from '../../../../../../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../../../../../../components/Tabs/Tabs';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
 import { ActivityLog } from '../../../../../../../../components/ActivityLog/ActivityLog';
@@ -35,7 +35,7 @@ function bucketLabel(iso) {
 
 /**
  * Shared "Activity Log" surface for the care-plan preview drawers.
- * Renders the same TabStrip (All / Since Last Visit) + Filter chip +
+ * Renders the same Tabs (All / Since Last Visit) + Filter chip +
  * grouped ActivityLog trio the Goal preview drawer uses so all three
  * drawers read as one system.
  *
@@ -82,17 +82,17 @@ export function CarePlanActivityBlock({ entries, lastVisit, filters = DEFAULT_FI
 
   return (
     <div className={styles.activityBlock}>
-      <TabStrip
+      <Tabs
         items={DEFAULT_TABS}
-        activeKey={tab}
-        onChange={setTab}
+        value={tab}
+        onValueChange={setTab}
         fullWidth={false}
-        size="S"
+        size="sm"
         trailing={(
           <ActionButton
             ref={filterBtnRef}
             icon="custom:filter"
-            size="S"
+            size="sm"
             tooltip="Filter activity"
             active={filtersOpen || filter !== 'all'}
             onClick={() => setFiltersOpen(v => !v)}

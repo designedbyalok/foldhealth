@@ -1,5 +1,5 @@
 /**
- * Report tab — question-wise breakdown. One card per question: choice questions
+ * Report tab: question-wise breakdown. One card per question: choice questions
  * get a distribution donut + legend + "Most Voted"; NPS questions get the
  * score, its three groups and the 0–10 spread; numeric questions get a
  * votes bar chart; free-text questions list the answers (with Show more).

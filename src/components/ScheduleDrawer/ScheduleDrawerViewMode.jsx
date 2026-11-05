@@ -88,20 +88,20 @@ export function ScheduleDrawerViewMode({
               style={{ width: 120 }}
               options={APPOINTMENT_STATUSES.map(s => ({ value: s, label: s }))}
               value={apptStatus}
-              onChange={handleStatusChange}
+              onValueChange={handleStatusChange}
               disabled={isPastAppointment}
             />
           </div>
-          <ActionButton icon="solar:paperclip-linear" size="L" tooltip="Attach" />
+          <ActionButton icon="solar:paperclip-linear" tooltip="Attach" />
           <span style={{ width: 0.5, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
           {!showViewStaffInstructions && (
-            <ActionButton size="L" tooltip="Add Staff Instructions" onClick={() => setShowViewStaffInstructions(true)}>
+            <ActionButton tooltip="Add Staff Instructions" onClick={() => setShowViewStaffInstructions(true)}>
               <StaffInstructionIcon />
             </ActionButton>
           )}
           {!showViewStaffInstructions && <span style={{ width: 0.5, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />}
           <div style={{ position: 'relative' }} ref={moreMenuRef}>
-            <ActionButton icon="solar:menu-dots-bold" size="L" tooltip="More" onClick={() => setShowMoreMenu(v => !v)} />
+            <ActionButton icon="solar:menu-dots-bold" tooltip="More" onClick={() => setShowMoreMenu(v => !v)} />
             {showMoreMenu && (
               <>
                 <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setShowMoreMenu(false)} />
@@ -134,14 +134,13 @@ export function ScheduleDrawerViewMode({
                 <ActionButton
                   ref={callBtnRef}
                   icon="solar:phone-linear"
-                  size="L"
                   tooltip="Call patient"
                   onClick={openCall}
                 />
                 <span style={{ width: 0.5, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-                <ActionButton icon="solar:chat-round-line-linear" size="L" tooltip="Chat" />
+                <ActionButton icon="solar:chat-round-line-linear" tooltip="Chat" />
                 <span style={{ width: 0.5, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-                <ActionButton icon="solar:menu-dots-bold" size="L" tooltip="More" />
+                <ActionButton icon="solar:menu-dots-bold" tooltip="More" />
               </div>
             </div>
             {/* Same field as the booking form; edits save on blur. Past
@@ -176,7 +175,7 @@ export function ScheduleDrawerViewMode({
         </div>
 
         <div className={styles.section} style={isPastAppointment ? { pointerEvents: 'none', opacity: 0.7 } : undefined}>
-          <span className={styles.sectionLabel}>Appointment Details {isPastAppointment && <span style={{ fontSize: 'var(--font-xs)', color: 'var(--neutral-200)', fontWeight: 400 }}>(Past — read only)</span>}</span>
+          <span className={styles.sectionLabel}>Appointment Details {isPastAppointment && <span style={{ fontSize: 'var(--font-xs)', color: 'var(--neutral-200)', fontWeight: 400 }}>(Past: read only)</span>}</span>
           <div className={styles.detailsCard}>
             <div className={styles.detailRow}>
               <span className={styles.detailLabel}>Appointment Type</span>
@@ -228,17 +227,17 @@ export function ScheduleDrawerViewMode({
                 onInput={e => setInstructionDraft(e.currentTarget.innerHTML)}
               />
               <div className={styles.instructionToolbar}>
-                <ActionButton icon="solar:paperclip-linear" size="S" tooltip="Attach" />
+                <ActionButton icon="solar:paperclip-linear" size="sm" tooltip="Attach" />
                 <span className={styles.toolbarDivider} />
-                <ActionButton icon="solar:text-bold-linear" size="S" tooltip="Bold" onClick={() => document.execCommand('bold')} />
-                <ActionButton icon="solar:text-italic-linear" size="S" tooltip="Italic" onClick={() => document.execCommand('italic')} />
-                <ActionButton icon="solar:text-underline-linear" size="S" tooltip="Underline" onClick={() => document.execCommand('underline')} />
+                <ActionButton icon="solar:text-bold-linear" size="sm" tooltip="Bold" onClick={() => document.execCommand('bold')} />
+                <ActionButton icon="solar:text-italic-linear" size="sm" tooltip="Italic" onClick={() => document.execCommand('italic')} />
+                <ActionButton icon="solar:text-underline-linear" size="sm" tooltip="Underline" onClick={() => document.execCommand('underline')} />
                 <span className={styles.toolbarDivider} />
-                <ActionButton icon="solar:text-field-linear" size="S" tooltip="Heading" onClick={() => document.execCommand('formatBlock', false, 'h3')} />
-                <ActionButton icon="solar:list-linear" size="S" tooltip="List" onClick={() => document.execCommand('insertUnorderedList')} />
+                <ActionButton icon="solar:text-field-linear" size="sm" tooltip="Heading" onClick={() => document.execCommand('formatBlock', false, 'h3')} />
+                <ActionButton icon="solar:list-linear" size="sm" tooltip="List" onClick={() => document.execCommand('insertUnorderedList')} />
                 <div style={{ flex: 1 }} />
-                <ActionButton icon="solar:close-linear" size="S" tooltip="Discard" state="error" onClick={() => { setInstructionDraft(ea.member_instruction || ''); setEditingInstruction(false); }} />
-                <ActionButton icon="solar:check-read-linear" size="S" tooltip="Save" onClick={handleSaveInstruction} />
+                <ActionButton icon="solar:close-linear" size="sm" tooltip="Discard" tone="danger" onClick={() => { setInstructionDraft(ea.member_instruction || ''); setEditingInstruction(false); }} />
+                <ActionButton icon="solar:check-read-linear" size="sm" tooltip="Save" onClick={handleSaveInstruction} />
               </div>
             </div>
           ) : (
@@ -264,18 +263,18 @@ export function ScheduleDrawerViewMode({
                   onInput={e => setStaffInstructionDraft(e.currentTarget.innerHTML)}
                 />
                 <div className={styles.instructionToolbar}>
-                  <ActionButton icon="solar:paperclip-linear" size="S" tooltip="Attach" />
+                  <ActionButton icon="solar:paperclip-linear" size="sm" tooltip="Attach" />
                   <span className={styles.toolbarDivider} />
-                  <ActionButton icon="solar:text-bold-linear" size="S" tooltip="Bold" onClick={() => document.execCommand('bold')} />
-                  <ActionButton icon="solar:text-italic-linear" size="S" tooltip="Italic" onClick={() => document.execCommand('italic')} />
-                  <ActionButton icon="solar:text-underline-linear" size="S" tooltip="Underline" onClick={() => document.execCommand('underline')} />
+                  <ActionButton icon="solar:text-bold-linear" size="sm" tooltip="Bold" onClick={() => document.execCommand('bold')} />
+                  <ActionButton icon="solar:text-italic-linear" size="sm" tooltip="Italic" onClick={() => document.execCommand('italic')} />
+                  <ActionButton icon="solar:text-underline-linear" size="sm" tooltip="Underline" onClick={() => document.execCommand('underline')} />
                   <span className={styles.toolbarDivider} />
-                  <ActionButton icon="solar:text-field-linear" size="S" tooltip="Heading" onClick={() => document.execCommand('formatBlock', false, 'h3')} />
-                  <ActionButton icon="solar:list-linear" size="S" tooltip="List" onClick={() => document.execCommand('insertUnorderedList')} />
+                  <ActionButton icon="solar:text-field-linear" size="sm" tooltip="Heading" onClick={() => document.execCommand('formatBlock', false, 'h3')} />
+                  <ActionButton icon="solar:list-linear" size="sm" tooltip="List" onClick={() => document.execCommand('insertUnorderedList')} />
                   <div style={{ flex: 1 }} />
-                  <ActionButton icon="solar:trash-bin-minimalistic-linear" size="S" tooltip="Remove" state="error" onClick={() => { setShowViewStaffInstructions(false); setStaffInstructionDraft(''); if (ea.id) updateAppointment(ea.id, { staff_instruction: '' }); }} />
-                  <ActionButton icon="solar:close-linear" size="S" tooltip="Discard" state="error" onClick={() => { setStaffInstructionDraft(ea.staff_instruction || ''); setEditingStaffInstruction(false); }} />
-                  <ActionButton icon="solar:check-read-linear" size="S" tooltip="Save" onClick={handleSaveStaffInstruction} />
+                  <ActionButton icon="solar:trash-bin-minimalistic-linear" size="sm" tooltip="Remove" tone="danger" onClick={() => { setShowViewStaffInstructions(false); setStaffInstructionDraft(''); if (ea.id) updateAppointment(ea.id, { staff_instruction: '' }); }} />
+                  <ActionButton icon="solar:close-linear" size="sm" tooltip="Discard" tone="danger" onClick={() => { setStaffInstructionDraft(ea.staff_instruction || ''); setEditingStaffInstruction(false); }} />
+                  <ActionButton icon="solar:check-read-linear" size="sm" tooltip="Save" onClick={handleSaveStaffInstruction} />
                 </div>
               </div>
             ) : (

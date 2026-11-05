@@ -2,7 +2,7 @@
 
 Motion audit for Foldhealth. Plans 001–006 were written by the `improve-animations` skill against commit `c672e8b`; plan 007 comes from a follow-up `/find-animation-opportunities` sweep at commit `f72a4a0`.
 
-Read the top-level audit findings in the chat that produced these plans (or regenerate with `/improve-animations`). Each plan is self-contained — the executor doesn't need any other context.
+Read the top-level audit findings in the chat that produced these plans (or regenerate with `/improve-animations`). Each plan is self-contained, the executor doesn't need any other context.
 
 ## Plans
 
@@ -18,14 +18,14 @@ Read the top-level audit findings in the chat that produced these plans (or rege
 
 ## Recommended execution order
 
-Land in this order — each plan builds on the substrate of the previous:
+Land in this order: each plan builds on the substrate of the previous:
 
-1. **001** — motion tokens. Substrate for everything else. Land first, alone.
-2. **002** — reduced-motion strategy. Removes the `!important` blanket nuke and the universal `*` transition; the app has no global cross-fade between this landing and 003 landing. Ship 003 in the same PR or immediately after.
-3. **003** — theme cross-fade. Puts the theme transition back, scoped correctly.
-4. **004** — kill `transition: all`. Big diff, mechanical but touches ~30 files. Can be split by directory into 3-4 PRs.
-5. **005** — Button press feedback. Small, high-visibility. Can land in parallel with 004.
-6. **006** — Drawer transitions. Isolated to one component; can land any time after 001.
+1. **001**: motion tokens. Substrate for everything else. Land first, alone.
+2. **002**: reduced-motion strategy. Removes the `!important` blanket nuke and the universal `*` transition; the app has no global cross-fade between this landing and 003 landing. Ship 003 in the same PR or immediately after.
+3. **003**: theme cross-fade. Puts the theme transition back, scoped correctly.
+4. **004**: kill `transition: all`. Big diff, mechanical but touches ~30 files. Can be split by directory into 3-4 PRs.
+5. **005**: Button press feedback. Small, high-visibility. Can land in parallel with 004.
+6. **006**: Drawer transitions. Isolated to one component; can land any time after 001.
 
 ## Dependencies
 
@@ -46,15 +46,15 @@ Land in this order — each plan builds on the substrate of the previous:
 ## What is NOT in this batch
 
 Deliberately deferred to follow-up (see the audit table in the parent chat for context):
-- Finding 6 (EngagementCard `transition: all 400ms ease`) — the `all` part is fixed by plan 004; the 400ms duration overshoot is fixed as part of that same rewrite. Not a separate plan.
-- Finding 8 (`scale(0)` in `popgroups.css:39`) — one keyframe, low blast radius. Fix inline when someone touches that file.
-- Finding 9 (Radix popover `transform-origin`) — needs a survey of which popovers already scale and which just fade; write after 001 tokens land so the transition side is consistent.
-- Missed opportunities (list-row stagger, filter-change cross-fade) — additive, not corrective. Design decision, not audit debt.
+- Finding 6 (EngagementCard `transition: all 400ms ease`): the `all` part is fixed by plan 004; the 400ms duration overshoot is fixed as part of that same rewrite. Not a separate plan.
+- Finding 8 (`scale(0)` in `popgroups.css:39`): one keyframe, low blast radius. Fix inline when someone touches that file.
+- Finding 9 (Radix popover `transform-origin`): needs a survey of which popovers already scale and which just fade; write after 001 tokens land so the transition side is consistent.
+- Missed opportunities (list-row stagger, filter-change cross-fade), additive, not corrective. Design decision, not audit debt.
 
 ## How to execute a plan
 
-Read the plan top-to-bottom before touching any code. The "Boundaries" section is not advisory — plans are written for executors with zero context, so drift from the plan (touching adjacent files, "improving" other things) is a review-time reject.
+Read the plan top-to-bottom before touching any code. The "Boundaries" section is not advisory: plans are written for executors with zero context, so drift from the plan (touching adjacent files, "improving" other things) is a review-time reject.
 
-Run the "Verification" section at the end. Both mechanical checks and feel checks. Motion plans can pass typecheck and lint and still land as regressions — the feel check is the real gate.
+Run the "Verification" section at the end. Both mechanical checks and feel checks. Motion plans can pass typecheck and lint and still land as regressions, the feel check is the real gate.
 
 Update this table's Status column when a plan lands: `TODO` → `IN PROGRESS` → `DONE`. When all rows are `DONE`, run `/improve-animations reconcile` to sweep the codebase against the plans and surface any drift.

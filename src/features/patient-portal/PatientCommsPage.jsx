@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { Button } from '../../components/Button/Button';
 import { Avatar } from '../../components/Avatar/Avatar';
@@ -7,6 +7,7 @@ import { MessageStatus } from '../../components/MessageStatus/MessageStatus';
 import { getPatientThread, sendAsPatient, markReadAsPatient, subscribeLocalComms } from '../messages/comms/commsRepo';
 import { initialsOf, dayLabel } from '../messages/comms/commsUtils';
 import { usePatientCallee } from './usePatientCallee';
+import { patientMediaSigner } from './patientMedia';
 import styles from './PatientCommsPage.module.css';
 
 const timeOnly = (iso) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -77,6 +78,7 @@ export function PatientCommsPage({ token }) {
 function PatientShell({ token, conversation, messages, onSent, reload }) {
   const visible = messages.filter(m => !m.internal && m.status !== 'draft' && m.kind === 'message');
   const call = usePatientCallee(conversation.patient_token);
+  const signUrl = useMemo(() => patientMediaSigner(token), [token]);
   const [draft, setDraft] = useState('');
   const [sendError, setSendError] = useState(null);
   const scrollRef = useRef(null);
@@ -111,18 +113,10 @@ function PatientShell({ token, conversation, messages, onSent, reload }) {
 
   return (
     <div className={styles.page}>
-      <nav className={styles.rail} aria-label="Patient app">
-        <span className={styles.railItem}><Icon name="solar:home-2-linear" size={20} />Home</span>
-        <span className={[styles.railItem, styles.railActive].join(' ')}><Icon name="solar:chat-round-linear" size={20} />Messages</span>
-        <span className={styles.railItem}><Icon name="solar:settings-linear" size={20} />Settings</span>
-      </nav>
-
       <div className={styles.main}>
         <header className={styles.top}>
-          <span className={styles.topTitle}>Home</span>
+          <span className={styles.topTitle}>Messages</span>
           <span className={styles.topRight}>
-            <Icon name="solar:bell-linear" size={20} color="var(--neutral-300)" />
-            <Button variant="primary" size="L" disabled>Book Appointment</Button>
             <Avatar variant="patient" size={32} initials={initialsOf(name)} />
           </span>
         </header>
@@ -165,9 +159,11 @@ function PatientShell({ token, conversation, messages, onSent, reload }) {
                     <ChatBubble
                       side={mine ? 'right' : 'left'}
                       name={mine ? 'You' : sender}
+                      selfAvatarVariant="patient"
                       initials={initialsOf(sender)}
                       text={m.body}
                       attachment={m.meta?.attachment}
+                      signUrl={signUrl}
                       compact={compact}
                       time={timeOnly(m.created_at)}
                       status={mine ? <MessageStatus status={m.read_at ? 'read' : 'sent'} /> : null}
@@ -220,16 +216,16 @@ function CallBanner({ call }) {
         {call.status === 'ended' && (call.error || 'Call ended')}
       </span>
       {call.status === 'incoming' && (<>
-        <Button variant="secondary" size="L" onClick={call.decline}>Decline</Button>
-        <Button variant="success" size="L" leadingIcon="solar:phone-linear" onClick={call.accept}>Answer</Button>
+        <Button variant="outline" onClick={call.decline}>Decline</Button>
+        <Button variant="soft" tone="success" leadingIcon="solar:phone-linear" onClick={call.accept}>Answer</Button>
       </>)}
       {(call.status === 'live' || call.status === 'connecting') && (<>
-        <Button variant="secondary" size="L" leadingIcon={call.muted ? 'solar:microphone-slash-linear' : 'solar:microphone-linear'} onClick={call.toggleMute}>
+        <Button variant="outline" leadingIcon={call.muted ? 'solar:microphone-slash-linear' : 'solar:microphone-linear'} onClick={call.toggleMute}>
           {call.muted ? 'Unmute' : 'Mute'}
         </Button>
-        <Button variant="dangerFilled" size="L" leadingIcon="solar:end-call-rounded-linear" onClick={call.hangup}>End</Button>
+        <Button tone="danger" leadingIcon="solar:end-call-rounded-linear" onClick={call.hangup}>End</Button>
       </>)}
-      {call.status === 'ended' && <Button variant="secondary" size="L" onClick={call.dismiss}>Close</Button>}
+      {call.status === 'ended' && <Button variant="outline" onClick={call.dismiss}>Close</Button>}
     </div>
   );
 }

@@ -1,4 +1,4 @@
--- First-party funnel tracking — one row per funnel step a user touches.
+-- First-party funnel tracking: one row per funnel step a user touches.
 --
 -- WHY THIS EXISTS
 -- Vercel Analytics custom events are anonymous and unstitchable: you can see
@@ -43,7 +43,7 @@ create table if not exists public.funnel_events (
   funnel     text        not null,
   event_name text        not null,
   props      jsonb       not null default '{}'::jsonb,
-  -- Stamped by the database from the insert's JWT — the client never sends it,
+  -- Stamped by the database from the insert's JWT: the client never sends it,
   -- so rows can't be forged against another user.
   user_id    uuid        default auth.uid(),
   created_at timestamptz not null default now()
@@ -65,7 +65,7 @@ create policy funnel_events_insert_own
   to authenticated
   with check ((select auth.uid()) is not null);
 
--- Readable app-wide (no PHI — opaque ids only) so a future in-app funnel
+-- Readable app-wide (no PHI: opaque ids only) so a future in-app funnel
 -- dashboard can query every session, like the analytics tables it mirrors.
 drop policy if exists funnel_events_select_authenticated on public.funnel_events;
 create policy funnel_events_select_authenticated

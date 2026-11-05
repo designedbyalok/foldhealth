@@ -1,4 +1,4 @@
-import { Toggle } from '../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../components/SegmentedControl/SegmentedControl';
 import { INTERVENTION_KIND_ORDER, KIND_LABELS } from './interventionKinds';
 import styles from './InterventionDrawer.module.css';
 
@@ -13,12 +13,12 @@ const KIND_BY_LABEL = Object.fromEntries(INTERVENTION_KIND_ORDER.map(k => [KIND_
 export function InterventionKindToggle({ kind, onKindChange }) {
   if (!onKindChange) return null;
   return (
-    <Toggle
-      size="S"
+    <SegmentedControl
+      size="sm"
       className={styles.kindToggle}
       items={LABELS}
-      active={KIND_LABELS[kind]}
-      onChange={label => onKindChange(KIND_BY_LABEL[label])}
+      value={KIND_LABELS[kind]}
+      onValueChange={label => onKindChange(KIND_BY_LABEL[label])}
     />
   );
 }

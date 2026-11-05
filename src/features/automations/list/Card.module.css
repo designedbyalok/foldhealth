@@ -1,0 +1,127 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 0;
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.card:hover {
+  border-color: var(--primary-200);
+  box-shadow: var(--shadow-card);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 28px;
+}
+
+.title {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--font-md);
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--neutral-500);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.description {
+  display: -webkit-box;
+  min-height: calc(var(--font-sm) * 1.5 * 2);
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--font-sm);
+  line-height: 1.5;
+  color: var(--neutral-300);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
+  border-radius: var(--space-1);
+  background: var(--neutral-25);
+}
+
+.statLabel {
+  overflow: hidden;
+  font-size: var(--font-xs);
+  color: var(--neutral-200);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.statValue {
+  overflow: hidden;
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.avg {
+  margin-top: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 24px;
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 0.5px solid var(--neutral-100);
+  cursor: default;
+}
+
+.footerRight {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.errorLink {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--font-sm);
+  color: var(--status-error);
+  cursor: pointer;
+}
+
+.errorLink:hover {
+  text-decoration: underline;
+}

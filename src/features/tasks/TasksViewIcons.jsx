@@ -24,7 +24,7 @@ export function CheckIcon({ size = 13, color = 'var(--neutral-0)' }) {
   );
 }
 
-// PriorityIcon lives in src/components/PriorityIcon now — this re-export
+// PriorityIcon lives in src/components/PriorityIcon now: this re-export
 // keeps the ~6 existing feature-local imports working without a bulk
 // rewrite. New callers should import from the shared location.
 export { PriorityIcon } from '../../components/PriorityIcon/PriorityIcon';

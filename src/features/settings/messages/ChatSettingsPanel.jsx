@@ -124,13 +124,13 @@ function ChatGroupRow({ g, onOpen }) {
       </td>
       <td style={tdStyle} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <ActionButton icon="solar:pen-linear" size="L" tooltip="Edit group"
+          <ActionButton icon="solar:pen-linear" tooltip="Edit group"
             onClick={() => setChatGroupDetailId(g.id)} />
           <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-          <ActionButton icon="solar:history-linear" size="L" tooltip="Audit Log"
+          <ActionButton icon="solar:history-linear" tooltip="Audit Log"
             onClick={() => setAuditDrawerEntity({ type: 'ChatGroup', name: g.name, id: g.id })} />
           <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-          <ActionButton icon="solar:menu-dots-linear" size="L" tooltip="More options"
+          <ActionButton icon="solar:menu-dots-linear" tooltip="More options"
             ref={moreBtnRef} onClick={handleMoreClick} />
         </div>
         {menuOpen && createPortal(

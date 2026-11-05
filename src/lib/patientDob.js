@@ -1,11 +1,11 @@
 // Patient DOB helpers.
 //
-// deriveDob(age, seed)     — deterministic mm/dd/yyyy from an "Ny Mm" age
+// deriveDob(age, seed), deterministic mm/dd/yyyy from an "Ny Mm" age
 //                            string, walking today back by that delta. Day
 //                            comes from a stable hash of `seed` (typically
 //                            the patient's name) so the same patient always
 //                            gets the same day (1..28).
-// formatDobDisplay(input)  — normalize a stored dob to mm/dd/yyyy. Accepts
+// formatDobDisplay(input): normalize a stored dob to mm/dd/yyyy. Accepts
 //                            ISO ("1958-10-22"), mm/dd/yyyy (passthrough),
 //                            or Date. Returns '' if the input is unusable.
 
@@ -34,7 +34,7 @@ export function formatDobDisplay(input) {
     return `${pad2(input.getMonth() + 1)}/${pad2(input.getDate())}/${input.getFullYear()}`;
   }
   const s = String(input).trim();
-  // Already mm/dd/yyyy (or single-digit m/d) — normalize padding.
+  // Already mm/dd/yyyy (or single-digit m/d): normalize padding.
   const us = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s);
   if (us) return `${pad2(us[1])}/${pad2(us[2])}/${us[3]}`;
   // ISO yyyy-mm-dd → mm/dd/yyyy.

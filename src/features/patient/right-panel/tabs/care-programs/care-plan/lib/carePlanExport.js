@@ -1,7 +1,7 @@
 import { generateCarePlanPdf } from './generateCarePlanPdf.js';
 
 // Template-based care plan export (roadmap #13). The download is a formatted
-// document generated from a template, not a raw dump — today there is one
+// document generated from a template, not a raw dump, today there is one
 // "standard" template; the format id is carried through so more can be added.
 // PDF is the primary download format; HTML remains for legacy callers.
 
@@ -14,8 +14,8 @@ function goalRows(goals) {
   return goals.map(g => `
     <tr>
       <td>${esc(g.title)}${g.subtitle ? `<div class="sub">${esc(g.subtitle)}</div>` : ''}</td>
-      <td>${esc(g.currentValue || '—')}</td>
-      <td>${esc(g.status || '—')}</td>
+      <td>${esc(g.currentValue || '-')}</td>
+      <td>${esc(g.status || '-')}</td>
     </tr>`).join('');
 }
 
@@ -24,8 +24,8 @@ function interventionRows(interventions) {
   return interventions.map(i => `
     <tr>
       <td>${esc(i.title)}</td>
-      <td>${esc(i.assignee?.name || '—')}</td>
-      <td>${esc(i.status || '—')}</td>
+      <td>${esc(i.assignee?.name || '-')}</td>
+      <td>${esc(i.status || '-')}</td>
     </tr>`).join('');
 }
 
@@ -34,7 +34,7 @@ function barrierRows(barriers) {
   return barriers.map(b => `
     <tr>
       <td>${esc(b.title)}${b.description ? `<div class="sub">${esc(b.description)}</div>` : ''}</td>
-      <td>${esc(b.status || '—')}</td>
+      <td>${esc(b.status || '-')}</td>
     </tr>`).join('');
 }
 
@@ -51,7 +51,7 @@ export function buildCarePlanHtml(meta, selection) {
 
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<title>Care Plan — ${esc(patientName)}</title>
+<title>Care Plan: ${esc(patientName)}</title>
 <style>
   :root { color-scheme: light; }
   body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1a2320; margin: 0; padding: 40px; background: #fff; }

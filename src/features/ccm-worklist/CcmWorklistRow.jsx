@@ -4,7 +4,8 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../components/Badge/Badge';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { laceTone } from '../../lib/riskTone';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { formatDobDisplay, deriveDob } from '../../lib/patientDob';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
@@ -18,19 +19,19 @@ import styles from './CcmWorklistRow.module.css';
 const LANG_MAP = { en: 'English', es: 'Spanish', zh: 'Chinese', yue: 'Cantonese', ko: 'Korean', vi: 'Vietnamese', hi: 'Hindi', pa: 'Punjabi', ch: 'Chinese' };
 
 const STATUS_VARIANT = {
-  'New':             { variant: 'toc-new',       label: 'New',             icon: 'solar:star-bold' },
-  'Engaged':         { variant: 'toc-engaged',   label: 'Engaged',         icon: 'solar:link-round-bold' },
-  'Enrolled':        { variant: 'toc-enrolled',  label: 'Enrolled',        icon: 'solar:check-circle-bold' },
-  'Unable to Reach': { variant: 'toc-attempted', label: 'Unable to Reach', icon: 'solar:history-bold' },
+  'New':             { variant: 'neutral',       label: 'New',             icon: 'solar:star-bold' },
+  'Engaged':         { variant: 'info',   label: 'Engaged',         icon: 'solar:link-round-bold' },
+  'Enrolled':        { variant: 'success',  label: 'Enrolled',        icon: 'solar:check-circle-bold' },
+  'Unable to Reach': { variant: 'warning', label: 'Unable to Reach', icon: 'solar:history-bold' },
 };
 
 function StatusBadge({ status }) {
   const cfg = STATUS_VARIANT[status] || STATUS_VARIANT['New'];
-  return <Badge size="M" variant={cfg.variant} label={cfg.label} icon={cfg.icon} />;
+  return <Badge size="md" tone={cfg.variant} label={cfg.label} icon={cfg.icon} />;
 }
 
 const formatMins = (seconds) => {
-  if (!seconds && seconds !== 0) return '—';
+  if (!seconds && seconds !== 0) return '-';
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')} Mins`;
@@ -55,7 +56,7 @@ export const CCM_MIDDLE_COLUMNS = [
     label: 'Next Action Due',
     renderCell: (m) => (
       <span className={`${styles.dateText} ${m.nextActionOverdue ? styles.overdue : ''}`}>
-        {m.nextActionDue || '—'}
+        {m.nextActionDue || '-'}
       </span>
     ),
   },
@@ -74,7 +75,7 @@ export const CCM_MIDDLE_COLUMNS = [
       ) : (
         <div className={styles.outreachCell}>
           <Icon name="solar:phone-linear" size={15} color="var(--neutral-200)" />
-          <span className={styles.outreachNone}>—</span>
+          <span className={styles.outreachNone}>-</span>
         </div>
       )
     ),
@@ -88,14 +89,14 @@ export const CCM_MIDDLE_COLUMNS = [
           name={m.assigneeName}
           initials={m.assigneeInitials || m.assigneeName.slice(0, 2).toUpperCase()}
           showRole={false}
-          onClick={() => ctx.showToast?.(`Change assignee for ${m.name} — coming soon`)}
+          onClick={() => ctx.showToast?.(`Change assignee for ${m.name}, coming soon`)}
         />
       ) : (
         <AssigneeChange
           unassigned
           unassignedLabel="Assign User"
           showRole={false}
-          onClick={() => ctx.showToast?.(`Assign owner for ${m.name} — coming soon`)}
+          onClick={() => ctx.showToast?.(`Assign owner for ${m.name}, coming soon`)}
         />
       )
     ),
@@ -103,12 +104,12 @@ export const CCM_MIDDLE_COLUMNS = [
   {
     key: 'startDate',
     label: 'Start Date',
-    renderCell: (m) => <span className={styles.dateText}>{m.startDate || '—'}</span>,
+    renderCell: (m) => <span className={styles.dateText}>{m.startDate || '-'}</span>,
   },
   {
     key: 'lastAdmission',
     label: 'Last Admission',
-    renderCell: (m) => <span className={styles.dateText}>{m.lastAdmission || '—'}</span>,
+    renderCell: (m) => <span className={styles.dateText}>{m.lastAdmission || '-'}</span>,
   },
   {
     key: 'billableMins',
@@ -130,8 +131,8 @@ export const CCM_MIDDLE_COLUMNS = [
     label: 'Risk Level',
     renderCell: (m) => (
       m.riskLevel
-        ? <Badge size="M" variant={`lace-${m.riskLevel.toLowerCase()}`} label={m.riskLevel} />
-        : <span className={styles.mutedDash}>—</span>
+        ? <Badge size="md" tone={laceTone(m.riskLevel)} label={m.riskLevel} />
+        : <span className={styles.mutedDash}>-</span>
     ),
   },
   {
@@ -140,13 +141,13 @@ export const CCM_MIDDLE_COLUMNS = [
     renderCell: (m) => (
       m.taskCount
         ? <span className={styles.taskBadge}>{m.taskCount} Task</span>
-        : <span className={styles.mutedDash}>—</span>
+        : <span className={styles.mutedDash}>-</span>
     ),
   },
   {
     key: 'carePlanStatus',
     label: 'Care Plan Status',
-    renderCell: (m) => <span className={styles.carePlanText}>{m.carePlanStatus || '—'}</span>,
+    renderCell: (m) => <span className={styles.carePlanText}>{m.carePlanStatus || '-'}</span>,
   },
 ];
 
@@ -207,7 +208,7 @@ export function CcmWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
   const openInCarePlan = (e) => {
     e.stopPropagation();
     if (!m.patientId) {
-      showToast(`${m.name} — no linked patient record yet`);
+      showToast(`${m.name}, no linked patient record yet`);
       return;
     }
     navigateToPatient(m.patientId, {
@@ -218,7 +219,7 @@ export function CcmWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
 
   const handleRowClick = () => {
     if (m.patientId) navigateToPatient(m.patientId);
-    else showToast(`${m.name} — no linked patient record yet`);
+    else showToast(`${m.name}, no linked patient record yet`);
   };
 
   const handleNameClick = (e) => {
@@ -288,12 +289,11 @@ export function CcmWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
 
       <td className={`${styles.td} ${styles.stickyRight}`} onClick={e => e.stopPropagation()}>
         <div className={styles.actionsCell}>
-          <ActionButton icon="solar:document-text-linear" size="L" tooltip="Open CCM care program" onClick={openInCarePlan} />
+          <ActionButton icon="solar:document-text-linear" tooltip="Open CCM care program" onClick={openInCarePlan} />
           <span className={styles.actionDivider} />
           <ActionButton
             ref={callBtnRef}
             icon="solar:phone-linear"
-            size="L"
             tooltip="Call patient"
             onClick={(e) => {
               e.stopPropagation();
@@ -304,7 +304,6 @@ export function CcmWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
           <ActionButton
             ref={menuBtnRef}
             icon="solar:menu-dots-linear"
-            size="L"
             tooltip="More options"
             onClick={toggleMenu}
           />

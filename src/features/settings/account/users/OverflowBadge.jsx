@@ -18,7 +18,7 @@ export function OverflowBadge({ count, items }) {
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <Badge variant="ai-neutral" label={`+${count}`} />
+      <Badge label={`+${count}`} />
       {open && items.length > 0 && (
         <div className={styles.overflowDropdown}>
           {items.map((item, i) => (

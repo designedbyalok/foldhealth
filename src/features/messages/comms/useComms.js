@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import { listConversations, listMessages, listMessagesFor, subscribeComms, commsMode } from './commsRepo';
+import { useAppStore } from '../../../store/useAppStore';
+import { membersForConversation } from './smsMembers';
+import {
+  listConversations, listMessages, listMessagesFor, listSmsLoggedFor, subscribeComms, commsMode,
+} from './commsRepo';
 
 const upsert = (list, row) => {
   const i = list.findIndex(x => x.id === row.id);
@@ -10,14 +14,22 @@ const upsert = (list, row) => {
 };
 
 /** Every patient conversation, kept live. */
+// A load that hasn't answered by then counts as failed, so lists don't sit blank.
+const LOAD_TIMEOUT_MS = 15000;
+const withTimeout = (p) => Promise.race([
+  p,
+  new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), LOAD_TIMEOUT_MS)),
+]);
+
 export function useCommsConversations() {
-  const [state, setState] = useState({ conversations: [], loading: true, mode: null });
+  const [state, setState] = useState({ conversations: [], loading: true, failed: false, mode: null });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let alive = true;
-    const load = () => Promise.all([listConversations(), commsMode()])
-      .then(([conversations, mode]) => { if (alive) setState({ conversations, loading: false, mode }); })
-      .catch(() => { if (alive) setState(s => ({ ...s, loading: false })); });
+    const load = () => withTimeout(Promise.all([listConversations(), commsMode()]))
+      .then(([conversations, mode]) => { if (alive) setState({ conversations, loading: false, failed: false, mode }); })
+      .catch(() => { if (alive) setState(s => ({ ...s, loading: false, failed: true })); });
     load();
     const off = subscribeComms((change) => {
       if (change.type === 'reload') return load();
@@ -29,11 +41,13 @@ export function useCommsConversations() {
           : upsert(s.conversations, change.row))
           .sort((a, b) => new Date(b.last_message_at) - new Date(a.last_message_at)),
       }));
-    }, 'comms-convs');
+    });
     return () => { alive = false; off(); };
-  }, []);
+  }, [attempt]);
 
-  return state;
+  // Try again after a failed load.
+  const retry = () => { setState(s => ({ ...s, loading: true, failed: false })); setAttempt(n => n + 1); };
+  return { ...state, retry };
 }
 
 /** One conversation's messages, oldest first, kept live. */
@@ -59,7 +73,7 @@ export function useCommsMessages(conversationId) {
         ...s,
         messages: upsert(s.messages, change.row).sort((a, b) => new Date(a.created_at) - new Date(b.created_at)),
       }));
-    }, `comms-msgs-${conversationId}`);
+    });
     return () => { alive = false; off(); };
   }, [conversationId]);
 
@@ -88,9 +102,39 @@ export function useCommsMessagesFor(conversationIds) {
       }
       if (!ids.includes(change.row.conversation_id)) return;
       setState(s => ({ ...s, messages: upsert(s.messages, change.row) }));
-    }, 'comms-folder');
+    });
     return () => { alive = false; off(); };
   }, [key]);
 
   return state.key === key ? state.messages : [];
+}
+
+/**
+ * Every SMS logged for a patient ({ message, conversation }, newest first),
+ * reloaded when messages change. Unassigned SMS on a shared number are left
+ * out until someone assigns them.
+ */
+export function usePatientSmsLog(patientId) {
+  const [state, setState] = useState({ id: null, items: [] });
+
+  useEffect(() => {
+    if (!patientId) return undefined;
+    let alive = true;
+    // Patients are read at load time, so a new list doesn't reload the log.
+    const isShared = (c) => membersForConversation(c, useAppStore.getState().allPatients || []).length > 1;
+    const load = () => listSmsLoggedFor({ patientId, isShared })
+      .then(items => { if (alive) setState({ id: patientId, items }); })
+      .catch(() => { if (alive) setState({ id: patientId, items: [] }); });
+    load();
+    // A send writes its message twice (queued, then sent): reload once.
+    let timer = null;
+    const off = subscribeComms((change) => {
+      if (change.type !== 'reload' && change.table !== 'patient_messages') return;
+      clearTimeout(timer);
+      timer = setTimeout(load, 500);
+    });
+    return () => { alive = false; clearTimeout(timer); off(); };
+  }, [patientId]);
+
+  return state.id === patientId ? state.items : [];
 }

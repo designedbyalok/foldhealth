@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
-import { WorklistShell } from '../../components/WorklistShell/WorklistShell';
+import { WorklistShell } from '../worklists/WorklistShell';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
 import { SubnavToggle } from '../../components/SubnavToggle/SubnavToggle';
-import { FilterBar } from '../../components/FilterBar/FilterBar';
+import { FilterBar } from '../worklists/FilterBar';
 import { SavedFiltersChip } from '../hcc/SavedFiltersChip';
 import { useSavedFilterActions } from '../hcc/useSavedFilterActions';
 import { useTableSort } from '../../components/HeaderCell/useTableSort';
 import { JsaWorklistRow, JSA_MIDDLE_COLUMNS } from './JsaWorklistRow';
 
-// FilterBar chip definitions — all seven are primary so they show on wide
+// FilterBar chip definitions: all seven are primary so they show on wide
 // viewports; auto-fit trims the tail into More Filters on narrow screens.
 const JSA_FILTER_DEFS = [
   { key: 'progSubStatus', label: 'Program Sub Status', primary: true },
@@ -21,12 +21,8 @@ const JSA_FILTER_DEFS = [
   { key: 'assignee',      label: 'Assignee',           primary: true },
 ];
 const JSA_MORE_FILTER_ITEMS = JSA_FILTER_DEFS.map(fd => ({ k: fd.key, label: fd.label, primary: fd.primary }));
-const JSA_PRIMARY_KEYS = [];
-for (const fd of JSA_FILTER_DEFS) {
-  if (fd.primary) JSA_PRIMARY_KEYS.push(fd.key);
-}
 
-// WorklistShell column defs — sticky checkbox + sticky Members col on the
+// WorklistShell column defs: sticky checkbox + sticky Members col on the
 // left, all JSA data columns in the middle, sticky Actions on the right.
 // Same shape TOC uses (once it migrates); keeps the sticky-column scroll
 // behaviour consistent with HCC / TOC.
@@ -58,17 +54,6 @@ export function JsaWorklistTable() {
   const [filterBarOpen, setFilterBarOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  // `null` = uncustomised (FilterBar autoFit picks visible chips from the
-  // primary set). Once the user toggles anything from More Filters, the
-  // custom set takes over.
-  const [visibleKeys, setVisibleKeys] = useState(null);
-  const toggleVisible = (k) => setVisibleKeys(prev => {
-    const base = prev ?? JSA_PRIMARY_KEYS;
-    const next = new Set(base);
-    if (next.has(k)) next.delete(k); else next.add(k);
-    return [...next];
-  });
-  const clearVisible = () => setVisibleKeys([]);
 
   useEffect(() => { fetchMembers(); }, [fetchMembers]);
 
@@ -130,7 +115,9 @@ export function JsaWorklistTable() {
 
   const filterNode = (
     <FilterBar
+      collapsed={!filterBarOpen}
       autoFit
+      pinPrimary
       multiSelect
       leading={null}
       filterDefs={JSA_FILTER_DEFS}
@@ -145,9 +132,6 @@ export function JsaWorklistTable() {
       onSaveFilter={(name) => saveSavedFilter('JSA', name)}
       getOptions={(def) => filterOptions[def.key] || []}
       moreFilterItems={JSA_MORE_FILTER_ITEMS}
-      {...(visibleKeys !== null ? { visibleKeys } : {})}
-      onToggleVisible={toggleVisible}
-      onClearVisible={clearVisible}
     />
   );
 
@@ -169,14 +153,15 @@ export function JsaWorklistTable() {
           <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
         </>
       }
-      onDownload={() => showToast('Export — coming soon')}
+      onDownload={() => showToast('Export: coming soon')}
     />
   );
 
   return (
     <WorklistShell
       header={header}
-      showFilters={filterBarOpen}
+      // Always passed: when closed, the bar shows just the applied filters.
+      showFilters
       filters={filterNode}
       worklistKey="jsa"
       columns={JSA_SHELL_COLUMNS}
@@ -192,7 +177,7 @@ export function JsaWorklistTable() {
           hiddenSet={ctx.hiddenSet}
           selected={selectedIds.includes(m.id)}
           onToggle={() => selectMember(m.id)}
-          onView={() => showToast(`Program details for ${m.name} — coming soon`)}
+          onView={() => showToast(`Program details for ${m.name}, coming soon`)}
           showToast={showToast}
         />
       )}

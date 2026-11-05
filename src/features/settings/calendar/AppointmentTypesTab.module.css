@@ -1,0 +1,53 @@
+.intro {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.scroll {
+  flex: 1;
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  padding: var(--space-2) var(--space-4);
+  text-align: left;
+  font-weight: 500;
+  color: var(--neutral-300);
+  background: var(--neutral-50);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+
+.name {
+  color: var(--neutral-500);
+}
+
+/* A row opens its Appointment Type drawer. */
+.row { cursor: pointer; }
+.row:hover td { background: var(--neutral-25); }
+
+/* Appointment Type drawer */
+.headerDivider { width: 1px; height: 16px; background: var(--neutral-150); flex-shrink: 0; }
+.form { display: flex; flex-direction: column; gap: var(--space-6); }
+.group { display: flex; flex-direction: column; gap: var(--space-3); }
+.groupLabel { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+.groupHint { margin-top: calc(-1 * var(--space-2)); font-size: var(--font-sm); color: var(--neutral-300); }
+.checks { display: flex; gap: var(--space-6); }
+.check { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--font-base); color: var(--neutral-400); cursor: pointer; }
+.error { font-size: var(--font-sm); color: var(--status-error); }

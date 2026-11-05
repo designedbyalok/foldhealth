@@ -75,7 +75,7 @@ function DialogWrapper(props) {
   return (
     <div style={centerStage}>
       <Button
-        variant={props.variant === 'destructive' ? 'danger' : 'secondary'}
+        variant={props.variant === 'destructive' ? 'soft' : 'outline'} tone={props.variant === 'destructive' ? 'danger' : 'neutral'}
         onClick={() => setOpen(true)}
       >
         Open ConfirmDialog

@@ -7,7 +7,7 @@ export default {
   tags: ['autodocs'],
   parameters: {
     docs: {
-      description: { component: 'Fold Health custom `Select` — matches Input tokens, supports single- and multi-select, searchable menus, section headers, and leading icons. Every optional label/helper slot is exposed through a Figma-style `show*` boolean paired with its value.' },
+      description: { component: 'Fold Health custom `Select`, matches Input tokens, supports single- and multi-select, searchable menus, section headers, and leading icons. Every optional label/helper slot is exposed through a Figma-style `show*` boolean paired with its value.' },
     },
   },
   argTypes: {
@@ -24,9 +24,20 @@ export default {
     },
     variant: {
       control: 'select',
-      options: ['default', 'error'],
-      description: 'Visual state — error swaps border/background to the error tokens.',
-      table: { type: { summary: "'default' | 'error'" }, defaultValue: { summary: 'default' } },
+      options: ['outline', 'ghost'],
+      description: '`outline` is the bordered field; `ghost` is borderless with a hover tint.',
+      table: { type: { summary: "'outline' | 'ghost'" }, defaultValue: { summary: 'outline' } },
+    },
+    invalid: {
+      control: 'boolean',
+      description: 'Red chrome and `aria-invalid`. `errorText` implies it and adds the message.',
+      table: { type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
+    },
+    size: {
+      control: 'select',
+      options: ['sm', 'md'],
+      description: 'md 32px, sm 28px.',
+      table: { type: { summary: "'sm' | 'md'" }, defaultValue: { summary: 'md' } },
     },
     disabled: {
       control: 'boolean',
@@ -51,7 +62,7 @@ export default {
     },
     multiple: {
       control: 'boolean',
-      description: 'Multi-select mode — value becomes `string[]`; menu stays open on pick.',
+      description: 'Multi-select mode: value becomes `string[]`; menu stays open on pick.',
       table: { type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
     },
     value: {
@@ -64,13 +75,13 @@ export default {
       description: 'Fires with the new value on pick.',
       table: { type: { summary: '(next: string | string[]) => void' } },
     },
-    // Label row — mirrors src/components/Input's toggle+value pattern
+    // Label row: mirrors src/components/Input's toggle+value pattern
     showLabel: { control: 'boolean', description: 'Storybook-only toggle for the Title slot. Renders `label` when true.' },
     label: { control: 'text', description: 'Text above the trigger.' },
     required: { control: 'boolean', description: 'Adds the 4×4 red dot next to the label.' },
     showInfo: { control: 'boolean', description: 'Info icon next to the label (`infoText` sets its tooltip).' },
     infoText: { control: 'text', description: 'Tooltip for the info icon.' },
-    // Leading icon — same toggle+string pair Input uses
+    // Leading icon: same toggle+string pair Input uses
     showLeadingIcon: { control: 'boolean', description: 'Storybook-only toggle for the leading icon slot.' },
     leadingIcon: { control: 'text', description: 'Solar icon name (e.g. `solar:user-linear`) rendered inside the trigger.' },
     // Below the field
@@ -110,12 +121,12 @@ function SelectFromArgs({
 
 function SingleWrapper({ initial = '', ...props }) {
   const [value, setValue] = useState(initial);
-  return <SelectFromArgs {...props} value={value} onChange={setValue} />;
+  return <SelectFromArgs {...props} value={value} onValueChange={setValue} />;
 }
 
 function MultiWrapper({ initial = [], ...props }) {
   const [value, setValue] = useState(initial);
-  return <SelectFromArgs {...props} multiple value={value} onChange={setValue} />;
+  return <SelectFromArgs {...props} multiple value={value} onValueChange={setValue} />;
 }
 
 export const Playground = {
@@ -123,7 +134,9 @@ export const Playground = {
   args: {
     options: SAMPLE_OPTIONS,
     placeholder: 'Select status…',
-    variant: 'default',
+    variant: 'outline',
+    invalid: false,
+    size: 'md',
     disabled: false,
     menuAlign: 'left',
     searchable: false,
@@ -143,4 +156,55 @@ export const Playground = {
     helperText: 'This is supporting text',
     errorText: '',
   },
+};
+
+/**
+ * Multi-pick with chips, searchable: the field stays one line, open or
+ * closed. Chips that don't fit fold into "+N"; while open the search is
+ * typed after the chips, and removing a chip keeps the menu open. Each
+ * chip's `triggerLabel` names the pick and `badgeTooltip` shows on hover.
+ */
+export const MultiChipsSearchable = {
+  render: () => (
+    <div style={{ width: 420 }}>
+      <MultiWrapper
+        label="Send To"
+        showLabel
+        showInfo
+        infoText="You can select the member and their contacts (caregiver, decision maker etc.) here."
+        searchable
+        checkboxes
+        badges
+        searchPlaceholder="Search by name"
+        placeholder="Select member and their contacts"
+        initial={['amy', 'maria', 'daniel']}
+        options={[
+          { value: 'amy', label: 'Amy Phillips', triggerLabel: 'Amy Phillips (Member)', badgeTooltip: 'Patient' },
+          { value: 'maria', label: 'Maria Lopez', triggerLabel: 'Maria Lopez · Care Giver, Decision Maker', badgeTooltip: 'Care Giver, Decision Maker' },
+          { value: 'daniel', label: 'Daniel Lopez', triggerLabel: 'Daniel Lopez · Emergency Contact', badgeTooltip: 'Emergency Contact' },
+          { value: 'rosa', label: 'Rosa Alvarez', triggerLabel: 'Rosa Alvarez · Alternate Decision Maker' },
+        ]}
+      />
+    </div>
+  ),
+};
+
+/** variant × size, with invalid. */
+export const LookMatrix = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 200px)', gap: 'var(--space-3)' }}>
+      {['outline', 'ghost'].flatMap(variant => ['md', 'sm'].flatMap(size => [false, true].map(invalid => (
+        <SingleWrapper
+          key={`${variant}-${size}-${invalid}`}
+          options={SAMPLE_OPTIONS}
+          variant={variant}
+          size={size}
+          invalid={invalid}
+          aria-label={`${variant} ${size}${invalid ? ' invalid' : ''}`}
+          placeholder={`${variant} ${size}${invalid ? ' invalid' : ''}`}
+        />
+      ))))}
+    </div>
+  ),
 };

@@ -3,7 +3,7 @@ import { ActionButton } from '../../../../../components/ActionButton/ActionButto
 import { Avatar } from '../../../../../components/Avatar/Avatar';
 import { Badge } from '../../../../../components/Badge/Badge';
 import { BadgeSelect } from '../../../../../components/BadgeSelect/BadgeSelect';
-import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../components/EmptyState/EmptyState';
 import { PanelSection, PanelSectionDivider, PanelSectionItem, PanelSectionMore } from '../../../../../components/PanelSection/PanelSection';
 import styles from './CareJourneysWidget.module.css';
 
@@ -17,7 +17,7 @@ const JOURNEYS = [
     total: 7,
     unit: 'Days',
     status: 'Assigned',
-    badgeVariant: 'toc-oncall',
+    badgeVariant: 'primary',
   },
   {
     id: 2,
@@ -28,7 +28,7 @@ const JOURNEYS = [
     total: 180,
     unit: 'Days',
     status: 'Active',
-    badgeVariant: 'toc-enrolled',
+    badgeVariant: 'success',
   },
   {
     id: 3,
@@ -39,7 +39,7 @@ const JOURNEYS = [
     total: 7,
     unit: 'Days',
     status: 'Stopped',
-    badgeVariant: 'status-failed',
+    badgeVariant: 'danger',
   },
   {
     id: 4,
@@ -50,7 +50,7 @@ const JOURNEYS = [
     total: 7,
     unit: 'Days',
     status: 'Paused',
-    badgeVariant: 'toc-attempted',
+    badgeVariant: 'warning',
   },
 ];
 
@@ -68,6 +68,7 @@ export function CareJourneysWidget() {
 
   return (
     <PanelSection
+      icon="solar:routing-2-linear"
       title="Care Journeys"
       actions={(
         <>
@@ -78,12 +79,12 @@ export function CareJourneysWidget() {
             onChange={(v) => { setView(v); setExpanded(false); }}
           />
           <PanelSectionDivider />
-          <ActionButton icon="solar:add-circle-linear" size="S" tooltip="Add Care Journey" />
+          <ActionButton icon="solar:add-circle-linear" size="sm" tooltip="Add Care Journey" />
         </>
       )}
     >
       {journeys.length === 0 ? (
-        <RingEmptyState icon="solar:routing-2-linear" label={`No ${view.toLowerCase()} care journeys`} size="S" />
+        <EmptyState icon="solar:routing-2-linear" title={`No ${view.toLowerCase()} care journeys`} size="sm" />
       ) : (
         <>
           {shown.map(j => {
@@ -91,10 +92,11 @@ export function CareJourneysWidget() {
             return (
               <PanelSectionItem
                 key={j.id}
+                alignTop
                 leading={<Avatar type="icon" variant="patient" iconName="solar:routing-2-linear" size="M" />}
                 title={j.name}
                 meta={[j.date, j.type]}
-                titleAside={<Badge variant={j.badgeVariant} label={j.status} />}
+                trailing={<Badge tone={j.badgeVariant} label={j.status} />}
               >
                 <div className={styles.progressRow}>
                   <div

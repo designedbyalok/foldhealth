@@ -1,7 +1,7 @@
-// Today — Next Best Action feed.
+// Today: Next Best Action feed.
 //
 // The rows are real patients from the database (all_patients); this file only
-// carries the *clinical scenario overlay* for the demo feed — the reason a
+// carries the *clinical scenario overlay* for the demo feed, the reason a
 // patient is surfaced and the suggested next action. TodayView binds each
 // scenario to a real all_patients record (name, age, id, PCP, payer) at render
 // time, so every row opens that patient's real P360 profile on click.

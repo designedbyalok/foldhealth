@@ -30,12 +30,12 @@ export function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
     );
   }
 
-  // Raw HTML escape hatch — the parser emits these when it detects an
+  // Raw HTML escape hatch: the parser emits these when it detects an
   // imported subtree that's too bespoke to faithfully model as blocks
   // (deeply nested table mockups, bar charts assembled from stacked
   // cells, etc.). Users can also drop them in from the components panel
   // for arbitrary HTML they need to keep verbatim. dangerouslySetInnerHTML
-  // is safe here — the parser strips <script> before walking and the
+  // is safe here: the parser strips <script> before walking and the
   // user is the trust boundary for what they paste.
   if (type === 'RawHtml') {
     return (
@@ -44,7 +44,7 @@ export function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
           padding: paddingCss(style.padding),
           textAlign: style.blockAlign || style.textAlign,
         }}
-        // Preview only — this renders in our origin, so a <script> pasted by
+        // Preview only: this renders in our origin, so a <script> pasted by
         // one teammate would otherwise execute for everyone who opens the
         // campaign. The exported email still uses the author's raw markup.
         dangerouslySetInnerHTML={{ __html: sanitizeEmailHtml(props.html) }}
@@ -85,7 +85,7 @@ export function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
     if (style.minHeight) {
       containerStyle.minHeight = typeof style.minHeight === 'number' ? `${style.minHeight}px` : style.minHeight;
     }
-    // SVG tint for backgroundImage — substitute fills inline and emit
+    // SVG tint for backgroundImage: substitute fills inline and emit
     // as a data-URI so the existing background-image: url(…) path keeps
     // working without changing CSS plumbing.
     if (style.bgSvgRaw && style.bgTintColor) {
@@ -169,7 +169,7 @@ export function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
           const w = columnWidths[idx] || (100 / count);
           // In row direction the column-width % drives flex-basis along the
           // main (horizontal) axis. When the user flips direction to column,
-          // the main axis is vertical — applying the % there would size each
+          // the main axis is vertical: applying the % there would size each
           // column as a fraction of the parent's height (≈0 in hug mode), so
           // every column would collapse. Stack them at full width instead.
           const colAlign = col?.align || 'left';
@@ -215,6 +215,6 @@ export function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
     return <InlineTable id={id} props={props} style={style} commitTable={ctx.commitTable} />;
   }
 
-  // Other primitives — delegate to Reader.
+  // Other primitives: delegate to Reader.
   return <Reader document={ctx.doc} rootBlockId={id} />;
 }

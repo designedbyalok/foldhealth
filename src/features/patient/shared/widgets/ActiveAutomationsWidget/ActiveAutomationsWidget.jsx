@@ -26,8 +26,9 @@ export function ActiveAutomationsWidget() {
 
   return (
     <PanelSection
+      icon="solar:bolt-linear"
       title="Active Automations"
-      actions={<ActionButton icon="solar:refresh-linear" size="S" tooltip="Refresh" />}
+      actions={<ActionButton icon="solar:refresh-linear" size="sm" tooltip="Refresh" />}
     >
       {AUTOMATIONS.map(a => (
         <PanelSectionItem
@@ -36,7 +37,7 @@ export function ActiveAutomationsWidget() {
           title={a.title}
           trailing={(
             <>
-              <ActionButton icon="solar:eye-linear" size="S" tooltip="View Automation" />
+              <ActionButton icon="solar:eye-linear" size="sm" tooltip="View Automation" />
               <Switch checked={states[a.id]} onChange={val => setStates(prev => ({ ...prev, [a.id]: val }))} />
             </>
           )}

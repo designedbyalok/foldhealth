@@ -4,7 +4,7 @@
 --   1. Every client wrote the literal string 'You' into hcc_diag_comments.author
 --      (LeftWorkspace.addComment and both useDiagPanel status comments). 'You'
 --      is a viewer-relative label, not an identity, so once stored it read as
---      "You" for EVERY reader — and the Comments tab decided edit/delete rights
+--      "You" for EVERY reader: and the Comments tab decided edit/delete rights
 --      with `author === 'You'`, which meant everyone could edit everyone's
 --      comments. There was no author id column at all.
 --   2. @mentions never reached the mentioned person. addHccDiagComment called
@@ -34,7 +34,7 @@
 -- Mention ids are UUIDs only. The HCC mention roster falls back to a plain name
 -- for staff with no login (recordParticipants.js); those people have no
 -- profile and therefore nothing to notify, so the client drops them before the
--- write — a non-UUID in a uuid[] would reject the comment insert.
+-- write: a non-UUID in a uuid[] would reject the comment insert.
 
 begin;
 

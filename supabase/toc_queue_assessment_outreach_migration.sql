@@ -1,4 +1,4 @@
--- TOC Queue redesign — replace the ambient "Next Action" and "AI Insights"
+-- TOC Queue redesign: replace the ambient "Next Action" and "AI Insights"
 -- columns with two new patient-scoped statuses that each open a dedicated
 -- drawer: Assessment and Outreach Status.
 --
@@ -8,7 +8,7 @@
 --   - Backfill the 10 agent-assigned patients with realistic values so the
 --     new columns look meaningful in the Agent Queue immediately.
 --
--- The old next_action / ai_insights columns are intentionally NOT dropped —
+-- The old next_action / ai_insights columns are intentionally NOT dropped,
 -- the UI stops rendering them, but the data stays around for history + any
 -- other consumers.
 
@@ -24,7 +24,7 @@ ALTER TABLE public.patients
   ADD COLUMN IF NOT EXISTS outreach_status TEXT
     CHECK (outreach_status IN ('Not Started','In Progress','Attempted','Completed'));
 
--- Seed values for the 10 agent-assigned patients — spread across every
+-- Seed values for the 10 agent-assigned patients, spread across every
 -- enum value so the pill styling gets exercised end-to-end.
 UPDATE public.patients SET assessment_status = 'In Progress', outreach_status = 'In Progress' WHERE id = 'p1';
 UPDATE public.patients SET assessment_status = 'Completed',  outreach_status = 'Completed'   WHERE id = 'p3';

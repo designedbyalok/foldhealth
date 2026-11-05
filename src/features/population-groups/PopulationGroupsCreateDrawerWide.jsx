@@ -105,8 +105,7 @@ export function PopulationGroupsCreateDrawerWide({ vm, onMemberAdded }) {
                       </div>
                       <div style={{ fontSize: 'var(--font-base)', color:'var(--neutral-200)', textAlign:'center', lineHeight: 1.6 }}>You can minimize this window and<br/>continue working while it processes.</div>
                       <Button
-                        variant="secondary"
-                        size="L"
+                        variant="outline"
                         leadingIcon="solar:minimize-square-linear"
                         onClick={() => {
                           startPgSession({

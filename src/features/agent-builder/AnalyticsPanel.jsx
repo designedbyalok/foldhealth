@@ -67,7 +67,7 @@ const STATUS_COLORS = {
   idle: '#D0D6E1',
 };
 
-/* ── Delta arrow icon — uses filled triangular arrow, not chevron ── */
+/* ── Delta arrow icon: uses filled triangular arrow, not chevron ── */
 function DeltaArrow({ direction, color }) {
   const isUp = direction === 'up';
   return (
@@ -182,7 +182,7 @@ const ROLE_LABELS = { coordinator: 'Care Coordinator', navigator: 'Care Navigato
 const VOICE_LABELS = { erica: 'Erica - US Female', james: 'James - US Male', sophia: 'Sophia - US Female', david: 'David - UK Male' };
 const MODALITY_LABELS = { voice: 'Voice', text: 'Text', both: 'Voice & Text' };
 
-/* ── Snapshot Tab Content — Beautiful read-only config overview ── */
+/* ── Snapshot Tab Content: Beautiful read-only config overview ── */
 function SnapshotContent({ agent, showBanner, setShowBanner }) {
   const builderConfig = useAppStore(s => s.builderConfig);
   const goalsData = useAppStore(s => s.goalsData) || [];
@@ -250,11 +250,11 @@ function SnapshotContent({ agent, showBanner, setShowBanner }) {
             </div>
             <div className={styles.snapField}>
               <span className={styles.snapLabel}>Role</span>
-              <span className={styles.snapValue}>{ROLE_LABELS[c.agent_role] || c.agent_role || '—'}</span>
+              <span className={styles.snapValue}>{ROLE_LABELS[c.agent_role] || c.agent_role || '-'}</span>
             </div>
             <div className={styles.snapField}>
               <span className={styles.snapLabel}>Use Case</span>
-              <span className={styles.snapValue}>{c.use_case_name || agent?.use_case || '—'}</span>
+              <span className={styles.snapValue}>{c.use_case_name || agent?.use_case || '-'}</span>
             </div>
             <div className={styles.snapField}>
               <span className={styles.snapLabel}>Version</span>
@@ -289,15 +289,15 @@ function SnapshotContent({ agent, showBanner, setShowBanner }) {
           <div className={styles.snapGrid} style={{ marginTop: 12 }}>
             <div className={styles.snapField}>
               <span className={styles.snapLabel}>Phone</span>
-              <span className={styles.snapValue}>{c.phone || '—'}</span>
+              <span className={styles.snapValue}>{c.phone || '-'}</span>
             </div>
             <div className={styles.snapField}>
               <span className={styles.snapLabel}>Email</span>
-              <span className={styles.snapValue}>{c.email || '—'}</span>
+              <span className={styles.snapValue}>{c.email || '-'}</span>
             </div>
             <div className={styles.snapField}>
               <span className={styles.snapLabel}>Office Hours</span>
-              <span className={styles.snapValue}>{c.office_hours || '—'}</span>
+              <span className={styles.snapValue}>{c.office_hours || '-'}</span>
             </div>
             <div className={styles.snapField}>
               <span className={styles.snapLabel}>Languages</span>
@@ -389,7 +389,7 @@ function SnapshotContent({ agent, showBanner, setShowBanner }) {
 function AnalyticsContent() {
   return (
     <>
-      {/* Agent Uptime — 24 blocks = 24 hours */}
+      {/* Agent Uptime: 24 blocks = 24 hours */}
       <div className={styles.section}>
         <div className={styles.sectionBody}>
           <div className={styles.uptimeHeader}>
@@ -411,7 +411,7 @@ function AnalyticsContent() {
         </div>
       </div>
 
-      {/* Agent Performance — semantic delta colors */}
+      {/* Agent Performance: semantic delta colors */}
       <div>
         <div className={styles.sectionTitle} style={{ marginBottom: 12 }}>Agent Performance</div>
         <div className={styles.kpiRow}>

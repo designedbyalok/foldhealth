@@ -37,7 +37,7 @@ export function LabOrderDetail({ order, result, results = [], gapTest }) {
       <div className={styles.field}>
         <span className={styles.fieldHint}>Tests</span>
         <div className={styles.tagList}>
-          {testsOf(order).map(t => <Badge key={t} tone={t === gapTest ? 'primary' : 'grey'} size="S" label={t} />)}
+          {testsOf(order).map(t => <Badge key={t} tone={t === gapTest ? 'primary' : 'neutral'} size="sm" label={t} />)}
         </div>
       </div>
       <div className={styles.field}>

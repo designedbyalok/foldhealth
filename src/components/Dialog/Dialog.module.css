@@ -1,0 +1,53 @@
+/* Fold modal shell: aligned with Drawer chrome (neutral surface, hairline
+   border, popover shadow) and CloseButton in the top-right corner. */
+
+.content {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 9999;
+  translate: -50% -50%;
+  width: calc(100% - var(--space-8));
+  max-width: 420px;
+  padding: var(--space-6);
+  padding-top: var(--space-5);
+  border-radius: var(--space-4);
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  box-shadow: var(--shadow-popover);
+  box-sizing: border-box;
+}
+
+.closeBtn {
+  position: absolute;
+  right: var(--space-3);
+  top: var(--space-3);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  text-align: left;
+  /* Keep title/description clear of the CloseButton hit target. */
+  padding-right: var(--space-7);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-lg);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-400);
+}
+
+.description {
+  margin: 0;
+  font-size: var(--font-md);
+  line-height: 1.45;
+  color: var(--neutral-300);
+}
+
+.overlay {
+  background: color-mix(in srgb, var(--neutral-500) 35%, transparent);
+}

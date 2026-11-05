@@ -5,7 +5,7 @@ import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { Icon } from '../../../components/Icon/Icon';
 import { CheckIcon } from '../../../components/Icon/CheckIcon';
 import { CloseIcon } from '../../../components/Icon/CloseIcon';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Badge } from '../../../components/Badge/Badge';
 import { IcdCommentIcon } from './IcdCommentIcon';
 import { useIcdComments } from './icdComments';
@@ -18,13 +18,13 @@ import { deriveClaimId } from '../claimId';
 import styles from './IcdDosCard.module.css';
 
 /**
- * IcdDosCard — one card per ICD with one action row per DOS (Paper 1WXT /
+ * IcdDosCard: one card per ICD with one action row per DOS (Paper 1WXT /
  * "RA Coder Workflow"; ICD row states from Figma ICD-Import 4696:132231).
  *
  * Head: purple code + description (selecting opens the source-document
- * preview on the left), comment / activity counters. Body: a row per DOS —
+ * preview on the left), comment / activity counters. Body: a row per DOS,
  * date, `HCC n (V28)` chip (or `No HCC`), `Claim` link, `Manually Added`
- * chip — with per-DOS states:
+ * chip: with per-DOS states:
  *   • unactioned → [✓ Accept] [✗ Reject] [⋯]
  *   • accepted   → green "✓ Accepted" + undo + ⋯
  *   • rejected   → inline dismiss-reason form → red "✗ Dismissed" +
@@ -55,7 +55,7 @@ export function IcdDosCard({ icd, currentDos = null, focusKey, onFocusRow, selec
   const [confirmDeleteIcd, setConfirmDeleteIcd] = useState(false);
   const [confirmRemoveDos, setConfirmRemoveDos] = useState(null); // {code, dos} | null
   // Flash + scroll when this ICD was just added via the New Diagnosis Gap
-  // panel — draws the user's attention to where the new code landed in the
+  // panel: draws the user's attention to where the new code landed in the
   // current list (the border pulses; auto-clears via the store timer).
   const isJustAdded = useAppStore(s => s.hccJustAddedCode) === icd.code;
   const cardRef = useRef(null);
@@ -69,10 +69,10 @@ export function IcdDosCard({ icd, currentDos = null, focusKey, onFocusRow, selec
   // dot on the counter).
   const { count: commentsCount, unread: hasUnreadComments } = useIcdComments(icd.code, icd.cmts ?? 0);
   // History tab renders one row per DOS the ICD is on for this member,
-  // so the counter has to match that — otherwise the "7" on the card
+  // so the counter has to match that, otherwise the "7" on the card
   // opens a tab with 3 rows and the reviewer wonders what disappeared.
   // Activity-log scoping was the old source of truth but it counts
-  // events (comments, edits, per-DOS status changes) — a different unit
+  // events (comments, edits, per-DOS status changes), a different unit
   // than the tab's per-DOS rowcount.
   const historyCount = useMemo(() => icd.entries?.length ?? 0, [icd.entries]);
 
@@ -80,11 +80,11 @@ export function IcdDosCard({ icd, currentDos = null, focusKey, onFocusRow, selec
   const hccLabel = hccShort
     ? (/^hcc\s*not\s*linked$/i.test(hccShort) ? hccShort : `${hccShort} (V28)`)
     : 'No HCC';
-  // `icd.hcc` looks like "HCC 58 - Major Depressive Disorder" — take the
+  // `icd.hcc` looks like "HCC 58 - Major Depressive Disorder", take the
   // right half as the tooltip content on the header chip so hovering the
   // "HCC N (V28)" badge reveals the full category name.
   const hccDesc = (icd.hcc || '').split(' - ').slice(1).join(' - ').trim();
-  // Doc-panel selection — drives the source-document toggle below.
+  // Doc-panel selection: drives the source-document toggle below.
   const isSelected = diagActivityIcd === icd.code;
   // The ICD currently being worked on = the one that owns the focused DOS.
   // Its card is highlighted; as focus advances to the next ICD this one stops
@@ -93,13 +93,13 @@ export function IcdDosCard({ icd, currentDos = null, focusKey, onFocusRow, selec
   const allActed = icd.entries.length > 0
     && icd.entries.every(e => !!dosActions[`${icd.code}|${e.dos}`]);
   const isCompleted = allActed && !isActive;
-  // Header status pill — surfaces when the ICD was acted on (accepted OR
+  // Header status pill: surfaces when the ICD was acted on (accepted OR
   // dismissed) on ANOTHER created-date DOS in the SAME calendar year as
   // the drawer's current DOS. HCC codes close per year, so a prior-year
   // acceptance doesn't close this year's review; the same-year filter
   // keeps the badge to a true "already closed for this year" signal.
   // `currentDos` comes from the drawer's `member.dos_list[0].date` via
-  // DiagPanelViewCards. Accepted wins over dismissed if both exist —
+  // DiagPanelViewCards. Accepted wins over dismissed if both exist,
   // the positive closure is the more useful signal.
   const currentYear = currentDos ? String(currentDos).split('/')[2] : null;
   // Extract calendar year from a MM/DD/YYYY string.
@@ -162,21 +162,21 @@ export function IcdDosCard({ icd, currentDos = null, focusKey, onFocusRow, selec
           )}
           <div className={styles.headMeta}>
             <Tooltip label={hccDesc}>
-              <Badge tone="grey" size="S" label={hccLabel} />
+              <Badge size="sm" label={hccLabel} />
             </Tooltip>
 
             {acceptedDos && (
               <Badge
                 tone="success"
-                size="S"
+                size="sm"
                 icon="solar:check-circle-linear"
                 label={`Already Accepted on ${acceptedDos}`}
               />
             )}
             {dismissedDos && (
               <Badge
-                tone="error"
-                size="S"
+                tone="danger"
+                size="sm"
                 icon="solar:close-circle-linear"
                 label={`Already Dismissed on ${dismissedDos}`}
               />
@@ -187,7 +187,7 @@ export function IcdDosCard({ icd, currentDos = null, focusKey, onFocusRow, selec
           <Tooltip label="Comments">
             <Button
               variant="ghost"
-              size="S"
+              size="sm"
               onClick={(e) => { e.stopPropagation(); openIcdPanel('comments', icd.code); }}
             >
               <IcdCommentIcon unread={hasUnreadComments} />
@@ -198,7 +198,7 @@ export function IcdDosCard({ icd, currentDos = null, focusKey, onFocusRow, selec
           <Tooltip label="History">
             <Button
               variant="ghost"
-              size="S"
+              size="sm"
               leadingIconElement={<Icon name="custom:history" size={14} />}
               onClick={(e) => { e.stopPropagation(); openIcdPanel('history', icd.code); }}
             >
@@ -230,7 +230,7 @@ export function IcdDosCard({ icd, currentDos = null, focusKey, onFocusRow, selec
       <div className={styles.rows}>
         {icd.entries.map((entry) => {
           const key = `${icd.code}|${entry.dos}`;
-          // Advance focus to the next un-acted DOS — but only when the action
+          // Advance focus to the next un-acted DOS, but only when the action
           // actually resolved the row. Missed/Defer toggle off (undo), so read
           // fresh store state rather than assuming the row is now acted.
           const advanceIfActed = () => {
@@ -300,7 +300,7 @@ function DosActionRow({
 }) {
   const [menuPos, setMenuPos] = useState(null);
   const moreRef = useRef(null);
-  // ICD accept/reject is a coding action — Support can't perform it, and QA /
+  // ICD accept/reject is a coding action, Support can't perform it, and QA /
   // Compliance are locked out until Support + Coder have completed (reviewLocked).
   const rowRole = useAppStore(s => s.hccUserRole);
   const canReview = rowRole !== 'Support' && !reviewLocked;
@@ -313,7 +313,7 @@ function DosActionRow({
       ? 'Support role cannot code ICDs'
       : (reviewLocked ? "Support team hasn't reviewed the documents yet" : null));
   // Claim-sourced DOS rows open the DiagPanel's built-in Claims tab (left
-  // pane) — mirrors the behaviour of the old inline "Claim" link so the
+  // pane): mirrors the behaviour of the old inline "Claim" link so the
   // detail lands in the panel the user is already looking at, not a
   // separate right-side drawer.
   const openHccClaimForDos = useAppStore(s => s.openHccClaimForDos);
@@ -378,13 +378,13 @@ function DosActionRow({
             aria-label={`Select ${icd.code} on ${entry.dos}`}
           />
         )}
-        {/* DOS date + D/C/M badge — grouped in one inline-flex span so the
+        {/* DOS date + D/C/M badge: grouped in one inline-flex span so the
             gap between them (6px) stays independent of the row's 8px flex
             gap between the group and the neighbouring row-actions cluster.
             Claim-sourced rows: hover the C badge to see the claim number
             as a clickable link (same tooltip the worklist uses); click
             either the badge or the number to open the Claims tab inside
-            this DiagPanel — matches the old inline "Claim" link but
+            this DiagPanel: matches the old inline "Claim" link but
             through the shared source-badge affordance. */}
         <span className={styles.dosDateGroup}>
           <span className={styles.dosDate}>{entry.dos}</span>
@@ -409,7 +409,7 @@ function DosActionRow({
         )}
         {/* stopPropagation so ICD-action button clicks (Accept / Dismiss /
             More / Undo) don't bubble to the parent card's toggleSelect
-            handler — which would force-switch the left panel to Documents
+            handler: which would force-switch the left panel to Documents
             even when the user has Timeline / Comments / History open. */}
         <div className={styles.rowActions} onClick={(e) => e.stopPropagation()}>
           {isAccepted ? (
@@ -444,7 +444,7 @@ function DosActionRow({
             </>
           ) : isMissed ? (
             <>
-              <Badge size="S" tone="warning" icon="solar:flag-linear" label="Missed Opportunity" />
+              <Badge size="sm" tone="warning" icon="solar:flag-linear" label="Missed Opportunity" />
               <Tooltip label={canReview ? 'Undo' : (disabledReason || 'Undo')}>
                 <button
                   type="button"
@@ -476,8 +476,8 @@ function DosActionRow({
             <>
               <Tooltip label={canReview ? 'Accept (A)' : (disabledReason || 'Accept')}>
                 <Button
-                  variant="alt"
-                  size="S"
+                  variant="outline" tone="primary"
+                  size="sm"
                   iconOnly
                   aria-label="Accept"
                   disabled={!canReview}
@@ -487,8 +487,8 @@ function DosActionRow({
               </Tooltip>
               <Tooltip label={canReview ? 'Dismiss (X)' : (disabledReason || 'Dismiss')}>
                 <Button
-                  variant="secondary"
-                  size="S"
+                  variant="outline"
+                  size="sm"
                   iconOnly
                   aria-label="Dismiss"
                   disabled={!canReview}
@@ -554,8 +554,8 @@ function DosActionRow({
 
 /**
  * Hover popover for the "Dismiss Reason" link on a dismissed DOS row. Mirrors
- * the ChartDetailDrawer failed-badge tooltip pattern — a portalled card with a
- * "Dismiss Reason:" heading, the reason text, and an optional Note box — so
+ * the ChartDetailDrawer failed-badge tooltip pattern: a portalled card with a
+ * "Dismiss Reason:" heading, the reason text, and an optional Note box, so
  * both surfaces read as one system. Click still opens the inline reason form.
  */
 function DismissReasonHoverLink({ reason, note, onClick }) {

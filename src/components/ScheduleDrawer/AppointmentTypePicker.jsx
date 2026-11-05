@@ -33,7 +33,7 @@ export function AppointmentTypePicker({ value, onSelect, appointmentTypes }) {
       {open && createPortal(
         <>
           {/* Decorative click-catcher, and a sibling of the dropdown rather than
-              its parent — an aria-hidden ancestor would hide the whole menu from
+              its parent: an aria-hidden ancestor would hide the whole menu from
               assistive tech. Escape is the keyboard dismiss path. */}
           <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setOpen(false)} aria-hidden="true" />
           <div className={styles.apptDropdown} style={{ position: 'fixed', top: btnRef.current?.getBoundingClientRect().bottom + 4, left: btnRef.current?.getBoundingClientRect().left, zIndex: 9999 }}>

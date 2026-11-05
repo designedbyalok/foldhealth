@@ -36,7 +36,7 @@ export function normalizeAiTocDueDate(patient) {
 
 /** Display due for TasksTab (MM/DD/YYYY). */
 export function displayAiTocDue(dueDate) {
-  if (!dueDate) return '—';
+  if (!dueDate) return '-';
   const dash = /^(\d{2})-(\d{2})-(\d{4})$/.exec(dueDate);
   if (dash) return `${dash[1]}/${dash[2]}/${dash[3]}`;
   return dueDate;
@@ -122,7 +122,7 @@ export function groupAiTocListRows(rows) {
   return { pending, overdue, completed };
 }
 
-/** Local-only preview — used until ensureAiTocTasksForPatient resolves. */
+/** Local-only preview: used until ensureAiTocTasksForPatient resolves. */
 export function buildAiTocTasks(patient) {
   const count = resolveAiTaskCount(patient);
   const due = displayAiTocDue(normalizeAiTocDueDate(patient));

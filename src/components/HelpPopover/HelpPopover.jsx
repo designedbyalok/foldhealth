@@ -57,7 +57,7 @@ const FEATURES = [
       {
         icon: 'solar:clipboard-list-linear',
         crumbs: ['HCC Coding', 'Diagnosis Gaps'],
-        description: 'ICD-first review panel — accept/reject each code per DOS with MEAT evidence, plus suspects & recaptures.',
+        description: 'ICD-first review panel: accept/reject each code per DOS with MEAT evidence, plus suspects & recaptures.',
         page: 'population',
         subnavList: 'HCC',
       },
@@ -315,7 +315,7 @@ export function HelpPopover({ onClose, onOpenFeedback, onOpenChangelog, changelo
         </button>
       </div>
       <div className={styles.body}>
-        {/* Pinned Featurebase actions — docs, feedback board + changelog. */}
+        {/* Pinned Featurebase actions: docs, feedback board + changelog. */}
         <div className={styles.group}>
           <div className={styles.groupLabel}>Feedback &amp; Updates</div>
           <button
@@ -327,7 +327,7 @@ export function HelpPopover({ onClose, onOpenFeedback, onOpenChangelog, changelo
             </div>
             <div className={styles.itemContent}>
               <div className={styles.breadcrumb}><span>Documentation</span></div>
-              <div className={styles.description}>Guides and how-tos for every part of the platform — opens in a new tab.</div>
+              <div className={styles.description}>Guides and how-tos for every part of the platform, opens in a new tab.</div>
             </div>
           </button>
           <button
@@ -339,7 +339,7 @@ export function HelpPopover({ onClose, onOpenFeedback, onOpenChangelog, changelo
             </div>
             <div className={styles.itemContent}>
               <div className={styles.breadcrumb}><span>Give Feedback</span></div>
-              <div className={styles.description}>Share ideas, report issues, and vote on feature requests — opens the feedback portal in a new tab.</div>
+              <div className={styles.description}>Share ideas, report issues, and vote on feature requests, opens the feedback portal in a new tab.</div>
             </div>
           </button>
           <button

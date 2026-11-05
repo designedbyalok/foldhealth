@@ -1,0 +1,161 @@
+.board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: stretch;
+  min-height: 0;
+}
+
+.lane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--space-2);
+  border-radius: var(--space-2);
+  background: var(--neutral-50);
+}
+
+.laneHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding: 0 var(--space-1);
+}
+
+.laneTitle {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.count {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+
+.hint {
+  padding: 0 var(--space-1);
+  margin-bottom: var(--space-2);
+  font-size: var(--font-xs);
+  color: var(--neutral-200);
+}
+
+.laneBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  min-height: var(--space-16);
+  border-radius: calc(var(--space-1) * 1.5);
+  transition: background-color 150ms ease;
+}
+
+.over { background: var(--primary-50); }
+
+.empty {
+  padding: var(--space-3) var(--space-2);
+  text-align: center;
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-1) var(--space-1) var(--space-1) 0;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: calc(var(--space-1) * 1.5);
+  background: var(--neutral-0);
+  cursor: grab;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.card:hover { border-color: var(--neutral-200); }
+
+/* The dragged card's own slot becomes the landing indicator: a dashed,
+   tinted gap the same size as the card, moving as the drop target moves.
+   (Beats SortableList's lifted .dragging style on purpose.) */
+.card[data-dragging] {
+  border: 1px dashed var(--primary-300);
+  background: var(--primary-50);
+  box-shadow: none;
+}
+
+.card[data-dragging] > * { visibility: hidden; }
+
+/* The copy under the pointer: lifted and slightly tilted. */
+.overlay {
+  border-color: var(--primary-200);
+  box-shadow: var(--shadow-popover);
+  cursor: grabbing;
+  transform: rotate(1.5deg) scale(1.02);
+}
+
+/* Switched off: stays in place, dimmed, with its show control always visible. */
+.disabled {
+  background: var(--neutral-25);
+  border-style: dashed;
+}
+
+.disabled .label,
+.disabled .meta,
+.disabled .grip { opacity: 0.55; }
+
+.grip {
+  display: inline-flex;
+  padding: var(--space-1);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Narrow lanes: long names wrap to two lines rather than truncating. */
+.label {
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.meta {
+  font-size: var(--font-xs);
+  color: var(--neutral-200);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Actions show on hover or keyboard focus, and always on switched-off cards
+   and touch screens (no hover to reveal them). */
+.actions {
+  display: inline-flex;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.card:hover .actions,
+.card:focus-within .actions,
+.disabled .actions { opacity: 1; }
+
+@media (hover: none) {
+  .actions { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay { transform: none; }
+  .actions,
+  .card,
+  .laneBody { transition: none; }
+}

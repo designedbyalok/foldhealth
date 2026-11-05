@@ -2,7 +2,7 @@ import { MEASURE_INFO, DEFAULT_MEASURE_INFO } from './measureInfoData';
 import styles from './MeasureInfoBody.module.css';
 
 /**
- * MeasureInfoBody — read-only content pane for the "Measure Details"
+ * MeasureInfoBody: read-only content pane for the "Measure Details"
  * left workspace of the Care Gap drawer. Mirrors the HCC Tutorial pane:
  * each section is a bordered card with a primary-tone heading, followed
  * by nested bullets (Requirements) or scenario + action groups

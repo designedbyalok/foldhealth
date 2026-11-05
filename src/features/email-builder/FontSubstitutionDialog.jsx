@@ -11,7 +11,7 @@ import { applyFontMappings } from './htmlToDocument';
 // the user to map each to a font the builder can load. On confirm we
 // rewrite the pending doc with the chosen substitutions and commit it via
 // setEmailDocument. Skipping leaves the original (unrenderable) font name
-// in place — the renderer falls back to Inter, which is safe.
+// in place: the renderer falls back to Inter, which is safe.
 export function FontSubstitutionDialog() {
   const pendingFontDoc = useAppStore(s => s.pendingFontDoc);
   const pendingUnknownFonts = useAppStore(s => s.pendingUnknownFonts);
@@ -19,7 +19,7 @@ export function FontSubstitutionDialog() {
   const closeFontSubstitutionDialog = useAppStore(s => s.closeFontSubstitutionDialog);
   const setEmailDocument = useAppStore(s => s.setEmailDocument);
 
-  // Default every unknown font to Inter — the existing builder default —
+  // Default every unknown font to Inter, the existing builder default,
   // so a single Confirm click works.
   const [mappings, setMappings] = useState(() =>
     Object.fromEntries(pendingUnknownFonts.map(f => [f, 'Inter']))
@@ -90,7 +90,7 @@ export function FontSubstitutionDialog() {
                 <Select
                   options={fontOptions}
                   value={mappings[font] || 'Inter'}
-                  onChange={v => setMappings(m => ({ ...m, [font]: v }))}
+                  onValueChange={v => setMappings(m => ({ ...m, [font]: v }))}
                 />
               </div>
             </div>
@@ -101,8 +101,8 @@ export function FontSubstitutionDialog() {
           display: 'flex', justifyContent: 'flex-end', gap: 8,
           padding: '12px 20px', borderTop: '0.5px solid var(--neutral-100)',
         }}>
-          <Button variant="secondary" size="L" onClick={skip}>Skip</Button>
-          <Button variant="primary" size="L" onClick={commit}>Apply substitutions</Button>
+          <Button variant="outline" onClick={skip}>Skip</Button>
+          <Button onClick={commit}>Apply substitutions</Button>
         </div>
       </div>
     </dialog>

@@ -1,11 +1,11 @@
 import styles from './Switch.module.css';
 
 /**
- * Fold Health Switch — single source-of-truth toggle control.
+ * Fold Health Switch: single source-of-truth toggle control.
  *
  * Matches Figma Fold-Pixel-1.0 node 1518:142478 exactly.
  *
- * Size S (Web) — default:
+ * Size S (Web): default:
  *   Track: 32×19px, 4px radius, 1.5px padding
  *   Knob:  16×16px, 3px radius, white
  *   OFF:   var(--neutral-100)   ON: var(--primary-300)

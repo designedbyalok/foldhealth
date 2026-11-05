@@ -1,7 +1,7 @@
 import styles from './RadioButton.module.css';
 
 /**
- * Fold Health RadioButton — single source-of-truth radio control.
+ * Fold Health RadioButton: single source-of-truth radio control.
  *
  * Matches the design spec for the Outreach Log radio selectors.
  *

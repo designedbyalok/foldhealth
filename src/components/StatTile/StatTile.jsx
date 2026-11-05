@@ -4,7 +4,7 @@ import styles from './StatTile.module.css';
 const TONES = ['neutral', 'success', 'error', 'warning', 'info'];
 
 /**
- * StatTile — a small summary card: an icon and label, one headline value,
+ * StatTile: a small summary card: an icon and label, one headline value,
  * and an optional muted caption (e.g. a profile's "Last successful sign-in").
  * Lay several side by side in a grid.
  *

@@ -38,6 +38,7 @@ export default defineConfig({
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
     __APP_VERSION__: JSON.stringify('report-viewer'),
+    __DEPLOY_TARGET__: JSON.stringify(''),
   },
   resolve: { alias: { '@': path.resolve(dirname, './src') } },
   publicDir: false,

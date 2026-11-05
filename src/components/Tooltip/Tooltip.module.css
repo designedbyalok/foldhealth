@@ -20,7 +20,7 @@
   transform: translate(-50%, 0);
 }
 
-/* Side placements — bubble is centred vertically on the trigger and sits
+/* Side placements: bubble is centred vertically on the trigger and sits
    outside it horizontally. Used by rail-style sidebars where top/bottom
    placements would land between adjacent icons. */
 .bubbleLeft {
@@ -60,8 +60,10 @@
   white-space: normal;
   box-shadow: var(--shadow-tooltip);
 }
+/* Higher lift (`raised`). Same specificity as the variants, so it's last. */
+.bubbleLight.bubbleRaised { box-shadow: var(--shadow-tooltip-raised); }
 
-/* Light variant — matches ActionButton tooltips. */
+/* Light variant: matches ActionButton tooltips. */
 .bubbleLight {
   background: var(--neutral-0);
   color: var(--neutral-400);

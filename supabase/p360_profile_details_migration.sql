@@ -1,5 +1,5 @@
 -- ============================================================
--- Profile tab — extend p360_profiles with the demographic /
+-- Profile tab: extend p360_profiles with the demographic /
 -- address / other-info fields that back the Patient → Profile tab
 -- (Figma Fold-Pixel 1.0 node 6820:269258).
 -- ============================================================
@@ -40,7 +40,7 @@ ALTER TABLE p360_profiles ADD COLUMN IF NOT EXISTS practice_location   TEXT;
 ALTER TABLE p360_profiles ADD COLUMN IF NOT EXISTS age                 TEXT;   -- "72", "63y 2m", …
 ALTER TABLE p360_profiles ADD COLUMN IF NOT EXISTS tags                JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE p360_profiles ADD COLUMN IF NOT EXISTS custom_fields       JSONB DEFAULT '[]'::jsonb; -- [{ label, value }]
-ALTER TABLE p360_profiles ADD COLUMN IF NOT EXISTS extra_languages     JSONB DEFAULT '[]'::jsonb; -- string[] — extras beyond Primary/Secondary
+ALTER TABLE p360_profiles ADD COLUMN IF NOT EXISTS extra_languages     JSONB DEFAULT '[]'::jsonb; -- string[]: extras beyond Primary/Secondary
 ALTER TABLE p360_profiles ADD COLUMN IF NOT EXISTS extra_phones        JSONB DEFAULT '[]'::jsonb; -- [{ number, hours }]
 ALTER TABLE p360_profiles ADD COLUMN IF NOT EXISTS additional_notes    TEXT;
 

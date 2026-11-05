@@ -23,6 +23,11 @@ export function patientFor(conversation, patients = []) {
 
 /** "Patient • F • 53Y • Dr. Robert Frost (PCP)" style meta, from what we know. */
 export function patientMeta(conversation, patient) {
+  return patientMetaParts(conversation, patient).join(' • ');
+}
+
+/** The pieces of `patientMeta`; the gender letter, when known, is second. */
+export function patientMetaParts(conversation, patient) {
   const parts = ['Patient'];
   if (patient?.gender) parts.push(String(patient.gender)[0].toUpperCase());
   if (patient?.age) parts.push(`${patient.age}Y`);
@@ -31,7 +36,7 @@ export function patientMeta(conversation, patient) {
     const contact = conversation?.patient_phone || conversation?.patient_email;
     if (contact) parts.push(contact);
   }
-  return parts.join(' • ');
+  return parts;
 }
 
 /** Visuals for a call by how it ended. */

@@ -26,7 +26,7 @@ export const THEME_STORAGE_KEY = 'theme';
 export const THEME_VALUES = ['light', 'dark', 'blue', 'plum', 'system'];
 
 /**
- * Nav style — independent of color theme.
+ * Nav style: independent of color theme.
  * 'default' keeps the per-theme dark-purple chrome.
  * 'light'   applies a hardcoded light sidebar across every color theme
  *           via [data-nav-style="light"] in tokens.css.
@@ -69,7 +69,7 @@ export function initNavStyle() {
 }
 
 /**
- * Sidebar shape — the user's choice between the standard 72px labeled rail
+ * Sidebar shape: the user's choice between the standard 72px labeled rail
  * (plus a page-column SubNav) and the compact 240px floating card that
  * pairs a 52px icon-only rail with the SubNav inline. Persisted so the
  * preference survives reloads. No `data-*` attribute: the layout picks
@@ -145,7 +145,7 @@ export function applyFloatingDensity(value) {
 }
 
 /**
- * Contrast setting — independent of color theme.
+ * Contrast setting: independent of color theme.
  * 'default' keeps the standard neutral scale.
  * 'high'    boosts text and border tokens for easier reading (older users,
  *           low-vision scenarios) via [data-contrast="high"] in tokens.css.
@@ -188,7 +188,7 @@ export function initContrast() {
 }
 
 /**
- * Font-scale setting — independent of color theme.
+ * Font-scale setting: independent of color theme.
  * 5 accessibility levels that adjust the root font-size so all rem-based
  * tokens scale proportionally. Mirrors Apple's Dynamic Type non-accessibility
  * range (xSmall → xxLarge), mapped to clean percentage steps.
@@ -199,7 +199,7 @@ export function initContrast() {
  *   large    → 112.5%
  *   larger   → 125%
  *
- * These are multipliers, not absolute px — they compose with the fluid base
+ * These are multipliers, not absolute px, they compose with the fluid base
  * root size (which grows with viewport width on large desktop panels). The
  * px each level resolves to therefore depends on screen size; on laptop
  * widths it is 14/15/16/18/20px. See `--root-font-fluid` in tokens.css.
@@ -271,7 +271,7 @@ export function persistTheme(setting) {
 }
 
 /**
- * Duration of the theme cross-fade in ms — mirrors --duration-base in
+ * Duration of the theme cross-fade in ms, mirrors --duration-base in
  * src/tokens/tokens.css. The +20ms cushion covers the last commit frame.
  */
 const THEME_TRANSITION_MS = 200;
@@ -284,7 +284,7 @@ const THEME_TRANSITION_CLEAR_MS = THEME_TRANSITION_MS + 20;
  * theme flips cross-fade. Initial paint is a no-op (guard: same-theme skip),
  * so the app boots without a fade.
  *
- * Never write `data-theme` directly outside this function — the attribute
+ * Never write `data-theme` directly outside this function: the attribute
  * pair is the contract.
  */
 export function applyResolvedTheme(resolved) {

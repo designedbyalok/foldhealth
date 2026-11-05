@@ -1,11 +1,11 @@
 export function statusBadge(status) {
-  if (status === 'Locked') return { variant: 'status-failed', icon: 'solar:lock-keyhole-minimalistic-linear' };
-  if (status === 'Unlocked') return { variant: 'status-scheduled', icon: 'solar:lock-keyhole-unlocked-linear' };
-  if (status === 'Pending') return { variant: 'status-scheduled', icon: 'solar:clock-circle-linear' };
+  if (status === 'Locked') return { variant: 'danger', icon: 'solar:lock-keyhole-minimalistic-linear' };
+  if (status === 'Unlocked') return { variant: 'info', icon: 'solar:lock-keyhole-unlocked-linear' };
+  if (status === 'Pending') return { variant: 'info', icon: 'solar:clock-circle-linear' };
   const isActive = status === 'Active';
   const isInvited = status === 'Invited';
   return {
-    variant: isActive ? 'status-completed' : (isInvited ? 'status-queued' : 'status-failed'),
+    variant: isActive ? 'success' : (isInvited ? 'warning' : 'danger'),
     icon: isActive
       ? 'solar:check-circle-linear'
       : (isInvited ? 'solar:hourglass-linear' : 'solar:close-circle-linear'),
@@ -13,9 +13,9 @@ export function statusBadge(status) {
 }
 
 export function formatDate(iso) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
+  if (Number.isNaN(d.getTime())) return '-';
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
   return `${mm}/${dd}/${d.getFullYear()}`;

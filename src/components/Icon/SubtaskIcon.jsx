@@ -1,5 +1,5 @@
 /**
- * Subtask glyph — a small connected-dots mark used to introduce a subtask
+ * Subtask glyph: a small connected-dots mark used to introduce a subtask
  * affordance (e.g. the compact "+ Add Subtask" link on the care-plan Add
  * Task drawer). Solar has no direct equivalent, so this is the design-
  * system source of truth. Reach for it via `custom:subtask` from `<Icon>`
@@ -7,7 +7,7 @@
  *
  * @param {object} props
  * @param {number} [props.size=16]
- * @param {string} [props.color='var(--neutral-300)'] — stroke color
+ * @param {string} [props.color='var(--neutral-300)']: stroke color
  * @param {string} [props.className]
  */
 export function SubtaskIcon({ size = 16, color = 'var(--neutral-300)', className, ...rest }) {

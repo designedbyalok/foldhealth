@@ -13,10 +13,10 @@
 .rowActive .stickyLeft { background: var(--primary-100) !important; }
 .rowActive .stickyRight { background: var(--primary-100); }
 
-/* Attestation blocked — dim the wide/data cells (Member, ICD Codes, Reasons)
+/* Attestation blocked: dim the wide/data cells (Member, ICD Codes, Reasons)
    so the row reads as inactive, but keep the small info cells (EHR ID,
    Month, DoS, CPT, Last Encounter, Provider) at full opacity so the EHR
-   link stays a clickable exit ramp — provider fixes the mapping in Athena. */
+   link stays a clickable exit ramp, provider fixes the mapping in Athena. */
 .rowBlocked .tdWrap,
 .rowBlocked .memberTd { opacity: 0.6; }
 
@@ -46,7 +46,7 @@
 .checkTd { padding: 8px 10px; vertical-align: middle; }
 .memberTd {
   /* Left padding trimmed to 4px so the patient avatar sits closer to
-     the selection checkbox — matches the shared worklist rule. */
+     the selection checkbox: matches the shared worklist rule. */
   padding: var(--space-2) var(--space-3) var(--space-2) var(--space-1);
   border-right: 0.5px solid var(--neutral-150);
   vertical-align: middle;
@@ -74,7 +74,7 @@
 /* Em dash placeholder */
 .emDash { font-size: var(--font-sm); color: var(--neutral-200); }
 
-/* Member cell — mirrors TOC Worklist (WorklistRow.module.css). */
+/* Member cell: mirrors TOC Worklist (WorklistRow.module.css). */
 .patientCell { display: flex; align-items: center; gap: 12px; }
 .patientInfo { display: flex; flex-direction: column; align-items: flex-start; }
 .patientName {
@@ -93,7 +93,7 @@
 .foldId { cursor: pointer; transition: color .12s; }
 .foldId:hover { color: var(--primary-300); text-decoration: underline; }
 
-/* Language badge — inline plain-text link inside .patientMeta. */
+/* Language badge: inline plain-text link inside .patientMeta. */
 .langBadge {
   position: relative;
   display: inline-flex;
@@ -142,7 +142,7 @@
 .cptG0557 { background: var(--primary-100); color: var(--primary-400); border: 0.5px solid var(--primary-200); }
 .cptG0558 { background: color-mix(in srgb, var(--primary-300) 12%, transparent); color: var(--primary-400); border: 0.5px solid var(--primary-200); }
 
-/* ICD codes — checkbox left, then code + description. Clicking the row
+/* ICD codes: checkbox left, then code + description. Clicking the row
    label toggles the checkbox for a bigger hit target. */
 .icdList { display: flex; flex-direction: column; gap: 6px; }
 .icdItem {
@@ -157,7 +157,7 @@
 .icdCode { font-weight: 500; color: var(--neutral-400); flex-shrink: 0; }
 .icdDesc { color: var(--neutral-300); white-space: normal; }
 
-/* Provenance tag — shown inline after the description for ICDs that arrived
+/* Provenance tag: shown inline after the description for ICDs that arrived
    already-chronic from Athena. Mirrors the prod screen's green label style
    so users can distinguish provider-marked from user-marked-this-session. */
 .chronicProviderTag {
@@ -167,7 +167,7 @@
   white-space: nowrap;
 }
 
-/* Unresolved-mapping tag — inline warning under the description for ICD
+/* Unresolved-mapping tag: inline warning under the description for ICD
    entries where Fold couldn't confidently pick a single code. */
 .unresolvedTag {
   display: inline-flex;
@@ -189,7 +189,7 @@
   color: var(--neutral-400);
   font-variant-numeric: tabular-nums;
 }
-/* Inline expand toggle — primary-colored text + chevron. Stays a
+/* Inline expand toggle: primary-colored text + chevron. Stays a
    <button> for a11y but renders as a plain link. */
 .icdMoreBtn {
   display: inline-flex;
@@ -207,7 +207,7 @@
 }
 .icdMoreBtn:hover { text-decoration: underline; }
 
-/* Reasons — bullet list, neutral text. Hover any item to reveal a
+/* Reasons: bullet list, neutral text. Hover any item to reveal a
    tooltip styled to match the language-badge tooltip elsewhere. */
 .reasonsList { display: flex; flex-direction: column; gap: 4px; }
 .reasonItem {
@@ -254,7 +254,7 @@
 }
 /* Comment is rendered as a borderless, transparent textarea so it reads
    as plain text inside the table cell. No box, no background, no hover
-   chrome — only the caret tells the user they're editing once focused. */
+   chrome: only the caret tells the user they're editing once focused. */
 .commentTextarea {
   width: 100%;
   min-height: 24px;
@@ -279,7 +279,7 @@
   font-style: normal;
 }
 
-/* Actions cell — width: 1% forces the column to shrink to its content
+/* Actions cell: width: 1% forces the column to shrink to its content
    width inside a `table { width: 100% }` layout, so the empty stretch
    that previously sat to the right of the icons is gone. */
 .actionsTd {

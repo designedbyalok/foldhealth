@@ -24,7 +24,7 @@ function seed(str) {
 }
 
 function docDate(member) {
-  return member?.dos || member?.dos_list?.[0]?.date || member?.date || '—';
+  return member?.dos || member?.dos_list?.[0]?.date || member?.date || '-';
 }
 
 /**
@@ -43,7 +43,7 @@ export function generateDefaultCharts(member) {
   // DiagPanel + Doc Review drawer never disagree:
   //   Support has an assignee AND supS === Completed → docs default Passed
   //   Support has an assignee AND supS === Reject    → docs default Failed
-  //   anything else — including Support unassigned   → Pending
+  //   anything else: including Support unassigned   → Pending
   // Requiring an assignee is intentional: docs can't be "passed" by nobody,
   // so a row with Support = "Assign" always shows All Pending, no matter
   // what stale legacy `supS` field the seed carries. A per-doc override
@@ -89,7 +89,7 @@ export function getChartDocs(member, added = [], statusOverrides = {}, removedId
     const removed = new Set(removedIds);
     all = all.filter(d => !removed.has(d.id));
   }
-  // An explicit persisted override (from hcc_chart_status — a real Pass/Fail
+  // An explicit persisted override (from hcc_chart_status: a real Pass/Fail
   // a user recorded in the drawer) is authoritative and ALWAYS wins. It must
   // never be discarded, even when Support currently shows no assignee: the
   // doc-status write and the support-assignee write are separate, non-atomic
@@ -98,7 +98,7 @@ export function getChartDocs(member, added = [], statusOverrides = {}, removedId
   // to Pending here silently reverted the user's saved review on refresh.
   //
   // The "force Pending when Support is unassigned" rule only exists to hide
-  // STALE SEED DEFAULTS (generateDefaultCharts / member.docStatus) — docs
+  // STALE SEED DEFAULTS (generateDefaultCharts / member.docStatus), docs
   // that were never actually reviewed. So it applies only to docs WITHOUT an
   // explicit override.
   const overrides = (statusOverrides && Object.keys(statusOverrides).length) ? statusOverrides : null;

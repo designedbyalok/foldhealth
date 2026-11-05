@@ -2,6 +2,8 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { Badge } from '../../../../../../../components/Badge/Badge';
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
+import { UnityIcon } from '../../../../../../../components/UnityIcon/UnityIcon';
+import { formatRetireDate, retiringOn } from '../../../../../../settings/care-plan-library/lib/templateRetirement';
 import styles from './CarePlanView.module.css';
 
 const CHIP_GAP = 4;
@@ -10,6 +12,7 @@ function TemplateBadge({
   template,
   templatePriority,
   version,
+  templateVersion,
   isActive,
   canRemove,
   onSelect,
@@ -23,16 +26,26 @@ function TemplateBadge({
       className={`${styles.appliedTemplateBadge} ${isActive ? styles.appliedTemplateBadgeActive : ''}`}
       aria-pressed={isActive}
       onClick={() => onSelect(template.id)}
-      aria-label={`${templatePriority} priority, ${template.name}${version ? `, version ${version}` : ''}${isActive ? ', filter active' : ''}`}
+      aria-label={`${templatePriority} priority, ${template.name}${templateVersion?.category ? `, ${templateVersion.category}` : ''}${version ? `, version ${version}` : ''}${isActive ? ', filter active' : ''}`}
+      title={[templateVersion?.title, retiringOn(template) && `Retiring on ${formatRetireDate(retiringOn(template))}`].filter(Boolean).join('. ') || undefined}
     >
       <Badge
-        tone={isActive ? 'primary' : 'grey'}
-        size="S"
+        tone={isActive ? 'primary' : 'neutral'}
+        size="sm"
         label={(
           <>
             <PriorityIcon priority={templatePriority} size={12} />
             {template.name}
+            {template.status === 'archived' && <span className={styles.runVersion}>Retired</span>}
+            {retiringOn(template) && (
+              <span className={styles.retiringTag}>
+                <Icon name="solar:calendar-mark-linear" size={12} color="currentColor" />
+                {`Retiring ${formatRetireDate(retiringOn(template))}`}
+              </span>
+            )}
+            {templateVersion?.category && <span className={styles.runVersion}>{templateVersion.category}</span>}
             {version && <span className={styles.runVersion}>V{version}</span>}
+            {templateVersion?.pending && <Icon name="solar:refresh-circle-linear" size={12} color="var(--primary-300)" />}
           </>
         )}
         trailingIconElement={canRemove ? (
@@ -57,11 +70,15 @@ function TemplateBadge({
 }
 
 /**
- * An earlier run of a reinstated template: done (check mark), its version,
- * and selecting it shows that run's goals, interventions and barriers.
+ * An earlier run of a reinstated template, or of one moved to another
+ * category: done (check mark), its version and category, and selecting it
+ * shows that run's goals, interventions and barriers.
  */
 function RunBadge({ template, run, isActive, onSelect, disabled = false }) {
   const outcome = run.status === 'completed' ? 'completed' : 'closed';
+  const how = run.closeReason === 'episode_end' ? 'Episode ended on its last day'
+    : run.closeReason === 'ended_early' ? 'Episode ended early'
+      : `Version ${run.version}${run.categoryName ? `, ${run.categoryName}` : ''}, ${outcome} when the template was added again or changed category`;
   return (
     <button
       type="button"
@@ -69,21 +86,41 @@ function RunBadge({ template, run, isActive, onSelect, disabled = false }) {
       className={`${styles.appliedTemplateBadge} ${isActive ? styles.appliedTemplateBadgeActive : ''}`}
       aria-pressed={isActive}
       onClick={() => onSelect(`run:${run.id}`)}
-      aria-label={`${template.name}, version ${run.version}, done (${outcome})${isActive ? ', showing' : ''}`}
-      title={`Version ${run.version}, ${outcome === 'completed' ? 'completed' : 'closed'} when the template was added again`}
+      aria-label={`${template.name}${run.categoryName ? `, ${run.categoryName}` : ''}, version ${run.version}, done (${outcome})${isActive ? ', showing' : ''}`}
+      title={how}
     >
       <Badge
-        tone={isActive ? 'primary' : 'grey'}
-        size="S"
+        tone={isActive ? 'primary' : 'neutral'}
+        size="sm"
         label={(
           <>
             <Icon name="solar:check-circle-linear" size={12} color={isActive ? 'var(--primary-300)' : 'var(--status-success)'} />
             <span className={styles.runDoneName}>{template.name}</span>
+            {run.categoryName && <span className={styles.runVersion}>{run.categoryName}</span>}
             <span className={styles.runVersion}>V{run.version}</span>
           </>
         )}
       />
     </button>
+  );
+}
+
+// A recommendation's template, applied when the recommended plan is approved.
+function RecommendedBadge({ template }) {
+  const by = template.automation ? `Matched by automation "${template.automation}". ` : '';
+  return (
+    <span className={styles.recommendedTemplate} title={`Recommended: applies when the plan is approved. ${by}${template.why || ''}`.trim()}>
+      <Badge
+        tone="primary"
+        size="sm"
+        label={(
+          <>
+            <UnityIcon size={12} color="var(--primary-300)" />
+            {template.name}
+          </>
+        )}
+      />
+    </span>
   );
 }
 
@@ -95,10 +132,11 @@ function RunBadge({ template, run, isActive, onSelect, disabled = false }) {
  * `trailing` (the Templates action) sits at the row's end, so the strip also
  * renders when nothing is applied yet.
  *
- * `runsByTemplate`: { [templateId]: { version, previous: [{ id, version, status }] } }
+ * `runsByTemplate`: { [templateId]: { version, previous: [{ id, version, status, categoryName }] } }
  * for templates added again. The current run's chip shows its version (V2);
  * each earlier run follows it as a done chip (✓ V1). A selected id of
- * `run:<id>` is an earlier run.
+ * `run:<id>` is an earlier run. `historyTemplates` are templates no longer
+ * on the plan (an episode that ended) whose earlier runs still show.
  */
 export function AppliedTemplateStrip({
   templates,
@@ -109,8 +147,15 @@ export function AppliedTemplateStrip({
   onRemove,
   trailing = null,
   runsByTemplate = {},
+  historyTemplates = [],
+  // { [templateId]: { title, pending, category } }: the template version each
+  // run is on, and the category it went on with.
+  templateVersions = {},
   // Past-version view: chips show, nothing filters or removes.
   readOnly = false,
+  // A pending recommendation's templates ({ id, name, why, automation }),
+  // shown ahead of the applied ones until the plan is approved.
+  recommended = [],
 }) {
   const chipsRef = useRef(null);
   const measureRef = useRef(null);
@@ -118,15 +163,17 @@ export function AppliedTemplateStrip({
   const [visibleCount, setVisibleCount] = useState(templates.length);
   const [hasOverflow, setHasOverflow] = useState(false);
   const selectedRunTemplate = typeof templateFilterId === 'string' && templateFilterId.startsWith('run:')
-    ? templates.find(t => (runsByTemplate[t.id]?.previous || []).some(r => `run:${r.id}` === templateFilterId))
+    ? [...templates, ...historyTemplates].find(t => (runsByTemplate[t.id]?.previous || []).some(r => `run:${r.id}` === templateFilterId))
     : null;
   const selected = !expanded && templateFilterId
     ? selectedRunTemplate || templates.find(t => t.id === templateFilterId)
     : null;
-  const ordered = selected ? [selected, ...templates.filter(t => t !== selected)] : templates;
+  const all = [...templates, ...historyTemplates];
+  const ordered = selected ? [selected, ...all.filter(t => t !== selected)] : all;
+  const applied = new Set(templates.map(t => t.id));
   // One entry per chip: each template, then its earlier runs right after it.
   const entries = ordered.flatMap(t => [
-    { key: t.id, template: t },
+    ...(applied.has(t.id) ? [{ key: t.id, template: t }] : []),
     ...(runsByTemplate[t.id]?.previous || []).map(run => ({ key: `run:${run.id}`, template: t, run })),
   ]);
   const templatesKey = entries.map(e => e.key).join('|');
@@ -192,12 +239,19 @@ export function AppliedTemplateStrip({
     };
   }, [templatesKey, expanded, entries.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (templates.length === 0) {
-    if (!trailing) return null;
+  const recommendedChips = recommended.length > 0 && (
+    <span className={styles.recommendedTemplates} aria-label="Recommended templates">
+      {recommended.map(t => <RecommendedBadge key={t.id} template={t} />)}
+    </span>
+  );
+
+  if (entries.length === 0) {
+    if (!trailing && !recommendedChips) return null;
     return (
       <div className={styles.templatePriorityBar}>
         <div className={styles.priorityRow}>
-          <span className={`${styles.priorityChips} ${styles.noTemplates}`}>No templates applied</span>
+          {recommendedChips || <span className={`${styles.priorityChips} ${styles.noTemplates}`}>No templates applied</span>}
+          {recommendedChips && <span className={styles.priorityChips} />}
           {trailing}
         </div>
       </div>
@@ -221,6 +275,7 @@ export function AppliedTemplateStrip({
       template={e.template}
       templatePriority={appliedTemplatePriorities[e.template.id] || 'medium'}
       version={runsByTemplate[e.template.id]?.version}
+      templateVersion={templateVersions?.[e.template.id]}
       isActive={live && templateFilterId === e.key}
       canRemove={canRemove}
       onSelect={live && !readOnly ? onSelect : () => {}}
@@ -232,6 +287,7 @@ export function AppliedTemplateStrip({
   return (
     <div className={styles.templatePriorityBar}>
       <div className={styles.priorityRow}>
+        {recommendedChips}
         <div
           ref={chipsRef}
           className={`${styles.priorityChips} ${expanded ? '' : styles.priorityChipsCollapsed}`}

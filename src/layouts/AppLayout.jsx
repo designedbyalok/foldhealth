@@ -1,27 +1,18 @@
 import { lazy, Suspense, useEffect } from 'react';
+import { useCan } from '../lib/useCan';
+import { navPermissionKey } from '../lib/accessControl';
+import { EmptyState } from '../components/EmptyState/EmptyState';
 import { AppSidebar } from '../components/Sidebar/AppSidebar';
 import { SubNav } from '../components/SubNav/SubNav';
 import { TopBar } from '../components/TopBar/TopBar';
 import { TabBar } from './TabBar';
-import { FilterBar } from '../components/FilterBar/FilterBar';
+import { FilterBar } from '../features/worklists/FilterBar';
 import { useSavedFilterActions } from '../features/hcc/useSavedFilterActions';
 import { Pagination } from '../components/Pagination/Pagination';
 import { ActiveCallCard } from '../components/ActiveCallCard/ActiveCallCard';
 import { InvokeAgentModal } from '../components/InvokeAgentModal/InvokeAgentModal';
 import { DegradedBanner } from '../components/DegradedBanner/DegradedBanner';
-import { WorklistTable } from '../features/toc/worklist/WorklistTable';
-import { QueueTable } from '../features/toc/queue/QueueTable';
 import { QueueSummaryBar } from '../features/toc/queue/QueueSummaryBar';
-import { TocWorklistTable } from '../features/toc/TocWorklistTable';
-import { HccWorklistTable } from '../features/hcc/HccWorklistTable';
-import { HedisWorklistTable } from '../features/hedis-worklist/HedisWorklistTable';
-import { AwvWorklistTable } from '../features/awv-worklist/AwvWorklistTable';
-import { JsaWorklistTable } from '../features/jsa-worklist/JsaWorklistTable';
-import { PharmacyWorklistTable } from '../features/pharmacy-worklist/PharmacyWorklistTable';
-import { CcmWorklistTable } from '../features/ccm-worklist/CcmWorklistTable';
-import { SnpWorklistTable } from '../features/snp-worklist/SnpWorklistTable';
-import { AllPatientsTable } from '../features/all-patients/AllPatientsTable';
-import { PopulationGroupsView } from '../features/population-groups/PopulationGroupsView';
 import { PgProcessingHost } from '../features/population-groups/PgProcessingHost';
 import { Icon } from '../components/Icon/Icon';
 import { useAppStore } from '../store/useAppStore';
@@ -33,9 +24,15 @@ import { CallPopoverHost } from '../components/CallPopover/CallPopoverHost';
 import { BrowserCallCard } from '../features/messages/comms/call/BrowserCallCard';
 import { CommsDrawerHost } from '../features/messages/comms/CommsDrawerHost';
 import { ReassignmentSummaryHost } from '../features/ooo/ReassignmentSummaryHost';
+import { BulkSummaryHost } from '../features/calendar/list/BulkSummaryHost';
+import { DesignReviewHost } from '../features/design-review/DesignReviewHost';
 import { useProgramPanelSplitActive, useDiagPanelInSplit } from '../features/patient/hooks/useProgramPanelSplitActive';
 import { supabase } from '../lib/supabase';
 import styles from './AppLayout.module.css';
+import { CaptureConsentDrawerHost } from '../features/patient/shared/CaptureConsentDrawer/CaptureConsentDrawerHost';
+import { ConsentHistoryDrawer } from '../features/patient/shared/ConsentHistoryDrawer/ConsentHistoryDrawer';
+import { ContactConsentDialog } from '../features/patient/shared/ContactConsentDialog/ContactConsentDialog';
+import { GbiStatusReasonHost } from '../features/patient/right-panel/tabs/care-programs/care-plan/GbiStatusReasonHost';
 
 // Lazy-loaded features. These pull in heavy deps (recharts, @xyflow, @schedule-x,
 // @usewaypoint/email-builder, react-grid-layout) and are not used on the default
@@ -58,7 +55,22 @@ const CampaignBuilder   = lz(() => import('../features/campaign/CampaignBuilder'
 const FormBuilder       = lz(() => import('../features/forms/builder/FormBuilder'), 'FormBuilder');
 const FormView          = lz(() => import('../features/forms/view/FormView'),       'FormView');
 
-// Drawers and overlays — only mounted when their state is truthy, so lazy here
+// Worklist tables: one renders per subnav list, so each loads on demand.
+const WorklistTable        = lz(() => import('../features/toc/worklist/WorklistTable'), 'WorklistTable');
+const QueueTable           = lz(() => import('../features/toc/queue/QueueTable'), 'QueueTable');
+const TocWorklistTable     = lz(() => import('../features/toc/TocWorklistTable'), 'TocWorklistTable');
+const HccWorklistTable     = lz(() => import('../features/hcc/HccWorklistTable'), 'HccWorklistTable');
+const HedisWorklistTable   = lz(() => import('../features/hedis-worklist/HedisWorklistTable'), 'HedisWorklistTable');
+const AwvWorklistTable     = lz(() => import('../features/awv-worklist/AwvWorklistTable'), 'AwvWorklistTable');
+const CmpWorklistTable     = lz(() => import('../features/cmp-worklist/CmpWorklistTable'), 'CmpWorklistTable');
+const PharmacyWorklistTable = lz(() => import('../features/pharmacy-worklist/PharmacyWorklistTable'), 'PharmacyWorklistTable');
+const JsaWorklistTable     = lz(() => import('../features/jsa-worklist/JsaWorklistTable'), 'JsaWorklistTable');
+const CcmWorklistTable     = lz(() => import('../features/ccm-worklist/CcmWorklistTable'), 'CcmWorklistTable');
+const SnpWorklistTable     = lz(() => import('../features/snp-worklist/SnpWorklistTable'), 'SnpWorklistTable');
+const AllPatientsTable     = lz(() => import('../features/all-patients/AllPatientsTable'), 'AllPatientsTable');
+const PopulationGroupsView = lz(() => import('../features/population-groups/PopulationGroupsView'), 'PopulationGroupsView');
+
+// Drawers and overlays: only mounted when their state is truthy, so lazy here
 // keeps them out of the entry chunk entirely.
 const DetailDrawer         = lz(() => import('../components/DetailDrawer/DetailDrawer'),                   'DetailDrawer');
 const LiveDrawer           = lz(() => import('../components/LiveDrawer/LiveDrawer'),                       'LiveDrawer');
@@ -117,6 +129,7 @@ function PopulationView() {
   const sidebarShape = useAppStore(s => s.sidebarShape);
 
   const selectedPatientId = useAppStore(s => s.selectedPatientId);
+  const canSeePatient = useCan()('patient:details');
   const pgRuleBuilder = useAppStore(s => s.pgRuleBuilder);
   const setHccFilter = useAppStore(s => s.setHccFilter);
   const programSplit = useProgramPanelSplitActive();
@@ -124,8 +137,9 @@ function PopulationView() {
   const isAwv = activeSubnavList === 'Annual Visit';
   const isJsa = activeSubnavList === 'JSA';
   const isPharmacy = activeSubnavList === 'Pharmacy';
+  const isCmp = activeSubnavList === 'CMP';
 
-  // Dynamic group rule builder — full-page takeover, no subnav
+  // Dynamic group rule builder: full-page takeover, no subnav
   if (pgRuleBuilder) {
     return (
       <div className={styles.main}>
@@ -139,10 +153,18 @@ function PopulationView() {
     );
   }
 
-  // Patient detail view — full-page, no subnav. With a program open "in
+  // Patient detail view: full-page, no subnav. With a program open "in
   // right panel" the page is two cards (see PatientDetailView), so this
   // wrapper drops its own card chrome and the TopBar gives way to the
   // patient card's breadcrumb header.
+  if (selectedPatientId && !canSeePatient) {
+    return (
+      <div className={styles.main}>
+        <TopBar />
+        <div className={styles.content}><NoAccessView /></div>
+      </div>
+    );
+  }
   if (selectedPatientId) {
     return (
       <div className={styles.main} data-floating-split={programSplit || undefined}>
@@ -166,11 +188,11 @@ function PopulationView() {
   const isAllPatients = activeSubnavList === 'All Patients';
   const isPopulationGroup = activeSubnavList.startsWith('pg:');
   const isToc = activeSubnavList === 'TOC IP';
-  const isTcm = activeSubnavList === 'TCM' || (!isHcc && !isHedis && !isCcm && !isAwv && !isJsa && !isPharmacy && !isAllPatients && !isPopulationGroup && !isToc && activeSubnavList !== 'My Patients' && !['Day Optimizer', 'Review HRA', 'IP Visits', 'High Risk', 'High Cost', 'SNP', 'JSA', 'Pharmacy', 'High Utilizers', 'DM', 'My Patients'].includes(activeSubnavList));
+  const isTcm = activeSubnavList === 'TCM' || (!isHcc && !isHedis && !isCcm && !isAwv && !isJsa && !isCmp && !isPharmacy && !isAllPatients && !isPopulationGroup && !isToc && activeSubnavList !== 'My Patients' && !['Day Optimizer', 'Review HRA', 'IP Visits', 'High Risk', 'High Cost', 'SNP', 'JSA', 'Pharmacy', 'High Utilizers', 'DM', 'My Patients'].includes(activeSubnavList));
   const isComingSoon = ['Day Optimizer', 'Review HRA', 'IP Visits', 'High Risk', 'High Cost', 'High Utilizers', 'DM', 'My Patients'].includes(activeSubnavList);
   const pgFilter = activeSubnavList === 'pg:Static' ? 'Static' : activeSubnavList === 'pg:Dynamic' ? 'Dynamic' : 'All';
 
-  const chromeless = isHcc || isHedis || isCcm || isSnp || isAwv || isJsa || isPharmacy || isComingSoon || isPopulationGroup;
+  const chromeless = isHcc || isHedis || isCcm || isSnp || isAwv || isJsa || isCmp || isPharmacy || isComingSoon || isPopulationGroup;
 
   return (
     <div className={styles.main}>
@@ -183,10 +205,14 @@ function PopulationView() {
               TOC uses (title tab + right-side action icons) so the two
               worklists share one visual pattern. */}
           {(!chromeless || isCcm) && <TabBar />}
-          {!chromeless && showFilterBar && (
-            <WorklistFilterBar leading={(isToc || (isTcm && activeTab === 'toc-queue')) ? null : undefined} />
+          {!chromeless && (
+            <WorklistFilterBar
+              collapsed={!showFilterBar}
+              leading={(isToc || (isTcm && activeTab === 'toc-queue')) ? null : undefined}
+            />
           )}
           {isTcm && activeTab === 'toc-queue' && <QueueSummaryBar />}
+          <Suspense fallback={<LazyFallback />}>
           {isHcc
               ? <HccWorklistTable />
               : isHedis
@@ -199,6 +225,8 @@ function PopulationView() {
                   ? <AwvWorklistTable />
                 : isJsa
                   ? <JsaWorklistTable />
+                : isCmp
+                  ? <CmpWorklistTable />
                 : isPharmacy
                   ? <PharmacyWorklistTable />
                   : isAllPatients
@@ -210,6 +238,7 @@ function PopulationView() {
                         : isToc
                           ? <TocWorklistTable />
                           : (activeTab === 'toc-worklist' ? <WorklistTable /> : <QueueTable />)}
+          </Suspense>
           {!chromeless && <Pagination />}
         </div>
       </div>
@@ -218,13 +247,16 @@ function PopulationView() {
 }
 
 function SettingsView() {
-  // New Care Plan is a full-screen takeover: no TopBar, no Settings sub-nav —
+  // New Care Plan is a full-screen takeover: no TopBar, no Settings sub-nav,
   // just the app rail beside the card (Figma Care-Plan-Creation 14108:294859).
   const carePlanCreateOpen = useAppStore(s => s.carePlanCreateOpen);
   const carePlanTemplateScreen = useAppStore(s => s.carePlanTemplateScreen);
+  // Those editors draw their own card. The floating body shell would wrap
+  // that card in a second one, so the wrapper stays bare.
+  const ownCard = carePlanCreateOpen || carePlanTemplateScreen;
   return (
-    <div className={styles.main}>
-      {!carePlanCreateOpen && !carePlanTemplateScreen && <TopBar />}
+    <div className={styles.main} data-floating-bare={ownCard || undefined}>
+      {!ownCard && <TopBar />}
       <div className={styles.content}>
         <Suspense fallback={<LazyFallback />}>
           <SettingsLayout />
@@ -260,6 +292,18 @@ function CalendarViewPage() {
   );
 }
 
+function NoAccessView() {
+  return (
+    <div className={styles.noAccess}>
+      <EmptyState
+        icon="solar:shield-cross-linear"
+        title="You don't have access to this page"
+        description="Your role doesn't include it. Ask your practice administrator if you need it."
+      />
+    </div>
+  );
+}
+
 export function AppLayout() {
   const activePage = useAppStore(s => s.activePage);
   const builderAgent = useAppStore(s => s.builderAgent);
@@ -271,6 +315,11 @@ export function AppLayout() {
   useNotificationsFeed();
 
   useEffect(() => { fetchOrgFeatures(); }, [fetchOrgFeatures]);
+
+  // Access Control: which pages and Settings sections this user's roles see.
+  const fetchAccessRoles = useAppStore(s => s.fetchAccessRoles);
+  useEffect(() => { fetchAccessRoles(); }, [fetchAccessRoles]);
+  const can = useCan();
 
   // Out of Office records drive the avatar badge everywhere, so they load
   // with the app rather than with any one screen.
@@ -287,7 +336,7 @@ export function AppLayout() {
   useEffect(() => {
     // getSession(), not getUser(): getUser() is a network round trip that
     // re-validates the token against the auth server, and this effect used to
-    // block on it before it could do anything — the profile read behind it did
+    // block on it before it could do anything, the profile read behind it did
     // not start until ~4 s into a cold load. getSession() reads the locally
     // persisted session (including user_metadata) with no request at all.
     // Skipping server validation is safe here because everything below is
@@ -302,8 +351,8 @@ export function AppLayout() {
         || [meta.first_name, meta.last_name].filter(Boolean).join(' ')
         || null;
       // Derive the parts from full_name when the provider only gave us a
-      // single name. This used to run one way only — full_name FROM the parts
-      // — so an OAuth signup (Google et al. supply just a full name) wrote
+      // single name. This used to run one way only, full_name FROM the parts,
+      // so an OAuth signup (Google et al. supply just a full name) wrote
       // first_name/last_name NULL, and every later login refreshed the row
       // without ever filling them in. That is where 25 of the 27 broken
       // profiles came from. The DB trigger in
@@ -317,10 +366,18 @@ export function AppLayout() {
       const names = { first_name: firstName, last_name: lastName, full_name: fullName };
       const identity = { id: user.id, email: user.email, updated_at: new Date().toISOString() };
 
+      // Skip the write when this browser already synced these exact values.
+      // Every profiles write is a realtime event that makes each open
+      // Messages tab in the org re-read all profiles, so an unconditional
+      // write per page load fanned out across everyone.
+      const syncKey = `fold:profileSynced:${user.id}`;
+      const fingerprint = JSON.stringify([user.email, fullName, firstName, lastName]);
+      try { if (localStorage.getItem(syncKey) === fingerprint) return; } catch { /* storage blocked */ }
+
       // Write first, ask questions only if it missed. This was a
       // `select id` → then `update` or `insert`, i.e. two serialized round
       // trips on every single page load to do what is almost always one
-      // UPDATE — the row already exists, because handle_new_user() inserts it
+      // UPDATE: the row already exists, because handle_new_user() inserts it
       // from an auth.users trigger at signup. `.select('id')` on the update
       // reports what it actually touched, so the INSERT fallback still covers
       // rows that predate that trigger. Common path: one request. Same
@@ -342,12 +399,15 @@ export function AppLayout() {
         // Identity fields only. `role` / `admin_role` / `clinical_roles` are
         // authorization fields and must be owned by the database (the
         // handle_new_user() trigger and column defaults), never chosen by the
-        // client — otherwise a forged request could self-assign privileges.
+        // client: otherwise a forged request could self-assign privileges.
         await supabase.from('profiles').insert({
           ...identity,
           ...names,
           status: 'Active',
         });
+      }
+      if (updated?.length) {
+        try { localStorage.setItem(syncKey, fingerprint); } catch { /* storage blocked */ }
       }
     });
   }, []);
@@ -363,7 +423,7 @@ export function AppLayout() {
       useAppStore.getState().openBuilder(agent);
       return undefined;
     }
-    // Agent list may not be loaded yet — wait for it
+    // Agent list may not be loaded yet, wait for it
     const unsub = useAppStore.subscribe((state) => {
       if (state.agents?.length && state._pendingAgentId) {
         const a = state.agents.find(ag => String(ag.id) === String(state._pendingAgentId));
@@ -432,7 +492,7 @@ export function AppLayout() {
         if (mode === 'analytics' && subTab) useAppStore.getState().setFormAnalyticsTab(subTab);
       } else {
         // Form is gone (deleted, or a stale/typo'd id). Reset builder state AND
-        // leave the form-edit URL — otherwise onFormBuilderRoute stays true and
+        // leave the form-edit URL: otherwise onFormBuilderRoute stays true and
         // the takeover would show the loading fallback indefinitely.
         useAppStore.getState().showToast?.('Form not found');
         useAppStore.setState({ editingFormId: null, formBuilderForm: null });
@@ -460,6 +520,12 @@ export function AppLayout() {
   const patientEditPatient = useAppStore(s => s.patientEditPatient);
   const closePatientEdit = useAppStore(s => s.closePatientEdit);
   const quickViewPatient = useAppStore(s => s.quickViewPatient);
+  const consentCapture = useAppStore(s => s.consentCapture);
+  const closeConsentCapture = useAppStore(s => s.closeConsentCapture);
+  const consentHistoryPatientId = useAppStore(s => s.consentHistoryPatientId);
+  const closeConsentHistory = useAppStore(s => s.closeConsentHistory);
+  const contactConsent = useAppStore(s => s.contactConsent);
+  const closeContactConsent = useAppStore(s => s.closeContactConsent);
   const assessmentDrawerPatientId = useAppStore(s => s.assessmentDrawerPatientId);
   const outreachStatusDrawerPatientId = useAppStore(s => s.outreachStatusDrawerPatientId);
   const aiTasksDrawerPatientId = useAppStore(s => s.aiTasksDrawerPatientId);
@@ -472,7 +538,7 @@ export function AppLayout() {
 
   // Reload-safe form-builder detection. On a refresh of
   // #/settings/content/forms/{id}/{mode}, `editingFormId` is null until the
-  // hydration effect below has fetched the form and called openFormBuilder —
+  // hydration effect below has fetched the form and called openFormBuilder,
   // an async gap during which the content list would otherwise render, so the
   // editor "flashed back to the list and returned". Reading the URL
   // synchronously here lets the builder takeover win on the very first paint.
@@ -485,7 +551,7 @@ export function AppLayout() {
 
   // Email Builder is a full-screen takeover when editing a campaign. Wins over
   // the CampaignBuilder so "Edit Template" from inside the campaign builder
-  // pushes the email builder on top — closing it falls back to the campaign
+  // pushes the email builder on top, closing it falls back to the campaign
   // builder (campaignBuilderId stays set).
   if (editingCampaignId || editingComponent) {
     return (
@@ -513,7 +579,7 @@ export function AppLayout() {
     );
   }
 
-  // Shareable form fill-view (#/f/{id}) — focused takeover for respondents.
+  // Shareable form fill-view (#/f/{id}): focused takeover for respondents.
   if (formViewId) {
     return (
       <div className={styles.app}>
@@ -525,12 +591,12 @@ export function AppLayout() {
     );
   }
 
-  // Form Builder is a focused full-screen takeover (no app sidebar — it has its
+  // Form Builder is a focused full-screen takeover (no app sidebar: it has its
   // own header + close action that returns to #/settings/content/forms).
   // Rendered whenever the URL is a form-edit route, not only once the store's
   // editingFormId is set, so a reload never flashes the content list first.
   // While the form is still loading (reload, before fetchFormById resolves)
-  // show the neutral fallback rather than an empty "Untitled Form" — the
+  // show the neutral fallback rather than an empty "Untitled Form", the
   // not-found path redirects to the list, so this can't spin forever.
   if (editingFormId || onFormBuilderRoute) {
     return (
@@ -559,7 +625,11 @@ export function AppLayout() {
   // Wraps the active page in a single Suspense boundary so chart/grid/canvas
   // chunks load without dropping the whole shell. PopulationView is eager
   // (default landing area) so its fallback is a no-op.
-  const activeView = activePage === 'home' ? <HomeView />
+  // The sidebar already hides pages a role can't see; this covers a link,
+  // a keyboard shortcut or a typed URL that lands on one anyway.
+  const pageAllowed = can(navPermissionKey(activePage === 'builder' ? 'settings' : activePage));
+  const activeView = !pageAllowed ? <NoAccessView />
+    : activePage === 'home' ? <HomeView />
     : activePage === 'messages' ? <MessagesView />
     : activePage === 'calls' ? <CallsView />
     : activePage === 'tasks' ? <TasksView />
@@ -611,11 +681,25 @@ export function AppLayout() {
           />
         )}
         {quickViewPatient && <QuickViewDrawer />}
+        {consentCapture && (
+          <CaptureConsentDrawerHost
+            key={`${consentCapture.patientId}:${consentCapture.scopeType || ''}:${consentCapture.scope || ''}`}
+            {...consentCapture}
+            onClose={closeConsentCapture}
+          />
+        )}
+        {consentHistoryPatientId && (
+          <ConsentHistoryDrawer key={consentHistoryPatientId} patientId={consentHistoryPatientId} onClose={closeConsentHistory} />
+        )}
+        {contactConsent && <ContactConsentDialog {...contactConsent} onClose={closeContactConsent} />}
         {assessmentDrawerPatientId && <AssessmentDrawer />}
         {outreachStatusDrawerPatientId && <OutreachStatusDrawer />}
         {aiTasksDrawerPatientId && <AiTasksDrawer />}
         <PgProcessingHost />
         <ReassignmentSummaryHost />{/* opens from a reassignment's "summary is ready" notification */}
+        <BulkSummaryHost />{/* opens from a bulk reschedule's or cancel's "summary is ready" notification */}
+        <DesignReviewHost />{/* the floating Design Signoff review box, while a review is active */}
+        <GbiStatusReasonHost />{/* asks why a care plan goal, intervention or barrier changes status */}
       </Suspense>
       <Toaster />
     </div>
@@ -633,10 +717,9 @@ function WorklistFilterBar(props) {
   return (
     <FilterBar
       {...props}
-      // One line of chips; the rest sit in More Filters. TOC IP also follows
-      // the worklist filter spec (primaries in spec order, More Filters by domain).
+      // The primaries that fit show first; added filters follow and wrap.
       autoFit
-      pinPrimary={list === 'TOC IP'}
+      pinPrimary
       onClearAll={savedActions.onClearAll}
       clearAllLabel={savedActions.clearAllLabel}
       saveLabel={savedActions.saveLabel}

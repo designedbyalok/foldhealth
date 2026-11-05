@@ -1,5 +1,5 @@
 /**
- * formatQueryBridge.js — Bridges the population-group rule tree to
+ * formatQueryBridge.js, Bridges the population-group rule tree to
  * react-querybuilder's `formatQuery`, producing SQL (parameterized) and
  * JsonLogic output for server-side evaluation and export.
  *
@@ -74,7 +74,7 @@ function sqlRuleProcessor(rule) {
     return `(SELECT COUNT(*) FROM patient_clinical_events e WHERE e.patient_id = p.patient_id AND e.event_type = '${v.eventType}'${codeFilt}${dateFilt}) ${op} ${Number(v.count)}`;
   }
 
-  /* Profile-column fields — standard SQL */
+  /* Profile-column fields: standard SQL */
   const col = field.profileColumn;
   if (!col) return '(1=1)';
   const op = rule.operator;
@@ -165,7 +165,7 @@ function jsonLogicRuleProcessor(rule) {
 
 /* ── Normalize tree for rqb ──
    formatQuery expects { combinator, rules: [{ field, operator, value }] }.
-   Our rules use complex value objects — flatten them so rqb can walk the tree,
+   Our rules use complex value objects, flatten them so rqb can walk the tree,
    while the ruleProcessor receives the original rule via context. */
 
 function normalizeForRqb(node) {

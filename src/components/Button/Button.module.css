@@ -1,12 +1,13 @@
 /* ── Fold Health Button ──
  * Figma: Fold-Pixel-1.0, node 25:155
  *
- * Sizes:
+ * Sizes (sm / md / lg):
  *   S:  h 24px, px 8px, py 4px, radius 4px, font 12px, icon 14px
  *   L:  h 32px, px 8px, py 4px, radius 4px, font 14px, icon 16px
  *   XL: h 52px, px 12px, py 12px, radius 8px, font 18px, icon 24px (mobile)
  *
- * Types: Primary, Secondary, Tertiary, Success, Error, Ghost, Alt, Disable
+ * Variants: solid, soft, outline, ghost. Tones: primary, neutral, success,
+ *   warning, danger, info (see the variant × tone block below).
  * Font: Inter Medium 500
  * Borders: 0.5px solid
  */
@@ -33,7 +34,7 @@
   line-height: 1;
 }
 
-/* Press feedback — subtle scale-down on active. Applies to every button type
+/* Press feedback: subtle scale-down on active. Applies to every button type
    through the shared base class. AUDIT: 0.95–0.98 range; 0.97 is our default. */
 .btn:active:not(:disabled) {
   transform: scale(0.97);
@@ -85,94 +86,126 @@
 .iconOnly.sizeL { width: 32px; }
 .iconOnly.sizeXL { width: 52px; }
 
-/* ── Type: Primary ── */
-.primary {
-  background: var(--primary-300);
-  color: #FFFFFF;
+/* ── Variant × tone ──
+ * A tone sets five custom properties; a variant decides how to paint them.
+ * `.toned` lands on the button (or the split-button wrapper) with a
+ * data-tone attribute. Hover rules sit on `.btn` only, so the split
+ * wrapper keeps its chrome while each half paints its own hover tint. */
+.toned {
+  --tone: var(--primary-300);          /* text, solid fill, outline line */
+  --tone-strong: var(--primary-400);   /* solid hover */
+  --tone-soft: var(--primary-100);     /* soft fill, outline / ghost hover */
+  --tone-border: var(--primary-200);   /* soft border */
+  --tone-line: var(--primary-300);     /* outline border */
+  --tone-surface: transparent;         /* outline fill */
+  --tone-on: var(--on-color);          /* text on a filled tone */
 }
-.primary:hover:not(:disabled) {
-  background: var(--primary-400);
+.toned[data-tone='neutral'] {
+  --tone: var(--neutral-300);
+  --tone-strong: var(--neutral-400);
+  --tone-soft: var(--neutral-50);
+  --tone-border: var(--neutral-200);
+  --tone-line: var(--neutral-200);
+  --tone-surface: var(--neutral-0);
+  --tone-on: var(--neutral-0);
+}
+.toned[data-tone='success'] {
+  --tone: var(--status-success);
+  --tone-strong: var(--status-success);
+  --tone-soft: var(--status-success-light);
+  --tone-border: color-mix(in srgb, var(--status-success) 50%, transparent);
+  --tone-line: var(--status-success);
+  --tone-on: var(--neutral-0);
+}
+.toned[data-tone='warning'] {
+  --tone: var(--status-warning);
+  --tone-strong: var(--status-warning);
+  --tone-soft: var(--status-warning-light);
+  --tone-border: color-mix(in srgb, var(--status-warning) 50%, transparent);
+  --tone-line: var(--status-warning);
+  --tone-on: var(--neutral-0);
+}
+.toned[data-tone='danger'] {
+  --tone: var(--status-error);
+  --tone-strong: var(--status-error);
+  --tone-soft: var(--status-error-light);
+  --tone-border: color-mix(in srgb, var(--status-error) 50%, transparent);
+  --tone-line: var(--status-error);
+  --tone-on: var(--neutral-0);
+}
+.toned[data-tone='info'] {
+  --tone: var(--status-info);
+  --tone-strong: var(--status-info);
+  --tone-soft: var(--status-info-light);
+  --tone-border: color-mix(in srgb, var(--status-info) 50%, transparent);
+  --tone-line: var(--status-info);
+  --tone-on: var(--neutral-0);
 }
 
-/* ── Type: Secondary ── */
-.secondary {
-  background: var(--neutral-0);
-  color: var(--neutral-300);
-  border: 0.5px solid var(--neutral-200);
+.solid {
+  background: var(--tone);
+  color: var(--tone-on);
 }
-.secondary:hover:not(:disabled) {
-  background: var(--neutral-50);
+.soft {
+  background: var(--tone-soft);
+  color: var(--tone);
+  border: 0.5px solid var(--tone-border);
 }
-
-/* ── Type: Tertiary ── */
-.tertiary {
-  background: var(--primary-100);
-  color: var(--primary-300);
-  border: 0.5px solid var(--primary-200);
+.outline {
+  background: var(--tone-surface);
+  color: var(--tone);
+  border: 0.5px solid var(--tone-line);
 }
-.tertiary:hover:not(:disabled) {
-  background: var(--primary-300);
-  color: var(--neutral-0);
-}
-
-/* ── Type: Ghost ── */
 .ghost {
   background: transparent;
-  color: var(--neutral-300);
-}
-.ghost:hover:not(:disabled) {
-  background: var(--neutral-50);
+  color: var(--tone);
 }
 
-/* ── Type: Alt (outlined purple) ── */
-.alt {
-  background: transparent;
-  color: var(--primary-300);
-  border: 0.5px solid var(--primary-300);
+.btn.solid:hover:not(:disabled) {
+  background: var(--tone-strong);
 }
-.alt:hover:not(:disabled) {
-  background: var(--primary-100);
+.btn.soft:hover:not(:disabled) {
+  background: var(--tone);
+  color: var(--tone-on);
 }
-
-/* ── Type: Success ── */
-.success {
-  background: var(--status-success-light);
-  color: var(--status-success);
-  border: 0.5px solid color-mix(in srgb, var(--status-success) 50%, transparent);
-}
-.success:hover:not(:disabled) {
-  background: var(--status-success);
-  color: var(--neutral-0);
+.btn.outline:hover:not(:disabled),
+.btn.ghost:hover:not(:disabled) {
+  background: var(--tone-soft);
 }
 
-/* ── Type: Error / Danger ── */
-.danger {
-  background: var(--status-error-light);
-  color: var(--status-error);
-  border: 0.5px solid color-mix(in srgb, var(--status-error) 50%, transparent);
+/* ── Loading ──
+ * The label stays in the layout (invisible) so the button keeps its width,
+ * and the spinner sits over it in the label's color. Both switch after
+ * 150ms, so a quick action never flickers; the button is busy (clicks
+ * ignored) from the first instant. */
+.loading {
+  position: relative;
+  cursor: progress;
+  animation: btnLoadingText 1ms 150ms forwards;
 }
-.danger:hover:not(:disabled) {
-  background: var(--status-error);
-  color: var(--neutral-0);
+.loading > :not(.spinnerSlot) {
+  animation: btnLoadingHide 1ms 150ms forwards;
 }
+@keyframes btnLoadingText { to { color: transparent; } }
+@keyframes btnLoadingHide { to { visibility: hidden; } }
 
-/* Solid danger variant (for destructive primary actions) */
-.dangerFilled {
-  background: var(--status-error);
-  color: var(--neutral-0);
+.spinnerSlot {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  color: var(--tone);
+  animation: btnLoadingShow 1ms 150ms forwards;
 }
-.dangerFilled:hover:not(:disabled) {
-  background: var(--status-error);
-}
-
-/* ── Type: Info ── */
-.info {
-  background: var(--status-info);
-  color: var(--neutral-0);
-}
-.info:hover:not(:disabled) {
-  background: var(--status-info);
-}
+@keyframes btnLoadingShow { to { opacity: 1; } }
+.solid .spinnerSlot,
+.btn.soft:hover .spinnerSlot { color: var(--tone-on); }
+/* Split button: the halves are transparent, so color comes from the wrapper's tone. */
+.splitWrapper .loading > .spinnerSlot { color: var(--tone); }
+.splitWrapper.solid .loading > .spinnerSlot { color: var(--tone-on); }
 
 /* ── Disabled (all types) ── */
 .btn:disabled {
@@ -189,7 +222,7 @@
 
 /* ── Split-button (dropdown) mode ──
  * Rendered when Button is called with `menuItems`. The WRAPPER owns
- * every visual — background, border, border-radius, color — so the
+ * every visual, background, border, border-radius, color, so the
  * pill reads as one cohesive shape. The two inner <button>s are
  * transparent click regions that only paint a hover tint on the
  * hovered half, and a 1px divider lives between them. */
@@ -209,7 +242,7 @@
  * has to carry a size class (which would double-paint padding/height). */
 .splitWrapper:has(.sizeXL) { border-radius: 8px; }
 
-/* Halves are transparent inside the wrapper — no bg / no border / no
+/* Halves are transparent inside the wrapper, no bg / no border / no
  * radius of their own. Higher specificity (.splitWrapper .splitMain =
  * 2 classes) beats the base `.btn` variant rules. */
 .splitWrapper .splitMain,
@@ -230,7 +263,7 @@
   border-bottom-right-radius: inherit;
 }
 
-/* Hover tint on the individual half — currentColor mix lets one rule
+/* Hover tint on the individual half, currentColor mix lets one rule
  * work on every variant (light overlay on filled bgs, subtle darken on
  * outlined ones). */
 .splitWrapper .splitMain:hover:not(:disabled),
@@ -238,52 +271,10 @@
   background: color-mix(in srgb, currentColor 12%, transparent);
 }
 
-/* ── Per-variant wrapper chrome ──
- * Same background / border / color as the equivalent `.btn` variant,
- * just applied to the wrapper so both halves live inside one pill. */
-.splitWrapper.primary {
-  background: var(--primary-300);
-  color: var(--neutral-0);
-}
-.splitWrapper.secondary {
-  background: var(--neutral-0);
-  color: var(--neutral-300);
-  border: 0.5px solid var(--neutral-200);
-}
-.splitWrapper.tertiary {
-  background: var(--primary-100);
-  color: var(--primary-300);
-  border: 0.5px solid var(--primary-200);
-}
-.splitWrapper.ghost {
-  background: transparent;
-  color: var(--neutral-300);
-}
-.splitWrapper.alt {
-  background: transparent;
-  color: var(--primary-300);
-  border: 0.5px solid var(--primary-300);
-}
-.splitWrapper.success {
-  background: var(--status-success-light);
-  color: var(--status-success);
-  border: 0.5px solid color-mix(in srgb, var(--status-success) 50%, transparent);
-}
-.splitWrapper.danger {
-  background: var(--status-error-light);
-  color: var(--status-error);
-  border: 0.5px solid color-mix(in srgb, var(--status-error) 50%, transparent);
-}
-.splitWrapper.dangerFilled {
-  background: var(--status-error);
-  color: var(--neutral-0);
-}
-.splitWrapper.info {
-  background: var(--status-info);
-  color: var(--neutral-0);
-}
+/* Wrapper chrome comes from the same `.toned` + variant rules as a plain
+ * button; only hover differs (it lives on the halves, above). */
 
-/* Divider — the ONE interior seam. Uses currentColor at low alpha so
+/* Divider: the ONE interior seam. Uses currentColor at low alpha so
  * it automatically tints per variant (white-ish on filled bgs, purple
  * on tertiary, green on success, etc.) with no per-variant override. */
 .splitDivider {
@@ -294,7 +285,7 @@
   background: color-mix(in srgb, currentColor 25%, transparent);
 }
 
-/* Disabled — the wrapper flattens to the same neutral surface the
+/* Disabled: the wrapper flattens to the same neutral surface the
  * base `.btn:disabled` uses, and inner halves inherit through
  * `color: inherit` without needing their own :disabled rule. */
 .splitWrapper:has(:disabled) {
@@ -306,3 +297,7 @@
 .splitWrapper:has(:disabled) .splitDivider {
   background: var(--neutral-150);
 }
+
+/* Disabled with a reason: hovers pass through to the wrapper's tooltip. */
+.disabledWrap { display: inline-flex; cursor: not-allowed; }
+.disabledWrap > .btn { pointer-events: none; }

@@ -108,7 +108,7 @@ export function RiskView({ showToast, editing = false, resetTick = 0 }) {
   );
 
   const renderRafPractice = () => (
-    <Card title="RAF Breakup by Practice — Recapture Opportunity" flush>
+    <Card title="RAF Breakup by Practice: Recapture Opportunity" flush>
       <div className={s.tblWrap}>
         <table className={s.tbl}>
           <thead>
@@ -139,8 +139,8 @@ export function RiskView({ showToast, editing = false, resetTick = 0 }) {
 
   const renderHccPerf = () => (
     <Card
-      title="HCC Performance — Closure Rates"
-      actions={<Button variant="ghost" size="S" onClick={() => showToast?.('Opening HCC Suspect Worklist')}>Full Workbook &rarr;</Button>}
+      title="HCC Performance: Closure Rates"
+      actions={<Button variant="ghost" size="sm" onClick={() => showToast?.('Opening HCC Suspect Worklist')}>Full Workbook &rarr;</Button>}
     >
       <div className={s.g2}>
         <div>
@@ -205,7 +205,7 @@ export function RiskView({ showToast, editing = false, resetTick = 0 }) {
   );
 
   const renderHccSuspects = () => (
-    <Card title="Top Open HCC Suspects" flush actions={<Button variant="ghost" size="S" onClick={() => showToast?.('Opening full HCC suspect worklist')}>View All &rarr;</Button>}>
+    <Card title="Top Open HCC Suspects" flush actions={<Button variant="ghost" size="sm" onClick={() => showToast?.('Opening full HCC suspect worklist')}>View All &rarr;</Button>}>
       <div className={s.tblWrap}>
         <table className={s.tbl}>
           <thead>
@@ -225,7 +225,7 @@ export function RiskView({ showToast, editing = false, resetTick = 0 }) {
                 <td>{row.description}</td>
                 <td className={`${s.r} ${s.valR}`} style={{ fontWeight: 500 }}>{row.revenue_impact}</td>
                 <td className={s.mono}>{row.last_coded}</td>
-                <td><Button variant="ghost" size="S" onClick={() => showToast?.(`${row.action} for ${row.member_id}`)}>{row.action}</Button></td>
+                <td><Button variant="ghost" size="sm" onClick={() => showToast?.(`${row.action} for ${row.member_id}`)}>{row.action}</Button></td>
               </tr>
             ))}
           </tbody>

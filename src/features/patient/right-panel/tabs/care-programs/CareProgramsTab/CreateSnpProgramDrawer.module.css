@@ -1,0 +1,13 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Between the header actions and the close button (drawer header rule). */
+.headerDivider {
+  width: 1px;
+  height: var(--space-4);
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}

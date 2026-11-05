@@ -7,7 +7,15 @@
 // History.
 // Template rows that renew a run already on the plan rather than add or
 // remove one. Their detail is a sentence, not the template's contents.
-export const TEMPLATE_RENEWAL_ACTIVITY = { extended: 'Extended', reinstated: 'Reinstated' };
+// Episode rows (lib/episodeTemplates) are the same kind of sentence.
+export const TEMPLATE_RENEWAL_ACTIVITY = {
+  extended: 'Extended',
+  reinstated: 'Reinstated',
+  episode_started: 'Episode Started',
+  episode_extended: 'Episode End Date Changed',
+  episode_ended: 'Episode Ended',
+  recategorized: 'Category Changed',
+};
 export const isTemplateRenewal = row => !!TEMPLATE_RENEWAL_ACTIVITY[row?.action];
 
 export function templateContents(row) {
@@ -71,7 +79,7 @@ export function withLiveLinks(contents, { plan, libraryGoals } = {}) {
   const linkedBarriers = new Set();
 
   // When the row recorded a list, the links are narrowed to it. When it
-  // recorded none — older rows carry no barriers at all — the library goal's
+  // recorded none, older rows carry no barriers at all, the library goal's
   // links stand on their own, since those links are what the template applied.
   const keep = (recorded) => (title) => recorded.size === 0 || recorded.has(norm(title));
   const keepIntv = keep(ownIntv);

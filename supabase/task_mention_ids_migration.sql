@@ -6,8 +6,8 @@
 --
 --   text.match(/@(\w+(?:\s+\w+)?)/g)
 --
--- CommentComposer already knew exactly who was picked — the mention menu is
--- built from `profiles` rows and had the id in hand — and then threw it away,
+-- CommentComposer already knew exactly who was picked, the mention menu is
+-- built from `profiles` rows and had the id in hand, and then threw it away,
 -- keeping only the name. So intent was recovered by guessing at a string, and
 -- the guess is wrong in ordinary cases:
 --
@@ -28,14 +28,14 @@
 --      no ids were added on this statement.
 --
 -- WHY IDS ARE STILL EXPANDED BY NAME
--- `profiles` holds one row per email a person ever signed up with — three are
--- named "Alok Kumar" — and the picker's roster (`fetchPlatformUsers`) dedupes
+-- `profiles` holds one row per email a person ever signed up with, three are
+-- named "Alok Kumar", and the picker's roster (`fetchPlatformUsers`) dedupes
 -- by name, so it can only ever offer ONE of those ids. If we notified that id
 -- alone, a person signed in as a different one of their own duplicate rows
 -- would silently miss the mention, which is worse than today. So an id is
 -- expanded to every profile sharing its display name before rows are written.
 --
--- The win from ids is therefore not "fewer recipients" — it is that the set of
+-- The win from ids is therefore not "fewer recipients", it is that the set of
 -- recipients is derived from a picked identity rather than from a regex over
 -- free text, so typos, punctuation, casing, handles, and later edits to the
 -- comment body cannot change who gets told. Name expansion is the deliberate
@@ -77,7 +77,7 @@ begin
   -- ── Assignment ──
   -- The tg_op test is a separate statement on purpose. PL/pgSQL leaves OLD
   -- *unassigned* (not null) in an INSERT trigger, and touching a field on an
-  -- unassigned record raises `record "old" is not assigned yet` — so folding
+  -- unassigned record raises `record "old" is not assigned yet`, so folding
   -- this into one OR'd condition would abort every task INSERT.
   if tg_op = 'INSERT' then
     assignee_changed := new.assigned_to_id is not null;
@@ -173,7 +173,7 @@ commit;
 --   update tasks set mention_ids = array['<alok id>','<other id>']::uuid[] where id = <task id>;
 --   Expect: only the rows for <other id>'s name.
 --
--- Id path SUPPRESSES the legacy name path — a composer write sets both columns
+-- Id path SUPPRESSES the legacy name path, a composer write sets both columns
 -- and must not double-notify:
 --   update tasks set mention_ids = array['<alok id>']::uuid[],
 --                    mentions    = array['Alok Kumar']

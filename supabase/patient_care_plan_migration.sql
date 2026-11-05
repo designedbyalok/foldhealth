@@ -1,27 +1,27 @@
--- Patient Care Plan — the per-patient, per-program Goals & Interventions that
+-- Patient Care Plan: the per-patient, per-program Goals & Interventions that
 -- the Care Plan step renders.
 --
 -- THE HOLE THIS CLOSES
 -- The patient-facing Care Plan step (CarePlanView) rendered entirely from a
 -- static import (src/features/patient/data/carePlanMock.js). Every goal, its
--- status, every intervention — all hard-coded. Nothing a user did there could
+-- status, every intervention, all hard-coded. Nothing a user did there could
 -- persist, and there was no way to show a different plan per patient/program.
 -- Meanwhile Settings → Care Plan Library already had real, Supabase-backed
 -- goals/interventions/templates (care_plan_* tables) but nothing connected the
 -- two: a library template could not be instantiated against a patient.
 --
 -- WHAT THIS DOES
---   1. patient_care_plans — one header row per (patient, program). Holds the
+--   1. patient_care_plans: one header row per (patient, program). Holds the
 --      plan's identity: who created it, the chronic-condition chips shown at
 --      the top, and the total-conditions count. `program_id` is the runtime
 --      text id the store mints for an enrollment (`pcp-<patient>-<code>`), not
 --      a uuid, so it is stored as text. UNIQUE (patient_id, program_id) makes
 --      "the plan for this program" a single, upsertable row.
---   2. patient_care_plan_goals — one row per goal on a plan. Columns mirror
+--   2. patient_care_plan_goals: one row per goal on a plan. Columns mirror
 --      care_plan_goals (so a library goal maps in 1:1) plus the fields the
 --      patient view shows and edits: current_value, trend, status, and the
 --      subtitle/icon the row renders. sort_order keeps the author's ordering.
---   3. patient_care_plan_interventions — one row per intervention. goal_id is
+--   3. patient_care_plan_interventions: one row per intervention. goal_id is
 --      NULLABLE: the patient view lists interventions in their own section, not
 --      strictly nested under a goal, so an intervention belongs to the plan and
 --      MAY point at a goal. ON DELETE SET NULL keeps an intervention alive if

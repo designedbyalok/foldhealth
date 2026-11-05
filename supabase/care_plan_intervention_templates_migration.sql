@@ -1,4 +1,4 @@
--- Care Plan intervention templates — reusable, standalone interventions.
+-- Care Plan intervention templates: reusable, standalone interventions.
 --
 -- THE HOLE THIS CLOSES
 -- Interventions only existed *inside* a goal: care_plan_interventions rows hang
@@ -8,7 +8,7 @@
 -- way to save an intervention as a reusable template (roadmap #32).
 --
 -- WHAT THIS DOES
---   care_plan_intervention_templates — one row per reusable intervention,
+--   care_plan_intervention_templates: one row per reusable intervention,
 --   independent of any goal. `kind` is the same vocabulary the goal drawer's
 --   Add-Intervention menu uses (send-form / patient-education / patient-task /
 --   measure-vital / internal-task); `config` jsonb carries the kind-specific
@@ -17,7 +17,7 @@
 --   care_plan_interventions rows (those stay the per-goal instances).
 --
 -- RLS
--- Per RLS_POSTURE.md: on, wide open to `authenticated`, closed to `anon` —
+-- Per RLS_POSTURE.md: on, wide open to `authenticated`, closed to `anon`,
 -- staff-only library configuration, same as the other care_plan_* tables.
 
 CREATE TABLE IF NOT EXISTS public.care_plan_intervention_templates (

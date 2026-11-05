@@ -7,13 +7,13 @@
 -- from the INSERT via a client-side `dbOmit` (src/store/useAppStore.js).
 -- After reload the UI reconstructs them by name-matching `task.member`
 -- against `hedis_members` and by treating `task.labels` as the gap-code
--- list — brittle: two members with the same name collide, and any
+-- list: brittle: two members with the same name collide, and any
 -- non-gap label (a program tag, a care-journey chip) is treated as a
 -- gap code.
 --
 -- Ships two columns:
---   • hedis_member_id  — text, FK-shaped (matches hedis_members.id text)
---   • hedis_gap_codes  — text[], mirrors clinical_notes.gap_codes shape
+--   • hedis_member_id: text, FK-shaped (matches hedis_members.id text)
+--   • hedis_gap_codes: text[], mirrors clinical_notes.gap_codes shape
 -- Plus an index on hedis_member_id for the reviewer / drawer lookups.
 --
 -- Backfill: for every HEDIS Sign-Off task whose member name matches
@@ -28,7 +28,7 @@ alter table public.tasks
   add column if not exists hedis_gap_codes text[] default '{}'::text[];
 
 comment on column public.tasks.hedis_member_id is
-  'HEDIS member id (matches public.hedis_members.id) — set only for tasks in the HEDIS Sign-Off pool. NULL for every other task type.';
+  'HEDIS member id (matches public.hedis_members.id), set only for tasks in the HEDIS Sign-Off pool. NULL for every other task type.';
 comment on column public.tasks.hedis_gap_codes is
   'Gap codes this sign-off task covers (subset of the codes on the linked clinical_notes row). Empty array for non-HEDIS tasks.';
 
@@ -39,7 +39,7 @@ create index if not exists tasks_hedis_member_idx
 -- ---------------------------------------------------------------------
 -- Backfill existing sign-off tasks by unique-name match.
 -- Uses a CTE so we can pick out ambiguous names (>1 member with the
--- same display name) and leave those NULL — the UI's existing legacy
+-- same display name) and leave those NULL, the UI's existing legacy
 -- fallback still covers them.
 -- ---------------------------------------------------------------------
 
@@ -59,7 +59,7 @@ update public.tasks t
    and u.n = 1;
 
 -- ---------------------------------------------------------------------
--- caregap_activity — add a PK constraint on id so future seed
+-- caregap_activity: add a PK constraint on id so future seed
 -- INSERT ... ON CONFLICT (id) DO NOTHING statements are idempotent.
 -- The bootstrap migration declared `id text not null` without a PK;
 -- fresh envs still work but re-seeding would double-write rows. Guard

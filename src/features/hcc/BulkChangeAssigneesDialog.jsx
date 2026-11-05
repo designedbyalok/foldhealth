@@ -13,7 +13,7 @@ import styles from './BulkChangeAssigneesDialog.module.css';
 
 // Engine role key → clinical_roles vocabulary admins pick from in
 // Settings → Users. Mirrors ENGINE_TO_CLINICAL in RoleAssigneePicker so
-// both surfaces filter the same way — the bulk dialog is a many-at-once
+// both surfaces filter the same way, the bulk dialog is a many-at-once
 // version of the row picker.
 const ENGINE_TO_CLINICAL = {
   support:   'Support',
@@ -23,19 +23,19 @@ const ENGINE_TO_CLINICAL = {
 };
 
 /**
- * BulkChangeAssigneesDialog — centered modal matching Figma 1399:5871.
+ * BulkChangeAssigneesDialog: centered modal matching Figma 1399:5871.
  *
  * Opens from the HCC worklist's BulkBar "Change Assignee" action when one
  * or more rows are selected. Lets the user pick a role (Support / Coder /
  * Reviewer / Reviewer 2) and a single candidate from that role's pool (configured
  * Care Team members + Astrana roster), then applies the assignment to
- * every selected DOS (one per selected member's first DOS — the bulk
+ * every selected DOS (one per selected member's first DOS: the bulk
  * batch).
  *
  * Per the Figma copy ("Existing assignees for the selected role will be
  * replaced with the selected user. Assignees whose tasks are already
  * completed will not be changed."), members whose role is already in a
- * terminal state for that role are skipped — only active or new buckets
+ * terminal state for that role are skipped, only active or new buckets
  * are updated.
  *
  * Props:
@@ -44,7 +44,7 @@ const ENGINE_TO_CLINICAL = {
  *  - onClose       (function)            close + cancel
  *  - onApplied     (function({count}))   fires after a successful apply
  */
-// Statuses the engine treats as terminal — a role bucket in any of these
+// Statuses the engine treats as terminal, a role bucket in any of these
 // states is "completed work" per the Figma info banner ("Assignees whose
 // tasks are already completed will not be changed") and the bulk update
 // must skip it.
@@ -83,7 +83,7 @@ export function BulkChangeAssigneesDialog({ open, selectedIds, onClose, onApplie
     }
   }, [open]);
 
-  // Candidate pool — platform users (Settings → Users / profiles) whose
+  // Candidate pool: platform users (Settings → Users / profiles) whose
   // clinical_roles include the selected role's HCC clinical role. Mirrors
   // the row picker's strict scoping (see RoleAssigneePicker.jsx). Care
   // Team members for that role float to the top with a "Team: <name>"
@@ -93,7 +93,7 @@ export function BulkChangeAssigneesDialog({ open, selectedIds, onClose, onApplie
     const requiredRole = ENGINE_TO_CLINICAL[role];
     if (!requiredRole) return [];
 
-    // 1. Care Team members for this role — collect names → team name.
+    // 1. Care Team members for this role, collect names → team name.
     const teamMemberMap = new Map();
     for (const t of hccCareTeams || []) {
       if (t.kind !== 'hcc' || t.teamType !== teamType) continue;
@@ -155,7 +155,7 @@ export function BulkChangeAssigneesDialog({ open, selectedIds, onClose, onApplie
       if (!member || !dos) return;
       // Honor the info-banner rule: members whose role is already complete
       // are not touched. The engine treats Completed / Reject /
-      // Insufficient as terminal — none of those should be reassigned.
+      // Insufficient as terminal: none of those should be reassigned.
       if (isRoleCompleted(member, dos)) {
         skipped++;
         return;
@@ -168,7 +168,7 @@ export function BulkChangeAssigneesDialog({ open, selectedIds, onClose, onApplie
           .then(outcome => ({ member, outcome })),
       );
     });
-    // Close immediately — the rows already flipped optimistically. The
+    // Close immediately: the rows already flipped optimistically. The
     // toast waits for the actual DB outcomes: counting fired requests as
     // "updated" let a success toast mask writes that never persisted
     // (RLS / missing row / network), which reverted on the next reload.
@@ -183,14 +183,14 @@ export function BulkChangeAssigneesDialog({ open, selectedIds, onClose, onApplie
       const more = failed.length > 3 ? ` +${failed.length - 3} more` : '';
       showToast(
         `Reassigned ${updated} of ${updated + failed.length} ${roleLabel} role${updated + failed.length === 1 ? '' : 's'}`
-        + ` — couldn't save ${names}${more}; those rows were reverted.`,
+        + `, couldn't save ${names}${more}; those rows were reverted.`,
       );
     } else if (updated && skipped) {
       showToast(`Reassigned ${updated} ${roleLabel} role${updated === 1 ? '' : 's'} to ${pickedUser.name} · ${skipped} skipped (already completed)`);
     } else if (updated) {
       showToast(`Reassigned ${updated} ${roleLabel} role${updated === 1 ? '' : 's'} to ${pickedUser.name}`);
     } else if (skipped) {
-      showToast(`No changes — all ${skipped} selected ${roleLabel} role${skipped === 1 ? '' : 's'} already completed`);
+      showToast(`No changes: all ${skipped} selected ${roleLabel} role${skipped === 1 ? '' : 's'} already completed`);
     }
   };
 
@@ -226,7 +226,7 @@ export function BulkChangeAssigneesDialog({ open, selectedIds, onClose, onApplie
           <Select
             options={roleOptions}
             value={role}
-            onChange={(v) => { setRole(v); setPickedId(null); }}
+            onValueChange={(v) => { setRole(v); setPickedId(null); }}
           />
         </div>
 
@@ -241,7 +241,7 @@ export function BulkChangeAssigneesDialog({ open, selectedIds, onClose, onApplie
         </div>
 
         <div className={styles.list} role="radiogroup">
-          {/* Unassigned option — placeholder avatar */}
+          {/* Unassigned option: placeholder avatar */}
           <CandidateRow
             id="__unassigned"
             initials=""
@@ -273,12 +273,10 @@ export function BulkChangeAssigneesDialog({ open, selectedIds, onClose, onApplie
         </div>
 
         <div className={styles.footer}>
-          <Button variant="secondary" size="M" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button
-            variant="primary"
-            size="M"
             disabled={!pickedId || pickedId === '__unassigned'}
             onClick={handleApply}
           >

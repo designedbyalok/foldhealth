@@ -4,11 +4,11 @@ import { Button } from '../Button/Button';
 import { CloseButton } from '../CloseButton/CloseButton';
 import { SearchBar } from '../SearchBar/SearchBar';
 import { useAppStore } from '../../store/useAppStore';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../Dialog/Dialog';
 import styles from './SelectAssigneeModal.module.css';
 
 /**
- * SelectAssigneeModal — centred "pick one person" dialog.
+ * SelectAssigneeModal: centred "pick one person" dialog.
  * Matches Figma SNP-Story 2632:134826.
  *
  * The roster is the platform user list (Supabase `profiles`), so any surface
@@ -106,10 +106,8 @@ export function SelectAssigneeModal({
           </div>
 
           <div className={styles.footer}>
-            <Button variant="secondary" size="L" fullWidth onClick={close}>Cancel</Button>
+            <Button variant="outline" fullWidth onClick={close}>Cancel</Button>
             <Button
-              variant="primary"
-              size="L"
               fullWidth
               disabled={!selected}
               onClick={() => { if (selected) { onConfirm?.(selected); close(); } }}

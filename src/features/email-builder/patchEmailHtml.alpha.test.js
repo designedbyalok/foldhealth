@@ -6,7 +6,7 @@ function doc(block) {
   return { root: { type: 'EmailLayout', data: { childrenIds: ['b'] } }, b: block };
 }
 
-describe('patchEmailHtml — translucent hex handling', () => {
+describe('patchEmailHtml: translucent hex handling', () => {
   it('emits an Outlook-safe opaque fallback before rgba() for standalone color props', () => {
     const html = renderEmailHtml(doc({
       type: 'Text',
@@ -15,7 +15,7 @@ describe('patchEmailHtml — translucent hex handling', () => {
         style: { color: '#7C5CFA59', backgroundColor: '#FF000080' },
       },
     }));
-    // color: flattened first, rgba() second — order matters for Outlook's
+    // color: flattened first, rgba() second: order matters for Outlook's
     // "last valid declaration wins" quirk.
     expect(html).toMatch(/color:#[0-9A-F]{6};color:rgba\(124, 92, 250, 0\.\d+\)/);
     expect(html).toMatch(/background-color:#[0-9A-F]{6};background-color:rgba\(255, 0, 0, 0\.\d+\)/);
@@ -32,7 +32,7 @@ describe('patchEmailHtml — translucent hex handling', () => {
         childrenIds: [],
       },
     }));
-    // 0x59 / 255 = 0.349019… — the emitted rgba matches within 3 decimals.
+    // 0x59 / 255 = 0.349019…, the emitted rgba matches within 3 decimals.
     expect(html).toMatch(/rgba\(124, 92, 250, 0\.34\d?\)/);
     expect(html).not.toMatch(/#7C5CFA59/i);
   });

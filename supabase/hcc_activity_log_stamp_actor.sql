@@ -2,7 +2,7 @@
 --
 -- THE HOLE THIS CLOSES
 -- `hcc_activity_log_insert` is WITH CHECK (true) for authenticated. Every
--- actor column — actor_id, actor_name, actor_role — arrives from the browser
+-- actor column, actor_id, actor_name, actor_role, arrives from the browser
 -- and is written verbatim. Any signed-in user can POST a row attributed to
 -- anybody, with any headline, at any timestamp. For a table whose entire job is
 -- to be the compliance record of who touched which chart, that is the one
@@ -16,14 +16,14 @@
 -- It is worse than it looks, because today the log cannot identify anyone at
 -- all: makeActivityRow() sets `actor_id: payload.actorId || scope.actorId ||
 -- null` (src/features/hcc/activityLog.js:141) and NOTHING in the codebase ever
--- passes actorId — `grep -rn actorId src` finds only that line and a UI key
+-- passes actorId: `grep -rn actorId src` finds only that line and a UI key
 -- filter. So actor_id is null on every one of the ~1,264 existing rows. The
 -- audit trail has never had a real actor.
 --
 -- WHAT THIS DOES
 --   1. A BEFORE INSERT trigger that overwrites actor_id with auth.uid() for any
 --      caller holding a JWT. Client input for that column is discarded, not
---      validated — there is no version of "the browser knows best" here.
+--      validated: there is no version of "the browser knows best" here.
 --   2. WITH CHECK (actor_id = auth.uid()::text) on the INSERT policy, so the
 --      guarantee is enforced by RLS and not merely by the trigger. Belt and
 --      braces: the trigger makes correct inserts succeed, the policy makes
@@ -31,7 +31,7 @@
 --      AFTER BEFORE-triggers have fired, so these compose rather than fight.
 --
 -- WHAT THIS DELIBERATELY DOES NOT DO
--- actor_name and actor_role stay client-supplied, and that is intentional —
+-- actor_name and actor_role stay client-supplied, and that is intentional,
 -- they are DISPLAY labels, not identity. The timeline legitimately writes
 -- actor_name = 'System' for automated events (useAppStore.js:865) and 'SFTP'
 -- for unattended ingest (HccHistoryDrawer.jsx:541), and HccHistoryDrawer
@@ -47,8 +47,8 @@
 -- policies, SELECT and INSERT. With RLS on and no UPDATE or DELETE policy,
 -- both are denied by default for authenticated. Nothing to add.
 --
--- Existing rows keep actor_id = null. They are not retro-attributable — the
--- information was never captured — and inventing it would be the exact forgery
+-- Existing rows keep actor_id = null. They are not retro-attributable, the
+-- information was never captured: and inventing it would be the exact forgery
 -- this migration exists to prevent. Null is the honest value.
 --
 -- NOT SECURITY DEFINER, on purpose. It needs no privilege it does not already
@@ -64,7 +64,7 @@ set search_path = public
 as $$
 begin
   -- No JWT: service_role, the SQL editor, seeds and the api/ functions. Those
-  -- bypass RLS entirely, so stamping here would be theatre — and clobbering a
+  -- bypass RLS entirely, so stamping here would be theatre, and clobbering a
   -- seeded actor_id would corrupt fixtures. Leave the row as supplied.
   if auth.uid() is null then
     return new;
@@ -108,7 +108,7 @@ commit;
 --   Expect: hcc_activity_log_stamp_actor
 --
 -- From the app, signed in: open a chart and change an assignee, then check the
--- newest row carries YOUR id even though the client sent none —
+-- newest row carries YOUR id even though the client sent none,
 --   select ts, event_name, actor_id, actor_name
 --     from hcc_activity_log order by ts desc limit 5;
 --   Expect: actor_id = your auth user id on the new row, null on older ones.
@@ -118,7 +118,7 @@ commit;
 --     .insert({ event_name: 'patient.field_edited', actor_id: '<someone-else>' })
 --   Expect: the row is written with YOUR actor_id, not theirs. The trigger
 --   overwrites before the check runs, so this succeeds-but-corrected rather
---   than erroring — the forged value never reaches the table either way.
+--   than erroring: the forged value never reaches the table either way.
 --
 -- Seeds still work (no auth.uid(), trigger no-ops):
 --   node scripts/seed.js   → inserts unaffected.

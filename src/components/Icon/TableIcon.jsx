@@ -1,6 +1,6 @@
 /**
  * Table / spreadsheet glyph. Solar has no table icon, so this is the
- * design-system source of truth for one — reach for it (or `custom:table`
+ * design-system source of truth for one, reach for it (or `custom:table`
  * via `<Icon>`) instead of re-drawing a table SVG per feature.
  *
  * @param {object}  props

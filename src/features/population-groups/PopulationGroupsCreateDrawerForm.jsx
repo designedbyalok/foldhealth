@@ -78,13 +78,13 @@ export function PopulationGroupsCreateDrawerForm({ vm }) {
                           <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', background:'var(--status-info-light)', border:'0.5px solid color-mix(in srgb, var(--status-info) 40%, transparent)', borderRadius:6, marginBottom:12 }}>
                             <InfoCircleLinear size={14} color="var(--status-info)" style={{ flexShrink:0 }} />
                             <span style={{ fontSize: 'var(--font-sm)', color:'var(--status-info)', lineHeight: 1.5 }}>
-                              Ensure column names match your ID type — use "EHR ID" for EHR IDs or "Fold Contact ID" for Fold Contact IDs.
+                              Ensure column names match your ID type, use "EHR ID" for EHR IDs or "Fold Contact ID" for Fold Contact IDs.
                             </span>
                           </div>
 
                           {/* Upload area or uploaded file */}
                           {uploadFile && uploadState === 'uploading' ? (
-                            /* File selected — show progress */
+                            /* File selected: show progress */
                             <div style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', border:'0.5px solid var(--primary-200)', borderRadius:8, background:'var(--primary-50)', marginBottom:10 }}>
                               <Avatar variant="icon" size={28} backgroundColor="var(--primary-100)" borderColor="var(--primary-200)" icon={<TableIcon color="var(--primary-300)" size={16} />} />
                               <div style={{ flex:1, minWidth:0 }}>
@@ -191,7 +191,7 @@ export function PopulationGroupsCreateDrawerForm({ vm }) {
                     </div>
                   )}
 
-                  {/* Fold Membership Status — always visible */}
+                  {/* Fold Membership Status: always visible */}
                   <div style={{ marginBottom:16 }}>
                     <span style={{ display:'block', fontSize: 'var(--font-base)', fontWeight:400, color:'var(--neutral-200)', marginBottom: 6 }}>Fold Membership Status</span>
                     <DrawerSelect

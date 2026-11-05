@@ -125,7 +125,7 @@ export function EscalationPolicyPanel() {
               </span>
             ))}
           </div>
-          <Button variant="secondary" size="S" leadingIcon="solar:add-circle-linear" style={{ marginTop: 10 }}>
+          <Button variant="outline" size="sm" leadingIcon="solar:add-circle-linear" style={{ marginTop: 10 }}>
             Add Keyword
           </Button>
         </div>

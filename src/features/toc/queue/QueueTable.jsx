@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { Icon } from '../../../components/Icon/Icon';
-import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
+import { WorklistShell } from '../../worklists/WorklistShell';
 import { useTableSort } from '../../../components/HeaderCell/useTableSort';
 import { QueueRow, getQueueMiddleColumns } from './QueueRow';
 import { QueueEmptyState } from './QueueEmptyState';
@@ -32,7 +32,7 @@ export function QueueTable({
 
   const isToc = worklistKey === 'toc';
 
-  // This table reads `patients` and `callDetails` but never fetched either —
+  // This table reads `patients` and `callDetails` but never fetched either,
   // it relied on SubNav prefetching them for every Population route, which is
   // why `call_details` (101.9 KB) loaded on HCC, CCM, SNP and the rest. SubNav
   // now fetches counts only, so the view that renders the data owns fetching
@@ -83,7 +83,7 @@ export function QueueTable({
     return isToc ? result.map(enrichTocRow) : result;
   }, [patients, searchQuery, activeFilters, isToc]);
 
-  // TOC only — click cycles asc → desc → clear (back to priority order).
+  // TOC only: click cycles asc → desc → clear (back to priority order).
   // TCM Agent Queue keeps its fixed priority sort.
   const { sorted, sortKey, sortDir, setSort, clearSort } = useTableSort(filteredQueue);
   const handleSort = (field) => {

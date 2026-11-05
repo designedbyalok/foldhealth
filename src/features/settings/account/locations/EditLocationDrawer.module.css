@@ -1,4 +1,4 @@
-/* Edit / New Practice Location drawer — 2-step wizard (Practice location →
+/* Edit / New Practice Location drawer, 2-step wizard (Practice location →
    Business hours). Reuses the shared Drawer + Input + Select primitives. */
 
 .drawerBody {
@@ -14,7 +14,7 @@
   color: var(--neutral-400);
 }
 
-/* Stepper — two numbered pills connected by a horizontal rule. Active pill
+/* Stepper: two numbered pills connected by a horizontal rule. Active pill
    picks up primary-300; a check icon replaces the number once complete. */
 .stepper {
   display: flex;
@@ -73,7 +73,7 @@
 }
 .stepBarDone { background: var(--primary-300); }
 
-/* Body — 16px padding all around; scroll independently between the fixed
+/* Body: 16px padding all around; scroll independently between the fixed
    stepper and footer. */
 .body {
   flex: 1;
@@ -113,7 +113,7 @@
   border: 0.5px solid var(--neutral-150);
 }
 
-/* Step 2 — day chips + slot rows. */
+/* Step 2: day chips + slot rows. */
 .slotBar {
   display: flex;
   justify-content: flex-end;

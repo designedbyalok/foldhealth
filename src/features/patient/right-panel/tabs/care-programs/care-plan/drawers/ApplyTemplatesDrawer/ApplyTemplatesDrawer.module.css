@@ -1,4 +1,4 @@
-/* Figma 2349:336796 — Add Care Plan Templates drawer. Search sits above a
+/* Figma 2349:336796, Add Care Plan Templates drawer. Search sits above a
    two-column table (Problems Name / Priority) whose rows carry a checkbox,
    a title + template subtitle, and a three-button priority picker rendered
    with the shared PriorityIcon primitive. */
@@ -28,7 +28,7 @@
   min-width: 0;
 }
 
-/* Filter row — revealed below the search/filter toolbar by the Filter button. */
+/* Filter row: revealed below the search/filter toolbar by the Filter button. */
 .filterBar {
   display: flex;
   align-items: center;
@@ -62,7 +62,7 @@
   flex: 1;
   min-width: 0;
 }
-/* Condition column — fixed width so the cells align under the sortable head.
+/* Condition column: fixed width so the cells align under the sortable head.
    The head is a button (click to cycle sort) but reads as plain header text. */
 .tableHeadCondition {
   display: inline-flex;
@@ -91,7 +91,7 @@
   flex-shrink: 0;
   padding-left: var(--space-3);
 }
-/* Trailing actions column (favorite star + preview) — kept as an empty header
+/* Trailing actions column (favorite star + preview): kept as an empty header
    spacer so the row action cluster aligns under a fixed column. */
 .tableHeadActions {
   /* Apply again (applied rows only), then the star, right-aligned so the
@@ -154,7 +154,23 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* Why a recommended template is here — the matched patient problem(s). */
+/* Why a recommended template is here, the matched patient problem(s). */
+/* A newly added template's category: the picker and why it's preset. Indented
+   past the checkbox so it reads as part of the row above. */
+.categoryRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 0 var(--space-2) var(--space-2) calc(var(--space-2) * 2 + var(--space-4));
+}
+.categorySelect { max-width: 480px; }
+.categoryMatched,
+.categoryNote {
+  font-size: var(--font-sm);
+}
+.categoryMatched { color: var(--status-success); }
+.categoryNote { color: var(--neutral-300); }
+
 .rowReason {
   font-size: var(--font-sm);
   color: var(--primary-300);
@@ -163,7 +179,7 @@
   white-space: nowrap;
 }
 
-/* Condition value — aligns under the Condition head column width. */
+/* Condition value: aligns under the Condition head column width. */
 .conditionCell {
   width: 160px;
   flex-shrink: 0;
@@ -216,7 +232,7 @@
   width: 56px;
   flex-shrink: 0;
 }
-/* Priority button — Figma 2562:60655 / 60665 / 60675.
+/* Priority button: Figma 2562:60655 / 60665 / 60675.
    Three states per priority variant:
    • Default: 0.5px grey-150 border, glyph greyed out (grayscale filter so
      the shared PriorityIcon SVG mutes its colour without touching the
@@ -242,7 +258,7 @@
 .priorityBtn:hover > svg,
 .priorityBtnActive > svg { filter: none; opacity: 1; }
 
-/* Low — status-info palette */
+/* Low: status-info palette */
 .priorityBtn[data-priority="low"]:hover {
   background: var(--status-info-light);
   border-color: var(--status-info-light);
@@ -252,7 +268,7 @@
   border-color: var(--status-info);
 }
 
-/* Medium — status-warning palette */
+/* Medium: status-warning palette */
 .priorityBtn[data-priority="medium"]:hover {
   background: var(--status-warning-light);
   border-color: var(--status-warning-light);
@@ -262,7 +278,7 @@
   border-color: var(--status-warning-dark);
 }
 
-/* High — secondary (coral) palette */
+/* High: secondary (coral) palette */
 .priorityBtn[data-priority="high"]:hover {
   background: var(--secondary-100);
   border-color: var(--secondary-100);

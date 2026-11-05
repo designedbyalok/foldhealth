@@ -1,0 +1,598 @@
+/* ── Calendar List view (VBC-25651, Figma 3023:575134) ── */
+
+.root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--neutral-0);
+}
+
+/* One scroller for every group, so the stacked tables share a horizontal
+   scroll and their columns line up. */
+/* The empty state, centred in the list. */
+.empty {
+  display: flex;
+  justify-content: center;
+  padding-top: calc(var(--space-10) * 2);
+}
+
+.scroller {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  /* With the cells' own 8px, content starts 16px in, like the worklists. */
+  padding: 0 var(--space-2);
+}
+
+/* ── A section per provider (Figma Tasks 866:7982), each over the
+   standard worklist table ── */
+/* Its min-width (inline) is the table's: the fixed columns plus room for
+   Reason for Visit. Narrower, the list scrolls sideways. */
+.group { min-width: 0; }
+
+/* The provider's label row, over a darker rule like a Tasks status group. */
+.groupRow {
+  display: flex;
+  align-items: center;
+  padding: var(--space-4) var(--space-2) var(--space-2);
+  border-bottom: 0.5px solid var(--neutral-200);
+}
+/* The checkbox, avatar and name stay at the left edge while the table
+   scrolls sideways, lined up with the sticky checkbox column under them. */
+.groupLead { position: sticky; left: var(--space-2); display: inline-flex; align-items: center; }
+
+.groupToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  margin-left: var(--space-2);
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+.groupToggle:hover { color: var(--neutral-500); }
+
+.groupCount {
+  display: inline-flex;
+  margin-left: var(--space-1);
+}
+/* A count alone: at least as wide as it is tall, the number centered. */
+.countSquare {
+  min-width: 20px;
+  justify-content: center;
+}
+
+.caret { transform: rotate(-90deg); transition: transform var(--duration-base) var(--ease-out); }
+.caretOpen { composes: caret; transform: rotate(0deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .caret { transition: none; }
+}
+
+.actionCell { text-align: center; }
+.rowActions { display: inline-flex; align-items: center; gap: var(--space-2); }
+
+/* Sticky columns (left offsets match COLUMNS): the checkbox and Appt Type on
+   the left, "..." on the right. Their row backgrounds are solid, so the
+   columns between scroll under them; a hairline marks each edge. Raised
+   above the row, they'd hide its divider, so they take the same border,
+   which the table collapses into the row's one line. */
+.stickyCheck,
+.stickyType,
+.stickyActions { position: sticky; z-index: 2; border-bottom: 0.5px solid var(--neutral-150); }
+.stickyCheck { left: 0; }
+.stickyType { left: 36px; box-shadow: inset -0.5px 0 0 var(--neutral-150); }
+.stickyActions { right: 0; box-shadow: inset 0.5px 0 0 var(--neutral-150); }
+/* Disabled while a selection is open: the dots in neutral-150 as they are,
+   without the button's extra dimming (doubled to outrank it). */
+.actionCell.actionCell button:disabled > svg { opacity: 1; }
+
+/* Room for two lines in every row, so a row with a second line (member
+   details, Provider OOO) is no taller than one without. */
+.row { height: 52px; }
+
+/* An open provider's appointments sit on a light tint under the white
+   provider row; picked and highlighted rows below override it. */
+.row td { background: var(--primary-25); transition: background-color var(--duration-base) var(--ease-out); }
+/* Every column's text in neutral-300, the member link included (status
+   badges and the Provider OOO tag keep their own colours). */
+.row td,
+.row td .memberLink { color: var(--neutral-300); }
+/* Just reassigned to me (from the notification), for 3 seconds. */
+.rowHighlight td { background: var(--primary-50); }
+
+.rowPicked td { background: var(--primary-50); }
+
+/* Two-line cells, like the worklists' member cell: the value over a
+   quieter detail line. */
+.twoLine {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-width: 0;
+}
+/* Lines start at their own width; capped at the cell so "…" kicks in
+   instead of running into the next column. */
+.twoLine > .cellText { max-width: 100%; }
+
+/* The member's name, cut short with an ellipsis when the column is narrow. */
+.memberLine {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+/* The provider is out of office then: in the Out of Office pink. */
+.oooNote {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  line-height: 1.2;
+  color: var(--accent-magenta);
+  white-space: nowrap;
+  cursor: default;
+}
+
+.cellText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Every checkbox sits 8px in, like the table header's; in the provider row
+   it keeps 24px clear so the avatar lines up with the member avatars below
+   (8 + 16 + 24 = the 36px checkbox column + 12px cell padding). */
+.check,
+.checkDisabled { display: inline-flex; padding-right: var(--space-6); }
+.checkCell .check,
+.checkCell .checkDisabled { padding-right: 0; }
+/* Doubled to outrank the worklist cell's own padding, whichever loads last. */
+.checkCell.checkCell { padding-left: var(--space-2); padding-right: var(--space-2); }
+
+/* A disabled checkbox ignores the pointer; the wrapper still catches the
+   hover for the tooltip that says why. */
+.checkDisabled { cursor: not-allowed; }
+.checkDisabled > * { pointer-events: none; }
+
+/* The member link: user icon + name; the name gives way to "…" first. */
+.memberLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  max-width: 100%;
+}
+.memberLinkText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Cancel Appointments drawer ── */
+/* Doubled to win over the dialog's own max-width utility. */
+/* Cancel Appointments drawer (Close Case layout): the prompt, then the reasons. */
+.cancelBody { display: flex; flex-direction: column; gap: var(--space-4); }
+.cancelPrompt { font-size: var(--font-base); font-weight: 500; line-height: 1.2; color: var(--neutral-400); }
+/* The reasons: the prompt, then 12px between it and each radio. */
+.cancelReasons { gap: var(--space-3); }
+.cancelReasons [role="radiogroup"] { gap: var(--space-3); }
+
+/* ── Bulk Reschedule drawer ── */
+.member {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* Stays inside its cell; a long detail line ends in "…" (full text on hover). */
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Figma VMG 777:24172: name over "when • what", both 14 regular. */
+.memberName {
+  font-size: var(--font-base);
+  font-weight: 400;
+  color: var(--neutral-500);
+}
+
+/* Sized to the button, not stretched to the header's height, so the
+   tooltip sits just under Save. */
+.saveTip { align-self: center; }
+
+/* Save, while rows are still empty: the wrapper takes the hover for its tooltip. */
+.saveBlocked { display: inline-flex; cursor: not-allowed; }
+.saveBlocked > * { pointer-events: none; }
+
+.headerDivider {
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+.reschedule {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3); /* 12px from the heading to the table */
+}
+
+
+
+
+
+
+
+.memberText {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2); /* 2px between the name and its detail line */
+  min-width: 0;
+}
+
+.memberSub {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.memberDemo {
+  font-weight: 400;
+  color: var(--neutral-200);
+}
+
+.rescheduleTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.rescheduleDateCol { width: 160px; }
+.rescheduleTimeCol { width: 170px; }
+
+/* "Select New Date & Time" with Autofill on the right. */
+.rescheduleHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.rescheduleTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.rescheduleTable th {
+  padding: var(--space-2);
+  font-size: var(--font-sm);
+  font-weight: 400;
+  color: var(--neutral-300);
+  text-align: left;
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.rescheduleTable td {
+  padding: var(--space-2);
+  border-bottom: 0.5px solid var(--neutral-150);
+  vertical-align: middle;
+}
+
+/* ── Bulk Edit Appointments drawer ── */
+.bulkEdit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Bulk Update Preview: Fields / Change To, in a bordered card. */
+.changeTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  overflow: hidden;
+}
+.changeFieldCol { width: 30%; }
+.changeTable th {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-base);
+  font-weight: 400;
+  color: var(--neutral-400);
+  text-align: left;
+  background: var(--neutral-50);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.changeTable td {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-base);
+  vertical-align: top;
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.changeTable tr:last-child td { border-bottom: 0; }
+.changeField { color: var(--neutral-300); }
+.changeValue {
+  color: var(--neutral-400);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.applyList {
+  display: flex;
+  flex-direction: column;
+}
+.applyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+/* Bulk Edit, first step: "Applies to [N] appointments", a folded card in
+   the shape of Reassign's "No users available for reassignment", in neutral. */
+.appliesTo {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2);
+  background: var(--neutral-50);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+}
+.appliesToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-300);
+  text-align: left;
+  cursor: pointer;
+}
+.appliesToggle:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; border-radius: 2px; }
+.countBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  padding: calc(var(--space-1) / 2) var(--space-1);
+  border-radius: 4px;
+  background: var(--secondary-300);
+  font-size: var(--font-2xs);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-0);
+}
+/* The arrow turns as the card opens. */
+.chevron { flex-shrink: 0; transition: transform var(--duration-medium) var(--ease-out); }
+.chevronOpen { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .chevron { transition: none; } }
+/* The rows sit on white inside the card. */
+.appliesBody { padding-top: var(--space-2); }
+.appliesBody .applyList {
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-1);
+}
+.appliesBody .applyRow:last-child { border-bottom: 0; }
+/* Bulk Edit's Action Needed (Figma Tasks 1413:40970): a red tray of
+   conflict cards; each a header, then a Fields / Initial / Updated table. */
+.conflicts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--status-error-light);
+  border-radius: var(--space-2);
+}
+.conflictsHead { display: flex; align-items: center; justify-content: space-between; padding: var(--space-1) var(--space-2); }
+/* An Action Needed card's Autofill Slots and Hide Details, split by a divider. */
+.conflictsTools { display: inline-flex; align-items: center; gap: var(--space-3); }
+.conflictsTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-300);
+}
+.conflictCard { background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: var(--space-2); overflow: hidden; }
+.conflictHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.conflictBody { padding: var(--space-2); background: var(--neutral-50); }
+.conflictTable { background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: var(--space-2); overflow: hidden; }
+.conflictTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+  font-size: var(--font-base);
+}
+.conflictErrors { font-weight: 500; color: var(--status-error); }
+.conflictOk { font-weight: 500; color: var(--status-success); }
+.conflictGrid {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  column-gap: var(--space-3);
+  row-gap: var(--space-2);
+  align-items: start;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+}
+.conflictTh { font-size: var(--font-base); font-weight: 500; color: var(--neutral-300); padding-bottom: var(--space-1); }
+.conflictField { font-size: var(--font-base); color: var(--neutral-400); padding-top: var(--space-2); }
+/* Date, then that day's slots, side by side. */
+.conflictPick { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2); min-width: 0; align-items: start; }
+/* The pick's error runs under both the date and the slot. */
+.conflictError { grid-column: 1 / -1; font-size: var(--font-sm); line-height: 1.2; color: var(--status-error); }
+
+/* ── Group appointment: the session row and its drawer ── */
+.row { cursor: pointer; }
+/* Two panels: the session's details, then its members beside them. */
+.groupDrawer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: var(--space-6);
+  align-items: start;
+  min-height: 100%;
+}
+/* Tracking (the legacy members panel): grey, full height, its own search. */
+.trackingPanel {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) calc(var(--space-4) * -1) 0;
+  background: var(--neutral-50);
+  border-left: 0.5px solid var(--neutral-150);
+}
+.trackingHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.trackingTitle { margin: 0; font-size: var(--font-lg); font-weight: 500; color: var(--neutral-500); }
+.trackingList { display: flex; flex-direction: column; padding: 0 var(--space-4); }
+.trackingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.trackingInfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); }
+.trackingSub { font-size: var(--font-sm); color: var(--neutral-300); overflow-wrap: anywhere; }
+.trackingStatus { display: inline-flex; margin-top: var(--space-1); }
+.sessionMeta { display: flex; flex-direction: column; gap: var(--space-4); }
+.sessionHead { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.sessionTitle { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.sessionName { font-size: var(--font-xl); font-weight: 500; line-height: 1.2; color: var(--neutral-500); }
+.copyLink { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-sm); }
+.sessionActivity { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-2); }
+.totalMembers {
+  padding: var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+.sessionMetaRow { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.sessionMetaLabel { font-size: var(--font-sm); color: var(--neutral-300); }
+.sessionMetaValue {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+}
+.memberActions { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+.membersEmpty { padding: var(--space-3); font-size: var(--font-sm); color: var(--neutral-300); }
+
+/* ── Bulk Edit Confirmation (Figma Tasks 1424:13811) ── */
+.confirm { display: flex; flex-direction: column; gap: var(--space-6); }
+.confirmHero { display: flex; justify-content: center; padding: var(--space-12) 0 var(--space-4); }
+.confirmMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  /* Mint greens from the Figma success green, no grey in the mix. */
+  background: color-mix(in srgb, var(--status-success-dark) 16%, var(--neutral-0));
+  color: var(--status-success-dark);
+  box-shadow: 0 0 0 12px color-mix(in srgb, var(--status-success-dark) 7%, var(--neutral-0));
+  animation: confirmPop 420ms var(--ease-out) both;
+}
+.confirmMarkFailed {
+  background: color-mix(in srgb, var(--status-error) 14%, var(--neutral-0));
+  color: var(--status-error);
+  box-shadow: 0 0 0 12px color-mix(in srgb, var(--status-error) 6%, var(--neutral-0));
+}
+@keyframes confirmPop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.confirmCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  text-align: center;
+  animation: confirmRise 320ms var(--ease-out) 120ms both;
+}
+@keyframes confirmRise {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.confirmTitle { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+.confirmCounts { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--font-base); }
+.confirmOk { color: var(--status-success); }
+.confirmDot { color: var(--neutral-200); }
+.confirmFailed {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--status-error);
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .confirmMark, .confirmCard { animation: none; }
+}
+
+/* Bulk Edit: Location and its note fold away for virtual. The 24px between
+   fields moves inside each fold (and out of the flex gap), so a shut fold
+   takes no space at all. */
+.foldAbove { margin-bottom: calc(-1 * var(--space-6)); }
+.foldAbove > * > * { margin-bottom: var(--space-6); }
+.foldBelow { margin-top: calc(-1 * var(--space-6)); }
+.foldBelow > * > * { margin-top: var(--space-6); }
+
+
+/* Bulk Cancel / Reschedule review: appointments inside their type's
+   window, flagged in amber (staff can still go ahead). */
+.windowReview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--status-warning-light);
+  border-radius: var(--space-2);
+}
+.windowReview > .conflictsTitle { padding: var(--space-1) var(--space-2) 0; }
+.windowReviewNote { padding: 0 var(--space-2); font-size: var(--font-sm); color: var(--neutral-400); }
+.windowReview .applyRow:last-child { border-bottom: 0; }
+.windowReviewTrail { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+.windowReviewLimit { font-size: var(--font-sm); color: var(--neutral-300); white-space: nowrap; }

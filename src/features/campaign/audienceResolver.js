@@ -90,7 +90,7 @@ const OPEN_RATE = 44;      // % of delivered mail that gets opened
 /** Simulated delivery status for one recipient of one campaign. */
 export function simulateStatus(campaignId, memberId) {
   // Two independent hashes (different suffixes) so the delivery and open draws
-  // are uncorrelated — a single hash's shifted bits skew the open rate.
+  // are uncorrelated: a single hash's shifted bits skew the open rate.
   const deliveredRoll = hashStr(`${campaignId}:${memberId}:delivered`) % 100;
   const openRoll = hashStr(`${campaignId}:${memberId}:open`) % 100;
   if (deliveredRoll >= DELIVERED_RATE) return 'bounced';

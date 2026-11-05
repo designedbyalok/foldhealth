@@ -9,7 +9,7 @@
 -- The later member_id re-identification (patient_reident_member_id_migration.sql,
 -- PR #372) rewrote every worklist primary key to a synthetic code and moved the
 -- numeric value into `member_id`, so `WHERE id = '10039'` no longer matched and
--- the dedup silently no-oped. Only the leftover display rows duplicated — the
+-- the dedup silently no-oped. Only the leftover display rows duplicated, the
 -- single patient profile (11089) and all programs/plans stayed consolidated.
 --
 -- KEY CHOICE (important)

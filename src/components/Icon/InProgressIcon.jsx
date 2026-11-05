@@ -1,15 +1,15 @@
 /**
- * In Progress status icon — pie chart at 50%, half-filled with the
+ * In Progress status icon: pie chart at 50%, half-filled with the
  * status-warning amber. Used by `statusSpec.js` for the "In Progress"
  * row across worklist cells, the DiagPanel status pill, and the legend.
  *
  * Provided verbatim from Figma (Jan-Feb 2026 file). The colour comes
  * through as a prop so it can stay in lockstep with the spec's `color`
- * field — both the half-fill and the surrounding ring use the same tone.
+ * field: both the half-fill and the surrounding ring use the same tone.
  *
  * @param {object}  props
- * @param {number}  [props.size=12]            — Width & height in px
- * @param {string}  [props.color='#D9A50B']    — Fill + stroke (warning amber)
+ * @param {number}  [props.size=12], Width & height in px
+ * @param {string}  [props.color='#D9A50B']: Fill + stroke (warning amber)
  * @param {string}  [props.className]
  */
 export function InProgressIcon({ size = 12, color = '#D9A50B', className, ...rest }) {

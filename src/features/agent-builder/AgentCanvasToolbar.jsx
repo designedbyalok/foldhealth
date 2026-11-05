@@ -1,4 +1,4 @@
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
 import { Button } from '../../components/Button/Button';
@@ -22,7 +22,7 @@ export function AgentCanvasToolbar({
   return (
     <div className={styles.toolbar}>
       <div className={styles.toolbarLeft}>
-        <Button variant="ghost" size="S" iconOnly leadingIcon="solar:arrow-left-linear" onClick={onClose} title="Back to Agents" />
+        <Button variant="ghost" size="sm" iconOnly leadingIcon="solar:arrow-left-linear" onClick={onClose} title="Back to Agents" />
         <span className={styles.agentName}>{agentName}</span>
         {autoSaveStatus !== 'idle' && (
           <span className={styles.autoSaveStatus}>
@@ -32,33 +32,31 @@ export function AgentCanvasToolbar({
       </div>
 
       <div className={styles.toolbarCenter}>
-        <Toggle items={BUILDER_TABS} active={activeTab} onChange={onTabChange} />
+        <SegmentedControl items={BUILDER_TABS} value={activeTab} onValueChange={onTabChange} />
       </div>
 
       <div className={styles.toolbarRight}>
         <ActionButton
           icon="solar:undo-left-linear"
-          size="L"
           tooltip="Undo (⌘Z)"
-          state={canUndo ? 'active' : 'disabled'}
+          disabled={!canUndo}
           onClick={onUndo}
         />
         <ActionButton
           icon="solar:undo-right-linear"
-          size="L"
           tooltip="Redo (⌘⇧Z)"
-          state={canRedo ? 'active' : 'disabled'}
+          disabled={!canRedo}
           onClick={onRedo}
         />
         <span className={styles.toolbarDivider} />
-        <Button variant="secondary" size="L" onClick={onSave} disabled={saving}>
-          {saving ? 'Saving…' : 'Save'}
+        <Button variant="outline" onClick={onSave} loading={saving}>
+          Save
         </Button>
         <span className={styles.toolbarDivider} />
-        <Button variant="ghost" size="L" leadingIcon="solar:play-linear" disabled>
+        <Button variant="ghost" leadingIcon="solar:play-linear" disabled>
           Run Test
         </Button>
-        <Button variant="ghost" size="L" disabled>
+        <Button variant="ghost" disabled>
           Deploy Agent Now
         </Button>
         <CloseButton onClick={onClose} />

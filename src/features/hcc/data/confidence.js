@@ -9,27 +9,27 @@ export const CONFIDENCE_DATA = {
     { text: 'eGFR has remained stable between 38–42 over the past 14 months.' },
   ] },
   'E11.319': { score: 78, status: 'Ready to Close', evidence: [
-    { text: 'HbA1c 8.4% (02/10/2026) — consistently above target.' },
+    { text: 'HbA1c 8.4% (02/10/2026): consistently above target.' },
     { text: 'Ophthalmology visit 01/20/2026: mild non-proliferative DR confirmed.' },
     { text: 'Currently on metformin 1000mg BID + insulin glargine 20U nightly.' },
     { text: 'Diabetic retinopathy noted in retinal imaging report.' },
   ] },
   'F32.1': { score: 72, status: 'High Confidence', evidence: [
-    { text: 'PHQ-9 score 14 (01/25/2026) — moderate severity.' },
+    { text: 'PHQ-9 score 14 (01/25/2026): moderate severity.' },
     { text: 'Patient on sertraline 100mg daily for 6+ months.' },
     { text: 'Psychiatry follow-up 12/15/2025: single episode confirmed.' },
     { text: 'DSM-5 criteria met per behavioral health note.' },
   ] },
   'I50.43': { score: 91, status: 'Ready to Close', evidence: [
     { text: 'Echo 01/08/2026: EF 30%, combined systolic and diastolic failure.' },
-    { text: 'BNP 820 pg/mL (01/10/2026) — elevated, consistent with decompensation.' },
+    { text: 'BNP 820 pg/mL (01/10/2026): elevated, consistent with decompensation.' },
     { text: 'Carvedilol 12.5mg BID + lisinopril 10mg daily active.' },
     { text: 'Cardiology note 01/12/2026 documents acute-on-chronic exacerbation.' },
   ] },
   'G47.33': { score: 80, status: 'Ready to Close', evidence: [
-    { text: 'Sleep study (12/20/2025): AHI 28 events/hr — moderate-severe OSA.' },
+    { text: 'Sleep study (12/20/2025): AHI 28 events/hr, moderate-severe OSA.' },
     { text: 'CPAP therapy initiated, compliance report 72% usage.' },
-    { text: 'BMI 34.2 — risk factor documented in chart.' },
+    { text: 'BMI 34.2, risk factor documented in chart.' },
     { text: 'Pulmonology referral note confirms ongoing active diagnosis.' },
   ] },
 };
@@ -47,7 +47,7 @@ const DEFAULT_CONFIDENCE = {
 export const getConfidence = (code) => CONFIDENCE_DATA[code] || DEFAULT_CONFIDENCE;
 
 /**
- * DB-preferring variant of getConfidence — pass the `hccGapConfidence`
+ * DB-preferring variant of getConfidence: pass the `hccGapConfidence`
  * store slice (a { code: { score, status, evidence, factors, meatNote } }
  * map) as `dbMap`. Returns the DB row when the code is seeded, otherwise
  * falls back to the JS mock. This lets IcdRow read a single source that
@@ -82,7 +82,7 @@ export function getFieldConfidence(enc, fieldName) {
   for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) & 0xffffffff;
   const ah = Math.abs(h);
   const bucket = ah % 10;
-  // ~55% high, ~30% medium, ~15% low — matches the per-encounter
+  // ~55% high, ~30% medium, ~15% low, matches the per-encounter
   // distribution in mockOcr.gradedMatchConfidence so the two views feel
   // visually consistent.
   if (bucket < 5) return 85 + (ah % 15);          // 85-99
@@ -95,7 +95,7 @@ export function getFieldConfidence(enc, fieldName) {
  * lower → secondary orange; sub-35 → muted grey.
  */
 export function getScoreStyle(score) {
-  // Amber/orange tiers use dark text — white on brand-yellow/orange fails WCAG AA.
+  // Amber/orange tiers use dark text: white on brand-yellow/orange fails WCAG AA.
   if (score >= 75) return { color: 'var(--neutral-0)',   bg: 'var(--status-success)', label: 'Auto-Surface' };
   if (score >= 55) return { color: 'var(--neutral-500)', bg: 'var(--status-warning)', label: 'Clinical Review' };
   if (score >= 35) return { color: 'var(--neutral-500)', bg: 'var(--secondary-300)',  label: 'Batch Review' };

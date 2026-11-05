@@ -15,7 +15,7 @@ export const POS_BY_VT = {
   'Established Patient Office Visit':          { code: '11', desc: 'Office' },
   'Telehealth Visit':                          { code: '02', desc: 'Telehealth (Other)' },
   'Specialist Visit / Consult':                { code: '22', desc: 'On-Campus OP Hospital' },
-  'ER Visit':                                  { code: '23', desc: 'ER — Hospital' },
+  'ER Visit':                                  { code: '23', desc: 'ER: Hospital' },
   'Inpatient Visit / Admission':               { code: '21', desc: 'Inpatient Hospital' },
   'Observation Visit':                         { code: '22', desc: 'On-Campus OP Hospital' },
   'Skilled Nursing Facility Visit':            { code: '31', desc: 'SNF' },

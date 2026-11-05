@@ -1,4 +1,4 @@
-/** Intervention type picker — Figma SNP-Story 2632:91999, shared with CreateGoalDrawer. */
+/** Intervention type picker: Figma SNP-Story 2632:91999, shared with CreateGoalDrawer. */
 export const CARE_PLAN_INTERVENTION_MENU = [
   { key: 'send-form', label: 'Send Form', icon: 'solar:document-add-linear' },
   { key: 'patient-education', label: 'Patient Education', icon: 'solar:book-2-linear' },

@@ -2,16 +2,16 @@ import { Icon } from '../Icon/Icon';
 import styles from './ChipSelect.module.css';
 
 /**
- * ChipSelect — a wrapping group of selectable pills for picking from a short
+ * ChipSelect: a wrapping group of selectable pills for picking from a short
  * fixed list inline (no popover), e.g. barriers / interventions on a form.
  *
  * Props:
  *  - options   string[]
  *  - value     string[] (multi) | string | null (single)
- *  - onChange  (next) => void — string[] in multi mode, string | null in single
- *  - single    boolean — one pick at a time; clicking the picked chip clears it
- *  - tone      'primary' | 'error' | 'success' — selected color
- *  - ariaLabel string — names the group for assistive tech
+ *  - onChange  (next) => void: string[] in multi mode, string | null in single
+ *  - single    boolean: one pick at a time; clicking the picked chip clears it
+ *  - tone      'primary' | 'error' | 'success', selected color
+ *  - ariaLabel string: names the group for assistive tech
  */
 export function ChipSelect({ options, value, onChange, single = false, tone = 'primary', ariaLabel }) {
   const picked = single ? (value ? [value] : []) : (value || []);

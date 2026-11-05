@@ -12,13 +12,13 @@ import { Icon } from '../../../../../../components/Icon/Icon';
 import { CloseIcon } from '../../../../../../components/Icon/CloseIcon';
 import { AddIconMinimalist } from '../../../../../../components/Icon/AddIconMinimalist';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { AllergySelect } from './AllergySelect';
 import { ALLERGY_REACTIONS, REACTION_SYSTEM } from '../../../../../../reference-data/allergyReactions';
 import { toast } from '../../../../../../components/Toast/sonnerToast';
 import { todayIso, toIsoDate, formatClinicalDate } from '../../../../../../lib/clinicalDates';
-import { Collapse } from '../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import styles from '../AddProblemsDrawer/AddProblemsDrawer.module.css';
 
 const STATUS_OPTIONS = ['Active', 'Past'].map(v => ({ value: v, label: v }));
@@ -27,7 +27,7 @@ const REACTION_TYPE_OPTIONS = ['Adverse Reaction', 'Allergy', 'Intolerance']
 // Criticality drives the badge tone: High is the one that changes care.
 const CRITICALITY_OPTIONS = ['High', 'Low', 'Unable to Assess']
   .map(v => ({ value: v, label: v }));
-const CRITICALITY_TONE = { High: 'error', Low: 'grey', 'Unable to Assess': 'grey' };
+const CRITICALITY_TONE = { High: 'danger', Low: 'neutral', 'Unable to Assess': 'neutral' };
 // Coded reactions, so a recorded reaction carries its SNOMED concept rather
 // than a string someone typed.
 const REACTION_OPTIONS = ALLERGY_REACTIONS.map(r => ({ value: r.code, label: r.display }));
@@ -52,8 +52,8 @@ function AllergyRow({ allergy, onStatusChange, onEdit, dimmed }) {
             <span className={styles.rowTitle}>{allergy.title}</span>
             {allergy.criticality && (
               <Badge
-                tone={CRITICALITY_TONE[allergy.criticality] || 'grey'}
-                size="S"
+                tone={CRITICALITY_TONE[allergy.criticality] || 'neutral'}
+                size="sm"
                 label={allergy.criticality}
               />
             )}
@@ -80,20 +80,20 @@ function AllergyRow({ allergy, onStatusChange, onEdit, dimmed }) {
           portal
           options={STATUS_OPTIONS}
           value={allergy.status || 'Active'}
-          onChange={v => onStatusChange(allergy, v)}
+          onValueChange={v => onStatusChange(allergy, v)}
           className={styles.statusSelect}
         />
         <span className={styles.rowDivider} aria-hidden="true" />
         <ActionButton
           icon="solar:pen-linear"
-          size="S"
+          size="sm"
           tooltip="Edit"
           aria-label={`Edit ${allergy.title}`}
           onClick={() => onEdit(allergy)}
         />
       </div>
       {hasDetails && (
-        <Collapse open={open}>
+        <CollapsibleContent open={open}>
           <div className={styles.rowDetails}>
             {allergy.reactions?.length > 0 && (
               <p className={`${styles.rowNote} ${styles.rowReactions}`}>
@@ -112,7 +112,7 @@ function AllergyRow({ allergy, onStatusChange, onEdit, dimmed }) {
               </p>
             )}
           </div>
-        </Collapse>
+        </CollapsibleContent>
       )}
     </div>
   );
@@ -171,8 +171,8 @@ function AllergyDraft({ title, eyebrow, initial, onSave, onCancel }) {
       </div>
       <div className={[styles.draftFields, styles.draftFieldsTriple].join(' ')}>
         <Input label="Since Date" required type="date" value={since} onChange={e => setSince(e.target.value)} />
-        <Select portal label="Reaction Type" required options={REACTION_TYPE_OPTIONS} value={reactionType} onChange={setReactionType} />
-        <Select portal label="Criticality" required options={CRITICALITY_OPTIONS} value={criticality} onChange={setCriticality} />
+        <Select portal label="Reaction Type" required options={REACTION_TYPE_OPTIONS} value={reactionType} onValueChange={setReactionType} />
+        <Select portal label="Criticality" required options={CRITICALITY_OPTIONS} value={criticality} onValueChange={setCriticality} />
       </div>
 
       <div className={styles.draftDividerRow} aria-hidden="true" />
@@ -186,7 +186,7 @@ function AllergyDraft({ title, eyebrow, initial, onSave, onCancel }) {
               searchable
               options={REACTION_OPTIONS.filter(o => o.value === r.code || !takenCodes.has(o.value))}
               value={r.code}
-              onChange={(code) => patchReaction(i, {
+              onValueChange={(code) => patchReaction(i, {
                 code,
                 display: ALLERGY_REACTIONS.find(x => x.code === code)?.display || '',
               })}
@@ -198,10 +198,10 @@ function AllergyDraft({ title, eyebrow, initial, onSave, onCancel }) {
               portal
               options={REACTION_SEVERITY_OPTIONS}
               value={r.severity}
-              onChange={v => patchReaction(i, { severity: v })}
+              onValueChange={v => patchReaction(i, { severity: v })}
               className={styles.reactionSeverity}
             />
-            <ActionButton size="S" tooltip="Remove" aria-label={`Remove reaction ${i + 1}`} onClick={() => removeReaction(i)}>
+            <ActionButton size="sm" tooltip="Remove" aria-label={`Remove reaction ${i + 1}`} onClick={() => removeReaction(i)}>
               <CloseIcon size={14} color="var(--neutral-300)" />
             </ActionButton>
           </div>
@@ -218,7 +218,7 @@ function AllergyDraft({ title, eyebrow, initial, onSave, onCancel }) {
         <div className={styles.draftNote}>
           <div className={styles.draftNoteHead}>
             <span className={styles.draftNoteLabel}>Note</span>
-            <ActionButton size="S" tooltip="Discard note" aria-label="Discard note" onClick={() => { setNote(''); setNoteOpen(false); }}>
+            <ActionButton size="sm" tooltip="Discard note" aria-label="Discard note" onClick={() => { setNote(''); setNoteOpen(false); }}>
               <CloseIcon size={14} color="var(--neutral-300)" />
             </ActionButton>
           </div>
@@ -232,7 +232,7 @@ function AllergyDraft({ title, eyebrow, initial, onSave, onCancel }) {
       )}
 
       <div className={styles.draftActions}>
-        <Button variant="primary" size="M" disabled={saving || !canSave} onClick={save}>Save</Button>
+        <Button disabled={saving || !canSave} onClick={save}>Save</Button>
         <span className={styles.draftDivider} aria-hidden="true" />
         <Link variant="secondary" onClick={onCancel}>Discard</Link>
       </div>
@@ -247,7 +247,7 @@ const Section = forwardRef(function Section({ title, count, open, onToggle, chil
         type="button"
         className={[styles.sectionHead, dimmed ? styles.dimmed : ''].filter(Boolean).join(' ')} onClick={onToggle} aria-expanded={open}>
         <span className={styles.sectionTitle}>{title}</span>
-        {count > 0 && <Badge tone="grey" size="S" label={String(count)} className={styles.countBadge} />}
+        {count > 0 && <Badge size="sm" label={String(count)} className={styles.countBadge} />}
         <DownChevronIcon size={14} className={open ? styles.chevron : styles.chevronClosed} />
       </button>
       <div className={[styles.sectionBody, open ? styles.sectionBodyOpen : ''].filter(Boolean).join(' ')}>
@@ -258,7 +258,7 @@ const Section = forwardRef(function Section({ title, count, open, onToggle, chil
 });
 
 /**
- * Add Allergies — the PAMI/Hx Allergies section's `+` opens this. Mirrors Add
+ * Add Allergies: the PAMI/Hx Allergies section's `+` opens this. Mirrors Add
  * Problems and Add Medications: type an allergen, describe it, and the list
  * below splits by status.
  */
@@ -384,7 +384,7 @@ export function AddAllergiesDrawer({ patientId, focus, onClose }) {
             >
               {active.length === 0 ? (
                 <div className={styles.emptyCard}>
-                  <RingEmptyState icon="custom:allergy" label="No Active Allergies" iconSize={31} />
+                  <EmptyState icon="custom:allergy" title="No Active Allergies" iconSize={31} />
                 </div>
               ) : active.map(a => renderRow(a))}
             </Section>

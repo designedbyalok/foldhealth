@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
-import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../../../components/SegmentedControl/SegmentedControl';
 import { SearchBar } from '../../../../../../../../components/SearchBar/SearchBar';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { DocumentUploader } from '../../../../../../../../components/DocumentUploader/DocumentUploader';
-import { RingEmptyState } from '../../../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../../../components/EmptyState/EmptyState';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
 import { DateRangePopover } from '../../../../../../../../components/DateRangePopover/DateRangePopover';
 import { ImagePreviewOverlay } from '../../../../../../../../components/ImagePreviewOverlay/ImagePreviewOverlay';
@@ -60,15 +60,15 @@ const extOf = (filename) => {
 };
 
 // Only offer the click-to-preview affordance when there's an actual file to
-// show (fileUrl once persisted, or the in-memory File for the same session)
-// — otherwise FilePreview would just render an empty drawer/overlay.
+// show (fileUrl once persisted, or the in-memory File for the same session),
+// otherwise FilePreview would just render an empty drawer/overlay.
 const previewKindOf = (d) => (d.fileUrl || d.file)
   ? resolveFileKind({ src: d.fileUrl, name: d.name, ext: d.ext })
   : null;
 const isPreviewable = (d) => ['image', 'pdf', 'docx'].includes(previewKindOf(d));
 
 /**
- * Program Documents step — a patient's document library. Empty by default;
+ * Program Documents step: a patient's document library. Empty by default;
  * documents accrue as the user uploads them via the inline DocumentUploader
  * (opened by the "Upload File" toolbar button). Uploaded docs persist to the
  * `program_documents` table, scoped by programCode + patientId.
@@ -140,7 +140,7 @@ export function ProgramRelatedFiles({ programCode, patientId }) {
 
   return (
     <div className={styles.container}>
-      {/* Toolbar — mirrors the Letters step formatting. */}
+      {/* Toolbar: mirrors the Letters step formatting. */}
       <div className={styles.toolbar}>
         {searchOpen ? (
           <div className={styles.searchWrap}>
@@ -154,23 +154,22 @@ export function ProgramRelatedFiles({ programCode, patientId }) {
           </div>
         ) : (
           <>
-            <ActionButton icon="solar:magnifer-linear" size="S" tooltip="Search" onClick={() => setSearchOpen(true)} />
+            <ActionButton icon="solar:magnifer-linear" size="sm" tooltip="Search" onClick={() => setSearchOpen(true)} />
             <span className={styles.tabDivider} />
-            <Toggle size="S" items={SUB_TABS} active={activeTab} onChange={setActiveTab} />
+            <SegmentedControl size="sm" items={SUB_TABS} value={activeTab} onValueChange={setActiveTab} />
             <div className={styles.spacer} />
           </>
         )}
-        <Toggle size="S" items={VIEW_ITEMS} active={view} onChange={setView} />
+        <SegmentedControl size="sm" items={VIEW_ITEMS} value={view} onValueChange={setView} />
         <Button
-          variant="tertiary"
-          size="L"
+          variant="soft"
           leadingIcon="solar:upload-minimalistic-linear"
           onClick={() => setUploaderOpen(v => !v)}
         >
           Upload File
         </Button>
         <span className={styles.tabDivider} />
-        <ActionButton icon="solar:filter-linear" size="S" tooltip="Filter" active={filtersOpen}
+        <ActionButton icon="solar:filter-linear" size="sm" tooltip="Filter" active={filtersOpen}
           iconColor={filtersOpen ? 'var(--primary-300)' : undefined}
           onClick={() => setFiltersOpen(v => !v)} />
       </div>
@@ -210,7 +209,7 @@ export function ProgramRelatedFiles({ programCode, patientId }) {
 
       {rows.length === 0 ? (
         <div className={styles.empty}>
-          <RingEmptyState icon="solar:file-text-linear" label={q ? 'No Documents Found' : 'No Documents Added'} />
+          <EmptyState icon="solar:file-text-linear" title={q ? 'No Documents Found' : 'No Documents Added'} />
         </div>
       ) : view === 'grid' ? (
         <div className={styles.grid}>

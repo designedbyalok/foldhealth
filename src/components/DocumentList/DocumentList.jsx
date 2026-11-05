@@ -6,7 +6,7 @@ import { MenuPopover } from '../MenuPopover/MenuPopover';
 import styles from './DocumentList.module.css';
 
 /**
- * DocumentList — the document table from the HCC Diagnosis Gaps drawer's
+ * DocumentList: the document table from the HCC Diagnosis Gaps drawer's
  * Documents tab: a dashed "Upload Document" CTA, then rows of file icon +
  * name + meta line, an optional status Badge, and a row menu.
  *
@@ -67,12 +67,12 @@ export function DocumentList({
                 {d.meta && <div className={styles.meta}>{d.meta}</div>}
               </div>
             </div>
-            {showStatus && (d.status ? <Badge size="M" variant={d.status.variant} label={d.status.label} /> : <span />)}
+            {showStatus && (d.status ? <Badge size="md" tone={d.status.variant} label={d.status.label} /> : <span />)}
             <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
               {hasMenu && (
                 <ActionButton
                   icon="solar:menu-dots-linear"
-                  size="S"
+                  size="sm"
                   tooltip="More actions"
                   onClick={(e) => {
                     const r = e.currentTarget.getBoundingClientRect();

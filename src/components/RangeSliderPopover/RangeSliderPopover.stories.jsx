@@ -10,7 +10,7 @@ export default {
     docs: {
       description: {
         component:
-          'Dual-thumb numeric range picker in a popover. Used by the HCC Decile filter (1–10) but generic — set `min`/`max`/`step`/`unitLabel` for other ranges (e.g. age in years).',
+          'Dual-thumb numeric range picker in a popover. Used by the HCC Decile filter (1–10) but generic: set `min`/`max`/`step`/`unitLabel` for other ranges (e.g. age in years).',
       },
     },
   },

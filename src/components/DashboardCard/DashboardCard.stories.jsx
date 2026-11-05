@@ -30,11 +30,11 @@ export const Default = {
       icon="solar:notes-linear"
       title="Recent Notes"
       count={2}
-      actions={<Button variant="ghost" size="S">Create note</Button>}
+      actions={<Button variant="ghost" size="sm">Create note</Button>}
     >
       <DashboardCardBody>
         {NOTES.map(n => (
-          <PanelSectionItem key={n.id} title={n.title} meta={n.meta} trailing={<Badge tone={n.tone} size="S" label={n.status} />} />
+          <PanelSectionItem key={n.id} title={n.title} meta={n.meta} trailing={<Badge tone={n.tone} size="sm" label={n.status} />} />
         ))}
       </DashboardCardBody>
     </DashboardCard>
@@ -47,7 +47,7 @@ export const Ai = {
       tone="ai"
       icon="custom:ai"
       title="Patient Synopsis"
-      actions={<ActionButton icon="solar:refresh-linear" size="S" tooltip="Regenerate" />}
+      actions={<ActionButton icon="solar:refresh-linear" size="sm" tooltip="Regenerate" />}
       footer="Powered by Unity"
     >
       <DashboardCardBody>

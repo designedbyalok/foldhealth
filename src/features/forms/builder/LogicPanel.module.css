@@ -1,4 +1,4 @@
-/* Logic tab — node map (left) + rule editor (right). */
+/* Logic tab: node map (left) + rule editor (right). */
 .wrap { flex: 1 1 0; display: flex; min-height: 0; background: var(--neutral-50); }
 
 /* React-Flow canvas */

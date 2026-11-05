@@ -1,0 +1,14 @@
+.root tbody tr:last-child { border-bottom: none; }
+
+/* Scoped under .root so it beats WorklistRow's .td in either load order. */
+.root .cell {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* The worklist divider after the first column. Cells only: a first cell
+   with rowSpan would need its own class. */
+.divided thead th:first-child,
+.divided tbody td:first-child {
+  border-right: 0.5px solid var(--neutral-150);
+}

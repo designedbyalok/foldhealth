@@ -3,6 +3,7 @@ import { Avatar } from '../../../../components/Avatar/Avatar';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { Icon } from '../../../../components/Icon/Icon';
 import { MenuPopover } from '../../../../components/MenuPopover/MenuPopover';
+import { CollapsibleContent } from '../../../../components/Collapsible/Collapsible';
 import { useAppStore } from '../../../../store/useAppStore';
 import { formatFoldId } from '../../../../lib/foldId';
 import { usePatientDisplay } from '../../hooks/usePatientDisplay';
@@ -10,17 +11,24 @@ import { PatientAppActiveIndicator } from '../../../../components/PatientAppActi
 import { FALLBACK_P360 } from '../../data/p360Mock';
 import { ExpandedDemographics, ExpandedHealthStatus, ExpandedAppointments, ExpandedFamily, QuickViewExpanded } from './PatientP360BannerExpanded';
 import { PatientP360BannerDrawer } from './PatientP360BannerDrawer';
-import { MORE_MENU_LABELS } from './PatientP360Banner.utils';
+import { buildPatientRowMenuItems } from '../../../../components/MenuPopover/patientRowMenuItems';
 import { useCcmTimerDockOptional } from '../CcmTimerWidget/CcmTimerDockContext';
+import { PatientConsentPopover } from '../../shared/PatientConsentPopover/PatientConsentPopover';
+import { usePatientConsent } from '../../hooks/usePatientConsent';
+import { consentPopoverPos, consentSummaryLabel } from './consentBadge';
+import { PatientTagPills, AddPatientTagDrawer } from './PatientTags';
+import { AddFamilyDrawer } from '../../family/AddFamilyDrawer';
+import { CareTeamDrawer } from '../../care-team/CareTeamDrawer';
 import styles from './PatientP360Banner.module.css';
 
 export function PatientP360Banner({ patient, variant = 'full' }) {
   const [expanded, setExpanded] = useState(false);
   const [tags, setTags] = useState([]);
+  const [addTagOpen, setAddTagOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   // The dropdown's scrim is aria-hidden, so Escape is the keyboard dismiss path.
-  // Before this there was none at all — the only way out was a mouse click on
+  // Before this there was none at all, the only way out was a mouse click on
   // the scrim, which a keyboard user cannot reach.
   useEffect(() => {
     if (!showProfileDropdown) return undefined;
@@ -35,10 +43,17 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
   const openCallPopover = useAppStore(s => s.openCallPopover);
   const [bannerSize, setBannerSize] = useState('wide');
   const showToast = useAppStore(s => s.showToast);
-  const updatePatient = useAppStore(s => s.updatePatient);
+  const runPatientRowAction = useAppStore(s => s.runPatientRowAction);
   const openPatientEdit = useAppStore(s => s.openPatientEdit);
   const showPatientAppIndicator = useAppStore(s => s.showPatientAppIndicator);
   const { dockRef } = useCcmTimerDockOptional();
+  const [consentPos, setConsentPos] = useState(null);
+  const { summary: consent } = usePatientConsent(patient?.id);
+  const toggleConsent = (e) => {
+    const next = consentPopoverPos(e.currentTarget);
+    setConsentPos(pos => (pos ? null : next));
+  };
+  const closeConsent = useCallback(() => setConsentPos(null), []);
 
   const measureBanner = useCallback(() => {
     const el = bannerRef.current;
@@ -61,26 +76,36 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
   useEffect(() => { if (patient?.id) fetchP360Profile(patient.id); }, [patient?.id, fetchP360Profile]);
   useEffect(() => { fetchOrgFeatures(); }, [fetchOrgFeatures]);
 
-  // Real enrolled care programs (patient_care_programs) — the "Programs:"
+  // Real enrolled care programs (patient_care_programs): the "Programs:"
   // badges must reflect actual enrollment, not the static p360 mock field.
   // The fetch is per-patient-guarded in the store, so this is a no-op when
   // the Care Programs tab (or a previous banner mount) already hydrated it.
   const carePrograms = useAppStore(s => (patient?.id ? s.careProgramsByPatient[patient.id] : undefined));
   const fetchCareProgramsForPatient = useAppStore(s => s.fetchCareProgramsForPatient);
   useEffect(() => { if (patient?.id) fetchCareProgramsForPatient(patient.id); }, [patient?.id, fetchCareProgramsForPatient]);
-  // Unique codes in enrollment order — SNP can be enrolled multiple times
+  // Unique codes in enrollment order: SNP can be enrolled multiple times
   // (one row per trigger) but reads as a single badge.
   const programCodes = useMemo(
     () => [...new Set((carePrograms || []).map(cp => cp.code))],
     [carePrograms],
   );
 
-  const p = p360Profile || FALLBACK_P360;
+  // Family and care team come only from the patient's own profile; without
+  // one they're empty (sample people would read as real ones).
+  const p = p360Profile || { ...FALLBACK_P360, family_members: [], family_caregiver_count: 0, care_team: [] };
+  const [familyOpen, setFamilyOpen] = useState(false);
+  const [careTeamOpen, setCareTeamOpen] = useState(false);
+  const familyDrawer = patient && (
+    <>
+      {familyOpen && <AddFamilyDrawer patient={patient} onClose={() => setFamilyOpen(false)} />}
+      {careTeamOpen && <CareTeamDrawer patient={patient} onClose={() => setCareTeamOpen(false)} />}
+    </>
+  );
   const display = usePatientDisplay(patient);
   useEffect(() => { setTags(p.condition_tags || FALLBACK_P360.condition_tags); }, [p.condition_tags]);
 
   if (!patient) return null;
-  if (variant === 'drawer') return <PatientP360BannerDrawer patient={patient} p={p} programCodes={programCodes} />;
+  if (variant === 'drawer') return <><PatientP360BannerDrawer patient={patient} p={p} programCodes={programCodes} onManageFamily={() => setFamilyOpen(true)} onManageCareTeam={() => setCareTeamOpen(true)} />{familyDrawer}</>;
 
 
   return (
@@ -96,12 +121,12 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
               )}
             </div>
             <div className={styles.meta}>
-              {display.gender} • {display.dob || '—'} ({display.age})
+              {display.gender} • {display.dob || '-'} ({display.age})
               {bannerSize !== 'wide' && (
                 <>
                   <span className={styles.metaDot}>•</span>
-                  <button type="button" className={styles.metaConsent}>
-                    Consent: {p.consent_given}/{p.consent_total}
+                  <button type="button" className={styles.metaConsent} onClick={toggleConsent} aria-haspopup="dialog">
+                    Consent: {consentSummaryLabel(consent)}
                     <Icon name="solar:alt-arrow-down-linear" size={12} color="var(--status-warning)" />
                   </button>
                 </>
@@ -132,7 +157,7 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
                   {(p.insurance_profiles || FALLBACK_P360.insurance_profiles).map(prof => (
                     <button type="button" key={prof.id} aria-pressed={selectedProfileId === prof.id} className={`${styles.profileOption} ${selectedProfileId === prof.id ? styles.profileOptionSelected : ''}`} onClick={() => { setSelectedProfileId(prof.id); setShowProfileDropdown(false); }}>
                       <div className={styles.profileOptionHeader}>
-                        {/* Central Profile IS the FoldHealth identity — its id is the
+                        {/* Central Profile IS the FoldHealth identity, its id is the
                             patient's real Fold ID, not the mock's sample Athena id.
                             Other insurer profiles keep their sample member ids. */}
                         <div><div className={styles.profileOptionName}>{prof.name}</div><div className={styles.profileOptionSub}>{prof.id === 'central' ? `Fold ID: ${formatFoldId(patient.memberId)}` : prof.subtitle}</div></div>
@@ -150,7 +175,7 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
               <div className={styles.metricCol}>
                 <span className={styles.metricLabel}>Consent</span>
                 <div className={styles.metricValueRow}>
-                  <span className={`${styles.badge} ${styles.badgeWarning}`}>{p.consent_given}/{p.consent_total} <Icon name="solar:alt-arrow-down-linear" size={10} color="var(--status-warning)" /></span>
+                  <button type="button" className={`${styles.badge} ${styles.badgeWarning}`} onClick={toggleConsent} aria-haspopup="dialog" aria-label={`Consent ${consentSummaryLabel(consent)}`}>{consentSummaryLabel(consent)} <Icon name="solar:alt-arrow-down-linear" size={10} color="var(--status-warning)" /></button>
                 </div>
               </div>
               <div className={styles.metricCol}>
@@ -166,7 +191,7 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
               </div>
               <div className={styles.metricCol}>
                 <span className={styles.metricLabel}>Next Appt.</span>
-                <div className={styles.metricValueRow}><span className={styles.nextApptValue}>{p.next_appointment_date || '—'}</span></div>
+                <div className={styles.metricValueRow}><span className={styles.nextApptValue}>{p.next_appointment_date || '-'}</span></div>
               </div>
             </>
           )}
@@ -179,24 +204,22 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
         </div>
 
         <div className={styles.actionsGroup}>
-          <div className={styles.actionCol}><ActionButton icon="solar:square-top-down-linear" size="L" tooltip="EHR" /><span className={styles.actionLabel}>EHR</span></div>
+          <div className={styles.actionCol}><ActionButton icon="solar:square-top-down-linear" tooltip="EHR" /><span className={styles.actionLabel}>EHR</span></div>
           <span className={styles.hDivider} />
           <div className={styles.actionCol}>
             <ActionButton
               ref={callBtnRef}
               icon="solar:phone-linear"
-              size="L"
               tooltip="Call"
               onClick={() => openCallPopover(patient.id, callBtnRef)}
             />
             <span className={styles.actionLabel}>Call</span>
           </div>
           <span className={styles.hDivider} />
-          <div className={styles.actionCol}><ActionButton icon="solar:letter-linear" size="L" tooltip="Email" /><span className={styles.actionLabel}>Email</span></div>
+          <div className={styles.actionCol}><ActionButton icon="solar:letter-linear" tooltip="Email" onClick={() => runPatientRowAction('Send Email', patient)} /><span className={styles.actionLabel}>Email</span></div>
           <span className={styles.hDivider} />
           <ActionButton
-            icon="solar:menu-dots-bold"
-            size="L"
+            icon="solar:menu-dots-linear"
             tooltip="More"
             onClick={(e) => setMoreMenuRect(e.currentTarget.getBoundingClientRect())}
           />
@@ -208,32 +231,15 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
           anchorRect={moreMenuRect}
           width={220}
           align="right"
-          items={[
-            { key: 'assessment', icon: 'solar:clipboard-check-linear', label: 'Assessment' },
-            { key: 'education', icon: 'solar:book-linear', label: 'Education' },
-            { key: 'add-task', icon: 'solar:checklist-linear', label: 'Add Task' },
-            { key: 'referral', icon: 'solar:arrow-right-up-linear', label: 'Create Referral' },
-            { key: 'automation', icon: 'solar:bolt-linear', label: 'Run Automation' },
-            { key: 'relatives', icon: 'solar:users-group-two-rounded-linear', label: 'Add Relatives' },
-            { key: 'print', icon: 'solar:printer-linear', label: 'Print Clinical Profile' },
-            { key: 'edit', icon: 'solar:pen-linear', label: 'Edit Details' },
-            { key: 'reset-pw', icon: 'solar:refresh-linear', label: 'Reset Password' },
-            { key: 'inactive', icon: 'solar:user-cross-linear', label: patient.status === 'inactive' ? 'Set Active' : 'Set Inactive' },
-            { divider: true },
-            { key: 'block', icon: 'solar:forbidden-circle-linear', label: 'Block Number', danger: true },
-          ]}
+          // The same actions as a worklist row's menu, minus Send Email:
+          // the Email button sits beside this one.
+          items={buildPatientRowMenuItems().filter(item => item.key !== 'Send Email')}
           onClose={() => setMoreMenuRect(null)}
           onSelect={(key) => {
             setMoreMenuRect(null);
-            if (key === 'edit') { openPatientEdit('basic', patient); return; }
-            if (key === 'print') { showToast('Printing clinical profile…'); window.print(); return; }
-            if (key === 'inactive') {
-              const nextStatus = patient.status === 'inactive' ? 'active' : 'inactive';
-              updatePatient(patient.id, { status: nextStatus });
-              showToast(nextStatus === 'inactive' ? `${patient.name} set to Inactive` : `${patient.name} set to Active`);
-              return;
-            }
-            showToast(`${MORE_MENU_LABELS[key] || 'Action'} — coming soon`);
+            if (runPatientRowAction(key, patient)) return;
+            if (key === 'Edit Details') { openPatientEdit('basic', patient); return; }
+            showToast(`${key}: coming soon`);
           }}
         />
       )}
@@ -249,23 +255,27 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
             </button>
           </span>
         ))}
-        <button className={styles.addTagBtn} aria-label="Add tag"><Icon name="solar:add-circle-linear" size={12} color="var(--neutral-300)" /></button>
+        <PatientTagPills patientId={patient.id} />
+        <button className={styles.addTagBtn} aria-label="Add tag" onClick={() => setAddTagOpen(true)}><Icon name="solar:add-circle-linear" size={12} color="var(--neutral-300)" /></button>
+        {addTagOpen && <AddPatientTagDrawer patient={patient} onClose={() => setAddTagOpen(false)} />}
+        {familyDrawer}
         <span className={styles.row2Spacer} aria-hidden="true" />
         <div ref={dockRef} className={styles.timerDockSlot} data-ccm-timer-dock />
       </div>
 
-      {expanded && (
-        bannerSize === 'wide' ? (
+      <CollapsibleContent open={expanded}>
+        {bannerSize === 'wide' ? (
           <div className={styles.expandedGrid}>
             <ExpandedDemographics p={p} />
             <ExpandedHealthStatus p={p} movedMetrics programCodes={programCodes} />
             <ExpandedAppointments p={p} />
-            <ExpandedFamily p={p} />
+            <ExpandedFamily p={p} patientId={patient.id} visible={expanded} onManage={() => setFamilyOpen(true)} onManageCareTeam={() => setCareTeamOpen(true)} />
           </div>
         ) : (
-          <QuickViewExpanded p={p} programCodes={programCodes} />
-        )
-      )}
+          <QuickViewExpanded p={p} patientId={patient.id} visible={expanded} programCodes={programCodes} onManageFamily={() => setFamilyOpen(true)} onManageCareTeam={() => setCareTeamOpen(true)} />
+        )}
+      </CollapsibleContent>
+      {consentPos && <PatientConsentPopover patientId={patient.id} pos={consentPos} onClose={closeConsent} />}
     </div>
   );
 }

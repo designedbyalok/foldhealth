@@ -5,12 +5,12 @@ import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { RadioOptionGroup } from '../../../components/RadioOptionGroup/RadioOptionGroup';
 import { Input } from '../../../components/Input/Input';
-import { Toggle } from '../../../components/Toggle/Toggle';
-import { Collapse } from '../../../components/Collapse/Collapse';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
+import { CollapsibleContent } from '../../../components/Collapsible/Collapsible';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Badge } from '../../../components/Badge/Badge';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { Link } from '../../../components/Link/Link';
 import { Icon } from '../../../components/Icon/Icon';
 import { AddIconMinimalist } from '../../../components/Icon/AddIconMinimalist';
@@ -234,7 +234,7 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
   // The roles/users picker, under the option cards; eases open when
   // "+ Additional Roles/Users" is picked.
   const pickerContent = (
-    <Collapse open={plus}>
+    <CollapsibleContent open={plus}>
       <div className={styles.picker}>
         <span className={styles.pickerHeading}>Add additional roles/users who can log billable time for this program</span>
 
@@ -250,11 +250,11 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
           />
           {pickerOpen && (
             <div className={styles.dropdown}>
-              <Toggle
-                size="S"
+              <SegmentedControl
+                size="sm"
                 fullWidth
-                active={pickerTab}
-                onChange={setPickerTab}
+                value={pickerTab}
+                onValueChange={setPickerTab}
                 items={[{ key: 'users', label: 'Users' }, { key: 'roles', label: 'Roles' }]}
               />
               <div className={styles.dropdownList}>
@@ -278,11 +278,11 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
           )}
         </div>
 
-        <Toggle
-          size="S"
+        <SegmentedControl
+          size="sm"
           className={styles.pickerToggle}
-          active={tab}
-          onChange={setTab}
+          value={tab}
+          onValueChange={setTab}
           items={[
             { key: 'all', label: <>All{tabCount(teamMembers.length + userNames.length + roles.length)}</> },
             { key: 'team', label: <>Care Program Team{tabCount(teamMembers.length)}</> },
@@ -295,10 +295,10 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
           {/* Empty: the dashed ring card the PAMI drawers use. */}
           {added.length === 0 && (
             <div className={styles.emptyCard}>
-              <RingEmptyState
+              <EmptyState
                 icon="solar:users-group-rounded-linear"
                 iconSize={31}
-                label={tab === 'roles' ? 'No Additional Roles Added' : tab === 'users' ? 'No Additional Users Added' : tab === 'team' ? 'No Care Program Team Members' : 'No Additional Roles or Users Added'}
+                title={tab === 'roles' ? 'No Additional Roles Added' : tab === 'users' ? 'No Additional Users Added' : tab === 'team' ? 'No Care Program Team Members' : 'No Additional Roles or Users Added'}
               />
             </div>
           )}
@@ -308,11 +308,11 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
               {/* Team members come from the care program team; they're managed there.
                   The tag only tells them apart in the mixed All tab. */}
               {o.kind === 'team'
-                ? tab === 'all' && <Badge tone="grey" size="XS" label="Care program team" className={styles.optionTag} />
+                ? tab === 'all' && <Badge size="xs" label="Care program team" className={styles.optionTag} />
                 : (
                   <ActionButton
                     icon="solar:trash-bin-trash-linear"
-                    size="S"
+                    size="sm"
                     tooltip="Remove"
                     className={styles.optionRemove}
                     onClick={() => remove(o)}
@@ -322,7 +322,7 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
           ))}
         </div>
       </div>
-    </Collapse>
+    </CollapsibleContent>
   );
   const accessOptions = Object.entries(TIMER_ACCESS).map(([value, label]) => ({
     value,
@@ -331,7 +331,7 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
     ...(value !== 'all' && !hasTeam ? { disabled: true, disabledReason: noTeamReason } : {}),
   }));
 
-  const saveButton = <Button variant="primary" size="L" disabled={!!blocker} onClick={handleSave}>Save</Button>;
+  const saveButton = <Button disabled={!!blocker} onClick={handleSave}>Save</Button>;
 
   return (
     <Drawer
@@ -360,11 +360,11 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
         </p>
         <RadioOptionGroup name="timer-access" variant="card" options={accessOptions} value={access} onChange={setAccess} />
         {/* One slot under the options: at most one of these is open, so the
-            gap above stays 24px whichever it is (a closed Collapse still
+            gap above stays 24px whichever it is (a closed CollapsibleContent still
             takes a flex gap). */}
         <div>
           {/* "Care Program Team only": who that is, read-only. */}
-          <Collapse open={access === 'team' && hasTeam}>
+          <CollapsibleContent open={access === 'team' && hasTeam}>
             <div className={styles.picker}>
               <span className={styles.pickerHeading}>Care program team</span>
               <div className={styles.list}>
@@ -373,7 +373,7 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
                 ))}
               </div>
             </div>
-          </Collapse>
+          </CollapsibleContent>
           {pickerContent}
         </div>
 

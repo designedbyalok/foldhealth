@@ -15,7 +15,7 @@
   padding-bottom: 16px;
 }
 
-/* Floating-sidebar shape — the Body panel (`.main`) now carries the card
+/* Floating-sidebar shape: the Body panel (`.main`) now carries the card
    chrome instead of each individual SideNav, so feature SideNavs render
    as plain columns inside the Body card. The hairline right border from
    the default `.nav` style is enough separation between the SideNav and
@@ -37,7 +37,7 @@
 .nav::-webkit-scrollbar { width: 4px; }
 .nav::-webkit-scrollbar-thumb { background: var(--neutral-150); border-radius: 4px; }
 
-/* Optional slot above the sections — e.g. a full-width "Create New" Button. */
+/* Optional slot above the sections: e.g. a full-width "Create New" Button. */
 .header {
   padding: 12px 12px 4px;
   position: relative;
@@ -50,7 +50,7 @@
    modifier so comm panels / analytics keep their small-caps look.
 
    The label is the darkest, heaviest text in the rail. It has to outrank the
-   items below it, which are larger (14px) — so at 12px it can only win on
+   items below it, which are larger (14px): so at 12px it can only win on
    weight and colour. Anything lighter than the items inverts the hierarchy
    and the heading reads as a caption. */
 .sectionLabel {
@@ -77,7 +77,7 @@
   font-weight: 500;
 }
 
-/* Sliding highlight for the active row — one element translated to the
+/* Sliding highlight for the active row, one element translated to the
    active item (measured in JS). Carries the background + left accent so the
    rows themselves never change padding and labels never shift. */
 .activeIndicator {
@@ -149,7 +149,7 @@
   border-color: color-mix(in srgb, var(--primary-300) 20%, transparent);
 }
 
-/* Row being dragged — lift above siblings so the drop position reads
+/* Row being dragged: lift above siblings so the drop position reads
    clearly. dnd-kit moves the element via transform. */
 .item.dragging {
   opacity: 0.85;

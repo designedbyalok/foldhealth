@@ -535,8 +535,12 @@
 }
 
 .calGrid {
+  /* Absolute children (events, now line) are placed from the padding edge,
+     so they read these to stay clear of the hour-label gutter. */
+  --cal-gutter-left: calc(var(--space-10) + var(--space-1));
+  --cal-gutter-right: var(--space-3);
   position: relative;
-  padding: 0 12px 0 44px;
+  padding: 0 var(--cal-gutter-right) 0 var(--cal-gutter-left);
   min-height: 400px;
 }
 
@@ -601,8 +605,8 @@
 
 .calEvent {
   position: absolute;
-  left: 4px;
-  right: 6px;
+  left: calc(var(--cal-gutter-left) + var(--space-1));
+  right: calc(var(--cal-gutter-right) + var(--space-1));
   background: var(--primary-100);
   border-left: 3px solid var(--primary-300);
   border-radius: 4px;
@@ -610,6 +614,28 @@
   overflow: hidden;
   cursor: pointer;
   z-index: 2;
+}
+
+.calEventCompact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.calEventCompact .calEventTitle {
+  flex-shrink: 0;
+  max-width: 60%;
+}
+
+.calEventCompact .calEventMeta {
+  margin-top: 0;
+  min-width: 0;
+}
+
+.calEventCompact .calEventMeta::before {
+  content: '· ';
 }
 
 .calEvent:hover {
@@ -636,8 +662,8 @@
 
 .nowLine {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: var(--cal-gutter-left);
+  right: var(--cal-gutter-right);
   height: 1px;
   background: var(--status-error);
   z-index: 3;
@@ -998,4 +1024,59 @@
 :global(.react-grid-item.react-draggable-dragging) {
   z-index: 100;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+}
+
+/* Team programs (supervisor card): one row per program. */
+.teamList {
+  display: flex;
+  flex-direction: column;
+}
+.teamRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  border-bottom: 0.5px solid var(--neutral-150);
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+button.teamRow {
+  cursor: pointer;
+}
+button.teamRow:hover {
+  background: var(--neutral-50);
+}
+.teamCode {
+  flex-shrink: 0;
+  min-width: 44px;
+  padding: calc(var(--space-1) / 2) var(--space-2);
+  border-radius: var(--space-1);
+  background: var(--neutral-100);
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--neutral-400);
+  text-align: center;
+}
+.teamMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+}
+.teamName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.teamMeta {
+  /* Wraps: the breakdown is why a program is flagged. */
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
 }

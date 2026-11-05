@@ -3,7 +3,7 @@
  *
  * Translates a Supabase `hcc_documents` row to/from the JS shape the
  * HccSftpReviewDrawer and the rest of the upload flow consume (live in
- * the Zustand `hccSftpBatches` slice — see useAppStore.js).
+ * the Zustand `hccSftpBatches` slice: see useAppStore.js).
  *
  * Keep this in lockstep with supabase/hcc_documents_migration.sql.
  */

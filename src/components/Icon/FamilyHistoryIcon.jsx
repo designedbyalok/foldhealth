@@ -1,5 +1,5 @@
 /**
- * Custom family-history icon — a person with a heart, for the Family History
+ * Custom family-history icon: a person with a heart, for the Family History
  * card and its empty state. The design's own glyph, supplied directly; no
  * Solar icon matches it.
  *

@@ -12,18 +12,34 @@ export function HealthChartCard({ overview }) {
     ? (scores.reduce((sum, s) => sum + Number(s.patient || 0), 0) / scores.length).toFixed(1)
     : null;
   const change = overview?.healthScoreChange;
+  // Domains under the clinic average, furthest behind first.
+  const behind = scores
+    .map(s => ({ axis: s.axis, gap: Number(s.patient) - Number(s.clinic) }))
+    .filter(s => Number.isFinite(s.gap) && s.gap < 0)
+    .sort((a, b) => a.gap - b.gap);
 
   return (
-    <DashboardCard icon="solar:radar-2-linear" title="Health Chart">
+    <DashboardCard
+      icon="solar:radar-2-linear"
+      title="Health Chart"
+      footer={scores.length > 0 ? (
+        <>
+          <span>Overall health score</span>
+          <span className={styles.spacer} />
+          <span className={styles.scoreValue}>{overall} / {MAX_SCORE}</span>
+          {change != null && change !== 0 && (
+            <span className={change > 0 ? styles.textSuccess : styles.textError}>
+              {change > 0 ? '▲' : '▼'} {Math.abs(change)}{overview.healthScoreSince ? ` since ${overview.healthScoreSince}` : ''}
+            </span>
+          )}
+        </>
+      ) : null}
+    >
       <DashboardCardBody>
         {scores.length === 0 ? (
           <p className={styles.empty}>No health scores yet.</p>
         ) : (
           <>
-            <div className={styles.legend}>
-              <span className={styles.legendItem}><span className={styles.legendSwatch} aria-hidden="true" />Patient</span>
-              <span className={styles.legendItem}><span className={`${styles.legendSwatch} ${styles.clinic}`} aria-hidden="true" />Clinic average</span>
-            </div>
             <div className={styles.radar} role="img" aria-label={`Health chart: ${scores.map(s => `${s.axis} ${s.patient} of ${MAX_SCORE}`).join(', ')}`}>
               <ResponsiveContainer width="100%" height="100%">
                 {/* Radius leaves room for the longest axis label ("Musculoskeletal")
@@ -38,16 +54,16 @@ export function HealthChartCard({ overview }) {
                 </RadarChart>
               </ResponsiveContainer>
             </div>
-            <div className={styles.scoreRow}>
-              <span>Overall health score</span>
-              <span className={styles.spacer} />
-              <span className={styles.scoreValue}>{overall} / {MAX_SCORE}</span>
-              {change != null && change !== 0 && (
-                <span className={change > 0 ? styles.textSuccess : styles.textError}>
-                  {change > 0 ? '▲' : '▼'} {Math.abs(change)}{overview.healthScoreSince ? ` since ${overview.healthScoreSince}` : ''}
-                </span>
-              )}
+            <div className={styles.legend}>
+              <span className={styles.legendItem}><span className={styles.legendSwatch} aria-hidden="true" />Patient</span>
+              <span className={styles.legendItem}><span className={`${styles.legendSwatch} ${styles.clinic}`} aria-hidden="true" />Clinic average</span>
             </div>
+            {behind.length > 0 && (
+              <p className={styles.behind}>
+                <span className={styles.textWarning}>Below clinic average:</span>{' '}
+                {behind.map(b => `${b.axis} (${b.gap.toFixed(1)})`).join(', ')}
+              </p>
+            )}
           </>
         )}
       </DashboardCardBody>

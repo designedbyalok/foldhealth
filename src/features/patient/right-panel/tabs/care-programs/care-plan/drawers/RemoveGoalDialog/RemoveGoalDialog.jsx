@@ -5,12 +5,12 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from '../../../../../../../../components/ShadcnDialog/ShadcnDialog';
+} from '../../../../../../../../components/Dialog/Dialog';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { goalCascadeQuestion } from '../../lib/carePlanGoalCascade';
 
 /**
- * RemoveGoalDialog — removing a goal that has linked items is a choice, not a
+ * RemoveGoalDialog: removing a goal that has linked items is a choice, not a
  * yes/no: delete its interventions and barriers with it, or take out only the
  * goal and leave them on the plan. A goal with nothing linked falls back to a
  * plain confirm, since there is nothing to choose between.
@@ -37,13 +37,13 @@ export function RemoveGoalDialog({ goalTitle, cascade, onRemoveAll, onRemoveGoal
         <DialogFooter>
           {question ? (
             <>
-              <Button variant="secondary" size="L" onClick={onRemoveAll}>Remove all</Button>
-              <Button variant="danger" size="L" onClick={onRemoveGoalOnly}>Remove goal only</Button>
+              <Button variant="outline" onClick={onRemoveAll}>Remove all</Button>
+              <Button variant="soft" tone="danger" onClick={onRemoveGoalOnly}>Remove goal only</Button>
             </>
           ) : (
             <>
-              <Button variant="secondary" size="L" onClick={onCancel}>Cancel</Button>
-              <Button variant="danger" size="L" onClick={onRemoveAll}>Remove</Button>
+              <Button variant="outline" onClick={onCancel}>Cancel</Button>
+              <Button variant="soft" tone="danger" onClick={onRemoveAll}>Remove</Button>
             </>
           )}
         </DialogFooter>

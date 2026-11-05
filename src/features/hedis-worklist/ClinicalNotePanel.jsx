@@ -18,7 +18,7 @@ import styles from './ClinicalNotePanel.module.css';
 
 export function ClinicalNotePanel({ member, gapCode, year, onClose, editingTaskId = null }) {
   const v = useClinicalNotePanel({ member, gapCode, onClose, editingTaskId });
-  // DSF-B guard mirrors CareGapDetailDrawer's Phq9ExitDialog wiring —
+  // DSF-B guard mirrors CareGapDetailDrawer's Phq9ExitDialog wiring,
   // Save as Draft on a note that carries DSF-B always warns about the
   // 30-day sign-off window because a draft leaves the gap Open; Close
   // only nags when PHQ-9 is partially answered.
@@ -56,17 +56,17 @@ export function ClinicalNotePanel({ member, gapCode, year, onClose, editingTaskI
   };
   const canSaveDraftEffective = v.hasChanges || !!detectPhq9Incomplete({ mode: 'save-draft' });
   // A sign-off review lands here with a consolidated note that already
-  // covers every gap the author submitted — the reviewer's job is to
+  // covers every gap the author submitted, the reviewer's job is to
   // read and revise every section top-to-bottom, not to pick one gap out
   // of a list. Render the same stacked layout the CareGap drawer uses
   // for its consolidated authoring surface (Date of Service on top, one
   // section per gap below it), instead of the split two-pane layout the
   // single-gap "Add Note" flow uses. `editingTaskId` is the review-flow
-  // marker — set only when the panel opens from a sign-off task.
+  // marker: set only when the panel opens from a sign-off task.
   const isReviewFlow = !!editingTaskId;
   // Resolve the linked note for this task so the drawer title can carry
   // the current DB status (Draft / Pending Review / Signed) underneath a
-  // proper note title — "Consolidated Clinical Note" for a multi-gap
+  // proper note title: "Consolidated Clinical Note" for a multi-gap
   // review, "${code} Visit Note" when only one gap is under review.
   const linkedNote = useAppStore(s => {
     if (!isReviewFlow) return null;
@@ -129,7 +129,7 @@ export function ClinicalNotePanel({ member, gapCode, year, onClose, editingTaskI
       >
         {isReviewFlow ? (
           <>
-            {/* Pinned above the scroll region — same EHR-sync note the
+            {/* Pinned above the scroll region: same EHR-sync note the
                 two-pane authoring surface pins above its own scroll. */}
             <div className={styles.infoBanner}>
               <Icon name="solar:info-circle-linear" size={14} color="var(--status-info)" />

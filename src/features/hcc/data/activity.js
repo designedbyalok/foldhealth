@@ -1,4 +1,4 @@
-// HCC activity log — ported verbatim from /Users/alokk/Downloads/HCC/hcc_worklist_v2.tsx
+// HCC activity log: ported verbatim from /Users/alokk/Downloads/HCC/hcc_worklist_v2.tsx
 // (GLOBAL_ACTIVITY lines 487–551). Keyed by member.name; falls back to _default.
 
 export const ACTIVITY = {
@@ -85,7 +85,7 @@ export const ACTIVITY = {
 export const getActivityForMember = (name) => ACTIVITY[name] || ACTIVITY._default || [];
 
 /**
- * DB-preferring variant — pass the `hccGapActivity` store slice
+ * DB-preferring variant: pass the `hccGapActivity` store slice
  * ({ memberName: [entry, ...] }) as `dbMap`. Returns the member's rows,
  * else the seeded '_default' rows, else the JS mock. Keeps the
  * Timeline tab working while the seed rolls out.

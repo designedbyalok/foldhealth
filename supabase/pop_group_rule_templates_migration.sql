@@ -1,7 +1,7 @@
 -- Rule templates for the "Import Rule" drawer in Population Groups.
 -- Customers can pick a pre-built rule to bootstrap a new Dynamic group,
 -- then customise it in the builder. Templates are read-only for app
--- users — seeded by the Fold team, displayed in a Drawer, never edited
+-- users: seeded by the Fold team, displayed in a Drawer, never edited
 -- in the UI.
 
 CREATE TABLE IF NOT EXISTS pop_group_rule_templates (
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS pop_group_rule_templates (
 
 ALTER TABLE pop_group_rule_templates ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all" ON pop_group_rule_templates;
-CREATE POLICY "Allow all" ON pop_group_rule_templates FOR SELECT USING (true);
+CREATE POLICY "Allow all" ON pop_group_rule_templates FOR SELECT TO authenticated USING (true);
 
 -- Also add a `status` column to population_groups (draft / active):
 ALTER TABLE population_groups ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'active';

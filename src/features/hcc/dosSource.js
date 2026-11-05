@@ -1,22 +1,22 @@
-// DOS-source classifier — shared by the worklist source badge
+// DOS-source classifier: shared by the worklist source badge
 // (HccWorklistRow) and the "DOS Source" filter (filters.js) so both agree on
 // which source (D=Clinical Document, C=Claims, M=Manual Entry) a given DOS
 // maps to.
 //
-// The three sources are MUTUALLY EXCLUSIVE — a DOS is either extracted from
+// The three sources are MUTUALLY EXCLUSIVE, a DOS is either extracted from
 // a document, matched from a claim, or manually entered by a user; never
 // more than one. The classifier resolves that by reading a persisted
 // `source` field on the DOS entry when present, and falls back to a
 // deterministic date hash (legacy demo rows without a source field) for
 // everything else.
 //
-// Manual entries MUST be tagged explicitly via `source === 'manual'` — the
+// Manual entries MUST be tagged explicitly via `source === 'manual'`, the
 // legacy hash pool omits `M` so a row without the tag can never accidentally
 // classify as manual.
 
 export const DOS_SOURCES = ['D', 'C', 'M'];
 
-// Legacy hash pool — Manual is reserved for entries with an explicit
+// Legacy hash pool: Manual is reserved for entries with an explicit
 // `source: 'manual'` marker, so it never appears in the fallback pool.
 const LEGACY_HASH_POOL = ['D', 'C'];
 const LEGACY_HASH_POOL_NO_DOC = ['C']; // no document → only claims possible
@@ -26,20 +26,20 @@ const SOURCE_KEY_TO_LETTER = { document: 'D', claim: 'C', manual: 'M' };
 /**
  * Classify a DOS to a source letter (D=Document, C=Claim, M=Manual).
  *
- * Accepts either a DOS entry object (preferred — its persisted `source`
- * wins) or a plain date string (legacy call sites — falls back to the
+ * Accepts either a DOS entry object (preferred: its persisted `source`
+ * wins) or a plain date string (legacy call sites: falls back to the
  * deterministic hash over D/C).
  *
  * @param {object|string} entryOrDate DOS entry ({ date, source, ... }) or a
  *                                    bare date string.
  * @param {boolean} hasDoc            Whether the member has any document on
  *                                    file. Only consulted for the legacy
- *                                    hash fallback — when false, 'D' is
+ *                                    hash fallback: when false, 'D' is
  *                                    excluded (a DOS cannot be
  *                                    document-sourced with nothing on file).
  */
 export function dosSourceLetter(entryOrDate, hasDoc = true) {
-  // Explicit source wins — the entry was authored with a known provenance.
+  // Explicit source wins: the entry was authored with a known provenance.
   if (entryOrDate && typeof entryOrDate === 'object') {
     const letter = SOURCE_KEY_TO_LETTER[entryOrDate.source];
     if (letter) return letter;
@@ -56,7 +56,7 @@ export function dosSourceLetter(entryOrDate, hasDoc = true) {
   return pool[Math.abs(h) % pool.length];
 }
 
-// What each DOS-source letter means — drives the badge colour + the hover
+// What each DOS-source letter means: drives the badge colour + the hover
 // tooltip (source of the encounter) and the filter option labels.
 export const DOS_SOURCE_META = {
   D: { cls: 'srcDoc',    label: 'Clinical Document', hint: 'Extracted from an uploaded document' },

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useId } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { Button } from '../../components/Button/Button';
 import { Select } from '../../components/Select/Select';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Input } from '../../components/Input/Input';
 import styles from './NodeSettings.module.css';
 
@@ -71,7 +71,7 @@ export function NodeSettingsTransitions({
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>Transition</span>
         <div className={styles.addBtnWrap} ref={addMenuRef}>
-          <Button variant="secondary" size="S" className={styles.addBtn} onClick={() => setShowAddMenu(v => !v)}>+ Add New</Button>
+          <Button variant="outline" size="sm" className={styles.addBtn} onClick={() => setShowAddMenu(v => !v)}>+ Add New</Button>
           {showAddMenu && (
             <div className={styles.addDropdown}>
               <button className={styles.addDropdownItem} onClick={() => addTransition('prompt')}>
@@ -130,11 +130,11 @@ export function NodeSettingsTransitions({
                 <div className={styles.equationBox}>
                   <div className={styles.equationHeader}>
                     <div className={styles.toggleWrap}>
-                      <Toggle
-                        size="S"
+                      <SegmentedControl
+                        size="sm"
                         items={[{ key: 'all', label: 'All' }, { key: 'any', label: 'Any' }]}
-                        active={t.matchMode || 'all'}
-                        onChange={(key) => onUpdateTransition(i, 'matchMode', key)}
+                        value={t.matchMode || 'all'}
+                        onValueChange={(key) => onUpdateTransition(i, 'matchMode', key)}
                       />
                     </div>
                     <button className={styles.addRuleBtn} onClick={() => onAddRule(i)}>Add Rule</button>
@@ -192,7 +192,7 @@ export function NodeSettingsTransitions({
                   value={t.target || ''}
                   options={nodeOptions}
                   placeholder="Select Transfer Node"
-                  onChange={val => onUpdateTransition(i, 'target', val)}
+                  onValueChange={val => onUpdateTransition(i, 'target', val)}
                 />
               </div>
             </div>

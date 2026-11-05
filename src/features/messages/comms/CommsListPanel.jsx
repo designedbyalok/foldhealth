@@ -1,18 +1,22 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
 import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { BulkBar } from '../../../components/BulkBar/BulkBar';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
+import { toast } from '../../../components/Toast/sonnerToast';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Avatar } from '../../../components/Avatar/Avatar';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { SearchBar } from '../../../components/SearchBar/SearchBar';
-import boneStyles from '../../../components/TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../../../components/Skeleton/Skeleton';
 import listStyles from '../MessagesView.module.css';
+import { useAppStore } from '../../../store/useAppStore';
+import { membersForConversation, threadTitle } from './smsMembers';
 import { formatTime } from '../messageUtils';
 import { CHANNEL_META, initialsOf, isMissedCall } from './commsUtils';
 import { CommsListEmpty } from './CommsEmptyState';
 import { CommsListHeader } from './CommsListHeader';
-import { updateConversation, markConversationRead } from './commsRepo';
+import { updateConversation, markConversationRead, deleteConversation } from './commsRepo';
 import styles from './Comms.module.css';
 
 const CHANNEL_FILTER = { Chat: 'chat', SMS: 'sms', Calls: 'call', Email: 'email' };
@@ -47,11 +51,21 @@ export function CommsListPanel({
   const [activityCutoff, setActivityCutoff] = useState(0);
   const [bulk, setBulk] = useState(false);
   const [picked, setPicked] = useState([]);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const mixed = channel === 'all';
 
   const tabs = channel === 'call'
     ? [{ key: 'all', label: 'All' }, { key: 'unanswered', label: 'Unanswered' }, { key: 'pinned', label: 'Pinned' }]
     : [{ key: 'all', label: 'All' }, { key: 'unread', label: 'Unread' }, { key: 'pinned', label: 'Pinned' }];
+
+  // Shared SMS numbers read "Annette, Liam, +1" or their custom name, and search
+  // finds them by that name or any member's.
+  const patients = useAppStore(s => s.allPatients);
+  const smsMembers = useMemo(() => new Map(conversations
+    .filter(c => c.channel === 'sms')
+    .map(c => [c.id, membersForConversation(c, patients || [])])), [conversations, patients]);
+  const titleOf = (c) => (c.channel === 'sms' ? threadTitle(c, smsMembers.get(c.id), { max: 2 }) : c.patient_name || 'Unknown');
 
   const q = query.trim().toLowerCase();
   const list = conversations.filter((c) => {
@@ -62,7 +76,8 @@ export function CommsListPanel({
     if (channels.length && !channels.some(k => CHANNEL_FILTER[k] === c.channel)) return false;
     if (activityCutoff && new Date(c.last_message_at).getTime() < activityCutoff) return false;
     if (!q) return true;
-    return `${c.patient_name} ${c.group_name || ''} ${c.last_preview} ${c.patient_phone || ''}`.toLowerCase().includes(q);
+    const memberNames = (smsMembers.get(c.id) || []).map(m => m.name).join(' ');
+    return `${c.patient_name} ${c.thread_name || ''} ${memberNames} ${c.group_name || ''} ${c.last_preview} ${c.patient_phone || ''}`.toLowerCase().includes(q);
   });
 
   const unread = conversations.filter(c => !!c.archived === showArchived && c.unread_count > 0).length;
@@ -87,7 +102,7 @@ export function CommsListPanel({
       />
 
       <div className={listStyles.convTabs}>
-        <Toggle items={tabs} active={tab} onChange={setTab} size="S" />
+        <SegmentedControl items={tabs} value={tab} onValueChange={setTab} size="sm" />
       </div>
 
       {filterOpen && (
@@ -112,10 +127,10 @@ export function CommsListPanel({
         {loading ? (
           Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className={listStyles.convItem} aria-hidden>
-              <span className={`${boneStyles.bone} ${styles.boneAvatar}`} />
+              <Skeleton className={styles.boneAvatar} />
               <div className={listStyles.convInfo}>
-                <span className={`${boneStyles.bone} ${styles.boneLine}`} />
-                <span className={`${boneStyles.bone} ${styles.boneLineShort}`} />
+                <Skeleton className={styles.boneLine} />
+                <Skeleton className={styles.boneLineShort} />
               </div>
             </div>
           ))
@@ -144,12 +159,14 @@ export function CommsListPanel({
                 <Icon name={isMissedCall(c) ? 'solar:end-call-rounded-linear' : 'solar:phone-calling-linear'} size={18} />
               </span>
             ) : (
-              <Avatar variant="patient" size={36} initials={initialsOf(c.patient_name)} />
+              (smsMembers.get(c.id)?.length > 1
+                ? <Avatar variant="patient" type="icon" iconName="solar:users-group-rounded-linear" size={36} />
+                : <Avatar variant="patient" size={36} initials={initialsOf(c.patient_name)} />)
             )}
             <div className={listStyles.convInfo}>
               <div className={listStyles.convNameRow}>
                 <div className={[listStyles.convName, c.unread_count ? '' : listStyles.muted].join(' ')}>
-                  {c.patient_name || 'Unknown'}
+                  {titleOf(c)}
                 </div>
                 {channel === 'all' && <Icon name={CHANNEL_META[c.channel]?.icon} size={12} color="var(--neutral-300)" />}
                 <div className={listStyles.convTime}>{formatTime(c.last_message_at)}</div>
@@ -173,10 +190,33 @@ export function CommsListPanel({
           onClear={() => setPicked([])}
           noun={picked.length === 1 ? 'Conversation' : 'Conversations'}
           actions={[
-            { label: 'Mark as Read', icon: 'solar:check-read-linear', variant: 'secondary', onClick: (ids) => { ids.forEach(id => markConversationRead(conversations.find(c => c.id === id))); setPicked([]); } },
-            { label: 'Pin', icon: 'solar:pin-linear', variant: 'secondary', onClick: (ids) => { ids.forEach(id => updateConversation(id, { pinned: true })); setPicked([]); } },
-            { label: showArchived ? 'Unarchive' : 'Archive', icon: 'solar:archive-linear', variant: 'primary', onClick: (ids) => { ids.forEach(id => updateConversation(id, { archived: !showArchived })); setPicked([]); } },
+            { label: 'Mark as Read', icon: 'solar:check-read-linear', variant: 'outline', onClick: (ids) => { ids.forEach(id => markConversationRead(conversations.find(c => c.id === id))); setPicked([]); } },
+            { label: 'Pin', icon: 'solar:pin-linear', variant: 'outline', onClick: (ids) => { ids.forEach(id => updateConversation(id, { pinned: true })); setPicked([]); } },
+            { label: showArchived ? 'Unarchive' : 'Archive', icon: 'solar:archive-linear', variant: 'solid', onClick: (ids) => { ids.forEach(id => updateConversation(id, { archived: !showArchived })); setPicked([]); } },
+            { label: 'Delete', icon: 'solar:trash-bin-minimalistic-linear', variant: 'soft', tone: 'danger', onClick: () => setConfirmDelete(true) },
           ]}
+        />
+      )}
+      {confirmDelete && (
+        <ConfirmDialog
+          variant="destructive"
+          title={`Delete ${picked.length} ${picked.length === 1 ? 'conversation' : 'conversations'}?`}
+          description="Every message in them is removed for everyone, permanently. This can't be undone."
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          loading={deleting}
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={async () => {
+            setDeleting(true);
+            const ids = [...picked];
+            const results = await Promise.allSettled(ids.map(id => deleteConversation(id)));
+            const failed = results.filter(r => r.status === 'rejected').length;
+            if (failed) toast.error(`${failed} of ${ids.length} could not be deleted.`);
+            else toast.success(ids.length === 1 ? 'Conversation Deleted Successfully' : 'Conversations Deleted Successfully');
+            setPicked([]);
+            setDeleting(false);
+            setConfirmDelete(false);
+          }}
         />
       )}
     </div>

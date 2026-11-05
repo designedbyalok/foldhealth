@@ -1,6 +1,6 @@
 import { HccWorklistRow, HccEmptyPatientRow } from './HccWorklistRow';
 import { HeaderCell } from '../../components/HeaderCell/HeaderCell';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Button } from '../../components/Button/Button';
@@ -10,7 +10,7 @@ import { SortPopover } from '../../components/SortPopover/SortPopover';
 import { DUE_OPTIONS } from './dueDateFilter';
 import { SavedFiltersChip } from './SavedFiltersChip';
 import { FilterChipBar } from './FilterChipBar';
-import { FilterNameDialog } from './FilterNameDialog';
+import { FilterNameDialog } from '../../components/FilterBar/FilterNameDialog';
 import { ColumnConfigPopover } from '../../components/ColumnConfigPopover/ColumnConfigPopover';
 import { MEMBER_SORT_ITEMS } from './columns';
 import { Pagination } from '../../components/Pagination/Pagination';
@@ -22,6 +22,7 @@ import { StatusLegend } from './StatusLegend';
 import { HorizontalScrollbar } from '../../components/HorizontalScrollbar/HorizontalScrollbar';
 import { UploadMenuButton, EmptyState, ColumnsIcon } from './HccWorklistTableParts';
 import { COL_CLASS } from './HccWorklistTableParts.constants';
+import { useAppStore } from '../../store/useAppStore';
 import styles from './HccWorklistTable.module.css';
 import rowStyles from './HccWorklistRow.module.css';
 
@@ -36,6 +37,11 @@ export function HccWorklistTableView({
   bulkAssigneeOpen, setBulkAssigneeOpen, sortPop, setSort, clearSort, memberSortPop,
   toggleHccColumn, reorderHccColumns, clearHccColumnOrder, clearHccHiddenCols,
 }) {
+  // The table slices rows by the store's page, so the pager drives it too.
+  const currentPage = useAppStore(s => s.currentPage);
+  const setCurrentPage = useAppStore(s => s.setCurrentPage);
+  const perPage = useAppStore(s => s.perPage);
+  const setPerPage = useAppStore(s => s.setPerPage);
   return (
     <div className={styles.wrap}>
       <HccUploadProgressRibbon />
@@ -67,10 +73,9 @@ export function HccWorklistTableView({
             <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
             <ActionButton
               icon="custom:export"
-              size="L"
               tooltip="Export"
               tooltipBelow
-              onClick={() => showToast('Export — coming soon')}
+              onClick={() => showToast('Export: coming soon')}
             />
             <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
             <UploadMenuButton
@@ -82,7 +87,7 @@ export function HccWorklistTableView({
         }
       />
 
-      {filterOpen && <FilterChipBar onSaveFilter={() => setSaveDialogOpen(true)} />}
+      <FilterChipBar collapsed={!filterOpen} onSaveFilter={() => setSaveDialogOpen(true)} />
       {/* Saved filters live exclusively in the left SubNav (under HCC).
           Inline chip strip removed per UX; rename/delete handled in-sidebar. */}
 
@@ -104,7 +109,7 @@ export function HccWorklistTableView({
       />
 
       <div className={styles.scrollWrap} ref={scrollWrapRef}>
-        {/* Empty states check the COMBINED list — if the secondary section
+        {/* Empty states check the COMBINED list, if the secondary section
             still has patients that match the search, don't tell the user
             there are no results. */}
         {combinedRows.length === 0 && searchQuery?.trim() && (
@@ -113,7 +118,7 @@ export function HccWorklistTableView({
             message={`No members match "${searchQuery.trim()}". Try a different search term.`}
           />
         )}
-        {/* Filters (chips or Due Date) scoped primary rows out — prompt the
+        {/* Filters (chips or Due Date) scoped primary rows out, prompt the
             user to adjust them. Only shown when the secondary section is
             also empty, otherwise the table still has meaningful content. */}
         {filtered.length === 0 && patientsWithoutGaps.length === 0 && !searchQuery?.trim() && filtersActive && !hccMembersLoading && (
@@ -123,8 +128,8 @@ export function HccWorklistTableView({
             icon="solar:filter-linear"
             action={
               <Button
-                variant="secondary"
-                size="S"
+                variant="outline"
+                size="sm"
                 leadingIcon="solar:close-circle-linear"
                 onClick={() => { clearHccFilters(); setHccDueDateFilter(null); }}
               >
@@ -171,7 +176,7 @@ export function HccWorklistTableView({
                     onSort={col.sortable ? ((field) => {
                       // Cycle asc → desc → cleared on the active column, or
                       // start fresh at asc when switching to a new column.
-                      // No popover — the header morphs its own icon to show
+                      // No popover: the header morphs its own icon to show
                       // the current direction.
                       if (sortKey === field) {
                         if (sortDir === 'asc') setSort(field, 'desc');
@@ -243,6 +248,10 @@ export function HccWorklistTableView({
       <StatusLegend />
 
       <Pagination
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        perPage={perPage}
+        onPerPageChange={setPerPage}
         totalItems={combinedRows.length}
         totalCount={totalRecordCount}
         filtered={filtersActive || !!searchQuery?.trim()}

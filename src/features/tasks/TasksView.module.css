@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   Tasks Page — uses same patterns as TabBar + FilterBar
+   Tasks Page: uses same patterns as TabBar + FilterBar
    ═══════════════════════════════════════════════════════════ */
 
 .wrapper {
@@ -26,7 +26,7 @@
   overflow-y: auto;
   /* Narrow viewports get a horizontal scrollbar rather than crushing the
      task title column to zero. Every horizontal band (header, group bar,
-     rows) shares ONE fixed minimum — the sum of the column widths below —
+     rows) shares ONE fixed minimum: the sum of the column widths below,
      so they always lay out identically and columns stay aligned. Never
      use per-element `min-width: fit-content` here: it resolves against
      each row's own content, so rows with long titles end up wider than
@@ -43,6 +43,7 @@
 .progSection { display: flex; flex-direction: column; margin-bottom: 16px; }
 .progSectionHead { display: flex; align-items: center; gap: 8px; padding: 8px 12px 6px; }
 .progSectionTitle { font-size: var(--font-base); font-weight: 500; color: var(--neutral-400); }
+.progSectionHeadPlain { padding: var(--space-2) var(--space-1); font-size: var(--font-base); font-weight: 500; line-height: 1.2; color: var(--neutral-500); }
 .progEmpty {
   display: flex;
   flex-direction: column;
@@ -78,7 +79,7 @@
 .progHeader .pinRight0 { z-index: 4; }
 /* Draw the divider on each header cell (not the container) so the opaque
    pinned cells don't paint over it, and every cell's hairline lands on the
-   same line — no doubling. */
+   same line: no doubling. */
 .progHeader.tableHeader { border-bottom: none; }
 .progHeader .thCell { box-sizing: border-box; border-bottom: 0.5px solid var(--neutral-150); }
 
@@ -106,13 +107,13 @@
 }
 
 /* .thCell's `padding: 0 12px` shorthand applies to every header cell that
-   doesn't set its own padding — the check/P/actions columns didn't, which
+   doesn't set its own padding: the check/P/actions columns didn't, which
    made those three headers 24px wider than their data cells and cascaded
    into a 72px offset by the end of the row. Explicit `padding: 0` on
    the three centered columns reset them to match .cellCheck / .cellP /
    .cellActions exactly. */
 .colCheck { width: 48px; flex-shrink: 0; padding: 0; display: flex; align-items: center; justify-content: center; }
-/* Floor task-title width so it stays readable when the viewport narrows —
+/* Floor task-title width so it stays readable when the viewport narrows,
    before this, the flex:1 column would collapse to 0 as the fixed
    sibling columns claimed the space. The parent .tableWrap now scrolls
    horizontally past this floor. Mirrored on .cellTask below. */
@@ -169,7 +170,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  /* Sibling of `.groupHeaderLeft` — pin to the right edge so the Add /
+  /* Sibling of `.groupHeaderLeft`, pin to the right edge so the Add /
      Collapse actions stay in reach without following the scroll. */
   position: sticky;
   right: var(--space-3);
@@ -185,7 +186,7 @@
   padding: 0 8px;
   box-sizing: border-box;
   min-width: var(--tasks-table-min-width);
-  /* Left-edge accent bar — colored per row status. Default is transparent
+  /* Left-edge accent bar: colored per row status. Default is transparent
      so status-neutral rows read as plain, missed rows get a red rail. */
   box-shadow: inset 3px 0 0 0 transparent;
   transition: background 100ms, box-shadow 120ms;
@@ -248,7 +249,7 @@
   border-color: var(--primary-300);
 }
 
-/* Press feedback — subtle scale-down while held. Slightly deeper than the
+/* Press feedback: subtle scale-down while held. Slightly deeper than the
    Button primitive's 0.97 because the checkbox is a smaller hit target. */
 .taskCheckbox:active:not(:disabled) {
   transform: scale(0.92);
@@ -264,7 +265,7 @@
   border-color: var(--status-success);
 }
 
-/* Check icon — always mounted; scale + opacity drive the state change so
+/* Check icon: always mounted; scale + opacity drive the state change so
    React never remounts the SVG. */
 .taskCheckIcon {
   display: inline-flex;
@@ -538,7 +539,7 @@
   color: var(--neutral-300);
 }
 
-/* Inline assignee in the list row — visually identical to the
+/* Inline assignee in the list row, visually identical to the
    original static span (icon + name). The button is the click target
    for opening the dropdown but renders without chrome so it reads as
    plain inline text. Empty state (.assignEmpty) handles unassigned. */
@@ -850,7 +851,7 @@
   flex-wrap: wrap;
 }
 
-/* People row — patient left, staff right */
+/* People row: patient left, staff right */
 .cardPeople {
   display: flex;
   align-items: center;
@@ -883,7 +884,7 @@
   text-decoration: underline;
 }
 
-/* (avatarXs removed — use Avatar size="S" instead) */
+/* (avatarXs removed: use Avatar size="S" instead) */
 
 /* Divider between people and footer */
 .cardDivider {
@@ -971,7 +972,7 @@
   transition: background .15s;
 }
 
-/* Beat InlineEditable's default size_M (14px) — same specificity, so we
+/* Beat InlineEditable's default size_M (14px): same specificity, so we
    double the class-name selector to win regardless of stylesheet order. */
 .drawerTaskTitleEditable.drawerTaskTitleEditable {
   font-size: var(--font-2xl);
@@ -1086,7 +1087,7 @@
   cursor: pointer;
   font-family: 'Inter', sans-serif;
   transition: background .15s;
-  /* Date / status text never wraps — cells narrow enough to force a
+  /* Date / status text never wraps, cells narrow enough to force a
      two-line MM-DD-YYYY should ellipsize or trigger the horizontal
      scroll, not stack numerals vertically. */
   white-space: nowrap;
@@ -1240,7 +1241,7 @@
   gap: var(--space-1);
 }
 /* Empty state shown when a HEDIS Sign-Off task has no persisted clinical
-   note yet — replaces the old `syntheticLinkedNoteFromTask` ghost card
+   note yet: replaces the old `syntheticLinkedNoteFromTask` ghost card
    that fabricated data from `task.labels`. Honest empty state instead of
    a fake row whose View action was a toast. */
 .linkedNoteEmpty {
@@ -1316,7 +1317,7 @@
 
 /* Warning-toned counterpart shown on a Pending-Review preview (note is
    out for reviewer sign-off, not yet Signed). Same shape as the Signed
-   tag — different icon/color and label. */
+   tag: different icon/color and label. */
 .previewPendingReviewTag {
   display: inline-flex;
   align-items: center;
@@ -1457,7 +1458,7 @@
   overflow: hidden;
 }
 /* Progress fill spans full width and scales along X. Animating `transform`
-   instead of `width` keeps the tween off the layout thread — no reflow per
+   instead of `width` keeps the tween off the layout thread, no reflow per
    frame, just GPU-composited scaling. */
 .subtaskProgressFill {
   height: 100%;
@@ -1600,7 +1601,7 @@
   align-items: center;
 }
 
-/* Sticky tab-strip wrap — pins the All/Comments/History row at the top
+/* Sticky tab-strip wrap: pins the All/Comments/History row at the top
    of the drawer body while the log scrolls beneath. Sides bleed to the
    drawer body's border edges (drawer body has 16px padding). Height +
    horizontal padding match SectionTitleBar's page-level tab row so the
@@ -1613,7 +1614,7 @@
   display: flex;
   align-items: stretch;
   /* Explicit height (not min-height) so the embedded TabStrip's inner
-     `height: 100%` resolves and its tab items stretch to fill the row —
+     `height: 100%` resolves and its tab items stretch to fill the row,
      mirroring the 48px page-level tab bar. */
   height: var(--space-12);
   position: sticky;
@@ -1975,22 +1976,14 @@
   justify-content: center;
 }
 
+/* Row ••• (shared ActionButton): hidden until the row is hovered or it has focus / its menu is open. */
 .actionMenuBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: none;
-  background: none;
-  cursor: pointer;
   opacity: 0;
-  transition: opacity .15s, background .15s;
+  transition: opacity .15s;
 }
 .taskRow:hover .actionMenuBtn,
-.actionMenuBtn:focus { opacity: 1; }
-.actionMenuBtn:hover { background: var(--neutral-100); }
+.actionMenuBtn:focus-visible,
+.actionMenuBtnOpen { opacity: 1; }
 
 .actionMenuDropdown {
   background: var(--neutral-0);
@@ -2042,7 +2035,7 @@
 }
 .taskTr:hover { background: var(--primary-25); }
 /* Pin Task Title (+ its check) left and the action column right while the
-   middle columns scroll — WorklistShell only makes the <th>s sticky, so the
+   middle columns scroll: WorklistShell only makes the <th>s sticky, so the
    body cells need it here. Each pinned cell paints its own background (and
    repeats the hover tint) or scrolled content shows through. */
 .taskTr .tdCheck { position: sticky; left: 0; z-index: 2; background: var(--neutral-0); }

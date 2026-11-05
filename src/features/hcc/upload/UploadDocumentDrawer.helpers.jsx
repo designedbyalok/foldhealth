@@ -53,11 +53,11 @@ export function ProcessingPhase({ fileName, onMinimize, onDiscard }) {
         You can minimize this window and continue working while it processes.
       </div>
       <div className={styles.processingActions}>
-        <Button variant="primary" size="s" onClick={onMinimize}>
+        <Button size="sm" onClick={onMinimize}>
           <Icon name="solar:minimize-square-2-linear" size={14} color="#fff" />
           Minimize
         </Button>
-        <Button variant="alt" size="s" onClick={onDiscard}>
+        <Button variant="outline" tone="primary" size="sm" onClick={onDiscard}>
           <Icon name="solar:trash-bin-2-linear" size={14} color="var(--neutral-300)" />
           Discard
         </Button>
@@ -147,7 +147,7 @@ export function shortDate(iso) {
   return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`;
 }
 
-// Relative day heading — "Today • Jul 29, 2026" / "Yesterday • …" / weekday.
+// Relative day heading: "Today • Jul 29, 2026" / "Yesterday • …" / weekday.
 export function dayHeading(iso) {
   const d = new Date(iso);
   const now = new Date();
@@ -159,7 +159,7 @@ export function dayHeading(iso) {
 }
 
 /**
- * ExtractedRecords — post-extraction results shown inside a tab
+ * ExtractedRecords: post-extraction results shown inside a tab
  * (Add Records drawer). Layout matches Paper 27A3-0:
  *   Section header ("Degraded Documents ⌄" + Review All)
  *     Day heading ("Today • …")
@@ -168,7 +168,7 @@ export function dayHeading(iso) {
  */
 export function ExtractedRecords({ records, activeBucket, setActiveBucket, onReview, onDelete, tabScope = null }) {
   const count = (k) => records.filter(r => r.bucket === k).length;
-  // When wrapped by a tab, the tab is already the filter — show every record
+  // When wrapped by a tab, the tab is already the filter, show every record
   // passed in; otherwise fall back to activeBucket.
   const visible = tabScope ? records : records.filter(r => r.bucket === activeBucket);
 
@@ -188,7 +188,7 @@ export function ExtractedRecords({ records, activeBucket, setActiveBucket, onRev
           <Icon name="solar:documents-linear" size={28} color="var(--neutral-200)" />
           <div className={styles.extractedEmptyTitle}>No extracted documents yet</div>
           <div className={styles.extractedEmptyBody}>
-            Upload a document above — extracted records pending review, added to the
+            Upload a document above: extracted records pending review, added to the
             worklist, or unreadable will appear here.
           </div>
         </div>
@@ -196,7 +196,7 @@ export function ExtractedRecords({ records, activeBucket, setActiveBucket, onRev
     );
   }
 
-  // Legacy path — no tabScope, use bucket-pill row and one flat list.
+  // Legacy path: no tabScope, use bucket-pill row and one flat list.
   if (!tabScope) {
     const legacyGroups = groupByDay(visible);
     return (
@@ -240,7 +240,7 @@ export function ExtractedRecords({ records, activeBucket, setActiveBucket, onRev
     );
   }
 
-  // Tab-scoped path — render Paper 27A3-0 sections.
+  // Tab-scoped path: render Paper 27A3-0 sections.
   return (
     <div className={styles.extracted}>
       {visible.length === 0 && (
@@ -287,7 +287,7 @@ export function ExtractedRecords({ records, activeBucket, setActiveBucket, onRev
   );
 }
 
-// Bundle rows by their dayHeading — used inside RecordSection to draw a
+// Bundle rows by their dayHeading: used inside RecordSection to draw a
 // per-day heading above each group card.
 export function groupByDay(rows) {
   const map = new Map();
@@ -300,7 +300,7 @@ export function groupByDay(rows) {
 }
 
 /**
- * RecordSection — one section (Degraded / Unreadable / Added). Header row
+ * RecordSection: one section (Degraded / Unreadable / Added). Header row
  * with a tone-tinted icon + collapsible chevron + optional "Review All"
  * link. Body groups records by day into rounded cards with dividers.
  */
@@ -361,14 +361,14 @@ export function RecordSection({ title, iconName, iconColor, rightAction, rows, o
 }
 
 /**
- * ExtractedRow — one row inside a section card (Paper 27A3-0). Layout:
+ * ExtractedRow: one row inside a section card (Paper 27A3-0). Layout:
  * [PDF icon] filename                                  [action] | [kebab]
  *            source-line (+ error tag for unreadable)
  * Degraded → purple Review pill. Unreadable → outline Retry pill.
  * Added → eye + download icons. Legacy/no-context rows fall back to a
  * trash affordance.
  */
-// Custom document-with-embedded-PDF-letters glyph — no Solar equivalent
+// Custom document-with-embedded-PDF-letters glyph: no Solar equivalent
 // carries the inline "PDF" wordmark, so a raw SVG is kept here. Uses
 // currentColor so a parent color rule tokens it (neutral-300 by default).
 export function PdfDocIcon() {
@@ -441,8 +441,8 @@ export function ExtractedRow({ rec, onReview, onDelete, onOpenPatient }) {
       )}
       {isAdded && (
         <div className={styles.exAddedActions}>
-          <ActionButton icon="solar:eye-linear" size="S" tooltip="View" onClick={() => onReview(rec)} />
-          <ActionButton icon="solar:download-minimalistic-linear" size="S" tooltip="Download" onClick={handleDownload} />
+          <ActionButton icon="solar:eye-linear" size="sm" tooltip="View" onClick={() => onReview(rec)} />
+          <ActionButton icon="solar:download-minimalistic-linear" size="sm" tooltip="Download" onClick={handleDownload} />
         </div>
       )}
       {(isDegraded || isUnreadable) && (
@@ -451,7 +451,7 @@ export function ExtractedRow({ rec, onReview, onDelete, onOpenPatient }) {
           <span ref={moreRef} className={styles.exMoreWrap}>
             <ActionButton
               icon="solar:menu-dots-linear"
-              size="S"
+              size="sm"
               tooltip="More"
               onClick={() => setMenuOpen(v => !v)}
               aria-expanded={menuOpen}
@@ -479,7 +479,7 @@ export function ExtractedRow({ rec, onReview, onDelete, onOpenPatient }) {
 
 
 /**
- * StagedFileRow — single row in the staged-file list. While uploading
+ * StagedFileRow: single row in the staged-file list. While uploading
  * renders an animated progress bar + × remove. Once complete swaps to
  * a check + eye-preview + trash.
  */
@@ -521,7 +521,7 @@ export function StagedFileRow({ file, onRemove, onPreview }) {
 }
 
 /**
- * WhatHappensNext — collapsible info accordion sitting under the
+ * WhatHappensNext: collapsible info accordion sitting under the
  * dropzone. Default collapsed (pill with bulb icon); expanded shows a
  * 3-step grid explaining the extract → review → confirm flow.
  */
@@ -562,7 +562,7 @@ export function formatBytes(bytes) {
 }
 
 /**
- * PickerUploadQueue — inline list of documents the user has queued
+ * PickerUploadQueue: inline list of documents the user has queued
  * from the picker. Each row shows filename + status (extracting /
  * ready). A "Review N" CTA opens the multi-doc review drawer once at
  * least one document has finished OCR. The picker itself stays open

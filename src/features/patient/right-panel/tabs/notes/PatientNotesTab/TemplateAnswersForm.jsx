@@ -8,12 +8,12 @@ import { derivedPatch, isFieldVisible, userSelectOptions } from '../../../../../
 import styles from './TemplateAnswersForm.module.css';
 
 /**
- * TemplateAnswersForm — renders a Note Template's `schema.items` as a
+ * TemplateAnswersForm: renders a Note Template's `schema.items` as a
  * flat form and reports the answers back as `{ [key]: value }`.
  *
  * Deliberately decoupled from the Care Gap Visit workspace's own
  * `GenericEvidenceForm`, which routes updates through
- * `useClinicalNotePanel`. This component owns nothing — it just paints
+ * `useClinicalNotePanel`. This component owns nothing, it just paints
  * the fields the caller hands it and pushes answers up via `onChange`.
  *
  * Field descriptor shape (matches `GAP_TEMPLATES` and the Form Builder):
@@ -89,7 +89,7 @@ function Field({ field, answers, onSet, submitted, users }) {
         <Select
           options={userSelectOptions(field, users)}
           value={value || ''}
-          onChange={(v) => onSet(key, v)}
+          onValueChange={(v) => onSet(key, v)}
           placeholder={placeholder || 'Choose an option'}
           searchable
         />
@@ -143,7 +143,7 @@ function Field({ field, answers, onSet, submitted, users }) {
         <Select
           options={(options || []).map(o => ({ value: o.value, label: o.label }))}
           value={value || ''}
-          onChange={(v) => onSet(key, v)}
+          onValueChange={(v) => onSet(key, v)}
           placeholder={placeholder || 'Choose an option'}
         />
         {description && <span className={styles.help}>{description}</span>}
@@ -194,7 +194,7 @@ function Field({ field, answers, onSet, submitted, users }) {
         onChange={(e) => onSet(key, e.target.value)}
         placeholder={placeholder}
         trailingText={field.unit}
-        variant={hasError ? 'error' : 'default'}
+        invalid={hasError}
       />
       {description && <span className={styles.help}>{description}</span>}
       {errorText && <span className={styles.error}>{errorText}</span>}

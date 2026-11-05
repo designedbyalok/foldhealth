@@ -16,8 +16,8 @@ export function AssignedToMeCard({ dragHandleClassName }) {
           Assigned to me
         </div>
         <div className={styles.cardActions}>
-          <ActionButton icon="solar:share-linear" size="S" tooltip="Share" />
-          <ActionButton icon="custom:filter" size="S" tooltip="Filter" />
+          <ActionButton icon="solar:share-linear" size="sm" tooltip="Share" />
+          <ActionButton icon="custom:filter" size="sm" tooltip="Filter" />
         </div>
       </div>
       <div className={styles.cardBody}>

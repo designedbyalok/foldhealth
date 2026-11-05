@@ -154,8 +154,8 @@ export function InsightBanner({ icon, title, text, variant = '', buttons = [], s
             {buttons.map((b, i) => (
               <Button
                 key={i}
-                variant={b.primary ? 'primary' : 'secondary'}
-                size="S"
+                variant={b.primary ? 'solid' : 'outline'}
+                size="sm"
                 onClick={() => handleButtonClick(b)}
               >
                 {b.label}
@@ -215,8 +215,8 @@ export function Tag({ label, variant = 'stars' }) {
 
 // ─── Button helpers (thin wrappers around shared Button component) ───
 export function GhostBtn({ label, onClick }) {
-  return <Button variant="ghost" size="S" onClick={onClick}>{label}</Button>;
+  return <Button variant="ghost" size="sm" onClick={onClick}>{label}</Button>;
 }
 export function PrimaryBtn({ label, onClick }) {
-  return <Button variant="primary" size="S" onClick={onClick}>{label}</Button>;
+  return <Button size="sm" onClick={onClick}>{label}</Button>;
 }

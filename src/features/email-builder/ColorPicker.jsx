@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Select as SharedSelect } from '../../components/Select/Select';
-import { Slider } from '../../components/ShadcnSlider/ShadcnSlider';
+import { Slider } from '../../components/Slider/Slider';
 import {
   isGradient, parseGradient, formatGradient,
   hexToHsv, hsvToHex, normalizeHex,
@@ -34,7 +34,7 @@ function SVSquare({ h, s, v, onChange }) {
   const ref = useRef(null);
   const draggingRef = useRef(false);
   // Mirrors draggingRef in state purely so CSS can drop the pointer's
-  // position transition mid-drag — a tweened pointer lags the cursor.
+  // position transition mid-drag: a tweened pointer lags the cursor.
   const [dragging, setDragging] = useState(false);
 
   const handle = useCallback((clientX, clientY) => {
@@ -74,7 +74,7 @@ function SVSquare({ h, s, v, onChange }) {
   );
 }
 
-// ── Ramp slider — the hue and opacity tracks ────────────────────────────
+// ── Ramp slider: the hue and opacity tracks ────────────────────────────
 // Both are drag-along-a-painted-ramp controls, so they share one component.
 // The shared `Slider` can't back these: their track has to render a hue ramp
 // or a checkerboard-backed alpha ramp, and its thumb carries the live color.
@@ -102,7 +102,7 @@ function RampSlider({ fraction, onChange, trackClass, trackStyle, thumbColor, la
     };
   }, [handle]);
 
-  // Arrow keys walk the ramp in 1% steps, 10% with Shift — same contract as
+  // Arrow keys walk the ramp in 1% steps, 10% with Shift, same contract as
   // the numeric fields.
   const onKeyDown = (e) => {
     const up = e.key === 'ArrowUp' || e.key === 'ArrowRight';
@@ -136,7 +136,7 @@ function RampSlider({ fraction, onChange, trackClass, trackStyle, thumbColor, la
   );
 }
 
-// EyeDropper button — uses the native EyeDropper API where available
+// EyeDropper button: uses the native EyeDropper API where available
 // (Chromium / Edge / Opera). Hidden on browsers that don't support it
 // rather than showing a non-functional control.
 function EyeDropperBtn({ onPick }) {
@@ -149,7 +149,7 @@ function EyeDropperBtn({ onPick }) {
       const { sRGBHex } = await ed.open();
       if (sRGBHex) onPick(sRGBHex.toUpperCase());
     } catch {
-      // User cancelled — fine, no-op.
+      // User cancelled: fine, no-op.
     }
   };
   return (
@@ -165,7 +165,7 @@ function SolidPicker({ value, onChange, variables, recentlyUsed, mode, onModeCha
   const { hex, alpha } = useMemo(() => splitAlpha(value), [value]);
   const hsv = useMemo(() => hexToHsv(hex), [hex]);
   const formatted = formatColor(hex, alpha, mode);
-  // The field holds a draft while it's being typed — half-finished text must
+  // The field holds a draft while it's being typed: half-finished text must
   // not round-trip through the parser and fight the keystrokes. `from` records
   // the value the draft produced, so a color arriving from anywhere else (a
   // swatch, the ramps, the eyedropper) drops the draft instead of masking it.
@@ -177,7 +177,7 @@ function SolidPicker({ value, onChange, variables, recentlyUsed, mode, onModeCha
   const commitHue = (fraction) => emit(hsvToHex({ h: fraction * 360, s: hsv.s, v: hsv.v }));
   const commitAlpha = (nextAlpha) => emit(hex, Math.max(0, Math.min(1, nextAlpha)));
 
-  // A swatch is a color choice, not an opacity choice — the current opacity
+  // A swatch is a color choice, not an opacity choice, the current opacity
   // survives unless the swatch itself carries one.
   const pickSwatch = (swatchColor) => {
     const digits = String(swatchColor).trim().replace(/^#/, '');
@@ -225,7 +225,7 @@ function SolidPicker({ value, onChange, variables, recentlyUsed, mode, onModeCha
           className={styles.modeSelect}
           options={COLOR_MODES}
           value={mode}
-          onChange={(next) => { setDraft(null); onModeChange(next); }}
+          onValueChange={(next) => { setDraft(null); onModeChange(next); }}
           aria-label="Color mode"
         />
         <input
@@ -360,11 +360,11 @@ function GradientPicker({ value, onChange, variables, mode, onModeChange }) {
             { value: 'radial', label: 'Radial' },
           ]}
           value={grad.type}
-          onChange={(v) => emit({ ...grad, type: v })}
+          onValueChange={(v) => emit({ ...grad, type: v })}
         />
         <ActionButton
           icon="solar:transfer-horizontal-linear"
-          size="S"
+          size="sm"
           tooltip="Reverse stops"
           onClick={reverseStops}
         />
@@ -395,7 +395,7 @@ function GradientPicker({ value, onChange, variables, mode, onModeChange }) {
 
       <div className={styles.stopsHeader}>
         <span className={styles.sectionLabel}>Stops</span>
-        <ActionButton icon="solar:add-circle-linear" size="S" tooltip="Add stop" onClick={addStop} />
+        <ActionButton icon="solar:add-circle-linear" size="sm" tooltip="Add stop" onClick={addStop} />
       </div>
 
       <div className={styles.stopsList}>
@@ -445,7 +445,7 @@ function GradientPicker({ value, onChange, variables, mode, onModeChange }) {
 
       {/* The active stop's color is edited via the inline Solid picker
           below. We hide the variables grid here to keep the gradient
-          popover compact — variables stay accessible in solid mode. */}
+          popover compact: variables stay accessible in solid mode. */}
       <div className={styles.activeStopWrap}>
         <SolidPicker
           value={active.color}
@@ -459,14 +459,14 @@ function GradientPicker({ value, onChange, variables, mode, onModeChange }) {
   );
 }
 
-// ── Top-level ColorPicker — mode toggle + popover frame ────────────────
+// ── Top-level ColorPicker: mode toggle + popover frame ────────────────
 // Close behavior is owned by the host (ColorInput's outside-click handler).
 // We don't render a close button here so the chrome stays minimal.
 export function ColorPicker({ value, onChange, variables = [], recentlyUsed = [], onCommitRecent, allowGradient = true, gradientOnly = false }) {
   const initialMode = gradientOnly || isGradient(value) ? 'gradient' : 'solid';
   const [mode, setMode] = useState(initialMode);
   // How the value field reads and accepts colors. A display preference, not
-  // part of the value — the stored color is always a hex.
+  // part of the value: the stored color is always a hex.
   const [colorMode, setColorMode] = useState('hex');
 
   // Free drag by the grip. The offset is a transform on top of whatever
@@ -545,7 +545,7 @@ export function ColorPicker({ value, onChange, variables = [], recentlyUsed = []
       style={offset.x || offset.y ? { transform: `translate3d(${offset.x}px, ${offset.y}px, 0)` } : undefined}
       onMouseDown={(e) => e.stopPropagation()}
     >
-      {/* Pointer-only affordance, so it stays out of the tab order — there is
+      {/* Pointer-only affordance, so it stays out of the tab order, there is
           no keyboard equivalent to drag, and the picker works without it. */}
       <button
         type="button"
@@ -558,15 +558,15 @@ export function ColorPicker({ value, onChange, variables = [], recentlyUsed = []
       </button>
       {/* gradientOnly: the host already chose gradient (e.g. a Gradient tab), so no switch. */}
       {allowGradient && !gradientOnly && (
-        <Toggle
+        <SegmentedControl
           fullWidth
-          size="S"
+          size="sm"
           items={[
             { key: 'solid',    label: 'Solid' },
             { key: 'gradient', label: 'Gradient' },
           ]}
-          active={mode}
-          onChange={setModeWithConvert}
+          value={mode}
+          onValueChange={setModeWithConvert}
         />
       )}
       {/* Keyed on mode so the body cross-fades in on every switch instead of

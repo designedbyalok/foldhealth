@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../components/Button/Button';
 import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
-import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { SearchBar } from '../../components/SearchBar/SearchBar';
 import { SearchIconButton } from '../../components/SearchIconButton/SearchIconButton';
 import { toast } from '../../components/Toast/sonnerToast';
@@ -62,7 +62,7 @@ export function useHolidays({ embedded = false } = {}) {
       ) : (
         <SearchIconButton tooltipBelow onClick={() => setSearchOpen(true)} />
       )}
-      <Button variant="secondary" size="L" leadingIcon="solar:add-circle-linear" onClick={() => setForm({})}>New Configuration</Button>
+      <Button variant="outline" leadingIcon="solar:add-circle-linear" onClick={() => setForm({})}>New Configuration</Button>
     </>
   );
 
@@ -90,7 +90,7 @@ export function useHolidays({ embedded = false } = {}) {
       embedded={embedded}
       emptyState={(
         <div className={styles.emptyBox}>
-          <RingEmptyState icon={HolidayIcon} label={query ? 'No holidays match your search' : `No holidays in ${year[0]} yet`} />
+          <EmptyState icon={HolidayIcon} title={query ? 'No holidays match your search' : `No holidays in ${year[0]} yet`} />
         </div>
       )}
       pagination={shown.length > PER_PAGE ? {

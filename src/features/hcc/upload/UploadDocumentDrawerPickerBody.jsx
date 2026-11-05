@@ -2,7 +2,7 @@ import { Button } from '../../../components/Button/Button';
 import { Icon } from '../../../components/Icon/Icon';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Dropzone } from '../../../components/Dropzone/Dropzone';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { DemoPhiStrip } from '../../../components/DemoPhiStrip/DemoPhiStrip';
 import { StagedFileRow, ExtractedRecords } from './UploadDocumentDrawer.helpers';
@@ -41,7 +41,7 @@ export function UploadDocumentDrawerPickerBody(p) {
   return (
     <div className={styles.pickerPhase2}>
       <div className={styles.tabRow}>
-        <TabStrip items={tabItems} activeKey={activeTab} onChange={setActiveTab} />
+        <Tabs items={tabItems} value={activeTab} onValueChange={setActiveTab} />
         {activeTab !== 'upload' && (
           <button
             type="button"
@@ -87,7 +87,7 @@ export function UploadDocumentDrawerPickerBody(p) {
             onChange={(vals) => setRecordFilters(f => ({ ...f, date: vals }))}
           />
           {filterActive && (
-            <Button variant="ghost" size="S" leadingIcon="solar:close-circle-linear" className={styles.filterChipClear} onClick={clearAllFilters}>
+            <Button variant="ghost" size="sm" leadingIcon="solar:close-circle-linear" className={styles.filterChipClear} onClick={clearAllFilters}>
               Clear All
             </Button>
           )}
@@ -119,7 +119,7 @@ export function UploadDocumentDrawerPickerBody(p) {
                     key={s.id}
                     file={s}
                     onRemove={() => removeStaged(s.id)}
-                    onPreview={() => showToast?.(`Preview ${s.name} — coming soon`)}
+                    onPreview={() => showToast?.(`Preview ${s.name}, coming soon`)}
                   />
                 ))}
               </div>

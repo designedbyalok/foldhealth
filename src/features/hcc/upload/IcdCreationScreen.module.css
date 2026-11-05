@@ -1,4 +1,4 @@
-/* ICD Creation — unified upload + manual + SFTP entry surface
+/* ICD Creation: unified upload + manual + SFTP entry surface
  * Portal-rendered, full-viewport modal styled after Figma 1:12719.
  */
 
@@ -75,7 +75,7 @@
   min-height: 0;
 }
 
-/* Inline Document Review host — fills the surface below the title bar. */
+/* Inline Document Review host: fills the surface below the title bar. */
 .reviewInlineHost {
   flex: 1;
   min-height: 0;
@@ -563,7 +563,7 @@
   opacity: 0.3;
 }
 
-/* Clickable pass pill — opens the document review. */
+/* Clickable pass pill: opens the document review. */
 .passPillClickable {
   cursor: pointer;
   transition: filter 0.12s, box-shadow 0.12s;

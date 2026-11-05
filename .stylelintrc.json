@@ -1,7 +1,7 @@
 {
   "rules": {
     "color-no-hex": [true, {
-      "message": "Use a design token — var(--neutral-…/--primary-…/--status-… etc.), not a raw hex color. See src/tokens/tokens.css."
+      "message": "Use a design token: var(--neutral-…/--primary-…/--status-… etc.), not a raw hex color. See src/tokens/tokens.css."
     }],
     "function-disallowed-list": [
       ["rgb", "rgba", "hsl", "hsla"],
@@ -12,7 +12,7 @@
     "property-disallowed-list": [
       ["font-family"],
       {
-        "message": "Do not set font-family — Inter is applied globally. Remove this declaration."
+        "message": "Do not set font-family: Inter is applied globally. Remove this declaration."
       }
     ],
     "declaration-property-unit-disallowed-list": [{

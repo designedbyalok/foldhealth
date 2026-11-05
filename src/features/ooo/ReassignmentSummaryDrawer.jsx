@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { Icon } from '../../components/Icon/Icon';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
-import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
+import { Tabs } from '../../components/Tabs/Tabs';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../store/useAppStore';
 import { formatDate, initialsOf } from './oooUtils';
 import { TYPE_LABELS } from './reassignJobs';
@@ -57,11 +57,11 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
   return (
     <Drawer title="Appointment Reassignment Summary" width={640} onClose={onClose}>
       {!job ? (
-        <RingEmptyState icon="solar:history-linear" label="This reassignment summary isn't available" />
+        <EmptyState icon="solar:history-linear" title="This reassignment summary isn't available" />
       ) : (
         <div className={styles.summary}>
           <div className={styles.summaryField}>
-            <span className={styles.summaryLabel}>Reassigned From:</span>
+            <span className={styles.summaryLabel}>Reassigned From</span>
             <div className={styles.summaryCard}>
               <Avatar variant="staff" initials={initialsOf(job.fromUser)} size="M" />
               <span className={styles.summaryCardText}>
@@ -71,7 +71,7 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
             </div>
           </div>
           <div className={styles.summaryField}>
-            <span className={styles.summaryLabel}>Reassignment Type:</span>
+            <span className={styles.summaryLabel}>Reassignment Type</span>
             <div className={styles.summaryCard}>
               <Avatar type="icon" variant="others" iconName="solar:calendar-linear" size="M" />
               <span className={styles.summaryCardText}>
@@ -82,10 +82,10 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
           </div>
           <div className={styles.summaryField}>
             <span className={styles.summaryLabel}>Appointments Summary</span>
-            <TabStrip
+            <Tabs
               items={TABS.map(t => ({ key: t.key, label: `${t.label} (${job.results.filter(t.pick).length})` }))}
-              activeKey={tab}
-              onChange={setTab}
+              value={tab}
+              onValueChange={setTab}
               fullWidth={false}
             />
           </div>

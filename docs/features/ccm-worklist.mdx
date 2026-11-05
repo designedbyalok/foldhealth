@@ -1,6 +1,6 @@
 ---
 title: "CCM Worklist"
-description: "Chronic Care Management — monthly time-tracked care coordination with a billing-review flow for month-close."
+description: "Chronic Care Management: monthly time-tracked care coordination with a billing-review flow for month-close."
 ---
 
 The **CCM Worklist** is where care teams manage chronically ill members month-to-month. CCM billing is time-based (CPT 99490, 99439, 99487, 99489), so the worklist doubles as a **time ledger** and a **billing-review** surface for month-close.
@@ -11,7 +11,7 @@ Route: `#/population/ccm`.
 
 - **Time is the currency.** Every logged interaction (call, message, chart review, medication reconciliation) accrues minutes toward the month's CPT thresholds.
 - **Monthly rhythm.** Rows re-open each month; last month's totals lock and roll into the Billing Review drawer.
-- **Attestation and consent.** CCM requires documented consent — the worklist enforces it before you can bill.
+- **Attestation and consent.** CCM requires documented consent, the worklist enforces it before you can bill.
 
 ## Columns
 
@@ -27,7 +27,7 @@ Route: `#/population/ccm`.
 | **Assignee** | Care manager |
 | **Actions** | Log time, open Billing Review, ⋯ menu |
 
-## Walkthrough — log a CCM interaction
+## Walkthrough: log a CCM interaction
 
 <Steps>
   <Step title="Open CCM">
@@ -47,7 +47,7 @@ Route: `#/population/ccm`.
   </Step>
 </Steps>
 
-## Walkthrough — month-close billing review
+## Walkthrough: month-close billing review
 
 <Steps>
   <Step title="Open Billing Review">
@@ -73,6 +73,6 @@ The **Time FilterChip** (`TimeFilterChip.jsx`) is a CCM-only control for slicing
 
 ## Tips
 
-- **Two chronic conditions minimum.** CCM eligibility is not just a filter — the Billing Review will block a row that has fewer than two active chronic conditions.
+- **Two chronic conditions minimum.** CCM eligibility is not just a filter, the Billing Review will block a row that has fewer than two active chronic conditions.
 - **Consent is loud.** Missing consent shows in red on the row, in the Quick View header, and in the Billing Review. Capture it before you log the first minute.
 - **Row menu → APCM.** Members on APCM (Advanced Primary Care Management) show in [APCM Billing](/features/apcm-billing) instead; the row's ⋯ menu can flip a member's program.

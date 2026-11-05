@@ -1,7 +1,7 @@
 dist
 node_modules
 storybook-static
-# Token source of truth — hex definitions live here by design.
+# Token source of truth: hex definitions live here by design.
 src/tokens/tokens.css
 # Global resets / @font-face.
 src/index.css

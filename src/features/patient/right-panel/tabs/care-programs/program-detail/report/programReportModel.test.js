@@ -9,7 +9,7 @@ describe('program report dates', () => {
     expect(toDate('09/08/2025').getMonth()).toBe(8);
     expect(toDate('10-13-2026').getFullYear()).toBe(2026);
     expect(toDate('11/11/2024, 11:45 AM').getDate()).toBe(11);
-    expect(toDate('—')).toBeNull();
+    expect(toDate('-')).toBeNull();
   });
 
   it('resolves presets, starting "Since enrollment" on the program start date', () => {

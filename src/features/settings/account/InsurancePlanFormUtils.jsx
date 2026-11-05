@@ -6,7 +6,7 @@ import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import styles from './InsurancePlanFormUtils.module.css';
 
-/* ── FieldLabel — label row with optional required dot and info-icon tooltip ── */
+/* ── FieldLabel: label row with optional required dot and info-icon tooltip ── */
 export function FieldLabel({ children, required, info }) {
   return (
     <div className={styles.label}>
@@ -23,7 +23,7 @@ export function FieldLabel({ children, required, info }) {
   );
 }
 
-/* ── PrefixInput — Input with an inline leading symbol (e.g. "$") ── */
+/* ── PrefixInput: Input with an inline leading symbol (e.g. "$") ── */
 export function PrefixInput({ prefix, ...inputProps }) {
   return (
     <div className={styles.prefixInputWrap}>
@@ -33,7 +33,7 @@ export function PrefixInput({ prefix, ...inputProps }) {
   );
 }
 
-/* ── DateRangePicker — Fold-styled start→end calendar (matches Figma 2006:121957) ── */
+/* ── DateRangePicker: Fold-styled start→end calendar (matches Figma 2006:121957) ── */
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const toISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -157,7 +157,7 @@ export function DateRangePicker({
    exported from here so the form's existing imports don't change. ── */
 export { CollapsibleSection } from '../../../components/CollapsibleSection/CollapsibleSection';
 
-/* ── RichTextNote — contenteditable field with B/I/U toolbar and char counter ── */
+/* ── RichTextNote: contenteditable field with B/I/U toolbar and char counter ── */
 export function RichTextNote({ value, onChange, placeholder = 'Add Additional Note', maxLength = 150 }) {
   const editorRef = useRef(null);
   const [charCount, setCharCount] = useState(0);
@@ -166,7 +166,7 @@ export function RichTextNote({ value, onChange, placeholder = 'Add Additional No
     const el = editorRef.current;
     if (!el) return;
     // `value` is stored rich text read back from Supabase, so it is sanitized
-    // on the way in — the same treatment InsuranceCardPreview already gives it
+    // on the way in: the same treatment InsuranceCardPreview already gives it
     // on the way out.
     const clean = sanitizeRichText(value);
     if (clean && el.innerHTML !== clean) {
@@ -203,11 +203,11 @@ export function RichTextNote({ value, onChange, placeholder = 'Add Additional No
         suppressContentEditableWarning
       />
       <div className={styles.noteToolbar}>
-        <ActionButton icon="solar:text-bold-linear" size="S" tooltip="Bold"
+        <ActionButton icon="solar:text-bold-linear" size="sm" tooltip="Bold"
           onMouseDown={e => { e.preventDefault(); applyFormat('bold'); }} />
-        <ActionButton icon="solar:text-italic-linear" size="S" tooltip="Italic"
+        <ActionButton icon="solar:text-italic-linear" size="sm" tooltip="Italic"
           onMouseDown={e => { e.preventDefault(); applyFormat('italic'); }} />
-        <ActionButton icon="solar:text-underline-linear" size="S" tooltip="Underline"
+        <ActionButton icon="solar:text-underline-linear" size="sm" tooltip="Underline"
           onMouseDown={e => { e.preventDefault(); applyFormat('underline'); }} />
         <span className={styles.noteCount}>{charCount}/{maxLength}</span>
       </div>

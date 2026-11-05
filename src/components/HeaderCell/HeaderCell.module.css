@@ -1,4 +1,4 @@
-/* HeaderCell — canonical column-header primitive for every worklist /
+/* HeaderCell: canonical column-header primitive for every worklist /
    data-table. Baseline typography matches the legacy SortableHeader
    (12 / 500 / neutral-300) so mixing plain <th>s and HeaderCells in the
    same row still lines up. */
@@ -6,7 +6,7 @@
 .headerCell {
   /* Fixed 32px header row across every worklist. Because sibling cells
      (checkbox column, sticky Member column, custom Actions column)
-     share the same <tr>, the tallest wins — those overrides also set
+     share the same <tr>, the tallest wins, those overrides also set
      `height: 32px` + zero vertical padding so the row stays at 32px
      end-to-end. */
   height: 32px;

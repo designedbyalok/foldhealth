@@ -1,0 +1,154 @@
+/* Settings > Care Program Configuration: program list, and a program's
+   Overview / Steps / Worklists / Care Team / Completion Criteria / Access. */
+
+.wrapper { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+.nameCell { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); min-width: 0; }
+.actionCell { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-1); }
+/* ── Program detail ── */
+.headerActions { display: flex; align-items: center; gap: var(--space-2); }
+.headerDivider { width: 1px; height: 16px; background: var(--neutral-150); flex-shrink: 0; }
+.dirtyHint { font-size: var(--font-sm); color: var(--neutral-300); }
+/* A white card holding one block of settings. */
+.card {
+  display: flex; flex-direction: column; gap: var(--space-4);
+  padding: var(--space-4); background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150); border-radius: 8px;
+}
+.cardFlush { padding: 0; gap: 0; overflow: hidden; }
+.cardHead { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.cardFlush > .cardHead { padding: var(--space-4); border-bottom: 0.5px solid var(--neutral-150); }
+.cardTitleBlock { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.cardTitle { margin: 0; font-size: var(--font-md); font-weight: 500; color: var(--neutral-500); }
+.cardHint { margin: 0; font-size: var(--font-base); line-height: var(--leading-tight); color: var(--neutral-300); }
+.fieldGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.fieldFull { grid-column: 1 / -1; }
+/* Overview stats */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
+.stat { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-3); border: 0.5px solid var(--neutral-150); border-radius: 8px; background: var(--neutral-0); }
+.statLabel { font-size: var(--font-sm); color: var(--neutral-300); }
+.statValue { font-size: var(--font-xl, var(--font-lg)); font-weight: 500; color: var(--neutral-500); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+/* A setting with a switch on the right. */
+.switchRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.switchRow + .switchRow { padding-top: var(--space-3); border-top: 0.5px solid var(--neutral-100); }
+.switchText { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); min-width: 0; }
+.switchLabel { font-size: var(--font-base); font-weight: 500; color: var(--neutral-400); }
+.switchHint { font-size: var(--font-sm); line-height: var(--leading-tight); color: var(--neutral-300); }
+.numberField { width: 120px; flex-shrink: 0; }
+.selectField { width: 220px; flex-shrink: 0; }
+.cadenceControls { display: inline-flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
+.intervalField { width: 180px; }
+/* ── Worklists / care team lists ── */
+.listRow {
+  display: grid; align-items: center; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4); border-bottom: 0.5px solid var(--neutral-100);
+}
+.listRow:last-child { border-bottom: 0; }
+.worklistRow { grid-template-columns: minmax(0, 1fr) 140px minmax(0, 200px) 120px 72px; }
+.careTeamRow { grid-template-columns: 180px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 40px; }
+.listHead { font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300); background: var(--neutral-50); padding-top: var(--space-2); padding-bottom: var(--space-2); }
+.listText { font-size: var(--font-base); color: var(--neutral-400); min-width: 0; }
+.listMuted { font-size: var(--font-sm); color: var(--neutral-300); }
+.drawerBody { display: flex; flex-direction: column; gap: var(--space-4); }
+/* ── Master-detail layout (Figma Simplifying-Implementation 55:42451) ── */
+.split { flex: 1; min-height: 0; display: flex; }
+.listPane {
+  width: 340px; flex-shrink: 0; min-height: 0;
+  display: flex; flex-direction: column; gap: var(--space-4);
+  padding: var(--space-4) var(--space-4) 0;
+  border-right: 0.5px solid var(--neutral-150); background: var(--neutral-0);
+}
+.paneHead { display: flex; align-items: center; gap: var(--space-3); }
+.paneTitle { flex: 1; margin: 0; font-size: var(--font-md); font-weight: 500; line-height: 1.2; color: var(--neutral-500); }
+.paneActions { display: flex; align-items: center; gap: var(--space-3); }
+.programList { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--space-3); padding-bottom: var(--space-4); }
+.programCard {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 0.5px solid var(--neutral-150); border-radius: 8px; background: var(--neutral-0);
+  cursor: pointer; text-align: left;
+}
+.programCard:hover { border-color: var(--neutral-200); }
+.programCardOn { background: var(--primary-50); border: 1px solid var(--primary-300); }
+.programCardOn:hover { border-color: var(--primary-300); }
+.programCardText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); }
+.programCardName { font-size: var(--font-base); line-height: 1.2; color: var(--neutral-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.programCardOn .programCardName { color: var(--neutral-500); }
+.programCardMeta { font-size: var(--font-sm); line-height: 1.2; color: var(--neutral-200); }
+.detailPane { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--neutral-50); }
+/* Title and tabs: one white bar across the pane. */
+.detailTop { background: var(--neutral-0); border-bottom: 0.5px solid var(--neutral-150); }
+.detailHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--space-4) 0; }
+.detailTitleRow { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.detailTitle { font-size: var(--font-md); font-weight: 500; line-height: 1.2; color: var(--neutral-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.detailCode { font-size: var(--font-sm); color: var(--neutral-300); }
+.detailBadges { display: flex; align-items: center; gap: calc(var(--space-1) * 1.5); }
+.detailTabs { padding: 0 var(--space-2); }
+.detailBody { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); }
+/* ── Access card (Figma "Platform Access"): header, Permissions / Status, group rows, switch rows. ── */
+.accessCards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-4); align-items: start; }
+/* Cards and their rows keep their height; the pane scrolls instead. */
+.accessCard { flex-shrink: 0; display: flex; flex-direction: column; background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: 8px; overflow: hidden; }
+.accessHead {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  padding: var(--space-4) var(--space-4) var(--space-3); border-bottom: 0.5px solid var(--neutral-150);
+}
+.accessTitle { display: flex; align-items: center; gap: calc(var(--space-1) * 1.5); font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+.accessHeadRight { display: flex; align-items: center; gap: var(--space-2); }
+.allowAll { font-size: var(--font-sm); color: var(--neutral-300); }
+.accessCols {
+  display: flex; align-items: center; gap: var(--space-2); height: 32px;
+  padding: 0 var(--space-4); border-bottom: 0.5px solid var(--neutral-150);
+  font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300);
+}
+.accessColName { flex: 1; min-width: 0; }
+.accessHead, .accessCols, .accessGroup, .accessRow { flex-shrink: 0; }
+.accessCount { margin-left: var(--space-1); font-size: var(--font-sm); font-weight: 400; color: var(--neutral-300); }
+.accessGroup {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: calc(var(--space-1) * 1.5) var(--space-4);
+  background: var(--neutral-50); border-bottom: 0.5px solid var(--neutral-150);
+  font-size: var(--font-base); color: var(--neutral-300);
+}
+.accessRow {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-3) var(--space-4); border-bottom: 0.5px solid var(--neutral-150);
+}
+.accessRow:last-child { border-bottom: 0; }
+.accessRowOff .accessLabel { color: var(--neutral-200); }
+.accessLabel { flex: 1; min-width: 0; font-size: var(--font-base); line-height: 1.2; color: var(--neutral-400); }
+.accessControls { display: flex; align-items: center; gap: var(--space-4); }
+.colCheck { width: 72px; display: flex; justify-content: center; }
+.colSwitch { width: 40px; display: flex; justify-content: flex-end; }
+/* Remove, for assessments; empty on other rows so the columns line up. */
+.colDelete { width: 24px; display: flex; justify-content: center; }
+/* Configure (the gear): every step and section. */
+.colConfigure { width: 24px; display: flex; justify-content: center; }
+/* What a step opens, under its name: "Form: PHQ-9". */
+.stepNote { display: block; margin-top: calc(var(--space-1) / 2); font-size: var(--font-sm); color: var(--neutral-300); }
+
+/* ── Steps tree: sections are parent rows; their steps hang off a guide line. ── */
+.sectionRow {
+  display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0;
+  padding: var(--space-2) var(--space-4);
+  background: var(--neutral-50); border-bottom: 0.5px solid var(--neutral-150);
+}
+.sectionLabel { font-size: var(--font-base); font-weight: 500; line-height: 1.2; color: var(--neutral-500); }
+.sectionCount { flex: 1; min-width: 0; font-size: var(--font-sm); color: var(--neutral-300); }
+.treeToggle {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 22px; height: 22px; padding: 0; border: 0; border-radius: 4px; background: transparent; cursor: pointer;
+}
+.treeToggle:hover { background: var(--neutral-100); }
+.treeToggle:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; }
+.treeToggle svg { transition: transform var(--duration-instant) var(--ease-hover); }
+.treeToggleClosed { transform: rotate(-90deg); }
+/* Top-level steps leave the toggle's room, so names line up with sections'. */
+.treeSpacer { width: 22px; flex-shrink: 0; }
+/* A section's step: indented past the section's toggle, joined to it by an elbow. */
+.childRow { position: relative; padding-left: calc(var(--space-16) + var(--space-3)); }
+.treeGuide { position: absolute; left: 59px; top: 0; bottom: 0; width: 12px; border-left: 1px solid var(--neutral-150); pointer-events: none; }
+.treeGuide::after { content: ''; position: absolute; left: 0; top: 50%; width: 12px; border-top: 1px solid var(--neutral-150); }
+.childLast .treeGuide { bottom: 50%; }
+.childLast .treeGuide::after { top: 100%; }
+.emptyChild { flex: 1; min-width: 0; font-size: var(--font-sm); color: var(--neutral-300); }

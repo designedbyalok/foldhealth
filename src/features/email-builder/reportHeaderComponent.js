@@ -35,7 +35,7 @@ export function reportHeaderTree() {
         type: 'Image',
         data: {
           // Figma: 60.8 × 48, centred in a 108 × 48 slot.
-          props: { url: '/brand/trailhead-clinics-logo.png', alt: 'Trailhead Clinics', width: 61, height: 48 },
+          props: { url: '/brand/trailhead-clinics-logo.png', alt: 'Trailhead Clinics', width: 54, height: 48 },
           style: { blockAlign: 'center', padding: noPad },
         },
       },
@@ -202,7 +202,7 @@ export function patientSummaryHeaderTree() {
       'ps-h-logo': {
         type: 'Image',
         data: {
-          props: { url: '/brand/trailhead-clinics-logo.png', alt: 'Trailhead Clinics', width: 51, height: 40 },
+          props: { url: '/brand/trailhead-clinics-logo.png', alt: 'Trailhead Clinics', width: 45, height: 40 },
           style: { blockAlign: 'left', padding: noPad },
         },
       },
@@ -469,7 +469,7 @@ export function headerOption3Tree() {
     blocks: {
       'h3-title': text('{{report_title}}', { color: '#16181D', size: 16, weight: '500' }),
       'h3-generated': text('Generated On : {{generated_on}}', { color: '#8A94A8', size: 10, pad: { ...noPad, top: 2 } }),
-      'h3-logo': image('/brand/trailhead-clinics-logo.png', 'Trailhead Clinics', 41, 32, 'right'),
+      'h3-logo': image('/brand/trailhead-clinics-logo.png', 'Trailhead Clinics', 36, 32, 'right'),
       'h3-cols': columns([70, 30], [[['h3-title', 'h3-generated'], 'left'], [['h3-logo'], 'right']], { top: 16, bottom: 12, left: 24, right: 24 }),
       'h3-rule': { type: 'Divider', data: { props: { lineColor: '#1376BC', lineHeight: 2 }, style: { padding: { top: 0, bottom: 0, left: 24, right: 24 } } } },
       'h3-root': container('report_header', '#FFFFFF', ['h3-cols', 'h3-rule']),
@@ -486,7 +486,7 @@ export function headerOption4Tree() {
   return {
     rootId: 'h4-root',
     blocks: {
-      'h4-logo': image('/brand/trailhead-clinics-logo-white.png', 'Trailhead Clinics', 46, 36, 'left'),
+      'h4-logo': image('/brand/trailhead-clinics-logo-white.png', 'Trailhead Clinics', 41, 36, 'left'),
       'h4-title': text('{{report_title}}', { color: '#FFFFFF', size: 16, weight: '500', align: 'center' }),
       'h4-generated': text('Generated On : {{generated_on}}', { color: '#DCEAF6', size: 10, align: 'center', pad: { ...noPad, top: 2 } }),
       'h4-page': text('Page {{page_number}} of {{page_count}}', { color: '#FFFFFF', size: 10, align: 'right' }),

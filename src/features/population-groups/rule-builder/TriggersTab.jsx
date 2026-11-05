@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { Select } from '../../../components/Select/Select';
 import { Input } from '../../../components/Input/Input';
 import { Icon } from '../../../components/Icon/Icon';
@@ -28,7 +28,7 @@ const ACTION_TYPES = [
 ];
 
 /**
- * TriggersTab — lists automation triggers for a population group and lets
+ * TriggersTab: lists automation triggers for a population group and lets
  * users create/edit/delete them. Each trigger watches for a membership
  * event and fires an action (invoke agent, send notification, add tag, etc.).
  */
@@ -108,8 +108,8 @@ export function TriggersTab({ groupId, showToast }) {
       <div className={styles.triggersHeader}>
         <span className={styles.triggersTitle}>Automation Triggers</span>
         <Button
-          variant="secondary"
-          size="S"
+          variant="outline"
+          size="sm"
           leadingIcon="solar:add-circle-linear"
           onClick={() => setEditId('new')}
         >
@@ -131,15 +131,15 @@ export function TriggersTab({ groupId, showToast }) {
         return (
           <div key={t.id} className={styles.triggerCard}>
             <div className={styles.triggerCardHeader}>
-              <Toggle checked={t.enabled} onChange={() => handleToggle(t)} size="S" />
+              <SegmentedControl checked={t.enabled} onValueChange={() => handleToggle(t)} size="sm" />
               <span className={styles.triggerCardName}>{t.name}</span>
               <span className={styles.triggerCardActions}>
-                <ActionButton icon="solar:pen-linear" size="S" tooltip="Edit" onClick={() => setEditId(t.id)} />
-                <ActionButton icon="solar:trash-bin-minimalistic-linear" size="S" tooltip="Delete" onClick={() => setDeleteTarget(t)} />
+                <ActionButton icon="solar:pen-linear" size="sm" tooltip="Edit" onClick={() => setEditId(t.id)} />
+                <ActionButton icon="solar:trash-bin-minimalistic-linear" size="sm" tooltip="Delete" onClick={() => setDeleteTarget(t)} />
               </span>
             </div>
             <div className={styles.triggerCardBody}>
-              <Badge tone="info" size="S" label={ev?.label || t.trigger_event} />
+              <Badge tone="info" size="sm" label={ev?.label || t.trigger_event} />
               <Icon name="solar:arrow-right-linear" size={12} color="var(--neutral-200)" />
               <Icon name={act?.icon || 'solar:bolt-linear'} size={14} color="var(--neutral-300)" />
               <span className={styles.triggerCardAction}>{act?.label || t.action_type}</span>
@@ -210,8 +210,8 @@ function TriggerEditorDrawer({ triggerId, groupId, triggers, onClose, onSaved })
       title={triggerId ? 'Edit Trigger' : 'New Trigger'}
       onClose={onClose}
       primaryAction={
-        <Button variant="primary" size="L" disabled={!canSave || saving} onClick={save}>
-          {saving ? 'Saving...' : 'Save'}
+        <Button disabled={!canSave} onClick={save} loading={saving}>
+          Save
         </Button>
       }
     >
@@ -223,7 +223,7 @@ function TriggerEditorDrawer({ triggerId, groupId, triggers, onClose, onSaved })
         <Select
           options={TRIGGER_EVENTS.map(e => ({ value: e.value, label: e.label }))}
           value={triggerEvent}
-          onChange={setTriggerEvent}
+          onValueChange={setTriggerEvent}
           style={{ width: '100%' }}
         />
         <div className={styles.triggerEventDesc}>
@@ -234,7 +234,7 @@ function TriggerEditorDrawer({ triggerId, groupId, triggers, onClose, onSaved })
         <Select
           options={ACTION_TYPES.map(a => ({ value: a.value, label: a.label }))}
           value={actionType}
-          onChange={setActionType}
+          onValueChange={setActionType}
           style={{ width: '100%' }}
         />
 
@@ -284,7 +284,7 @@ function TriggerEditorDrawer({ triggerId, groupId, triggers, onClose, onSaved })
                 { value: 'in_app', label: 'In-App' },
               ]}
               value={config.channel || 'email'}
-              onChange={v => setConfig(c => ({ ...c, channel: v }))}
+              onValueChange={v => setConfig(c => ({ ...c, channel: v }))}
               style={{ width: '100%' }}
             />
           </>

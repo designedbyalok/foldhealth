@@ -12,6 +12,7 @@ import { SimpleTableSkeleton } from '../../../components/SimpleTableSkeleton/Sim
 import { useAppStore } from '../../../store/useAppStore';
 import { DOMAINS } from '../../../data/embeddedComponents';
 import { AuditLogDrawer } from '../shared/AuditLogDrawer';
+import { embedUrl } from './embedUrl';
 
 const PLACEMENT_LABELS = {
   'p360-tab': 'P360 tab',
@@ -135,7 +136,7 @@ function ComponentRow({ comp, onToggle, onEdit, onPreview, onAuditLog, onDuplica
         </code>
         {isDomainRemoved && (
           <div style={{ marginTop: 2 }}>
-            <Badge variant="compliance-warn" label="Domain removed" />
+            <Badge tone="warning" label="Domain removed" />
           </div>
         )}
       </td>
@@ -146,16 +147,16 @@ function ComponentRow({ comp, onToggle, onEdit, onPreview, onAuditLog, onDuplica
           {comp.surfaces?.map(surface => {
             const placement = comp.placements?.[surface];
             const label = placement ? (PLACEMENT_LABELS[placement] || placement) : SURFACE_LABELS[surface];
-            return <Badge key={surface} variant="ai-neutral" label={label} />;
+            return <Badge key={surface} label={label} />;
           })}
         </div>
       </td>
 
-      {/* Errors 24h — with tooltip on hover */}
+      {/* Errors 24h: with tooltip on hover */}
       <td style={tdStyle}>
         {comp.errors24h > 0 ? (
           <span
-            title={comp.errors24h >= 3 ? `${comp.errors24h} errors in 24h — component may be misconfigured or domain unreachable` : `${comp.errors24h} warning(s) in 24h — intermittent issues detected`}
+            title={comp.errors24h >= 3 ? `${comp.errors24h} errors in 24h, component may be misconfigured or domain unreachable` : `${comp.errors24h} warning(s) in 24h, intermittent issues detected`}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: comp.errors24h >= 3 ? 'var(--status-error)' : 'var(--status-warning)', fontSize: 'var(--font-base)', fontWeight: 500, cursor: 'help' }}
           >
             <Icon name={comp.errors24h >= 3 ? 'solar:close-circle-bold' : 'solar:danger-triangle-linear'} size={14} color={comp.errors24h >= 3 ? 'var(--status-error)' : 'var(--status-warning)'} />
@@ -178,11 +179,11 @@ function ComponentRow({ comp, onToggle, onEdit, onPreview, onAuditLog, onDuplica
       {/* Actions: Edit | Audit Log | More (3-dot) */}
       <td style={tdStyle} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <ActionButton icon="solar:pen-linear" size="L" tooltip="Edit" onClick={() => onEdit(comp.id)} />
+          <ActionButton icon="solar:pen-linear" tooltip="Edit" onClick={() => onEdit(comp.id)} />
           <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-          <ActionButton icon="solar:eye-linear" size="L" tooltip="Preview" onClick={() => onPreview(comp.id)} />
+          <ActionButton icon="solar:eye-linear" tooltip="Preview" onClick={() => onPreview(comp.id)} />
           <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-          <ActionButton icon="solar:menu-dots-bold" size="L" tooltip="More" ref={moreBtnRef} onClick={handleMoreClick} />
+          <ActionButton icon="solar:menu-dots-bold" tooltip="More" ref={moreBtnRef} onClick={handleMoreClick} />
         </div>
         {showMenu && createPortal(
           <div style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}>
@@ -206,10 +207,10 @@ function ComponentRow({ comp, onToggle, onEdit, onPreview, onAuditLog, onDuplica
 function PreviewDrawer({ comp, onClose }) {
   const [collapsed, setCollapsed] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
-  const fullUrl = comp.domain && comp.url ? `https://${comp.domain}${comp.url}` : '';
+  const fullUrl = embedUrl(comp.domain, comp.url);
 
   return (
-    <Drawer title={`Preview — ${comp.name}`} onClose={onClose}>
+    <Drawer title={`Preview: ${comp.name}`} onClose={onClose}>
       <div style={{ border: '0.5px solid var(--neutral-150)', borderRadius: 8, overflow: 'hidden' }}>
         {/* Collapsible header */}
         <button
@@ -225,7 +226,7 @@ function PreviewDrawer({ comp, onClose }) {
           }}
         >
           <span style={{ fontSize: 'var(--font-md)', fontWeight: 500, color: 'var(--neutral-400)', flex: 1 }}>{comp.name}</span>
-          <Badge variant="compliance-warn" label="External" />
+          <Badge tone="warning" label="External" />
           <DownChevronIcon size={12} color="var(--neutral-200)" style={collapsed ? { transform: 'rotate(-90deg)' } : undefined} />
         </button>
 
@@ -254,7 +255,7 @@ function PreviewDrawer({ comp, onClose }) {
                 <Icon name="solar:link-round-linear" size={12} color="var(--status-warning)" />
                 External Content Provided by Your Org
               </div>
-              <ActionButton icon="solar:refresh-linear" size="S" tooltip="Refresh preview" onClick={() => setIframeKey(k => k + 1)} />
+              <ActionButton icon="solar:refresh-linear" size="sm" tooltip="Refresh preview" onClick={() => setIframeKey(k => k + 1)} />
             </div>
           </>
         )}
@@ -366,7 +367,7 @@ export function ComponentLibraryPanel({ searchQuery = '' }) {
         </div>
       )}
 
-      {/* Table — edge-to-edge */}
+      {/* Table: edge-to-edge */}
       <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Inter', sans-serif" }}>
         <thead>
           <tr>

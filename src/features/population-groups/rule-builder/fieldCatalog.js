@@ -2,7 +2,7 @@
  * Condition field catalog for the dynamic population group rule builder.
  *
  * Every condition a rule can reference is a field on the patient profile
- * (`p360_profiles`) — `profileColumn` names the column each condition reads,
+ * (`p360_profiles`): `profileColumn` names the column each condition reads,
  * so the catalog doubles as the contract between the builder UI and the data
  * layer that will evaluate rules. Columns marked with (†) did not exist on
  * the profile before this feature; supabase/pop_group_rule_builder_migration.sql
@@ -86,7 +86,7 @@ export const EVENT_TYPES = [
   { value: 'immunization', label: 'Immunizations' },
 ];
 
-/* Category accents — `accent` is the chip surface; `fg` is label + icon
+/* Category accents: `accent` is the chip surface; `fg` is label + icon
    color. Token pairs invert under [data-theme="dark"] so contrast holds. */
 export const FIELD_GROUPS = [
   { key: 'personal', label: 'Personal Info', accent: 'var(--accent-light-purple)', fg: 'var(--accent-purple)' },
@@ -188,7 +188,7 @@ export const groupChipStyle = (groupKey, extra = {}) => ({
 });
 
 /* Badge descriptors for a rule's node row: [{ text, tone }]. Complex
-   conditions (metrics, negations, qualifiers — e.g. "Vital · Blood Pressure ·
+   conditions (metrics, negations, qualifiers, e.g. "Vital · Blood Pressure ·
    is more than 140/90 mmHg") carry an explicit `display` array authored when
    the rule was built; simple builder-authored rules derive their badges from
    operator + value. Editing a display-carrying rule through the generic
@@ -222,7 +222,7 @@ export function ruleSummary(rule) {
     parts.push({ text: `${op.label} ${val}`, tone: 'grey' });
   }
 
-  /* Lookback window badge — shared across coded/observation/eventCount */
+  /* Lookback window badge: shared across coded/observation/eventCount */
   if (v.lookback?.amount) {
     parts.push({ text: `in last ${v.lookback.amount} ${v.lookback.unit || 'months'}`, tone: 'info' });
   }

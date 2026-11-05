@@ -11,7 +11,7 @@
 }
 
 /* THE single vertical scroller for every tab body rendered below. A tab's own
-   root must grow to its content (no `height: 100%` + `overflow-y: auto`) — a
+   root must grow to its content (no `height: 100%` + `overflow-y: auto`): a
    self-scrolling tab nests a second scrollbar inside this one (double
    scrollbar). Follow the OutreachTab/VitalsLabsTab wrapper pattern for new
    tabs. */
@@ -41,13 +41,13 @@
   background: var(--neutral-0);
 }
 
-/* Flush layout — scroll content touches the panel edges for the sticky
+/* Flush layout: scroll content touches the panel edges for the sticky
  * note strip, but the Gaps tab body sits inside a 12px horizontal gutter
  * so it lines up with the other tabs (PAMI/Hx, Vitals/Labs, Comms…). */
 .flushContent .gapsWrapper { padding: 12px 12px 0; }
 .flushContent .sections { padding: 0; }
 .flushContent .sectionHeader { padding: 0; }
-/* Was `margin-top: 0` — that zeroed out the shared 16px gap so the
+/* Was `margin-top: 0`, that zeroed out the shared 16px gap so the
  * Diagnosis Gaps / Alerts headers merged flush with the previous
  * section's last row. Keep the 16px so the QuickView reads with the
  * same rhythm as the full patient detail view. */
@@ -67,20 +67,6 @@
 
 .flushContent .gapsWrapper :global([class*="sectionLabel"]) {
   padding-left: 0;
-}
-
-.flushContent .gapsWrapper :global([class*="colHeader"]) {
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.flushContent .gapsWrapper :global([class*="colHeader"]) :global([class*="colStatus"]) {
-  padding-left: 0;
-}
-
-.flushContent .gapsWrapper :global([class*="row"]) {
-  padding-left: 0;
-  padding-right: 0;
 }
 
 /* Tab row: OverflowTabStrip fills height; search pinned on the right. */
@@ -135,7 +121,7 @@
 .searchInput::placeholder { color: var(--neutral-200); }
 .searchClose { background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; flex-shrink: 0; }
 .alertHeader { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--status-warning-light); font-size: var(--font-sm); color: var(--neutral-400); flex-shrink: 0; border-bottom: 0.5px solid var(--neutral-100); }
-/* Quick View / left-panel gaps surface — the tab body previously butted
+/* Quick View / left-panel gaps surface, the tab body previously butted
  * flush against the sticky-note strip; a 12px top gutter separates the
  * first section header ("Care Gaps") from the strip. */
 .gapsWrapper { padding: 12px 0 0; }
@@ -149,7 +135,7 @@
 .dosValue { font-size: var(--font-sm); color: var(--neutral-300); }
 .filterDivider { width: 0.5px; height: 12px; background: var(--neutral-150); }
 /* Diagnosis Gaps / Alerts section headers sit directly under the previous
- * section's table with no separator — the 16px margin gives each new
+ * section's table with no separator: the 16px margin gives each new
  * section room to breathe so they don't read as one continuous block. */
 .diagnosisHeader { margin-top: 20px; }
 /* Shared DownChevronIcon rotated -90° to point right when a section is

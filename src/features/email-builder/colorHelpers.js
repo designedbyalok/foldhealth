@@ -1,7 +1,7 @@
 // Color & gradient helpers for the email builder color picker.
 //
 // Storage model: a "color value" is either:
-//   • a hex string ('#RRGGBB') — solid
+//   • a hex string ('#RRGGBB'): solid
 //   • a CSS gradient string ('linear-gradient(90deg, #FFFFFF 0%, #000000 100%)')
 //
 // Helpers below parse, format, and convert between hex/RGB/HSV for the
@@ -40,7 +40,7 @@ function splitTopLevel(str, delim) {
 }
 
 // Parse "linear-gradient(90deg, #FFF 0%, #000 100%)" into a structured object.
-// Returns null when the string isn't a (linear|radial)-gradient — callers
+// Returns null when the string isn't a (linear|radial)-gradient: callers
 // should fall back to solid-color handling in that case.
 export function parseGradient(str) {
   if (!isGradient(str)) return null;
@@ -80,7 +80,7 @@ export function formatGradient({ type = 'linear', angle = 90, stops = [] }) {
   return `${type}-gradient(${head}${body})`;
 }
 
-// Pull the first stop's color out of a gradient — used as an email fallback
+// Pull the first stop's color out of a gradient, used as an email fallback
 // when a client can't render gradient text or backgrounds.
 export function firstStopColor(gradient) {
   const g = parseGradient(gradient);
@@ -89,7 +89,7 @@ export function firstStopColor(gradient) {
 
 // ── HEX / RGB / HSV conversion ───────────────────────────────────────────
 // Always returns an opaque 6-digit hex. An 8-digit input has its alpha
-// dropped rather than rejected — callers that need the alpha use splitAlpha.
+// dropped rather than rejected: callers that need the alpha use splitAlpha.
 export function normalizeHex(input) {
   if (!input) return '#000000';
   let h = String(input).trim();
@@ -127,7 +127,7 @@ export function withAlpha(hex, alpha = 1) {
 }
 
 // Matches a translucent hex (#RRGGBBAA or #RGBA) without matching the first
-// four characters of an opaque #RRGGBB — the lookahead is what excludes it.
+// four characters of an opaque #RRGGBB, the lookahead is what excludes it.
 const TRANSLUCENT_HEX = /#(?:[0-9a-f]{8}|[0-9a-f]{4})(?![0-9a-f])/gi;
 
 export function hasTranslucentHex(value) {
@@ -135,7 +135,7 @@ export function hasTranslucentHex(value) {
 }
 
 // Composite a translucent color onto an opaque backdrop. Needed wherever
-// alpha can't be expressed — an opaque approximation beats no color at all.
+// alpha can't be expressed: an opaque approximation beats no color at all.
 export function flattenAlpha(value, backdrop = '#FFFFFF') {
   const { hex, alpha } = splitAlpha(value);
   if (alpha >= 1) return hex;

@@ -1,37 +1,151 @@
-/* "Verify ID to access links in this mail" card. */
+/* "Verify ID to access links in this mail / message" (Figma 3000:1959). */
+
+/* A field and the Verify ID control right under it. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  /* Same as the drawers' field spacing. */
+  gap: var(--space-3);
+  min-width: 0;
+}
+
 .card {
   display: flex;
   flex-direction: column;
+  gap: var(--space-4);
   padding: var(--space-3);
   border: 0.5px solid var(--neutral-150);
   border-radius: var(--space-2);
-  background: var(--neutral-0);
+  background: var(--primary-50);
 }
-.check {
-  display: inline-flex;
+
+/* Off: the checkbox alone in the card, on white until it's ticked. */
+.offCard {
+  background: var(--neutral-0);
+  flex-direction: row;
   align-items: center;
   gap: var(--space-2);
-  align-self: flex-start;
-  font-size: var(--font-base);
-  color: var(--neutral-500);
   cursor: pointer;
 }
-/* Padding, not margin, so the space folds away with the Collapse. */
+.offLabel {
+  font-size: var(--font-base);
+  line-height: 1.2;
+  color: var(--neutral-400);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.title {
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-400);
+}
+
+/* On: checkbox, what has to be verified, and Edit on the right. */
+.summaryCard {
+  flex-direction: row;
+  align-items: center;
+}
+.summaryMain {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+}
+.summaryText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+}
+.summaryLines {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+}
+.desc {
+  font-size: var(--font-sm);
+  line-height: 1.2;
+  color: var(--neutral-300);
+}
+.blocker {
+  font-size: var(--font-sm);
+  line-height: 1.2;
+  color: var(--status-error);
+}
+.edit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+/* Editing: label | field rows, then Discard / Save. */
 .rows {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding-top: var(--space-4);
 }
 .row {
   display: grid;
-  grid-template-columns: 180px 1fr;
+  /* Wide enough that every label fits on one line. */
+  grid-template-columns: 15rem 1fr;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 .rowLabel {
   font-size: var(--font-base);
-  line-height: 1.3;
-  color: var(--neutral-400);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--neutral-300);
 }
 .rowControl { min-width: 0; }
+.rowInfo { cursor: help; }
+/* The (i) follows the label text inline, 4px after it. */
+.rowLabel > :last-child { margin-left: var(--space-1); vertical-align: -1px; }
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* Yes / No field (VerifyIdField): radios, then the summary as supporting text. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.yesNo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  min-height: 2rem;
+}
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+/* Yes / No field's Edit: an S link (14px text and icon), as on the card. */
+.fieldEdit { display: inline-flex; }
+
+/* VerifyIdReveal: cancels the column gap above it and adds it back inside, so
+   the gap opens and shuts with the card. */
+.reveal { margin-top: calc(-1 * var(--space-3)); }
+.revealInner {
+  padding-top: var(--space-3);
+  opacity: 0;
+  transition: opacity var(--duration-medium) var(--ease-out);
+}
+.revealOpen .revealInner { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .revealInner { transition: none; }
+}

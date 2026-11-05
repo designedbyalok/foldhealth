@@ -8,7 +8,7 @@ import styles from './CcmBillingReviewDrawer.module.css';
 
 // Full CCM Billing Review inside a drawer, opened from the CCM worklist's
 // Billable Mins cell. Reuses the same CcmBillingReview component that
-// renders inside the patient's Care Programs tab — we just pass the row's
+// renders inside the patient's Care Programs tab: we just pass the row's
 // patientId explicitly so it doesn't fall back to the routed patient.
 export function CcmBillingReviewDrawer({ member, onClose }) {
   const navigateToPatient = useAppStore(s => s.navigateToPatient);
@@ -28,8 +28,8 @@ export function CcmBillingReviewDrawer({ member, onClose }) {
       headerRight={
         <>
           <Button
-            variant="tertiary"
-            size="S"
+            variant="soft"
+            size="sm"
             trailingIcon="solar:arrow-right-linear"
             onClick={gotoCarePlan}
             disabled={!member.patientId}

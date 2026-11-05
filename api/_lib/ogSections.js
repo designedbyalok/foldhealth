@@ -1,15 +1,15 @@
 /**
- * OpenGraph section registry — single source of truth for per-section link
+ * OpenGraph section registry: single source of truth for per-section link
  * previews. Both the image function (`api/og.jsx`) and the share responder
  * (`api/share.js`) read from here.
  *
  * `hash` is the in-app SPA route (hash-router path) a human is bounced to when
- * they open a /s/<slug> link — it must match a route `hashToState` understands
+ * they open a /s/<slug> link: it must match a route `hashToState` understands
  * in `src/lib/router.js`.
  */
 
 const DEFAULT_DESCRIPTION =
-  'AI-native care coordination platform — worklists, HCC coding, outreach, and analytics.';
+  'AI-native care coordination platform: worklists, HCC coding, outreach, and analytics.';
 
 export const DEFAULT_SECTION = {
   eyebrow: 'Fold Health',
@@ -19,7 +19,7 @@ export const DEFAULT_SECTION = {
 };
 
 const SECTIONS = {
-  home: { eyebrow: 'Fold Health', title: 'Home', description: 'Your daily overview — alerts, tasks, calendar, and notes at a glance.', hash: '/home' },
+  home: { eyebrow: 'Fold Health', title: 'Home', description: 'Your daily overview: alerts, tasks, calendar, and notes at a glance.', hash: '/home' },
 
   // Population worklists
   population: { eyebrow: 'Population', title: 'TCM Worklist', description: 'Prioritized worklist of patients in transitional care management.', hash: '/population/tcm' },

@@ -37,7 +37,7 @@ export const ConversationNode = memo(function ConversationNode({ data, id }) {
   const handleRowClick = useCallback((e, i) => {
     e.stopPropagation();
     if (activeTransitionIdx === i) {
-      // Already selected — trigger shake
+      // Already selected: trigger shake
       setShakeIdx(null);
       requestAnimationFrame(() => setShakeIdx(i));
       setTimeout(() => setShakeIdx(null), 500);
@@ -171,7 +171,7 @@ export const ConversationNode = memo(function ConversationNode({ data, id }) {
               const isActiveRow = isThisNodeSelected && activeTransitionIdx === i;
               const condLabel = t.type === 'equation'
                 ? (t.rules || []).map(r => `${r.variable || '?'} ${r.operator} ${r.value || '?'}`).join(', ') || 'Equation'
-                : (t.condition || '—');
+                : (t.condition || '-');
               return (
                 <div
                   key={i}
@@ -180,7 +180,7 @@ export const ConversationNode = memo(function ConversationNode({ data, id }) {
                   onClick={(e) => handleRowClick(e, i)}
                 >
                   <DragDots className={styles.dragDots} onPointerDown={(e) => handlePointerDown(e, i)} />
-                  <span className={styles.transitionText}>{condLabel} &rarr; {t.target || '—'}</span>
+                  <span className={styles.transitionText}>{condLabel} &rarr; {t.target || '-'}</span>
                   <Handle
                     type="source"
                     position={Position.Right}

@@ -5,7 +5,7 @@
 // does; there is nothing to keep off the bundle.
 //
 // Response: [total, keyIds[], extras, [[consumerName], …]]. The key is NLM's
-// own id for the procedure — not CPT, not SNOMED — so it is stored under a
+// own id for the procedure, not CPT, not SNOMED, so it is stored under a
 // code system that names this table rather than passing for either.
 //
 // Results are cached per query so a typeahead does not re-ask for a term the

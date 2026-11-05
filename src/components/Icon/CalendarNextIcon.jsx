@@ -1,5 +1,5 @@
 /**
- * Next-month nav — `>` chevron inside a rounded-square outline. Same
+ * Next-month nav: `>` chevron inside a rounded-square outline. Same
  * outline geometry as CalendarPrevIcon; chevron is drawn in the
  * mirrored direction (apex on the right).
  *

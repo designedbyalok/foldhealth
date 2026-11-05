@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../Icon/Icon';
 import { useAppStore } from '../../store/useAppStore';
 import { browserNotificationPermission, canAskBrowserNotifications, requestBrowserNotifications } from '../../lib/browserNotifications';
-import boneStyles from '../TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../Skeleton/Skeleton';
 import styles from './NotificationsPopover.module.css';
 
 /**
  * Cold-load placeholder. Shaped like `.entry` (icon square + title line +
- * sub line) so the list doesn't jump when real rows replace it. Reuses the
- * shared `.bone` shimmer rather than defining another one.
+ * sub line) so the list doesn't jump when real rows replace it. Built from
+ * `Skeleton`.
  */
 function NotificationSkeleton({ count = 3 }) {
   return (
@@ -16,11 +16,11 @@ function NotificationSkeleton({ count = 3 }) {
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className={styles.entry} style={{ cursor: 'default' }}>
           <span className={styles.entryIcon}>
-            <span className={boneStyles.bone} style={{ width: 16, height: 16, borderRadius: 4 }} />
+            <Skeleton style={{ width: 16, height: 16, borderRadius: 4 }} />
           </span>
           <span className={styles.entryBody}>
-            <span className={boneStyles.bone} style={{ width: '70%', height: 12 }} />
-            <span className={boneStyles.bone} style={{ width: '45%', height: 10 }} />
+            <Skeleton style={{ width: '70%', height: 12 }} />
+            <Skeleton style={{ width: '45%', height: 10 }} />
           </span>
         </div>
       ))}
@@ -29,7 +29,7 @@ function NotificationSkeleton({ count = 3 }) {
 }
 
 /**
- * NotificationsPopover — bell-icon dropdown.
+ * NotificationsPopover: bell-icon dropdown.
  *
  * Renders the notifications slice from the global store. Each entry has
  * a typed icon, title, body, and a relative-time stamp. Clicking an
@@ -42,7 +42,7 @@ function NotificationSkeleton({ count = 3 }) {
  */
 export function NotificationsPopover({ onClose, anchorRef }) {
   const ref = useRef(null);
-  // Read once on open — Notification.permission is not reactive, so this is
+  // Read once on open: Notification.permission is not reactive, so this is
   // re-evaluated when the popover mounts and after the user answers.
   const [canAsk, setCanAsk] = useState(canAskBrowserNotifications);
   // Tracks the OS-level permission so a blocked state is visible rather than
@@ -66,10 +66,12 @@ export function NotificationsPopover({ onClose, anchorRef }) {
   const openPreferencesFromNotification = useAppStore(s => s.openPreferencesFromNotification);
   const openPendingUsersFromNotification = useAppStore(s => s.openPendingUsersFromNotification);
   const openReassignmentSummary = useAppStore(s => s.openReassignmentSummary);
+  const openAssignedAppointments = useAppStore(s => s.openAssignedAppointments);
+  const openBulkSummary = useAppStore(s => s.openBulkSummary);
 
   // Refetch on open. The realtime subscription is the fast path, not the
-  // source of truth: a binding created before the table was published — or
-  // one that died while the tab stayed visible and online — delivers silence
+  // source of truth: a binding created before the table was published, or
+  // one that died while the tab stayed visible and online, delivers silence
   // forever, and none of the other resync triggers (visibilitychange, online,
   // re-subscribe) fire in that state. Reading once at the moment the user
   // actually looks makes the panel correct regardless of socket health, and
@@ -118,6 +120,10 @@ export function NotificationsPopover({ onClose, anchorRef }) {
       openPendingUsersFromNotification?.(['Locked']);
     } else if (n.action === 'openReassignmentSummary' && n.reassignmentJobId) {
       openReassignmentSummary?.(n.reassignmentJobId);
+    } else if (n.action === 'openBulkSummary' && n.bulkJobId) {
+      openBulkSummary?.(n.bulkJobId);
+    } else if (n.action === 'viewAssignedAppointments' && n.reassignmentJobId) {
+      openAssignedAppointments?.(n.reassignmentJobId);
     }
     onClose?.();
   };
@@ -158,7 +164,7 @@ export function NotificationsPopover({ onClose, anchorRef }) {
       )}
 
       {/* Blocked state. Once an origin is denied, the browser refuses further
-          prompts from script, so there is no button to offer — surface why the
+          prompts from script, so there is no button to offer, surface why the
           OS banners stopped and where to turn them back on. Permission is
           per-origin (host + port), so a changed dev-server port reads here too. */}
       {permission === 'denied' && (
@@ -168,7 +174,7 @@ export function NotificationsPopover({ onClose, anchorRef }) {
         </div>
       )}
 
-      {/* Cold load only — `didFetch` keeps the skeleton from flashing on
+      {/* Cold load only: `didFetch` keeps the skeleton from flashing on
           background resyncs (tab refocus, realtime reconnect), which would
           otherwise blank a list the user is actively reading. */}
       {loading && !didFetch && notifications.length === 0 ? (
@@ -198,13 +204,25 @@ export function NotificationsPopover({ onClose, anchorRef }) {
                 <span className={styles.entryTitle}>{n.title}</span>
                 {/* A reassignment job's result reads as a card (Figma Eventus
                     16978:129436): what it is, then the counts. */}
-                {n.body && n.type === 'reassignment.summary' ? (
+                {/* Appointments moved to me (Figma Eventus 17737:121055): who
+                    moved them from whom, then a link to them. */}
+                {n.type === 'appointment.reassigned' ? (
+                  <span className={styles.assignedBody}>
+                    {n.body && <span className={styles.assignedText}>{n.body}</span>}
+                    <span className={styles.assignedLink}>
+                      View Appointments
+                      <Icon name="solar:alt-arrow-right-linear" size={14} />
+                    </span>
+                  </span>
+                ) : n.body && (n.type === 'reassignment.summary' || n.type === 'bulk.summary') ? (
                   <span className={styles.summaryCard}>
                     <span className={styles.summaryIcon}>
                       <Icon name="solar:calendar-linear" size={20} color="var(--neutral-400)" />
                     </span>
                     <span className={styles.summaryText}>
-                      <span className={styles.summaryTitle}>Appointment Reassignment Summary</span>
+                      <span className={styles.summaryTitle}>{n.type === 'bulk.summary'
+                        ? (n.kind === 'cancel' ? 'Appointment Cancellation Summary' : 'Appointment Rescheduling Summary')
+                        : 'Appointment Reassignment Summary'}</span>
                       <span className={styles.entrySub}>{n.body}</span>
                     </span>
                   </span>
@@ -229,6 +247,8 @@ function iconForType(type) {
   if (type === 'task.mentioned') return 'solar:mention-square-linear';
   if (type === 'appointment.assigned') return 'solar:calendar-linear';
   if (type === 'reassignment.summary') return 'solar:users-group-rounded-linear';
+  if (type === 'bulk.summary') return 'solar:calendar-mark-linear';
+  if (type === 'appointment.reassigned') return 'solar:calendar-linear';
   if (type === 'message.received') return 'solar:chat-round-linear';
   if (type === 'referral.received') return 'solar:square-share-line-linear';
   if (type === 'hcc.extraction_complete') return 'solar:document-text-linear';

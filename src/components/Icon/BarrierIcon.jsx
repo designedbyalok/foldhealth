@@ -1,5 +1,5 @@
 /**
- * Barrier glyph — the care-plan "barrier" mark. Solar has no equivalent, so
+ * Barrier glyph: the care-plan "barrier" mark. Solar has no equivalent, so
  * this is the design-system source of truth for one; reach for it (or
  * `custom:barrier` via `<Icon>`) instead of re-drawing it per feature.
  *

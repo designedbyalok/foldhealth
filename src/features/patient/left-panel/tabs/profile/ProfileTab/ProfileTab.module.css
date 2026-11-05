@@ -1,4 +1,4 @@
-/* Profile tab — Figma Fold-Pixel 1.0 node 6820:269258.
+/* Profile tab: Figma Fold-Pixel 1.0 node 6820:269258.
  * A stack of collapsible sections (Contact Info, Basic Info, Address,
  * Other Info) each rendering label/value cells in a wrap-flow grid so
  * they collapse from 2 columns → 1 column on narrow layouts. */
@@ -14,7 +14,6 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
 .sectionHeader {
@@ -50,9 +49,12 @@
 /* When the section is collapsed, rotate the shared DownChevronIcon -90°
  * so it reads as a right-pointing caret ▶ without swapping to a second
  * icon primitive. */
+.chevron {
+  transition: transform var(--duration-medium) var(--ease-out);
+}
+
 .chevronCollapsed {
   transform: rotate(-90deg);
-  transition: transform 0.12s ease;
 }
 
 /* ── Grid of cells (label / value pairs) ──────────────────────── */
@@ -64,11 +66,14 @@
    * across the whole panel width. */
   column-gap: 16px;
   row-gap: 0;
+  /* Spacing below the header lives here, not as a .section gap, so a
+   * collapsed section leaves no stray gap under its header. */
+  margin-top: var(--space-1);
   background: var(--neutral-0);
   width: 100%;
 }
 
-/* Every field is a flex row inside .grid — flex-basis via min-width
+/* Every field is a flex row inside .grid, flex-basis via min-width
  * makes them fall from 2 columns to 1 as the panel narrows. */
 .field {
   flex: 1 0 0;
@@ -111,7 +116,7 @@
 /* ── View row (segmented control + edit action) ──────────────── */
 /* Toggle sits on the left, the single Edit ActionButton is pinned to
  * the far right. The per-section edit pencils used to live inside each
- * Section header — those were removed so the profile surface has one
+ * Section header: those were removed so the profile surface has one
  * canonical edit entry-point instead of five. */
 .viewRow {
   display: flex;
@@ -137,4 +142,12 @@
   font-size: var(--font-base);
   color: var(--neutral-500);
   line-height: 1.2;
+}
+
+/* Contact Validity: the number or email with its status badge. */
+.contactValidity {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }

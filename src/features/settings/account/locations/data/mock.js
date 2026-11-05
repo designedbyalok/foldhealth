@@ -1,10 +1,10 @@
 /**
- * Practice-location mock rows — seeded to `practice_locations` by
+ * Practice-location mock rows: seeded to `practice_locations` by
  * `bun run seed`. Same shape as the store's fetched objects (camelCase).
  *
  * Kept as a JS mock (not a JSON dump) so ids, timezones, and address
  * details stay easy to hand-tune. Business hours default to Mon-Fri
- * 9-17 in the location's own timezone — the drawer lets admins tighten
+ * 9-17 in the location's own timezone: the drawer lets admins tighten
  * or split those per day.
  */
 

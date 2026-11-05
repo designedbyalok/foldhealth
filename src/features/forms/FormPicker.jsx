@@ -28,7 +28,7 @@ export function FormPicker({ onSelect, onClose }) {
       .limit(50)
       .then(({ data, error: err }) => {
         if (!active) return;
-        // Distinguish "no forms" from "couldn't load" — an empty list and a
+        // Distinguish "no forms" from "couldn't load", an empty list and a
         // failed query rendered identically before.
         setError(err ? 'Could not load forms' : null);
         setForms(data || []);

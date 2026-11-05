@@ -1,17 +1,21 @@
 import { useMemo, useState } from 'react';
+import { Banner } from '../../../../../components/Banner/Banner';
 import { Input } from '../../../../../components/Input/Input';
 import { Textarea } from '../../../../../components/Textarea/Textarea';
-import { RadioButton } from '../../../../../components/RadioButton/RadioButton';
 import { Button } from '../../../../../components/Button/Button';
 import { CloseButton } from '../../../../../components/CloseButton/CloseButton';
 import { MenuPopover } from '../../../../../components/MenuPopover/MenuPopover';
-import { CarePlanSections, ChronicConditionSelect, TemplateRenewalChoice, TemplateScopeChoice } from '../../shared';
+import {
+  CarePlanSections, CategoryCriteriaCard, ChronicConditionSelect, CommonSectionNote, COMMON, EpisodeSettings,
+  TemplateCategoryBar, TemplateRenewalChoice, TemplateRetirementNote, TemplateScopeChoice, TemplateTypeChoice, templateTypeOf, useTemplateCategories,
+} from '../../shared';
+import { categoriesProblem } from '../../lib/templateCategories';
 import { CARE_PLAN_NAME_MAX } from '../../lib/carePlanLimits';
 import { CreateGoalDrawer } from '../../goals/CreateGoalDrawer/CreateGoalDrawer';
 import { AddGoalsDrawer } from '../../goals/AddGoalsDrawer/AddGoalsDrawer';
 import { AddInterventionsDrawer } from '../../interventions/AddInterventionsDrawer';
 import { AddBarriersDrawer } from '../../barriers/AddBarriersDrawer/AddBarriersDrawer';
-import { INTERVENTION_EDITORS } from '../../interventions';
+import { INTERVENTION_EDITORS, interventionTemplateFromValues } from '../../interventions';
 import {
   goalPayloadFromTemplateEntry,
   interventionPayloadFromTemplateEntry,
@@ -21,19 +25,24 @@ import {
   LIBRARY_SCOPE_CHOICES, PATIENT_SCOPE_CHOICES, templateScopeOf,
 } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/templateScope';
 import { renewalOf } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/templateRenewal';
+import { DEFAULT_EPISODE_DAYS, episodeOf } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/episodeTemplates';
 import { useAppStore } from '../../../../../store/useAppStore';
 import { useTemplateSdoh } from '../../lib/useTemplateSdoh';
 import { isSdohBarrier } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/sdohTaxonomy';
 import styles from './CarePlanTemplateView.module.css';
 
 
-const TEMPLATE_TYPES = [
-  { value: 'general', label: 'General' },
-  { value: 'chronic', label: 'For Chronic Conditions' },
-];
+// A template entry references a library row; an intervention keeps its kind
+// and config (its task template) so applying it doesn't need the library.
+const entryOf = (row) => ({
+  id: row.id,
+  title: row.title,
+  ...(row.kind && { kind: row.kind }),
+  ...(row.config && { config: row.config }),
+});
 
 // A goal's row icon follows its measure category, the way an intervention's
-// follows its kind — the flag is the fallback for an uncategorised goal.
+// follows its kind: the flag is the fallback for an uncategorised goal.
 const GOAL_CATEGORY_ICONS = {
   Vital: 'solar:heart-pulse-linear',
   Activity: 'solar:dumbbell-small-linear',
@@ -44,12 +53,13 @@ const GOAL_CATEGORY_ICONS = {
 /**
  * A Care Plan Library template, full-pane like New Care Plan: identity on the
  * left, the plan itself on the right rendered with the same GBI tables the
- * patient care plan uses — a template is the plan a patient will get, so it
+ * patient care plan uses: a template is the plan a patient will get, so it
  * should read identically before it is applied.
  *
  */
 export function CarePlanTemplateView({ template, onClose, onSave }) {
   const libraryGoals = useAppStore(s => s.carePlanGoals);
+  const carePlanTemplates = useAppStore(s => s.carePlanTemplates);
   const saveCarePlanGoal = useAppStore(s => s.saveCarePlanGoal);
   const interventionLibrary = useAppStore(s => s.carePlanInterventionTemplates);
   // Clicking a goal row edits the library goal the template entry points at.
@@ -69,18 +79,42 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
   const [name, setName] = useState(template.name || '');
   const [description, setDescription] = useState(template.description || '');
   const [conditions, setConditions] = useState(template.conditions || []);
-  // A template with conditions on it was authored as a chronic-conditions one.
-  const [templateType, setTemplateType] = useState(
-    (template.conditions || []).length ? 'chronic' : 'general',
-  );
+  // Episodic when marked so; otherwise a template with conditions on it was
+  // authored as a chronic-conditions one.
+  const [templateType, setTemplateType] = useState(() => templateTypeOf(template));
+  const [episode, setEpisode] = useState(() => episodeOf(template) || { days: DEFAULT_EPISODE_DAYS, pausesOngoing: true, programCode: 'TOC IP', supersedes: [] });
+  const savedEpisode = episodeOf(template);
+  const nextEpisode = templateType === 'episodic' ? episode : null;
+  const episodeChanged = JSON.stringify(nextEpisode) !== JSON.stringify(savedEpisode);
   // The three lists are edited here and written on Save, so a picked goal
   // shows in the table before the template is persisted.
   const [goals, setGoals] = useState(template.goals || []);
   const [interventions, setInterventions] = useState(template.interventions || []);
   const [barriers, setBarriers] = useState(template.barriers || []);
   const [picker, setPicker] = useState(null); // 'goals' | 'interventions' | 'barriers'
-  // { list, item, rect } — which row's menu is open.
+  // { list, item, rect }, which row's menu is open.
   const [rowMenu, setRowMenu] = useState(null);
+  // Common + categories: the three lists above hold whichever is on screen.
+  const cats = useTemplateCategories(template.categories, { goals, interventions, barriers }, { setGoals, setInterventions, setBarriers });
+  const showToast = useAppStore(s => s.showToast);
+  const save = () => {
+    const snap = cats.snapshot();
+    const problem = categoriesProblem(snap.categories);
+    if (problem) { showToast?.(problem); return; }
+    onSave?.({
+      name: name.trim(),
+      description,
+      conditions,
+      goals: snap.goals,
+      interventions: snap.interventions,
+      barriers: snap.barriers,
+      categories: snap.categories,
+      renewal,
+      episode: nextEpisode,
+      episodeChanged,
+      ...(scope !== templateScopeOf(template) && { scope, patientId: template.patientId }),
+    });
+  };
 
   const removeFromList = (list, id) => {
     const setters = { goals: setGoals, interventions: setInterventions, barriers: setBarriers };
@@ -113,7 +147,7 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
         const key = norm(l.title);
         if (!key || seen.has(key)) continue;
         seen.add(key);
-        add.push({ id: l.id, title: l.title });
+        add.push(entryOf(l));
       }
       return add.length ? [...list, ...add] : list;
     };
@@ -152,7 +186,7 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
       seen.add(key);
       return true;
     });
-    if (fresh.length) setList([...list, ...fresh.map(p => ({ id: p.id, title: p.title }))]);
+    if (fresh.length) setList([...list, ...fresh.map(entryOf)]);
     setPicker(null);
   };
 
@@ -163,7 +197,7 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
       id: entry.id || `goal-${i}`,
       icon: GOAL_CATEGORY_ICONS[payload.category] || payload.icon,
       currentValue: 'No Data',
-      trend: '—',
+      trend: '-',
       progress: '0%',
     };
   }), [goals, libraryGoals]);
@@ -175,14 +209,16 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
     icon: CARE_PLAN_INTERVENTION_ICONS[entry.kind] || 'solar:clipboard-list-linear',
   })), [interventions]);
 
-  // SDOH needs go to their own section (lib/useTemplateSdoh).
+  // SDOH needs get their own section (lib/useTemplateSdoh) and, being
+  // barriers, are listed under Barriers too, as on the patient's plan.
   const { plainBarriers, sdoh } = useTemplateSdoh({ barriers, setBarriers, interventions, setInterventions });
-  const barrierRows = useMemo(() => plainBarriers.map((entry, i) => ({
+  const barrierRows = useMemo(() => barriers.map((entry, i) => ({
     id: entry.id || `barrier-${i}`,
     title: entry.title,
     subtitle: entry.description || '',
+    priority: entry.priority || 'medium',
     status: 'Not Started',
-  })), [plainBarriers]);
+  })), [barriers]);
 
   // Reverse of a goal's links: which goals point at a given intervention or
   // barrier. Mirrors CarePlanView's linkedForChild, which shows owning goals.
@@ -220,6 +256,16 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
           <span className={styles.formTitle}>Edit Care Plan</span>
         </div>
         <div className={styles.formBody}>
+          {template.sourceProtocol && (
+            <Banner size="sm" icon="solar:document-medicine-linear">
+              Based on clinical protocol: {[
+                template.sourceProtocol.title,
+                template.sourceProtocol.version && `v${template.sourceProtocol.version}`,
+                template.sourceProtocol.organization,
+              ].filter(Boolean).join(' · ')}
+            </Banner>
+          )}
+          <TemplateRetirementNote template={template} templates={carePlanTemplates} />
           <div className={styles.field}>
             <span className={styles.fieldLabel}>Care Plan Name</span>
             <Input
@@ -242,20 +288,18 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
           </div>
 
           <div className={styles.field}>
-            <span className={styles.fieldLabel}>Template Type</span>
-            <div className={styles.radioGroup} role="radiogroup" aria-label="Template Type">
-              {TEMPLATE_TYPES.map(t => (
-                <RadioButton
-                  key={t.value}
-                  name="templateType"
-                  value={t.value}
-                  label={t.label}
-                  checked={templateType === t.value}
-                  onChange={() => setTemplateType(t.value)}
-                />
-              ))}
-            </div>
+            <TemplateTypeChoice
+              value={templateType}
+              onChange={setTemplateType}
+              details={{ chronic: <ChronicConditionSelect label="Chronic condition" value={conditions} onChange={setConditions} /> }}
+            />
           </div>
+
+          {templateType === 'episodic' && (
+            <div className={styles.field}>
+              <EpisodeSettings value={episode} onChange={setEpisode} />
+            </div>
+          )}
 
           {scopeChoices.length > 1 && (
             <div className={styles.field}>
@@ -266,36 +310,12 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
           <div className={styles.field}>
             <TemplateRenewalChoice value={renewal} onChange={setRenewal} />
           </div>
-
-          {templateType === 'chronic' && (
-            <div className={styles.field}>
-              <ChronicConditionSelect
-                label="Chronic condition"
-                value={conditions}
-                onChange={setConditions}
-              />
-            </div>
-          )}
         </div>
       </div>
 
       <div className={styles.planPane}>
         <div className={styles.toolbar}>
-          <Button
-            variant="primary"
-            size="L"
-            disabled={!name.trim()}
-            onClick={() => onSave?.({
-              name: name.trim(),
-              description,
-              conditions,
-              goals,
-              interventions,
-              barriers,
-              renewal,
-              ...(scope !== templateScopeOf(template) && { scope, patientId: template.patientId }),
-            })}
-          >
+          <Button disabled={!name.trim()} onClick={save}>
             Save
           </Button>
           <span className={styles.toolbarDivider} />
@@ -303,6 +323,20 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
         </div>
 
         <div className={styles.planBody}>
+          <div className={styles.categories}>
+            <TemplateCategoryBar categories={cats.categories} active={cats.active} onSelect={cats.select} onAdd={cats.add} />
+            {cats.active === COMMON && cats.categories.length > 0 && <CommonSectionNote />}
+            {cats.activeCategory && (
+              <CategoryCriteriaCard
+                category={cats.activeCategory}
+                index={cats.categories.indexOf(cats.activeCategory)}
+                total={cats.categories.length}
+                onChange={patch => cats.update(cats.active, patch)}
+                onRemove={() => cats.remove(cats.active)}
+                onMove={by => cats.move(cats.active, by)}
+              />
+            )}
+          </div>
           <CarePlanSections
             goalRows={goalRows}
             interventionRows={interventionRows}
@@ -311,6 +345,7 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
             onRowMenuGoal={(m) => setRowMenu({ list: 'goals', item: m.item, rect: m.rect })}
             onRowMenuIntervention={(m) => setRowMenu({ list: 'interventions', item: m.item, rect: m.rect })}
             onRowMenuBarrier={(m) => setRowMenu({ list: 'barriers', item: m.item, rect: m.rect })}
+            onChangeBarrierPriority={(row, priority) => setBarriers(prev => prev.map(b => (b.id === row.id ? { ...b, priority } : b)))}
             onAddGoal={() => setPicker('goals')}
             onAddIntervention={() => setPicker('interventions')}
             onAddBarrier={() => setPicker('barriers')}
@@ -349,21 +384,30 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
       </div>
 
       {editingIntervention && (() => {
-        const Editor = INTERVENTION_EDITORS[editingIntervention.kind];
-        // A template entry is a reference — { id, kind, title } — so the
+        const entry = editingIntervention;
+        const Editor = INTERVENTION_EDITORS[entry.kind];
+        // A template entry is a reference, { id, kind, title }, so the
         // prefill is its title plus whatever the library row carries. Only a
         // config saved from this drawer has the scheduling fields.
-        const libRow = (interventionLibrary || []).find(i => i.id === editingIntervention.id);
+        const libRow = (interventionLibrary || []).find(i => i.id === entry.id);
         return (
           <Editor
-            kind={editingIntervention.kind}
+            kind={entry.kind}
             intervention={{
-              title: editingIntervention.title || libRow?.title || '',
+              title: entry.title || libRow?.title || '',
               note: libRow?.description || '',
-              ...(editingIntervention.config || {}),
+              ...(entry.config || {}),
             }}
+            taskTemplate
             onClose={() => setEditingIntervention(null)}
-            onSave={() => setEditingIntervention(null)}
+            onSave={(values) => {
+              // The entry is the task template: what spawns on a patient's
+              // queue reads it when the task is created.
+              const next = interventionTemplateFromValues(values, { kind: entry.kind });              setInterventions(list => list.map(e => (e.id === entry.id
+                ? { ...e, kind: next.kind, title: next.title, config: next.config }
+                : e)));
+              setEditingIntervention(null);
+            }}
           />
         );
       })()}
@@ -382,7 +426,10 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
             const { list, item } = rowMenu;
             setRowMenu(null);
             if (key === 'remove') {
+              // A social need takes its suggested referrals with it.
+              const need = list === 'barriers' && barriers.find(b => b.id === item.id && isSdohBarrier(b));
               if (list === 'goals') removeGoal(item.id);
+              else if (need) sdoh.onRemoveNeed(need);
               else removeFromList(list, item.id);
               return;
             }

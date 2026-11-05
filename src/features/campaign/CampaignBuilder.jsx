@@ -9,12 +9,12 @@ import { SendTestPopover } from '../email-builder/SendTestPopover';
 import { Input } from '../../components/Input/Input';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Select } from '../../components/Select/Select';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { RadioButton } from '../../components/RadioButton/RadioButton';
 import { makeInitialDocument } from '../email-builder/initialDocument';
 import styles from './CampaignBuilder.module.css';
 
-// Static option lists — would come from Supabase audience / sender tables in
+// Static option lists: would come from Supabase audience / sender tables in
 // production. Audience options now load from the audience_segments table via
 // the store (with a fallback); sender/from lists stay static.
 const SENDER_OPTIONS = [
@@ -75,7 +75,7 @@ export function CampaignBuilder() {
   // Build a preview document on the fly when the campaign has no saved
   // template yet, so the user sees something instead of an empty pane.
   // Render it to HTML through the same renderer the production email uses
-  // (renderEmailHtml) — Reader on its own can't draw custom block types
+  // (renderEmailHtml): Reader on its own can't draw custom block types
   // (NavBar / Social / Table) and skips backgroundImage gradients, so the
   // preview was diverging visually from the actual email export.
   const previewHtml = useMemo(() => {
@@ -83,7 +83,7 @@ export function CampaignBuilder() {
       || makeInitialDocument({ name: campaign?.name || 'Untitled Campaign' });
     const html = renderPreviewHtml(doc);
     // Prepend a thin transparent scrollbar style so the preview iframe doesn't
-    // render with the OS-default dark scrollbar. Preview-only — does not
+    // render with the OS-default dark scrollbar. Preview-only, does not
     // affect the actual email HTML delivered to recipients. !important wins
     // against whatever the email template ships with.
     const scrollbarCss = `<style>
@@ -140,7 +140,7 @@ export function CampaignBuilder() {
             <div className={styles.aiRow}>
               <button
                 className={styles.aiBtn}
-                onClick={() => showToast('Write with AI — coming soon')}
+                onClick={() => showToast('Write with AI: coming soon')}
                 type="button"
               >
                 <Icon name="custom:ai" size={14} color="var(--primary-300)" />
@@ -189,7 +189,7 @@ export function CampaignBuilder() {
               required
               options={audienceOptions}
               value={campaign.audienceInclude || []}
-              onChange={v => set({ audienceInclude: v })}
+              onValueChange={v => set({ audienceInclude: v })}
               placeholder="Search or Select Audience"
               searchPlaceholder="Search or Select Audience"
             />
@@ -205,7 +205,7 @@ export function CampaignBuilder() {
                 label="Exclude"
                 options={audienceOptions}
                 value={(campaign.audienceExclude || []).filter(v => v !== '__placeholder__')}
-                onChange={v => set({ audienceExclude: v.length === 0 ? [] : v })}
+                onValueChange={v => set({ audienceExclude: v.length === 0 ? [] : v })}
                 placeholder="Search or Select Audience to exclude"
                 searchPlaceholder="Search or Select Audience to exclude"
               />
@@ -267,19 +267,19 @@ export function CampaignBuilder() {
       {/* ── Right pane: email config + preview ─────────────────── */}
       <div className={styles.rightPane}>
         <div className={styles.topBar}>
-          <Toggle
+          <SegmentedControl
             items={[
               { key: 'one_time', label: 'One-Time' },
               { key: 'sequence', label: 'Sequence' },
             ]}
-            active={campaign.campaignType || 'one_time'}
-            size="S"
-            onChange={v => set({ campaignType: v })}
+            value={campaign.campaignType || 'one_time'}
+            size="sm"
+            onValueChange={v => set({ campaignType: v })}
           />
           <div className={styles.topRight} style={{ position: 'relative' }}>
             <Button
-              variant="secondary"
-              size="S"
+              variant="outline"
+              size="sm"
               leadingIcon="solar:letter-linear"
               onClick={() => setShowTestEmail(v => !v)}
             >
@@ -292,9 +292,8 @@ export function CampaignBuilder() {
               />
             )}
             <Button
-              variant="primary"
-              size="S"
-              disabled={!isComplete || sending}
+              size="sm"
+              disabled={!isComplete}
               onClick={async () => {
                 setSending(true);
                 try {
@@ -303,9 +302,9 @@ export function CampaignBuilder() {
                 } finally {
                   setSending(false);
                 }
-              }}
+              }} loading={sending}
             >
-              {sending ? 'Sending…' : 'Run Campaign Now'}
+              Run Campaign Now
             </Button>
             <CloseButton onClick={closeBuilder} />
           </div>
@@ -318,7 +317,7 @@ export function CampaignBuilder() {
               required
               options={SENDER_OPTIONS}
               value={campaign.senderName}
-              onChange={v => set({ senderName: v })}
+              onValueChange={v => set({ senderName: v })}
               placeholder="Select the Sender Name"
             />
           </FieldCol>
@@ -328,7 +327,7 @@ export function CampaignBuilder() {
               required
               options={SEND_FROM_OPTIONS}
               value={campaign.sendFrom}
-              onChange={v => set({ sendFrom: v })}
+              onValueChange={v => set({ sendFrom: v })}
               placeholder="Select the Delivery Email Address"
             />
           </FieldCol>

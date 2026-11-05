@@ -1,4 +1,4 @@
-// perfect-freehand stroke options — mirrors the controls shown in the
+// perfect-freehand stroke options: mirrors the controls shown in the
 // @uiw/react-signature demo (Size / Smoothing / Thinning / Streamline).
 export const SIGNATURE_OPTIONS = {
   size: 4,
@@ -22,7 +22,7 @@ export function loadSavedSignatures() {
 
 export function persistSavedSignatures(list) {
   try { localStorage.setItem(SAVED_SIGNATURES_KEY, JSON.stringify(list)); }
-  catch { /* quota or private mode — silent */ }
+  catch { /* quota or private mode: silent */ }
 }
 
 export function serializeSignatureSvg(svgEl) {
@@ -57,7 +57,7 @@ export const ATTESTATION_TEXT =
   'information recorded in this note is complete and accurate.';
 
 // Builds the props shape expected by the shared PatientBanner component
-// from an APCM patient record (which lacks gender/age — those fields are
+// from an APCM patient record (which lacks gender/age: those fields are
 // optional in the banner and will simply not render).
 export function toBannerProps(patient) {
   if (!patient) return null;

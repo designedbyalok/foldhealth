@@ -2,7 +2,7 @@
  * Pure helpers for the form layout/view modes. No React.
  *
  * Three layouts: 'by-question' (Typeform-style, paged), 'by-section' (paged by
- * section), 'entire-page' (one scrolling page — the default + legacy behavior).
+ * section), 'entire-page' (one scrolling page: the default + legacy behavior).
  */
 
 export const LAYOUTS = { 'by-question': 1, 'by-section': 1, 'entire-page': 1 };

@@ -105,7 +105,7 @@ POSTGREST_URL="$(cd infra/terraform && terraform output -raw postgrest_url)"
 # Should return 200 with an empty body (schema introspection; no RLS reads)
 curl -i "$POSTGREST_URL/"
 
-# A real table query — profiles is SELECT-open to anon in the current schema
+# A real table query: profiles is SELECT-open to anon in the current schema
 curl -i "$POSTGREST_URL/profiles?limit=1" \
   -H "apikey: ${VITE_SUPABASE_ANON_KEY}" \
   -H "Authorization: Bearer ${VITE_SUPABASE_ANON_KEY}"

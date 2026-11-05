@@ -8,21 +8,21 @@ import styles from './ruleBuilder.module.css';
 const TERM_LABELS = { icd10: 'ICD-10', snomed: 'SNOMED', cpt: 'CPT', loinc: 'LOINC', rxnorm: 'RxNorm' };
 
 /**
- * TerminologySearch — autocomplete for coded healthcare terminologies.
+ * TerminologySearch: autocomplete for coded healthcare terminologies.
  *
  * For ICD-10 it delegates to the existing useIcdSearch hook (WHO ICD-11 API →
  * Supabase cache → bundled catalog). For other terminologies (SNOMED, CPT,
  * LOINC, RxNorm) it provides a local search against the patient_clinical_events
- * table's distinct codes — a practical approach that works without external
+ * table's distinct codes: a practical approach that works without external
  * terminology servers while still offering real data.
  *
  * @param {object}   props
- * @param {string}   props.terminology  — 'icd10' | 'snomed' | 'cpt' | 'loinc' | 'rxnorm'
+ * @param {string}   props.terminology, 'icd10' | 'snomed' | 'cpt' | 'loinc' | 'rxnorm'
  * @param {(result:{code,display,system})=>void} props.onSelect
  * @param {string}   [props.placeholder]
- * @param {string[]} [props.excludeCodes] — codes to hide (already selected)
+ * @param {string[]} [props.excludeCodes], codes to hide (already selected)
  */
-// Stable identity for the omitted prop — an inline `= []` default would rebuild
+// Stable identity for the omitted prop, an inline `= []` default would rebuild
 // the excludeSet memo below on every render.
 const EMPTY_CODES = [];
 
@@ -150,7 +150,7 @@ export function TerminologySearch({
   );
 }
 
-/* Lightweight local search for non-ICD terminologies — queries distinct codes
+/* Lightweight local search for non-ICD terminologies, queries distinct codes
    from patient_clinical_events. In production these would hit terminology
    servers; for now the event table has enough data for demos. */
 function useLocalTermSearch({ terminology, minChars = 2, debounceMs = 200 }) {

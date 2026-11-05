@@ -42,8 +42,10 @@
      children (BrowserCallCard, drawer hosts, etc.) that already carry
      their own chrome and shouldn't double up.
    - `[data-floating-split]`: the patient view with a program "in right
-     panel" draws its own two cards, so the wrapper stays bare. */
-:root[data-sidebar-shape="floating"] .app > *:not([data-float-shell]):not([data-react-aria-top-layer]):not([data-floating-overlay]):not([data-floating-split]) {
+     panel" draws its own two cards, so the wrapper stays bare.
+   - `[data-floating-bare]`: a full-page editor (care plan template, new
+     care plan) already draws its own card, so the body shell stays bare. */
+:root[data-sidebar-shape="floating"] .app > *:not([data-float-shell]):not([data-react-aria-top-layer]):not([data-floating-overlay]):not([data-floating-split]):not([data-floating-bare]) {
   border: 0.5px solid var(--neutral-150);
   border-radius: 8px;
   background: var(--neutral-0);
@@ -73,3 +75,6 @@
   flex-direction: column;
   overflow: hidden;
 }
+
+/* Access Control: a page this user's roles can't see. */
+.noAccess { flex: 1; min-width: 0; display: flex; background: var(--neutral-0); }

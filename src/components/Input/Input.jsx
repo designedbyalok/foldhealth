@@ -5,28 +5,12 @@ import { CalendarIcon } from '../Icon/CalendarIcon';
 import { CloseIcon } from '../Icon/CloseIcon';
 import { Button } from '../Button/Button';
 import { DatePickerPopover } from '../DatePicker/DatePickerPopover';
+import { resolveFieldLook } from '../../lib/legacyProps';
+import { isoFromMdy, mdyFromIso } from '../../lib/localDate';
 import styles from './Input.module.css';
 
-// ── MM/DD/YYYY ↔ YYYY-MM-DD helpers ──────────────────────────────────
-// `type="date"` inputs speak ISO at the value boundary (matching native
-// <input type="date">) but display MM/DD/YYYY on-screen so the visible
-// order is locale-independent.
-function mdyFromIso(iso) {
-  if (!iso) return '';
-  const [y, m, d] = String(iso).split('-');
-  return (y && m && d) ? `${m}/${d}/${y}` : '';
-}
-function isoFromMdy(mdy) {
-  const m = /^\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s*$/.exec(mdy || '');
-  if (!m) return null;
-  const [, mm, dd, yyyy] = m;
-  const month = Number(mm), day = Number(dd);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-  return `${yyyy}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
 // Sensible inputMode + autoComplete defaults per type. Callers can override
-// by passing `inputMode` / `autoComplete` explicitly — they win.
+// by passing `inputMode` / `autoComplete` explicitly: they win.
 const TYPE_DEFAULTS = {
   email:    { inputMode: 'email',    autoComplete: 'email' },
   password: { inputMode: 'text',     autoComplete: 'current-password' },
@@ -35,7 +19,7 @@ const TYPE_DEFAULTS = {
   url:      { inputMode: 'url',      autoComplete: 'url' },
   search:   { inputMode: 'search',   autoComplete: 'off' },
   text:     { inputMode: undefined,  autoComplete: undefined },
-  // Native date/time types — browser owns the calendar/clock UI. Field
+  // Native date/time types: browser owns the calendar/clock UI. Field
   // chrome (border, radius, focus ring) still comes from Input so date
   // rows sit pixel-identical next to text rows in the same grid.
   date:            { inputMode: undefined, autoComplete: 'off' },
@@ -44,13 +28,13 @@ const TYPE_DEFAULTS = {
 };
 
 /**
- * Fold Health Input — single source-of-truth text input control.
+ * Fold Health Input: single source-of-truth text input control.
  *
  * Matches Figma Fold-Pixel design node 25:21239 across every state
  * (Placeholder, Filled, Hover, Focus, Disable, Error, Error Hover) and
  * every optional slot the design exposes as a boolean flag.
  *
- * Wrapper props (all optional — when NONE are set the component renders a
+ * Wrapper props (all optional: when NONE are set the component renders a
  * bare `<input>` so the many callers of `<Input placeholder="…" />` keep
  * working unchanged):
  *
@@ -65,6 +49,8 @@ const TYPE_DEFAULTS = {
  *     - showPriority   Adds a leading priority flag icon.
  *     - trailingText   Static text on the right (e.g. "Days").
  *     - chevron        `true`/"down"/"up" adds a small trailing chevron.
+ *     - trailingElement Any node at the right end of the field (e.g. a
+ *                      colour swatch that opens a picker).
  *     - trailingAction Boolean or Solar icon name for a small right-aligned
  *                      icon-only action button; wire via `onTrailingAction`.
  *     - onStepUp / onStepDown  Either one adds an up/down stepper that
@@ -76,9 +62,17 @@ const TYPE_DEFAULTS = {
  *                      the cap. Uses `value.length`
  *                      when controlled, otherwise tracks length internally.
  *
- *   Variant
- *     - variant        'error' (red chrome) or 'quiet' (no border until
+ *   Look
+ *     - variant        'outline' (default) or 'ghost' (no border until
  *                      hover / focus; for inline-editable table cells).
+ *     - invalid        Red chrome and `aria-invalid`, without a message.
+ *                      `errorText` implies it.
+ *     - size           'md' (32px, default) or 'sm' (28px).
+ *
+ *   Value
+ *     - onChange       The native change event.
+ *     - onValueChange  (value) => void, the same change as a string
+ *                      (ISO for `type="date"`, '' when a search is cleared).
  *
  *   Below the field
  *     - helperText     Muted text below the input, hidden while an error shows.
@@ -87,7 +81,7 @@ const TYPE_DEFAULTS = {
  * Password support
  *     - showPasswordToggle  Toggle-visibility eye button for `type="password"`.
  *
- * Native types accepted via `type` — text | email | password | number |
+ * Native types accepted via `type`, text | email | password | number |
  * tel | url | search. Each type wires sensible `inputMode` +
  * `autoComplete` defaults.
  *
@@ -96,13 +90,15 @@ const TYPE_DEFAULTS = {
  *     lean on native constraints (`type`, `required`, `pattern`, `min`,
  *     `max`, `minLength`, `maxLength`, `step`) and Input will read
  *     `input.checkValidity()` / `validationMessage`.
- *   - `validateOn` — 'blur' (default), 'change', or 'none'.
+ *   - `validateOn`, 'blur' (default), 'change', or 'none'.
  *   - The internal error clears the moment the user edits after a
  *     failed validation, so the message never nags.
  */
 export const Input = forwardRef(function Input(
   {
     variant,
+    invalid,
+    size,
     type = 'text',
     // Label row
     label,
@@ -114,18 +110,21 @@ export const Input = forwardRef(function Input(
     showPriority = false,
     trailingText,
     // Render `trailingText` as a filled segment flush to the field's right
-    // edge (divider + grey fill) instead of inline text — e.g. a unit suffix.
+    // edge (divider + grey fill) instead of inline text, e.g. a unit suffix.
     trailingTextSegment = false,
     chevron = false,
+    trailingElement,
     trailingAction = false,
     trailingActionLabel = 'Voice input',
     onTrailingAction,
     onStepUp,
     onStepDown,
-    trailingButton = false,   // boolean toggle — mirrors Figma "Trailing Button" flag
+    trailingButton = false,   // boolean toggle, mirrors Figma "Trailing Button" flag
     trailingButtonText = 'Button Text',
     onTrailingButtonClick,
     characterLimit,           // number
+    // type="date": (iso) => true disables that day in the calendar.
+    isDayDisabled,
     // Below the field
     helperText,
     errorText,
@@ -144,6 +143,7 @@ export const Input = forwardRef(function Input(
     defaultValue,
     onBlur,
     onChange,
+    onValueChange,
     id,
     ...props
   },
@@ -160,11 +160,13 @@ export const Input = forwardRef(function Input(
   const autoId = useId();
   const inputId = id || (label ? autoId : undefined);
 
-  // Explicit errorText (or legacy variant='error') wins over internal
-  // validation output. Internal state only kicks in when the caller
-  // hasn't spoken.
+  // Explicit errorText wins over internal validation output. Internal
+  // state only kicks in when the caller hasn't spoken.
+  const look = resolveFieldLook('Input', { variant, invalid, size });
   const activeError = errorText != null ? errorText : internalError;
-  const isError = variant === 'error' || Boolean(activeError);
+  const isError = look.invalid || Boolean(activeError);
+  const isGhost = look.variant === 'ghost' && !isError;
+  const sizeCls = look.size === 'sm' ? styles.sizeSm : '';
 
   const runValidate = useCallback((el) => {
     if (!el) return;
@@ -196,7 +198,8 @@ export const Input = forwardRef(function Input(
       setUncontrolledLen(e.currentTarget.value.length);
     }
     onChange?.(e);
-  }, [validateOn, runValidate, internalError, onChange, characterLimit, value]);
+    onValueChange?.(e.currentTarget.value);
+  }, [validateOn, runValidate, internalError, onChange, onValueChange, characterLimit, value]);
 
   const typeDefaults = TYPE_DEFAULTS[type] || TYPE_DEFAULTS.text;
   const inputMode = inputModeProp ?? typeDefaults.inputMode;
@@ -207,15 +210,15 @@ export const Input = forwardRef(function Input(
   // picker. Value in / out stays ISO (YYYY-MM-DD) to match the semantics
   // of native `<input type="date">`; the visible text renders MM/DD/YYYY.
   const isDateType = type === 'date';
-  // `time` / `datetime-local` still fall through to native `showPicker()`
-  // — a Fold time-picker UI isn't built yet.
+  // `time` / `datetime-local` still fall through to native `showPicker()`,
+  // a Fold time-picker UI isn't built yet.
   const isTimeLike = type === 'time' || type === 'datetime-local';
   const showPickerIcon = isDateType || isTimeLike;
   const effectiveType = type === 'password' && passwordVisible
     ? 'text'
     : (isDateType ? 'text' : type);
 
-  // Local typed state for the date branch — decouples the visible text
+  // Local typed state for the date branch, decouples the visible text
   // from the parent's controlled ISO value while the user is mid-typing,
   // and snaps back on blur so partial edits ("07/03/") never linger.
   const [dateTyped, setDateTyped] = useState(() =>
@@ -225,7 +228,7 @@ export const Input = forwardRef(function Input(
     if (isDateType) setDateTyped(mdyFromIso(value));
   }, [isDateType, value]);
 
-  // Date popover — anchored to the shell so it flips with the trigger.
+  // Date popover: anchored to the shell so it flips with the trigger.
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [datePopoverAnchor, setDatePopoverAnchor] = useState(null);
   const shellRef = useRef(null);
@@ -236,10 +239,11 @@ export const Input = forwardRef(function Input(
   }, [props.disabled]);
   const emitIsoDate = useCallback((iso) => {
     // Synthesise the same shape as a native <input> onChange for callers
-    // that read `e.target.value` — the rest of the app expects that
+    // that read `e.target.value`, the rest of the app expects that
     // contract from anything named "onChange".
     onChange?.({ target: { value: iso || '' }, currentTarget: { value: iso || '' } });
-  }, [onChange]);
+    onValueChange?.(iso || '');
+  }, [onChange, onValueChange]);
 
   // Merge the caller's forwarded ref with a local one so the picker-icon
   // handler can call `showPicker()` regardless of ref shape.
@@ -273,21 +277,30 @@ export const Input = forwardRef(function Input(
   // is hidden in CSS because it ignores the design system entirely.
   const showSearchClear = type === 'search' && !props.disabled && !props.readOnly
     && String(value ?? '').length > 0;
-  const hasTrailing = Boolean(trailingText) || chevronDir || trailingActionActive || showStepper
+  const hasTrailing = Boolean(trailingText) || Boolean(trailingElement) || chevronDir || trailingActionActive || showStepper
     || showTrailingButton || characterLimit != null
     || (type === 'password' && showPasswordToggle)
     || showSearchClear
     || showPickerIcon;
   const usesShell = hasLeading || hasTrailing;
 
-  // Bare-input fast path — no wrapper markup for the many callers that
+  // Bare-input fast path: no wrapper markup for the many callers that
   // don't use the structural extras. Keeps flex/grid parents happy.
   const needsWrapper = label || helperText || activeError || usesShell;
+
+  // The browser steps a focused number field on mouse wheel, so scrolling the
+  // page past one silently changes the value. Dropping focus lets the wheel
+  // scroll the page instead.
+  const handleWheel = (e) => {
+    if (type === 'number' && document.activeElement === e.currentTarget) e.currentTarget.blur();
+    props.onWheel?.(e);
+  };
 
   if (!needsWrapper) {
     const inputCls = [
       styles.input,
-      variant === 'quiet' && !isError ? styles.inputQuiet : '',
+      sizeCls,
+      isGhost ? styles.inputGhost : '',
       isError ? styles.inputError : '',
       className || '',
     ].filter(Boolean).join(' ');
@@ -308,12 +321,14 @@ export const Input = forwardRef(function Input(
         onBlur={handleBlur}
         onChange={handleChange}
         aria-invalid={isError || undefined}
+        data-invalid={isError || undefined}
         {...props}
+        onWheel={handleWheel}
       />
     );
   }
 
-  // Shell path — the input sits inside a styled row that owns the border,
+  // Shell path: the input sits inside a styled row that owns the border,
   // padding, focus ring, and every optional slot the Figma component
   // exposes. The <input> itself becomes borderless.
   //
@@ -324,7 +339,7 @@ export const Input = forwardRef(function Input(
     : value;
   // Keep `undefined` as `undefined` so a controlled date field (value set, no
   // defaultValue) doesn't get a synthesized `defaultValue=""` alongside its
-  // `value` — React warns on an input carrying both.
+  // `value`, React warns on an input carrying both.
   const shellInputDefault = isDateType
     ? (defaultValue !== undefined ? mdyFromIso(defaultValue) : undefined)
     : defaultValue;
@@ -371,6 +386,10 @@ export const Input = forwardRef(function Input(
       onChange={handleShellChange}
       aria-invalid={isError || undefined}
       {...restProps}
+      // A date field opens its calendar from anywhere in the field, not just
+      // the icon; typing a date still works.
+      onClick={isDateType ? (e) => { restProps.onClick?.(e); openDatePopover(); } : restProps.onClick}
+      onWheel={handleWheel}
     />
   );
 
@@ -411,6 +430,7 @@ export const Input = forwardRef(function Input(
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             onChange?.({ target: { value: '' }, currentTarget: { value: '' } });
+            onValueChange?.('');
             localInputRef.current?.focus();
           }}
           tabIndex={-1}
@@ -462,6 +482,7 @@ export const Input = forwardRef(function Input(
           </button>
         </span>
       )}
+      {trailingElement}
       {trailingActionActive && (
         <button
           type="button"
@@ -493,8 +514,8 @@ export const Input = forwardRef(function Input(
       )}
       {showTrailingButton && (
         <Button
-          variant="tertiary"
-          size="S"
+          variant="soft"
+          size="sm"
           onClick={onTrailingButtonClick}
           className={styles.trailingButtonSlot}
         >
@@ -515,14 +536,15 @@ export const Input = forwardRef(function Input(
 
   const shellCls = [
     styles.shell,
-    variant === 'quiet' && !isError ? styles.shellQuiet : '',
+    sizeCls,
+    isGhost ? styles.shellGhost : '',
     isError ? styles.shellError : '',
     props.disabled ? styles.shellDisabled : '',
     props.readOnly ? styles.shellReadonly : '',
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={[styles.field, wrapperClassName || ''].filter(Boolean).join(' ')}>
+    <div className={[styles.field, wrapperClassName || ''].filter(Boolean).join(' ')} data-invalid={isError || undefined}>
       {label && (
         <label className={styles.label} htmlFor={inputId}>
           <span className={styles.labelText}>{label}</span>
@@ -558,6 +580,7 @@ export const Input = forwardRef(function Input(
           anchorRect={datePopoverAnchor}
           min={props.min}
           max={props.max}
+          isDayDisabled={isDayDisabled}
         />
       )}
     </div>

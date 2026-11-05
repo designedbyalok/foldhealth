@@ -4,18 +4,3 @@
   height: 28px; display: flex; align-items: center; padding-left: 8px;
   font-size: var(--font-base); font-weight: 400; color: var(--neutral-300);
 }
-
-.card {
-  background: var(--neutral-0);
-  border-bottom: 0.5px solid var(--neutral-100);
-  overflow: hidden;
-}
-
-.colHeader {
-  display: flex; align-items: center; gap: 10px;
-  padding: 6px 8px;
-  border-bottom: 0.5px solid var(--neutral-150);
-}
-.colTitle { flex: 1; font-size: var(--font-base); font-weight: 500; color: var(--neutral-300); }
-.colStatus { width: 120px; flex-shrink: 0; font-size: var(--font-base); font-weight: 500; color: var(--neutral-300); }
-.colActions { width: 24px; flex-shrink: 0; }

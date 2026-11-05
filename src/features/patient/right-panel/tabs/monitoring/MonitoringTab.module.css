@@ -23,7 +23,7 @@
   border-radius: var(--radius-sm);
 }
 
-/* Shared card chrome — one surface treatment across the tab */
+/* Shared card chrome: one surface treatment across the tab */
 .surfaceCard {
   background: var(--neutral-0);
   border: 0.5px solid var(--neutral-150);

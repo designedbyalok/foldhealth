@@ -1,4 +1,4 @@
-/* Read-only signed-note preview — matches Figma 511:105429's section
+/* Read-only signed-note preview: matches Figma 511:105429's section
    summary layout with a signer/subtitle header pinned above scrollable
    key/value rows. */
 
@@ -145,7 +145,7 @@
   font-size: var(--font-base);
 }
 
-/* Non-Visit Note body — plain text block rendered by the preview
+/* Non-Visit Note body: plain text block rendered by the preview
    when `note.formType === 'non_visit_note'`. */
 .nonVisitBody {
   font-size: var(--font-base);
@@ -167,7 +167,7 @@
   color: var(--neutral-400);
 }
 
-/* DSF Care Plan block — the preview twin of dsf/DsfEvidenceForms's
+/* DSF Care Plan block: the preview twin of dsf/DsfEvidenceForms's
    CarePlanOutcomePanel. Same disc-marker bullet list on the tinted
    primary background, same title/label rhythm, so a signed / submitted
    note reads the same as its editable original without the reviewer

@@ -7,6 +7,8 @@ import styles from './HomeView.module.css';
 
 const HOUR_HEIGHT = 48;
 const MIN_HEIGHT = 400;
+// Below this a title plus a meta line no longer fit, so the card goes single-line.
+const COMPACT_EVENT_HEIGHT = 40;
 
 function addDays(date, delta) {
   const d = new Date(date);
@@ -132,7 +134,7 @@ export function TodayCalendarCard({ dragHandleClassName }) {
   };
 
   const handleDrawerClose = () => setDrawerSlot(null);
-  const handleSave = () => { if (fetchAppointments) fetchAppointments(); };
+  const handleSave = () => { if (fetchAppointments) fetchAppointments({ force: true }); };
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
@@ -144,9 +146,9 @@ export function TodayCalendarCard({ dragHandleClassName }) {
           {isToday ? 'Today' : viewDate.toLocaleDateString('en-US', { weekday: 'short' })}, {formatDate(viewDate)}
         </div>
         <div className={styles.calNav}>
-          <ActionButton icon="solar:alt-arrow-left-linear" size="S" tooltip="Previous day" onClick={() => setViewDate(d => addDays(d, -1))} />
-          <ActionButton icon="solar:calendar-date-linear" size="S" tooltip="Today" onClick={() => setViewDate(new Date())} />
-          <ActionButton icon="solar:alt-arrow-right-linear" size="S" tooltip="Next day" onClick={() => setViewDate(d => addDays(d, 1))} />
+          <ActionButton icon="solar:alt-arrow-left-linear" size="sm" tooltip="Previous day" onClick={() => setViewDate(d => addDays(d, -1))} />
+          <ActionButton icon="solar:calendar-date-linear" size="sm" tooltip="Today" onClick={() => setViewDate(new Date())} />
+          <ActionButton icon="solar:alt-arrow-right-linear" size="sm" tooltip="Next day" onClick={() => setViewDate(d => addDays(d, 1))} />
         </div>
       </div>
       <div className={styles.calBody} ref={bodyRef}>
@@ -169,7 +171,7 @@ export function TodayCalendarCard({ dragHandleClassName }) {
           {eventBlocks.map(evt => (
             <div
               key={evt.id}
-              className={styles.calEvent}
+              className={[styles.calEvent, evt.height < COMPACT_EVENT_HEIGHT && styles.calEventCompact].filter(Boolean).join(' ')}
               style={{ top: `${evt.top}px`, height: `${evt.height}px` }}
               title={evt.title}
             >

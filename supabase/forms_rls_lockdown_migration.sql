@@ -1,4 +1,4 @@
--- Lock down forms / form_responses — the last two tables where `anon`
+-- Lock down forms / form_responses: the last two tables where `anon`
 -- could read AND write everything.
 --
 -- Why: RLS_POSTURE.md deliberately keeps these anon-READABLE so a patient
@@ -18,18 +18,18 @@
 -- Design (keeps patient filling working end-to-end):
 --
 --   forms
---     anon    SELECT restricted to status='active' — share links serve
+--     anon    SELECT restricted to status='active', share links serve
 --             published forms only; drafts stop leaking.
 --     anon    no writes. Builder CRUD is staff-only.
 --   form_responses
---     anon    INSERT allowed — that IS the anonymous patient submission.
+--     anon    INSERT allowed: that IS the anonymous patient submission.
 --     anon    UPDATE allowed ONLY while the row is still 'in_progress' and
 --             stays 'in_progress' or flips to 'completed'. This preserves
 --             savePartialResponse's upsert autosave and FormView's
 --             submit-time flip of the same session row, while closing the
 --             tamper path against completed submissions. Sequential bigint
 --             ids make enumeration trivial, so this is a compromise, not a
---             guarantee — flagged in RLS_POSTURE.md follow-ups.
+--             guarantee: flagged in RLS_POSTURE.md follow-ups.
 --     anon    no SELECT (a filler never reads back), no DELETE.
 --   authenticated  full access to both, as today.
 --
@@ -126,4 +126,4 @@ commit;
 -- drop all "forms_*" / "form_responses_*" policies above, then:
 -- create policy "public_access" on public.forms          for all to anon, authenticated using ((select auth.uid()) is not null) with check ((select auth.uid()) is not null);
 -- create policy "public_access" on public.form_responses for all to anon, authenticated using ((select auth.uid()) is not null) with check ((select auth.uid()) is not null);
--- (i.e. restore the previous state — not recommended; see probe results)
+-- (i.e. restore the previous state, not recommended; see probe results)

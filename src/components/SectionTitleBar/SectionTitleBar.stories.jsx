@@ -10,7 +10,7 @@ export default {
     docs: {
       description: {
         component:
-          'Shared third-level header. Flip `variant` between `tabs`, `titleOnly`, `titleWithDropdown`, and `titleWithToggle`. When in `tabs` mode, use `tabCount` and `tabLabels` to preview how the bar handles overflow — extras collapse into a `More ▾` dropdown so nothing overlaps the right-side action cluster. Tabs can carry a count badge (`showTabCounts`) or the pulsing "new activity" dot (`showNotifDot`). Toggle the right-side icons via the `actions` array (`search`, `filter`, `history`, `upload`, `download`, `savedFilters`), or set `primaryActionLabel` to append a primary CTA button after the icon cluster.',
+          'Shared third-level header. Flip `variant` between `tabs`, `titleOnly`, `titleWithDropdown`, and `titleWithToggle`. When in `tabs` mode, use `tabCount` and `tabLabels` to preview how the bar handles overflow, extras collapse into a `More ▾` dropdown so nothing overlaps the right-side action cluster. Tabs can carry a count badge (`showTabCounts`) or the pulsing "new activity" dot (`showNotifDot`). Toggle the right-side icons via the `actions` array (`search`, `filter`, `history`, `upload`, `download`, `savedFilters`), or set `primaryActionLabel` to append a primary CTA button after the icon cluster.',
       },
     },
   },
@@ -43,7 +43,7 @@ export default {
     },
     showTabCounts: {
       control: 'boolean',
-      description: 'Attach a count Badge (overflow variant) to each tab — mirrors the Tasks/Campaigns pattern.',
+      description: 'Attach a count Badge (overflow variant) to each tab: mirrors the Tasks/Campaigns pattern.',
       if: { arg: 'variant', eq: 'tabs' },
     },
     actions: {
@@ -59,7 +59,7 @@ export default {
     },
     primaryActionVariant: {
       control: 'select',
-      options: ['primary', 'secondary'],
+      options: ['solid', 'outline'],
       if: { arg: 'primaryActionLabel', truthy: true },
     },
     primaryActionIcon: {
@@ -140,7 +140,7 @@ export const Playground = {
     filterBadgeCount: 0,
     uploadHasDropdown: false,
     primaryActionLabel: '',
-    primaryActionVariant: 'secondary',
+    primaryActionVariant: 'outline',
     primaryActionIcon: 'solar:add-circle-linear',
   },
 };

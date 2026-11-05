@@ -10,6 +10,7 @@
 import { renderEmailHtml } from './patchEmailHtml';
 import { applyMergeTags } from './mergeTags';
 import { componentToDocument } from './componentDocument';
+import { sanitizeEmailHtml } from '../../lib/sanitizeHtml';
 
 const WIDTH = 600; // the builder's canvas width
 
@@ -61,7 +62,7 @@ export async function rasterizeComponent(tree, ctx, { fontFaces = '', scale = 3 
     // Measured in this page, which already has the fonts, at the canvas width.
     const host = document.createElement('div');
     host.style.cssText = `position:fixed;left:-10000px;top:0;width:${WIDTH}px;visibility:hidden;`;
-    host.innerHTML = body.outerHTML;
+    host.innerHTML = sanitizeEmailHtml(body.outerHTML);
     document.body.appendChild(host);
     await Promise.all([...host.querySelectorAll('img')].map(img => (img.complete ? null : img.decode().catch(() => null))));
     const height = Math.ceil(host.getBoundingClientRect().height);

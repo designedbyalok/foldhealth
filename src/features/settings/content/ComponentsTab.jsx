@@ -81,11 +81,11 @@ export function ComponentsTab({ searchVal }) {
       <td className={styles.tdDate}><span className={styles.cellText}>{shortDate(c.updatedAt)}</span></td>
       <td className={styles.tdAction}>
         <div className={styles.actionCell}>
-          <ActionButton icon="solar:pen-linear" size="S" tooltip="Edit component" onClick={() => openComponentBuilder(c)} />
+          <ActionButton icon="solar:pen-linear" size="sm" tooltip="Edit component" onClick={() => openComponentBuilder(c)} />
           {!c.isLocal && (
             <>
               <div className={styles.vDivider} />
-              <ActionButton icon="solar:trash-bin-trash-linear" size="S" tooltip="Delete component" onClick={() => setDeleteTarget(c)} />
+              <ActionButton icon="solar:trash-bin-trash-linear" size="sm" tooltip="Delete component" onClick={() => setDeleteTarget(c)} />
             </>
           )}
         </div>

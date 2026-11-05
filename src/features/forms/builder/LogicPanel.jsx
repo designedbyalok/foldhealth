@@ -1,9 +1,9 @@
 /**
- * Logic tab — the visual workflow / branching builder.
+ * Logic tab: the visual workflow / branching builder.
  *
  * A React-Flow node map (one node per field, edges for conditional rules) on the
  * left, and a rule editor on the right. Rules compile to the field's
- * `enableWhen[]` + `enableBehavior` — exactly what the engine evaluates and the
+ * `enableWhen[]` + `enableBehavior`, exactly what the engine evaluates and the
  * renderer now honors (Phase 1). "Show field B when A = Yes" ⇒ B.enableWhen =
  * [{question:'A', operator:'=', answer:'Yes'}], drawn as an edge A → B.
  */
@@ -14,7 +14,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { Select } from '../../../components/Select/Select';
 import { Input } from '../../../components/Input/Input';
 import { Button } from '../../../components/Button/Button';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { OPERATOR } from '../scoring/types';
 import { endingsOf } from '../render/flow';
 import { fieldIcon } from '../analytics/formAnalyticsUi';
@@ -97,7 +97,7 @@ function ConditionList({ conditions, behavior, triggers, fields, onConditions, o
       {conditions.length > 1 && (
         <div className={styles.behaviorRow}>
           <span className={styles.behaviorLabel}>Match</span>
-          <Toggle size="S" items={[{ key: 'all', label: 'All' }, { key: 'any', label: 'Any' }]} active={behavior} onChange={onBehavior} />
+          <SegmentedControl size="sm" items={[{ key: 'all', label: 'All' }, { key: 'any', label: 'Any' }]} value={behavior} onValueChange={onBehavior} />
           <span className={styles.behaviorLabel}>of these</span>
         </div>
       )}
@@ -111,10 +111,10 @@ function ConditionList({ conditions, behavior, triggers, fields, onConditions, o
             <div key={i} className={styles.cond}>
               {i > 0 && <span className={styles.condJoin}>{behavior === 'all' ? 'AND' : 'OR'}</span>}
               <div className={styles.condGrid}>
-                <Select value={c.question} onChange={(v) => setCond(i, { question: v })} placeholder="Question" options={triggers.map((t) => ({ value: t.linkId, label: t.text || t.linkId }))} />
-                <Select value={c.operator} onChange={(v) => setCond(i, { operator: v })} options={ops.map((o) => ({ value: o, label: OPERATOR_LABELS[o] || o }))} />
+                <Select value={c.question} onValueChange={(v) => setCond(i, { question: v })} placeholder="Question" options={triggers.map((t) => ({ value: t.linkId, label: t.text || t.linkId }))} />
+                <Select value={c.operator} onValueChange={(v) => setCond(i, { operator: v })} options={ops.map((o) => ({ value: o, label: OPERATOR_LABELS[o] || o }))} />
                 {showValue && (optionVals?.length ? (
-                  <Select value={String(c.answer ?? '')} onChange={(v) => setCond(i, { answer: v })} placeholder="Value" options={optionVals} />
+                  <Select value={String(c.answer ?? '')} onValueChange={(v) => setCond(i, { answer: v })} placeholder="Value" options={optionVals} />
                 ) : (
                   <Input value={c.answer ?? ''} placeholder="Value" onChange={(e) => setCond(i, { answer: e.target.value })} />
                 ))}
@@ -126,7 +126,7 @@ function ConditionList({ conditions, behavior, triggers, fields, onConditions, o
           );
         })}
       </div>
-      <Button variant="ghost" size="S" leadingIcon="solar:add-circle-linear" onClick={addCond}>Add condition</Button>
+      <Button variant="ghost" size="sm" leadingIcon="solar:add-circle-linear" onClick={addCond}>Add condition</Button>
     </>
   );
 }
@@ -146,7 +146,7 @@ function JumpEditor({ field, fields, triggers, endings, onApply }) {
         <div key={i} className={styles.jumpCard}>
           <div className={styles.jumpHead}>
             <span className={styles.behaviorLabel}>Jump to</span>
-            <Select value={j.to} onChange={(v) => update(i, { to: v })} options={endings.map((e) => ({ value: e.id, label: e.title || e.id }))} />
+            <Select value={j.to} onValueChange={(v) => update(i, { to: v })} options={endings.map((e) => ({ value: e.id, label: e.title || e.id }))} />
             <button className={styles.condRemove} onClick={() => remove(i)} aria-label="Remove jump"><Icon name="solar:trash-bin-minimalistic-linear" size={15} color="var(--neutral-300)" /></button>
           </div>
           <ConditionList
@@ -159,7 +159,7 @@ function JumpEditor({ field, fields, triggers, endings, onApply }) {
           />
         </div>
       ))}
-      <Button variant="ghost" size="S" leadingIcon="solar:add-circle-linear" onClick={add}>Add jump rule</Button>
+      <Button variant="ghost" size="sm" leadingIcon="solar:add-circle-linear" onClick={add}>Add jump rule</Button>
     </div>
   );
 }
@@ -196,11 +196,11 @@ function RuleEditor({ field, fields, endings, onApply }) {
 
       <div className={styles.sectionLabel}>Visibility</div>
       <div className={styles.visToggle}>
-        <Toggle
-          size="S"
+        <SegmentedControl
+          size="sm"
           items={[{ key: 'always', label: 'Always show' }, { key: 'cond', label: 'Show when…' }]}
-          active={conditional ? 'cond' : 'always'}
-          onChange={(k) => setConditional(k === 'cond')}
+          value={conditional ? 'cond' : 'always'}
+          onValueChange={(k) => setConditional(k === 'cond')}
         />
       </div>
 

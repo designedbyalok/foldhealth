@@ -1,4 +1,4 @@
-// Seed rows for the patient-profile Outreach feed — one per supported
+// Seed rows for the patient-profile Outreach feed, one per supported
 // communication type so the timeline exercises every TypeDropdown option.
 // Each row uses representative outcomes per the MLOV outreach_step_outcomes
 // table. Lives in its own module so consumers (OutreachTab, and the HEDIS
@@ -23,7 +23,7 @@ export const INITIAL_LOG_GROUPS = [
           ],
         },
       },
-      // Astrana-sourced (contact-level, no care program) — exercises
+      // Astrana-sourced (contact-level, no care program), exercises
       // the /api/v2/outreach POST surface with
       // `outreachSource: "Astrana"` and no careProgramTypeCode /
       // careProgramId. Surfaces the attribution chip and the
@@ -71,7 +71,7 @@ export const INITIAL_LOG_GROUPS = [
         author: 'Delores Conn (Co-Ordinator)',
         title: 'Chat Message', programs: ['SNP'],
         outcome: 'Replied', outcomeColor: 'var(--status-success)',
-        note: 'Patient responded in app chat — confirmed insurance card uploaded.',
+        note: 'Patient responded in app chat: confirmed insurance card uploaded.',
       },
       {
         id: 8, type: 'Letter', date: '01/11', time: '12:30 PM',

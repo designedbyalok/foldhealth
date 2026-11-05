@@ -1,4 +1,4 @@
-// Sweep-mode ICD data — deduplicated list across all DOSes per member.
+// Sweep-mode ICD data: deduplicated list across all DOSes per member.
 // Each entry has a `dos_entries` array showing per-DOS status / RAF / claim.
 //
 // Ported from /Users/ketanp/Downloads/HCC/hcc_worklist_v2.tsx (SWEEP_ICD_DATA
@@ -6,7 +6,7 @@
 // member not in the map.
 
 export const SWEEP_ICD_DATA = {
-  // Annette Brave — the design reference patient (Paper 1WXT / 17R). Every
+  // Annette Brave: the design reference patient (Paper 1WXT / 17R). Every
   // dos_entries date is one of her worklist DOS dates (03/04/2026,
   // 03/31/2026, 06/11/2025) so the drawer's ICD→DOS grouping mirrors the
   // worklist record. HCCs are V28.
@@ -70,7 +70,7 @@ export const getSweepIcdsForMember = (name) =>
   SWEEP_ICD_DATA[name] || SWEEP_ICD_DATA._default;
 
 /**
- * DB-preferring variant — pass the `hccGapSweep` store slice
+ * DB-preferring variant: pass the `hccGapSweep` store slice
  * ({ memberName: [row, ...] }) as `dbMap`. Returns the member's rows,
  * else the seeded '_default' rows, else the JS mock. Keeps the
  * DiagPanel sweep grouping working while the seed rolls out to every

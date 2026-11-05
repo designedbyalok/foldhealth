@@ -10,16 +10,20 @@ export default {
     docs: {
       description: {
         component:
-          'Single-line text input — matches Figma Fold-Pixel node 25:21239 exactly. Renders a bare `<input>` when only styling props are passed (backward-compatible with 20+ existing callers); adds a wrapper with label / helper / error / slot chrome when any structural slot is set. Native `type` drives sensible `inputMode` + `autoComplete` defaults and unlocks type-aware validation via native `checkValidity()` or a custom `validate()` function.',
+          'Single-line text input: matches Figma Fold-Pixel node 25:21239 exactly. Renders a bare `<input>` when only styling props are passed (backward-compatible with 20+ existing callers); adds a wrapper with label / helper / error / slot chrome when any structural slot is set. Native `type` drives sensible `inputMode` + `autoComplete` defaults and unlocks type-aware validation via native `checkValidity()` or a custom `validate()` function.',
       },
     },
   },
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'error'],
-      description: 'Legacy visual state. Prefer `errorText` for message + state in one prop.',
+      options: ['outline', 'ghost'],
+      description: '`outline` is the bordered field; `ghost` shows its border only on hover / focus (inline-editable table cells).',
+      table: { defaultValue: { summary: 'outline' } },
     },
+    invalid: { control: 'boolean', description: 'Red chrome and `aria-invalid`. `errorText` implies it and adds the message.' },
+    size: { control: 'select', options: ['sm', 'md'], description: 'md 32px, sm 28px', table: { defaultValue: { summary: 'md' } } },
+    onValueChange: { action: 'onValueChange', description: '(value) => void, alongside the native `onChange(event)`.' },
     type: {
       control: 'select',
       options: ['text', 'email', 'password', 'number', 'tel', 'url', 'search', 'date', 'time', 'datetime-local'],
@@ -35,16 +39,16 @@ export default {
     showLeadingIcon: { control: 'boolean', description: 'Storybook-only toggle for the leading icon slot.' },
     leadingIcon: { control: 'text', description: 'Solar icon name (e.g. `solar:user-linear`) or React node rendered before the input.' },
     showPriority: { control: 'boolean', description: 'Leading priority flag icon (Figma "Show Priority" toggle).' },
-    // Trailing slots — each slot has a boolean toggle + a separate text value
+    // Trailing slots: each slot has a boolean toggle + a separate text value
     showTrailingText: { control: 'boolean', description: 'Show static trailing text.' },
     trailingText: { control: 'text', description: 'Trailing text value (e.g. "Days").' },
     showChevron: { control: 'boolean', description: 'Show the trailing chevron.' },
     chevronDirection: { control: 'select', options: ['down', 'up'], description: 'Chevron direction.' },
-    // Superseded by `showChevron` + `chevronDirection` in the Playground —
+    // Superseded by `showChevron` + `chevronDirection` in the Playground,
     // hidden from Controls so it doesn't fall through as a "Set object"
     // catch-all. Still a first-class prop on the component itself.
     chevron: { table: { disable: true } },
-    trailingAction: { control: 'boolean', description: 'Trailing icon action button (Figma "Trailing Action" — default is a microphone).' },
+    trailingAction: { control: 'boolean', description: 'Trailing icon action button (Figma "Trailing Action", default is a microphone).' },
     trailingActionLabel: { control: 'text' },
     trailingButton: { control: 'boolean', description: 'Show the trailing tertiary Button slot.' },
     trailingButtonText: { control: 'text', description: 'Label for the trailing Button.' },
@@ -98,7 +102,9 @@ function InputFromArgs({
 // ── Playground ──
 export const Playground = {
   args: {
-    variant: 'default',
+    variant: 'outline',
+    invalid: false,
+    size: 'md',
     type: 'text',
     // Label row
     showLabel: true,
@@ -136,7 +142,7 @@ export const Playground = {
   render: (args) => <InputFromArgs {...args} />,
 };
 
-// ── Every Figma slot toggled on — mirrors the "Text Input Web" playground
+// ── Every Figma slot toggled on, mirrors the "Text Input Web" playground
 // on Fold-Pixel-1.0 node 25:21239. Every flag here maps 1:1 to the Figma
 // component's boolean/enum controls. ──
 export const AllSlots = {
@@ -184,6 +190,29 @@ export const AllStates = {
   },
 };
 
+// ── variant × size, with invalid ──
+export const LookMatrix = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 200px)', gap: 'var(--space-3)', alignItems: 'center' }}>
+      {['outline', 'ghost'].flatMap(variant => ['md', 'sm'].map(size => (
+        [false, true].map(invalid => (
+          <Input
+            key={`${variant}-${size}-${invalid}`}
+            variant={variant}
+            size={size}
+            invalid={invalid}
+            aria-label={`${variant} ${size}${invalid ? ' invalid' : ''}`}
+            defaultValue={`${variant} ${size}${invalid ? ' invalid' : ''}`}
+          />
+        )).concat(
+          <Input key={`${variant}-${size}-icon`} variant={variant} size={size} leadingIcon="solar:magnifer-linear" aria-label="With icon" placeholder="With icon" />,
+        )
+      )))}
+    </div>
+  ),
+};
+
 // ── Native input types ──
 export const Types = {
   render: () => (
@@ -200,7 +229,7 @@ export const Types = {
     </div>
   ),
   parameters: {
-    docs: { description: { story: 'Each `type` wires inputMode + autoComplete for the right mobile keyboard and password-manager behaviour. Password gets an inline eye toggle when `showPasswordToggle` is set. Date/time types keep Input\'s field chrome and let the browser render the native calendar/clock — `src/components/DatePicker` delegates to `<Input type="date">` under the hood so every date row across the app looks identical to a text row.' } },
+    docs: { description: { story: 'Each `type` wires inputMode + autoComplete for the right mobile keyboard and password-manager behaviour. Password gets an inline eye toggle when `showPasswordToggle` is set. Date/time types keep Input\'s field chrome and let the browser render the native calendar/clock, `src/components/DatePicker` delegates to `<Input type="date">` under the hood so every date row across the app looks identical to a text row.' } },
   },
 };
 
@@ -238,7 +267,7 @@ function CustomValidationDemo() {
           if (!/^[^@\s]+@fold\.health$/i.test(v)) return 'Must end in @fold.health.';
           return null;
         }}
-        helperText="Blur to validate — only @fold.health addresses pass."
+        helperText="Blur to validate: only @fold.health addresses pass."
       />
     </div>
   );

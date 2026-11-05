@@ -1,7 +1,7 @@
 -- Make attribution mandatory on every task, at the database.
 --
 -- THE HOLE THIS CLOSES
--- The task audit log is enforced entirely in JavaScript — every callsite is
+-- The task audit log is enforced entirely in JavaScript, every callsite is
 -- expected to (a) stamp `created_by` / `created_by_id` on the row and (b) write
 -- a `task_audit_log` `created` entry after insert. It works today only because
 -- every caller happens to do the right thing. The moment a new callsite forgets
@@ -13,7 +13,7 @@
 -- WHAT THIS DOES
 --   1. Backfills any existing rows missing `created_by` / `created_at` so the
 --      NOT NULL constraint can attach without failing. `created_by` is set to
---      'System' — an honest "we don't know who did this"; `created_at` is set
+--      'System', an honest "we don't know who did this"; `created_at` is set
 --      to `now()` for anything null.
 --   2. Adds NOT NULL on `tasks.created_by` and `tasks.created_at`. From here
 --      on, a task INSERT without a creator or timestamp is rejected by the
@@ -29,7 +29,7 @@
 --      the drawer's history from showing "created" twice for one task.
 --
 -- WHAT THIS DELIBERATELY DOES NOT DO
--- No RLS change on `tasks.created_by` — unlike the HCC audit table, `tasks` is
+-- No RLS change on `tasks.created_by`, unlike the HCC audit table, `tasks` is
 -- routinely written by multiple actors on behalf of the same session (a
 -- provider creates a task assigned to a care manager; a service worker adds a
 -- TOC follow-up). Forcing `created_by = auth.uid()` here would break the
@@ -65,7 +65,7 @@ set search_path = public
 as $$
 begin
   -- Skip if the client already logged a `created` row for this task within the
-  -- same second — the JS store writes one immediately after INSERT and we do
+  -- same second: the JS store writes one immediately after INSERT and we do
   -- not want a duplicate entry appearing in the drawer.
   if exists (
     select 1

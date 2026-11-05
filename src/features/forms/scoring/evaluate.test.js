@@ -64,7 +64,7 @@ function phq9Form() {
       id: 'q9_selfharm',
       linkId: 'q9',
       condition: { operator: OPERATOR.GT, value: 0 },
-      alert: 'Positive self-harm response — review immediately',
+      alert: 'Positive self-harm response: review immediately',
       severity: SEVERITY.CRITICAL,
     }],
   };
@@ -139,7 +139,7 @@ describe('reverse scoring', () => {
   });
 });
 
-describe('Example A — low total, positive critical item', () => {
+describe('Example A: low total, positive critical item', () => {
   it('reports Mild band AND fires the self-harm trigger', () => {
     const ans = { q1: 2, q2: 1, q3: 1, q4: 1, q5: 0, q6: 0, q7: 0, q8: 0, q9: 1 }; // total 6
     const r = evaluate(phq9Form(), ans);
@@ -242,7 +242,7 @@ describe('determinism', () => {
 describe('runtime cycle guard', () => {
   it('returns a fail-safe result with CYCLE_AT_RUNTIME and never loops', () => {
     // section "sec" (hidden) contains field "f" which feeds score "sc",
-    // whose band reveals "sec" — a cycle.
+    // whose band reveals "sec", a cycle.
     const form = {
       questionnaire: { item: [{ linkId: 'sec', type: 'group', defaultVisibility: 'hidden', item: [choice03('f', false)] }] },
       scores: [{ id: 'sc', label: 'sc', aggregation: AGGREGATION.SUM, sources: [{ linkId: 'f' }], range: { min: 0, max: 3 }, interpretations: [{ min: 0, max: 3, label: 'b', severity: SEVERITY.INFO, actions: [{ type: ACTION_TYPE.BRANCH, reveal: ['sec'] }] }] }],

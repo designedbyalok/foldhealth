@@ -1,17 +1,17 @@
 /**
- * Banner expand icon — filled primary circle with a white chevron inside.
+ * Banner expand icon: filled primary circle with a white chevron inside.
  * Used in PatientBanner's expand/collapse affordance (and any other banner
  * with the same expand UX). Rotates 180° when expanded; the rotation is
  * applied by the caller via a `className` whose transform flips the SVG.
  *
  * Per CLAUDE.md the platform standard is `solar:*-linear` icons rendered at
  * 1px stroke. This one is intentionally a filled-disc affordance (not an
- * icon glyph) — a stronger expand cue than a bare chevron in the banner
+ * icon glyph): a stronger expand cue than a bare chevron in the banner
  * row. Reuse the component anywhere this pattern recurs; don't rebuild it.
  *
  * @param {object}  props
- * @param {number}  [props.size=20]                  — Width & height in px
- * @param {string}  [props.color='var(--primary-300)'] — Disc fill colour
+ * @param {number}  [props.size=20], Width & height in px
+ * @param {string}  [props.color='var(--primary-300)']: Disc fill colour
  * @param {string}  [props.className]
  */
 export function BannerExpandIcon({ size = 20, color = 'var(--primary-300)', className, ...rest }) {

@@ -15,18 +15,18 @@ function InstructionEditor({ label, placeholder, inputRef, showRemove, onRemove 
           onInput={e => { inputRef.current = e.currentTarget.innerHTML; }}
         />
         <div className={styles.instructionToolbar}>
-          <ActionButton icon="solar:paperclip-linear" size="S" tooltip="Attach" />
+          <ActionButton icon="solar:paperclip-linear" size="sm" tooltip="Attach" />
           <span className={styles.toolbarDivider} />
-          <ActionButton icon="solar:text-bold-linear" size="S" tooltip="Bold" onClick={() => document.execCommand('bold')} />
-          <ActionButton icon="solar:text-italic-linear" size="S" tooltip="Italic" onClick={() => document.execCommand('italic')} />
-          <ActionButton icon="solar:text-underline-linear" size="S" tooltip="Underline" onClick={() => document.execCommand('underline')} />
+          <ActionButton icon="solar:text-bold-linear" size="sm" tooltip="Bold" onClick={() => document.execCommand('bold')} />
+          <ActionButton icon="solar:text-italic-linear" size="sm" tooltip="Italic" onClick={() => document.execCommand('italic')} />
+          <ActionButton icon="solar:text-underline-linear" size="sm" tooltip="Underline" onClick={() => document.execCommand('underline')} />
           <span className={styles.toolbarDivider} />
-          <ActionButton icon="solar:text-field-linear" size="S" tooltip="Heading" onClick={() => document.execCommand('formatBlock', false, 'h3')} />
-          <ActionButton icon="solar:list-linear" size="S" tooltip="List" onClick={() => document.execCommand('insertUnorderedList')} />
+          <ActionButton icon="solar:text-field-linear" size="sm" tooltip="Heading" onClick={() => document.execCommand('formatBlock', false, 'h3')} />
+          <ActionButton icon="solar:list-linear" size="sm" tooltip="List" onClick={() => document.execCommand('insertUnorderedList')} />
           {showRemove && (
             <>
               <div style={{ flex: 1 }} />
-              <ActionButton icon="solar:trash-bin-minimalistic-linear" size="S" tooltip="Remove" state="error" onClick={onRemove} />
+              <ActionButton icon="solar:trash-bin-minimalistic-linear" size="sm" tooltip="Remove" tone="danger" onClick={onRemove} />
             </>
           )}
         </div>

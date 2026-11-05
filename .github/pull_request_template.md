@@ -4,9 +4,9 @@
 
 ## Design-system checklist
 
-- [ ] **Colors** use tokens (`var(--neutral-…/--primary-…/--status-…)`) — no raw hex / `rgb()` / `hsl()`.
-- [ ] **No `font-family`** declarations — Inter is applied globally.
-- [ ] **Icons** are Solar `solar:*-linear` at 1px stroke — no `-outline` variants, no custom SVG where a Solar match exists.
+- [ ] **Colors** use tokens (`var(--neutral-…/--primary-…/--status-…)`): no raw hex / `rgb()` / `hsl()`.
+- [ ] **No `font-family`** declarations: Inter is applied globally.
+- [ ] **Icons** are Solar `solar:*-linear` at 1px stroke: no `-outline` variants, no custom SVG where a Solar match exists.
 - [ ] **UI reuses `src/components/*` primitives** (Button, Input, Select, Drawer, Badge, …) instead of raw HTML elements.
 - [ ] **Drawers** with actions in `headerRight` include the `headerDivider` + `noCloseDivider` pattern.
 - [ ] Verified in the browser preview.

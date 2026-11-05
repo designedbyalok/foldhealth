@@ -8,13 +8,30 @@ import styles from './PauseCarePlanDialog.module.css';
 // "Other" comes from ReasonDialog's free-text choice, so it isn't listed.
 const STANDARD_REASONS = PAUSE_REASONS.filter(r => r.value !== 'other').map(r => r.label);
 
+const COPY = {
+  plan: {
+    title: 'Pause Care Plan',
+    description: 'While paused: no cadence, no overdue flags and no automated outreach. Every pause and resume is recorded in the plan’s history.',
+    confirm: 'Pause Plan',
+    resumes: 'The plan resumes the first time it’s opened on or after that date.',
+  },
+  program: {
+    title: 'Pause Care Program',
+    description: 'The program’s care plan pauses with it: no cadence, no overdue flags and no automated outreach. Every pause and resume is recorded in the history.',
+    confirm: 'Pause Program',
+    resumes: 'The program returns to Active the first time it’s opened on or after that date.',
+  },
+};
+
 /**
- * Pause a care plan: why (Hospitalized / Traveling / Patient request, or
- * Other in free text), from when, the planned resume date, and whether it
- * resumes on its own then. Submits { reason, note, pausedOn, resumeOn,
- * autoResume } for pauseCarePlan.
+ * Pause a care plan, or a care program (`subject="program"`, which pauses its
+ * plan too): why (Hospitalized / Traveling / Patient request, or Other in
+ * free text), from when, the planned resume date, and whether it resumes on
+ * its own then. Submits { reason, note, pausedOn, resumeOn, autoResume } for
+ * pauseCarePlan / pauseCareProgramInstance.
  */
-export function PauseCarePlanDialog({ onCancel, onSubmit }) {
+export function PauseCarePlanDialog({ subject = 'plan', onCancel, onSubmit }) {
+  const copy = COPY[subject] || COPY.plan;
   const [pausedOn, setPausedOn] = useState(() => isoDay(new Date()));
   const [resumeOn, setResumeOn] = useState('');
   const [autoResume, setAutoResume] = useState(false);
@@ -22,11 +39,11 @@ export function PauseCarePlanDialog({ onCancel, onSubmit }) {
 
   return (
     <ReasonDialog
-      title="Pause Care Plan"
-      description="While paused: no cadence, no overdue flags and no automated outreach. Every pause and resume is recorded in the plan's history."
+      title={copy.title}
+      description={copy.description}
       standardReasons={STANDARD_REASONS}
-      confirmLabel="Pause Plan"
-      confirmVariant="primary"
+      confirmLabel={copy.confirm}
+      confirmTone="primary"
       confirmDisabled={!!problem}
       notesPlaceholder="Anything the care team should know about this pause…"
       onCancel={onCancel}
@@ -54,7 +71,7 @@ export function PauseCarePlanDialog({ onCancel, onSubmit }) {
         <span className={styles.hint}>
           {autoResume && !resumeOn
             ? 'Set a planned resume date to auto-resume.'
-            : 'The plan resumes the first time it’s opened on or after that date.'}
+            : copy.resumes}
         </span>
       </div>
     </ReasonDialog>

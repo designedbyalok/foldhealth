@@ -4,7 +4,7 @@ import { AVERGENT_THEME, PROMINENCE_THEME, NO_THEME } from './CardThemePicker.co
 import { sanitizeRichText } from '../../../lib/sanitizeHtml';
 import styles from './InsuranceCardPreview.module.css';
 
-/* Theme selector — bordered field + dropdown (Figma 2005:76958 / 8:64414) */
+/* Theme selector: bordered field + dropdown (Figma 2005:76958 / 8:64414) */
 const Swatch = ({ size, theme }) => (
   <span
     className={styles.themeSwatch}
@@ -173,7 +173,7 @@ export function InsuranceCardPreview({
               </div>
             </div>
 
-            {/* Footer motto bar — shown whenever the Avergent logo is selected (any theme) */}
+            {/* Footer motto bar: shown whenever the Avergent logo is selected (any theme) */}
             {isAvergentLogo && data?.planMotto && (
               <div
                 className={styles.cardFooterBar}
@@ -191,7 +191,7 @@ export function InsuranceCardPreview({
           <div className={styles.backCard} style={cardStyle}>
 
             <div className={styles.backContent}>
-              {/* TPA logo — only when a TPA logo is provided */}
+              {/* TPA logo: only when a TPA logo is provided */}
               {backLogoUrl && (
                 <>
                   <div className={styles.backTpaRow}>
@@ -204,7 +204,7 @@ export function InsuranceCardPreview({
                 </>
               )}
 
-              {/* RxBIN / RxPCN / RxGroup — only the ones provided */}
+              {/* RxBIN / RxPCN / RxGroup: only the ones provided */}
               {(data?.rxBin || data?.rxPcn || data?.rxGroup) && (
                 <>
                   <div className={styles.backRxGroup}>
@@ -270,11 +270,11 @@ export function InsuranceCardPreview({
               </div>
             </div>
 
-            {/* Note bar — theme-tinted */}
+            {/* Note bar: theme-tinted */}
             {noteText && (
               <div className={styles.backNoteBar} style={{ background: cardTheme?.noteBg || '#FFEDDB' }}>
                 {/* Rich-text field authored in CreateInsurancePlanDrawer and
-                    read back for every viewer of the plan — sanitize. */}
+                    read back for every viewer of the plan, sanitize. */}
                 <p className={styles.backNote} dangerouslySetInnerHTML={{ __html: sanitizeRichText(data.additionalNote) }} />
               </div>
             )}

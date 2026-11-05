@@ -97,7 +97,7 @@
   background: var(--primary-25);
 }
 
-/* Column min-widths — total ~1062px, forces horizontal scroll below that viewport */
+/* Column min-widths: total ~1062px, forces horizontal scroll below that viewport */
 .colName      { min-width: 180px; }
 .colUseCase   { min-width: 140px; }
 .colVersion   { min-width: 64px; }

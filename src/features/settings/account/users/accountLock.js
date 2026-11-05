@@ -44,10 +44,3 @@ export function accountStatus(user) {
   const signedInSince = user.lastActiveAt && new Date(user.lastActiveAt) > new Date(unlockedAt);
   return waiting || !signedInSince ? 'Unlocked' : user.status;
 }
-
-/** "Account locked since 10:42 AM, 5 failed attempts" */
-export function lockLine(lock) {
-  if (!isLocked(lock)) return '';
-  const n = lock.failed_count || 5;
-  return `Account locked since ${formatLockTime(lock.locked_at)}, ${n} failed attempt${n === 1 ? '' : 's'}`;
-}

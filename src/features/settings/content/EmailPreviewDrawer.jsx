@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { Button } from '../../../components/Button/Button';
 import { EmailIframe, MacBookPro, IPhone17Pro } from '../../email-builder/DevicePreview';
 import { renderPreviewHtml } from '../../email-builder/renderEmail';
@@ -15,15 +15,15 @@ const VIEW_ITEMS = [
 ];
 
 /**
- * EmailPreviewDrawer — read-only preview of a campaign's email template.
+ * EmailPreviewDrawer: read-only preview of a campaign's email template.
  *
- * Three views, switched via the shared Toggle:
- *   • Email  — bare iframe, full-bleed of the drawer body
- *   • Web    — same MacBookPro mockup used in the email builder
- *   • Mobile — same iPhone 17 Pro mockup used in the email builder
+ * Three views, switched via the shared SegmentedControl:
+ *   • Email: bare iframe, full-bleed of the drawer body
+ *   • Web: same MacBookPro mockup used in the email builder
+ *   • Mobile: same iPhone 17 Pro mockup used in the email builder
  *
  * The email's emailTemplate document (or a generated initial doc) is rendered
- * once into HTML via renderEmailHtml and fed into EmailIframe — same render
+ * once into HTML via renderEmailHtml and fed into EmailIframe, same render
  * pipeline as the builder's DevicePreview.
  */
 export function EmailPreviewDrawer({ campaign, onClose, onEdit }) {
@@ -57,7 +57,7 @@ export function EmailPreviewDrawer({ campaign, onClose, onEdit }) {
   }, [fullCampaign, campaign]);
 
   // Track stage width so the device mockups can sit inside the 700px drawer
-  // without overflowing — mirrors how DevicePreview sizes itself against its
+  // without overflowing: mirrors how DevicePreview sizes itself against its
   // parent column.
   const stageRef = useRef(null);
   const [stageW, setStageW] = useState(0);
@@ -83,8 +83,7 @@ export function EmailPreviewDrawer({ campaign, onClose, onEdit }) {
   const headerRight = onEdit ? (
     <>
       <Button
-        variant="primary"
-        size="S"
+        size="sm"
         leadingIcon="solar:pen-linear"
         onClick={onEdit}
       >
@@ -97,11 +96,11 @@ export function EmailPreviewDrawer({ campaign, onClose, onEdit }) {
   return (
     <Drawer title={title} onClose={onClose} headerRight={headerRight} bodyClassName={styles.body} noCloseDivider>
       <div className={styles.toggleBar}>
-        <Toggle
-          size="S"
+        <SegmentedControl
+          size="sm"
           items={VIEW_ITEMS}
-          active={view}
-          onChange={setView}
+          value={view}
+          onValueChange={setView}
         />
       </div>
 

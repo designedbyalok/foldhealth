@@ -2,7 +2,7 @@
 --
 -- Background: until profiles_signup_role_defaults.sql, handle_new_user() never
 -- set admin_role, so every account inherited the column default
--- 'Business/Practice Owner'. That value is an admin marker — the
+-- 'Business/Practice Owner'. That value is an admin marker, the
 -- "Admins can update any profile" policy grants UPDATE on EVERY row to anyone
 -- whose admin_role is 'Business/Practice Owner' or 'Admin/Practice Manager',
 -- or whose clinical_roles contains 'Admin/Practice Manager'.
@@ -10,7 +10,7 @@
 -- Audit of the 35 accounts holding it (2026-08-10) shows the grant was
 -- indiscriminate, not deliberate:
 --   • 21 @fold.health staff, mostly Viewer / Coder / Support / QA
---   •  7 @astranahealth.com — external customer accounts
+--   •  7 @astranahealth.com, external customer accounts
 --   •  7 personal addresses (gmail / yahoo / outlook / thelanby)
 -- Only 4 of them carry an explicit admin marker.
 --
@@ -53,8 +53,8 @@ commit;
 
 -- ── Verify ────────────────────────────────────────────────────────────────
 -- Expected after: 4 owners remain (all explicitly marked admins), and the
--- total admin population is 5 once poojaw@fold.health — already 'Employer'
--- but carrying the clinical admin marker — is counted.
+-- total admin population is 5 once poojaw@fold.health, already 'Employer'
+-- but carrying the clinical admin marker, is counted.
 --
 -- select email, role, admin_role, clinical_roles
 --   from public.profiles

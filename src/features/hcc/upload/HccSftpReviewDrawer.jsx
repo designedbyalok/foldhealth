@@ -9,7 +9,7 @@ import { Badge } from '../../../components/Badge/Badge';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Select } from '../../../components/Select/Select';
 import { IcdSearch } from '../../../components/IcdSearch/IcdSearch';
-// BulkBar import removed — per-card actions replace the floating bar
+// BulkBar import removed: per-card actions replace the floating bar
 // in the new Document Review layout (Figma 121:87283).
 import { useAppStore } from '../../../store/useAppStore';
 
@@ -26,8 +26,8 @@ export function HccSftpReviewDrawer() {
   const activeId = useAppStore(s => s.hccSftpActiveBatchId);
   const setActiveId = useAppStore(s => s.setHccSftpActiveBatchId);
   // When review is opened over a specific set of documents (e.g. from the
-  // upload picker's "Review"), scope the drawer — and its Previous/Next
-  // navigation — to just those, in the order they were passed (focus first).
+  // upload picker's "Review"), scope the drawer, and its Previous/Next
+  // navigation: to just those, in the order they were passed (focus first).
   const batches = useMemo(() => {
     if (!sourceBatchIds || !sourceBatchIds.length) return allBatches;
     const order = new Map(sourceBatchIds.map((id, i) => [id, i]));
@@ -47,7 +47,7 @@ export function HccSftpReviewDrawer() {
     [batches, activeId],
   );
 
-  // Per-batch selection state — when the user switches tabs we reset
+  // Per-batch selection state: when the user switches tabs we reset
   // the set so bulk actions only ever apply to the visible batch.
   const selectedIdxsRef = useRef(new Set());
   // Doc-switcher popover open state (filename click).
@@ -108,8 +108,8 @@ export function HccSftpReviewDrawer() {
   // worklist. Invoked from the floating BulkBar's "Add to Worklist"
   // action; the row's checkbox set drives what gets added.
   //
-  // hccCreateOrMergeFromEncounter takes an encounter object directly —
-  // not a wrapper — and threads `_docName` through for the activity
+  // hccCreateOrMergeFromEncounter takes an encounter object directly,
+  // not a wrapper: and threads `_docName` through for the activity
   // log entry that gets stamped on the matched member.
   const handleAddSelectedToWorklist = () => {
     if (!activeBatch) return;
@@ -136,7 +136,7 @@ export function HccSftpReviewDrawer() {
     // them. Sort descending so removing by index doesn't shift later
     // targets.
     appliedIdxs.sort((a, b) => b - a).forEach(idx => removeEnc?.(activeBatch.id, idx));
-    // If the batch is now empty, drop it — nothing left to review.
+    // If the batch is now empty, drop it, nothing left to review.
     const after = (useAppStore.getState().hccSftpBatches || []).find(b => b.id === activeBatch.id);
     if (after && (after.encounters?.length || 0) === 0) {
       removeBatch?.(activeBatch.id);
@@ -160,15 +160,15 @@ export function HccSftpReviewDrawer() {
   const bucket = (status) => activeEncs.filter(e => (e._docStatus || 'pending') === status);
   const pendingEncs = bucket('pending');
 
-  // No tabs / status filter — the card stack shows every pending record for
+  // No tabs / status filter: the card stack shows every pending record for
   // this document, grouped by patient.
   const visibleEncs = pendingEncs;
 
   // Group encounters by patient so one card == one patient, with N DOS
   // blocks inside. Insertion-ordered Map preserves the document's
   // chronological appearance. Matched encounters group by member id;
-  // unmatched fall back to extracted name + DOB. Plain const — not a
-  // hook — so it stays compatible with the early-return above.
+  // unmatched fall back to extracted name + DOB. Plain const, not a
+  // hook: so it stays compatible with the early-return above.
   const visibleGroups = (() => {
     const map = new Map();
     visibleEncs.forEach((enc) => {
@@ -196,8 +196,8 @@ export function HccSftpReviewDrawer() {
   const headerRight = totalDocs > 1 ? (
     <span className={styles.reviewNav}>
       <Button
-        variant="alt"
-        size="S"
+        variant="outline" tone="primary"
+        size="sm"
         leadingIcon="solar:alt-arrow-left-linear"
         disabled={activeIndex <= 0}
         onClick={() => goToDoc(activeIndex - 1)}
@@ -208,8 +208,8 @@ export function HccSftpReviewDrawer() {
         Reviewing: {activeIndex + 1} of {stats.patients} {stats.patients === 1 ? 'Patient' : 'Patients'}
       </span>
       <Button
-        variant="alt"
-        size="S"
+        variant="outline" tone="primary"
+        size="sm"
         trailingIcon="solar:alt-arrow-right-linear"
         disabled={activeIndex >= totalDocs - 1}
         onClick={() => goToDoc(activeIndex + 1)}

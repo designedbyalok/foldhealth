@@ -75,7 +75,7 @@ const BASE_HEDIS_MEMBERS = [
     startDate: '05/14/2026',
     advIllness: 0, frailty: 0, riskLevel: '2_Mod-High', tasks: null,
     outreachDots: ['success', 'success', 'pending'], outreachDate: '05/15/2026',
-    memberStatus: 'Active', phone: '+917838997914', dob: '09/08/1977',
+    memberStatus: 'Active', phone: '+919175367487', dob: '09/08/1977',
     ipa: 'CFC', hpCode: 'HP-001', zip: '10016', city: 'Manhattan', state: 'NY',
   },
   {
@@ -537,7 +537,7 @@ const BASE_HEDIS_MEMBERS = [
     ipa: 'CFC', hpCode: 'HP-002', zip: '07030', city: 'Hoboken', state: 'NJ',
   },
 
-  // ── DSF-A-only seed (10 members) — reviewers running the PHQ-2
+  // ── DSF-A-only seed (10 members): reviewers running the PHQ-2
   //    without a paired follow-up gap yet. Covers the "opened from
   //    Astrana, not yet screened" pattern the worklist should show.
   {
@@ -641,7 +641,7 @@ const BASE_HEDIS_MEMBERS = [
     ipa: 'Astrana', hpCode: 'HP-002', zip: '10010', city: 'Newark', state: 'NJ',
   },
 
-  // ── DSF-B-only seed (5 members) — DSF-A (PHQ-2 Positive) completed
+  // ── DSF-B-only seed (5 members): DSF-A (PHQ-2 Positive) completed
   //    outside Fold, so only the follow-up (PHQ-9) gap is ingested from
   //    Astrana. Due date anchor here is the DSF-B ingestion date + 30
   //    days (not the PHQ-2 savedAt, since we never observed one).
@@ -745,6 +745,58 @@ const BASE_HEDIS_MEMBERS = [
     advIllness: 0, frailty: 0, riskLevel: null, tasks: null,
     outreachDots: ['pending', 'pending', 'pending'], outreachDate: null,
     memberStatus: 'Active', phone: '(347) 555-0115', dob: '08/25/2026',
+    ipa: 'Astrana', hpCode: 'HP-001', zip: '90012', city: 'Los Angeles', state: 'CA',
+  },
+  // CIS-CMB10 demo members with a blank Vaccine Calendar, no doses or
+  // outreach yet (supabase/hedis_members_cis_cmb10_more_seed.sql).
+  {
+    id: '19309', in: 'OB', name: 'Olivia Bennett',
+    gender: 'F', age: '2m', memberId: '19309', language: 'en',
+    gaps: [{ code: 'CIS-CMB10', status: 'Open', startDate: '10/01/2026' }],
+    assignee: null, assigneeInitials: null, startDate: '10/01/2026',
+    advIllness: 0, frailty: 0, riskLevel: null, tasks: null,
+    outreachDots: ['pending', 'pending', 'pending'], outreachDate: null,
+    memberStatus: 'Active', phone: '(555) 301-9309', dob: '08/27/2026',
+    ipa: 'Astrana', hpCode: 'HP-001', zip: '90012', city: 'Los Angeles', state: 'CA',
+  },
+  {
+    id: '19310', in: 'JW', name: 'James Wilson',
+    gender: 'M', age: '5m', memberId: '19310', language: 'en',
+    gaps: [{ code: 'CIS-CMB10', status: 'Open', startDate: '10/01/2026' }],
+    assignee: null, assigneeInitials: null, startDate: '10/01/2026',
+    advIllness: 0, frailty: 0, riskLevel: null, tasks: null,
+    outreachDots: ['pending', 'pending', 'pending'], outreachDate: null,
+    memberStatus: 'Active', phone: '(555) 301-9310', dob: '05/27/2026',
+    ipa: 'Astrana', hpCode: 'HP-001', zip: '90012', city: 'Los Angeles', state: 'CA',
+  },
+  {
+    id: '19311', in: 'MG', name: 'Mia Garcia',
+    gender: 'F', age: '1d', memberId: '19311', language: 'en',
+    gaps: [{ code: 'CIS-CMB10', status: 'Open', startDate: '10/26/2026' }],
+    assignee: null, assigneeInitials: null, startDate: '10/26/2026',
+    advIllness: 0, frailty: 0, riskLevel: null, tasks: null,
+    outreachDots: ['pending', 'pending', 'pending'], outreachDate: null,
+    memberStatus: 'Active', phone: '(555) 301-9311', dob: '10/26/2026',
+    ipa: 'Astrana', hpCode: 'HP-001', zip: '90012', city: 'Los Angeles', state: 'CA',
+  },
+  {
+    id: '19312', in: 'LO', name: 'Lucas Okafor',
+    gender: 'M', age: '2m', memberId: '19312', language: 'en',
+    gaps: [{ code: 'CIS-CMB10', status: 'Open', startDate: '10/01/2026' }],
+    assignee: null, assigneeInitials: null, startDate: '10/01/2026',
+    advIllness: 0, frailty: 0, riskLevel: null, tasks: null,
+    outreachDots: ['pending', 'pending', 'pending'], outreachDate: null,
+    memberStatus: 'Active', phone: '(555) 301-9312', dob: '08/27/2026',
+    ipa: 'Astrana', hpCode: 'HP-001', zip: '90012', city: 'Los Angeles', state: 'CA',
+  },
+  {
+    id: '19313', in: 'EC', name: 'Emma Chen',
+    gender: 'F', age: '5m', memberId: '19313', language: 'en',
+    gaps: [{ code: 'CIS-CMB10', status: 'Open', startDate: '10/01/2026' }],
+    assignee: null, assigneeInitials: null, startDate: '10/01/2026',
+    advIllness: 0, frailty: 0, riskLevel: null, tasks: null,
+    outreachDots: ['pending', 'pending', 'pending'], outreachDate: null,
+    memberStatus: 'Active', phone: '(555) 301-9313', dob: '05/27/2026',
     ipa: 'Astrana', hpCode: 'HP-001', zip: '90012', city: 'Los Angeles', state: 'CA',
   },
 ];

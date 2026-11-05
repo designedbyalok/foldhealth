@@ -2,6 +2,7 @@ import { Fragment } from 'react';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { Badge } from '../../components/Badge/Badge';
 import { Icon } from '../../components/Icon/Icon';
+import { openStoredLink } from '../../lib/openSafeUrl';
 import { REFERRAL_CHANNELS } from './useCareGapReferralForm';
 import styles from './CareGapReferralDetail.module.css';
 
@@ -30,7 +31,7 @@ export function CareGapReferralDetail({ referral: r, member, providers = [] }) {
 
   return (
     <div className={styles.root}>
-      <Badge tone={statusTone(r.status)} size="M" label={r.status || 'Sent'} className={styles.status} />
+      <Badge tone={statusTone(r.status)} size="md" label={r.status || 'Sent'} className={styles.status} />
 
       <section className={styles.section}>
         <span className={styles.label}>Patient</span>
@@ -71,7 +72,7 @@ export function CareGapReferralDetail({ referral: r, member, providers = [] }) {
               return (
                 <li key={a.documentId || a.storagePath || `${a.name}-${i}`}>
                   {a.url
-                    ? <a className={styles.attachment} href={a.url} target="_blank" rel="noopener noreferrer">{body}</a>
+                    ? <a className={styles.attachment} href={a.url} target="_blank" rel="noopener noreferrer" onClick={e => openStoredLink(e, a.url)}>{body}</a>
                     : <span className={styles.attachment}>{body}</span>}
                 </li>
               );

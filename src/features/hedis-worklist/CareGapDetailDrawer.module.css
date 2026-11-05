@@ -1,4 +1,4 @@
-/* ── Panel sizing — mirrors Diagnosis Gaps 1280px expanded / 700px closed ── */
+/* ── Panel sizing: mirrors Diagnosis Gaps 1280px expanded / 700px closed ── */
 .panel {
   transition: width 280ms cubic-bezier(0.32, 0.72, 0.36, 1),
               max-width 280ms cubic-bezier(0.32, 0.72, 0.36, 1) !important;
@@ -10,7 +10,7 @@
 /* ── Header nav (prev/next + divider in Drawer headerRight) ── */
 .headerNav { display: flex; align-items: center; gap: 4px; }
 
-/* Split body — the drawer widens (see `width` prop) and swaps to a
+/* Split body: the drawer widens (see `width` prop) and swaps to a
    row layout when a left workspace is active (Add Task today; the
    pattern mirrors HCC's Document Review LeftPane + RightPane split so
    both surfaces feel like one entity, not two stacked drawers).
@@ -19,7 +19,7 @@
    expanded = 640 + 640) so the Care Gap content stays fixed in place;
    the left workspace fills the new space as the drawer's width
    transitions 700→1280. Combined with Drawer's own `width` transition,
-   this reads as the workspace sliding out from behind the right pane —
+   this reads as the workspace sliding out from behind the right pane,
    the right side never moves. */
 .drawerBodySplit { flex-direction: row !important; }
 .drawerBodySplit .contentBody {
@@ -27,7 +27,7 @@
   min-width: 0;
 }
 
-/* Left workspace pane — hosts Add Task / Add Note / Schedule / Measure
+/* Left workspace pane: hosts Add Task / Add Note / Schedule / Measure
    Tutorial. Flexes to fill the space the drawer's 700→1280 width
    transition frees up on the left side; the right pane stays pinned at
    640px so the Care Gap content never shifts. During the open/close
@@ -59,8 +59,10 @@
   font-weight: 500;
   color: var(--neutral-500);
 }
-/* Preview mode — title collapses to 14px medium and a 12px subtitle
+/* Preview mode: title collapses to 14px medium and a 12px subtitle
    sits below it so the reader knows who signed and when at a glance. */
+/* A title with a tag beside it (the pharmacy drug pane's gap code). */
+.paneTitleRow { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; }
 .paneTitleStack {
   display: flex;
   flex-direction: column;
@@ -82,7 +84,7 @@
 }
 /* Editable clinical-note workspace surfaces the note's current status
    (In Progress / Draft / Pending Review / Signed) beneath the title as
-   an icon + label — same vocabulary the HCC worklist uses for Action
+   an icon + label: same vocabulary the HCC worklist uses for Action
    Needed. Sits inside .paneTitleStack. */
 .paneStatusRow {
   display: inline-flex;
@@ -98,8 +100,8 @@
   align-items: center;
   gap: var(--space-2);
 }
-/* Read-only preview header affordances (Displayed to Member, print, Amend)
-   — Figma 511:105429. Reused by the clinical-note-preview leftWorkspace. */
+/* Read-only preview header affordances (Displayed to Member, print, Amend),
+   Figma 511:105429. Reused by the clinical-note-preview leftWorkspace. */
 .previewDisplayed {
   display: inline-flex;
   align-items: center;
@@ -109,7 +111,7 @@
   color: var(--status-success);
   white-space: nowrap;
 }
-/* Pending-Review preview affordance — same shape as .previewDisplayed but
+/* Pending-Review preview affordance: same shape as .previewDisplayed but
    warning-toned (matches the Pending Review activity-log status). */
 .previewPendingReview {
   display: inline-flex;
@@ -127,8 +129,8 @@
   overflow-x: hidden;
   padding: var(--space-3) var(--space-4);
 }
-/* Pinned info banner for the 'clinical-note-consolidated' left workspace
-   — sits directly under the pane header, edge-to-edge, so the DOS card
+/* Pinned info banner for the 'clinical-note-consolidated' left workspace,
+   sits directly under the pane header, edge-to-edge, so the DOS card
    and gap sections below keep the normal leftPaneBody inset while the
    banner stays flush against the header. */
 .clinicalNoteInfoBanner {
@@ -142,7 +144,7 @@
   flex-shrink: 0;
 }
 /* Clinical-note workspace pins its own info banner + evidence type row
-   above an inner scroll region — the outer body must not scroll or those
+   above an inner scroll region: the outer body must not scroll or those
    two strips scroll with the form. Padding stays at 0 so the pinned
    strips can bleed edge-to-edge. */
 .leftPaneBodyClinicalNote {
@@ -162,7 +164,7 @@
   flex-direction: column;
   padding: 0;
 }
-/* Consolidated mode is the same story — ConsolidatedNoteBody's own
+/* Consolidated mode is the same story, ConsolidatedNoteBody's own
    .consolidatedScroll owns the 12px/16px inset and its scroll.
    Doubling up with the pane's default padding stacked two 16px insets
    and pushed content noticeably off-center. */
@@ -199,7 +201,7 @@
   margin: 0 4px; flex-shrink: 0;
 }
 
-/* Drawer body override — no padding + no scroll here; the tab content pane
+/* Drawer body override: no padding + no scroll here; the tab content pane
    below owns the only scroll region so the toolbar / title / suggested
    actions / tab bar stay pinned when the activity log or outreach feed
    grows. `overflow: hidden` beats Drawer.module.css's default `overflow-y:
@@ -215,7 +217,7 @@
 /* PatientBanner stretches edge-to-edge; its own background + border-bottom handle separation */
 .patientBannerWrap { }
 
-/* Body wrapper — flex column that fills the drawer body. Children default
+/* Body wrapper: flex column that fills the drawer body. Children default
    to `flex-shrink: 0` (pinned); only .tabContentWrap grows and scrolls. */
 .contentBody {
   padding: 0;
@@ -226,13 +228,13 @@
   overflow: hidden;
 }
 
-/* Gap header block — pinned above the scrolling tab content. Padding is
+/* Gap header block: pinned above the scrolling tab content. Padding is
    applied per-child so the toolbar strip can stay full-bleed. */
 .gapHeader {
   padding: 0;
   flex-shrink: 0;
 }
-/* Flat, transparent toolbar row — hairline bottom border separates it from
+/* Flat, transparent toolbar row, hairline bottom border separates it from
    the title row below. Fixed 40px total height per spec. */
 .gapToolbar {
   display: flex; align-items: center; justify-content: space-between;
@@ -270,7 +272,7 @@
 }
 .moreMenuItem:hover { background: var(--neutral-50); }
 
-/* Content sections that follow the toolbar — share 16px horizontal indent.
+/* Content sections that follow the toolbar, share 16px horizontal indent.
    All pinned (flex-shrink: 0) so the tab content pane below is the only
    region that scrolls when its feed grows past the drawer height. */
 .gapTitleWrap  { padding: var(--space-2) var(--space-3); flex-shrink: 0; }
@@ -283,14 +285,14 @@
   overflow-y: auto;
   overflow-x: hidden;
 }
-/* Flush variant — the Tasks tab renders the shared TasksTab component,
+/* Flush variant: the Tasks tab renders the shared TasksTab component,
    which brings its own section spacing. Dropping the wrapper padding
    avoids double-inset. */
 .tabContentWrapFlush {
   padding: 0;
 }
 
-/* Measurement Year scope chip — compact 24px pill with the value inline
+/* Measurement Year scope chip: compact 24px pill with the value inline
    (`Label : Value ⌄`), matching the toolbar's tightened height. Wrapper
    is `position:relative` so the year dropdown menu anchors to the chip. */
 .yearWrap { position: relative; }
@@ -311,7 +313,7 @@
 .yearChipSep   { color: var(--neutral-300); }
 .yearChipValue { font-weight: 500; color: var(--neutral-500); }
 
-/* Year dropdown — left-anchored below the chip. Follows the same visual
+/* Year dropdown: left-anchored below the chip. Follows the same visual
    language as .statusMenu / .moreMenu so all popovers in this drawer read
    as one system. */
 .yearMenuOverlay {
@@ -331,7 +333,7 @@
 .yearMenuItem:hover { background: var(--neutral-50); }
 .yearMenuItemActive { color: var(--primary-300); font-weight: 500; }
 
-/* Title row (below toolbar) — big title/subtitle on the left, assignee +
+/* Title row (below toolbar): big title/subtitle on the left, assignee +
    status pinned to the right so the gap's identity and its state read
    together at a glance. */
 .gapTitleRow {
@@ -343,7 +345,7 @@
   display: flex; align-items: center; gap: 8px; flex-shrink: 0;
 }
 
-/* Assignee chip — mirrors the HCC ChartDetailDrawer's `.dmBadge` (assigned)
+/* Assignee chip: mirrors the HCC ChartDetailDrawer's `.dmBadge` (assigned)
    and `.dmUnassigned` (unassigned) treatments so the two drawers use one
    assignee affordance across the app. Two variants: `assigneeChip` (assigned
    avatar + chevron in the secondary purple), `assigneeChipEmpty` (dashed
@@ -390,7 +392,7 @@
 }
 .assigneeChipEmpty:hover { border-color: var(--primary-300); color: var(--primary-300); }
 
-/* Status button — mirrors the HCC drawer's `.actionNeeded` pill. Color +
+/* Status button: mirrors the HCC drawer's `.actionNeeded` pill. Color +
    background are provided inline based on STATUS_STYLE below so the same
    component supports every status the design system defines. */
 .statusWrap { position: relative; }
@@ -409,7 +411,7 @@
 }
 .statusBtn:disabled { cursor: not-allowed; opacity: 0.7; }
 
-/* Reset wrapper around the shared Badge — the Badge itself owns the
+/* Reset wrapper around the shared Badge, the Badge itself owns the
    colour / border / padding via its tone; this button just needs to
    be clickable and pass focus. Kept a discrete class instead of
    inline styles so the disabled/hover states can be tuned in CSS. */
@@ -427,7 +429,7 @@
   outline: 2px solid var(--primary-200);
   outline-offset: 2px;
 }
-/* Status change menu — mirrors the HCC DiagPanel `DosStatusMenu` so the two
+/* Status change menu: mirrors the HCC DiagPanel `DosStatusMenu` so the two
    drawers use one popover language. Header + item list with a check icon on
    the currently-selected status; danger variant reserved for terminal
    rejection statuses (not used by HEDIS yet). Right-anchored to the trigger
@@ -467,7 +469,7 @@
   font-size: var(--font-base); color: var(--neutral-400);
 }
 
-/* Assignee picker — portalled searchable list of platform users
+/* Assignee picker: portalled searchable list of platform users
    (Settings → Account). Same visual language as the status menu, plus a
    search input and per-row avatar. */
 .assigneeMenuOverlay {
@@ -663,7 +665,7 @@
 }
 .emptyTabTitle { font-size: var(--font-base); font-weight: 500; color: var(--neutral-300); margin: 0; }
 
-/* Appt/Reminders tab — one card per appointment scoped to this member.
+/* Appt/Reminders tab: one card per appointment scoped to this member.
    Intentionally light: icon, title/meta, status pill. Real detail lives
    in the scheduler view when we later wire "View Details". */
 .apptList { display: flex; flex-direction: column; gap: var(--space-2); }
@@ -712,3 +714,20 @@
   cursor: pointer;
 }
 .activityClearAll:hover { color: var(--neutral-400); }
+
+/* Header instance dropdown (shown once a gap has a second instance). */
+.instancePickerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+  color: var(--primary-300);
+  cursor: pointer;
+}
+.instancePickerBtn:hover { text-decoration: underline; }
+.instanceOption { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); min-width: 0; white-space: normal; }
+.instanceOptionMeta { font-size: var(--font-sm); color: var(--neutral-300); }
+.gapTitleWithSource { display: flex; align-items: center; gap: var(--space-2); }

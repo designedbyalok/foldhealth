@@ -3,7 +3,7 @@ import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { CardSkeleton } from '../../../../../../../../components/CardSkeleton/CardSkeleton';
-import { TabStrip } from '../../../../../../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../../../../../../components/Tabs/Tabs';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { secondsToTime } from '../../../../../../data/ccmBillingMock';
 import { CcmBillingLogTable } from '../CcmBillingLogTable/CcmBillingLogTable.jsx';
@@ -50,7 +50,7 @@ const AUTO_CLAIM_DATE = (ym) => {
     .toLocaleString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 };
 
-// Full auto-claim date for the summary alert — e.g. "Aug 5, 2026".
+// Full auto-claim date for the summary alert, e.g. "Aug 5, 2026".
 const AUTO_CLAIM_DATE_FULL = (ym) => {
   if (!ym) return '';
   const [y, m] = ym.split('-').map(Number);
@@ -58,7 +58,7 @@ const AUTO_CLAIM_DATE_FULL = (ym) => {
     .toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 };
 
-// Compact duration for the summary card — e.g. "28m 30s".
+// Compact duration for the summary card, e.g. "28m 30s".
 const secondsToCompactDuration = (sec) => {
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);
@@ -188,7 +188,7 @@ export function CcmBillingReview({ program, patientId: patientIdProp }) {
     [periodActivities],
   );
   // Required minutes lives on the period row. Complexity is a display
-  // classifier — the CPT threshold is set by the operator, not derived here.
+  // classifier: the CPT threshold is set by the operator, not derived here.
   const requiredMinutes = currentPeriod?.requiredMinutes ?? 20;
   const requiredSeconds = requiredMinutes * 60;
   const overshoot = totalSeconds - requiredSeconds;
@@ -207,17 +207,17 @@ export function CcmBillingReview({ program, patientId: patientIdProp }) {
 
   return (
     <div className={styles.wrap}>
-      {/* Sub-tabs — shared TabStrip so the Billable/Billing History switch
+      {/* Sub-tabs: shared TabStrip so the Billable/Billing History switch
           reads identically to every other tab surface (sliding underline,
           hairline divider, same typography). */}
-      <TabStrip
+      <Tabs
         items={TABS.map(t => ({ key: t, label: t }))}
-        activeKey={activeTab}
-        onChange={setActiveTab}
+        value={activeTab}
+        onValueChange={setActiveTab}
         fullWidth={false}
       />
 
-      {/* Info banner — surfaces the auto-claim date when the month is ready
+      {/* Info banner: surfaces the auto-claim date when the month is ready
           to bill. Only shows on the Billable tab, on the current period,
           when the threshold is met. */}
       {activeTab === 'Billable' && currentPeriod && isReady && (
@@ -235,7 +235,7 @@ export function CcmBillingReview({ program, patientId: patientIdProp }) {
       <div className={styles.body}>
       {activeTab === 'Billable' ? (
         <>
-          {/* Toolbar — month pager on the left, complexity pill on the right.
+          {/* Toolbar: month pager on the left, complexity pill on the right.
               Prev/Next are placeholders in stage 2; the pager becomes
               functional once server-side month scoping lands (stage 3+). */}
           <div className={styles.toolbar}>
@@ -264,7 +264,7 @@ export function CcmBillingReview({ program, patientId: patientIdProp }) {
             <ComplexityDropdown value={complexity} onChange={setComplexity} />
           </div>
 
-          {/* Summary card — billable time + billed-under row, with an inline
+          {/* Summary card: billable time + billed-under row, with an inline
               alert when the month is ready (Figma 583:38719). */}
           <div className={styles.summaryCard}>
             <div className={styles.summaryBody}>
@@ -343,12 +343,12 @@ export function CcmBillingReview({ program, patientId: patientIdProp }) {
                     <td className={styles.historyEhr}>{r.integratedEhr}</td>
                     <td>
                       <div className={styles.historyActions}>
-                        <Button variant="tertiary" size="S" onClick={() => setOpenReport(r)}>
+                        <Button variant="soft" size="sm" onClick={() => setOpenReport(r)}>
                           View
                         </Button>
                         <ActionButton
                           icon="solar:printer-linear"
-                          size="S"
+                          size="sm"
                           tooltip="Print"
                           onClick={() => setOpenReport(r)}
                         />

@@ -84,7 +84,7 @@ export function useIcdSearch({ minChars = 2, debounceMs = 250, limit = 15 } = {}
 // empty, or the query errors.
 async function searchCache(q, limit, signal) {
   try {
-    // PostgREST `.or()` filters are comma/paren-delimited — strip those and
+    // PostgREST `.or()` filters are comma/paren-delimited: strip those and
     // wildcards from user input so it can't break out of the ilike pattern.
     const safe = q.replace(/[(),%*]/g, ' ').trim();
     if (safe) {
@@ -110,7 +110,7 @@ async function searchCache(q, limit, signal) {
       }
     }
   } catch {
-    // table missing / network down — bundled catalog below
+    // table missing / network down: bundled catalog below
   }
   return [filterFallbackIcds(q, limit), 'fallback'];
 }

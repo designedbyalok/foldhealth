@@ -166,7 +166,7 @@ export function QuickNotesCard({ dragHandleClassName }) {
           Quick Notes
         </div>
         <div className={styles.cardActions}>
-          <ActionButton icon="solar:add-circle-linear" size="S" tooltip="Add note" onClick={() => setAddingNew(true)} />
+          <ActionButton icon="solar:add-circle-linear" size="sm" tooltip="Add note" onClick={() => setAddingNew(true)} />
         </div>
       </div>
       <div className={styles.quickNotesBody}>

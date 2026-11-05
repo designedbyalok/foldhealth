@@ -8,9 +8,9 @@
 -- append-only version history it can be restored from.
 --
 -- WHAT THIS DOES
---   1. patient_care_plans gains signed_by / signed_at — the plan's sign-off
+--   1. patient_care_plans gains signed_by / signed_at: the plan's sign-off
 --      state. Null = draft; set = signed.
---   2. patient_care_plan_versions — one immutable snapshot per version. The
+--   2. patient_care_plan_versions: one immutable snapshot per version. The
 --      snapshot jsonb captures the full plan (conditions + goals +
 --      interventions) at capture time, so a restore is a pure data replay and
 --      doesn't depend on the live rows still existing. `reason` says why it was

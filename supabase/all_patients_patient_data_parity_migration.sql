@@ -1,9 +1,9 @@
 -- ============================================================
--- All Patients — patient-data parity with the other worklists.
+-- All Patients: patient-data parity with the other worklists.
 -- Every other worklist table carries these patient-data columns
 -- (patients/ccm/hedis: dob; awv/ccm/hcc/hedis: ipa; ccm/hedis:
 -- hp_code; hedis: zip) but all_patients was missing them, so the
--- profile banner showed "—" for DOB and the row tooltip had to
+-- profile banner showed "-" for DOB and the row tooltip had to
 -- re-derive a DOB from age on every render.
 -- ============================================================
 --

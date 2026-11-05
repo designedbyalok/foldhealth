@@ -13,7 +13,7 @@ export function TaskDetailDrawerSubtasks({
 }) {
   return (
     <>
-        {/* Subtasks — show progress + list of children, allow adding new ones */}
+        {/* Subtasks: show progress + list of children, allow adding new ones */}
         {!task.is_subtask && (
           <div className={styles.drawerSection}>
             <div className={styles.subtaskHeader}>
@@ -22,7 +22,7 @@ export function TaskDetailDrawerSubtasks({
               </h4>
               <Button
                 variant="ghost"
-                size="S"
+                size="sm"
                 leadingIcon="solar:add-circle-linear"
                 onClick={() => setShowAddSubtask(v => !v)}
               >
@@ -49,8 +49,8 @@ export function TaskDetailDrawerSubtasks({
                   onKeyDown={e => { if (e.key === 'Enter') handleAddSubtask(); if (e.key === 'Escape') { setShowAddSubtask(false); setSubtaskName(''); } }}
                   autoFocus
                 />
-                <Button variant="primary" size="S" onClick={handleAddSubtask} disabled={!subtaskName.trim()}>Add</Button>
-                <Button variant="secondary" size="S" onClick={() => { setShowAddSubtask(false); setSubtaskName(''); }}>Cancel</Button>
+                <Button size="sm" onClick={handleAddSubtask} disabled={!subtaskName.trim()}>Add</Button>
+                <Button variant="outline" size="sm" onClick={() => { setShowAddSubtask(false); setSubtaskName(''); }}>Cancel</Button>
               </div>
             )}
             {subtasks.map(sub => (
@@ -72,7 +72,7 @@ export function TaskDetailDrawerSubtasks({
                   <div className={styles.subtaskCardRow}>
                     <PriorityIcon priority={sub.priority} size={16} />
                     <span className={`${styles.subtaskCardName} ${sub.status === 'completed' ? styles.subtaskCardNameDone : ''}`}>{sub.name}</span>
-                    <Badge variant={STATUS_BADGE_VARIANTS[sub.status]} label={STATUS_LABELS[sub.status]} />
+                    <Badge tone={STATUS_BADGE_VARIANTS[sub.status]} label={STATUS_LABELS[sub.status]} />
                     <span className={`${styles.subtaskCardDate} ${isOverdue(sub) ? styles.dueMissed : ''}`}>
                       {formatDateFriendly(sub.due_date)}
                     </span>

@@ -3,7 +3,7 @@ title: "SNP Worklist"
 description: "D-SNP and C-SNP members with HRA (Health Risk Assessment) and Individualized Care Plan (ICP) status tracking."
 ---
 
-The **SNP Worklist** manages members enrolled in **Special Needs Plans** — D-SNP (Dual Eligible), C-SNP (Chronic Condition), and I-SNP (Institutional). SNPs carry strict CMS requirements around annual **HRA** completion, ongoing **ICP** review, and Model of Care goals.
+The **SNP Worklist** manages members enrolled in **Special Needs Plans**, D-SNP (Dual Eligible), C-SNP (Chronic Condition), and I-SNP (Institutional). SNPs carry strict CMS requirements around annual **HRA** completion, ongoing **ICP** review, and Model of Care goals.
 
 Route: `#/population/snp`.
 
@@ -20,7 +20,7 @@ Route: `#/population/snp`.
 | **Assignee** | Care manager |
 | **Actions** | Open HRA, open ICP, ⋯ menu |
 
-## Walkthrough — chase overdue HRAs
+## Walkthrough: chase overdue HRAs
 
 <Steps>
   <Step title="Open SNP">
@@ -33,11 +33,11 @@ Route: `#/population/snp`.
     Select rows and choose **Add to Campaign → SNP HRA Reminder** from the BulkBar. The campaign builder opens with the audience pre-set.
   </Step>
   <Step title="Or complete an HRA in-app">
-    Click a row → **Open HRA** from Quick View. The HRA form (rendered by the [Forms](/features/forms) engine) opens; complete it and submit — status flips to Completed and the calendar-clock resets for next year.
+    Click a row → **Open HRA** from Quick View. The HRA form (rendered by the [Forms](/features/forms) engine) opens; complete it and submit, status flips to Completed and the calendar-clock resets for next year.
   </Step>
 </Steps>
 
 ## Tips
 
-- **HRA and ICP are separate but linked** — an updated HRA usually triggers an ICP review; both status columns show what's outstanding.
+- **HRA and ICP are separate but linked**, an updated HRA usually triggers an ICP review; both status columns show what's outstanding.
 - **CMS auditing.** Every state change in this worklist writes to the audit log; use the ⋯ menu → **Audit** to review a member's compliance trail.

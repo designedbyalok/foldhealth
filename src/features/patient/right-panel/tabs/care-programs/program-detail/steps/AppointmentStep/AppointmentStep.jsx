@@ -4,9 +4,10 @@ import { AddIconMinimalist } from '../../../../../../../../components/Icon/AddIc
 import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChevronIcon';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { ScheduleDrawer } from '../../../../../../../../components/ScheduleDrawer/ScheduleDrawer';
 import { toast } from '../../../../../../../../components/Toast/sonnerToast';
+import { CollapsibleContent } from '../../../../../../../../components/Collapsible/Collapsible';
 import { WorklistShell } from '../../../../../../../../components/WorklistShell/WorklistShell';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import styles from './AppointmentStep.module.css';
@@ -107,7 +108,7 @@ export function AppointmentStep({ patientId, programCode, stepName = 'Appointmen
         <div className={styles.section}>
           <div className={styles.sectionHead}>
             <span className={styles.sectionTitle}>Program related appointments</span>
-            <ActionButton size="S" tooltip="Schedule appointment" onClick={() => setScheduleOpen(true)}><AddIconMinimalist size={16} color="var(--neutral-300)" /></ActionButton>
+            <ActionButton size="sm" tooltip="Schedule appointment" onClick={() => setScheduleOpen(true)}><AddIconMinimalist size={16} color="var(--neutral-300)" /></ActionButton>
           </div>
           <ApptTable rows={programAppts} />
         </div>
@@ -120,8 +121,8 @@ export function AppointmentStep({ patientId, programCode, stepName = 'Appointmen
           </span>
           <span className={styles.emptyText}>Program Related Appointment Not Scheduled</span>
           <div className={styles.actions}>
-            <Button variant="primary" size="L" onClick={() => setScheduleOpen(true)}>Schedule Appointment</Button>
-            <Button variant="secondary" size="L" trailingIcon="solar:arrow-right-up-linear" onClick={() => toast.success('Link Appointments — coming soon')}>
+            <Button onClick={() => setScheduleOpen(true)}>Schedule Appointment</Button>
+            <Button variant="outline" trailingIcon="solar:arrow-right-up-linear" onClick={() => toast.success('Link Appointments: coming soon')}>
               Link Appointments
             </Button>
           </div>
@@ -131,18 +132,20 @@ export function AppointmentStep({ patientId, programCode, stepName = 'Appointmen
       <div className={styles.section}>
         <div className={styles.sectionHead}>
           <button type="button" className={styles.collapseToggle} onClick={() => setUpcomingOpen(o => !o)} aria-expanded={upcomingOpen}>
-            <DownChevronIcon size={16} color="var(--neutral-300)" style={upcomingOpen ? undefined : { transform: 'rotate(-90deg)' }} />
+            <DownChevronIcon size={16} color="var(--neutral-300)" className={styles.chevron} style={upcomingOpen ? undefined : { transform: 'rotate(-90deg)' }} />
             <span className={styles.sectionTitle}>Upcoming Appointments &amp; Reminders</span>
           </button>
           {upcomingOpen && (
-            <ActionButton size="S" tooltip="Add" onClick={() => setScheduleOpen(true)}><AddIconMinimalist size={16} color="var(--neutral-300)" /></ActionButton>
+            <ActionButton size="sm" tooltip="Add" onClick={() => setScheduleOpen(true)}><AddIconMinimalist size={16} color="var(--neutral-300)" /></ActionButton>
           )}
         </div>
-        {upcomingOpen && (
-          all.length > 0
-            ? <ApptTable rows={all} />
-            : <div className={styles.sectionEmpty}>No upcoming appointments or reminders.</div>
-        )}
+        <CollapsibleContent open={upcomingOpen} className={styles.sectionCollapse}>
+          <div className={styles.sectionBody}>
+            {all.length > 0
+              ? <ApptTable rows={all} />
+              : <div className={styles.sectionEmpty}>No upcoming appointments or reminders.</div>}
+          </div>
+        </CollapsibleContent>
       </div>
 
       {scheduleOpen && (

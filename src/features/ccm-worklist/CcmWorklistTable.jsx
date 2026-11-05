@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
-import { FilterBar } from '../../components/FilterBar/FilterBar';
+import { FilterBar } from '../worklists/FilterBar';
 import { useSavedFilterActions } from '../hcc/useSavedFilterActions';
 import { DobFilter } from '../../components/DobFilter/DobFilter';
 import { dobInRange } from '../../components/DateRangePopover/yearSpan';
+import { GENDER_FILTER_OPTIONS, LANGUAGE_FILTER_OPTIONS, MEMBER_STATUS_FILTER_OPTIONS, memberGenderLabel, memberLanguageLabel } from '../../lib/memberFilters';
 import { Pagination } from '../../components/Pagination/Pagination';
 import { TableSkeleton } from '../../components/TableSkeleton/TableSkeleton';
 import { BulkBar } from '../../components/BulkBar/BulkBar';
 import { CcmWorklistRow, CCM_MIDDLE_COLUMNS } from './CcmWorklistRow';
 import { ColumnsHeaderButton } from '../../components/WorklistColumns/ColumnsHeaderButton';
-import { useWorklistColumns } from '../../components/WorklistColumns/useWorklistColumns';
+import { useWorklistColumns } from '../worklists/useWorklistColumns';
 import {
   TimeFilterPopover,
 } from './TimeFilterChip';
@@ -34,12 +35,14 @@ const EMPTY_TIME_FILTER = { user: ALL_USERS, threshold: null };
 // numeric / date fields we derive a bucket label per row via BUCKET_FN
 // below. Order here matches the Figma chip row left → right.
 const FILTER_KEYS = [
+  // Member filters first, in the order every worklist uses.
+  { key: 'memberStatus',        label: 'Member Status' },
   { key: 'dob',                 label: 'DOB' },
   { key: 'gender',              label: 'Gender' },
   { key: 'language',            label: 'Language' },
+  { key: 'assignee',            label: 'Assignee' },
   { key: 'utrFlag',             label: 'UTR Flag' },
   { key: 'utrAge',              label: 'UTR Age' },
-  { key: 'assignee',            label: 'Assigned to' },
   { key: 'status',              label: 'Status' },
   { key: 'programDueDate',      label: 'Program Due Date' },
   { key: 'lastOutreachDate',    label: 'Last Outreach Date' },
@@ -47,14 +50,11 @@ const FILTER_KEYS = [
   { key: 'assignmentDate',      label: 'Assignment Date' },
   { key: 'ipa',                 label: 'IPA' },
   { key: 'hpCode',              label: 'HP Code' },
-  { key: 'memberStatus',        label: 'Member Status' },
   // billableMins / unloggedMins are rendered via TimeFilterChip below (they
   // compose a user selector + threshold radio, not a multi-select bucket),
   // so they don't live in this key list.
   { key: 'unloggedUser',        label: 'Unlogged User' },
 ];
-
-const LANG_LABEL = { en: 'English', ch: 'Chinese', es: 'Spanish', ko: 'Korean', vi: 'Vietnamese' };
 
 // Parse an "MM/DD/YYYY" string; returns null when the input is missing or
 // malformed so callers can bucket that as 'None' / 'Never'.
@@ -103,11 +103,11 @@ const utrAgeBucket = (days) => {
 };
 
 // A single per-row → bucket lookup used both for populating the FilterChip
-// option lists AND for evaluating each row against a selected filter — keeps
+// option lists AND for evaluating each row against a selected filter, keeps
 // the two branches consistent by construction.
 const BUCKET_FN = {
-  gender:              (m) => m.gender || 'Unknown',
-  language:            (m) => LANG_LABEL[m.language] || 'Other',
+  gender:              (m) => memberGenderLabel(m.gender),
+  language:            (m) => memberLanguageLabel(m.language),
   utrFlag:             (m) => m.utrFlag || 'No',
   utrAge:              (m) => utrAgeBucket(m.utrAgeDays),
   assignee:            (m) => m.assigneeName || 'Unassigned',
@@ -122,24 +122,38 @@ const BUCKET_FN = {
   unloggedUser:        (m) => m.assigneeName || 'Unassigned',
 };
 
-// Chip definitions for the shared FilterBar. First 8 chips are `primary`
-// (rendered by default, on one line — the shared FilterBar's autoFit packer
+// Member filters show the vocabulary every worklist shares, not the values
+// that happen to be in the rows.
+const MEMBER_OPTIONS = {
+  memberStatus: MEMBER_STATUS_FILTER_OPTIONS,
+  gender: GENDER_FILTER_OPTIONS,
+  language: LANGUAGE_FILTER_OPTIONS,
+};
+
+// Chip definitions for the shared FilterBar. The CCM_PRIMARY_KEYS chips are `primary`
+// (rendered by default, on one line, the shared FilterBar's autoFit packer
 // hides overflow into More Filters); the rest are extended (hidden by
 // default, opt-in via More Filters).
 const CCM_PRIMARY_KEYS = new Set([
-  'dob', 'gender', 'language', 'utrFlag',
-  'utrAge', 'assignee', 'status', 'programDueDate',
+  'memberStatus', 'dob', 'gender', 'language',
+  'assignee', 'utrFlag', 'utrAge', 'status', 'programDueDate',
 ]);
+// More Filters domain for each secondary filter.
+const CCM_GROUP = {
+  ipa: 'Member', hpCode: 'Member',
+  lastOutreachDate: 'Workflow Status', lastOutreachOutcome: 'Workflow Status',
+  assignmentDate: 'Assignment',
+};
 const CCM_FILTER_DEFS = (() => {
   const defs = [];
   for (const f of FILTER_KEYS) {
     if (f.key === 'unloggedUser') continue;
-    defs.push({ ...f, primary: CCM_PRIMARY_KEYS.has(f.key) });
+    defs.push({ ...f, primary: CCM_PRIMARY_KEYS.has(f.key), group: CCM_GROUP[f.key] });
   }
   defs.push(
-    { key: 'billableMins', label: 'Billable Mins', primary: false },
-    { key: 'unloggedMins', label: 'Unlogged Mins', primary: false },
-    { key: 'unloggedUser', label: 'Unlogged User', primary: false },
+    { key: 'billableMins', label: 'Billable Mins', primary: false, group: 'Workflow Status' },
+    { key: 'unloggedMins', label: 'Unlogged Mins', primary: false, group: 'Workflow Status' },
+    { key: 'unloggedUser', label: 'Unlogged User', primary: false, group: 'Assignment' },
   );
   return defs;
 })();
@@ -147,6 +161,7 @@ const CCM_MORE_FILTER_ITEMS = CCM_FILTER_DEFS.map(fd => ({
   k: fd.key,
   label: fd.label,
   primary: fd.primary,
+  group: fd.group,
 }));
 
 const thStyle = {
@@ -181,7 +196,7 @@ export function CcmWorklistTable() {
   const loading = useAppStore(s => s.ccmWorklistLoading);
   const fetchMembers = useAppStore(s => s.fetchCcmWorklistMembers);
   // Search query + filter-bar visibility are both owned by the shared TabBar
-  // (via useAppStore.searchQuery / .showFilterBar) — the TOC pattern —
+  // (via useAppStore.searchQuery / .showFilterBar), the TOC pattern,
   // so the top-bar Filter icon toggles CCM's chip row the same way it
   // toggles TOC's <FilterBar />.
   const searchQuery = useAppStore(s => s.searchQuery);
@@ -199,9 +214,6 @@ export function CcmWorklistTable() {
   const unloggedFilter = filters.unloggedMins || EMPTY_TIME_FILTER;
   const setBillableFilter = (v) => setCcmFilter('billableMins', isTimeFilterActive(v) ? v : null);
   const setUnloggedFilter = (v) => setCcmFilter('unloggedMins', isTimeFilterActive(v) ? v : null);
-  // `null` = default (FilterBar's autoFit packer picks visible chips); a
-  // populated array = user-customized set from the More Filters popover.
-  const [visibleKeys, setVisibleKeys] = useState(null);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -222,7 +234,7 @@ export function CcmWorklistTable() {
     }
     const opts = {};
     for (const { key } of FILTER_KEYS) {
-      opts[key] = [...sets[key]].toSorted();
+      opts[key] = MEMBER_OPTIONS[key] || [...sets[key]].toSorted();
     }
     return opts;
   }, [members]);
@@ -288,7 +300,7 @@ export function CcmWorklistTable() {
     isTimeFilterActive(billableFilter) ||
     isTimeFilterActive(unloggedFilter);
 
-  // Column prefs — bespoke table, wire useWorklistColumns directly.
+  // Column prefs: bespoke table, wire useWorklistColumns directly.
   const columnPrefs = useWorklistColumns('ccm', CCM_MIDDLE_COLUMNS);
   const visibleMiddle = columnPrefs.visibleColumns;
   const orderedColumnsForRow = useMemo(() => (
@@ -302,111 +314,99 @@ export function CcmWorklistTable() {
   return (
     <div className={styles.wrap}>
       {/* The shared TabBar (rendered by AppLayout for CCM) sits above this
-          component and owns the title + right-side action icons — same
+          component and owns the title + right-side action icons, same
           chrome TOC uses. Below it we render just the filter chip row
           and the sticky-column table. */}
 
       {/* Filter chip row. Visible only when the TabBar's Filter icon has
-          been toggled on (showFilterBar) — same pattern TOC uses for its
+          been toggled on (showFilterBar): same pattern TOC uses for its
           FilterBar. All the bucket-based chips render from FILTER_KEYS;
           Billable Mins + Unlogged Mins slot in between memberStatus and
           unloggedUser to match the Figma order. */}
-      {showFilterBar && (
-        <FilterBar
-          autoFit
-          leading={null}
-          filterDefs={CCM_FILTER_DEFS}
-          moreFilterItems={CCM_MORE_FILTER_ITEMS}
-          filters={{
-            ...filters,
-            // Mirror the two time-filter chips into FilterBar's `filters` bag
-            // so autoFit treats them as active (always visible) when set.
-            billableMins: isTimeFilterActive(billableFilter) ? ['active'] : [],
-            unloggedMins: isTimeFilterActive(unloggedFilter) ? ['active'] : [],
-          }}
-          multiSelect
-          onClearAll={savedActions.onClearAll}
-          clearAllLabel={savedActions.clearAllLabel}
-          saveLabel={savedActions.saveLabel}
-          saveMenuItems={savedActions.saveMenuItems}
-          onSaveMenuSelect={savedActions.onSaveMenuSelect}
-          onSaveFilter={(name) => saveSavedFilter('CCM', name)}
-          hasActive={hasAnyActive || savedActions.edited}
-          visibleKeys={visibleKeys ?? undefined}
-          onToggleVisible={(k) => {
-            setVisibleKeys(prev => {
-              const seed = prev ?? CCM_FILTER_DEFS.reduce((keys, fd) => {
-                if (fd.primary) keys.push(fd.key);
-                return keys;
-              }, []);
-              const next = new Set(seed);
-              if (next.has(k)) next.delete(k); else next.add(k);
-              return [...next];
-            });
-          }}
-          onClearVisible={() => setVisibleKeys([])}
-          renderChip={(k /* , mirror */) => {
-            if (k === 'billableMins') {
-              return (
-                <FilterChip
-                  key={k}
-                  label="Billable Mins"
-                  active={isTimeFilterActive(billableFilter)}
-                  activeSummary={summarizeTimeFilter(billableFilter)}
-                  onClear={() => setBillableFilter(EMPTY_TIME_FILTER)}
-                  renderPopover={({ anchorRect, onClose }) => (
-                    <TimeFilterPopover
-                      anchorRect={anchorRect}
-                      onClose={onClose}
-                      label="Billable Mins"
-                      thresholds={BILLABLE_THRESHOLDS}
-                      userOptions={userOptions}
-                      value={billableFilter}
-                      onChange={setBillableFilter}
-                    />
-                  )}
-                />
-              );
-            }
-            if (k === 'unloggedMins') {
-              return (
-                <FilterChip
-                  key={k}
-                  label="Unlogged Mins"
-                  active={isTimeFilterActive(unloggedFilter)}
-                  activeSummary={summarizeTimeFilter(unloggedFilter)}
-                  onClear={() => setUnloggedFilter(EMPTY_TIME_FILTER)}
-                  renderPopover={({ anchorRect, onClose }) => (
-                    <TimeFilterPopover
-                      anchorRect={anchorRect}
-                      onClose={onClose}
-                      label="Unlogged Mins"
-                      thresholds={UNLOGGED_THRESHOLDS}
-                      userOptions={userOptions}
-                      value={unloggedFilter}
-                      onChange={setUnloggedFilter}
-                    />
-                  )}
-                />
-              );
-            }
-            if (k === 'dob') {
-              return <DobFilter key={k} value={filters.dob || []} onChange={vals => setFilter('dob', vals)} />;
-            }
-            const def = CCM_FILTER_DEFS.find(d => d.key === k);
-            if (!def) return null;
+      <FilterBar
+        collapsed={!showFilterBar}
+        autoFit
+        pinPrimary
+        leading={null}
+        filterDefs={CCM_FILTER_DEFS}
+        moreFilterItems={CCM_MORE_FILTER_ITEMS}
+        filters={{
+          ...filters,
+          // Mirror the two time-filter chips into FilterBar's `filters` bag
+          // so autoFit treats them as active (always visible) when set.
+          billableMins: isTimeFilterActive(billableFilter) ? ['active'] : [],
+          unloggedMins: isTimeFilterActive(unloggedFilter) ? ['active'] : [],
+        }}
+        multiSelect
+        onClearAll={savedActions.onClearAll}
+        clearAllLabel={savedActions.clearAllLabel}
+        saveLabel={savedActions.saveLabel}
+        saveMenuItems={savedActions.saveMenuItems}
+        onSaveMenuSelect={savedActions.onSaveMenuSelect}
+        onSaveFilter={(name) => saveSavedFilter('CCM', name)}
+        hasActive={hasAnyActive || savedActions.edited}
+        renderChip={(k /* , mirror */) => {
+          if (k === 'billableMins') {
             return (
               <FilterChip
                 key={k}
-                label={def.label}
-                options={filterOptions[k] || []}
-                selected={filters[k] || []}
-                onChange={vals => setFilter(k, vals)}
+                label="Billable Mins"
+                active={isTimeFilterActive(billableFilter)}
+                activeSummary={summarizeTimeFilter(billableFilter)}
+                onClear={() => setBillableFilter(EMPTY_TIME_FILTER)}
+                renderPopover={({ anchorRect, onClose }) => (
+                  <TimeFilterPopover
+                    anchorRect={anchorRect}
+                    onClose={onClose}
+                    label="Billable Mins"
+                    thresholds={BILLABLE_THRESHOLDS}
+                    userOptions={userOptions}
+                    value={billableFilter}
+                    onChange={setBillableFilter}
+                  />
+                )}
               />
             );
-          }}
-        />
-      )}
+          }
+          if (k === 'unloggedMins') {
+            return (
+              <FilterChip
+                key={k}
+                label="Unlogged Mins"
+                active={isTimeFilterActive(unloggedFilter)}
+                activeSummary={summarizeTimeFilter(unloggedFilter)}
+                onClear={() => setUnloggedFilter(EMPTY_TIME_FILTER)}
+                renderPopover={({ anchorRect, onClose }) => (
+                  <TimeFilterPopover
+                    anchorRect={anchorRect}
+                    onClose={onClose}
+                    label="Unlogged Mins"
+                    thresholds={UNLOGGED_THRESHOLDS}
+                    userOptions={userOptions}
+                    value={unloggedFilter}
+                    onChange={setUnloggedFilter}
+                  />
+                )}
+              />
+            );
+          }
+          if (k === 'dob') {
+            return <DobFilter key={k} value={filters.dob || []} onChange={vals => setFilter('dob', vals)} />;
+          }
+          const def = CCM_FILTER_DEFS.find(d => d.key === k);
+          if (!def) return null;
+          return (
+            <FilterChip
+              key={k}
+              label={def.label}
+              options={filterOptions[k] || []}
+              selected={filters[k] || []}
+              onChange={vals => setFilter(k, vals)}
+              searchable={k === 'language'}
+            />
+          );
+        }}
+      />
 
       {/* Table body. Uses the same inline th styles + sticky columns as
           src/features/toc/worklist/WorklistTable.jsx. */}

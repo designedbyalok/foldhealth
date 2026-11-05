@@ -7,7 +7,7 @@
   overflow: hidden;
 }
 
-/* Templates + problems bar — sits above the scroll area so it stays
+/* Templates + problems bar: sits above the scroll area so it stays
    pinned without needing position: sticky and without stealing scroll
    from the content column. */
 .stickyTop {
@@ -35,7 +35,7 @@
   border-bottom: 0.5px solid var(--neutral-150);
 }
 
-/* Applied-template strip — templates in apply order on one row; "View More"
+/* Applied-template strip: templates in apply order on one row; "View More"
    appears on the right only when the row overflows. */
 .templatePriorityBar {
   display: flex;
@@ -60,7 +60,7 @@
   gap: var(--space-1);
   padding: var(--space-1) var(--space-3);
 }
-/* Collapsed strip keeps chips on a single line — anything past the row
+/* Collapsed strip keeps chips on a single line, anything past the row
    width clips out and stays hidden until the user hits "View All". */
 .priorityChipsCollapsed {
   flex-wrap: nowrap;
@@ -116,6 +116,17 @@
   height: 16px;
   background: var(--neutral-150);
 }
+/* A pending recommendation's templates, ahead of the applied ones. */
+.recommendedTemplates {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border-right: 0.5px solid var(--neutral-150);
+  margin-right: var(--space-1);
+}
+.recommendedTemplate { display: inline-flex; }
 .noTemplates {
   font-size: var(--font-sm);
   color: var(--neutral-300);
@@ -149,116 +160,15 @@
 .pausedBanner {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-2);
   margin: var(--space-2) var(--space-3) 0;
 }
-.pausedBanner > :first-child { flex: 1; min-width: 0; }
+/* In a narrow plan column the actions drop below the message instead of
+   squeezing it. */
+.pausedBanner > :first-child { flex: 1 1 260px; min-width: 0; }
 
-.summaryStrip {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  padding: 0 var(--space-1);
-}
-.summaryMetric {
-  font-size: var(--font-sm);
-  color: var(--neutral-300);
-  white-space: nowrap;
-}
-.summaryMetric strong {
-  font-weight: 600;
-  color: var(--neutral-400);
-}
-.summaryDot {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--neutral-200);
-  flex-shrink: 0;
-}
-.summaryStatuses {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  margin-left: auto;
-}
-
-/* ── Care Note (Figma 2562:60104) — always shows the latest plan-level
- *    note; the "+" opens the edit / add drawer, and every save is
- *    appended to the audit log as a change entry. ── */
-.careNoteSection {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-.careNoteHead {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  /* Same 24px row as the GBI section heads, whose add button sets theirs. */
-  min-height: var(--space-6);
-  padding-right: var(--space-1);
-}
-/* Card wrapper hosts the click target + the hover-only delete button. */
-.careNoteCardWrap {
-  position: relative;
-}
-.careNoteCard {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 0.5px solid var(--neutral-150);
-  border-radius: var(--space-2);
-  background: var(--primary-50);
-  cursor: pointer;
-  text-align: left;
-  width: 100%;
-  font: inherit;
-}
-.careNoteCard:hover { background: var(--primary-100); }
-.careNoteCard:disabled { cursor: default; }
-/* Bottom-right, centred on the author • timestamp line (24px button over
-   a ~14px line sitting on the card's 12px padding). */
-.careNoteDelete {
-  position: absolute;
-  bottom: var(--space-2);
-  right: var(--space-2);
-  opacity: 0;
-  transition: opacity 0.12s;
-}
-.careNoteCardWrap:hover .careNoteDelete,
-.careNoteCardWrap:focus-within .careNoteDelete { opacity: 1; }
-.careNoteBody {
-  margin: 0;
-  font-size: var(--font-base);
-  color: var(--neutral-400);
-  line-height: 1.2;
-  white-space: pre-wrap;
-}
-.careNoteMeta {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: var(--font-sm);
-  color: var(--neutral-200);
-}
-.careNoteAuthor {
-  display: inline-flex;
-  align-items: center;
-  gap: calc(var(--space-1) / 2);
-  font-size: var(--font-sm);
-}
-.careNoteDot {
-  font-size: var(--font-sm);
-  color: var(--neutral-200);
-}
-.careNoteTimestamp {
-  font-size: var(--font-sm);
-  color: var(--neutral-200);
-}
-/* Change log inside the Add Note drawer — the shared ActivityLog
+/* Change log inside the Add Note drawer, the shared ActivityLog
    renders every past note (newest first) so users can trace edits. */
 .noteTimeline {
   display: flex;
@@ -754,7 +664,7 @@
   color: var(--neutral-300);
 }
 
-/* Figma SNP-Story 8430:288488 — per-section dashed empty card. */
+/* Figma SNP-Story 8430:288488, per-section dashed empty card. */
 .sectionEmpty {
   display: flex;
   flex-direction: column;
@@ -792,7 +702,7 @@
   gap: var(--space-4);
   margin-top: var(--space-3);
 }
-/* Left-aligned primary-first footer (Save · Cancel) — avoids shadcn
+/* Left-aligned primary-first footer (Save · Cancel): avoids shadcn
    DialogFooter’s default sm:justify-end fighting caller overrides. */
 .templateDialogFooter {
   display: flex;
@@ -889,4 +799,19 @@
 }
 .runBannerBack:hover {
   text-decoration: underline;
+}
+
+/* Strip: the template groups menu anchors on this wrapper. */
+.stripGroups { display: inline-flex; }
+/* Scheduled retirement warning on a template chip. */
+.retiringTag {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+  margin-left: var(--space-1);
+  padding: 0 var(--space-1);
+  border-radius: var(--space-1);
+  background: color-mix(in srgb, var(--status-warning) 16%, transparent);
+  font-size: var(--font-xs);
+  color: var(--status-warning-dark);
 }

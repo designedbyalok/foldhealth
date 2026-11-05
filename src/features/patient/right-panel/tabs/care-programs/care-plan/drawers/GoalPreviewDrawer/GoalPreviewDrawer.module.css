@@ -1,4 +1,4 @@
-/* Goal Details body — Figma SNP-Story 2632:81504.
+/* Goal Details body: Figma SNP-Story 2632:81504.
    Uniform inset is owned by <Drawer> .body (var(--space-4)); this class lays out
    the scroll column so children stay full width inside that padding. */
 .drawerPad {
@@ -15,7 +15,7 @@
   /* Align drawer list rows with care-plan GBI table columns. */
   --gbi-col-priority: 28px;
   --gbi-col-assignee: 124px;
-  --gbi-col-status: 116px;
+  --gbi-col-status: 140px;
   --gbi-col-actions: 36px;
   --gbi-row-pad-y: calc(var(--space-1) + var(--space-1) / 2);
   --gbi-row-pad-x: var(--space-2);
@@ -65,7 +65,7 @@
   gap: var(--space-1);
   min-width: 0;
 }
-/* Intervention kind label sits above the title — Figma 2632:81636 (4px stack). */
+/* Intervention kind label sits above the title, Figma 2632:81636 (4px stack). */
 .heroWithKind {
   gap: var(--space-1);
 }
@@ -208,7 +208,7 @@
 }
 .favorableOn { color: var(--status-success); border-color: var(--status-success); }
 .favorableOff { color: var(--status-error); border-color: var(--status-error); }
-/* Neither in nor out yet — the target couldn't be judged automatically. */
+/* Neither in nor out yet: the target couldn't be judged automatically. */
 .favorableIdle { color: var(--neutral-300); }
 
 /* ── Measure-aware reading entry ── */
@@ -434,7 +434,7 @@
   opacity: 1;
 }
 
-/* ── Linked interventions (Goal Details) — verbatim copy of the
+/* ── Linked interventions (Goal Details): verbatim copy of the
        BarrierDetailDrawer's Linked Goals row shape so both drawers'
        linked lists read as one primitive: icon 16 + title/subtitle +
        right-side action cluster. */
@@ -459,7 +459,7 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) 0;
-  /* Bottom hairline is drawn on EVERY row, including the last one —
+  /* Bottom hairline is drawn on EVERY row, including the last one,
      the previous `:last-child` exception left a single-row list with
      no visible separator. Kept 0.5px on neutral-150 to match the
      BarrierDetailDrawer linked-goals treatment. */
@@ -495,7 +495,7 @@
 }
 .intvLinkSubtitle {
   /* Subtitle drops one step so it reads as secondary info under the
-     title — matches the caption sizing used on other GBI subtitles. */
+     title: matches the caption sizing used on other GBI subtitles. */
   font-size: var(--font-sm);
   color: var(--neutral-300);
 }
@@ -727,7 +727,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  /* Full-bleed tab bar + timeline — cancel Drawer body horizontal padding only. */
+  /* Full-bleed tab bar + timeline: cancel Drawer body horizontal padding only. */
   margin: 0 calc(var(--space-4) * -1) 0;
   padding: 0;
 }
@@ -826,7 +826,7 @@
   gap: var(--space-2);
 }
 
-/* Intervention hero — Figma 8533-295507. Title is inline-editable on
+/* Intervention hero: Figma 8533-295507. Title is inline-editable on
    hover (soft neutral background) and clicks straight into an input.
    Linked content + duration render as adjacent chips below the meta. */
 .priorityTrigger {

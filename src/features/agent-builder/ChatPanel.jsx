@@ -7,12 +7,12 @@ import styles from './ChatPanel.module.css';
 
 const INITIAL_MESSAGE = {
   role: 'assistant',
-  content: 'Here\'s a production-style node workflow you can modify. Ask me to:\n\n• **Add a node** — e.g. "Add a medication check node"\n• **Remove a node** — e.g. "Remove the escalation node"\n• **Modify a node** — e.g. "Update the greeting message"\n• **Regenerate the flow** — e.g. "Create a chronic care monitoring flow"',
+  content: 'Here\'s a production-style node workflow you can modify. Ask me to:\n\n• **Add a node**, e.g. "Add a medication check node"\n• **Remove a node**, e.g. "Remove the escalation node"\n• **Modify a node**, e.g. "Update the greeting message"\n• **Regenerate the flow**, e.g. "Create a chronic care monitoring flow"',
   time: formatTime(),
 };
 
 // Message text is user- and model-authored, so it must be HTML-escaped BEFORE
-// the tiny markdown pass adds its own tags — otherwise a message containing
+// the tiny markdown pass adds its own tags, otherwise a message containing
 // markup (e.g. `<img onerror=…>`) executes when injected into the bubble.
 // Escaping first means the only tags that survive are the ones we add here.
 function renderMessageMarkup(content) {

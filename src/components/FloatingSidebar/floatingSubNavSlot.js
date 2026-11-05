@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 // Stash the registry on globalThis so a single instance is shared across
 // HMR-split module copies (SidebarFloating lives in the eager app entry,
-// each feature layout lives in its own lazy chunk — Vite can hand them
+// each feature layout lives in its own lazy chunk, Vite can hand them
 // separate instances of this file in dev, which would make the Set + ref
 // orphaned per chunk). The guard also survives SSR / tests cleanly.
 
@@ -15,7 +15,7 @@ import { useSyncExternalStore } from 'react';
  * SideNav into it when `sidebarShape === 'floating'`.
  *
  * Portaling keeps every feature's SideNav state local to its layout
- * (store selectors, local callbacks, scroll refs) — the DOM moves into
+ * (store selectors, local callbacks, scroll refs), the DOM moves into
  * the floating card, the React fiber tree does not. That's cheaper than
  * extracting each nav into a shared component.
  *

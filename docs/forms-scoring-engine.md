@@ -1,7 +1,7 @@
-# Form Scoring Engine — Evaluation Spec (v1)
+# Form Scoring Engine: Evaluation Spec (v1)
 
 > Status: draft. Scope is the validated-instrument core. This document is the
-> spec-lock for the pure evaluation function — build and test it in isolation
+> spec-lock for the pure evaluation function, build and test it in isolation
 > before any Score-tab UI exists.
 
 ## 1. Purpose & scope
@@ -20,7 +20,7 @@ re-architecting.
 
 **Inputs**
 
-- `FormDefinition` = `{ questionnaire, scores[], criticalTriggers[] }` — the FHIR
+- `FormDefinition` = `{ questionnaire, scores[], criticalTriggers[] }`, the FHIR
   `Questionnaire` plus the scoring config.
 - `Answers` = map `linkId -> value | value[]` (the in-progress
   `QuestionnaireResponse`).
@@ -47,7 +47,7 @@ re-architecting.
 ```
 
 The engine is a **pure function** `evaluate(FormDefinition, Answers) ->
-EvaluationResult`. No I/O, no clock, no randomness — same inputs always yield the
+EvaluationResult`. No I/O, no clock, no randomness, same inputs always yield the
 same output. Side effects (writing flags, opening care gaps, routing) are
 performed by the **caller** from `result.actions`; the engine only *decides*
 them.
@@ -91,23 +91,23 @@ resolves, for each node type:
 1. Resolve visibility   (enableWhen, default section state)
 2. Resolve scores       (per topo order; composites after children)
 3. Match bands          (per score, if scoreable)
-4. Apply branch actions (mutate downstream visibility — only nodes later in topo order)
+4. Apply branch actions (mutate downstream visibility: only nodes later in topo order)
 5. Evaluate critical triggers
 6. Collect + merge actions
 ```
 
 Because branch targets are always *downstream* in the topological order
 (guaranteed by acyclicity), step 4 only ever changes the visibility of nodes not
-yet evaluated — so there is **no recompute**. This is the property that makes the
+yet evaluated: so there is **no recompute**. This is the property that makes the
 engine single-pass and deterministic.
 
-### Stage 0 — Normalize
+### Stage 0: Normalize
 
 - Coerce each answer to a canonical form (single value vs array per field type).
 - An item is **answered** iff it has a non-empty value. Empty string / empty
   array / null = unanswered.
 
-### Stage 1 — Visibility
+### Stage 1: Visibility
 
 For each item, `visible = enableWhenResult AND notHiddenByBranch`.
 
@@ -116,10 +116,10 @@ For each item, `visible = enableWhenResult AND notHiddenByBranch`.
   is itself hidden evaluates as "condition not met."
 - Branch-controlled sections start at their **declared default** (`hidden` or
   `shown`); branch actions in Stage 4 may override. In v1, **branch actions are
-  reveal-only** (`reveal`) — see §7 for why. "Hide when X" is expressed as a
+  reveal-only** (`reveal`): see §7 for why. "Hide when X" is expressed as a
   default-hidden section revealed on the complementary band.
 
-### Stage 2 — Score resolution
+### Stage 2: Score resolution
 
 For score `S`, let:
 
@@ -147,15 +147,15 @@ For score `S`, let:
 
 **Status:**
 
-- `empty` — `Answered(S)` is ∅.
-- `partial` — some but not all *required* applicable sources answered.
-- `complete` — all required applicable sources answered.
+- `empty`: `Answered(S)` is ∅.
+- `partial`, some but not all *required* applicable sources answered.
+- `complete`, all required applicable sources answered.
 
 `value` is computed for `partial`/`complete`. Whether a `partial` score is
 allowed to match a band is governed by `score.showPartialScore` (default
 **false** -> partial scores report `band: null`).
 
-### Stage 3 — Band matching
+### Stage 3: Band matching
 
 If the score is scoreable (`complete`, or `partial` with
 `showPartialScore=true`):
@@ -166,31 +166,31 @@ If the score is scoreable (`complete`, or `partial` with
 - No match (only possible if validation was bypassed) -> `band: null` +
   `diagnostic: BAND_NO_MATCH`.
 
-### Stage 4 — Branch actions
+### Stage 4: Branch actions
 
 A matched band's `action.type=branch` sets `reveal` on its target section's
 visibility node (downstream only). Already applied before those downstream nodes
 are evaluated.
 
-### Stage 5 — Critical triggers
+### Stage 5: Critical triggers
 
 Independent of all scores and of form completeness. For each trigger:
 
 - Fire iff its `linkId` is **visible AND answered AND** the value satisfies the
   condition (`> 0`, `= "yes"`, etc.).
 - For a **numeric** condition (e.g. `> 0`) on a scored `choice` item, the
-  comparison uses the selected option's *score*, not the raw option text — so
+  comparison uses the selected option's *score*, not the raw option text, so
   "PHQ-9 Q9 > 0" means "any answer worth points." **String** conditions still
   match the raw answer value.
-- A trigger fires even when the parent score is `partial`/`empty` — this is the
+- A trigger fires even when the parent score is `partial`/`empty`, this is the
   whole point (low total, but a self-harm item is positive).
 
-### Stage 6 — Collect & merge actions
+### Stage 6: Collect & merge actions
 
 Gather actions from all matched bands plus critical triggers, then dedupe/merge
 (§9) and order deterministically.
 
-## 5. Missing / incomplete / skipped — the rules table
+## 5. Missing / incomplete / skipped, the rules table
 
 | Situation | Rule |
 |---|---|
@@ -205,7 +205,7 @@ Gather actions from all matched bands plus critical triggers, then dedupe/merge
 
 - Stable action ordering: by `(score topo index, band order, action declaration
   index)`; critical-trigger actions appended in trigger declaration order.
-- No dependence on object/map key iteration order — sort sources by declared
+- No dependence on object/map key iteration order, sort sources by declared
   order.
 - Forbidden in the engine: `Date.now()`, `Math.random()`, locale-dependent
   number formatting.
@@ -235,7 +235,7 @@ bands.
 Even with author-time `CYCLE` validation, the runtime keeps a guard: if the
 topological sort detects a back-edge (corrupt/legacy definition), abort with
 `EvaluationError(CYCLE_AT_RUNTIME)` and return scores computed with all branch
-actions suppressed (fail safe — never loop, never partially apply).
+actions suppressed (fail safe: never loop, never partially apply).
 
 ## 9. Action merge semantics
 
@@ -249,11 +249,11 @@ Merge key per type:
 | `branch` | `reveal target` | union (reveal-only, idempotent) |
 
 Merging matters because two scores (e.g. PHQ-9 + GAD-7) can both route to the
-same triage queue — the caller should act once.
+same triage queue: the caller should act once.
 
 ## 10. Worked examples
 
-### Example A — Low total, positive critical item (the safety case)
+### Example A: Low total, positive critical item (the safety case)
 
 PHQ-9, `missingPolicy=exclude`, all 9 answered. Items 1–8 sum to 5; item 9
 (self-harm) = 1 -> total **6**.
@@ -265,18 +265,18 @@ PHQ-9, `missingPolicy=exclude`, all 9 answered. Items 1–8 sum to 5; item 9
   "minimal-looking" score still surfaces the red alert. This is the case generic
   builders get wrong.
 
-### Example B — AVERAGE with a skipped (hidden) item
+### Example B: AVERAGE with a skipped (hidden) item
 
 5-item average scale, item 5 hidden by `enableWhen`. Items 1–4 answered with
 points `3,2,4,1` (sum 10).
 
-- `Applicable = {1,2,3,4}` (item 5 not applicable — hidden).
+- `Applicable = {1,2,3,4}` (item 5 not applicable: hidden).
 - `missingPolicy=exclude`: `D = 4` -> `value = 10/4 = 2.5`.
 - If items 1–4 were applicable but item 4 *unanswered*: `exclude` -> `D=3`,
   `value=9/3=3.0`; `as_zero` -> `D=4`, `value=9/4=2.25`. Demonstrates the
   denominator rule.
 
-### Example C — Score-driven branch (acyclicity in action)
+### Example C: Score-driven branch (acyclicity in action)
 
 Score `phq9_total ≥ 15` -> band `Moderately severe`, `action: branch reveal
 section_safety_plan`. `section_safety_plan` contains a free-text field that is

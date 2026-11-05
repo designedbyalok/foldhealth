@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
+import { CollapsibleContent } from '../../../../../../../../components/Collapsible/Collapsible';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
 import { Avatar } from '../../../../../../../../components/Avatar/Avatar';
 import { Button } from '../../../../../../../../components/Button/Button';
@@ -9,9 +10,9 @@ import { HeaderCell } from '../../../../../../../../components/HeaderCell/Header
 import { ActivityLog } from '../../../../../../../../components/ActivityLog/ActivityLog';
 import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChevronIcon';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
-import { RingEmptyState } from '../../../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../../../components/EmptyState/EmptyState';
 import { TableSkeleton } from '../../../../../../../../components/TableSkeleton/TableSkeleton';
-import { WorklistShell } from '../../../../../../../../components/WorklistShell/WorklistShell';
+import { WorklistShell } from '../../../../../../../worklists/WorklistShell';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { AddIconMinimalist } from '../../../../../../../../components/Icon/AddIconMinimalist';
@@ -20,6 +21,8 @@ import { AssigneeChange } from '../../../../../../../../components/AssigneeChang
 import { useTableSort } from '../../../../../../../../components/HeaderCell/useTableSort';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { buildCarePlanSnapshot, filterCarePlanSnapshot } from '../carePlanSnapshot';
+import { AiSummaryCard, AiSummarySkeleton } from '../CarePlanAiSummary/CarePlanAiSummary';
+import { buildSummaryPayload, useCarePlanAiSummary } from '../CarePlanAiSummary/useCarePlanAiSummary';
 import {
   GbiNameCell,
   GbiProgressCell,
@@ -42,47 +45,16 @@ import { BarrierDetailDrawer } from '../../drawers/BarrierDetailDrawer/BarrierDe
 import sharedRow from '../../tables/carePlanTables.module.css';
 import styles from './CarePlanSummaryView.module.css';
 import { localDateMs } from '../../../../../../../../lib/localDate';
-import { apiFetch } from '../../../../../../../../lib/apiFetch';
 import { useSignedCarePlans } from '../../lib/useSignedCarePlans';
+import { isProgramClosed } from '../../../../../../data/programStatus';
+import { isEmptyDash } from '../../../../../../../../lib/emptyDash';
+import { latestPlanNote } from '../../lib/carePlanNotes';
+import { SegmentedControl } from '../../../../../../../../components/SegmentedControl/SegmentedControl';
+import { confirmStatusChange, statusReasonPatch } from '../../lib/confirmStatusChange';
 
 const PRIORITIES = ['high', 'medium', 'low'];
 
-// Compact the cross-program snapshot into the small JSON the summary API
-// sends to the model — titles + status + the few fields that shape a recap,
-// nothing patient-identifying beyond the name already on screen.
-function buildSummaryPayload({ patientName, programs, conditions, goals, interventions, barriers }) {
-  const progName = (p) => p?.name || p?.code || 'Program';
-  return {
-    patientName: patientName || 'the patient',
-    programs: (programs || []).map(p => ({ name: progName(p), status: p?.status || null })),
-    conditions: (conditions || []).map(c => (typeof c === 'string' ? c : c?.label)).filter(Boolean),
-    goals: (goals || []).map(g => ({ title: g.title, status: g.status, progress: g.progress ?? null, priority: g.priority || null, program: g.programCode || null })),
-    interventions: (interventions || []).map(i => ({ title: i.title, status: i.status, assignee: i.assignee?.name || null, program: i.programCode || null })),
-    barriers: (barriers || []).map(b => ({ title: b.title, status: b.status, program: b.programCode || null })),
-  };
-}
-
-// Call the server-side Gemini proxy (keeps the API key off the client) and
-// return one { intro, points, actions } summary. Throws a user-readable
-// message the caller can toast.
-async function fetchCarePlanSummary(payload) {
-  const res = await apiFetch('/api/care-plan-summary', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const errJson = await res.json().catch(() => ({}));
-    throw new Error(errJson?.error?.message || 'Could not generate the summary. Please try again.');
-  }
-  const json = await res.json().catch(() => ({}));
-  if (!json.summary) {
-    throw new Error(json?.error?.message || 'Could not generate the summary. Please try again.');
-  }
-  return json.summary;
-}
-
-// Person cell — shared Avatar primitive + name, so PCM / PCP renders
+// Person cell: shared Avatar primitive + name, so PCM / PCP renders
 // the way every other assignee cell in the app does (matches the
 // Fold design system rather than a bespoke user glyph).
 function PersonCell({ name, fallback = 'Unassigned' }) {
@@ -96,7 +68,7 @@ function PersonCell({ name, fallback = 'Unassigned' }) {
   );
 }
 
-// Active Programs Summary table — one row per enrolled program that
+// Active Programs Summary table: one row per enrolled program that
 // has a care plan. Plan (first column) and Actions (last column) are
 // sticky so the middle columns can scroll horizontally on narrow
 // panes. Read-only surface; interactions are limited to View Plan +
@@ -122,25 +94,25 @@ function ActiveProgramsTable({ rows, onView, onOpenActivity }) {
             const conditionsList = p.conditionsList || [];
             const firstCondition = conditionsList[0] || null;
             const extraConditions = Math.max(conditionsList.length - 1, 0);
-            const range = p.startDateFmt === '—' && p.endDateFmt === '—'
-              ? '—'
+            const range = isEmptyDash(p.startDateFmt) && isEmptyDash(p.endDateFmt)
+              ? '-'
               : `${p.startDateFmt} - ${p.endDateFmt}`;
             const activityCount = (p.sinceReviewEntries || []).length;
             return (
               <tr key={p.id}>
                 <td className={`${styles.stickyLeft} ${styles.colPlan}`}>
-                  <Badge tone="grey" size="S" label={p.code} />
+                  <Badge size="sm" label={p.code} />
                 </td>
                 <td>
                   {firstCondition ? (
                     <span className={styles.conditionCell} title={conditionsList.join(', ')}>
                       <span className={styles.conditionName}>{firstCondition}</span>
                       {extraConditions > 0 && (
-                        <Badge tone="grey" size="S" label={`+${extraConditions}`} />
+                        <Badge size="sm" label={`+${extraConditions}`} />
                       )}
                     </span>
                   ) : (
-                    <span className={styles.programMuted}>—</span>
+                    <span className={styles.programMuted}>-</span>
                   )}
                 </td>
                 <td className={styles.programDates}>{range}</td>
@@ -163,13 +135,13 @@ function ActiveProgramsTable({ rows, onView, onOpenActivity }) {
                       {p.activitySummary}
                     </button>
                   ) : (
-                    <span className={styles.programMuted}>—</span>
+                    <span className={styles.programMuted}>-</span>
                   )}
                 </td>
                 <td className={`${styles.stickyRight} ${styles.colActions}`}>
                   <Button
-                    variant="secondary"
-                    size="S"
+                    variant="outline"
+                    size="sm"
                     onClick={() => onView?.(p)}
                     disabled={!onView}
                   >
@@ -181,52 +153,6 @@ function ActiveProgramsTable({ rows, onView, onOpenActivity }) {
           })}
         </tbody>
       </table>
-    </div>
-  );
-}
-
-// Summarize output card — mock AI recap that sits under the Active
-// Programs table when Summarize has completed. Footer carries the
-// paginator + copy / regenerate / delete affordances so the reader
-// can cycle between candidate summaries, copy one for a chart note,
-// regenerate, or dismiss the whole card.
-function SummaryCard({ data, index, total, onPrev, onNext, onCopy, onRegenerate, onDelete }) {
-  return (
-    <div className={styles.summaryCard} role="region" aria-label="AI-generated program summary">
-      <p className={styles.summaryIntro}>{data.intro}</p>
-      <ol className={styles.summaryList}>
-        {data.points.map((p, i) => (
-          <li key={i}>
-            <strong>{p.title}:</strong> {p.body}
-          </li>
-        ))}
-      </ol>
-      <div className={styles.summaryActionsHead}>Action Items :</div>
-      <ul className={styles.summaryActions}>
-        {data.actions.map((a, i) => <li key={i}>{a}</li>)}
-      </ul>
-      <div className={styles.summaryFooter}>
-        <div className={styles.summaryPager}>
-          <button type="button" className={styles.summaryPagerBtn} onClick={onPrev} disabled={total <= 1} aria-label="Previous summary">
-            <Icon name="solar:alt-arrow-left-linear" size={14} color="var(--neutral-400)" />
-          </button>
-          <span className={styles.summaryPagerCount}>{index + 1}/{total}</span>
-          <button type="button" className={styles.summaryPagerBtn} onClick={onNext} disabled={total <= 1} aria-label="Next summary">
-            <Icon name="solar:alt-arrow-right-linear" size={14} color="var(--neutral-400)" />
-          </button>
-        </div>
-        <div className={styles.summaryToolbar}>
-          <button type="button" className={styles.summaryToolBtn} onClick={onCopy} aria-label="Copy summary">
-            <Icon name="solar:copy-linear" size={14} color="var(--neutral-400)" />
-          </button>
-          <button type="button" className={styles.summaryToolBtn} onClick={onRegenerate} aria-label="Regenerate summary">
-            <Icon name="solar:refresh-linear" size={14} color="var(--neutral-400)" />
-          </button>
-          <button type="button" className={styles.summaryToolBtn} onClick={onDelete} aria-label="Dismiss summary">
-            <Icon name="solar:trash-bin-trash-linear" size={14} color="var(--neutral-400)" />
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
@@ -252,7 +178,7 @@ function ActivityReviewDrawer({ target, onClose }) {
   });
   return (
     <Drawer
-      title={`Activity Since Review${target?.code ? ` — ${target.code}` : ''}`}
+      title={`Activity Since Review${target?.code ? `, ${target.code}` : ''}`}
       onClose={onClose}
       headerRight={target?.lastReviewed ? (
         <span className={styles.drawerMeta}>Last reviewed {target.lastReviewed}{target.lastReviewedBy ? ` · by ${target.lastReviewedBy}` : ''}</span>
@@ -265,7 +191,7 @@ function ActivityReviewDrawer({ target, onClose }) {
   );
 }
 
-// Goals/Interventions/Barriers section head — matches the CarePlanView's GBI
+// Goals/Interventions/Barriers section head: matches the CarePlanView's GBI
 // treatment (chevron + title + count pill). The read-only roll-up has no Add;
 // the editable one (care_plan_mode = 'both') passes `onAdd`, which asks for
 // the owning program first.
@@ -286,14 +212,14 @@ function SectionHead({ title, count, open, onToggle, onAdd }) {
     <div className={styles.sectionHeadRow}>
       {toggle}
       <span className={styles.sectionActionDivider} aria-hidden="true" />
-      <ActionButton size="S" tooltip={`Add ${title.toLowerCase().replace(/s$/, '')}`} onClick={e => onAdd(e.currentTarget.getBoundingClientRect())}>
+      <ActionButton size="sm" tooltip={`Add ${title.toLowerCase().replace(/s$/, '')}`} onClick={e => onAdd(e.currentTarget.getBoundingClientRect())}>
         <AddIconMinimalist size={16} color="var(--neutral-300)" />
       </ActionButton>
     </div>
   );
 }
 
-// Care Plan column — injected before Status in each table so every row
+// Care Plan column: injected before Status in each table so every row
 // tells you which program owns it. Sort by the row's `programCode` tag.
 const HEADER_COMPACT = { paddingLeft: 6, paddingRight: 6 };
 const CARE_PLAN_COLUMN = {
@@ -313,7 +239,7 @@ const insertBefore = (cols, key, col) => {
 
 const stripActions = (cols) => cols.filter(c => c.key !== 'actions');
 
-// Due Date column — matches the per-plan CarePlanInterventionsTable
+// Due Date column: matches the per-plan CarePlanInterventionsTable
 // injection (inserted immediately before Assigned To), so the
 // Comprehensive interventions grid reads: P · Name · Due Date ·
 // Assigned To · Adherence · Program · Status.
@@ -332,7 +258,7 @@ const colByKey = (cols, key) => cols.find(c => c.key === key);
 // than reusing every GBI column: the body renders a compact metric set
 // (Progress for goals, Adherence for interventions) plus a Program tag, so a
 // literal list keeps the header aligned with the body. The sticky `actions`
-// column is kept — it is where WorklistShell mounts the column picker button.
+// column is kept: it is where WorklistShell mounts the column picker button.
 // Progress and Adherence carry `defaultHidden` from the shared defs, so both
 // start hidden and users opt in through the picker.
 const SUMMARY_GOAL_COLUMNS = [
@@ -357,7 +283,7 @@ const SUMMARY_INTERVENTION_COLUMNS = [
 ];
 const SUMMARY_BARRIER_COLUMNS = insertBefore(stripActions(BARRIER_COLUMNS), 'status', CARE_PLAN_COLUMN);
 
-// Program cell — first programCode as a badge, plus a `+N` badge
+// Program cell: first programCode as a badge, plus a `+N` badge
 // when the same title also appears on other programs in the current
 // filtered snapshot. Keeps each row's own program identity intact
 // while surfacing cross-program overlap ("SNP +1") in one glance.
@@ -365,8 +291,8 @@ function ProgramCell({ code, overlap }) {
   const extra = Math.max((overlap || 1) - 1, 0);
   return (
     <span className={styles.programBadgeStack}>
-      <Badge tone="grey" size="S" label={code} />
-      {extra > 0 && <Badge tone="grey" size="S" label={`+${extra}`} />}
+      <Badge size="sm" label={code} />
+      {extra > 0 && <Badge size="sm" label={`+${extra}`} />}
     </span>
   );
 }
@@ -487,7 +413,7 @@ function GoalsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, programOverlap
             )}
             <td className={sharedRow.statusTd} onClick={e => e.stopPropagation()}>
               <GbiStatusButton
-                value={g.status}
+                value={g.status} reason={g.statusReason}
                 disabled={!onStatusMenu}
                 onOpen={rect => onStatusMenu?.({ kind: 'goal', item: g, rect })}
               />
@@ -541,7 +467,7 @@ function InterventionsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, onAssi
         renderRow={(i, _idx, ctx) => {
           const hidden = ctx?.hiddenSet || null;
           const isHidden = (k) => (hidden ? hidden.has(k) : false);
-          // Only Internal Task lets the user reassign — every other
+          // Only Internal Task lets the user reassign, every other
           // intervention kind runs on the member and the assignee stays
           // locked to them. Fall back to the plan's patient when a
           // legacy row is still 'Unassigned' so the column reads
@@ -625,7 +551,7 @@ function InterventionsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, onAssi
               {!isHidden('status') && (
               <td className={sharedRow.statusTd} onClick={e => e.stopPropagation()}>
                 <GbiStatusButton
-                  value={i.status}
+                  value={i.status} reason={i.statusReason}
                   disabled={!onStatusMenu}
                   onOpen={rect => onStatusMenu?.({ kind: 'intv', item: i, rect })}
                 />
@@ -640,7 +566,7 @@ function InterventionsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, onAssi
   );
 }
 
-// Row body — mirrors the per-plan CarePlanBarriersTable's BarrierRow
+// Row body: mirrors the per-plan CarePlanBarriersTable's BarrierRow
 // (empty priority cell, custom:barrier icon, barrierStatusTd width),
 // with the Care Plan column injected before Status.
 function BarrierRow({ b, onOpen, onStatusMenu, overlap }) {
@@ -662,7 +588,7 @@ function BarrierRow({ b, onOpen, onStatusMenu, overlap }) {
       </td>
       <td className={sharedRow.barrierStatusTd} onClick={e => e.stopPropagation()}>
         <GbiStatusButton
-          value={b.status}
+          value={b.status} reason={b.statusReason}
           disabled={!onStatusMenu}
           onOpen={rect => onStatusMenu?.({ kind: 'barrier', item: b, rect })}
         />
@@ -727,7 +653,7 @@ function BarriersTable({ rows, onOpen, onStatusMenu, programOverlap }) {
             <span className={sharedRow.closedBarriersLabel}>Closed Barriers</span>
             <span className={sharedRow.completedCount}>{closedRows.length}</span>
           </button>
-          {closedOpen && (
+          <CollapsibleContent open={closedOpen}>
             <table className={sharedRow.closedBarriersTable}>
               <colgroup>
                 <col style={{ width: GBI_COL_WIDTH.priority }} />
@@ -747,7 +673,7 @@ function BarriersTable({ rows, onOpen, onStatusMenu, programOverlap }) {
                 ))}
               </tbody>
             </table>
-          )}
+          </CollapsibleContent>
         </div>
       )}
     </div>
@@ -772,8 +698,7 @@ export function CarePlanSummaryView({
   embedded = false,
   // care_plan_mode = 'both': the roll-up is the patient-level Care Plan, so
   // its drawers edit in full and each section can add to a chosen program.
-  editable = false,
-}) {
+  editable = false, summarizeRequest = 0, onSummaryState }) {
   const [rollupAdd, setRollupAdd] = useState(null); // { kind, rect } | null
   // The editable roll-up (care plan level "both") is where the drafts are
   // edited, so it reads them. Read-only, a plan reads as last signed, with
@@ -787,11 +712,11 @@ export function CarePlanSummaryView({
   const signedCarePlans = useSignedCarePlans();
   const patientCarePlans = editable ? draftCarePlans : signedCarePlans;
   const saveCarePlanLiveField = useAppStore(s => s.saveCarePlanLiveField);
-  // Resolve THIS patient only — `s.patients` holds the current worklist
+  // Resolve THIS patient only: `s.patients` holds the current worklist
   // slice (many patients), so indexing [0] there landed on whoever's at
   // the top of the list (e.g. "Ralph Halvorson") instead of the patient
   // we're viewing. Look up by `patientId` across every worklist slice,
-  // then hand the row picker a single-element array — mirrors what the
+  // then hand the row picker a single-element array, mirrors what the
   // per-plan CarePlanView passes into `CarePlanInterventionsTable`.
   const currentPatient = useAppStore(s => {
     const buckets = [s.patients, s.allPatients, s.snpMembers, s.ccmMembers, s.hccMembers, s.awvMembers, s.jsaMembers];
@@ -842,7 +767,7 @@ export function CarePlanSummaryView({
     [conditions, goals, interventions, barriers, searchText, filterKey], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  // Per-table cross-program overlap map — powers the ProgramCell's
+  // Per-table cross-program overlap map: powers the ProgramCell's
   // "+N" badge on rows whose title appears on multiple programs.
   const goalProgramOverlap         = useMemo(() => buildProgramOverlap(filteredGoals),         [filteredGoals]);
   const interventionProgramOverlap = useMemo(() => buildProgramOverlap(filteredInterventions), [filteredInterventions]);
@@ -856,31 +781,42 @@ export function CarePlanSummaryView({
 
   const isEmpty = loadedFor && goals.length === 0 && interventions.length === 0 && barriers.length === 0;
 
-  const [openSections, setOpenSections] = useState({ programs: true, goals: true, interventions: true, barriers: true });
+  const [openSections, setOpenSections] = useState({ aiSummary: true, programs: true, careNotes: true, goals: true, interventions: true, barriers: true });
+  // Which program's Care Note the Care Notes section shows.
+  const [noteProgramId, setNoteProgramId] = useState(null);
   const toggleSection = (k) => setOpenSections(s => ({ ...s, [k]: !s[k] }));
 
   // Active programs summary row set. Only surfaces programs whose
   // patient plan actually exists (a plan row in `patientCarePlans` for
-  // this patient + program) — matches the ask that the section shows
+  // this patient + program): matches the ask that the section shows
   // "only plans that have been created". Closed / completed enrollments
   // are still hidden to match CareProgramsTab's PAST_STATUSES rule.
   const patientCarePlanAudit = useAppStore(s => s.patientCarePlanAudit);
+  const fetchCarePlanAudit = useAppStore(s => s.fetchCarePlanAudit);
+  // The Care Notes and Activity Since Review read each plan's audit, which
+  // this view would otherwise only have once the program's plan was opened.
+  const openProgramIds = (programs || []).filter(p => !isProgramClosed(p.status)).map(p => p.id).join(',');
+  useEffect(() => {
+    if (!patientId || !openProgramIds) return;
+    for (const id of openProgramIds.split(',')) {
+      if (!useAppStore.getState().patientCarePlanAudit[`${patientId}::${id}`]) fetchCarePlanAudit(patientId, id);
+    }
+  }, [patientId, openProgramIds, fetchCarePlanAudit]);
   const fmtDate = (iso) => {
-    if (!iso || iso === '—') return null;
+    if (!iso || isEmptyDash(iso)) return null;
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return null;
     const pad = (n) => String(n).padStart(2, '0');
     return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`;
   };
   const activeProgramRows = useMemo(() => {
-    const past = new Set(['Completed', 'Closed']);
     return (programs || [])
-      .filter(p => !past.has(p.status))
+      .filter(p => !isProgramClosed(p.status))
       .map(p => {
         const key = `${patientId}::${p.id}`;
         const plan = patientCarePlans[key];
         if (!plan) return null;
-        // Conditions on this plan — only the patient-level medical
+        // Conditions on this plan: only the patient-level medical
         // conditions the plan row carries (e.g. Diabetes,
         // Hypertension). Goal.conditions holds template category tags
         // ("Care management", "Comprehensive care management"), which
@@ -907,13 +843,13 @@ export function CarePlanSummaryView({
         const endISO = goalEndTimes.length
           ? new Date(Math.max(...goalEndTimes)).toISOString()
           : null;
-        const startDate = fmtDate(startISO) || '—';
-        const endDate = fmtDate(endISO) || (p.endDate && p.endDate !== '—' ? p.endDate : '—');
+        const startDate = fmtDate(startISO) || '-';
+        const endDate = fmtDate(endISO) || (p.endDate && !isEmptyDash(p.endDate) ? p.endDate : '-');
 
         // Reviewer + last review date come off the plan's most recent
         // signature; fall back to the program's lastUpdated stamp.
-        const lastReviewedISO = plan.plan?.signedAt || (p.lastUpdated !== '—' ? p.lastUpdated : null);
-        const lastReviewed = fmtDate(lastReviewedISO) || '—';
+        const lastReviewedISO = plan.plan?.signedAt || (!isEmptyDash(p.lastUpdated) ? p.lastUpdated : null);
+        const lastReviewed = fmtDate(lastReviewedISO) || '-';
         const lastReviewedBy = plan.plan?.signedBy || null;
         const lastReviewedTs = lastReviewedISO ? new Date(lastReviewedISO).getTime() : 0;
 
@@ -930,7 +866,7 @@ export function CarePlanSummaryView({
         if (buckets.intervention) activityBits.push(`${buckets.intervention} Intervention${buckets.intervention === 1 ? '' : 's'} Updated`);
         if (buckets.barrier) activityBits.push(`${buckets.barrier} Barrier${buckets.barrier === 1 ? '' : 's'} Closed`);
         // Every plan-level or otherwise-bucketed audit entry that isn't
-        // captured above still counts as activity for the reviewer —
+        // captured above still counts as activity for the reviewer,
         // report it as a generic "N Plan Update(s)" so the cell never
         // renders a blank clickable when sinceReview has entries but
         // none of them are goal / intervention / barrier changes.
@@ -955,13 +891,13 @@ export function CarePlanSummaryView({
           lastReviewedBy,
           activitySummary: activityBits.join(', '),
           sinceReviewEntries: sinceReview,
+          planNote: latestPlanNote(audit),
         };
       })
       .filter(Boolean);
   }, [programs, patientCarePlans, patientCarePlanAudit, patientId, currentPatient?.pcp]);
-  const showToast = useAppStore(s => s.showToast);
 
-  // Summarize — the cross-program recap (via the /api/care-plan-summary proxy,
+  // Summarize: the cross-program recap (via the /api/care-plan-summary proxy,
   // which keeps the Gemini key server-side). It is persisted one row per patient
   // in patient_care_plan_summaries, so the card renders straight from the store:
   // a generated summary survives reload, and regenerating overwrites it.
@@ -974,55 +910,28 @@ export function CarePlanSummaryView({
     if (patientId) fetchPatientCarePlanSummary(patientId);
   }, [patientId, fetchPatientCarePlanSummary]);
 
-  // `generating` is the only local bit — the in-flight state while the model
-  // writes. The rest derives from the persisted recap.
-  const [generating, setGenerating] = useState(false);
-  const savedSummary = savedSummaryEntry?.summary || null;
-  const summaryState = generating ? 'loading' : (savedSummary ? 'ready' : 'idle');
+  const summary = useCarePlanAiSummary({
+    saved: savedSummaryEntry?.summary || null,
+    onSave: (next) => savePatientCarePlanSummary(patientId, next),
+    onDelete: () => deletePatientCarePlanSummary(patientId),
+    buildPayload: () => buildSummaryPayload({ patientName: currentPatient?.name, programs, conditions, goals, interventions, barriers }),
+    isEmpty: goals.length + interventions.length + barriers.length === 0,
+  });
 
-  const generateSummary = async ({ regenerate = false } = {}) => {
-    if (generating) return;
-    if (goals.length + interventions.length + barriers.length === 0) {
-      showToast?.('No care plan content to summarize yet');
-      return;
-    }
-    setGenerating(true);
-    if (regenerate) showToast?.('Regenerating summary…');
-    try {
-      const summary = await fetchCarePlanSummary(buildSummaryPayload({
-        patientName: currentPatient?.name, programs, conditions, goals, interventions, barriers,
-      }));
-      await savePatientCarePlanSummary(patientId, summary);
-    } catch (err) {
-      showToast?.(err.message || (regenerate ? 'Could not regenerate the summary' : 'Could not generate the summary'));
-    } finally {
-      setGenerating(false);
-    }
-  };
-  const summarizePrograms = () => generateSummary();
-  const regenerateSummary = () => { if (savedSummary) generateSummary({ regenerate: true }); };
-  const copySummary = () => {
-    const s = savedSummary;
-    if (!s) return;
-    const bits = [
-      `${s.intro}`,
-      ...s.points.map((p, i) => `${i + 1}. ${p.title}: ${p.body}`),
-      '',
-      'Action Items :',
-      ...s.actions.map(a => `• ${a}`),
-    ];
-    navigator.clipboard?.writeText(bits.join('\n')).then(
-      () => showToast?.('Summary copied'),
-      () => showToast?.('Copy failed'),
-    );
-  };
-  const clearSummary = () => { deletePatientCarePlanSummary(patientId); };
+  // Summarize lives in the pane's toolbar: it bumps `summarizeRequest`, and
+  // the state goes back up so its button reads "AI is writing…" / "Generated".
+  useEffect(() => {
+    if (!summarizeRequest) return;
+    summary.generate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [summarizeRequest]);
+  useEffect(() => { onSummaryState?.(summary.state); }, [summary.state, onSummaryState]);
 
-  // "Activity Since Review" drawer target — the row the user clicked;
+  // "Activity Since Review" drawer target: the row the user clicked;
   // null when the drawer is closed.
   const [activityReviewOpen, setActivityReviewOpen] = useState(null);
 
-  // Preview drawer state — reuses the exact per-plan drawer so every
+  // Preview drawer state: reuses the exact per-plan drawer so every
   // edit (status, adherence, progress, notes) lands in the same store
   // slice and shows up here on the next render.
   const [previewGoal, setPreviewGoal] = useState(null);
@@ -1042,11 +951,14 @@ export function CarePlanSummaryView({
     if (item.program) saveCarePlanLiveField(patientId, item.program, TYPE_OF[kind], item.id, { priority });
   };
 
-  const changeStatus = (status) => {
+  const changeStatus = async (status) => {
     if (!statusMenu) return;
     const { kind, item } = statusMenu;
     setStatusMenu(null);
-    if (item.program) saveCarePlanLiveField(patientId, item.program, TYPE_OF[kind], item.id, { status });
+    if (!item.program) return;
+    const why = await confirmStatusChange([{ type: TYPE_OF[kind], item }], status);
+    if (!why) return;
+    saveCarePlanLiveField(patientId, item.program, TYPE_OF[kind], item.id, { status, ...statusReasonPatch(item, why) });
   };
 
   // Only Internal Task's assignee is editable; other kinds stay with the member.
@@ -1083,52 +995,61 @@ export function CarePlanSummaryView({
       {loading && !loadedFor ? (
         <TableSkeleton rows={6} />
       ) : isEmpty ? (
-        <RingEmptyState icon="solar:hand-heart-linear" label="No Signed Care Plans Yet" />
+        <EmptyState icon="solar:hand-heart-linear" title="No Signed Care Plans Yet" />
       ) : (
         <div className={styles.body}>
+          {/* Shown once Summarize (in the toolbar) is generating or has run. */}
+          {summary.state !== 'idle' && (
           <div className={styles.section}>
-            {/* Active Programs Summary — one row per enrolled program.
-                Sits above the GBI sections so the reader gets a quick
-                who-owns-what recap (PCM / PCP / last review / activity
-                since review) before diving into the goal / intervention
-                lists. Closed / completed enrollments are hidden. */}
-            <div className={styles.activeProgramsHead}>
+            {/* AI Summary: the cross-program recap, saved until someone
+                regenerates or dismisses it. Its own section, separate from
+                the Active Programs table. */}
+            <div className={styles.splitHead}>
               <button
                 type="button"
                 className={styles.sectionHead}
-                onClick={() => toggleSection('programs')}
-                aria-expanded={openSections.programs}
+                onClick={() => toggleSection('aiSummary')}
+                aria-expanded={openSections.aiSummary}
               >
                 <DownChevronIcon
                   size={16}
                   color="var(--neutral-400)"
-                  className={`${styles.sectionChevron} ${openSections.programs ? '' : styles.sectionChevronClosed}`}
+                  className={`${styles.sectionChevron} ${openSections.aiSummary ? '' : styles.sectionChevronClosed}`}
                 />
-                <span className={styles.sectionTitle}>Active Programs Summary</span>
-              </button>
-              {/* State-aware trigger — Summarize (idle) → AI is
-                  writing… (loading) → Generated Summary (ready).
-                  Loading state disables re-triggering; ready state
-                  acts as a passive label. */}
-              <button
-                type="button"
-                className={`${styles.summarizeBtn} ${summaryState === 'loading' ? styles.summarizeBtnBusy : ''}`}
-                onClick={summarizePrograms}
-                disabled={summaryState !== 'idle'}
-                aria-label={
-                  summaryState === 'loading' ? 'Summary is generating'
-                  : summaryState === 'ready' ? 'Summary generated'
-                  : 'Summarize active programs'
-                }
-              >
-                <Icon name="custom:ai" size={14} color="var(--primary-300)" />
-                <span>
-                  {summaryState === 'loading' ? 'AI is writing…'
-                  : summaryState === 'ready' ? 'Generated Summary'
-                  : 'Summarize'}
-                </span>
+                <span className={styles.sectionTitle}>AI Summary</span>
               </button>
             </div>
+            {openSections.aiSummary && summary.state === 'loading' && <AiSummarySkeleton />}
+            {openSections.aiSummary && summary.state === 'ready' && (
+              <AiSummaryCard
+                data={savedSummaryEntry.summary}
+                onCopy={summary.copy}
+                onRegenerate={summary.regenerate}
+                onDelete={summary.clear}
+              />
+            )}
+          </div>
+          )}
+
+          <div className={styles.section}>
+            {/* Active Programs Summary: one row per enrolled program.
+                Sits above the GBI sections so the reader gets a quick
+                who-owns-what recap (PCM / PCP / last review / activity
+                since review) before diving into the goal / intervention
+                lists. Closed / completed enrollments are hidden. */}
+            <button
+              type="button"
+              className={styles.sectionHead}
+              onClick={() => toggleSection('programs')}
+              aria-expanded={openSections.programs}
+            >
+              <DownChevronIcon
+                size={16}
+                color="var(--neutral-400)"
+                className={`${styles.sectionChevron} ${openSections.programs ? '' : styles.sectionChevronClosed}`}
+              />
+              <span className={styles.sectionTitle}>Active Programs Summary</span>
+            </button>
             {openSections.programs && (
               activeProgramRows.length === 0 ? (
                 <div className={styles.programsEmpty}>No active programs.</div>
@@ -1140,27 +1061,56 @@ export function CarePlanSummaryView({
                 />
               )
             )}
-            {openSections.programs && summaryState === 'loading' && (
-              <div className={styles.summarySkeleton} aria-live="polite">
-                <span className={styles.summarySkeletonLine} style={{ width: '70%' }} />
-                <span className={styles.summarySkeletonLine} style={{ width: '90%' }} />
-                <span className={styles.summarySkeletonLine} style={{ width: '55%' }} />
-                <Icon name="solar:refresh-linear" size={16} color="var(--primary-300)" className={styles.summarySpinner} />
-              </div>
-            )}
-            {openSections.programs && summaryState === 'ready' && savedSummary && (
-              <SummaryCard
-                data={savedSummary}
-                index={0}
-                total={1}
-                onPrev={() => {}}
-                onNext={() => {}}
-                onCopy={copySummary}
-                onRegenerate={regenerateSummary}
-                onDelete={clearSummary}
-              />
-            )}
           </div>
+
+          {/* Care Notes (#80): one program's note at a time, with a tab per
+              program that has one. Hidden until some program has a note;
+              the toolbar's note action adds one. */}
+          {(() => {
+            const withNotes = activeProgramRows.filter(r => r.planNote);
+            if (!withNotes.length) return null;
+            const shown = withNotes.find(r => r.id === noteProgramId) || withNotes[0];
+            return (
+              <div className={styles.section}>
+                <div className={styles.careNotesHead}>
+                  <button
+                    type="button"
+                    className={styles.sectionHead}
+                    onClick={() => toggleSection('careNotes')}
+                    aria-expanded={openSections.careNotes}
+                  >
+                    <DownChevronIcon
+                      size={16}
+                      color="var(--neutral-400)"
+                      className={`${styles.sectionChevron} ${openSections.careNotes ? '' : styles.sectionChevronClosed}`}
+                    />
+                    <span className={styles.sectionTitle}>Care Notes</span>
+                  </button>
+                  {withNotes.length > 1 ? (
+                    <SegmentedControl
+                      size="sm"
+                      items={withNotes.map(r => ({ key: r.id, label: r.code }))}
+                      value={shown.id}
+                      onValueChange={(id) => {
+                        setNoteProgramId(id);
+                        if (!openSections.careNotes) toggleSection('careNotes');
+                      }}
+                    />
+                  ) : (
+                    <span className={styles.careNoteProgram}>{shown.code}</span>
+                  )}
+                </div>
+                {openSections.careNotes && (
+                  <div className={styles.careNoteCard}>
+                    <p className={styles.careNoteBody}>{shown.planNote.detail}</p>
+                    <span className={styles.careNoteMeta}>
+                      {shown.planNote.actor || 'Unknown'} • {fmtDate(shown.planNote.createdAt)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           <div className={styles.section}>
             <SectionHead

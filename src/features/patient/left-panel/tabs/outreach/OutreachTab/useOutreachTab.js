@@ -3,6 +3,10 @@ import { useAppStore } from '../../../../../../store/useAppStore';
 import { toast } from '../../../../../../components/Toast/sonnerToast';
 import { getOpenIcdsForMember } from '../../../../../hcc/data/icds';
 import { INITIAL_LOG_GROUPS } from '../../../../data/outreachLogMock';
+import { canContact } from '../../../../data/consentRules';
+import { OUTREACH_CHANNEL, numberFromRecipient } from '../../../../data/patientPreferences';
+import { usePatientConsent } from '../../../../hooks/usePatientConsent';
+
 import {
   PROGRAMS,
   TYPE_LOG_LABEL,
@@ -12,6 +16,8 @@ import {
   logActivityCategory,
   matchesOutreachScope,
 } from './OutreachTab.utils';
+
+const MEMBER_OUTREACH = 'Member Outreach';
 
 // Outreach type → Program Activity Log kind (icon) and outcome → status tone.
 const OUTREACH_ACTIVITY_KIND = {
@@ -29,15 +35,19 @@ export function useOutreachTab({
   defaultFormOpen = false,
   scopedProgram = null,
   initialLogGroups = INITIAL_LOG_GROUPS,
-  // Optional override — TOC / HEDIS drawers pass the row's patient so
+  // Optional override: TOC / HEDIS drawers pass the row's patient so
   // ScheduleDrawer doesn't depend on the profile-tab selectedPatientId.
   patientId: patientIdProp,
-  // Patient name — used to source this patient's open HCC gaps for the
+  // Patient name: used to source this patient's open HCC gaps for the
   // "HCC Gaps" mode (same data the Diagnosis Gaps panel shows).
   memberName,
   // Called after a save with the new log entries, so a host can mirror them
-  // into its own persisted activity feed (the Care Gap drawer does).
+  // into its own persisted activity feed (the Care Gap drawer does). On an
+  // edit, `editedId` is the id of the log that changed.
   onSaved,
+  // Called after a log is deleted from the feed, so a host can delete it
+  // from its own record too.
+  onDeleted,
   // Program Activity Log code for saved entries when the pills are not
   // themselves programs (e.g. MAD / MAH / MAC pills inside the PHARM program).
   activityProgramCode = null,
@@ -46,7 +56,8 @@ export function useOutreachTab({
   outcomeItems = null,
   callTypeOptions,
 } = {}) {
-  const PROGRAM_OPTIONS = [...new Set([...(programs && programs.length ? programs : PROGRAMS), ...defaultPrograms])];
+  // The program or gaps the outreach is logged from lead the pills.
+  const PROGRAM_OPTIONS = [...new Set([...defaultPrograms, ...(programs && programs.length ? programs : PROGRAMS)])];
   // This patient's distinct open HCC gap codes (e.g. "HCC 37").
   const HCC_GAP_OPTIONS = useMemo(
     () => (memberName
@@ -89,6 +100,15 @@ export function useOutreachTab({
   const [callDirection, setCallDirection] = useState('outgoing');
   const [callViaNumber, setCallViaNumber] = useState('Delores Conn (581 824-1591)');
   const [calledToNumber, setCalledToNumber] = useState(INITIAL_CALLED_TO);
+
+  // Consent and contact checks for the logged channel (Phase 2A.4). Outreach
+  // documents contact that already happened, so this warns, it doesn't block.
+  const { consents, preferences } = usePatientConsent(patientId);
+  const consentTableMissing = useAppStore(s => s.patientConsentTableMissing);
+  const outreachChannel = OUTREACH_CHANNEL[type];
+  const contactWarning = outreachChannel && !consentTableMissing
+    ? canContact(consents, preferences, outreachChannel, { value: outreachChannel === 'call' ? numberFromRecipient(calledToNumber) : undefined }).reason
+    : null;
   const [callType, setCallType] = useState('Provider');
   const [callDurationMin, setCallDurationMin] = useState('00');
   const [callDurationSec, setCallDurationSec] = useState('00');
@@ -146,9 +166,11 @@ export function useOutreachTab({
   };
 
   const useSeparate = separateNotes && selectedProgs.length >= 2;
+  // With nothing picked the note is a Member Outreach: logged on the member,
+  // not on any program or gap.
   const sharedPanelTitle = !useSeparate && selectedProgs.length >= 2
     ? `Common Note (${selectedProgs.join(', ')})`
-    : selectedProgs.length === 1 ? selectedProgs[0] : null;
+    : selectedProgs.length === 1 ? selectedProgs[0] : MEMBER_OUTREACH;
 
   const addOutcome = (prog, val) => {
     if (useSeparate && prog) {
@@ -162,6 +184,18 @@ export function useOutreachTab({
       }
     } else if (!sharedPanel.outcomes.includes(val)) {
       patchShared({ outcomes: [...sharedPanel.outcomes, val], outcomeOpen: false });
+    }
+  };
+
+  // Replaces the whole list, for the multi-select outcome picker.
+  const setOutcomes = (prog, next) => {
+    if (useSeparate && prog) {
+      patchPanel(prog, { outcomes: next });
+      if (getPanel(prog).syncText) {
+        selectedProgs.forEach(p => { if (p !== prog) patchPanel(p, { outcomes: next }); });
+      }
+    } else {
+      patchShared({ outcomes: next });
     }
   };
 
@@ -188,7 +222,7 @@ export function useOutreachTab({
   const hasNote = useSeparate
     ? selectedProgs.some(p => getPanel(p).note.trim().length > 0)
     : sharedPanel.note.trim().length > 0;
-  const canSave = selectedProgs.length > 0 && outcome !== null && hasNote;
+  const canSave = outcome !== null && hasNote;
 
   const handleLogForChange = (key) => {
     setLogFor(key);
@@ -226,7 +260,8 @@ export function useOutreachTab({
     const label = TYPE_LOG_LABEL[type] || type;
     const now = Date.now();
 
-    const newEntries = selectedProgs.map((prog, i) => {
+    // No program or gap picked: one Member Outreach entry with no programs.
+    const newEntries = (selectedProgs.length ? selectedProgs : [null]).map((prog, i) => {
       const panelData = useSeparate ? getPanel(prog) : sharedPanel;
       const outcomeText = panelData.outcomes.length > 0 ? panelData.outcomes[0] : outcome;
       return {
@@ -236,7 +271,7 @@ export function useOutreachTab({
         time,
         author,
         title: label,
-        programs: [prog],
+        programs: prog ? [prog] : [],
         outcome: outcomeText,
         // Every outcome picked on the panel (the log line shows the first).
         outcomes: panelData.outcomes,
@@ -267,7 +302,7 @@ export function useOutreachTab({
     // A new outreach attempt against a care program is program activity: it
     // goes in that program's Program Activity Log.
     if (logFor === 'care-program' && editingIdRef.current == null) {
-      for (const entry of newEntries) {
+      for (const entry of newEntries.filter(e => e.programs.length)) {
         // Pills that are not programs themselves (e.g. MAD / MAH / MAC) log
         // into the host program; real program pills keep their own log.
         const asHost = activityProgramCode && !PROGRAMS.includes(entry.programs[0]);
@@ -284,6 +319,7 @@ export function useOutreachTab({
 
     onSaved?.(newEntries, {
       isEdit: editingIdRef.current != null,
+      editedId: editingIdRef.current,
       callDetails: showCallDetails ? {
         via: callViaNumber,
         to: calledToNumber,
@@ -329,6 +365,7 @@ export function useOutreachTab({
       }
       return next;
     });
+    onDeleted?.(log);
   };
 
   const filteredLogGroups = useMemo(() => {
@@ -364,8 +401,10 @@ export function useOutreachTab({
     filterMenu, setFilterMenu,
     logGroups,
     type, setType,
+    contactWarning,
     datetime, setDatetime,
     selectedProgs,
+    setSelectedProgs,
     outcome, setOutcome: changeOutcome,
     separateNotes, setSeparateNotes,
     sharedPanel,
@@ -379,6 +418,7 @@ export function useOutreachTab({
     sharedPanelTitle,
     addOutcome,
     removeOutcome,
+    setOutcomes,
     handleNoteChange,
     canSave,
     handleLogForChange,

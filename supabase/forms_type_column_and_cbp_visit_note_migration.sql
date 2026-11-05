@@ -12,11 +12,11 @@
 -- Forms table and the care-gap workspace can key off.
 --
 -- ENUM
---   'Note'        — clinical / visit notes (CBP Visit Note, DM Foot Exam…)
---   'Assessment'  — screenings and assessments (PHQ-9, ACEs…)
---   'Intake'      — new-patient / program intake
---   'Consent'     — attestations and consents
---   'Other'       — default; anything unclassified
+--   'Note', clinical / visit notes (CBP Visit Note, DM Foot Exam…)
+--   'Assessment', screenings and assessments (PHQ-9, ACEs…)
+--   'Intake', new-patient / program intake
+--   'Consent', attestations and consents
+--   'Other', default; anything unclassified
 --
 -- Kept as a text column with a CHECK constraint (not a Postgres ENUM type)
 -- so future values can be added by a plain ALTER TABLE without the type-
@@ -27,7 +27,7 @@
 --     same statement.
 --   • Seed is guarded by WHERE NOT EXISTS on `name` so re-running the
 --     migration is safe and won't overwrite hand-edits to the template. The
---     `id` is left to the bigint sequence — no code references a hardcoded
+--     `id` is left to the bigint sequence, no code references a hardcoded
 --     forms.id, only clinical_notes.form_type = 'cbp_visit_note' (a string
 --     enum), so a stable id is not required.
 
@@ -55,7 +55,7 @@ INSERT INTO public.forms (
 )
 SELECT
   'CBP Visit Note',
-  'Controlling Blood Pressure — visit note capturing BP reading, method, and follow-up plan.',
+  'Controlling Blood Pressure: visit note capturing BP reading, method, and follow-up plan.',
   'Care Gap',
   'Note',
   'active',

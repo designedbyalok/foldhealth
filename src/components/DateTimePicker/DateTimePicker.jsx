@@ -4,6 +4,7 @@ import { CalendarIcon } from '../Icon/CalendarIcon';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { parsePickerValue } from './parsePickerValue';
 import { TimeColumns } from '../TimePicker/TimeColumns';
+import { Calendar } from '../Calendar/Calendar';
 import inputStyles from '../Input/Input.module.css';
 import styles from './DateTimePicker.module.css';
 
@@ -55,12 +56,6 @@ export function DateTimePicker({ value, onChange, label, required = false, place
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const days = [];
-  for (let i = 0; i < firstDay; i++) days.push(null);
-  for (let d = 1; d <= daysInMonth; d++) days.push(d);
-  const minDay = minDate ? new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate()).getTime() : null;
 
   const to12 = (h) => h % 12 || 12;
   const scrollToTime = (h, m) => {
@@ -128,31 +123,20 @@ export function DateTimePicker({ value, onChange, label, required = false, place
             <div className={styles.dtPickerBody}>
               <div className={styles.calendarSection}>
                 <div className={styles.calendarHeader}>
-                  <ActionButton icon="solar:alt-arrow-left-linear" size="S" tooltip="Previous month"
+                  <ActionButton icon="solar:alt-arrow-left-linear" size="sm" tooltip="Previous month"
                     onClick={() => setViewDate(new Date(year, month - 1, 1))} />
                   <span className={styles.calendarTitle}>{MONTH_NAMES[month]} {year}</span>
-                  <ActionButton icon="solar:alt-arrow-right-linear" size="S" tooltip="Next month"
+                  <ActionButton icon="solar:alt-arrow-right-linear" size="sm" tooltip="Next month"
                     onClick={() => setViewDate(new Date(year, month + 1, 1))} />
                 </div>
-                <div className={styles.calendarGrid}>
-                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-                    <div key={i} className={styles.calendarDayLabel}>{d}</div>
-                  ))}
-                  {days.map((d, i) => {
-                    if (!d) return <div key={i} />;
-                    const key = `${pad(month + 1)}/${pad(d)}/${year}`;
-                    const disabled = minDay != null && new Date(year, month, d).getTime() < minDay;
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        disabled={disabled}
-                        className={`${styles.calendarDay} ${selectedDate === key ? styles.calendarDaySelected : ''}`}
-                        onClick={() => pickDay(key)}
-                      >{d}</button>
-                    );
-                  })}
-                </div>
+                <Calendar
+                  className={styles.calendar}
+                  year={year}
+                  month={month}
+                  selected={selectedDate ? toDate(selectedDate) : null}
+                  min={minDate}
+                  onPick={(d) => pickDay(`${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`)}
+                />
               </div>
 
               <TimeColumns

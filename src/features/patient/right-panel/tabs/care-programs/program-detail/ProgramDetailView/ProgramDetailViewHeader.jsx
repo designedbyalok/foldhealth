@@ -3,17 +3,16 @@ import { Icon } from '../../../../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevronIcon';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
 import { MenuPopover } from '../../../../../../../components/MenuPopover/MenuPopover';
+import { CollapsibleContent } from '../../../../../../../components/Collapsible/Collapsible';
 import { CloseButton } from '../../../../../../../components/CloseButton/CloseButton';
 import { BannerExpandIcon } from '../../../../../../../components/Icon/BannerExpandIcon';
 import { ProgressRing } from '../../../../../../hcc/DiagPanel/ReviewProgressPopover';
 import { ProgramStatusRing } from '../shared/ProgramStatusRing/ProgramStatusRing.jsx';
 import { ProgramBadges } from '../shared/ProgramBadges/ProgramBadges.jsx';
-import { statusColorFor } from '../../../../../data/programStatus';
+import { statusColorFor, isProgramClosed } from '../../../../../data/programStatus';
 import { useRightPanelMenuOption } from '../../../../../hooks/useProgramPanelSplitActive';
 import { ProgramDetailExpandPanel } from './ProgramDetailViewParts';
 import styles from './ProgramDetailView.module.css';
-
-const ENDED = new Set(['Closed', 'Completed']);
 
 export function ProgramDetailViewHeader({
   program,
@@ -43,7 +42,7 @@ export function ProgramDetailViewHeader({
     { key: 'history', icon: 'solar:history-linear', label: 'History' },
     { key: 'report', icon: 'solar:download-minimalistic-linear', label: 'Download Report' },
     { divider: true },
-    { key: 'end', icon: 'solar:close-circle-linear', label: 'End Program', danger: true, disabled: ENDED.has(status) },
+    { key: 'end', icon: 'solar:close-circle-linear', label: 'End Program', danger: true, disabled: isProgramClosed(status) },
   ];
   return (
     <>
@@ -79,7 +78,7 @@ export function ProgramDetailViewHeader({
           <button type="button" className={styles.expandBtn}
             aria-label={detailsExpanded ? 'Collapse details' : 'Expand details'}
             aria-expanded={detailsExpanded} onClick={() => setDetailsExpanded(e => !e)}>
-            <BannerExpandIcon size={16} className={detailsExpanded ? styles.expandIconRotated : ''} />
+            <BannerExpandIcon size={16} className={`${styles.expandIcon} ${detailsExpanded ? styles.expandIconRotated : ''}`} />
           </button>
         </div>
         <div className={styles.headerRight}>
@@ -92,14 +91,14 @@ export function ProgramDetailViewHeader({
           )}
           {otherPrograms.length > 0 && (
             <>
-              <ProgramBadges programs={otherPrograms} progressFor={progressFor} />
+              <ProgramBadges programs={otherPrograms} progressFor={progressFor} onSelect={onSwitchProgram} />
               <span className={styles.headerDivider} />
             </>
           )}
           <ActionButton
             ref={moreRef}
             icon="solar:menu-dots-linear"
-            size="S"
+            size="sm"
             tooltip="More"
             active={!!moreRect}
             onClick={e => setMoreRect(moreRect ? null : e.currentTarget.getBoundingClientRect())}
@@ -147,7 +146,9 @@ export function ProgramDetailViewHeader({
         </div>
       )}
 
-      {detailsExpanded && <ProgramDetailExpandPanel program={program} />}
+      <CollapsibleContent open={detailsExpanded} className={styles.expandCollapse}>
+        <ProgramDetailExpandPanel program={program} />
+      </CollapsibleContent>
     </>
   );
 }

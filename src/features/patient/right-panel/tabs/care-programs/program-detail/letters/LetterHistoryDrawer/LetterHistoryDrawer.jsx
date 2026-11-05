@@ -5,7 +5,7 @@ import { Avatar } from '../../../../../../../../components/Avatar/Avatar';
 import styles from './LetterHistoryDrawer.module.css';
 
 /**
- * Letter Sent Log — a timeline of letter send events, built dynamically from
+ * Letter Sent Log: a timeline of letter send events, built dynamically from
  * the letters that carry send metadata (sentVia / lastSent / sentBy).
  * Figma 2334-319026. Built on the shared Drawer.
  */

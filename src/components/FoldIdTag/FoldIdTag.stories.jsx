@@ -10,14 +10,14 @@ export default {
   parameters: {
     docs: {
       description: {
-        component: 'The clickable "#10070" Fold ID shown on every worklist row. Hover shows "Click to copy Fold ID"; clicking copies it and swaps the tooltip to "Copied: #10070" for a beat instead of firing a toast. The label swap fades in — see FoldIdTag.module.css.',
+        component: 'The clickable "#10070" Fold ID shown on every worklist row. Hover shows "Click to copy Fold ID"; clicking copies it and swaps the tooltip to "Copied: #10070" for a beat instead of firing a toast. The label swap fades in, see FoldIdTag.module.css.',
       },
     },
   },
   argTypes: {
     id: {
       control: 'text',
-      description: 'Raw Fold ID to copy — formatted for display via formatFoldId unless `display` is passed',
+      description: 'Raw Fold ID to copy: formatted for display via formatFoldId unless `display` is passed',
       table: { type: { summary: 'string | number' } },
     },
     display: {
@@ -63,7 +63,7 @@ export const Playground = {
  * Auto-cycles between the "idle" and "copied" tooltip states so the fade
  * animation is visible without needing to hover or click. This renders a
  * mock of the Tooltip bubble (same styling, always open) with the same
- * `.labelFade` keyed span the real component uses — the swap fades in
+ * `.labelFade` keyed span the real component uses, the swap fades in
  * every 1.6s so the animation loops for anyone reviewing the story.
  */
 export const TransitionDemo = {
@@ -84,8 +84,8 @@ export const TransitionDemo = {
     return (
       <div style={{ padding: '96px 48px 48px', fontFamily: 'Inter, sans-serif', fontSize: 'var(--font-md)', textAlign: 'center' }}>
         <div style={{ display: 'inline-block', position: 'relative' }}>
-          {/* Mock of the Tooltip bubble — same neutral-500 background,
-              same 6px radius, same 12/font shadow — anchored above a
+          {/* Mock of the Tooltip bubble: same neutral-500 background,
+              same 6px radius, same 12/font shadow, anchored above a
               plain #10070 span so the label swap is watchable. */}
           <div
             role="tooltip"

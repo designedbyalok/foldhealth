@@ -3,21 +3,21 @@
 -- THE HOLE THIS CLOSES
 -- `useAppStore.notifications` was an in-memory array and the two task
 -- producers were pointed at the wrong person. Both sat inside updateTask /
--- createTask and read `currentUserProfile` — the ACTOR — then asked "is the
+-- createTask and read `currentUserProfile`, the ACTOR, then asked "is the
 -- new assignee me?":
 --
 --   const nowMine = updates.assigned_to_id === me.id
 --   if (nowMine && !wasMine) addNotification(...)
 --
 -- That runs in the assigner's browser. Assign a task to someone else and
--- `nowMine` is false, so nothing is emitted anywhere — the recipient is never
+-- `nowMine` is false, so nothing is emitted anywhere, the recipient is never
 -- told. The only case that ever fired was assigning a task to yourself, which
 -- is the one notification nobody needs. Mentions had the same shape. And
 -- because the array was local, even a correct notification died on reload and
 -- could never reach another device.
 --
 -- WHAT THIS DOES
---   1. Creates `public.notifications` — one row per (recipient, event). RLS
+--   1. Creates `public.notifications`, one row per (recipient, event). RLS
 --      scopes every row to its recipient, which also makes the realtime
 --      subscription self-filtering: postgres_changes evaluates RLS per
 --      subscriber, so a client only ever receives its own rows.
@@ -29,7 +29,7 @@
 --      guarantee. This fires for writes from any client, the SQL editor, the
 --      seed script, or a future service worker.
 --   3. Publishes the table on `supabase_realtime`. This is load-bearing and
---      easy to miss — realtime.subscription filters on pg_publication_tables,
+--      easy to miss: realtime.subscription filters on pg_publication_tables,
 --      so a table absent from the publication does NOT error the channel, it
 --      just silently never delivers. See realtime_publish_profiles.sql, which
 --      fixed exactly this for `profiles`.
@@ -39,12 +39,12 @@
 -- recipient against `auth.uid()` and skips the match, so self-assigning and
 -- @mentioning yourself stay silent. Writes with no JWT (seed script, service
 -- role, SQL editor) have a null auth.uid() and therefore never match, so
--- seeded rows still notify — which is what makes the seed demoable.
+-- seeded rows still notify: which is what makes the seed demoable.
 --
 -- Mentions resolve by NAME, case-insensitively, because that is what the app
 -- stores: `tasks.mentions` is a text[] of display names scraped from comment
 -- text by a regex, e.g. {'fold demo','Ketan patni'}. `profiles` holds more
--- than one row per human (one per email they ever signed up with — three rows
+-- than one row per human (one per email they ever signed up with, three rows
 -- are named "Alok Kumar"), so a name can resolve to several recipients. All of
 -- them get a row: a person only signs in as one of those identities, so they
 -- see exactly one notification.
@@ -56,7 +56,7 @@ create table if not exists public.notifications (
   id           uuid primary key default gen_random_uuid(),
   -- Deliberately NOT a foreign key. The trigger below inserts inside the
   -- task write's own transaction, so an FK violation here would roll back
-  -- the user's task edit — a notification must never be able to break a
+  -- the user's task edit: a notification must never be able to break a
   -- save. Recipients come from `profiles.id` / `tasks.assigned_to_id`, and a
   -- value that no longer resolves just yields a row nobody can read (RLS
   -- matches on auth.uid()), which is a strictly better failure than a
@@ -78,7 +78,7 @@ create table if not exists public.notifications (
 create index if not exists notifications_recipient_created_idx
   on public.notifications (recipient_id, created_at desc);
 
--- Unread badge count — partial index keeps it tiny as history grows.
+-- Unread badge count: partial index keeps it tiny as history grows.
 create index if not exists notifications_unread_idx
   on public.notifications (recipient_id)
   where not read;
@@ -141,7 +141,7 @@ begin
   --
   -- The tg_op test is a separate statement on purpose. PL/pgSQL leaves OLD
   -- *unassigned* (not null) in an INSERT trigger, and touching a field on an
-  -- unassigned record raises `record "old" is not assigned yet` — so folding
+  -- unassigned record raises `record "old" is not assigned yet`, so folding
   -- this into one OR'd condition would abort every task INSERT.
   if tg_op = 'INSERT' then
     assignee_changed := new.assigned_to_id is not null;
@@ -198,7 +198,7 @@ create trigger tasks_emit_notifications
 
 -- ── 4. Realtime ─────────────────────────────────────────────────────────────
 -- Without this the client's postgres_changes binding matches nothing and never
--- errors — the failure mode is a channel that looks subscribed and delivers
+-- errors: the failure mode is a channel that looks subscribed and delivers
 -- silence. Guarded so re-running the migration is safe.
 do $$
 begin
@@ -246,7 +246,7 @@ commit;
 --    where recipient_id = auth.uid() and task_id = <that task> ;
 --   Expect: 0.
 --
--- RLS isolation — as an authenticated user, this must only ever return your own:
+-- RLS isolation: as an authenticated user, this must only ever return your own:
 --   select distinct recipient_id from notifications;
 --   Expect: exactly one row, your own auth.uid().
 --

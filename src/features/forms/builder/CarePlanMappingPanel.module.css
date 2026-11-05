@@ -1,0 +1,34 @@
+/* Care Plan tab: assessment-to-template rules. */
+.wrap { flex: 1 1 0; min-height: 0; overflow-y: auto; background: var(--neutral-50); }
+.inner { max-width: 760px; margin: 0 auto; padding: var(--space-6) var(--space-4) var(--space-8); display: flex; flex-direction: column; gap: var(--space-4); }
+
+.head { display: flex; flex-direction: column; gap: var(--space-1); }
+.title { margin: 0; font-size: var(--font-lg); font-weight: 600; color: var(--neutral-500); }
+.lede { margin: 0; font-size: var(--font-md); line-height: var(--leading-loose); color: var(--neutral-300); }
+
+.empty { background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: 8px; padding: var(--space-6) var(--space-4); }
+
+.list { display: flex; flex-direction: column; gap: var(--space-3); }
+.card {
+  display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3) var(--space-4);
+  background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: 8px;
+}
+.cardHead { display: flex; align-items: center; gap: var(--space-2); }
+.cardNum {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  background: var(--primary-50); color: var(--primary-300); font-size: var(--font-xs); font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.cardTitle { font-size: var(--font-base); font-weight: 600; color: var(--neutral-400); }
+.kind { width: 200px; margin-right: auto; }
+
+.row, .suggest { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.stack { display: flex; flex-direction: column; gap: var(--space-2); }
+.grow { flex: 1 1 200px; min-width: 0; }
+.num { width: 88px; }
+.word { flex-shrink: 0; font-size: var(--font-md); color: var(--neutral-300); }
+.suggest { padding-top: var(--space-3); border-top: 0.5px solid var(--neutral-150); }
+
+.hint { margin: 0; font-size: var(--font-sm); color: var(--neutral-300); }
+.issue { margin: 0; display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-sm); color: var(--neutral-400); }
+
+.actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }

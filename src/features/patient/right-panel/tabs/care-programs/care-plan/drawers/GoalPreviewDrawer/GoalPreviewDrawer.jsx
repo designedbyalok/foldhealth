@@ -10,11 +10,11 @@ import { Input } from '../../../../../../../../components/Input/Input';
 import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
 import { Avatar } from '../../../../../../../../components/Avatar/Avatar';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
-import { Slider } from '../../../../../../../../components/ShadcnSlider/ShadcnSlider';
+import { Slider } from '../../../../../../../../components/Slider/Slider';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
 import { DetailDropdown } from '../../../../../../../tasks/TasksViewDropdowns';
 import { PRIORITY_OPTIONS } from '../../../../../../../tasks/TasksView.utils';
-import { TabStrip } from '../../../../../../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../../../../../../components/Tabs/Tabs';
 import { ActivityLog } from '../../../../../../../../components/ActivityLog/ActivityLog';
 import { useCarePlanItemActivity } from '../../lib/useCarePlanItemActivity';
 import { CarePlanItemNote } from '../CarePlanItemNote/CarePlanItemNote';
@@ -58,6 +58,7 @@ import { localDateMs } from '../../../../../../../../lib/localDate';
 import { GBI_STATUSES, gbiStatusMeta } from '../../lib/gbiStatus';
 import { isCarePlanPaused } from '../../lib/carePlanPause';
 import { gbiStatusMenuItems } from '../../tables/carePlanTableShared';
+import { confirmStatusChange, presetStatusReason, statusReasonPatch } from '../../lib/confirmStatusChange';
 
 /** Session-persisted accordion open state for Goal Details sections. */
 const GOAL_PREVIEW_SECTIONS_KEY = 'fold.carePlan.goalPreview.sections';
@@ -105,7 +106,7 @@ const PRIORITIES = ['high', 'medium', 'low'];
 const progressBand = goalProgressBand;
 const progressTone = goalProgressTone;
 
-// Progress slider fill / thumb color per band — fed to the slider via
+// Progress slider fill / thumb color per band, fed to the slider via
 // the `--slider-tone` CSS variable so the CSS module can flip the fill
 // without changing markup. Mirrors the InterventionPreviewDrawer.
 function progressSliderColor(pct) {
@@ -159,7 +160,7 @@ function sparkNum(v) {
 
 function Sparkline({ values }) {
   const nums = values.map(sparkNum).filter(n => !Number.isNaN(n));
-  if (nums.length < 2) return <span className={styles.sparkEmpty}>—</span>;
+  if (nums.length < 2) return <span className={styles.sparkEmpty}>-</span>;
   const min = Math.min(...nums);
   const max = Math.max(...nums);
   const span = max - min || 1;
@@ -188,12 +189,12 @@ function Sparkline({ values }) {
   );
 }
 
-// Section head — matches the InterventionPreviewDrawer's Linked Goals
+// Section head: matches the InterventionPreviewDrawer's Linked Goals
 // treatment (barrierStyles.sectionHead / sectionToggle / sectionTitle /
 // sectionChevron), so every collapsible section in the goal drawer
 // reads with the same title weight, chevron placement, and hover
 // affordance. `muted` is preserved as a flag but the styling no longer
-// diverges — the visual language is now unified.
+// diverges: the visual language is now unified.
 const AccordionHead = function AccordionHead({
   title,
   open,
@@ -231,7 +232,7 @@ const AccordionHead = function AccordionHead({
               <ActionButton
                 ref={linkRef}
                 icon="solar:link-round-linear"
-                size="S"
+                size="sm"
                 tooltip={linkTooltip || 'Link existing'}
                 onClick={onLinkExisting}
                 aria-haspopup="dialog"
@@ -243,7 +244,7 @@ const AccordionHead = function AccordionHead({
           <ActionButton
             ref={addRef}
             icon="solar:add-linear"
-            size="S"
+            size="sm"
             tooltip={addTooltip}
             onClick={onAdd}
             aria-haspopup={addAriaHasPopup}
@@ -269,7 +270,7 @@ const INTERVENTION_KIND_ITEMS = [
 
 // Scope choices offered when the reviewer deletes a linked
 // intervention from the Goal Details drawer. Each key drives a
-// downstream delete surface (currently the same call for all — the
+// downstream delete surface (currently the same call for all, the
 // template-scoped / global deletes are not wired yet, so the picker
 // just captures the intent and toasts the chosen scope).
 const SCOPE_LABEL = {
@@ -313,8 +314,8 @@ function IntvDeleteScopePicker({ name, kindLabel = 'intervention', onCancel, onC
           ))}
         </div>
         <div className={dialogStyles.actions}>
-          <Button variant="secondary" size="L" onClick={onCancel}>Cancel</Button>
-          <Button variant="danger" size="L" onClick={() => onConfirm(scope)}>Delete</Button>
+          <Button variant="outline" onClick={onCancel}>Cancel</Button>
+          <Button variant="soft" tone="danger" onClick={() => onConfirm(scope)}>Delete</Button>
         </div>
       </AlertDialogContent>
     </AlertDialog>
@@ -322,7 +323,7 @@ function IntvDeleteScopePicker({ name, kindLabel = 'intervention', onCancel, onC
 }
 
 /**
- * Goal Details — Figma SNP-Story 2632:81504.
+ * Goal Details: Figma SNP-Story 2632:81504.
  * Every edit (status, progress, readings, automations, notes, interventions,
  * barriers) writes through the care-plan store into Supabase.
  */
@@ -376,7 +377,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
       || (s.allPatients || []).find(x => x.id === patientId);
     return p?.initials;
   });
-  // Patient record for GoalLinkedInterventionsList — memoised so
+  // Patient record for GoalLinkedInterventionsList: memoised so
   // Zustand's default reference-equality doesn't tear us down on
   // every render (returning a fresh object literal inside a selector
   // triggers an infinite update loop → white screen).
@@ -651,16 +652,18 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
     saveLive({ progress: next });
   };
 
-  const changeStatus = (status) => {
+  const changeStatus = async (status) => {
     if (!canDocument || status === live.status) return;
-    saveLive({ status });
+    const why = await confirmStatusChange([{ type: 'goal', item: live }], status);
+    if (!why) return;
+    saveLive({ status, ...statusReasonPatch(live, why) });
   };
 
 
   // Full-detail edit via the shared Goals Library drawer. Its onSave returns the
   // whole goal shape (title/priority/target/duration/…); merge onto the live
   // goal so unrelated fields (subtitle, icon, status, progress) are preserved.
-  // `interventions` from the drawer is ignored — care-plan interventions are
+  // `interventions` from the drawer is ignored: care-plan interventions are
   // managed separately and the goal row mapper drops the field.
   const handleSaveGoalEdit = async (values) => {
     setEditGoalOpen(false);
@@ -685,7 +688,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
       value: ASSESSMENT_COMPLETED, unit: '', favorable: true, takenAt,
     });
     if (saved && live.status !== 'Met') {
-      await saveLive({ status: 'Met' });
+      await saveLive({ status: 'Met', ...presetStatusReason(live, 'Assessment completed') });
     }
   };
 
@@ -718,15 +721,17 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
     showToast?.(`Assigned to ${user.name}`);
   };
 
-  const changeLinkedItemStatus = (status) => {
+  const changeLinkedItemStatus = async (status) => {
     const { kind, item } = linkedStatusMenu || {};
     setLinkedStatusMenu(null);
     if (!item || !canEdit || status === item.status) return;
+    const why = await confirmStatusChange([{ type: kind === 'barrier' ? 'barrier' : 'intervention', item }], status);
+    if (!why) return;
     if (kind === 'barrier') {
-      savePatientCarePlanBarrier(patientId, program, { ...item, status }, item.id);
+      savePatientCarePlanBarrier(patientId, program, { ...item, status, ...statusReasonPatch(item, why) }, item.id);
       return;
     }
-    savePatientCarePlanIntervention(patientId, program, { ...item, status }, item.id);
+    savePatientCarePlanIntervention(patientId, program, { ...item, status, ...statusReasonPatch(item, why) }, item.id);
   };
 
   // Inline-edit hook for the Due Date on a linked intervention row.
@@ -825,7 +830,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
   const legacySubtitle = [[live.measure, targetText].filter(Boolean).join(' '), formatGoalDuration(live)].filter(Boolean).join(' • ');
   const showSubtitle = !!live.subtitle && live.subtitle !== buildGoalSubtitle(live) && live.subtitle !== legacySubtitle;
   // Goal type / category (Vitals, Exercise, Diet, Labs, Assessment,
-  // Others) — same field the plan-level Goals table renders as a
+  // Others): same field the plan-level Goals table renders as a
   // right-aligned Type badge. Falls back to `type` for older records.
   const goalTypeLabel = live.category || live.type || null;
 
@@ -849,7 +854,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
           <Select
             options={GBI_STATUSES.map(s => ({ value: s, label: s, icon: gbiStatusMeta(s).icon }))}
             value={live.status}
-            onChange={changeStatus}
+            onValueChange={changeStatus}
             disabled={!canDocument}
             portal
             className={styles.statusSelect}
@@ -863,7 +868,6 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
             <div className={styles.statusActions}>
               <ActionButton
                 icon="solar:pen-linear"
-                size="L"
                 tooltip="Edit Goal"
                 disabled={!canEdit}
                 onClick={() => setEditGoalOpen(true)}
@@ -872,7 +876,6 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
               <ActionButton
                 ref={moreBtnRef}
                 icon="solar:menu-dots-linear"
-                size="L"
                 tooltip="More"
                 disabled={!canEdit}
                 onClick={(e) => setMoreMenu(e.currentTarget.getBoundingClientRect())}
@@ -965,13 +968,13 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
           )}
           {(goalTypeLabel || programBadges.length > 0 || conditionBadges.length > 0) && (
             <div className={styles.badges}>
-              {goalTypeLabel && <Badge tone="grey" label={goalTypeLabel} />}
+              {goalTypeLabel && <Badge label={goalTypeLabel} />}
               {goalTypeLabel && (programBadges.length > 0 || conditionBadges.length > 0) && (
                 <span className={styles.badgeDivider} />
               )}
-              {programBadges.map(b => <Badge key={b} tone="grey" label={b} />)}
+              {programBadges.map(b => <Badge key={b} label={b} />)}
               {programBadges.length > 0 && conditionBadges.length > 0 && <span className={styles.badgeDivider} />}
-              {conditionBadges.map(b => <Badge key={b} tone="grey" label={b} />)}
+              {conditionBadges.map(b => <Badge key={b} label={b} />)}
             </div>
           )}
         </div>
@@ -1004,7 +1007,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
               />
             </div>
             <Badge
-              size="S"
+              size="sm"
               tone={progressTone(progressBand(pct))}
               label={`${pct}% • ${progressBand(pct)}`}
             />
@@ -1182,7 +1185,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
                       onKeyDown={e => { if (e.key === 'Enter') submitBarrier(); }}
                       aria-label="Barrier title"
                     />
-                    <Button variant="primary" size="S" onClick={submitBarrier} disabled={!barrierTitle.trim()}>Save</Button>
+                    <Button size="sm" onClick={submitBarrier} disabled={!barrierTitle.trim()}>Save</Button>
                   </div>
                 )}
                 {barriers.length === 0 ? (
@@ -1222,7 +1225,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
                       onKeyDown={e => { if (e.key === 'Enter') submitAutomation(); }}
                       aria-label="Automation title"
                     />
-                    <Button variant="primary" size="S" onClick={submitAutomation} disabled={!automationTitle.trim()}>Save</Button>
+                    <Button size="sm" onClick={submitAutomation} disabled={!automationTitle.trim()}>Save</Button>
                   </div>
                 )}
                 {automations.length === 0 ? (
@@ -1262,17 +1265,17 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
         )}
 
         <div className={styles.activityBlock}>
-          <TabStrip
+          <Tabs
             items={ACTIVITY_TABS}
-          activeKey={activityTab}
-          onChange={setActivityTab}
+          value={activityTab}
+          onValueChange={setActivityTab}
           fullWidth={false}
-          size="S"
+          size="sm"
           trailing={(
             <ActionButton
               ref={filterBtnRef}
               icon="custom:filter"
-              size="S"
+              size="sm"
               tooltip="Filter activity"
               active={filtersOpen || activityFilter !== 'all'}
               onClick={() => setFiltersOpen(v => !v)}
@@ -1469,7 +1472,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
                   toggleInterventionLink(item.id, false);
                 }
               }
-              /* Delete opens the scope picker below — the user chooses
+              /* Delete opens the scope picker below, the user chooses
                  whether the removal applies to this goal on this
                  template, every linked template, or the whole plan.
                  Same picker handles both interventions and barriers;
@@ -1531,7 +1534,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
           onCancel={() => setConfirm(null)}
           onConfirm={async (scope) => {
             /* Backend for template-scoped and global deletes is not
-               wired yet — every scope hits the plain delete store
+               wired yet: every scope hits the plain delete store
                action for its kind. The toast makes the user's chosen
                scope visible so QA can verify the picker fires
                end-to-end. */

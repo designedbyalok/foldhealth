@@ -19,6 +19,40 @@
   min-height: var(--space-10);
 }
 
+/* Inside an Overview card: same header rule and full-width rows as DashboardCard. */
+.embedded {
+  padding: 0;
+}
+
+.embedded .header {
+  /* One height whether or not the header carries buttons, so titles line up. */
+  min-height: calc(var(--space-10) + var(--space-1));
+  padding: var(--space-2) var(--space-4);
+}
+
+.embedded .title {
+  font-size: var(--font-lg);
+}
+
+.embedded .body {
+  padding-bottom: 0;
+}
+
+.embedded .item {
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+/* Inside a card, rows are separated by space rather than rules. */
+.embedded .item + .item {
+  border-top: none;
+}
+
+.embedded .more {
+  margin-left: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
 .titleBtn {
   display: flex;
   align-items: center;
@@ -27,7 +61,14 @@
   padding: 0;
   border: none;
   background: none;
+}
+
+button.titleBtn {
   cursor: pointer;
+}
+
+.chevron {
+  transition: transform var(--duration-medium) var(--ease-out);
 }
 
 .title {
@@ -68,6 +109,16 @@
   padding: var(--space-2) 0;
 }
 
+/* Lines a full-bleed card list up with the card's header. */
+.inset {
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+.alignTop {
+  align-items: flex-start;
+}
+
 .item + .item {
   border-top: 0.5px solid var(--neutral-100);
 }
@@ -94,7 +145,8 @@
 }
 
 .itemTitle {
-  font-size: var(--font-md);
+  /* A dashboard can set one type scale for every row (the patient Overview). */
+  font-size: var(--item-title-size, var(--font-md));
   font-weight: 400;
   line-height: var(--leading-normal);
   color: var(--neutral-500);
@@ -116,7 +168,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-1);
-  font-size: var(--font-sm);
+  font-size: var(--item-meta-size, var(--font-sm));
   line-height: var(--leading-normal);
   color: var(--neutral-200);
 }

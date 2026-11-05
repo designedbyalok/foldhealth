@@ -1,213 +1,94 @@
-/* PatientNotesTab — visually mirrors the Overview Recent Notes card so
-   the P360 Notes tab reads as the same primitive, not a bespoke list. */
-
-.card {
-  border-radius: var(--space-2);
-  background: var(--neutral-0);
-  margin: var(--space-3);
-  /* Column flex so the inline note pane (rendered instead of the
-     notes table when a row is opened inline) can flex to fill the
-     available height and let ConsolidatedNoteBody / PreviewBody own
-     their own scroll. Doesn't affect the default table layout. */
+.wrapper {
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  gap: var(--space-2);
   flex: 1;
-}
-/* Inline note mode drops the card's own margin so the header, info
-   banner, and body all run flush to the tab pane's edges (matches
-   the reference mock where the inline note is a full-bleed surface,
-   not a card floating in whitespace). */
-.cardInline {
-  margin: 0;
-  border-radius: 0;
+  min-height: 0;
+  padding: var(--space-3) var(--space-3) 0;
+  overflow-y: auto;
+  background: var(--neutral-0);
 }
 
-/* Section header — title left, "+" and (future) View All right */
-.sectionHeader {
+.toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--space-2);
+  gap: var(--space-3);
+  padding: calc(var(--space-1) / 2) 0;
 }
-.sectionTitle {
-  font-size: var(--font-base);
-  font-weight: 500;
-  color: var(--neutral-500);
+
+.views {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
-.sectionActions {
+
+.searchRow { padding: 0 var(--space-1); }
+.searchField { flex: 1; min-width: 0; }
+
+.divider {
+  flex-shrink: 0;
+  width: 0.5px;
+  height: var(--space-4);
+  background: var(--neutral-150);
+}
+
+.row { cursor: pointer; }
+
+.checkCell { width: 36px; }
+
+.titleCell {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
-
-/* Table — outer wrap scrolls horizontally so the metadata columns
-   (Status / Created By / Last Updated / Linked Task) can spill past
-   the card edge while the Note Title column stays pinned on the left
-   and the Template Name / kebab column stays pinned on the right. */
-.tableWrap {
-  overflow-x: auto;
-  overflow-y: hidden;
-  /* Space between the last data row's border and the horizontal
-     scrollbar. Without it the scroll track sat flush against the
-     row, which read as a border artifact rather than a control. */
-  padding-bottom: var(--space-3);
-}
-.table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  /* Content-driven widths so the sticky columns and status Badge each
-     take exactly the room they need. */
-  table-layout: auto;
-}
-/* Sticky Note Title cell (first column now that the bulk-select
-   checkbox is gone). White background covers the scrolling middle
-   columns so text doesn't ghost through. Bottom stroke stays on
-   because this cell inherits the shared `.table th`/`.table td`
-   border-bottom rule below (background sits above the row content
-   but under the border layer). */
-.table th:nth-child(1),
-.table td:nth-child(1) {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-  background: var(--neutral-0);
-  /* Right hairline reads as the column boundary once the middle
-     columns have scrolled underneath. */
-  box-shadow: inset -0.5px 0 0 var(--neutral-150);
-}
-/* Row hover has to override the sticky column too, otherwise the
-   pinned cell stays white while the middle stripe tints. */
-.tr:hover td:nth-child(1) {
-  background: var(--neutral-25);
-}
-.table th {
-  text-align: left;
-  font-size: var(--font-base);
-  font-weight: 500;
-  color: var(--neutral-300);
-  padding: var(--space-2);
-  border-bottom: 0.5px solid var(--neutral-150);
-  white-space: nowrap;
-}
-.table td {
-  font-size: var(--font-base);
-  color: var(--neutral-300);
-  padding: var(--space-2);
-  border-bottom: 0.5px solid var(--neutral-100);
-  /* Center every cell vertically so single-line values (Status badge,
-     dates, Linked Task badge, template name) sit on the midline of
-     the two-line Note Title. */
-  vertical-align: middle;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-.table tbody tr:last-child td { border-bottom: none; }
-.tr { cursor: pointer; }
-.tr:hover td { background: var(--neutral-25); }
-
-/* Template Name is now a plain text cell — the kebab moved into a
-   dedicated trailing Actions column so the two never fight for
-   space (previously the cell reserved right-padding for the kebab
-   which read as extra whitespace when the row wasn't hovered). */
-.templateCell {
-  position: relative;
-}
-.templateText {
-  display: inline-block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-/* Trailing Actions column — right-aligned, kebab visible on hover. */
-.actionsCell,
-.actionsCol {
-  position: relative;
-  width: var(--space-8);
-  padding-left: 0 !important;
-  padding-right: var(--space-2) !important;
-}
-.rowKebab {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
-.tr:hover .rowKebab,
-.rowKebab:focus-within {
-  opacity: 1;
+.titleText {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  flex: 1;
+  min-width: 0;
+  line-height: var(--leading-tight);
 }
 
-/* Column widths (bulk-select checkbox column removed). Layout:
-   1 = Note Title (sticky left, min 200px), 2 = Status (auto —
-   shrinks to the Badge's own width so "Draft" is a tiny chip and
-   "Pending Review" gets the room it needs), 3–4 = Created By /
-   Last Updated at 130px each, 5 = Linked Task at 96px, 6 = Template
-   Name (absorbs leftover width), 7 = Actions (32px kebab slot). */
-.table th:nth-child(1),
-.table td:nth-child(1) {
-  min-width: 200px;
-}
-.table th:nth-child(2),
-.table td:nth-child(2) {
-  width: 1%;
-  white-space: nowrap;
-  min-width: 120px;
-}
-.table th:nth-child(3),
-.table th:nth-child(4),
-.table td:nth-child(3),
-.table td:nth-child(4) {
-  min-width: 130px;
-}
-.table th:nth-child(5),
-.table td:nth-child(5) {
-  min-width: 96px;
-}
-/* Template Name (col 6): no width / min-width so it consumes
-   whatever's left over. */
-
-.noteTitle {
-  font-size: var(--font-base);
-  color: var(--neutral-500);
-  font-weight: 400;
-}
-.noteSub {
-  font-size: var(--font-sm);
-  color: var(--neutral-300);
-}
+.noteTitle { color: var(--neutral-500); }
+.muted { color: var(--neutral-300); }
 .dateText {
   font-size: var(--font-sm);
   color: var(--neutral-300);
 }
 
-/* Empty state */
-.empty {
+.statusSuccess { color: var(--status-success); }
+.statusWarning { color: var(--status-warning); }
+.statusNeutral { color: var(--neutral-300); }
+
+.linkedTooltip {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-8) var(--space-4);
-  color: var(--neutral-300);
-  text-align: center;
-}
-.emptyTitle {
-  font-size: var(--font-base);
-  font-weight: 500;
-  color: var(--neutral-400);
-}
-.emptyBody {
-  font-size: var(--font-sm);
-  color: var(--neutral-300);
-  max-width: 340px;
-  line-height: var(--leading-normal, 1.4);
+  gap: var(--space-2);
+  text-align: left;
 }
 
-/* Inline note pane — replaces the notes table when a row is opened
+.actionsCell { text-align: right; }
+.rowKebab {
+  display: inline-flex;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.row:hover .rowKebab,
+.rowKebab:focus-within {
+  opacity: 1;
+}
+
+.inlineWrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: var(--neutral-0);
+}
+
+/* Inline note pane: replaces the notes table when a row is opened
    inline. The pane runs edge-to-edge inside the card; header owns
    its own padding + a hairline divider, and the body's scroll runs
    below the info banner. Matches the reviewer-flow header layout the

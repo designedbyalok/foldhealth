@@ -69,7 +69,7 @@ export function PracticeConfigPanel() {
               <Icon name="solar:close-circle-bold" size={16} color="var(--neutral-200)" style={{ cursor: 'pointer' }} />
             </div>
           ))}
-          <Button variant="secondary" size="S" leadingIcon="solar:add-circle-linear" style={{ marginTop: 8 }}>
+          <Button variant="outline" size="sm" leadingIcon="solar:add-circle-linear" style={{ marginTop: 8 }}>
             Add Holiday
           </Button>
         </div>

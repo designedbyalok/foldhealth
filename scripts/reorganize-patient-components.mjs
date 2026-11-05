@@ -14,7 +14,7 @@ const SRC = join(ROOT, 'src');
 
 /** @type {Record<string, string>} component base name -> path under patient/ (no ext) */
 const COMPONENT_DEST = {
-  // Shell — profile chrome
+  // Shell: profile chrome
   PatientP360Banner: 'shell/PatientP360Banner/PatientP360Banner',
   ProfileTabBar: 'shell/ProfileTabBar/ProfileTabBar',
   CcmTimerWidget: 'shell/CcmTimerWidget/CcmTimerWidget',
@@ -23,13 +23,13 @@ const COMPONENT_DEST = {
   // Left panel
   PatientProfileTabs: 'left-panel/PatientProfileTabs/PatientProfileTabs',
 
-  // Left panel — Gaps tab
+  // Left panel: Gaps tab
   CareGapSection: 'left-panel/tabs/gaps/CareGapSection/CareGapSection',
   CareGapItem: 'left-panel/tabs/gaps/CareGapItem/CareGapItem',
   DiagnosisGapsTable: 'left-panel/tabs/gaps/DiagnosisGapsTable/DiagnosisGapsTable',
   AlertsTable: 'left-panel/tabs/gaps/AlertsTable/AlertsTable',
 
-  // Left panel — other tabs
+  // Left panel: other tabs
   PAMIHxTab: 'left-panel/tabs/pami-hx/PAMIHxTab/PAMIHxTab',
   VitalsLabsTab: 'left-panel/tabs/vitals-labs/VitalsLabsTab/VitalsLabsTab',
   CommsTab: 'left-panel/tabs/comms/CommsTab/CommsTab',
@@ -49,23 +49,23 @@ const COMPONENT_DEST = {
   ActiveAutomationsWidget: 'shared/widgets/ActiveAutomationsWidget/ActiveAutomationsWidget',
   InsuranceWidget: 'shared/widgets/InsuranceWidget/InsuranceWidget',
 
-  // Right panel — Overview
+  // Right panel: Overview
   OverviewTab: 'right-panel/tabs/overview/OverviewTab/OverviewTab',
   AppointmentsDrawer: 'right-panel/tabs/overview/AppointmentsDrawer/AppointmentsDrawer',
 
-  // Right panel — Care Management
+  // Right panel: Care Management
   CareManagementView: 'right-panel/tabs/care-management/CareManagementView/CareManagementView',
   ProgramActivityCard: 'right-panel/tabs/care-management/ProgramActivityCard/ProgramActivityCard',
   TimelineItem: 'right-panel/tabs/care-management/TimelineItem/TimelineItem',
 
-  // Right panel — Care Programs
+  // Right panel: Care Programs
   CareProgramsTab: 'right-panel/tabs/care-programs/CareProgramsTab/CareProgramsTab',
   ProgramDetailView: 'right-panel/tabs/care-programs/program-detail/ProgramDetailView/ProgramDetailView',
   ProgramDetailSkeleton: 'right-panel/tabs/care-programs/program-detail/shared/ProgramDetailSkeleton/ProgramDetailSkeleton',
   ProgramStatusRing: 'right-panel/tabs/care-programs/program-detail/shared/ProgramStatusRing/ProgramStatusRing',
   ProgramBadges: 'right-panel/tabs/care-programs/program-detail/shared/ProgramBadges/ProgramBadges',
 
-  // Care Plan — dedicated module (elevated from steps)
+  // Care Plan: dedicated module (elevated from steps)
   CarePlanView: 'right-panel/tabs/care-programs/care-plan/CarePlanView/CarePlanView',
   CarePlanShareDrawer: 'right-panel/tabs/care-programs/care-plan/drawers/CarePlanShareDrawer/CarePlanShareDrawer',
   CarePlanHistoryDrawer: 'right-panel/tabs/care-programs/care-plan/drawers/CarePlanHistoryDrawer/CarePlanHistoryDrawer',
@@ -73,7 +73,7 @@ const COMPONENT_DEST = {
   AddInterventionDrawer: 'right-panel/tabs/care-programs/care-plan/drawers/AddInterventionDrawer/AddInterventionDrawer',
   CarePlanSummaryView: 'right-panel/tabs/care-programs/care-plan/summary/CarePlanSummaryView/CarePlanSummaryView',
 
-  // Program detail — steps (CarePlanView now lives in care-plan/)
+  // Program detail: steps (CarePlanView now lives in care-plan/)
   PreVisitStep: 'right-panel/tabs/care-programs/program-detail/steps/PreVisitStep/PreVisitStep',
   AssessmentFormView: 'right-panel/tabs/care-programs/program-detail/steps/AssessmentFormView/AssessmentFormView',
   AppointmentStep: 'right-panel/tabs/care-programs/program-detail/steps/AppointmentStep/AppointmentStep',
@@ -82,20 +82,20 @@ const COMPONENT_DEST = {
   MedicationReconciliation: 'right-panel/tabs/care-programs/program-detail/steps/MedicationReconciliation/MedicationReconciliation',
   ReferralReview: 'right-panel/tabs/care-programs/program-detail/steps/ReferralReview/ReferralReview',
 
-  // Program detail — billing
+  // Program detail: billing
   CcmBillingReview: 'right-panel/tabs/care-programs/program-detail/billing/CcmBillingReview/CcmBillingReview',
   CcmBillingLogTable: 'right-panel/tabs/care-programs/program-detail/billing/CcmBillingLogTable/CcmBillingLogTable',
   CcmBillingReportDrawer: 'right-panel/tabs/care-programs/program-detail/billing/CcmBillingReportDrawer/CcmBillingReportDrawer',
   CcmUnloggedTable: 'right-panel/tabs/care-programs/program-detail/billing/CcmUnloggedTable/CcmUnloggedTable',
   CcmUnloggedDrawer: 'right-panel/tabs/care-programs/program-detail/billing/CcmUnloggedDrawer/CcmUnloggedDrawer',
 
-  // Program detail — letters
+  // Program detail: letters
   SendLetterDrawer: 'right-panel/tabs/care-programs/program-detail/letters/SendLetterDrawer/SendLetterDrawer',
   AddLetterDrawer: 'right-panel/tabs/care-programs/program-detail/letters/AddLetterDrawer/AddLetterDrawer',
   LetterHistoryDrawer: 'right-panel/tabs/care-programs/program-detail/letters/LetterHistoryDrawer/LetterHistoryDrawer',
   LetterPreviewDrawer: 'right-panel/tabs/care-programs/program-detail/letters/LetterPreviewDrawer/LetterPreviewDrawer',
 
-  // Program detail — related
+  // Program detail: related
   ProgramRelatedTasks: 'right-panel/tabs/care-programs/program-detail/related/ProgramRelatedTasks/ProgramRelatedTasks',
   ProgramRelatedFiles: 'right-panel/tabs/care-programs/program-detail/related/ProgramRelatedFiles/ProgramRelatedFiles',
 };
@@ -165,7 +165,7 @@ function fixImportsInFile(filePath) {
     // Map to src/components, src/store, or other features via old absolute resolution
     let target = absOld;
     if (importPath.includes('.module.css')) {
-      // css module — target is the resolved css file path
+      // css module: target is the resolved css file path
       if (!existsSync(target)) {
         const base = importPath.match(/\.\/([^./]+)\.module\.css/)?.[1];
         if (base && COMPONENT_DEST[base]) {

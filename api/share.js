@@ -4,7 +4,7 @@ import { getSection } from './_lib/ogSections.js';
  * GET /s/<slug>  (rewritten to /api/share?s=<slug> in vercel.json)
  *
  * Returns a tiny HTML document whose <head> carries section-specific OpenGraph
- * and Twitter tags — this is what link-preview crawlers (Slack, iMessage, X,
+ * and Twitter tags: this is what link-preview crawlers (Slack, iMessage, X,
  * LinkedIn, WhatsApp, Discord) read, since they never execute JS or see the
  * SPA's `#/…` hash route. A human browser is immediately bounced into the real
  * hash route via a meta-refresh + `location.replace`.

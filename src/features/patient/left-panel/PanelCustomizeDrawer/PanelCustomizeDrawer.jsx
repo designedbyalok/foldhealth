@@ -67,11 +67,11 @@ export function PanelCustomizeDrawer({ layout, available, onSave, onClose }) {
       title="Customize Panel"
       onClose={onClose}
       secondaryAction={(
-        <Button variant="secondary" size="L" disabled={isDefault} onClick={() => setSections(defaults)}>
+        <Button variant="outline" disabled={isDefault} onClick={() => setSections(defaults)}>
           Reset to Default
         </Button>
       )}
-      primaryAction={<Button variant="primary" size="L" onClick={save}>Save</Button>}
+      primaryAction={<Button onClick={save}>Save</Button>}
     >
       <p className={styles.intro}>
         Choose which tabs and widgets show in this panel, and drag them into the order you want. Only you see this layout.

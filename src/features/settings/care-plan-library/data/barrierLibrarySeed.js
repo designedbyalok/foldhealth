@@ -1,4 +1,4 @@
-// Barriers Library seed — Figma SNP-Story 7550:489275 (Add Barriers drawer).
+// Barriers Library seed: Figma SNP-Story 7550:489275 (Add Barriers drawer).
 // Upserted by `bun run seed` into `care_plan_barriers`.
 export const CARE_PLAN_BARRIER_LIBRARY = [
   { id: 'a0000001-0000-4000-8000-000000000001', title: 'Set a goal to overcome obstacles in your care plan.', description: '' },

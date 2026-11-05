@@ -187,7 +187,7 @@
 .row1 {
   display: flex; align-items: center; gap: 16px;
   padding: 8px 12px;
-  /* Decorative banner wash — pink tint is theme-invariant (becomes subtle on dark bg) */
+  /* Decorative banner wash: pink tint is theme-invariant (becomes subtle on dark bg) */
   background: linear-gradient(to right, rgba(255,218,246,0.2) 17%, color-mix(in srgb, var(--neutral-0) 20%, transparent));
   border-bottom: 0.5px solid var(--neutral-150);
 }
@@ -199,7 +199,7 @@
 .name { font-size: var(--font-lg); font-weight: 600; color: var(--neutral-500); white-space: nowrap; }
 .meta { display: flex; align-items: center; gap: 6px; font-size: var(--font-base); color: var(--neutral-300); white-space: nowrap; }
 .metaDot { color: var(--neutral-200); }
-/* Consent moved inline (narrow) — mirrors the Quick View drawer badge. */
+/* Consent moved inline (narrow): mirrors the Quick View drawer badge. */
 .metaConsent {
   display: inline-flex;
   align-items: center;
@@ -216,12 +216,12 @@
 /* Vertical divider */
 .vDivider { width: 0.5px; align-self: stretch; background: var(--neutral-150); flex-shrink: 0; }
 
-/* Main info area — metrics strip */
+/* Main info area: metrics strip */
 .mainInfo { display: flex; flex: 1; align-items: center; gap: 24px; min-width: 0; }
 
 /* Profile card (Central Profile + FoldHealth) */
 /* A <button> so the insurance-profile dropdown opens from the keyboard. The
-   class already pins width: 225px, so no width restoration is needed — only
+   class already pins width: 225px, so no width restoration is needed, only
    text alignment and font inheritance, which a button would otherwise override.
    The border here is decorative and deliberately kept. */
 .profileCard {
@@ -299,7 +299,7 @@
 
 /* Action buttons with labels.
    margin-left keeps a fixed 24px gap between the details (.mainInfo) and the
-   actions — the row's own 16px gap plus 8px here — so they never crowd or
+   actions, the row's own 16px gap plus 8px here, so they never crowd or
    overlap as the banner narrows. Actions never shrink. */
 .actionsGroup { display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 8px; }
 .actionCol { display: flex; flex-direction: column; align-items: center; gap: 0; width: 40px; cursor: pointer; background: none; border: none; }
@@ -349,7 +349,7 @@
 .expandedGrid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0; border-bottom: 0.5px solid var(--neutral-150); }
 .expandCol { padding: 12px 16px; border-right: 0.5px solid var(--neutral-100); display: flex; flex-direction: column; gap: 8px; }
 .expandCol:last-child { border-right: none; }
-.expandTitle { font-size: var(--font-md); font-weight: 600; color: var(--neutral-500); margin: 0; }
+.expandTitle { font-size: var(--font-md); font-weight: 500; color: var(--neutral-500); margin: 0; }
 .expandRows { display: flex; flex-direction: column; gap: 6px; }
 .expandRow { display: flex; align-items: flex-start; gap: 6px; font-size: var(--font-md); color: var(--neutral-400); }
 .expandItem { display: flex; flex-direction: column; gap: 2px; font-size: var(--font-md); color: var(--neutral-400); }
@@ -372,15 +372,41 @@
 .apptMeta { font-size: var(--font-sm); color: var(--neutral-200); }
 
 /* Family expanded */
-.familyNotice { display: flex; align-items: center; gap: 6px; font-size: var(--font-sm); color: var(--status-success); background: var(--status-success-light); padding: 4px 8px; border-radius: 4px; }
-.personRow { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
-.personName { font-size: var(--font-md); font-weight: 500; color: var(--neutral-400); display: flex; align-items: center; gap: 4px; }
-.personRole { font-size: var(--font-sm); color: var(--neutral-200); display: block; }
-.roleTag { font-size: var(--font-xs); font-weight: 500; color: var(--primary-300); background: var(--primary-50); padding: 0 4px; border-radius: 3px; }
-.viewAllBtn { font-size: var(--font-sm); color: var(--primary-300); background: none; border: none; cursor: pointer; padding: 2px 0; text-align: left; }
-.viewAllBtn:hover { text-decoration: underline; }
-.careTeamSection { margin-top: 8px; padding-top: 8px; border-top: 0.5px solid var(--neutral-100); display: flex; flex-direction: column; gap: 6px; }
-.careTeamHeader { display: flex; align-items: center; gap: 6px; }
-/* Sub-section header — must sit above .personName (13/500) but below .expandTitle (13/600) */
-.careTeamTitle { font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300); }
-.profileTypeLabel { font-size: var(--font-sm); color: var(--neutral-200); display: inline-flex; align-items: center; gap: 3px; }
+/* Patient Demographic Details: icon, then an optional grey label over the value. */
+.infoSection { display: flex; flex-direction: column; gap: var(--space-3); }
+.infoList { display: flex; flex-direction: column; gap: var(--space-2); }
+.infoRow { display: flex; align-items: flex-start; gap: var(--space-2); }
+.infoIcon { flex-shrink: 0; }
+.infoBody { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.infoLabel { font-size: var(--font-md); color: var(--neutral-300); line-height: 1.2; }
+.infoLine { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); font-size: var(--font-md); color: var(--neutral-500); line-height: 1.2; min-height: var(--space-4); overflow-wrap: anywhere; }
+.healthList { display: flex; flex-direction: column; gap: var(--space-2); }
+.healthItem { display: flex; flex-direction: column; gap: var(--space-1); }
+.healthValue { font-size: var(--font-md); color: var(--neutral-500); line-height: 1.2; }
+.healthItem .vitalsGrid { gap: var(--space-1) var(--space-3); }
+.infoValue { display: inline-flex; align-items: center; gap: var(--space-1); }
+.infoSep { color: var(--neutral-300); }
+
+.peopleStack { display: flex; flex-direction: column; gap: var(--space-6); }
+.peopleSection { display: flex; flex-direction: column; gap: var(--space-3); }
+.sectionHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: var(--space-5); }
+.sectionTitleGrow { flex: 1; min-width: 0; }
+.headDivider { width: 0.5px; height: var(--space-4); background: var(--neutral-150); flex-shrink: 0; }
+.noticeLink { font-size: var(--font-sm); }
+/* No family on record: the ring empty state in a bordered card. */
+.familyEmpty {
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-4) var(--space-3);
+  border: 0.5px solid var(--neutral-150); border-radius: var(--space-3); background: var(--neutral-0);
+}
+/* Loader rows while family loads. */
+.boneAvatar { width: var(--space-6); height: var(--space-6); border-radius: 6px; flex-shrink: 0; }
+.boneName { width: 96px; height: 12px; }
+.boneSub { width: 64px; height: 10px; }
+.people { display: flex; flex-direction: column; gap: var(--space-2); }
+.personRow { display: flex; align-items: center; gap: var(--space-2); }
+.personText { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); min-width: 0; }
+.personName { font-size: var(--font-md); color: var(--neutral-500); display: flex; align-items: center; gap: var(--space-1); }
+.personRole { font-size: var(--font-md); color: var(--neutral-300); }
+.viewAll { display: inline-flex; align-items: center; gap: var(--space-1); align-self: flex-start; font-size: var(--font-md); }
+.profileType { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-md); font-weight: 400; }

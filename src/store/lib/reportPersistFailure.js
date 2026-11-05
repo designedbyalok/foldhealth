@@ -10,6 +10,6 @@ export function reportPersistFailure(op, error) {
   const now = Date.now();
   if (now - _lastPersistToastAt > 3000) {
     _lastPersistToastAt = now;
-    try { toast.error?.("Couldn't save changes — refresh to see the last saved state."); } catch { /* ignore */ }
+    try { toast.error?.("Couldn't save changes: refresh to see the last saved state."); } catch { /* ignore */ }
   }
 }

@@ -1,4 +1,4 @@
-/* Between Save and the drawer's close control — the drawer gets
+/* Between Save and the drawer's close control: the drawer gets
    `noCloseDivider` so this is the only rule line. */
 .headerDivider {
   display: inline-block;
@@ -14,7 +14,7 @@
   gap: var(--space-4);
 }
 
-/* The column body stretches its children — the category toggle hugs instead. */
+/* The column body stretches its children, the category toggle hugs instead. */
 .categoryToggle {
   align-self: flex-start;
 }
@@ -44,7 +44,7 @@
   font-size: var(--font-base);
   color: var(--neutral-200);
 }
-/* Same marker Input/Select render for `required` — these labels head a row of
+/* Same marker Input/Select render for `required`, these labels head a row of
    controls, so no single component can own them. */
 .mandatoryDot {
   width: 4px;
@@ -81,7 +81,7 @@
   min-width: 0;
 }
 /* The character counter promotes Input to its shell path, which draws its own
-   border — inside our own bordered shell that reads as a second field. Strip
+   border: inside our own bordered shell that reads as a second field. Strip
    it and let the outer shell own the border and the focus ring. */
 .titleInputWrap > div {
   height: 100%;
@@ -98,7 +98,7 @@
   height: 100%;
 }
 
-/* Target Value — comparator, then one or two number fields with unit suffixes
+/* Target Value: comparator, then one or two number fields with unit suffixes
    (Blood Pressure is systolic / diastolic; every other measure is single). */
 .targetRow {
   display: flex;
@@ -143,7 +143,7 @@
   min-width: 0;
 }
 /* The duration unit lives inside the field's trailing segment, so it carries
-   no chrome of its own — the segment already supplies the fill and divider. */
+   no chrome of its own: the segment already supplies the fill and divider. */
 .unitTrigger {
   display: inline-flex;
   align-items: center;
@@ -168,7 +168,7 @@
   min-width: 0;
 }
 /* Reads the Target Duration back in plain English so the reviewer
-   sees what "3 months" resolves to once the Care Plan is signed —
+   sees what "3 months" resolves to once the Care Plan is signed,
    same idea as the Due Date summary on the intervention row. Sits
    flush under the input; the surrounding form owns any outer stack. */
 .durationHint {
@@ -179,7 +179,7 @@
   line-height: var(--leading-normal);
 }
 
-/* "Add Rule" — primary text link closing the goal fields. */
+/* "Add Rule", primary text link closing the goal fields. */
 .addRule {
   display: inline-flex;
   align-items: center;
@@ -220,7 +220,7 @@
   gap: var(--space-2);
   min-height: 24px;
 }
-/* Added interventions — one 52px row each, split by hairlines, every cell
+/* Added interventions: one 52px row each, split by hairlines, every cell
    padded 4px (Figma 14537:196477). */
 .interventionList {
   display: flex;
@@ -264,7 +264,7 @@
   min-width: 32px;
   justify-content: center;
 }
-/* Type is a column, not a label that hugs its text — every row lines up on
+/* Type is a column, not a label that hugs its text, every row lines up on
    the widest kind ("Patient Education"). */
 .interventionKind {
   width: 200px;
@@ -274,7 +274,7 @@
   flex: 1;
   min-width: 0;
 }
-/* Priority and name are both controls now — strip the button chrome so the
+/* Priority and name are both controls now, strip the button chrome so the
    row still reads as a table cell. */
 .interventionPriority,
 .interventionTextButton {
@@ -323,7 +323,7 @@
   flex-shrink: 0;
   justify-content: center;
 }
-/* Task interventions carry no due offset — the cell still holds the column. */
+/* Task interventions carry no due offset, the cell still holds the column. */
 .interventionNoDue {
   color: var(--neutral-200);
 }

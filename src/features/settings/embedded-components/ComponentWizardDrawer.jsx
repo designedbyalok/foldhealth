@@ -18,6 +18,7 @@ import {
 } from '../../../data/embeddedComponents';
 import s from './EmbeddedComponents.module.css';
 import g from '../agents/goals/GoalsPanel.module.css';
+import { embedUrl } from './embedUrl';
 
 const STEPS = ['Configure', 'Surfaces', 'Preview'];
 
@@ -139,14 +140,14 @@ function StepIdentity({ data, onChange }) {
             <Select
               options={COMPONENT_CATEGORIES.map(c => ({ value: c, label: c }))}
               value={data.category}
-              onChange={v => onChange({ category: v })}
+              onValueChange={v => onChange({ category: v })}
             />
           </FormField>
           <FormField label="Visible to">
             <Select
               options={VISIBILITY_OPTIONS.map(v => ({ value: v, label: v }))}
               value={data.visibleTo}
-              onChange={v => onChange({ visibleTo: v })}
+              onValueChange={v => onChange({ visibleTo: v })}
             />
           </FormField>
         </div>
@@ -157,20 +158,20 @@ function StepIdentity({ data, onChange }) {
           <Select
             options={ACTIVATION_OPTIONS.map(a => ({ value: a.value, label: a.label }))}
             value={data.activation}
-            onChange={v => onChange({ activation: v })}
+            onValueChange={v => onChange({ activation: v })}
           />
         </FormField>
       </div>
       {data.activation === 'conditional' && (
         <div style={{ marginTop: 10 }}>
           <div className={s.infoBox} style={{ background: 'var(--primary-50)', color: 'var(--primary-400)', border: '0.5px solid rgba(140,90,226,.15)' }}>
-            Component surfaces only when the selected condition is true — prevents irrelevant components from cluttering the provider view.
+            Component surfaces only when the selected condition is true, prevents irrelevant components from cluttering the provider view.
           </div>
           <FormField label="Show when">
             <Select
               options={CONDITION_OPTIONS.map(c => ({ value: c, label: c }))}
               value={data.condition}
-              onChange={v => onChange({ condition: v })}
+              onValueChange={v => onChange({ condition: v })}
             />
           </FormField>
         </div>
@@ -319,7 +320,7 @@ function StepSurfaces({ data, onChange }) {
         <div className={s.configSection}>
           <div className={s.configHeader}>
             <div className={s.configHeaderIcon}><Icon name="solar:monitor-linear" size={14} color="var(--primary-300)" /></div>
-            Fold Web — Placement type
+            Fold Web: Placement type
           </div>
           <div className={s.configBody}>
             <div className={s.placementGrid}>
@@ -357,28 +358,28 @@ function StepSurfaces({ data, onChange }) {
                       style={{ width: `${Math.round((data.drawerWidth - 300) / 500 * 100)}%` }} />
                   </div>
                   <span className={s.hint}>
-                    {data.drawerWidth > 650 ? 'Warning: will significantly overlap the patient chart' : data.drawerWidth > 500 ? 'Caution: may overlap chart on screens under 1280px' : 'Safe — fits alongside patient chart on 1280px+ screens'}
+                    {data.drawerWidth > 650 ? 'Warning: will significantly overlap the patient chart' : data.drawerWidth > 500 ? 'Caution: may overlap chart on screens under 1280px' : 'Safe: fits alongside patient chart on 1280px+ screens'}
                   </span>
                 </div>
                 <FormField label="Opens via">
                   <Select
                     options={['Action menu item only', 'Nav tab + action menu', 'Inline button (e.g. in gap list)'].map(o => ({ value: o, label: o }))}
                     value={data.opensVia}
-                    onChange={v => onChange({ opensVia: v })}
+                    onValueChange={v => onChange({ opensVia: v })}
                   />
                 </FormField>
                 <FormField label="Show in tab context">
                   <Select
                     options={['All patient tabs', 'Gaps tab only', 'Orders tab only', 'Care Programs tab'].map(o => ({ value: o, label: o }))}
                     value={data.tabContext}
-                    onChange={v => onChange({ tabContext: v })}
+                    onValueChange={v => onChange({ tabContext: v })}
                   />
                 </FormField>
                 <FormField label="Background behavior">
                   <Select
                     options={['Dim patient chart', 'No dim'].map(o => ({ value: o, label: o }))}
                     value={data.background}
-                    onChange={v => onChange({ background: v })}
+                    onValueChange={v => onChange({ background: v })}
                   />
                 </FormField>
               </div>
@@ -398,19 +399,19 @@ function StepSurfaces({ data, onChange }) {
                     <Select
                       options={DRAWER_TAB_OPTIONS.map(t => ({ value: t, label: t }))}
                       value={data.drawerTab}
-                      onChange={v => onChange({ drawerTab: v, widgetOrder: null })}
+                      onValueChange={v => onChange({ drawerTab: v, widgetOrder: null })}
                     />
                   </FormField>
                   <FormField label="Widget height">
                     <Select
                       options={['Auto (up to 280px)', 'Fixed 200px', 'Fixed 300px'].map(o => ({ value: o, label: o }))}
                       value={data.widgetHeight}
-                      onChange={v => onChange({ widgetHeight: v })}
+                      onValueChange={v => onChange({ widgetHeight: v })}
                     />
                   </FormField>
                 </div>
 
-                {/* Widget ordering — show existing widgets in the selected tab */}
+                {/* Widget ordering: show existing widgets in the selected tab */}
                 {data.drawerTab && (TAB_WIDGETS[data.drawerTab] || []).length > 0 && (
                   <WidgetOrderList
                     tab={data.drawerTab}
@@ -469,7 +470,7 @@ function StepSurfaces({ data, onChange }) {
                   <Select
                     options={['Opens a drawer on the right', 'Opens full-screen view'].map(o => ({ value: o, label: o }))}
                     value={data.actionTrigger}
-                    onChange={v => onChange({ actionTrigger: v })}
+                    onValueChange={v => onChange({ actionTrigger: v })}
                   />
                 </FormField>
               </div>
@@ -483,7 +484,7 @@ function StepSurfaces({ data, onChange }) {
         <div className={s.configSection}>
           <div className={s.configHeader}>
             <div className={s.configHeaderIcon}><Icon name="solar:link-round-linear" size={14} color="var(--primary-300)" /></div>
-            Sidecar — Placement
+            Sidecar: Placement
           </div>
           <div className={s.configBody}>
             <div className={s.subTabs} role="tablist">
@@ -534,7 +535,7 @@ function StepSurfaces({ data, onChange }) {
                     <Select
                       options={DRAWER_TAB_OPTIONS.map(t => ({ value: t, label: t }))}
                       value={data.sidecarWidgetTab}
-                      onChange={v => onChange({ sidecarWidgetTab: v })}
+                      onValueChange={v => onChange({ sidecarWidgetTab: v })}
                     />
                   </FormField>
                 )}
@@ -546,7 +547,7 @@ function StepSurfaces({ data, onChange }) {
                   <Select
                     options={SIDECAR_GLOBAL_PLACEMENTS.map(p => ({ value: p, label: p }))}
                     value={data.sidecarGlobalPlacement}
-                    onChange={v => onChange({ sidecarGlobalPlacement: v })}
+                    onValueChange={v => onChange({ sidecarGlobalPlacement: v })}
                   />
                 </FormField>
               </>
@@ -560,7 +561,7 @@ function StepSurfaces({ data, onChange }) {
         <div className={s.configSection}>
           <div className={s.configHeader}>
             <div className={s.configHeaderIcon}><Icon name="solar:smartphone-linear" size={14} color="var(--primary-300)" /></div>
-            Mobile app — Placement
+            Mobile app: Placement
           </div>
           <div className={s.configBody}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
@@ -601,7 +602,7 @@ function StepSurfaces({ data, onChange }) {
 function StepContext({ data, onChange }) {
   const activeDomains = DOMAINS.filter(d => d.status === 'active');
   const selectedDomain = activeDomains.find(d => d.id === data.domainId);
-  const fullUrl = selectedDomain ? `https://${selectedDomain.domain}${data.url}` : '';
+  const fullUrl = selectedDomain ? embedUrl(selectedDomain.domain, data.url) : '';
   const selectedFieldCount = data.contextFields.length;
   const totalFieldCount = CONTEXT_FIELDS.length;
 
@@ -612,26 +613,26 @@ function StepContext({ data, onChange }) {
           <Select
             options={activeDomains.map(d => ({ value: String(d.id), label: d.domain }))}
             value={String(data.domainId)}
-            onChange={v => onChange({ domainId: Number(v) })}
+            onValueChange={v => onChange({ domainId: Number(v) })}
           />
         </FormField>
         <FormField label="Path *" hint={fullUrl ? `Full URL: ${fullUrl}` : undefined}>
           <Input value={data.url} onChange={e => onChange({ url: e.target.value })} placeholder="/widget/..." />
         </FormField>
-        <FormField label="Test / staging URL" hint="Used in preview mode — no real patient data">
+        <FormField label="Test / staging URL" hint="Used in preview mode: no real patient data">
           <Input value={data.stagingUrl} onChange={e => onChange({ stagingUrl: e.target.value })} placeholder="/widget/...?env=staging" />
         </FormField>
         <FormField label="Token lifetime" hint={data.tokenLifetime === 30 ? 'Use 30 min for complex workflows like prior auth' : undefined}>
           <Select
             options={TOKEN_LIFETIME_OPTIONS.map(t => ({ value: String(t.value), label: t.label }))}
             value={String(data.tokenLifetime)}
-            onChange={v => onChange({ tokenLifetime: Number(v) })}
+            onValueChange={v => onChange({ tokenLifetime: Number(v) })}
           />
         </FormField>
       </div>
 
       <div style={{ fontSize: 'var(--font-sm)', fontWeight: 500, color: 'var(--neutral-300)', marginBottom: '0.5rem' }}>
-        JWT context scope — fields sent to this component
+        JWT context scope: fields sent to this component
       </div>
       <div className={s.modalGrid} style={{ gap: 6, marginBottom: 16 }}>
         {CONTEXT_FIELDS.map(field => {
@@ -650,7 +651,7 @@ function StepContext({ data, onChange }) {
               }}
             >
               <div className={s.checkBox}>{active ? '✓' : ''}</div>
-              {field.label}{field.description ? ` — ${field.description}` : ''}
+              {field.label}{field.description ? `, ${field.description}` : ''}
             </button>
           );
         })}
@@ -660,18 +661,18 @@ function StepContext({ data, onChange }) {
       <div className={s.summaryCard}>
         <div className={s.summaryLabel}>Save Summary</div>
         <div className={s.summaryGrid}>
-          <div className={s.summaryKey}>Name</div><div className={s.summaryVal}>{data.name || '—'}</div>
-          <div className={s.summaryKey}>Surfaces</div><div className={s.summaryVal}>{data.surfaces.map(sf => sf === 'web' ? 'Fold Web' : sf === 'sidecar' ? 'Sidecar' : 'Mobile').join(' · ') || '—'}</div>
+          <div className={s.summaryKey}>Name</div><div className={s.summaryVal}>{data.name || '-'}</div>
+          <div className={s.summaryKey}>Surfaces</div><div className={s.summaryVal}>{data.surfaces.map(sf => sf === 'web' ? 'Fold Web' : sf === 'sidecar' ? 'Sidecar' : 'Mobile').join(' · ') || '-'}</div>
           <div className={s.summaryKey}>Placement</div>
           <div className={s.summaryVal}>
             {[data.webPlacement && WEB_PLACEMENT_OPTIONS.find(p => p.value === data.webPlacement)?.label,
               data.sidecarPlacement && `Sidecar ${data.sidecarPlacement}`,
               data.mobilePlacement && MOBILE_PLACEMENTS.find(p => p.value === data.mobilePlacement)?.label,
-            ].filter(Boolean).join(' · ') || '—'}
+            ].filter(Boolean).join(' · ') || '-'}
             {data.webPlacement === 'side-drawer' && data.drawerWidth ? ` (${data.drawerWidth}px)` : ''}
           </div>
           <div className={s.summaryKey}>URL</div>
-          <div className={s.summaryVal} style={{ fontFamily: "'SF Mono', monospace", fontSize: 'var(--font-xs)' }}>{fullUrl || '—'}</div>
+          <div className={s.summaryVal} style={{ fontFamily: "'SF Mono', monospace", fontSize: 'var(--font-xs)' }}>{fullUrl || '-'}</div>
           <div className={s.summaryKey}>Token lifetime</div><div className={s.summaryVal}>{data.tokenLifetime} min</div>
           <div className={s.summaryKey}>Context scope</div><div className={s.summaryVal}>{selectedFieldCount} of {totalFieldCount} fields</div>
         </div>
@@ -687,7 +688,7 @@ function StepContext({ data, onChange }) {
 function StepConfigure({ data, onChange, embedDomains }) {
   const activeDomains = (embedDomains && embedDomains.length > 0 ? embedDomains : DOMAINS).filter(d => d.enabled !== false && d.status !== 'removed');
   const selectedDomain = activeDomains.find(d => d.id === data.domainId);
-  const fullUrl = selectedDomain ? `https://${selectedDomain.domain}${data.url}` : '';
+  const fullUrl = selectedDomain ? embedUrl(selectedDomain.domain, data.url) : '';
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   return (
@@ -708,7 +709,7 @@ function StepConfigure({ data, onChange, embedDomains }) {
           <Select
             options={activeDomains.map(d => ({ value: String(d.id), label: d.domain }))}
             value={String(data.domainId)}
-            onChange={v => onChange({ domainId: Number(v) })}
+            onValueChange={v => onChange({ domainId: Number(v) })}
           />
         </FormField>
         <FormField label="Path *" hint={fullUrl ? `${fullUrl}` : undefined}>
@@ -722,14 +723,14 @@ function StepConfigure({ data, onChange, embedDomains }) {
           <Select
             options={COMPONENT_CATEGORIES.map(c => ({ value: c, label: c }))}
             value={data.category}
-            onChange={v => onChange({ category: v })}
+            onValueChange={v => onChange({ category: v })}
           />
         </FormField>
         <FormField label="Visible to">
           <Select
             options={VISIBILITY_OPTIONS.map(v => ({ value: v, label: v }))}
             value={data.visibleTo}
-            onChange={v => onChange({ visibleTo: v })}
+            onValueChange={v => onChange({ visibleTo: v })}
           />
         </FormField>
       </div>
@@ -757,7 +758,7 @@ function StepConfigure({ data, onChange, embedDomains }) {
               <Select
                 options={ACTIVATION_OPTIONS.map(a => ({ value: a.value, label: a.label }))}
                 value={data.activation}
-                onChange={v => onChange({ activation: v })}
+                onValueChange={v => onChange({ activation: v })}
               />
             </FormField>
             {data.activation === 'conditional' && (
@@ -765,7 +766,7 @@ function StepConfigure({ data, onChange, embedDomains }) {
                 <Select
                   options={CONDITION_OPTIONS.map(c => ({ value: c, label: c }))}
                   value={data.condition}
-                  onChange={v => onChange({ condition: v })}
+                  onValueChange={v => onChange({ condition: v })}
                 />
               </FormField>
             )}
@@ -775,7 +776,7 @@ function StepConfigure({ data, onChange, embedDomains }) {
               <Select
                 options={TOKEN_LIFETIME_OPTIONS.map(t => ({ value: String(t.value), label: t.label }))}
                 value={String(data.tokenLifetime)}
-                onChange={v => onChange({ tokenLifetime: Number(v) })}
+                onValueChange={v => onChange({ tokenLifetime: Number(v) })}
               />
             </FormField>
 
@@ -801,7 +802,7 @@ function StepConfigure({ data, onChange, embedDomains }) {
                       }}
                     >
                       <div className={s.checkBox}>{active ? '✓' : ''}</div>
-                      {field.label}{field.description ? ` — ${field.description}` : ''}
+                      {field.label}{field.description ? `, ${field.description}` : ''}
                     </button>
                   );
                 })}
@@ -818,7 +819,7 @@ function StepConfigure({ data, onChange, embedDomains }) {
 function StepPreview({ data, onChange, embedDomains }) {
   const allDomains = (embedDomains && embedDomains.length > 0) ? embedDomains : DOMAINS;
   const selectedDomain = allDomains.find(d => d.id === data.domainId);
-  const fullUrl = selectedDomain ? `https://${selectedDomain.domain}${data.url}` : '';
+  const fullUrl = selectedDomain ? embedUrl(selectedDomain.domain, data.url) : '';
   const selectedFieldCount = data.contextFields.length;
   const totalFieldCount = CONTEXT_FIELDS.length;
   const [iframeLoading, setIframeLoading] = useState(true);
@@ -832,7 +833,7 @@ function StepPreview({ data, onChange, embedDomains }) {
     <div>
       {/* ── Widget Preview (matching Figma node 239:24297) ── */}
       <div style={{ border: '0.5px solid var(--neutral-150)', borderRadius: 8, overflow: 'hidden', marginBottom: 16 }}>
-        {/* Widget header — collapsible */}
+        {/* Widget header: collapsible */}
         <button
           type="button"
           className="buttonReset"
@@ -894,7 +895,7 @@ function StepPreview({ data, onChange, embedDomains }) {
                 <Icon name="solar:link-round-linear" size={12} color="#D9A50B" />
                 <span style={{ color: 'var(--status-warning)' }}>External Content Provided by Your Org</span>
               </div>
-              <ActionButton icon="solar:refresh-linear" size="S" tooltip="Refresh preview" onClick={refreshIframe} />
+              <ActionButton icon="solar:refresh-linear" size="sm" tooltip="Refresh preview" onClick={refreshIframe} />
             </div>
           </>
         )}
@@ -916,17 +917,17 @@ function StepPreview({ data, onChange, embedDomains }) {
       <div className={s.summaryCard} style={{ marginBottom: 16 }}>
         <div className={s.summaryLabel}>Save Summary</div>
         <div className={s.summaryGrid}>
-          <div className={s.summaryKey}>Name</div><div className={s.summaryVal}>{data.name || '—'}</div>
-          <div className={s.summaryKey}>Surfaces</div><div className={s.summaryVal}>{data.surfaces.map(sf => sf === 'web' ? 'Fold Web' : sf === 'sidecar' ? 'Sidecar' : 'Mobile').join(' · ') || '—'}</div>
+          <div className={s.summaryKey}>Name</div><div className={s.summaryVal}>{data.name || '-'}</div>
+          <div className={s.summaryKey}>Surfaces</div><div className={s.summaryVal}>{data.surfaces.map(sf => sf === 'web' ? 'Fold Web' : sf === 'sidecar' ? 'Sidecar' : 'Mobile').join(' · ') || '-'}</div>
           <div className={s.summaryKey}>Placement</div>
           <div className={s.summaryVal}>
             {[data.webPlacement && WEB_PLACEMENT_OPTIONS.find(p => p.value === data.webPlacement)?.label,
               data.sidecarPlacement && `Sidecar ${data.sidecarPlacement}`,
               data.mobilePlacement && MOBILE_PLACEMENTS.find(p => p.value === data.mobilePlacement)?.label,
-            ].filter(Boolean).join(' · ') || '—'}
+            ].filter(Boolean).join(' · ') || '-'}
           </div>
           <div className={s.summaryKey}>URL</div>
-          <div className={s.summaryVal} style={{ fontFamily: "'SF Mono', monospace", fontSize: 'var(--font-xs)' }}>{fullUrl || '—'}</div>
+          <div className={s.summaryVal} style={{ fontFamily: "'SF Mono', monospace", fontSize: 'var(--font-xs)' }}>{fullUrl || '-'}</div>
           <div className={s.summaryKey}>Token lifetime</div><div className={s.summaryVal}>{data.tokenLifetime} min</div>
           <div className={s.summaryKey}>Context scope</div><div className={s.summaryVal}>{selectedFieldCount} of {totalFieldCount} fields</div>
         </div>
@@ -1083,18 +1084,18 @@ export function ComponentWizardDrawer() {
 
   const headerRight = (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-      <Button variant="primary" size="L" disabled={!canNext || saving} onClick={() => {
+      <Button disabled={!canNext} onClick={() => {
         if (step < STEPS.length - 1) setStep(step + 1);
         else handleSave();
-      }}>
-        {saving ? 'Saving...' : step === STEPS.length - 1 ? (editId ? 'Save Changes' : 'Save & Enable') : 'Next'}
+      }} loading={saving}>
+        {step === STEPS.length - 1 ? (editId ? 'Save Changes' : 'Save & Enable') : 'Next'}
       </Button>
     </div>
   );
 
   return (
     <Drawer
-      title={editId ? `Edit — ${data.name}` : 'New Component'}
+      title={editId ? `Edit: ${data.name}` : 'New Component'}
       onClose={close}
       headerRight={headerRight}
     >

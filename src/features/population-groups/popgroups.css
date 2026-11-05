@@ -1,9 +1,9 @@
-/* ── Population Groups — animations & utility classes ──
+/* ── Population Groups: animations & utility classes ──
    Kept as plain (non-module) CSS because the ported view references these
    keyframe names from inline `animation:` style strings. Scoped by unique
    `pg-`/feature-specific names so they don't collide with app globals. */
 
-/* Create Pop Group drawer — overrides on the shared Drawer panel.
+/* Create Pop Group drawer: overrides on the shared Drawer panel.
    Standard shared-Drawer width (700px) until a file is uploaded; widens to a
    two-column layout during CSV processing. */
 .pg-create-panel {
@@ -13,7 +13,7 @@
   width: min(70vw, 1400px) !important;
   min-width: 800px;
 }
-/* Body owns no padding — the inner form / two-column panels manage their own. */
+/* Body owns no padding: the inner form / two-column panels manage their own. */
 .pg-create-body {
   padding: 0 !important;
   overflow: hidden !important;
@@ -50,13 +50,13 @@
   pointer-events: none;
 }
 
-/* Thin custom scrollbar — used by scrollable panels in the view */
+/* Thin custom scrollbar: used by scrollable panels in the view */
 .thin-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
 .thin-scroll::-webkit-scrollbar-track { background: transparent; }
 .thin-scroll::-webkit-scrollbar-thumb { background: var(--neutral-150); border-radius: 3px; }
 .thin-scroll::-webkit-scrollbar-thumb:hover { background: var(--neutral-200); }
 
-/* Criteria builder + dynamic value inputs — focus ring */
+/* Criteria builder + dynamic value inputs, focus ring */
 .pg-crit-select:focus { border-color: var(--primary-300) !important; outline: none; }
 .pg-input:focus { border-color: var(--primary-300) !important; box-shadow: 0 0 0 3px var(--primary-100) !important; outline: none; }
 

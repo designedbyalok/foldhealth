@@ -1,4 +1,4 @@
-# Agent Runtime — Implementation Plan
+# Agent Runtime: Implementation Plan
 
 _Turning the agent-builder from a UI shell into a real, callable AI agent._
 _Planned 2026-08-06. Work starts 2026-08-07._
@@ -7,19 +7,19 @@ _Planned 2026-08-06. Work starts 2026-08-07._
 
 The builder is UI-complete but has no runtime:
 
-- **Canvas** — `src/features/agent-builder/AgentCanvas.jsx` persists flows
+- **Canvas**: `src/features/agent-builder/AgentCanvas.jsx` persists flows
   (nodes/edges/versions) to `agent_flows` via `saveFlow` / `createFlowVersion`
   in `src/store/useAppStore.js` (~line 2830).
-- **Configure** — `ConfigurePanel.jsx` + `GlobalSettings.jsx` persist to
+- **Configure**: `ConfigurePanel.jsx` + `GlobalSettings.jsx` persist to
   `agent_config` (JSON blobs). The model dropdown (`LLM_MODELS` in
   `GlobalSettings.jsx`) writes to `builderAgent.globalSettings`, **not**
-  `agents.model` — it's cosmetic.
-- **Chat** — `ChatPanel.jsx` is keyword-matching mock (regex over "add node",
+  `agents.model`, it's cosmetic.
+- **Chat**: `ChatPanel.jsx` is keyword-matching mock (regex over "add node",
   "remove node", etc. + `flowGenerator.js` templates). No LLM anywhere.
-- **Analytics** — mock data.
-- **Storage** — `agents` (now with `model`/`role`/`avatar_url` columns),
+- **Analytics**: mock data.
+- **Storage**: `agents` (now with `model`/`role`/`avatar_url` columns),
   `agent_flows` (versioned, `is_current` unique index), `agent_config`.
-- **Edge functions** — pattern already exists: `supabase/functions/delete-user`,
+- **Edge functions**: pattern already exists: `supabase/functions/delete-user`,
   `supabase/functions/featurebase-jwt`.
 
 ## Architecture decisions (recommended)
@@ -27,7 +27,7 @@ The builder is UI-complete but has no runtime:
 | Decision | Choice | Why |
 |---|---|---|
 | Run endpoint host | **Supabase Edge Function** (`agent-run`) | Pattern exists in repo; secrets already live in Supabase; same auth boundary as the SPA (Supabase JWT); tools/KB handlers sit next to the data. Vercel Functions remain a fallback (repo is Vercel-linked) if Deno limits bite. |
-| Provider layer | **Vercel AI Gateway** (one key, OpenAI-compatible endpoint / AI SDK `gateway()` ids) | One auth boundary for OpenAI + Anthropic + Gemini; retries, fallbacks, per-key cost tracking built in. Key stored via `supabase secrets set AI_GATEWAY_API_KEY=…` — never in client `.env`. |
+| Provider layer | **Vercel AI Gateway** (one key, OpenAI-compatible endpoint / AI SDK `gateway()` ids) | One auth boundary for OpenAI + Anthropic + Gemini; retries, fallbacks, per-key cost tracking built in. Key stored via `supabase secrets set AI_GATEWAY_API_KEY=…`, never in client `.env`. |
 | Model identity | **Canonical gateway ids** (`openai/gpt-4.1-mini`, `anthropic/claude-opus-4-7`) in `agents.model`; display labels live in one registry module | Display strings like "ChatGPT 4.5 Mini" can't route. One `src/lib/modelRegistry.js` maps id ⇄ label for the table + dropdowns. |
 | Prompt compilation | **Client-side at save time**, persisted to `agent_flows.compiled_prompt` | Runtime never re-walks the graph per message. Pure function → unit-testable. |
 | Transcripts | New `agent_sessions` + `agent_messages` tables | Runtime needs history per session; analytics (M3) aggregates from the same rows. |
@@ -36,22 +36,22 @@ The builder is UI-complete but has no runtime:
 
 1. **ChatPanel dual role.** Today it's a *flow-editing copilot* (add/remove
    nodes). The review treats it as the *agent test chat*. Recommendation:
-   split into two modes/tabs — "Test agent" (talks to `agent-run`, M1) and
+   split into two modes/tabs: "Test agent" (talks to `agent-run`, M1) and
    "Edit flow" (keep the current copilot; make it LLM-backed later).
-2. **Which 2–3 tools ship in M2** — proposal below: `kb_search`,
+2. **Which 2–3 tools ship in M2**, proposal below: `kb_search`,
    `appointment_lookup` (backed by `appointments` table),
    `patient_chart_summary` (backed by `all_patients`).
-3. **Gateway account/key ownership** — need an AI Gateway API key before M1
+3. **Gateway account/key ownership**: need an AI Gateway API key before M1
    day 2.
 
 ---
 
-## Phase 0 — Keys & model plumbing (Day 1, ~half day)
+## Phase 0: Keys & model plumbing (Day 1, ~half day)
 
 1. Create the AI Gateway key → `supabase secrets set AI_GATEWAY_API_KEY=…`.
-2. `src/lib/modelRegistry.js` — single source of truth:
+2. `src/lib/modelRegistry.js`, single source of truth:
    `[{ id: 'openai/gpt-4.1-mini', label: 'GPT 4.1 mini', provider: 'openai' }, …]`.
-3. Migration `supabase/agents_model_canonicalize.sql` — normalize existing
+3. Migration `supabase/agents_model_canonicalize.sql`, normalize existing
    `agents.model` display strings → canonical ids (idempotent `UPDATE … WHERE`).
 4. Wire the Configure/GlobalSettings model `Select` to read/write
    `agents.model` (via the store's agent update path), sourced from the
@@ -60,10 +60,10 @@ The builder is UI-complete but has no runtime:
 **Verify:** change model in builder → row updates in Supabase → AgentsTable
 shows new label after reload.
 
-## Phase 1 — M1: Compiled prompt + run endpoint + real chat (Week 1)
+## Phase 1: M1: Compiled prompt + run endpoint + real chat (Week 1)
 
 ### 1.1 Prompt compiler
-- `src/lib/promptCompiler.js` — pure `compilePrompt({ nodes, edges, config, agent })`:
+- `src/lib/promptCompiler.js`, pure `compilePrompt({ nodes, edges, config, agent })`:
   - Walk the graph from `startNode` following edges (breadth-first, cycle-safe).
   - Each `conversationNode` → a numbered scoped instruction: label, prompt,
     per-node `guardrails`, `transitions` rendered as "if X → go to step N".
@@ -106,7 +106,7 @@ shows new label after reload.
 follows the compiled TOC script; rows appear in `agent_messages`; changing
 `agents.model` changes the provider actually hit (check gateway logs).
 
-## Phase 2 — M2: Knowledge base + tools (Weeks 2–3)
+## Phase 2: M2: Knowledge base + tools (Weeks 2–3)
 
 ### 2.1 pgvector KB
 - Migration: `CREATE EXTENSION IF NOT EXISTS vector`;
@@ -127,16 +127,16 @@ follows the compiled TOC script; rows appear in `agent_messages`; changing
 
 ### 2.3 `agent_config` schema upgrade (review gap #3)
 - Migration adding discrete columns: `tool_ids TEXT[]`, `kb_ids TEXT[]`,
-  `model TEXT`, `temperature NUMERIC` — backfill from the JSON blobs, keep
+  `model TEXT`, `temperature NUMERIC`, backfill from the JSON blobs, keep
   blobs during transition, switch store reads to columns.
 
 **Verify:** ask the test agent a KB question → `kb_search` fires → grounded
 answer; ask for an appointment → `appointment_lookup` returns a real row.
 
-## Phase 3 — M3: Guardrails, audit, real analytics (Weeks 4–5)
+## Phase 3: M3: Guardrails, audit, real analytics (Weeks 4–5)
 
 - `agent_runs` metrics table (session_id, model, tokens, cost_usd,
-  latency_ms, outcome, escalated) — written by `agent-run` per turn.
+  latency_ms, outcome, escalated), written by `agent-run` per turn.
 - Plug runs into the existing `audit_logs` table.
 - Inbound PHI redaction pass + moderation check before each response;
   compliance policies from Configure become injected prompt fragments or
@@ -150,7 +150,7 @@ answer; ask for an appointment → `appointment_lookup` returns a real row.
 **Verify:** run 10 test conversations → AnalyticsPanel numbers match SQL
 aggregates; a message containing seeded PHI gets redacted in stored rows.
 
-## Phase 4 — M4: Voice (separate track, after text runtime is proven)
+## Phase 4: M4: Voice (separate track, after text runtime is proven)
 
 - STT (Deepgram/AssemblyAI) → same `agent-run` loop → TTS
   (ElevenLabs/Cartesia); Twilio/Vapi for telephony. The `voice` /
@@ -161,12 +161,12 @@ aggregates; a message containing seeded PHI gets redacted in stored rows.
 
 ## Working notes
 
-- **Migrations:** repo has no `supabase/migrations` dir — apply SQL files
+- **Migrations:** repo has no `supabase/migrations` dir: apply SQL files
   manually via the aws-1 session pooler, keep every file idempotent like the
   existing ones. `config.toml` must stay a complete mirror; never
   `supabase config push` casually.
 - **New UI** (Test-agent tab, tool chips, analytics swaps) goes through the
-  `fold-feature-builder` skill — DS primitives, tokens, Solar `*-linear`
+  `fold-feature-builder` skill: DS primitives, tokens, Solar `*-linear`
   icons, Supabase-backed data.
 - **PRs:** DS check must be green before merge; no pushes without an
   explicit ask.

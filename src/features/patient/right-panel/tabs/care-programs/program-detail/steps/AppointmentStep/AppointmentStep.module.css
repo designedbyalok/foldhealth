@@ -53,6 +53,11 @@
   flex-direction: column;
   gap: 8px;
 }
+/* A collapsible body cancels the .section gap and puts it back inside, so a
+   closed section leaves no stray space under its header. */
+.sectionCollapse { margin-top: calc(var(--space-2) * -1); }
+.sectionBody { padding-top: var(--space-2); }
+.chevron { transition: transform var(--duration-medium) var(--ease-out); }
 .sectionHead {
   display: flex;
   align-items: center;
@@ -101,7 +106,7 @@
 .titleText { font-size: var(--font-base); color: var(--neutral-500); }
 .subtitle { font-size: var(--font-md); color: var(--neutral-300); }
 .typeCell { color: var(--neutral-300); }
-/* Inner flex keeps the label + recurring badge on one line — `display: flex`
+/* Inner flex keeps the label + recurring badge on one line, `display: flex`
    on a <td> would break table column sizing. */
 .typeInner { display: inline-flex; align-items: center; gap: var(--space-2); }
 .recurring {

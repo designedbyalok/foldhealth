@@ -1,6 +1,6 @@
 // "Last Reviewed by" attribution helpers for ICD cards.
 //
-// An ICD is reviewed only by a coding role — Coder, QA, or Compliance. Support
+// An ICD is reviewed only by a coding role, Coder, QA, or Compliance. Support
 // handles the *document* review workflow (pass/fail), never the ICD review, so
 // an activity whose actor is Support must not surface as "Last Reviewed by …".
 // This also normalizes legacy role labels that predate the QA / Compliance
@@ -29,7 +29,7 @@ export function normalizeRole(role) {
 }
 
 // The name to show after "Last Reviewed by", or null when the ICD has not been
-// reviewed by a coding role yet (e.g. only Support has touched it so far — its
+// reviewed by a coding role yet (e.g. only Support has touched it so far, its
 // document workflow precedes the coder's ICD review).
 export function reviewedByLabel(by) {
   if (!by || SUPPORT_SUFFIX.test(by)) return null;

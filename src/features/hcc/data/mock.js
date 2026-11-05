@@ -1,4 +1,4 @@
-// HCC Worklist mock data — ported verbatim from /Users/alokk/Downloads/HCC/hcc_worklist_v2.tsx
+// HCC Worklist mock data: ported verbatim from /Users/alokk/Downloads/HCC/hcc_worklist_v2.tsx
 // (lines 2709–2901). The `C` map below maps the upstream color tokens to our design-system
 // CSS variables, so data rows keep their original `labelColor: C.error` shape and the
 // tokens re-theme for free.
@@ -6,7 +6,7 @@
 import { deriveDob } from '../../../lib/patientDob';
 import { mockFoldId } from '../../../data/mockFoldIds';
 
-// Local color map — edit these to change the palette of every dos-label pill at once.
+// Local color map: edit these to change the palette of every dos-label pill at once.
 const C = {
   error:   'var(--status-error)',
   warning: 'var(--status-warning)',
@@ -16,7 +16,7 @@ const C = {
   grey300: 'var(--neutral-300)',
 };
 
-// Column definitions — shared between the table header and each row so they stay
+// Column definitions: shared between the table header and each row so they stay
 // in lockstep. `w` is only a hint for the `min-width` of the column.
 export const HCC_COLUMNS = [
   { k: 'dos',   lb: 'DOS',                w: 140 },
@@ -145,18 +145,18 @@ const MEMBERS_RAW = [
 ];
 
 // Derive POS (Place of Service) code + description from the visit type field.
-// Standard CMS POS codes — 11 Office, 02 Telehealth.
+// Standard CMS POS codes: 11 Office, 02 Telehealth.
 const POS_MAP = {
   'Walk-in':    { code: '11', desc: 'Office' },
   'Telehealth': { code: '02', desc: 'Telehealth' },
 };
 
 // Deterministic hash used below to derive a stable member id PER NAME.
-// Fold's real schema is one row per Patient+DOS+Provider+POS — the same
+// Fold's real schema is one row per Patient+DOS+Provider+POS, the same
 // real patient legitimately spans multiple rows (e.g. "Annette Brave"
 // appears twice in MEMBERS_RAW, once per visit-bucket), and a real
 // backend would always give those rows the SAME memberId (it's the
-// patient's canonical identifier). Hashing by name — not array index —
+// patient's canonical identifier). Hashing by name, not array index,
 // keeps that invariant true here too, so a patient's repeated records
 // share one memberId in the worklist (Figma 4680:138476).
 function hashStr(s) {
@@ -171,9 +171,9 @@ function hashStr(s) {
 // members SOME entries that differ in provider/POS from their first visit.
 // Entry 0 always keeps the member's own rp/vt-derived POS (so today's
 // single-DOS rows render identically to before this pool existed); entries
-// 1+ alternate through this pool so the composite key's split — two DOS
+// 1+ alternate through this pool so the composite key's split: two DOS
 // sharing a date but differing provider/POS must never collapse into one
-// record — actually gets exercised by the mock dataset.
+// record: actually gets exercised by the mock dataset.
 const RENDERING_PROVIDER_POOL = [
   { name: 'Dr. Marcus Osei',   pos: '21', posDesc: 'Inpatient Hospital' },
   { name: 'Dr. Aisha Mehta',   pos: '20', posDesc: 'Urgent Care Facility' },
@@ -231,7 +231,7 @@ export const HCC_MEMBERS = MEMBERS_RAW.map((m, i) => {
 // Name-keyed lookup of the rich mock so callers (DiagPanel, store enrichment)
 // can fill in prototype-shape fields when Supabase returns them stripped.
 // First entry wins when a name appears in multiple rows (e.g. multi-visit
-// repeats for the same patient — we keep the visit-1 record as canonical).
+// repeats for the same patient: we keep the visit-1 record as canonical).
 export const HCC_MEMBER_BY_NAME = Object.fromEntries(
   HCC_MEMBERS.reduce((acc, m) => {
     if (m.name && !acc.find(([k]) => k === m.name)) acc.push([m.name, m]);

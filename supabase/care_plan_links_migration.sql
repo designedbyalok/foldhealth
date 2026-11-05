@@ -1,15 +1,15 @@
--- Care Plan links — attach existing Fold primitives (tasks, appointments) to a
+-- Care Plan links: attach existing Fold primitives (tasks, appointments) to a
 -- specific goal / intervention / barrier on a care plan (roadmap #11).
 --
 -- THE HOLE THIS CLOSES
--- The LinkChip on every goal/intervention/barrier was decorative — a count with
+-- The LinkChip on every goal/intervention/barrier was decorative, a count with
 -- no data behind it and a click that only toasted. A care manager could not say
 -- "this goal is supported by that follow-up appointment and this outreach task",
 -- regardless of where those primitives were created. This table records those
 -- links so the chip is real and the relationships persist.
 --
 -- WHAT THIS DOES
---   care_plan_links — one row per link. owner_type + owner_id point at the GBI
+--   care_plan_links: one row per link. owner_type + owner_id point at the GBI
 --   the link hangs off; entity_type + entity_id + entity_label capture the
 --   linked primitive (a task or an appointment) by reference, so the link
 --   survives even if the primitive is later edited. A UNIQUE constraint stops

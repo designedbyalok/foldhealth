@@ -6,12 +6,13 @@ import { OOO_ICON } from '../../../ooo/oooUtils';
 import styles from '../AccountPanel.module.css';
 
 /**
- * Row-level actions for the Users table: Reset Password, Disable/Enable,
+ * Row-level actions for the Users table: Reset Password (Unlock Account
+ * when the account is locked), Disable/Enable,
  * More menu (Edit / View OOO Records / Delete). Pending sign-ups get
  * Approve / Reject in place of Reset Password and Disable/Enable.
- * Non-admins see a plain "—" — every action on this component is admin-only.
+ * Non-admins see a plain "-", every action on this component is admin-only.
  */
-export function UserActions({ user, isAdmin, onResetPassword, onToggleStatus, onApprove, onReject, onEdit, onViewOoo, onDelete }) {
+export function UserActions({ user, isAdmin, locked = false, onResetPassword, onUnlock, onToggleStatus, onApprove, onReject, onEdit, onViewOoo, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -23,24 +24,27 @@ export function UserActions({ user, isAdmin, onResetPassword, onToggleStatus, on
   }, [menuOpen]);
 
   if (!isAdmin) {
-    return <span style={{ color: 'var(--neutral-200)', fontSize: 'var(--font-md)' }}>—</span>;
+    return <span style={{ color: 'var(--neutral-200)', fontSize: 'var(--font-md)' }}>-</span>;
   }
 
   return (
     <div className={styles.actions}>
       {user.status === 'Pending' ? (
         <>
-          <ActionButton icon="solar:check-circle-linear" size="L" tooltip="Approve Sign-up" onClick={onApprove} />
+          <ActionButton icon="solar:check-circle-linear" tooltip="Approve Sign-up" onClick={onApprove} />
           <span className={styles.actionDivider} />
-          <ActionButton icon="solar:close-circle-linear" size="L" tooltip="Reject Sign-up" onClick={onReject} />
+          <ActionButton icon="solar:close-circle-linear" tooltip="Reject Sign-up" onClick={onReject} />
         </>
       ) : (
         <>
-          <ActionButton icon="solar:password-linear" size="L" tooltip="Reset Password" onClick={onResetPassword} />
+          {locked ? (
+            <ActionButton icon="solar:lock-keyhole-unlocked-linear" tooltip="Unlock Account" onClick={onUnlock} />
+          ) : (
+            <ActionButton icon="solar:password-linear" tooltip="Reset Password" onClick={onResetPassword} />
+          )}
           <span className={styles.actionDivider} />
           <ActionButton
             icon={user.status === 'Active' ? 'solar:user-cross-linear' : 'solar:user-check-linear'}
-            size="L"
             tooltip={user.status === 'Active' ? 'Disable User' : 'Enable User'}
             onClick={onToggleStatus}
           />
@@ -48,7 +52,7 @@ export function UserActions({ user, isAdmin, onResetPassword, onToggleStatus, on
       )}
       <span className={styles.actionDivider} />
       <div style={{ position: 'relative' }} ref={menuRef}>
-        <ActionButton icon="solar:menu-dots-linear" size="L" tooltip="More Options" onClick={() => setMenuOpen(v => !v)} />
+        <ActionButton icon="solar:menu-dots-linear" tooltip="More Options" onClick={() => setMenuOpen(v => !v)} />
         {menuOpen && createPortal(
           <div className={styles.moreDropdown} style={{
             position: 'fixed',

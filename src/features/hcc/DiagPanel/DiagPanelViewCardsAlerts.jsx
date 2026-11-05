@@ -103,7 +103,7 @@ export function DiagPanelViewCardsAlerts({
             View row
             <Icon name="solar:arrow-right-linear" size={12} color="currentColor" />
           </button>
-          <ActionButton size="S" tooltip="Dismiss" onClick={() => dismissNewRowNotice(memberId)}>
+          <ActionButton size="sm" tooltip="Dismiss" onClick={() => dismissNewRowNotice(memberId)}>
             <CloseIcon size={14} color="var(--neutral-300)" />
           </ActionButton>
         </div>

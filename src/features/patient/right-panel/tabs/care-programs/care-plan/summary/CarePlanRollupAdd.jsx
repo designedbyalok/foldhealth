@@ -7,6 +7,7 @@ import { INTERVENTION_EDITORS } from '../../../../../../settings/care-plan-libra
 import { AddTaskDrawer } from '../../../../../../tasks/AddTaskDrawer';
 import { addGoalsFromPicker, addBarriersFromPicker } from '../CarePlanView/carePlanPickerHandlers';
 import { buildInterventionRecordFromConfig, CARE_PLAN_INTERVENTION_MENU } from '../lib/carePlanInterventionMenu';
+import { isProgramClosed } from '../../../../../data/programStatus';
 
 const EMPTY_PLAN = { goals: [], interventions: [], barriers: [] };
 const KIND_NOUN = { goal: 'goal', intervention: 'intervention', barrier: 'barrier' };
@@ -47,7 +48,7 @@ export function CarePlanRollupAdd({ start, patientId, patientName, programs, onD
         items={[
           { section: `Add ${KIND_NOUN[start.kind]} to` },
           // A closed program's plan takes no new items.
-          ...programs.filter(p => p.status !== 'Closed').map(p => ({ key: p.id, label: p.name || p.code })),
+          ...programs.filter(p => !isProgramClosed(p.status)).map(p => ({ key: p.id, label: p.name || p.code })),
         ]}
         onSelect={(id) => { pickedRef.current = true; setProgram(programs.find(p => p.id === id) || null); }}
         onClose={closeMenu}

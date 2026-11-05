@@ -1,4 +1,4 @@
--- TOC AI Tasks — idempotent program tasks keyed by source_key so agent-
+-- TOC AI Tasks: idempotent program tasks keyed by source_key so agent-
 -- generated follow-ups persist per patient and survive reload.
 
 ALTER TABLE tasks

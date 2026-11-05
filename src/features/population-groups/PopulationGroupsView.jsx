@@ -1,5 +1,5 @@
 /**
- * PopulationGroupsView.jsx — Fold Health · Population Groups panel
+ * PopulationGroupsView.jsx, Fold Health · Population Groups panel
  * Ported from the Pop-group-creation-via-file-upload prototype.
  */
 

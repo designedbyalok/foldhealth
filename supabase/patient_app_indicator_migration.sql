@@ -1,5 +1,5 @@
 -- ============================================================
--- Patient app active indicator — per-patient status + per-org
+-- Patient app active indicator: per-patient status + per-org
 -- feature flag to show/hide the indicator in the P360 banner
 -- and All Patients table.
 -- ============================================================

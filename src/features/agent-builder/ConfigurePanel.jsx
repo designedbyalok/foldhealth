@@ -38,7 +38,7 @@ function buildForm(agent, builderConfig) {
 /**
  * Owns the editable form. `initialForm` seeds it once per mount, so the parent
  * resets it by changing this component's `key` rather than by syncing state in
- * an effect — the form has to stay mutable, so deriving it on every render
+ * an effect: the form has to stay mutable, so deriving it on every render
  * would throw away whatever the user has typed.
  */
 function ConfigureForm({ agent, initialForm, expanded, toggleExpanded, setGoalDetailId, saveAgentConfig, showToast, onSave }) {
@@ -63,7 +63,7 @@ function ConfigureForm({ agent, initialForm, expanded, toggleExpanded, setGoalDe
     });
   };
 
-  // Previously this handler existed but was never rendered — the Configure
+  // Previously this handler existed but was never rendered, the Configure
   // tab had no save affordance at all and every edit was lost on unmount.
   const handleSave = async () => {
     if (!agent?.id || saving) return;
@@ -91,8 +91,8 @@ function ConfigureForm({ agent, initialForm, expanded, toggleExpanded, setGoalDe
         setGoalDetailId={setGoalDetailId}
       />
       <div className={styles.saveBar}>
-        <Button variant="primary" onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving…' : 'Save Configuration'}
+        <Button onClick={handleSave} loading={saving}>
+          Save Configuration
         </Button>
       </div>
     </>
@@ -134,7 +134,7 @@ export function ConfigurePanel({ agent, onSave }) {
   // row lands a tick later. 'loaded' vs 'empty' is what flips the remount.
   //
   // Once past 'loading' the key is stable, so edits survive re-renders, and it
-  // only re-seeds when the agent changes — matching the one-shot hydration the
+  // only re-seeds when the agent changes, matching the one-shot hydration the
   // removed effect did via its formLoadedRef guard.
   const configState = builderConfigLoading ? 'loading' : builderConfig ? 'loaded' : 'empty';
   const formKey = `${agent?.id ?? 'none'}:${configState}`;

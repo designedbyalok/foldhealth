@@ -1,0 +1,623 @@
+.headerDivider {
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+/* Tabs + column headers, pinned under the drawer header. Pulls up through
+   the body's 16px padding and bleeds to its edges, like the list below. */
+.stickyTop {
+  position: sticky;
+  top: -16px;
+  z-index: 2;
+  margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) 0;
+  background: var(--neutral-0);
+}
+
+.padded {
+  padding-top: var(--space-4);
+}
+
+/* One grid for the header and every row, so reviewers, status and actions
+   sit in the same columns all the way down. */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 104px 160px;
+  column-gap: var(--space-3);
+  align-items: center;
+  padding: 0 var(--space-4);
+}
+
+.table {
+  margin: 0 calc(-1 * var(--space-4));
+}
+
+.head {
+  height: 32px;
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--neutral-300);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+/* Line the column label up with the titles, past the chevron. */
+.headFeature {
+  padding-left: var(--space-6);
+}
+
+.headActions {
+  text-align: right;
+}
+
+.dayRow {
+  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-4) calc(var(--space-1) + var(--space-1) / 2) var(--space-10);
+  background: var(--neutral-50);
+  border-bottom: 0.5px solid var(--neutral-100);
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--neutral-300);
+}
+
+.group + .group,
+.item + .item {
+  border-top: 0.5px solid var(--neutral-100);
+}
+
+.group:last-child {
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+
+.row {
+  position: relative;
+  min-height: 52px;
+  transition: background-color 160ms ease, opacity 160ms ease;
+}
+
+/* Sub-items are one line, so they sit tighter than their feature. */
+.childRow {
+  min-height: 40px;
+}
+
+.childRow .rowMain {
+  padding: var(--space-1) 0;
+}
+
+.childRow .rowTitle {
+  font-size: var(--font-sm);
+  font-weight: 400;
+  color: var(--neutral-400);
+}
+
+.inlineMeta {
+  margin-left: var(--space-2);
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+/* ── Drag to nest ── */
+
+/* Grip in the row's left gutter: takes no column space, shows on hover. */
+.dragHandle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-4);
+  height: var(--space-6);
+  padding: 0;
+  border: 0;
+  border-radius: var(--space-1);
+  background: transparent;
+  cursor: grab;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 120ms ease;
+  touch-action: none;
+}
+
+.row:hover .dragHandle,
+.dragHandle:focus-visible {
+  opacity: 1;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: -2px;
+}
+
+/* The row being dragged stays as a faint placeholder. */
+.rowDragging {
+  opacity: 0.4;
+}
+
+.rowDragging .dragHandle {
+  opacity: 1;
+}
+
+.dropTarget,
+.dropTarget:hover {
+  background: var(--primary-100);
+  outline: 1px solid var(--primary-300);
+  outline-offset: -1px;
+}
+
+.dropBlocked,
+.dropBlocked:hover {
+  background: var(--neutral-50);
+  cursor: not-allowed;
+}
+
+/* A moved row glows where it landed, then fades back. */
+.rowFlash {
+  animation: rowFlash 1.4s ease-out;
+}
+
+@keyframes rowFlash {
+  0%, 30% { background: var(--primary-100); }
+  100% { background: transparent; }
+}
+
+.rootZoneWrap {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  padding: var(--space-2) var(--space-4);
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-popover);
+  opacity: 0;
+  transform: translateY(calc(-1 * var(--space-1)));
+  pointer-events: none;
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.rootZoneWrapOpen {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.rootZone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px dashed var(--primary-200);
+  border-radius: var(--space-2);
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.rootZoneWhere {
+  color: var(--neutral-300);
+}
+
+.ghostRow {
+  border-top: 0.5px solid var(--neutral-100);
+  background: var(--primary-50);
+  outline: 1px dashed var(--primary-300);
+  outline-offset: -3px;
+  animation: ghostIn 140ms ease-out;
+}
+
+.ghostTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--space-1) + var(--space-1) / 2);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-left: var(--space-6);
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+}
+
+@keyframes ghostIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.rootZoneOver {
+  border-style: solid;
+  border-color: var(--primary-300);
+  background: var(--primary-100);
+}
+
+.dragPreview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: max-content;
+  max-width: 360px;
+  padding: var(--space-2) var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-popover);
+  cursor: grabbing;
+}
+
+.dragPreviewText {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+
+.dragPreviewTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.dragHint,
+.dragHintOk {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+.dragHintOk {
+  color: var(--primary-300);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row,
+  .dragHandle,
+  .rootZone,
+  .rootZoneWrap {
+    transition: none;
+  }
+
+  .rowFlash,
+  .ghostRow {
+    animation: none;
+  }
+}
+
+.row:hover,
+.rowExpanded {
+  background: var(--neutral-50);
+}
+
+/* The item the review box is open on. */
+.rowReviewing,
+.rowReviewing:hover {
+  background: var(--primary-100);
+  box-shadow: inset 2px 0 0 var(--primary-300);
+}
+
+.reviewingBadge {
+  flex-shrink: 0;
+  display: inline-flex;
+}
+
+.contextRow .rowTitle {
+  color: var(--neutral-300);
+}
+
+.featureCell {
+  min-width: 0;
+}
+
+.childCell {
+  padding-left: var(--space-6);
+}
+
+.rowMain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-2) 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chevron {
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+  transition: transform 160ms ease;
+}
+
+.chevronOpen {
+  transform: rotate(0deg);
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 4);
+  min-width: 0;
+}
+
+.rowTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.rowMeta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+.reviewersButton {
+  display: inline-flex;
+  align-items: center;
+  margin: calc(-1 * var(--space-1));
+  padding: var(--space-1);
+  border: none;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}
+
+.reviewersButton:hover {
+  background: var(--neutral-100);
+}
+
+.statusCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(var(--space-1) / 2);
+}
+
+/* Badge centres itself (align-self) by default; keep it on the left edge
+   with the date under it. */
+.statusCell > * {
+  align-self: flex-start;
+}
+
+.signedOn {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(var(--space-1) + var(--space-1) / 2);
+}
+
+.actionSlots {
+  display: grid;
+  grid-template-columns: 80px 1px 24px 1px 24px;
+  column-gap: calc(var(--space-1) + var(--space-1) / 2);
+  justify-content: end;
+  align-items: center;
+}
+
+.actionSlots > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Hug the divider, so the gap to it is the same on every row. */
+.actionSlots > .signOffSlot {
+  justify-content: flex-end;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0 var(--space-4) calc(var(--space-3) + var(--space-1) / 2) var(--space-10);
+  background: var(--neutral-50);
+}
+
+.childDetail {
+  padding-left: var(--space-16);
+}
+
+.description {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+  line-height: 1.5;
+}
+
+.reviewers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reviewer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.reviewerLine {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--space-1) + var(--space-1) / 2);
+  font-size: var(--font-sm);
+}
+
+.reviewerName {
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.reviewerVia {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+.reviewerWhen {
+  color: var(--neutral-300);
+}
+
+.comment {
+  margin: 0 0 0 var(--space-5);
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+  line-height: 1.5;
+}
+
+.reviewComments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.reviewCommentsTitle {
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--neutral-300);
+}
+
+.reviewCommentList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reviewComment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.reviewPoints {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reviewPoint {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-left: var(--space-2);
+  border-left: 1px solid var(--neutral-150);
+}
+
+.reviewPointHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--font-xs);
+}
+
+.reviewPointNo {
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.reviewPointPage {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-300);
+}
+
+.reviewCommentBody {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.reviewCommentBody p,
+.reviewCommentBody ul,
+.reviewCommentBody ol {
+  margin: 0;
+}
+
+.reviewCommentBody ul,
+.reviewCommentBody ol {
+  padding-left: var(--space-4);
+  white-space: normal;
+}
+
+.reviewCommentBody a {
+  color: var(--primary-300);
+}
+
+.reviewThumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.reviewThumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 54px;
+  overflow: hidden;
+  padding: 0;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-1);
+  background: var(--neutral-0);
+  cursor: zoom-in;
+}
+
+.reviewThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.commentBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-left: var(--space-5);
+}
+
+.commentActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.noReviewers {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}

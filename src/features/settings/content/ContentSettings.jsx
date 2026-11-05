@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNativeDialog } from '../../../hooks/useNativeDialog';
 import { Icon } from '../../../components/Icon/Icon';
@@ -8,18 +8,24 @@ import { Button } from '../../../components/Button/Button';
 import { SectionTitleBar } from '../../../components/SectionTitleBar/SectionTitleBar';
 import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { CloseIcon } from '../../../components/Icon/CloseIcon';
 import { useAppStore } from '../../../store/useAppStore';
 import { EmailPreviewDrawer } from './EmailPreviewDrawer';
 import { ComponentsTab } from './ComponentsTab';
 import { AddNoteTemplateDrawer } from './AddNoteTemplateDrawer';
 import { NoteTemplatePreviewDrawer } from './NoteTemplatePreviewDrawer';
+import { EmailUsageBadge } from '../../automations/content/EmailUsageBadge';
+import { EmailUsageGuard } from '../../automations/content/EmailUsageGuard';
+import { loadEmailUsage } from '../../automations/content/loadEmailUsage';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { ActivityLog } from '../../../components/ActivityLog/ActivityLog';
 import { formShareLink, copyToClipboard } from '../../forms/formLink';
 import { MEASURE_NAMES } from '../../hedis-worklist/ClinicalNotePanel.utils';
 import { toActivityLogEntries } from '../../hedis-worklist/CareGapDetailDrawer.utils';
+import { supabase } from '../../../lib/supabase';
+import { campaignRowToJs } from '../../../store/lib/campaignStoreMappers';
+import { ACCOUNT_SECURITY_EMAIL_TEMPLATES, accountSecurityEmailTemplateToRow } from '../../email-builder/accountSecurityEmailTemplates';
 import styles from './ContentSettings.module.css';
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -43,7 +49,7 @@ function BulkSelectCloseIcon({ size = 20 }) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// EmailsBulkBar — floating action bar that appears when ≥ 1 email selected.
+// EmailsBulkBar: floating action bar that appears when ≥ 1 email selected.
 // Mirrors components/BulkBar visuals but trimmed to just count + Delete + close.
 // ────────────────────────────────────────────────────────────────────────────
 function EmailsBulkBar({ count, onDelete, onClear, onExit }) {
@@ -57,8 +63,8 @@ function EmailsBulkBar({ count, onDelete, onClear, onExit }) {
       </div>
       <span className={styles.bulkDivider} />
       <Button
-        variant="secondary"
-        size="S"
+        variant="outline"
+        size="sm"
         leadingIcon="solar:trash-bin-trash-linear"
         onClick={onDelete}
       >
@@ -77,9 +83,9 @@ function EmailsBulkBar({ count, onDelete, onClear, onExit }) {
 // Compact "2h ago", "3d ago" formatter for the Last Updated column. Falls
 // back to the date itself once we're past a week.
 function formatRelative(iso) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return '—';
+  if (Number.isNaN(then)) return '-';
   const seconds = Math.floor((Date.now() - then) / 1000);
   if (seconds < 60) return 'Just now';
   const mins = Math.floor(seconds / 60);
@@ -91,7 +97,7 @@ function formatRelative(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-// Skeleton row that matches the live email row layout — 5 columns + action
+// Skeleton row that matches the live email row layout, 5 columns + action
 // cluster on the right. Reused for the initial load and per-page fetches.
 function EmailRowSkeleton() {
   return (
@@ -136,11 +142,11 @@ const CONTENT_TABS = [
 ];
 
 const STATUS_BADGE = {
-  running:   { variant: 'health-ok',     label: 'Running' },
-  paused:    { variant: 'status-review', label: 'Paused' },
-  scheduled: { variant: 'ai-neutral',    label: 'Scheduled' },
-  draft:     { variant: 'compliance-na', label: 'Draft' },
-  ended:     { variant: 'compliance-na', label: 'Ended' },
+  running:   { variant: 'success',     label: 'Running' },
+  paused:    { variant: 'warning', label: 'Paused' },
+  scheduled: { variant: 'neutral',    label: 'Scheduled' },
+  draft:     { variant: 'neutral', label: 'Draft' },
+  ended:     { variant: 'neutral', label: 'Ended' },
 };
 
 const STATUS_CYCLE = ['all', 'running', 'paused', 'scheduled', 'draft', 'ended'];
@@ -166,7 +172,7 @@ function RowMenu({ onPreview, onDuplicate, onDelete }) {
       <div ref={btnRef} style={{ display: 'inline-flex' }}>
         <ActionButton
           icon="solar:menu-dots-linear"
-          size="S"
+          size="sm"
           tooltip="More"
           onClick={openMenu}
         />
@@ -199,7 +205,7 @@ function RowMenu({ onPreview, onDuplicate, onDelete }) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Emails tab — column defs for WorklistShell. Sort headers are omitted for
+// Emails tab: column defs for WorklistShell. Sort headers are omitted for
 // now because the store fetches server-side and doesn't yet accept a sort
 // param; the shell falls back to plain `<th>`s when `sortKey` is unset.
 // ────────────────────────────────────────────────────────────────────────────
@@ -237,12 +243,32 @@ function EmailsTab({
   // an empty page (e.g. searching while on page 5 of unfiltered results).
   useEffect(() => { setPage(1); }, [searchVal, statusFilter]);
 
-  // Server-side fetch — runs on mount and whenever pagination/filter inputs
+  // Server-side fetch: runs on mount and whenever pagination/filter inputs
   // change. Supabase returns only the rows for the current page plus a total
   // count, so the table never holds the full dataset in memory.
   useEffect(() => {
     fetchContentEmails?.({ page, perPage, search: searchVal, status: statusFilter });
   }, [fetchContentEmails, page, perPage, searchVal, statusFilter]);
+
+  // The account security templates defined in code show here before they're
+  // in the database (until seeded, or until one is opened, which saves it).
+  // Rechecked whenever the list reloads, so a saved one stops showing twice.
+  const [savedKeys, setSavedKeys] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    supabase.from('campaigns').select('system_key')
+      .in('system_key', ACCOUNT_SECURITY_EMAIL_TEMPLATES.map(t => t.systemKey))
+      .then(({ data, error }) => { if (alive && !error) setSavedKeys(new Set((data || []).map(r => r.system_key))); });
+    return () => { alive = false; };
+  }, [emails]);
+  const localRows = useMemo(() => (savedKeys
+    ? ACCOUNT_SECURITY_EMAIL_TEMPLATES.filter(t => !savedKeys.has(t.systemKey)).map((t) => {
+      const dbRow = accountSecurityEmailTemplateToRow(t);
+      return { ...campaignRowToJs({ ...dbRow, id: `local:${t.systemKey}` }), local: true, dbRow };
+    })
+    : []), [savedKeys]);
+  const showLocal = page === 1 && !searchVal && localRows.length > 0;
+  const rows = showLocal ? [...localRows, ...emails] : emails;
 
   const renderRow = (campaign) => {
     const isSelected = bulkMode && selectedIds.has(campaign.id);
@@ -262,7 +288,7 @@ function EmailsTab({
               if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNameClick(); }
             }}
           >
-            {/* Leading slot — icon + checkbox stacked, cross-fading on
+            {/* Leading slot: icon + checkbox stacked, cross-fading on
                 bulk-mode toggle so the row never jumps. */}
             <div className={styles.nameLeading}>
               <span
@@ -283,7 +309,10 @@ function EmailsTab({
               </span>
             </div>
             <div className={styles.nameStack}>
-              <span className={styles.nameText}>{campaign.name}</span>
+              <span className={styles.nameRow}>
+                <span className={styles.nameText}>{campaign.name}</span>
+                <EmailUsageBadge emailId={campaign.id} />
+              </span>
               {campaign.description ? (
                 <span className={styles.nameDesc}>{campaign.description}</span>
               ) : null}
@@ -292,9 +321,9 @@ function EmailsTab({
         </td>
         <td className={styles.tdCategory}>
           {campaign.category ? (
-            <Badge variant="ai-neutral" label={campaign.category} />
+            <Badge label={campaign.category} />
           ) : (
-            <span className={styles.cellMuted}>—</span>
+            <span className={styles.cellMuted}>-</span>
           )}
         </td>
         <td className={styles.tdSubject}>
@@ -303,7 +332,7 @@ function EmailsTab({
               {campaign.subjectLine}
             </span>
           ) : (
-            <span className={styles.cellMuted}>—</span>
+            <span className={styles.cellMuted}>-</span>
           )}
         </td>
         <td className={styles.tdDate}>
@@ -311,29 +340,32 @@ function EmailsTab({
         </td>
         <td className={styles.tdUpdatedBy}>
           <span className={styles.cellText}>
-            {campaign.updatedByName || <span className={styles.cellMuted}>—</span>}
+            {campaign.local
+              ? <span className={styles.cellMuted}>Not saved yet</span>
+              : campaign.updatedByName || <span className={styles.cellMuted}>-</span>}
           </span>
         </td>
         <td className={styles.tdAction}>
           <div className={styles.actionCell}>
             <ActionButton
               icon="solar:pen-linear"
-              size="S"
+              size="sm"
               tooltip="Edit template"
               onClick={() => openContentEmailBuilder(campaign)}
             />
             <div className={styles.vDivider} />
             <ActionButton
               icon="solar:chart-linear"
-              size="S"
+              size="sm"
               tooltip="Analytics"
               onClick={() => showToast('Analytics – coming soon')}
             />
             <div className={styles.vDivider} />
             <RowMenu
               onPreview={() => onPreview(campaign)}
-              onDuplicate={() => onDuplicate(campaign)}
-              onDelete={() => onDelete(campaign)}
+              // Not in the database yet: nothing to copy or delete until it's opened (which saves it).
+              onDuplicate={() => (campaign.local ? showToast('Open the template once to save it, then duplicate it') : onDuplicate(campaign))}
+              onDelete={() => (campaign.local ? showToast('This template isn’t saved yet, so there’s nothing to delete') : onDelete(campaign))}
             />
           </div>
         </td>
@@ -346,7 +378,7 @@ function EmailsTab({
       <WorklistShell
         header={null}
         columns={EMAIL_COLUMNS}
-        rows={emails}
+        rows={rows}
         renderRow={renderRow}
         loading={loading}
         emptyState={
@@ -357,7 +389,7 @@ function EmailsTab({
         }
         page={page}
         perPage={perPage}
-        totalItems={total}
+        totalItems={total + (showLocal ? localRows.length : 0)}
         onPageChange={setPage}
         onPageSizeChange={(n) => { setPerPage(n); setPage(1); }}
         minTableWidth={1200}
@@ -367,7 +399,7 @@ function EmailsTab({
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Forms tab — same shape as EMAIL_COLUMNS; "Subject" swaps for "Responses"
+// Forms tab: same shape as EMAIL_COLUMNS; "Subject" swaps for "Responses"
 // (a numeric count of form submissions).
 // ────────────────────────────────────────────────────────────────────────────
 const FORM_COLUMNS = [
@@ -416,7 +448,7 @@ const FORM_TYPE_TONE = {
   Assessment: 'info',
   Intake: 'success',
   Consent: 'warning',
-  Other: 'grey',
+  Other: 'neutral',
 };
 
 function FormRowMenu({ onCopyLink, onDuplicate, onDelete }) {
@@ -432,7 +464,7 @@ function FormRowMenu({ onCopyLink, onDuplicate, onDelete }) {
   return (
     <>
       <div ref={btnRef} style={{ display: 'inline-flex' }}>
-        <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More" onClick={openMenu} />
+        <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More" onClick={openMenu} />
       </div>
       {open && createPortal(
         <div className={styles.overflowScrim} onClick={() => setOpen(false)}>
@@ -544,10 +576,10 @@ function FormsTab({ searchVal, onDuplicate, onDelete, bulkMode, selectedIds, onT
           </div>
         </td>
         <td className={styles.tdCategory}>
-          <Badge tone={FORM_TYPE_TONE[form.formType] || 'grey'} size="S" label={form.formType || 'Other'} />
+          <Badge tone={FORM_TYPE_TONE[form.formType] || 'neutral'} size="sm" label={form.formType || 'Other'} />
         </td>
         <td className={styles.tdCategory}>
-          {form.category ? <Badge variant="ai-neutral" label={form.category} /> : <span className={styles.cellMuted}>—</span>}
+          {form.category ? <Badge label={form.category} /> : <span className={styles.cellMuted}>-</span>}
         </td>
         <td className={styles.tdSubject}>
           <span className={styles.cellText}>{form.responseCount ?? 0}</span>
@@ -556,11 +588,11 @@ function FormsTab({ searchVal, onDuplicate, onDelete, bulkMode, selectedIds, onT
           <span className={styles.cellText}>{formatRelative(form.updatedAt)}</span>
         </td>
         <td className={styles.tdUpdatedBy}>
-          <span className={styles.cellText}>{form.updatedByName || <span className={styles.cellMuted}>—</span>}</span>
+          <span className={styles.cellText}>{form.updatedByName || <span className={styles.cellMuted}>-</span>}</span>
         </td>
         <td className={styles.tdAction}>
           <div className={styles.actionCell}>
-            <ActionButton icon="solar:pen-linear" size="S" tooltip="Edit form" onClick={() => openFormBuilder(form)} />
+            <ActionButton icon="solar:pen-linear" size="sm" tooltip="Edit form" onClick={() => openFormBuilder(form)} />
             <div className={styles.vDivider} />
             <FormRowMenu onCopyLink={() => copyLink(form)} onDuplicate={() => onDuplicate(form)} onDelete={() => onDelete(form)} />
           </div>
@@ -593,7 +625,7 @@ function FormsTab({ searchVal, onDuplicate, onDelete, bulkMode, selectedIds, onT
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Note Templates tab — Settings → Content → Notes (P2-1)
+// Note Templates tab: Settings → Content → Notes (P2-1)
 //
 // Reads `noteTemplatesById` (populated by fetchNoteTemplates from
 // public.forms where form_type='Note'). Table: name · gap code · field
@@ -695,13 +727,13 @@ function NoteTemplatesTab({ searchVal, showArchived }) {
                 </div>
               </td>
               <td className={styles.tdCategory}>
-                <Badge tone="grey" size="S" label={isCareGap ? 'Care Gap' : 'Normal'} />
+                <Badge size="sm" label={isCareGap ? 'Care Gap' : 'Normal'} />
               </td>
               <td className={styles.tdCategory}>
                 {t.gap_code
                   ? (
                     <div className={styles.gapStack}>
-                      <Badge variant="ai-neutral" label={t.gap_code} />
+                      <Badge label={t.gap_code} />
                       {t.context && (
                         <span className={styles.cellMuted}>
                           {t.context === 'non_visit' ? 'Non-Visit' : 'Visit'}
@@ -709,7 +741,7 @@ function NoteTemplatesTab({ searchVal, showArchived }) {
                       )}
                     </div>
                   )
-                  : <span className={styles.cellMuted}>—</span>}
+                  : <span className={styles.cellMuted}>-</span>}
               </td>
               {/* Score Group is intentionally empty until the scoring
                   system is wired end-to-end. FormBuilder's Score tab is
@@ -717,10 +749,10 @@ function NoteTemplatesTab({ searchVal, showArchived }) {
                   we can bind `t.category` or a dedicated `score_group`
                   column here. */}
               <td className={styles.tdCategory}>
-                <span className={styles.cellMuted}>—</span>
+                <span className={styles.cellMuted}>-</span>
               </td>
               <td className={styles.tdCategory}>
-                <Badge tone={isActive ? 'success' : 'grey'} size="S" label={t.status || 'active'} />
+                <Badge tone={isActive ? 'success' : 'neutral'} size="sm" label={t.status || 'active'} />
               </td>
               <td className={styles.tdCategory}>
                 <div className={styles.updatedStack}>
@@ -816,7 +848,7 @@ function NoteTemplatesTab({ searchVal, showArchived }) {
 }
 
 /**
- * NoteRowActions — Preview and Edit inline; everything else in a
+ * NoteRowActions: Preview and Edit inline; everything else in a
  * 3-dot MenuPopover so the sticky Actions column stays compact and the
  * primary CTAs read at a glance.
  */
@@ -854,12 +886,12 @@ function NoteRowActions({
 
   return (
     <div className={styles.rowActions}>
-      <ActionButton icon="solar:eye-linear" size="S" tooltip="Preview" onClick={onPreview} />
-      <ActionButton icon="solar:pen-linear" size="S" tooltip="Edit" onClick={onEdit} />
+      <ActionButton icon="solar:eye-linear" size="sm" tooltip="Preview" onClick={onPreview} />
+      <ActionButton icon="solar:pen-linear" size="sm" tooltip="Edit" onClick={onEdit} />
       <div ref={btnRef}>
         <ActionButton
           icon="solar:menu-dots-bold"
-          size="S"
+          size="sm"
           tooltip="More"
           onClick={() => setOpen(v => !v)}
         />
@@ -884,7 +916,7 @@ function NoteRowActions({
 }
 
 /**
- * NoteTemplateActivityDrawer — thin portaled aside listing the template's
+ * NoteTemplateActivityDrawer: thin portaled aside listing the template's
  * lifecycle events. Today the DB stores only `created_at` and
  * `updated_at` on `forms` (no per-edit audit table), so the drawer
  * surfaces those two anchors with the updater's name. A dedicated
@@ -931,7 +963,7 @@ function NoteTemplateActivityDrawer({ template, onClose }) {
             <div className={styles.inspectorTitle}>Activity Log</div>
             <div className={styles.inspectorSub}>{template.name}</div>
           </div>
-          <ActionButton icon="solar:close-circle-linear" size="S" tooltip="Close" onClick={onClose} />
+          <ActionButton icon="solar:close-circle-linear" size="sm" tooltip="Close" onClick={onClose} />
         </header>
         <div className={styles.inspectorBody}>
           <ActivityLog entries={entries} emptyLabel="No activity recorded yet." />
@@ -965,31 +997,31 @@ function NoteTemplateInspector({ template, onClose, onEditFields, onSetDefault, 
             <div className={styles.inspectorTitle}>{template.name}</div>
             {template.description && <div className={styles.inspectorSub}>{template.description}</div>}
           </div>
-          <ActionButton icon="solar:close-circle-linear" size="S" tooltip="Close" onClick={onClose} />
+          <ActionButton icon="solar:close-circle-linear" size="sm" tooltip="Close" onClick={onClose} />
         </header>
         <div className={styles.inspectorMeta}>
-          <Badge tone="grey" size="S" label={isCareGap ? 'Care Gap Note' : 'Normal Note'} />
+          <Badge size="sm" label={isCareGap ? 'Care Gap Note' : 'Normal Note'} />
           {template.gap_code && (
-            <Badge variant="ai-neutral" label={gapName ? `${template.gap_code} · ${gapName}` : `Gap: ${template.gap_code}`} />
+            <Badge label={gapName ? `${template.gap_code} · ${gapName}` : `Gap: ${template.gap_code}`} />
           )}
-          {contextLabel && <Badge tone="grey" size="S" label={contextLabel} />}
+          {contextLabel && <Badge size="sm" label={contextLabel} />}
           {isDefault && (
-            <Badge tone="success" size="S" label={template.context === 'non_visit' ? 'Non-Visit default' : 'Visit default'} />
+            <Badge tone="success" size="sm" label={template.context === 'non_visit' ? 'Non-Visit default' : 'Visit default'} />
           )}
-          <Badge tone="grey" size="S" label={`${items.length} field${items.length === 1 ? '' : 's'}`} />
-          <Badge tone="grey" size="S" label={template.status || 'active'} />
+          <Badge size="sm" label={`${items.length} field${items.length === 1 ? '' : 's'}`} />
+          <Badge size="sm" label={template.status || 'active'} />
         </div>
         <div className={styles.inspectorActions}>
-          <Button variant="primary" size="M" leadingIcon="solar:pen-linear" onClick={onEditFields}>
+          <Button leadingIcon="solar:pen-linear" onClick={onEditFields}>
             Edit fields
           </Button>
           {isCareGap && !isDefault && !isArchived && (
-            <Button variant="secondary" size="M" leadingIcon="solar:star-linear" onClick={onSetDefault}>
+            <Button variant="outline" leadingIcon="solar:star-linear" onClick={onSetDefault}>
               Set as {template.context === 'non_visit' ? 'Non-Visit' : 'Visit'} default
             </Button>
           )}
           {!isArchived && (
-            <Button variant="tertiary" size="M" leadingIcon="solar:archive-down-linear" onClick={onArchive}>
+            <Button variant="soft" leadingIcon="solar:archive-down-linear" onClick={onArchive}>
               Archive
             </Button>
           )}
@@ -1009,8 +1041,8 @@ function NoteTemplateInspector({ template, onClose, onEditFields, onSetDefault, 
                     {f.required && <span className={styles.fieldReq}>required</span>}
                   </div>
                   <div className={styles.fieldMeta}>
-                    <Badge tone="grey" size="S" label={f.type || 'text'} />
-                    {f.column === 2 && <Badge tone="grey" size="S" label="half-width" />}
+                    <Badge size="sm" label={f.type || 'text'} />
+                    {f.column === 2 && <Badge size="sm" label="half-width" />}
                     {Array.isArray(f.options) && f.options.length > 0 && (
                       <span className={styles.fieldOpts}>
                         {f.options.map(o => o.label || o.value).slice(0, 4).join(' · ')}
@@ -1029,7 +1061,7 @@ function NoteTemplateInspector({ template, onClose, onEditFields, onSetDefault, 
 }
 
 function fmtWhen(iso) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return String(iso);
   const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -1127,12 +1159,12 @@ export function ContentSettings() {
   const [notesDrawerOpen, setNotesDrawerOpen] = useState(false);
   const [notesShowArchived, setNotesShowArchived] = useState(false);
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
+  const handleDelete = async (target = deleteTarget) => {
+    if (!target) return false;
     setDeleting(true);
     let ok = false;
     try {
-      ok = isForms ? await deleteForm(deleteTarget.id) : await deleteCampaign(deleteTarget.id);
+      ok = isForms ? await deleteForm(target.id) : await deleteCampaign(target.id);
     } finally {
       setDeleting(false);
     }
@@ -1142,6 +1174,7 @@ export function ContentSettings() {
       if (isForms) fetchContentForms?.({ page: 1, perPage: 10, search: searchVal, force: true });
       else fetchContentEmails?.({ page: 1, perPage: 10, search: searchVal, status: statusFilter });
     }
+    return ok;
   };
 
   const handleDuplicate = async (row) => {
@@ -1162,7 +1195,7 @@ export function ContentSettings() {
 
   const handleBulkDeleteConfirm = async () => {
     const ids = Array.from(selectedIds);
-    if (ids.length === 0) { setBulkDeleteOpen(false); return; }
+    if (ids.length === 0) { setBulkDeleteOpen(false); return false; }
     setDeleting(true);
     let ok = false;
     try {
@@ -1177,6 +1210,28 @@ export function ContentSettings() {
       if (isForms) fetchContentForms?.({ page: 1, perPage: 10, search: searchVal, force: true });
       else fetchContentEmails?.({ page: 1, perPage: 10, search: searchVal, status: statusFilter });
     }
+    return ok;
+  };
+
+  // Emails that automations send get the usage dialog instead of the plain confirm.
+  const [usageGuard, setUsageGuard] = useState(null);
+  const guardEmailDelete = async (ids, name, confirm, proceed) => {
+    const used = await loadEmailUsage(ids);
+    if (used.length) setUsageGuard({ ids, name, proceed });
+    else confirm();
+  };
+  const deleteEmail = (campaign) => guardEmailDelete(
+    [campaign.id], campaign.name,
+    () => setDeleteTarget(campaign),
+    () => handleDelete(campaign),
+  );
+  const deleteSelectedEmails = () => {
+    const ids = Array.from(selectedIds);
+    guardEmailDelete(
+      ids, `${ids.length} selected email${ids.length === 1 ? '' : 's'}`,
+      () => setBulkDeleteOpen(true),
+      handleBulkDeleteConfirm,
+    );
   };
 
   // Reset bulk mode + selection on any tab switch (selections are per-list).
@@ -1232,7 +1287,6 @@ export function ContentSettings() {
             )}
             {!isNotes && !isComponents && (
               <ActionButton
-                size="L"
                 tooltip={bulkMode ? 'Exit bulk select' : 'Bulk select'}
                 iconColor={bulkMode ? 'var(--primary-300)' : 'var(--neutral-300)'}
                 onClick={() => {
@@ -1247,7 +1301,6 @@ export function ContentSettings() {
               <>
                 <ActionButton
                   icon="custom:filter"
-                  size="L"
                   tooltip="Filter"
                   onClick={() => {
                     const idx = STATUS_CYCLE.indexOf(statusFilter);
@@ -1261,7 +1314,7 @@ export function ContentSettings() {
                     onClick={() => setStatusFilter('all')}
                     aria-label="Clear status filter"
                   >
-                    <Badge variant={statusBadge.variant} label={statusBadge.label} />
+                    <Badge tone={statusBadge.variant} label={statusBadge.label} />
                   </button>
                 )}
               </>
@@ -1277,7 +1330,7 @@ export function ContentSettings() {
             statusFilter={statusFilter}
             onPreview={setPreviewCampaign}
             onDuplicate={handleDuplicate}
-            onDelete={setDeleteTarget}
+            onDelete={deleteEmail}
             bulkMode={bulkMode}
             selectedIds={selectedIds}
             onToggleId={toggleId}
@@ -1329,7 +1382,17 @@ export function ContentSettings() {
           variant="error"
           loading={deleting}
           onCancel={() => setDeleteTarget(null)}
-          onConfirm={handleDelete}
+          onConfirm={() => handleDelete()}
+        />
+      ) : null}
+
+      {usageGuard ? (
+        <EmailUsageGuard
+          emailIds={usageGuard.ids}
+          emailName={usageGuard.name}
+          deleting={deleting}
+          onDelete={usageGuard.proceed}
+          onClose={() => setUsageGuard(null)}
         />
       ) : null}
 
@@ -1349,11 +1412,11 @@ export function ContentSettings() {
         />
       ) : null}
 
-      {/* Floating bulk action bar — visible only when bulkMode + selections */}
+      {/* Floating bulk action bar: visible only when bulkMode + selections */}
       {bulkMode ? (
         <EmailsBulkBar
           count={selectedIds.size}
-          onDelete={() => setBulkDeleteOpen(true)}
+          onDelete={() => (isEmails ? deleteSelectedEmails() : setBulkDeleteOpen(true))}
           onClear={clearSelection}
           onExit={exitBulkMode}
         />

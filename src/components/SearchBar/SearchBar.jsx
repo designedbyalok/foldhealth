@@ -3,7 +3,7 @@ import { CloseIcon } from '../Icon/CloseIcon';
 import styles from './SearchBar.module.css';
 
 /**
- * SearchBar — the expanded search input used across the app (worklist tab bar,
+ * SearchBar: the expanded search input used across the app (worklist tab bar,
  * Care Programs, etc.). A bordered field with a leading magnifier, text input,
  * and a trailing clear/close button. Kept in one place so every "expanded
  * search" reads identically.

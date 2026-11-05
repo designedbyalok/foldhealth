@@ -21,7 +21,7 @@ import {
   readProgramPanelSplit,
 } from '../shellInitial';
 
-/** Theme, chrome preferences, Featurebase JWT, and changelog — shell concerns only. */
+/** Theme, chrome preferences, Featurebase JWT, and changelog, shell concerns only. */
 export function createShellSlice(set, get) {
   return {
     theme: initialThemeSetting,

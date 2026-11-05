@@ -6,11 +6,14 @@ import { PatientAvatarHover } from '../../../components/PatientHoverCard/Patient
 import { AssigneeChange } from '../../../components/AssigneeChange/AssigneeChange';
 import { platformUsersForAssigneePicker } from '../../../lib/worklistAssignee';
 import { Badge } from '../../../components/Badge/Badge';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { laceTone } from '../../../lib/riskTone';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { useAppStore } from '../../../store/useAppStore';
 import { FoldIdTag } from '../../../components/FoldIdTag/FoldIdTag';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { Phq9AssessmentDrawer } from './Phq9AssessmentDrawer/Phq9AssessmentDrawer';
+import { LiveCallDuration } from '../worklist/LiveCallDuration';
+import { useCallDuration } from '../worklist/useCallDuration';
 import rowStyles from '../worklist/WorklistRow.module.css';
 import styles from './QueueRow.module.css';
 
@@ -28,16 +31,16 @@ function computeAgentDueOn(dischargeDate, outreachType) {
 }
 
 const TOC_STATUS_MAP = {
-  enrolled: { variant: 'toc-enrolled', label: 'Enrolled', icon: 'solar:check-circle-linear' },
-  engaged: { variant: 'toc-engaged', label: 'Engaged', icon: 'solar:link-round-linear' },
-  attempted: { variant: 'toc-attempted', label: 'Attempted', icon: 'solar:history-linear' },
-  new: { variant: 'toc-new', label: 'New', icon: 'solar:star-linear' },
-  oncall: { variant: 'toc-oncall', label: 'On Call', icon: 'solar:phone-calling-linear' },
+  enrolled: { variant: 'success', label: 'Enrolled', icon: 'solar:check-circle-linear' },
+  engaged: { variant: 'info', label: 'Engaged', icon: 'solar:link-round-linear' },
+  attempted: { variant: 'warning', label: 'Attempted', icon: 'solar:history-linear' },
+  new: { variant: 'neutral', label: 'New', icon: 'solar:star-linear' },
+  oncall: { variant: 'primary', label: 'On Call', icon: 'solar:phone-calling-linear' },
 };
 
 function TocStatusBadge({ status }) {
   const cfg = TOC_STATUS_MAP[status] || TOC_STATUS_MAP.new;
-  return <Badge size="M" variant={cfg.variant} label={cfg.label} icon={cfg.icon} />;
+  return <Badge size="md" tone={cfg.variant} label={cfg.label} icon={cfg.icon} />;
 }
 
 function GoalsTooltipPortal({ goalsDetail, pillRef, visible }) {
@@ -63,7 +66,8 @@ function GoalsTooltipPortal({ goalsDetail, pillRef, visible }) {
 }
 
 function StatusCell({ patient: p, voicemailCalls, completedCall }) {
-  const { status, goals, scheduledTime, callDuration } = p;
+  const { status, goals, scheduledTime } = p;
+  const callDuration = useCallDuration(p);
   const goalsDetail = p.goalsDetail || completedCall?.goalsDetail || [];
   const [goalsHover, setGoalsHover] = useState(false);
   const goalsPillRef = useRef(null);
@@ -75,7 +79,7 @@ function StatusCell({ patient: p, voicemailCalls, completedCall }) {
     const pct = goals ? Math.round((goals.met / goals.total) * 100) : 0;
     return (
       <div className={styles.statusCompact}>
-        <Badge size="M" variant="status-completed" label="Completed" icon="solar:check-circle-linear" />
+        <Badge size="md" tone="success" label="Completed" icon="solar:check-circle-linear" />
         {goals && (
           <div
             className={styles.goalsPill}
@@ -100,8 +104,8 @@ function StatusCell({ patient: p, voicemailCalls, completedCall }) {
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
     return (
       <div className={styles.statusCompact}>
-        <Badge size="M"
-          variant="status-oncall"
+        <Badge size="md"
+          tone="success"
           label={callDuration || '00:00'}
           icon="solar:phone-calling-linear"
           dot={false}
@@ -120,7 +124,7 @@ function StatusCell({ patient: p, voicemailCalls, completedCall }) {
   if (status === 'scheduled') {
     return (
       <div className={styles.statusCompact}>
-        <Badge size="M" variant="status-scheduled" label="Scheduled" icon="solar:calendar-linear" />
+        <Badge size="md" tone="info" label="Scheduled" icon="solar:calendar-linear" />
         {scheduledTime && <div className={styles.scheduledSub}>{scheduledTime.split(' ')[0]}</div>}
       </div>
     );
@@ -128,14 +132,14 @@ function StatusCell({ patient: p, voicemailCalls, completedCall }) {
   if (status === 'queued') {
     return (
       <div className={styles.statusCompact}>
-        <Badge size="M" variant="status-queued" label="Queued" icon="solar:clock-circle-linear" />
+        <Badge size="md" tone="warning" label="Queued" icon="solar:clock-circle-linear" />
       </div>
     );
   }
   if (status === 'failed') {
     return (
       <div className={styles.statusCompact}>
-        <Badge size="M" variant="status-failed" label="Failed" icon="solar:close-circle-linear" />
+        <Badge size="md" tone="danger" label="Failed" icon="solar:close-circle-linear" />
         {attempts?.length > 0 && (
           <div className={styles.attemptsWrapper}>
             <Tooltip
@@ -169,9 +173,9 @@ function StatusCell({ patient: p, voicemailCalls, completedCall }) {
     );
   }
   if (status === 'review') {
-    return <Badge size="M" variant="status-review" label="Review" icon="solar:danger-triangle-linear" />;
+    return <Badge size="md" tone="warning" label="Review" icon="solar:danger-triangle-linear" />;
   }
-  return <span style={{ fontSize: 'var(--font-md)', color: 'var(--neutral-200)' }}>—</span>;
+  return <span style={{ fontSize: 'var(--font-md)', color: 'var(--neutral-200)' }}>-</span>;
 }
 
 // Shared status → badge-variant map for the Assessment and Outreach Status
@@ -189,10 +193,10 @@ const STATUS_BADGE = {
 };
 
 // Clickable status pill used by both Assessment and Outreach Status cells.
-// Renders a `—` when the row has no value yet (patients seed only sets
+// Renders a `-` when the row has no value yet (patients seed only sets
 // values for the 10 agent-assigned rows in the current backfill).
 function StatusPill({ status, onOpen, ariaLabel }) {
-  if (!status) return <span className={rowStyles.dateDash}>—</span>;
+  if (!status) return <span className={rowStyles.dateDash}>-</span>;
   const cfg = STATUS_BADGE[status] || STATUS_BADGE['Not Started'];
   return (
     <button
@@ -201,7 +205,7 @@ function StatusPill({ status, onOpen, ariaLabel }) {
       onClick={(e) => { e.stopPropagation(); onOpen(); }}
       aria-label={ariaLabel}
     >
-      <Badge size="M" variant={cfg.variant} label={status} icon={cfg.icon} />
+      <Badge size="md" tone={cfg.variant} label={status} icon={cfg.icon} />
       <Icon name="solar:alt-arrow-right-linear" size={12} color="var(--neutral-300)" />
     </button>
   );
@@ -239,7 +243,7 @@ export function getQueueMiddleColumns(programLabel = 'TOC') {
     label: 'LACE Acuity',
     tdClassName: rowStyles.td,
     renderCell: (p) => (
-      <Badge size="M" variant={`lace-${p.lace.toLowerCase()}`} label={p.lace} />
+      <Badge size="md" tone={laceTone(p.lace)} label={p.lace} />
     ),
   },
   {
@@ -247,14 +251,14 @@ export function getQueueMiddleColumns(programLabel = 'TOC') {
     label: 'Outreach Window',
     tdClassName: rowStyles.td,
     renderCell: (p) => {
-      const outreachBadgeVariant = p.outreachType === '48h' ? 'outreach-48h' : 'outreach-7d';
+      const outreachBadgeVariant = p.outreachType === '48h' ? 'danger' : 'info';
       return (
         <div className={rowStyles.outreachCell}>
-          <Badge size="M" variant={outreachBadgeVariant} label={`${programLabel} ${p.outreachType}`} />
+          <Badge size="md" tone={outreachBadgeVariant} label={`${programLabel} ${p.outreachType}`} />
           {p.onCall ? (
             <span className={rowStyles.outreachOncall}>
               <Icon name="solar:phone-calling-bold" size={14} />
-              On Call: {p.callDuration}
+              On Call: <LiveCallDuration patient={p} />
             </span>
           ) : (
             <span className={rowStyles.outreachTime}>
@@ -268,7 +272,7 @@ export function getQueueMiddleColumns(programLabel = 'TOC') {
   },
   {
     key: 'agentStatus',
-    // `label` is the plain string shown in the Show Columns popover — the
+    // `label` is the plain string shown in the Show Columns popover, the
     // "Agent" prefix disambiguates from the sibling `tocStatus` column and
     // the regular `dueOn` column. `thLabel` is the JSX icon+text cluster
     // shown in the table header so the agent band still reads like a
@@ -295,11 +299,11 @@ export function getQueueMiddleColumns(programLabel = 'TOC') {
     renderCell: (p) => (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, whiteSpace: 'nowrap' }}>
         <span style={{ fontSize: 'var(--font-base)', color: 'var(--neutral-400)' }}>
-          {computeAgentDueOn(p.dischargeDate, p.outreachType) || '—'}
+          {computeAgentDueOn(p.dischargeDate, p.outreachType) || '-'}
         </span>
         <span style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-300)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           <Icon name="solar:clock-circle-linear" size={14} />
-          {p.outreachLeft || '—'}
+          {p.outreachLeft || '-'}
         </span>
       </div>
     ),
@@ -336,10 +340,10 @@ export function getQueueMiddleColumns(programLabel = 'TOC') {
     tdClassName: rowStyles.td,
     renderCell: (p) => <TocStatusBadge status={p.tocStatus} />,
   },
-  { key: 'dueOn',         label: 'Due On',         tdClassName: rowStyles.td, renderCell: (p) => p.dueOn || '—' },
-  { key: 'nextOutreach',  label: 'Next Outreach',  tdClassName: rowStyles.td, renderCell: (p) => p.nextOutreach || '—' },
-  { key: 'startDate',     label: 'Start Date',     tdClassName: rowStyles.td, renderCell: (p) => p.startDate || '—' },
-  { key: 'lastAdmission', label: 'Last Admission', tdClassName: rowStyles.td, renderCell: (p) => p.lastAdmission || '—' },
+  { key: 'dueOn',         label: 'Due On',         tdClassName: rowStyles.td, renderCell: (p) => p.dueOn || '-' },
+  { key: 'nextOutreach',  label: 'Next Outreach',  tdClassName: rowStyles.td, renderCell: (p) => p.nextOutreach || '-' },
+  { key: 'startDate',     label: 'Start Date',     tdClassName: rowStyles.td, renderCell: (p) => p.startDate || '-' },
+  { key: 'lastAdmission', label: 'Last Admission', tdClassName: rowStyles.td, renderCell: (p) => p.lastAdmission || '-' },
   {
     key: 'assignee',
     label: 'Assignee',
@@ -379,8 +383,8 @@ export function getQueueMiddleColumns(programLabel = 'TOC') {
     tdClassName: rowStyles.td,
     renderCell: (p) => (
       p.readmission === 'Yes'
-        ? <Badge size="M" variant="yes" label="Yes" />
-        : <Badge size="M" variant="no" label="No" />
+        ? <Badge size="md" tone="danger" label="Yes" />
+        : <Badge size="md" label="No" />
     ),
   },
   {
@@ -391,7 +395,7 @@ export function getQueueMiddleColumns(programLabel = 'TOC') {
       <div className={rowStyles.tasksCell}>
         {p.tasks > 0
           ? <span className={rowStyles.taskBadge}>{p.tasks}</span>
-          : <span className={rowStyles.dateDash}>—</span>}
+          : <span className={rowStyles.dateDash}>-</span>}
       </div>
     ),
   },
@@ -401,10 +405,10 @@ export function getQueueMiddleColumns(programLabel = 'TOC') {
     tdClassName: rowStyles.td,
     renderCell: (p) => (
       p.carePlanStatus === 'updated'
-        ? <Badge size="M" variant="care-plan-updated" label="Updated" icon="solar:check-circle-linear" />
+        ? <Badge size="md" tone="success" label="Updated" icon="solar:check-circle-linear" />
         : p.carePlanStatus === 'pending'
-          ? <Badge size="M" variant="care-plan-pending" label="Pending" icon="solar:clock-circle-linear" />
-          : <Badge size="M" variant="care-plan-none" label="No Care Plan" />
+          ? <Badge size="md" tone="warning" label="Pending" icon="solar:clock-circle-linear" />
+          : <Badge size="md" label="No Care Plan" />
     ),
   },
 ];
@@ -531,7 +535,6 @@ export function QueueRow({ patient, columns, hiddenSet, isSelected, onSelect, vo
         <div className={rowStyles.actionsCell}>
           <ActionButton
             icon="solar:document-text-linear"
-            size="L"
             tooltip="View details"
             // Oncall and completed rows keep their own destinations; every
             // other row opens the PHQ-9 review. Quick view stays reachable
@@ -547,7 +550,6 @@ export function QueueRow({ patient, columns, hiddenSet, isSelected, onSelect, vo
             <ActionButton
               ref={callBtnRef}
               icon="solar:phone-linear"
-              size="L"
               tooltip={p.status === 'oncall' && allowLiveDrawer ? 'View live call' : 'Call patient'}
               iconColor={p.status === 'oncall' ? '#059669' : undefined}
               className={p.status === 'oncall' ? rowStyles.oncall : p.status === 'queued' ? rowStyles.queuedCall : ''}
@@ -558,7 +560,6 @@ export function QueueRow({ patient, columns, hiddenSet, isSelected, onSelect, vo
           <span className={rowStyles.actionDivider} />
           <ActionButton
             icon="solar:menu-dots-linear"
-            size="L"
             tooltip="More options"
             onClick={e => { e.stopPropagation(); showToast('More options – coming soon'); }}
           />

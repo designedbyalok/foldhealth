@@ -25,6 +25,8 @@ export function goalPayloadFromTemplateEntry(entry, libraryGoals = []) {
       durationUnit: lib.durationUnit || '',
       frequency: lib.frequency || '',
       targetDate: lib.targetDate || '',
+      // An IPA overlay's priority, cadence and wording win over the library's.
+      ...(entry?.overlay || {}),
     };
   }
   return {
@@ -34,6 +36,9 @@ export function goalPayloadFromTemplateEntry(entry, libraryGoals = []) {
     priority: entry?.priority || 'medium',
     icon: 'solar:flag-linear',
     status: 'Not Started',
+    ...(entry?.frequency ? { frequency: entry.frequency } : {}),
+    ...(entry?.duration ? { duration: entry.duration, durationUnit: entry.durationUnit || '' } : {}),
+    ...(entry?.overlay || {}),
   };
 }
 
@@ -58,6 +63,7 @@ export function interventionPayloadFromTemplateEntry(entry, goalId = null) {
     config: entry?.config || {},
     status: 'Not Started',
     assignee: { name: 'Unassigned', initials: '' },
+    ...(entry?.overlay?.patientTitle ? { patientTitle: entry.overlay.patientTitle } : {}),
   };
 }
 
@@ -74,6 +80,7 @@ export function barrierPayloadFromTemplateEntry(entry, goalIds = []) {
     priority: entry?.priority || 'medium',
     status: 'Not Started',
     goalIds,
+    ...(entry?.overlay?.patientTitle ? { patientTitle: entry.overlay.patientTitle } : {}),
     // An SDOH need on the template stays one on the plan.
     ...(entry?.sdohDomain ? { sdohDomain: entry.sdohDomain, sdohNeed: entry.sdohNeed || null, zCode: entry.zCode || '' } : {}),
   };
@@ -87,10 +94,19 @@ const normTitle = v => (v || '').trim().toLowerCase();
  *
  * A template goal entry points at a library goal, and that library goal's links
  * are what carry its interventions and barriers, so the ownership lives one hop
- * away in the library rather than on the template row itself.
+ * away in the library rather than on the template row itself. An imported
+ * template names its own links instead (intervention.goalTitle,
+ * barrier.goalTitles), and those win for the items they cover.
  */
 export function templateLinkOwners(template, libraryGoals = []) {
   const owners = { intervention: new Map(), barrier: new Map() };
+  // Links an imported template carries on its own items come first.
+  for (const entry of template?.interventions || []) {
+    if (entry?.goalTitle && normTitle(entry.title)) owners.intervention.set(normTitle(entry.title), [entry.goalTitle]);
+  }
+  for (const entry of template?.barriers || []) {
+    if (entry?.goalTitles?.length && normTitle(entry.title)) owners.barrier.set(normTitle(entry.title), [...entry.goalTitles]);
+  }
   for (const entry of template?.goals || []) {
     const lib = libraryGoals.find(g => g.id === entry?.id)
       || libraryGoals.find(g => normTitle(g.title) === normTitle(entry?.title));
@@ -100,6 +116,8 @@ export function templateLinkOwners(template, libraryGoals = []) {
       const key = normTitle(link.title);
       if (!key) continue;
       const map = link.kind === 'barrier' ? owners.barrier : owners.intervention;
+      const own = link.kind === 'barrier' ? template?.barriers : template?.interventions;
+      if ((own || []).some(x => normTitle(x?.title) === key && (x.goalTitle || x.goalTitles?.length))) continue;
       const list = map.get(key) || [];
       if (!list.includes(goalTitle)) list.push(goalTitle);
       map.set(key, list);

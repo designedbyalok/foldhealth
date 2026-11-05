@@ -2,12 +2,17 @@ import { apiFetch } from '../../../../lib/apiFetch';
 
 const norm = (s) => String(s ?? '').trim().toLowerCase();
 
-/** Ask the server for a draft (see api/_handlers/care-plan-template-draft.js). */
-export async function requestTemplateDraft(description, catalog) {
+/**
+ * Ask the server for a draft (see api/_handlers/care-plan-template-draft.js).
+ * `protocol` (optional): { title, version, organization, guidance } the draft must follow.
+ * `options`: { categories, libraryOnly } (see buildTemplateDraftPrompt).
+ * `reference` (optional): an existing template to start from (buildTemplateReference).
+ */
+export async function requestTemplateDraft(description, catalog, protocol = null, options = null, reference = null) {
   const res = await apiFetch('/api/care-plan-template-draft', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ description, catalog }),
+    body: JSON.stringify({ description, catalog, ...(protocol ? { protocol } : {}), ...(options ? { options } : {}), ...(reference ? { reference } : {}) }),
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || !json?.draft) {
@@ -84,6 +89,29 @@ export function templateDraftToEditor(draft, { libraryGoals = [], interventionLi
     brs.forEach(b => addUnique(barriers, b));
   }
   return { goals, interventions, barriers };
+}
+
+/**
+ * A whole draft as template content: its goals as Common and each category's
+ * own lists, without anything Common already has (a patient gets Common +
+ * one category). A category has to add a goal or an intervention; one that
+ * would only add barriers is left out.
+ */
+export function templateDraftToTemplate(draft, libraries) {
+  // `lists` on the draft or a category: its editor lists as a reviewer
+  // already edited them (a protocol's scope), taken as they are.
+  const common = draft.lists || templateDraftToEditor(draft, libraries);
+  const inCommon = Object.fromEntries(['goals', 'interventions', 'barriers']
+    .map(k => [k, new Set(common[k].map(x => norm(x.title)))]));
+  const categories = (draft.categories || []).map((c) => {
+    const lists = c.lists || templateDraftToEditor({ goals: c.goals, conditions: draft.conditions }, libraries);
+    const own = k => lists[k].filter(x => !inCommon[k].has(norm(x.title)));
+    return {
+      id: c.id, name: c.name, match: c.match || 'all', criteria: c.criteria,
+      goals: own('goals'), interventions: own('interventions'), barriers: own('barriers'),
+    };
+  }).filter(c => c.goals.length + c.interventions.length > 0);
+  return { ...common, categories };
 }
 
 /** How much of a draft came from the library, for the review banner. */

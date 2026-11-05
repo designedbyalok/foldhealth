@@ -1,3 +1,12 @@
+/* The synopsis and See More sit in a bordered box, like Care Utilization's. */
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3) var(--space-3) 0;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+}
+
 /* Collapsed: about six lines; See More opens the full synopsis. */
 .text {
   display: flex;

@@ -19,16 +19,16 @@ export function CreateInsurancePlanDrawer({ onClose, onSave = () => {}, initialP
         headerRight={
           <>
             {plan.showPreview ? (
-              <Button variant="secondary" size="L" leadingIcon="solar:eye-closed-linear" onClick={() => plan.setShowPreview(false)}>
+              <Button variant="outline" leadingIcon="solar:eye-closed-linear" onClick={() => plan.setShowPreview(false)}>
                 Hide ID Preview
               </Button>
             ) : (
-              <Button variant="secondary" size="L" leadingIcon="solar:eye-linear" onClick={() => plan.setShowPreview(true)}>
+              <Button variant="outline" leadingIcon="solar:eye-linear" onClick={() => plan.setShowPreview(true)}>
                 Show ID Preview
               </Button>
             )}
             <span className={styles.headerDivider} />
-            <Button variant="primary" size="L" onClick={plan.handleSave} style={plan.canSave ? undefined : { opacity: 0.5 }}>Save</Button>
+            <Button onClick={plan.handleSave} style={plan.canSave ? undefined : { opacity: 0.5 }}>Save</Button>
             <span className={styles.headerDivider} />
           </>
         }
@@ -52,9 +52,9 @@ export function CreateInsurancePlanDrawer({ onClose, onSave = () => {}, initialP
             </div>
             <div className={styles.stageNavRight}>
               {plan.step === 1 ? (
-                <Button variant="primary" size="L" onClick={plan.goToStep2} style={plan.canSave ? undefined : { opacity: 0.5 }}>Next</Button>
+                <Button onClick={plan.goToStep2} style={plan.canSave ? undefined : { opacity: 0.5 }}>Next</Button>
               ) : (
-                <Button variant="secondary" size="L" onClick={() => plan.setStep(1)}>Previous</Button>
+                <Button variant="outline" onClick={() => plan.setStep(1)}>Previous</Button>
               )}
             </div>
           </div>
@@ -65,7 +65,7 @@ export function CreateInsurancePlanDrawer({ onClose, onSave = () => {}, initialP
                 <Icon name="solar:layers-minimalistic-linear" size={16} color="var(--primary-300)" />
                 <span className={styles.tiersHeaderLabel}>Tier</span>
               </div>
-              <Button variant="tertiary" size="S" leadingIcon="solar:add-circle-linear" onClick={plan.addTier}>Add New</Button>
+              <Button variant="soft" size="sm" leadingIcon="solar:add-circle-linear" onClick={plan.addTier}>Add New</Button>
             </div>
           )}
 

@@ -8,11 +8,11 @@ import { formatGoalTarget, formatGoalDuration } from '../../../../../../../setti
 import styles from './LinkGoalToBarrierDrawer.module.css';
 
 /**
- * LinkGoalToBarrierDrawer — multi-select goal picker for wiring a
+ * LinkGoalToBarrierDrawer: multi-select goal picker for wiring a
  * barrier onto one-or-more goals in the current plan version.
  *
  * Rows show:
- *   • Checkbox — toggles selection.
+ *   • Checkbox: toggles selection.
  *   • Goal title, subtitle (measure + duration), and Template chip
  *     when the goal was cloned from a plan-template.
  *   • Right-aligned Type badge (Vitals / Exercise / Diet / Labs /
@@ -74,7 +74,7 @@ export function LinkGoalToBarrierDrawer({ goals, onClose, onLink, title }) {
       noCloseDivider
       headerRight={
         <>
-          <Button variant="primary" size="M" disabled={!canLink} onClick={handleLink}>
+          <Button disabled={!canLink} onClick={handleLink}>
             Link
           </Button>
           <span className={styles.headerDivider} aria-hidden />
@@ -126,7 +126,7 @@ function renderRow(g, selected, toggle, subtitleFor, styles) {
   const subtitle = subtitleFor(g);
   const type = g.category || g.type || 'Others';
   // The plan template a goal belongs to is derived from its chronic-
-  // condition binding — a goal that targets a condition (Hypertension,
+  // condition binding: a goal that targets a condition (Hypertension,
   // DM2, etc.) is authored under that plan-template. Fall back to any
   // explicit templateName / template if the store starts carrying one.
   const conditionLabel = Array.isArray(g.conditions) && g.conditions.length
@@ -150,11 +150,11 @@ function renderRow(g, selected, toggle, subtitleFor, styles) {
           {subtitle && <span className={styles.subtitle}>{subtitle}</span>}
           {templateName && (
             <span className={styles.templateLine}>
-              Template: <Badge tone="grey" size="S" label={templateName} />
+              Template: <Badge size="sm" label={templateName} />
             </span>
           )}
         </div>
-        <Badge tone="grey" size="S" label={type} />
+        <Badge size="sm" label={type} />
       </button>
     </li>
   );

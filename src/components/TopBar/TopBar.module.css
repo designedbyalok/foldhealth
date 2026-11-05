@@ -177,7 +177,7 @@
   font-size: var(--font-base);
   font-weight: 500;
   cursor: pointer;
-  /* The search box is the shrink target — the button keeps its label. */
+  /* The search box is the shrink target, the button keeps its label. */
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -190,17 +190,17 @@
   justify-content: flex-end;
   gap: 10px;
   flex: 1 1 0;
-  /* Buttons/avatar keep their natural size — this cluster never crushes. */
+  /* Buttons/avatar keep their natural size: this cluster never crushes. */
   min-width: fit-content;
 }
 
-/* Bell wrap — relative so the unread dot + popover position to the
+/* Bell wrap: relative so the unread dot + popover position to the
    bell button. */
 .bellWrap {
   position: relative;
   display: inline-flex;
 }
-/* Numeric count, not a bare dot — a dot says "something happened", a number
+/* Numeric count, not a bare dot, a dot says "something happened", a number
    says how much, which is the difference between glancing and opening the
    panel. Sized for two digits plus the "99+" overflow that
    formatBadgeCount() clamps to; `min-width` with horizontal padding lets a
@@ -208,7 +208,7 @@
 
    Offset up and to the right so it clears the 20px bell glyph rather than
    sitting on top of it. The ring is the surface colour, not white, so the
-   badge reads as lifted in dark themes too — the old rule hardcoded #fff
+   badge reads as lifted in dark themes too, the old rule hardcoded #fff
    and a #e54848 fallback. */
 .bellBadge {
   position: absolute;

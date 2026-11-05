@@ -7,7 +7,7 @@ import { CalendarNextIcon } from '../../../components/Icon/CalendarNextIcon';
 import styles from './SelectNewDosPopover.module.css';
 
 /**
- * "Select New DOS" calendar popover — the second view of the DOS Select in
+ * "Select New DOS" calendar popover: the second view of the DOS Select in
  * the +ICD IcdCard flow. Opens where the DOS dropdown was and slides in
  * from the right on top of the Select's list, with a back arrow that
  * dismisses this view without picking a date.
@@ -16,8 +16,8 @@ import styles from './SelectNewDosPopover.module.css';
  *   open        boolean
  *   anchorRect  DOMRect of the DOS field wrapper (drives width + position)
  *   onBack      user clicked ← (closes the popover, list re-opens on next click)
- *   onSelect    (iso YYYY-MM-DD) => void — picks the date and closes
- *   max         ISO YYYY-MM-DD — dates past this are disabled (defaults to today)
+ *   onSelect    (iso YYYY-MM-DD) => void: picks the date and closes
+ *   max         ISO YYYY-MM-DD: dates past this are disabled (defaults to today)
  */
 export function SelectNewDosPopover({ open, anchorRect, onBack, onSelect, max }) {
   const today = todayLocal();
@@ -53,7 +53,7 @@ export function SelectNewDosPopover({ open, anchorRect, onBack, onSelect, max })
   }, [open, anchorRect]);
 
   // Deferred mousedown arming (skips the in-flight opening click); teardown
-  // clears the timer AND removes the listener either way — the scanner's
+  // clears the timer AND removes the listener either way, the scanner's
   // cleanup matcher can't see through the setTimeout indirection.
   // react-doctor-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
@@ -109,13 +109,13 @@ export function SelectNewDosPopover({ open, anchorRect, onBack, onSelect, max })
       </div>
 
       <div className={styles.monthNav}>
-        <ActionButton size="S" tooltip="Previous month" onClick={() => stepMonth(-1)}>
+        <ActionButton size="sm" tooltip="Previous month" onClick={() => stepMonth(-1)}>
           <CalendarPrevIcon size={16} />
         </ActionButton>
         <span className={styles.monthLabel}>
           {MONTHS_LONG[viewMonth]} {viewYear}
         </span>
-        <ActionButton size="S" tooltip="Next month" onClick={() => stepMonth(1)}>
+        <ActionButton size="sm" tooltip="Next month" onClick={() => stepMonth(1)}>
           <CalendarNextIcon size={16} />
         </ActionButton>
       </div>

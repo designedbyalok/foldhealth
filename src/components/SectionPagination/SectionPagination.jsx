@@ -2,7 +2,7 @@ import { ActionButton } from '../ActionButton/ActionButton';
 import styles from './SectionPagination.module.css';
 
 /**
- * SectionPagination — the compact pager shown under a list/table section
+ * SectionPagination: the compact pager shown under a list/table section
  * (Figma 5732-276316). A left-aligned "start-end of total" range followed by
  * prev / next arrow buttons. Use it for in-section paging (e.g. a care-program
  * task section) where the full worklist `Pagination` (per-page selector +
@@ -25,16 +25,16 @@ export function SectionPagination({ page, perPage, total, onPageChange }) {
       <span className={styles.range}>{start}-{end} of {total}</span>
       <ActionButton
         icon="solar:alt-arrow-left-linear"
-        size="S"
+        size="sm"
         tooltip="Previous"
-        state={safePage <= 1 ? 'disabled' : 'active'}
+        disabled={safePage <= 1}
         onClick={() => onPageChange(safePage - 1)}
       />
       <ActionButton
         icon="solar:alt-arrow-right-linear"
-        size="S"
+        size="sm"
         tooltip="Next"
-        state={safePage >= totalPages ? 'disabled' : 'active'}
+        disabled={safePage >= totalPages}
         onClick={() => onPageChange(safePage + 1)}
       />
     </div>

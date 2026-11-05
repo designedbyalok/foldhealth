@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import styles from './HoverCard.module.css';
 
 /**
- * HoverCard — small wrapper that shows a portal-rendered popover when the
+ * HoverCard: small wrapper that shows a portal-rendered popover when the
  * user hovers the trigger. Used for the Care Team configuration tooltips:
  *   • "Capacity Used: X%" → capacity breakdown by team
  *   • "Total Assigned Users: X%" → users assigned to a TIN

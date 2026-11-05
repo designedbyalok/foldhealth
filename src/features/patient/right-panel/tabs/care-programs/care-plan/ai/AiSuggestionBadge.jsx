@@ -8,10 +8,12 @@ import styles from './AiSuggestionBadge.module.css';
 
 const KIND_LABEL = {
   condition: 'Condition', lab: 'Lab', lab_trend: 'Lab trend', event: 'Event', assessment: 'Assessment', barrier: 'Barrier',
+  description: 'Care manager', profile: 'Profile',
 };
 const KIND_ICON = {
   condition: 'solar:clipboard-heart-linear', lab: 'solar:test-tube-linear', lab_trend: 'solar:graph-up-linear',
   event: 'solar:hospital-linear', assessment: 'solar:document-text-linear', barrier: 'custom:barrier',
+  description: 'solar:pen-new-square-linear', profile: 'solar:user-id-linear',
 };
 
 /**
@@ -44,7 +46,7 @@ export function AiSuggestionBadge({ kind, item }) {
         onClick={(e) => { e.stopPropagation(); setRect(e.currentTarget.getBoundingClientRect()); }}
         aria-label="Suggested by UnityAI: view why and review"
       >
-        <Badge tone="unity" size="XS" icon="custom:ai" label="AI · Review" />
+        <Badge tone="unity" size="xs" icon="custom:ai" label="AI · Review" />
       </button>
       {rect && (
         <AnchoredPopover
@@ -68,8 +70,8 @@ export function AiSuggestionBadge({ kind, item }) {
               ))}
             </ul>
             {review?.onReview && (
-              <Button size="S" leadingIcon="solar:check-circle-linear" disabled={saving} onClick={markReviewed}>
-                {saving ? 'Saving…' : 'Mark Reviewed'}
+              <Button size="sm" leadingIcon="solar:check-circle-linear" onClick={markReviewed} loading={saving}>
+                Mark Reviewed
               </Button>
             )}
           </div>

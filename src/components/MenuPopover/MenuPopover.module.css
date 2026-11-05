@@ -1,35 +1,21 @@
-/* MenuPopover — shared chrome for action-list popovers.
+/* MenuPopover: shared chrome for action-list popovers.
  * Mirrors the ActionsMenu pattern in src/features/hcc/RowPopovers.module.css
  * 1:1 so all popovers (worklist actions, upload menu, future row menus) read
  * as the same component. */
 
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 8998;
-  background: transparent;
-}
-
+/* Surface, position and scrolling come from Popover. */
 .menu {
-  position: fixed;
-  z-index: 9400;
   padding: var(--space-2);
-  background: var(--neutral-0);
-  border: 0.5px solid var(--neutral-100);
-  border-radius: 8px;
-  box-shadow: var(--shadow-popover);
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
-  /* Long lists (taller than the viewport) scroll inside the menu. */
-  overflow-y: auto;
+  gap: var(--space-1);
 }
 .menu > * { flex-shrink: 0; }
 
 .row {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 0.375rem;
   height: 32px;
   padding: 0 var(--space-2);
   border: none;
@@ -38,6 +24,11 @@
   cursor: pointer;
   text-align: left;
   transition: background 0.12s;
+}
+
+.rowTall {
+  height: auto;
+  padding: var(--space-2);
 }
 
 .row:hover {
@@ -93,14 +84,14 @@
   flex-shrink: 0;
 }
 
-/* Submenu affordance — the shared down-chevron turned to point right, so the
+/* Submenu affordance: the shared down-chevron turned to point right, so the
    glyph matches every other chevron in the app rather than a Solar arrow. */
 .submenuChevron {
   transform: rotate(-90deg);
   flex-shrink: 0;
 }
 
-/* Searchable variant — sticky filter input pinned to the top of the menu
+/* Searchable variant: sticky filter input pinned to the top of the menu
    (same look as Select's searchable menu). */
 .searchRow {
   display: flex;
@@ -130,3 +121,7 @@
   color: var(--neutral-300);
   text-align: center;
 }
+
+/* A row's tooltip wrapper spans the menu's width, like the row itself. */
+.rowTip { display: flex; }
+.rowTip > .row { flex: 1; }

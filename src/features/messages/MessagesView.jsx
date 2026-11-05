@@ -76,7 +76,7 @@ export function MessagesView() {
   const [searchQuery, setSearchQuery]     = useState('');
   const [convRefreshKey, setConvRefreshKey] = useState(0);
   // Starts true so the very first paint is a skeleton, not the empty state.
-  // Only the FIRST load flips it — background refreshes (a realtime nudge
+  // Only the FIRST load flips it, background refreshes (a realtime nudge
   // bumping convRefreshKey) must not blank a list the user is reading.
   const [convLoading, setConvLoading] = useState(true);
   const [showSearch, setShowSearch]       = useState(false);
@@ -94,8 +94,8 @@ export function MessagesView() {
   const { patients, me } = useCommsPeople();
 
   // getSession() reads the persisted session locally; getUser() makes a
-  // network call to re-validate it. Nothing here needs re-validation — the
-  // app is already behind an auth gate and only `user.id` is used — and that
+  // network call to re-validate it. Nothing here needs re-validation, the
+  // app is already behind an auth gate and only `user.id` is used: and that
   // round-trip measured ~131ms during which `loadConversations` could not
   // even start, because it is gated on `currentUser`. That was the single
   // biggest cost in getting the chat list on screen.
@@ -116,7 +116,7 @@ export function MessagesView() {
       .select('id, full_name, first_name, last_name, email, avatar_url')
       .then(({ data, error }) => {
         if (error) {
-          console.warn('[MessagesView] profiles fetch failed — chat names will show as "Unknown" and New Chat list will be empty.', error);
+          console.warn('[MessagesView] profiles fetch failed: chat names will show as "Unknown" and New Chat list will be empty.', error);
           return;
         }
         setAllProfiles(data || []);
@@ -128,17 +128,27 @@ export function MessagesView() {
 
   useEffect(() => { refreshProfiles(); }, [refreshProfiles]);
 
+  // An UPDATE carries the changed row, so patch it in place; only a new or
+  // removed profile needs the list re-read. Re-reading every profile on
+  // every update made each sign-in anywhere refetch in every open tab.
   useEffect(() => {
+    const PROFILE_FIELDS = ['id', 'full_name', 'first_name', 'last_name', 'email', 'avatar_url'];
     const ch = supabase
       .channel('profiles-watch')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, refreshProfiles)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, (payload) => {
+        const row = payload?.new;
+        if (payload?.eventType !== 'UPDATE' || !row?.id) { refreshProfiles(); return; }
+        const picked = Object.fromEntries(PROFILE_FIELDS.map(k => [k, row[k]]));
+        setAllProfiles(prev => prev.map(p => (p.id === row.id ? { ...p, ...picked } : p)));
+        setProfiles(prev => (prev[row.id] ? { ...prev, [row.id]: { ...prev[row.id], ...picked } } : prev));
+      })
       .subscribe();
     return () => ch.unsubscribe();
   }, [refreshProfiles]);
 
   const loadConversations = useCallback(async () => {
     if (!currentUser) return;
-    // Named columns rather than `*` — the reduce below only reads these five,
+    // Named columns rather than `*`, the reduce below only reads these five,
     // and `*` drags any media/attachment columns along for every message in
     // the history.
     const { data } = await supabase
@@ -174,6 +184,15 @@ export function MessagesView() {
     if (currentUser) loadConversations();
   }, [currentUser, loadConversations, convRefreshKey]);
 
+  // Read through refs so opening a chat or a profile refresh doesn't tear
+  // the channel down and subscribe again.
+  const selectedUserIdRef = useRef(selectedUserId);
+  const allProfilesRef = useRef(allProfiles);
+  useEffect(() => {
+    selectedUserIdRef.current = selectedUserId;
+    allProfilesRef.current = allProfiles;
+  }, [selectedUserId, allProfiles]);
+
   useEffect(() => {
     if (!currentUser) return;
     const ch = supabase
@@ -183,15 +202,15 @@ export function MessagesView() {
         filter: `recipient_id=eq.${currentUser.id}`,
       }, (payload) => {
         setConvRefreshKey(k => k + 1);
-        // Fire a bell notification for the arrival — but not if I'm
+        // Fire a bell notification for the arrival, but not if I'm
         // already looking at the chat with that sender (the message will
         // land in the open view; nothing to announce). Also skip echoes
         // where I somehow received my own message.
         const row = payload?.new;
         if (!row || row.read_at) return;
         if (row.sender_id === currentUser.id) return;
-        if (row.sender_id === selectedUserId) return;
-        const sender = allProfiles.find(p => p.id === row.sender_id);
+        if (row.sender_id === selectedUserIdRef.current) return;
+        const sender = allProfilesRef.current.find(p => p.id === row.sender_id);
         const senderName = sender ? getDisplayName(sender) : 'Someone';
         const preview = (row.content || '').slice(0, 90);
         addNotification?.({
@@ -204,7 +223,7 @@ export function MessagesView() {
       })
       .subscribe();
     return () => ch.unsubscribe();
-  }, [currentUser, selectedUserId, allProfiles, addNotification]);
+  }, [currentUser, addNotification]);
 
   const handleConversationUpdate = useCallback(() => setConvRefreshKey(k => k + 1), []);
 
@@ -292,8 +311,6 @@ export function MessagesView() {
               collapsed={navCollapsed}
               header={
                 <Button
-                  variant="primary"
-                  size="L"
                   leadingIcon="solar:add-circle-bold"
                   fullWidth
                   iconOnly={navCollapsed}

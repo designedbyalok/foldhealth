@@ -1,33 +1,36 @@
-import { useState } from 'react';
-import { useAppStore } from '../../../store/useAppStore';
+import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Badge } from '../../../components/Badge/Badge';
 import { Icon } from '../../../components/Icon/Icon';
+import { Banner } from '../../../components/Banner/Banner';
 import { PhoneLink } from '../../../components/PhoneLink/PhoneLink';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { annotateClaims, confirmedFills, matchFill, medLabel, parseMdy } from '../pharmacyWorklist.utils';
+import { MeasureCode, Sep } from '../PharmacyCells';
 import styles from './MedicationClaims.module.css';
 
-const EMPTY = [];
 
 // Each claim status looks different, so a reversed, cancelled or rejected
 // line never reads as a paid fill.
 const CLAIM_BADGE = {
   Paid: { tone: 'success', icon: 'solar:check-circle-linear' },
-  Pending: { tone: 'grey', icon: 'solar:clock-circle-linear' },
-  Reversed: { tone: 'error', icon: 'solar:undo-left-linear' },
+  Pending: { tone: 'neutral', icon: 'solar:clock-circle-linear' },
+  Reversed: { tone: 'danger', icon: 'solar:undo-left-linear' },
   Cancelled: { tone: 'warning', icon: 'solar:close-circle-linear' },
-  Rejected: { tone: 'error', icon: 'solar:forbidden-circle-linear' },
-  Deleted: { tone: 'grey', icon: 'solar:trash-bin-minimalistic-linear' },
+  Rejected: { tone: 'danger', icon: 'solar:forbidden-circle-linear' },
+  Deleted: { tone: 'neutral', icon: 'solar:trash-bin-minimalistic-linear' },
 };
+// Where a fill confirmed in Fold stands against its claim.
 const MATCH_BADGE = {
-  Verified: { tone: 'success', label: 'Claim verified' },
-  'Pending claim': { tone: 'grey', label: 'Pending claim' },
-  'Not matched': { tone: 'error', label: 'Claim not matched' },
+  verified: { tone: 'success', label: 'Claim matched' },
+  pending: { tone: 'grey', label: 'Awaiting claim' },
+  'no-claim': { tone: 'error', label: 'Claim not matched' },
+  'other-coverage': { tone: 'error', label: 'Non–Part D claim' },
+  voided: { tone: 'error', label: 'Fill reversed' },
 };
 // Claim fields still waiting on Astrana's feed definition.
 const PENDING_FIELDS = 'Status values, transaction type, claim ID and sequence, fill and reversal dates, BIN / PCN / group, the negative-value rule and deleted-claim handling are pending confirmation from Astrana.';
 
-const money = (n) => (n == null ? '—' : `${n < 0 ? '-' : ''}$${Math.abs(Number(n)).toFixed(2)}`);
+const money = (n) => (n == null ? '-' : `${n < 0 ? '-' : ''}$${Math.abs(Number(n)).toFixed(2)}`);
 const total = (c) => (c.planPaid == null && c.copay == null ? null : (c.planPaid || 0) + (c.copay || 0));
 const byDate = (a, b) => (parseMdy(a.date) ?? 0) - (parseMdy(b.date) ?? 0);
 // Within one claim group, the order things happened: when each transaction
@@ -38,63 +41,81 @@ const eventAt = (c) => parseMdy(c.reversalDate || c.processedDate || c.date) ?? 
 const byEvent = (a, b) => eventAt(a) - eventAt(b) || TXN_RANK[a.txnType] - TXN_RANK[b.txnType] || a.claimSeq - b.claimSeq;
 
 function ClaimStatusBadge({ claim }) {
-  if (claim.effect === 'Not Part D') return <Badge size="S" tone="info" icon="solar:shield-linear" label={`${claim.coverage}`} />;
-  if (claim.effect === 'Superseded') return <Badge size="S" tone="grey" label="Superseded" />;
+  if (claim.effect === 'Not Part D') {
+    return (
+      <Tooltip label="Billed outside Part D: does not count in PDC" placement="bottom">
+        <span><Badge size="sm" tone="info" icon="solar:shield-linear" label={`Non–Part D · ${claim.coverage}`} /></span>
+      </Tooltip>
+    );
+  }
+  if (claim.effect === 'Superseded') return <Badge size="sm" label="Replaced by a newer version" />;
+  // A reversal line (a Reversal transaction, or negative values linked to a
+  // fill) cancels its fill, whatever status the feed sent with it.
+  if (claim.effect === 'Reversal') return <Badge size="sm" tone={CLAIM_BADGE.Reversed.tone} icon={CLAIM_BADGE.Reversed.icon} label="Reversal" />;
+  if (claim.effect === 'Invalid') {
+    return (
+      <Tooltip label="Days supply 0, or a negative value not linked to a fill: held for review and not counted in PDC" placement="bottom">
+        <span><Badge size="sm" tone="warning" icon="solar:eye-linear" label="Held for review" /></span>
+      </Tooltip>
+    );
+  }
   const status = claim.effect === 'Reversed' && claim.claimStatus === 'Paid' ? 'Reversed' : (claim.claimStatus || 'Paid');
   const b = CLAIM_BADGE[status] || CLAIM_BADGE.Paid;
-  return <Badge size="S" tone={b.tone} icon={b.icon} label={status} />;
+  return <Badge size="sm" tone={b.tone} icon={b.icon} label={status} />;
 }
 
 function PendingConfirmation() {
   return (
     <Tooltip label={PENDING_FIELDS} placement="bottom" maxWidth={320}>
-      <span><Badge size="S" tone="warning" icon="solar:info-circle-linear" label="Pending data confirmation" /></span>
+      <span><Badge size="sm" tone="warning" icon="solar:info-circle-linear" label="Pending data confirmation" /></span>
     </Tooltip>
   );
-}
-
-// The story of one claim group, oldest step first: billed, reversed,
-// rebilled, or billed to other insurance.
-function claimStory(rows) {
-  return rows.map(c => {
-    if (c.txnType === 'Reversal') return `Reversed ${c.reversalDate || c.date}`;
-    if (c.txnType === 'Rebill') return `Rebilled ${c.date} (seq ${c.claimSeq})`;
-    if (c.effect === 'Not Part D') return `Billed to ${c.coverage} ${c.date}`;
-    if (['Cancelled', 'Rejected', 'Deleted'].includes(c.claimStatus)) return `${c.claimStatus} ${c.date}`;
-    return `Billed ${c.date}`;
-  }).join(' → ');
 }
 
 function ClaimField({ label, children }) {
   return (
     <div className={styles.claimField}>
       <span className={styles.claimFieldLabel}>{label}</span>
-      <span className={styles.claimFieldValue}>{children ?? '—'}</span>
+      <span className={styles.claimFieldValue}>{children ?? '-'}</span>
     </div>
   );
 }
 
-function Section({ title, aside, children }) {
+// `table`: the body is a table, not a field grid.
+function Section({ title, aside, table = false, children }) {
   return (
     <section className={styles.claimSection}>
       <div className={styles.claimSectionHead}>
         <span className={styles.claimSectionTitle}>{title}</span>
         {aside}
       </div>
-      <div className={styles.claimInfoGrid}>{children}</div>
+      {table ? children : <div className={styles.claimInfoGrid}>{children}</div>}
     </section>
   );
+}
+
+// What the member took home on this claim's fill: its own drug first, then
+// any other drug of theirs on a current claim from the same pharmacy that day.
+function dispensedWith(med, claim, memberMeds) {
+  const others = (memberMeds || [])
+    .filter(d => d.id !== med.id)
+    .flatMap(d => {
+      const hit = annotateClaims(d.refills).find(c => c.current && c.date === claim.date && c.pharmacy === claim.pharmacy);
+      return hit ? [{ med: d, claim: hit }] : [];
+    });
+  return [{ med, claim }, ...others];
 }
 
 // Inline claim detail, as in the HCC Claims tab: back arrow and title, then
 // the claim, its transaction, the drug dispensed, the pharmacy and the
 // prescriber.
-function ClaimDetail({ med, claim, onBack, onOpen }) {
+function ClaimDetail({ med, claim, memberMeds, onBack, onOpen, flush }) {
+  const dispensed = dispensedWith(med, claim, memberMeds);
   const pharmacy = med.pharmacy?.name === claim.pharmacy ? med.pharmacy : { name: claim.pharmacy };
   const prescriber = med.prescriber;
   const original = claim.reversesClaimId || (claim.claimGroup !== claim.claimId ? claim.claimGroup : null);
   return (
-    <div>
+    <div className={flush ? styles.claimDetailFlush : undefined}>
       <div className={styles.claimDetailHead}>
         <button type="button" className={styles.claimBackBtn} onClick={onBack} aria-label="Back to claims">
           <Icon name="solar:arrow-left-linear" size={18} color="var(--neutral-400)" />
@@ -126,13 +147,26 @@ function ClaimDetail({ med, claim, onBack, onOpen }) {
         {claim.note && <ClaimField label="Note">{claim.note}</ClaimField>}
       </Section>
 
-      <Section title="Drug Dispensed">
-        <ClaimField label="Medication">{medLabel(med)}</ClaimField>
-        <ClaimField label="Generic">{med.generic}</ClaimField>
-        <ClaimField label="Gap">{med.measure}</ClaimField>
-        <ClaimField label="Quantity">{claim.qty}</ClaimField>
-        <ClaimField label="Days Supply">{claim.daysSupply}</ClaimField>
-        <ClaimField label="Dose Form">{med.doseForm}</ClaimField>
+      <Section title={dispensed.length > 1 ? `Drugs Dispensed (${dispensed.length})` : 'Drug Dispensed'} table>
+        <div className={`${styles.dataTableHead} ${styles.drugsGrid}`}>
+          <span>Medication</span>
+          <span>Gap</span>
+          <span>Qty</span>
+          <span>Days Supply</span>
+          <span>Dose Form</span>
+        </div>
+        {dispensed.map(({ med: d, claim: c }) => (
+          <div key={d.id} className={`${styles.dataTableRow} ${styles.drugsGrid}`}>
+            <span className={styles.idCell}>
+              <span className={styles.drugName}>{medLabel(d)}</span>
+              <span className={styles.rowMeta}>{d.generic}</span>
+            </span>
+            <span><MeasureCode code={d.measure} /></span>
+            <span>{c.qty ?? '-'}</span>
+            <span>{c.daysSupply ?? '-'}</span>
+            <span>{d.doseForm || '-'}</span>
+          </div>
+        ))}
       </Section>
 
       <Section title="Pharmacy">
@@ -151,22 +185,15 @@ function ClaimDetail({ med, claim, onBack, onOpen }) {
 }
 
 function ClaimRow({ c, onOpen }) {
-  const muted = c.voided || c.effect === 'Superseded' || c.txnType === 'Reversal';
+  const muted = c.voided || c.effect === 'Superseded' || c.effect === 'Invalid' || c.txnType === 'Reversal';
   return (
     <div className={`${styles.dataTableRow} ${styles.claimsGrid} ${muted ? styles.rowVoid : ''}`}>
       <span className={styles.idCell}>
         <button type="button" className={styles.claimIdLink} onClick={() => onOpen(c.claimId)}>{c.claimId || 'Claim'}</button>
-        {c.reversesClaimId && (
-          <span className={styles.rowMeta}>
-            Reverses <button type="button" className={styles.inlineLink} onClick={() => onOpen(c.reversesClaimId)}>{c.reversesClaimId}</button>
-          </span>
-        )}
       </span>
       <span className={styles.claimDate}>{c.date}</span>
-      <span className={styles.rowMeta}>{c.txnType}</span>
-      <span className={styles.rowMeta}>{c.claimSeq}{c.current ? ' · Current' : ''}</span>
       <ClaimStatusBadge claim={c} />
-      <span className={`${styles.claimAmount} ${c.voided || c.effect === 'Superseded' ? styles.struck : ''}`}>{money(total(c))}</span>
+      <ActionButton icon="solar:eye-linear" size="sm" tooltip="View claim" onClick={() => onOpen(c.claimId)} />
     </div>
   );
 }
@@ -174,21 +201,19 @@ function ClaimRow({ c, onOpen }) {
 // A fill confirmed in Fold (by hand, from a pickup or a refill approval):
 // projected until its claim matches, so it never reads as a claim.
 function FillRow({ f }) {
-  const b = MATCH_BADGE[f.match.status];
+  const b = MATCH_BADGE[f.match.kind];
   return (
     <div className={`${styles.dataTableRow} ${styles.claimsGrid} ${styles.rowFill}`}>
       <span className={styles.idCell}>
         <span className={styles.fillLabel}>{f.manual ? 'Entered by hand' : f.source}</span>
-        <span className={styles.rowMeta}>{f.match.detail}</span>
+        <span className={styles.rowMeta}>Fold fill<Sep />{f.match.detail}</span>
       </span>
       <span className={styles.claimDate}>{f.date}</span>
-      <span className={styles.rowMeta}>Fold fill</span>
-      <span className={styles.rowMeta}>—</span>
       <span className={styles.badges}>
-        {f.match.status !== 'Verified' && <Badge size="S" tone="warning" label="Projected" />}
-        <Badge size="S" tone={b.tone} label={b.label} />
+        {f.match.kind !== 'verified' && <Badge size="sm" tone="warning" label="Projected" />}
+        <Badge size="sm" tone={b.tone} label={b.label} />
       </span>
-      <span className={styles.claimAmount}>—</span>
+      <span />
     </div>
   );
 }
@@ -197,19 +222,19 @@ function FillRow({ f }) {
  * Claim history for one medication. Claims are grouped into the story of
  * each fill (billed, reversed, rebilled, billed to other insurance); fills
  * confirmed in Fold sit in the same timeline with their source and match
- * status, tagged Projected until a claim matches. Pharmacy-confirmed pickups
- * are listed below, apart from claim data. A claim ID opens its detail in the
- * same panel with a back arrow.
+ * status, tagged Projected until a claim matches. A claim ID opens its detail in the
+ * same panel with a back arrow. The host owns which claim is open
+ * (`selectedId` / `onSelect`), so it can hide its own tabs meanwhile.
+ * `flush`: the open claim runs edge to edge in a padded host pane.
+ * `memberMeds`: the member's other drugs (with `measure`), so a claim lists
+ * everything picked up from the same pharmacy that day.
  */
-export function MedicationClaims({ med, plan, memberRowId }) {
-  const [selectedId, setSelectedId] = useState(null);
-  const allPickups = useAppStore(s => s.pharmacyPickups ?? EMPTY);
+export function MedicationClaims({ med, plan, memberMeds, selectedId, onSelect: setSelectedId, flush = false }) {
   const claims = annotateClaims(med.refills);
   const fills = confirmedFills(med).map(f => ({ ...f, match: matchFill(f, claims, plan) }));
-  const pickups = allPickups.filter(p => p.memberRowId === memberRowId && p.measureCode === med.measure);
   const selected = selectedId ? claims.find(c => c.claimId === selectedId) : null;
 
-  if (selected) return <ClaimDetail med={med} claim={selected} onBack={() => setSelectedId(null)} onOpen={setSelectedId} />;
+  if (selected) return <ClaimDetail med={med} claim={selected} memberMeds={memberMeds} onBack={() => setSelectedId(null)} onOpen={setSelectedId} flush={flush} />;
 
   const groups = new Map();
   for (const c of claims) groups.set(c.claimGroup, [...(groups.get(c.claimGroup) || []), c]);
@@ -220,56 +245,21 @@ export function MedicationClaims({ med, plan, memberRowId }) {
 
   return (
     <div className={styles.history}>
-      <div className={styles.historyHead}>
-        <span className={styles.claimSectionTitle}>Claim History</span>
-        <PendingConfirmation />
-      </div>
       {!timeline.length ? <p className={styles.empty}>No claims on file for this medication.</p> : (
         <div className={styles.dataTable}>
           <div className={`${styles.dataTableHead} ${styles.claimsGrid}`}>
             <span>Claim ID</span>
             <span>Fill Date</span>
-            <span>Type</span>
-            <span>Seq</span>
             <span>Status</span>
-            <span>Amount</span>
+            <span />
           </div>
           {timeline.map(item => (item.kind === 'fill' ? (
             <FillRow key={`fill-${item.f.date}-${item.f.source}`} f={item.f} />
           ) : (
             <div key={item.rows[0].claimGroup} className={styles.claimGroup}>
-              {item.rows.length > 1 || item.rows[0].effect !== 'Counts' ? (
-                <div className={styles.story}>{claimStory(item.rows)}</div>
-              ) : null}
               {item.rows.map(c => <ClaimRow key={`${c.claimId}-${c.claimSeq}-${c.txnType}`} c={c} onOpen={setSelectedId} />)}
             </div>
           )))}
-        </div>
-      )}
-
-      <div className={styles.historyHead}>
-        <span className={styles.claimSectionTitle}>Pharmacy-Confirmed Pickups</span>
-        <span className={styles.rowMeta}>Logged in Fold, not claim data</span>
-      </div>
-      {!pickups.length ? <p className={styles.empty}>No pickups confirmed for {med.measure}.</p> : (
-        <div className={`${styles.dataTable} ${styles.pickupTable}`}>
-          <div className={`${styles.dataTableHead} ${styles.pickupGrid}`}>
-            <span>Pickup Date</span>
-            <span>Source</span>
-            <span>Logged By</span>
-            <span>Logged</span>
-          </div>
-          {pickups.map(p => (
-            <div key={p.id} className={`${styles.dataTableRow} ${styles.pickupGrid}`}>
-              <span className={styles.claimDate}>{p.pickupDate}</span>
-              <span className={styles.idCell}>
-                <span>{p.source}</span>
-                {p.note && <span className={styles.rowMeta}>{p.note}</span>}
-              </span>
-              <span>{p.loggedBy}</span>
-              <span className={styles.rowMeta}>{new Date(p.loggedAt).toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
-            </div>
-          ))}
         </div>
       )}
     </div>

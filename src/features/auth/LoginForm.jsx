@@ -175,8 +175,6 @@ export function LoginForm({
         )}
 
         <Button
-          variant="primary"
-          size="L"
           fullWidth
           disabled={loading}
           type="submit"

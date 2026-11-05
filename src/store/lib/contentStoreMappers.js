@@ -64,3 +64,35 @@ export function clinicalNoteVersionRowToJs(row) {
     createdAt: row.created_at || null,
   };
 }
+
+/** A patient's form_responses row (P360 Assessments). */
+export function patientFormResponseRowToJs(row) {
+  return {
+    id: row.id,
+    formId: row.form_id != null ? String(row.form_id) : null,
+    answers: row.answers || {},
+    scores: row.scores || {},
+    // Pre-migration rows have no status column: treat them as completed.
+    status: row.status || 'completed',
+    answeredCount: row.answered_count ?? null,
+    startedAt: row.started_at || row.created_at || null,
+    completedAt: row.completed_at || null,
+    createdAt: row.created_at || null,
+    filledByName: row.created_by_profile?.full_name || null,
+  };
+}
+
+/** A patient_assessment_sends row. */
+export function assessmentSendRowToJs(row) {
+  return {
+    id: row.id,
+    formId: row.form_id != null ? String(row.form_id) : null,
+    sentByName: row.sent_by_name || null,
+    sentAt: row.sent_at || row.created_at || null,
+    channels: row.channels || [],
+    programCodes: row.program_codes || [],
+    requiresSignature: !!row.requires_signature,
+    signedByName: row.signed_by_name || null,
+    signedAt: row.signed_at || null,
+  };
+}

@@ -35,8 +35,8 @@ CREATE INDEX IF NOT EXISTS idx_pce_patient_code
 ALTER TABLE public.patient_clinical_events ENABLE ROW LEVEL SECURITY;
 
 -- RLS. The previous policy was `FOR ALL USING (true)` with NO `TO` clause, which
--- defaults to PUBLIC — and PUBLIC includes `anon`, the key that ships in the
--- browser bundle. This table holds PHI — diagnoses, procedures,
+-- defaults to PUBLIC: and PUBLIC includes `anon`, the key that ships in the
+-- browser bundle. This table holds PHI, diagnoses, procedures,
 -- medications, labs, encounters and immunizations, keyed to a patient.
 -- Verified against production as the anon role before this change: SELECT,
 -- INSERT, UPDATE and DELETE were all ALLOWED.
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS public.pop_group_triggers (
 ALTER TABLE public.pop_group_triggers ENABLE ROW LEVEL SECURITY;
 
 -- RLS. The previous policy was `FOR ALL USING (true)` with NO `TO` clause, which
--- defaults to PUBLIC — and PUBLIC includes `anon`, the key that ships in the
+-- defaults to PUBLIC: and PUBLIC includes `anon`, the key that ships in the
 -- browser bundle. These rows configure automation that fires on
 -- group membership changes, so a forged write could drive outreach.
 -- Verified against production as the anon role before this change: SELECT,
@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS public.pop_group_memberships (
 ALTER TABLE public.pop_group_memberships ENABLE ROW LEVEL SECURITY;
 
 -- RLS. The previous policy was `FOR ALL USING (true)` with NO `TO` clause, which
--- defaults to PUBLIC — and PUBLIC includes `anon`, the key that ships in the
+-- defaults to PUBLIC: and PUBLIC includes `anon`, the key that ships in the
 -- browser bundle. These rows record which patients belong to which
 -- population group, which is itself patient information.
 -- Verified against production as the anon role before this change: SELECT,

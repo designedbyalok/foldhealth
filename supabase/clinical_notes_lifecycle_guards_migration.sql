@@ -33,12 +33,12 @@
 --   4. Amend audit
 --        The existing `clinical_notes_version_snapshot` trigger already
 --        snapshots the prior state into `clinical_note_versions` on
---        every UPDATE — this migration relies on that unchanged.
+--        every UPDATE: this migration relies on that unchanged.
 --
 -- Idempotent: guarded CREATE OR REPLACE. Safe to re-run.
 --
 -- BYPASS: A GUC `app.bypass_clinical_note_lifecycle = 'on'` disables
--- the transition guard for the duration of the current session — meant
+-- the transition guard for the duration of the current session, meant
 -- for backfill scripts and migrations that need to normalize legacy
 -- data. Never set from application code.
 -- =====================================================================
@@ -167,7 +167,7 @@ begin
   end if;
   if new.signed_by_name is null or btrim(new.signed_by_name) = '' then
     -- Fall back to the actor uid as a marker rather than a placeholder
-    -- like 'Provider' — display code can resolve this to a display name.
+    -- like 'Provider', display code can resolve this to a display name.
     new.signed_by_name := actor::text;
   end if;
   if new.signed_at is null then

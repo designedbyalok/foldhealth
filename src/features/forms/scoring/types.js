@@ -1,5 +1,5 @@
 /**
- * Form scoring — data contracts.
+ * Form scoring: data contracts.
  *
  * Plain-JS + JSDoc typedefs (this repo has no TypeScript). Editors pick these
  * up for autocomplete and inline checking. The frozen constant maps below are
@@ -10,7 +10,7 @@
  */
 
 /* ------------------------------------------------------------------ *
- * Runtime enums (frozen — single source of truth for the unions)
+ * Runtime enums (frozen: single source of truth for the unions)
  * ------------------------------------------------------------------ */
 
 /** @enum {string} */
@@ -136,7 +136,7 @@ export const DIAGNOSTIC_CODE = Object.freeze({
  */
 
 /**
- * Predicate for COUNT aggregation — an answer counts when its contribution
+ * Predicate for COUNT aggregation: an answer counts when its contribution
  * satisfies this. Defaults to `{ operator: '>=', value: 1 }`.
  * @typedef {Object} CountPredicate
  * @property {OPERATOR[keyof OPERATOR]} operator
@@ -180,7 +180,7 @@ export const DIAGNOSTIC_CODE = Object.freeze({
  * @property {CountPredicate} [countPredicate]  COUNT only.
  * @property {{min:number,max:number}} range    Min/max possible score (computed, stored for validation).
  * @property {Band[]} interpretations
- * @property {boolean} [locked]   Validated instrument — points/cutoffs not editable.
+ * @property {boolean} [locked]   Validated instrument: points/cutoffs not editable.
  */
 
 /**

@@ -2,20 +2,20 @@
 --
 -- Problem (verified against production 2026-08-10):
 --   handle_new_user() inserts only (id, email, full_name, status, created_at,
---   last_active_at), so `admin_role` fell through to its column default —
+--   last_active_at), so `admin_role` fell through to its column default,
 --   which was 'Business/Practice Owner'. That value IS the admin marker: the
 --   "Admins can update any profile" policy grants UPDATE on EVERY row to
 --   anyone holding it (see UsersTab.jsx:141, isSystemAdmin). Every account
 --   created through normal signup therefore became a system administrator.
 --
 -- Fix: default new profiles to the non-administrative pair already in use
--- elsewhere in the data — role 'Viewer', admin_role 'Employer' — and have the
+-- elsewhere in the data, role 'Viewer', admin_role 'Employer', and have the
 -- signup trigger set both explicitly instead of relying on column defaults.
 --
 -- Deliberately NOT changed: the 35 existing rows holding
 -- 'Business/Practice Owner'. Some of those are legitimate administrators and
 -- blanket-downgrading them could lock the organisation out of user
--- management. Auditing who should keep it is a separate, human decision —
+-- management. Auditing who should keep it is a separate, human decision,
 -- see the query at the bottom.
 --
 -- Verified safe: profiles has no CHECK constraint on `role` or `admin_role`

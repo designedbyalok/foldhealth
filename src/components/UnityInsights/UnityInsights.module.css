@@ -1,0 +1,164 @@
+/* Unity insights (Figma Reports 31:35360): a tinted strip, section headers
+   with "Powered by Unity", and recommendation rows with an action cell. */
+.insights {
+  display: flex;
+  flex-direction: column;
+  margin: 0 var(--space-4) var(--space-4);
+  border: 0.5px solid var(--primary-200);
+  border-radius: calc(var(--space-1) * 1.5);
+  background: var(--primary-50);
+  overflow: hidden;
+}
+
+/* ── Strip ── */
+.strip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: var(--space-8);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  background: var(--primary-100);
+  text-align: left;
+}
+
+.stripButton {
+  cursor: pointer;
+  transition: background-color 120ms ease-out;
+}
+
+.stripButton:hover {
+  background: color-mix(in srgb, var(--primary-200) 35%, var(--primary-100));
+}
+
+/* Feedback lands on press, not on release. */
+.stripButton:active {
+  background: color-mix(in srgb, var(--primary-200) 60%, var(--primary-100));
+  transition: none;
+}
+
+.chevron {
+  flex-shrink: 0;
+  transition: transform 240ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Height animates through grid rows (0fr to 1fr): a transition starts from
+   the current value, so reversing mid-way is seamless. */
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 260ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 180ms ease-out;
+}
+
+.collapseOpen {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.collapseInner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapse { transition: opacity 150ms ease-out; }
+  .chevron { transition: none; }
+}
+
+.stripButton:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: -2px;
+}
+
+.stripText {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--primary-300);
+}
+
+/* ── Section header ── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--space-8);
+  padding: var(--space-1) var(--space-3);
+  border-top: 0.5px solid var(--primary-200);
+}
+
+.headerIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+}
+
+.poweredBy {
+  font-size: var(--font-sm);
+  line-height: var(--leading-tight);
+  color: var(--primary-200);
+  white-space: nowrap;
+}
+
+/* ── Recommendation row ── */
+.recommendation {
+  display: flex;
+  align-items: stretch;
+  border-top: 0.5px solid var(--primary-200);
+  background: var(--neutral-0);
+}
+
+.recText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+}
+
+.recTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.recTitle {
+  min-width: 0;
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+}
+
+.recDescription {
+  font-size: var(--insight-description-size, var(--font-base));
+  line-height: var(--leading-normal);
+  color: var(--insight-description-color, var(--neutral-300));
+}
+
+.recActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  padding: var(--space-2);
+  border-left: 0.5px solid var(--primary-200);
+}

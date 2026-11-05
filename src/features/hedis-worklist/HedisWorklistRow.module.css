@@ -34,7 +34,7 @@
 
 .checkTd { padding: 8px 10px; vertical-align: middle; }
 
-/* Checkbox wrapper — matches the member identity block height (avatar +
+/* Checkbox wrapper: matches the member identity block height (avatar +
    name + meta) and centers the checkbox so it aligns to the avatar's
    vertical centre even on multi-gap rows where the row grows tall and
    the check td top-aligns. Same 35px height HCC's worklist uses so the
@@ -46,7 +46,7 @@
 }
 .memberTd {
   /* Left padding trimmed to 4px so the patient avatar sits closer to
-     the selection checkbox column — matches the shared worklist rule
+     the selection checkbox column: matches the shared worklist rule
      applied across HCC / APCM / TOC. */
   padding: var(--space-2) var(--space-3) var(--space-2) var(--space-1);
   border-right: 0.5px solid var(--neutral-150);
@@ -82,7 +82,7 @@
 .foldId { cursor: pointer; transition: color .12s; }
 .foldId:hover { color: var(--primary-300); text-decoration: underline; }
 
-/* Language badge — inline plain-text link inside .patientMeta, matches
+/* Language badge: inline plain-text link inside .patientMeta, matches
    src/features/toc/worklist (WorklistRow.module.css). Tooltip renders
    above the trigger so it doesn't get clipped by table chrome below. */
 .langBadge {
@@ -111,7 +111,7 @@
 /* Total Gaps cell list */
 .gapList { display: flex; gap: 4px; flex-wrap: wrap; }
 
-/* Gap-specific cell — padding removed from <td> so inner items control spacing */
+/* Gap-specific cell: padding removed from <td> so inner items control spacing */
 .tdGap {
   padding: 0;
   font-size: var(--font-base);
@@ -122,7 +122,7 @@
 }
 /* Single-gap rows: center the lone item vertically like other cells */
 .tdGapCenter { vertical-align: middle; }
-/* Right divider — marks the boundary between per-gap and per-member columns */
+/* Right divider: marks the boundary between per-gap and per-member columns */
 .tdGapDivide { border-right: 0.5px solid var(--neutral-150); }
 
 /* Stacked per-gap items inside a .tdGap cell */
@@ -132,7 +132,7 @@
   /* 44px accommodates the AssigneeChange pill (28px height) with the shared
      8/8 padding. Uses `height` (not min-height) with box-sizing: border-box
      so the 0.5px separator border between items doesn't accumulate subpixel
-     drift in the Assignee column — every column's per-gap row measures the
+     drift in the Assignee column: every column's per-gap row measures the
      same, and multi-gap cells stay pixel-aligned across columns. */
   height: 44px;
   box-sizing: border-box;
@@ -141,7 +141,7 @@
 }
 .gapItem + .gapItem { border-top: 0.5px solid var(--neutral-150); }
 
-/* Gap-code chip is a clickable button — opens the Care Gap Details
+/* Gap-code chip is a clickable button, opens the Care Gap Details
    drawer for that specific measure. The default Badge (compliance-na)
    is a static grey pill; wrapping it in this button applies a hover
    affordance (primary tint on background + border) so the user can tell
@@ -168,7 +168,7 @@
 }
 
 /* Equal-height footer row rendered by every gap-iterating column when more
-   than MAX_INLINE_GAPS gaps exist — mirrors the HCC dosFooter so the "View
+   than MAX_INLINE_GAPS gaps exist: mirrors the HCC dosFooter so the "View
    More N" button in Total Gaps stays vertically aligned with the empty
    footer spacers in Gap Status / Assignee / Start Date. */
 .gapFooter {
@@ -194,7 +194,7 @@
 
 /* Gap status */
 
-/* Outreach cell — lifted from src/features/toc/worklist/WorklistRow.module.css */
+/* Outreach cell: lifted from src/features/toc/worklist/WorklistRow.module.css */
 .outreachWl { display: flex; flex-direction: column; gap: 4px; }
 .outreachWlMain { display: flex; align-items: center; gap: 6px; }
 .outreachWlText { font-size: var(--font-md); color: var(--neutral-400); }
@@ -263,3 +263,42 @@
 .actionsBtns { display: flex; align-items: center; gap: 8px; }
 .actionsDivider { width: 1px; height: 16px; background: var(--neutral-150); flex-shrink: 0; }
 
+
+
+/* Total Gaps: code chip + source circle (M manual, C claim), as on the HCC
+   worklist's DOS. */
+.gapCodeLine { display: inline-flex; align-items: center; gap: var(--space-1); }
+/* Source hover card: Source, Reason, Other Instances, each block split by a
+   hairline. */
+.srcCard {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--space-3);
+  text-align: left;
+}
+.srcRow,
+.srcBlock {
+  padding: var(--space-2) 0;
+}
+.srcRow + .srcBlock,
+.srcBlock + .srcBlock { border-top: 0.5px solid var(--neutral-150); }
+.srcRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.srcBlock { display: flex; flex-direction: column; gap: var(--space-1); }
+.srcLabel { font-size: var(--font-sm); line-height: 1.3; color: var(--neutral-300); }
+.srcValue { font-size: var(--font-md); line-height: 1.3; color: var(--neutral-400); }
+.srcList { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.srcItem { display: flex; align-items: center; gap: var(--space-2); }
+.srcItemText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); }
+.srcItemText > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.srcItemMeta { font-size: var(--font-sm); line-height: 1.3; color: var(--neutral-300); }
+
+/* Previous instance: greyed out across the row, with a "Previous" tag by
+   the code. */
+.gapItemPrevious { background: var(--neutral-25); }
+.gapItemPrevious > * { opacity: 0.6; }
+/* Plain grey text beside the code, not a chip. */
+.previousTag {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  white-space: nowrap;
+}

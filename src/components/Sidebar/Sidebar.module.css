@@ -8,7 +8,7 @@
   flex-direction: column;
   align-items: stretch;
   padding: 8px 4px;
-  /* Outer sidebar never scrolls — only the inner .navItems area does. */
+  /* Outer sidebar never scrolls: only the inner .navItems area does. */
   overflow: hidden;
   z-index: 100;
 }
@@ -50,14 +50,14 @@
   position: relative;
 }
 
-/* Sliding pill — single element that slides between the active nav item's
+/* Sliding pill: single element that slides between the active nav item's
    position. Every nav item's active background used to live on
    .item.active .itemInner (a static per-item paint); now the pill owns it
    and glides. Apple-style spring easing gives a distinctive lift-and-settle
    feel over ~360ms. */
 /* Pill inherits its exact top/left/width/height from JS measurement of
    the active .itemInner (60×60), so the box is a perfect square. No CSS
-   margin — that would compound with the measured top and shift the pill
+   margin: that would compound with the measured top and shift the pill
    below its target. */
 .activePill {
   position: absolute;
@@ -123,7 +123,7 @@
   background: color-mix(in srgb, var(--sidebar-fg-muted) 60%, transparent);
 }
 
-/* ── Bottom section (Help) — pinned beneath the scrollable area ── */
+/* ── Bottom section (Help): pinned beneath the scrollable area ── */
 .bottomSection {
   flex-shrink: 0;
   display: flex;
@@ -132,7 +132,7 @@
   padding-top: 4px;
 }
 
-/* ── Nav item — fixed 64×64 tile with a 2px gutter around the inner card ── */
+/* ── Nav item: fixed 64×64 tile with a 2px gutter around the inner card ── */
 .item {
   width: 64px;
   height: 64px;
@@ -150,7 +150,7 @@
   background: none;
 }
 
-/* ── Inner container — rounded card inside each item ── */
+/* ── Inner container: rounded card inside each item ── */
 .itemInner {
   width: 100%;
   height: 100%;
@@ -179,7 +179,7 @@
   transition: color .15s;
 }
 
-/* Hover (inactive) — paint the inner card AND flip the item's own color so
+/* Hover (inactive): paint the inner card AND flip the item's own color so
    both the label span and the icon (via currentColor) inherit the paired
    hover-fg. Active items skip this rule because the pill owns the paint
    (see .item.active:hover below). */
@@ -195,7 +195,7 @@
   color: var(--sidebar-hover-fg, var(--sidebar-fg));
 }
 
-/* Active state — background is painted by the sliding pill above, so we
+/* Active state: background is painted by the sliding pill above, so we
    only tint the label + icon here. The pill sits at z-index 0 and the
    item's content stays above it via .item { z-index: 1 }. */
 .item {
@@ -210,7 +210,7 @@
   color: var(--sidebar-active-fg, var(--sidebar-fg));
 }
 
-/* Active + Hover — tint the pill itself, so the hover response reads as
+/* Active + Hover: tint the pill itself, so the hover response reads as
    one shape (the pill) rather than a second box painted on top of it.
    :has() lets the parent .navItems paint a sibling ~ selection: the pill
    sits above the items in DOM order, so we scope from the container. */

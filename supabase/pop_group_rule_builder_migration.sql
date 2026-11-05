@@ -1,6 +1,6 @@
 -- Dynamic population group rule builder.
 --
--- 1) population_groups.rule — the react-querybuilder rule tree a Dynamic
+-- 1) population_groups.rule, the react-querybuilder rule tree a Dynamic
 --    group is defined by ({ combinator, rules: [...] }). NULL for Static
 --    groups.
 --
@@ -11,7 +11,7 @@
 --    "includes X"); text columns are single-valued statuses.
 --
 -- Both tables already exist with RLS enabled and authenticated policies, so
--- this only adds columns. Idempotent — safe to re-run.
+-- this only adds columns. Idempotent, safe to re-run.
 
 ALTER TABLE public.population_groups
   ADD COLUMN IF NOT EXISTS rule jsonb;

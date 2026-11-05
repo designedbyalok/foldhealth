@@ -1,6 +1,6 @@
 ---
 title: "Analytics"
-description: "Fifteen dashboards spanning executive, financial, risk, quality, utilization, SDOH, and operations — all filterable by period and practice."
+description: "Fifteen dashboards spanning executive, financial, risk, quality, utilization, SDOH, and operations, all filterable by period and practice."
 ---
 
 The **Analytics** workspace is where leadership answers "how are we doing?" It ships with 15 opinionated dashboards, each tuned for a specific audience and question. Every view shares the same period selector, practice filter, and drill-down mechanics.
@@ -55,11 +55,11 @@ The **Analytics** workspace is where leadership answers "how are we doing?" It s
   </Card>
 </CardGroup>
 
-## Walkthrough — investigate a dip
+## Walkthrough: investigate a dip
 
 <Steps>
   <Step title="Start at the Executive view">
-    Open **Analytics** in the sidebar; the URL is `#/analytics/executive`. Scan the KPI row for anything unexpected — e.g. "TCM completion dropped from 74% to 61% this month."
+    Open **Analytics** in the sidebar; the URL is `#/analytics/executive`. Scan the KPI row for anything unexpected, e.g. "TCM completion dropped from 74% to 61% this month."
   </Step>
   <Step title="Narrow the period">
     Use the **Period selector** in the toolbar to switch from "Last 90 days" to just the month in question. Every chart re-queries and re-renders.
@@ -71,7 +71,7 @@ The **Analytics** workspace is where leadership answers "how are we doing?" It s
     Click the dropping bar directly. If the chart supports drill-down (most Executive and Financial charts do), it opens a detail popover with the underlying cohort. Click **View patients** to send that cohort to the Population worklist as a filter.
   </Step>
   <Step title="Cross-reference">
-    Switch to a specialized view — **Utilization** if the dip is about follow-ups, **Care Coordination** if it's about hand-offs, **AI Analytics** if it's about agent outcomes. All filters carry over.
+    Switch to a specialized view: **Utilization** if the dip is about follow-ups, **Care Coordination** if it's about hand-offs, **AI Analytics** if it's about agent outcomes. All filters carry over.
   </Step>
   <Step title="Export">
     Use the toolbar **Export** button to download the current chart (PNG) or its underlying data (CSV) for a slide or a follow-up email.
@@ -82,13 +82,13 @@ The **Analytics** workspace is where leadership answers "how are we doing?" It s
 
 Every view has the same top toolbar:
 
-- **Period selector** — presets (Today, 7d, 30d, 90d, YTD, All) + custom range picker.
-- **Practice filter** — single-select or multi-select depending on the view; scoped to the practices your account can see.
-- **Drill-down** — click on chart marks (bars, segments, points) to open a cohort popover.
-- **Export** — download the current chart as PNG or its data as CSV.
+- **Period selector**: presets (Today, 7d, 30d, 90d, YTD, All) + custom range picker.
+- **Practice filter**: single-select or multi-select depending on the view; scoped to the practices your account can see.
+- **Drill-down**: click on chart marks (bars, segments, points) to open a cohort popover.
+- **Export**: download the current chart as PNG or its data as CSV.
 
 ## Tips
 
-- **URL is the state.** Every filter, period, and drill-down writes to the hash — share a link and the recipient lands on exactly what you're looking at.
-- **Charts are built with Recharts.** All colors come from `src/tokens/tokens.css` — the dashboards adapt automatically when tokens change.
+- **URL is the state.** Every filter, period, and drill-down writes to the hash, share a link and the recipient lands on exactly what you're looking at.
+- **Charts are built with Recharts.** All colors come from `src/tokens/tokens.css`, the dashboards adapt automatically when tokens change.
 - **Simulator caveats.** The **ROI Simulator** is a "what if" tool: inputs never persist and don't affect real cohorts. It's a modeling scratchpad.

@@ -9,6 +9,9 @@
       the model (buildIndividualizedPrompt, INDIVIDUALIZED_SCHEMA).
    3. normalizeIndividualizedDraft keeps only what's grounded: real fact ids,
       real templates and library items, and drops any item that cites nothing.
+   With `recommended` (templates the org's enrollment automations matched to
+   this patient), the model must merge ALL of them into one plan instead of
+   picking its own; the caps grow with how many there are.
    Shared by the API handler and the store; plain JS with explicit .js
    imports so the server can load it. */
 
@@ -19,6 +22,8 @@ const MAX_TEMPLATES = 2;
 const MAX_GOALS = 6;
 const MAX_INTERVENTIONS = 12;
 const MAX_BARRIERS = 8;
+// Automation-recommended templates merged into one plan.
+const MAX_RECOMMENDED = 6;
 const EVENT_WINDOW_DAYS = 180;
 const LAB_WINDOW_DAYS = 730;
 
@@ -40,6 +45,20 @@ const iso = (d) => (d ? `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.get
 const daysAgo = (d, today) => Math.floor((today - d) / 86400000);
 const num = (v) => (Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10));
 
+/** Longest care manager description UnityAI plans from. */
+export const DESCRIPTION_MAX = 1000;
+
+/**
+ * The care manager's plain-English description of the patient, added as one
+ * more citable fact (kind 'description'). Used when the record has nothing to
+ * plan from, so the plan rests on what the care manager reported.
+ */
+export function withDescription(facts, description) {
+  const text = clip(description, DESCRIPTION_MAX);
+  if (!text) return facts;
+  return [...facts, { id: `F${facts.length + 1}`, kind: 'description', text, date: null }];
+}
+
 /**
  * The patient's inputs as citable facts: [{ id: 'F1', kind, text, date }].
  *   problems        patient_problems rows { title, status }
@@ -47,8 +66,9 @@ const num = (v) => (Number.isInteger(v) ? String(v) : String(Math.round(v * 10) 
  *   responses       form_responses rows for the patient { form_id, answers, … }
  *   formNames       Map form id → name
  *   barriers        open barriers already on the patient's plans { title, program }
+ *   profileTags     condition tags on the patient profile (p360_profiles.condition_tags)
  */
-export function buildPatientFacts({ problems = [], clinicalEvents = [], responses = [], formNames = new Map(), barriers = [] }, today = new Date()) {
+export function buildPatientFacts({ problems = [], clinicalEvents = [], responses = [], formNames = new Map(), barriers = [], profileTags = [] }, today = new Date()) {
   const facts = [];
   const add = (kind, text, date = null) => {
     if (facts.length < MAX_FACTS && text) facts.push({ id: `F${facts.length + 1}`, kind, text: clip(text, 220), date: iso(date) });
@@ -68,6 +88,14 @@ export function buildPatientFacts({ problems = [], clinicalEvents = [], response
     seen.add(norm(label));
     const d = toDate(e.effective_date);
     add('condition', `${label} (diagnosed${d ? ` ${fmt(d)}` : ''})`, d);
+  }
+
+  // Condition tags on the patient profile ("Chronic Pain", "Needs
+  // Transportation"), unless the record already names them.
+  for (const tag of profileTags) {
+    if (typeof tag !== 'string' || !tag.trim() || seen.has(norm(tag))) continue;
+    seen.add(norm(tag));
+    add('profile', `${tag.trim()} (patient profile)`);
   }
 
   // Lab trends: each lab's series, latest first, with its direction.
@@ -138,6 +166,36 @@ export function buildTemplateChoices(templates = [], libraryGoals = []) {
     }));
 }
 
+/**
+ * How many templates and items a draft may hold. Several automation-matched
+ * templates merge into one plan, so the room grows with them (to a ceiling).
+ */
+export function draftLimits(recommendedCount = 0) {
+  const n = Math.min(recommendedCount, MAX_RECOMMENDED);
+  if (!n) return { templates: MAX_TEMPLATES, goals: MAX_GOALS, interventions: MAX_INTERVENTIONS, barriers: MAX_BARRIERS };
+  const extra = n - 1;
+  return {
+    templates: n,
+    goals: Math.min(MAX_GOALS + 2 * extra, 12),
+    interventions: Math.min(MAX_INTERVENTIONS + 4 * extra, 24),
+    barriers: Math.min(MAX_BARRIERS + 2 * extra, 14),
+  };
+}
+
+/** Automation matches as the model sees them, only for templates it was sent. */
+export function recommendedForPrompt(recommended = [], templates = []) {
+  const known = new Set(templates.map(t => String(t.id)));
+  const seen = new Set();
+  return (Array.isArray(recommended) ? recommended : [])
+    .filter(r => r && known.has(String(r.templateId)) && !seen.has(String(r.templateId)) && seen.add(String(r.templateId)))
+    .slice(0, MAX_RECOMMENDED)
+    .map(r => ({
+      templateId: String(r.templateId),
+      rule: clip(r.rule, 120),
+      criteria: (Array.isArray(r.criteria) ? r.criteria : []).map(c => clip(c, 160)).slice(0, 8),
+    }));
+}
+
 const citations = { type: 'array', items: { type: 'string' }, description: 'fact ids (F1, F2, …) that justify this item' };
 const libraryRef = {
   libraryId: { type: 'string', nullable: true, description: 'library id, or null for a new item' },
@@ -182,14 +240,27 @@ export const INDIVIDUALIZED_SCHEMA = {
   required: ['summary', 'templates', 'goals', 'interventions', 'barriers'],
 };
 
-export function buildIndividualizedPrompt({ facts, templates, catalog, programName }) {
+export function buildIndividualizedPrompt({ facts, templates, catalog, programName, recommended = [] }) {
+  const matches = recommendedForPrompt(recommended, templates);
+  const limits = draftLimits(matches.length);
+  const pick = matches.length
+    ? [
+      `- The organization's automations matched every template in MATCHES to this patient (each with the rule and the criteria the patient met). Use ALL of them: list each in templates with why and the facts it rests on.`,
+      `- Then merge them into ONE tailored plan: up to ${limits.goals} goals, up to ${limits.interventions} interventions and up to ${limits.barriers} barriers. Where templates overlap, keep a single item. Leave out what the FACTS show doesn't apply to this patient, and add what this patient specifically needs.`,
+    ]
+    : [
+      `- First pick up to ${limits.templates} templates from TEMPLATES that best fit this patient, each with why and the facts it rests on. Pick none if none fit.`,
+      `- Then draft a tailored set: up to ${limits.goals} goals, up to ${limits.interventions} interventions and up to ${limits.barriers} barriers. Use the chosen templates' goals where they fit this patient, add what this patient specifically needs, and leave out what doesn't apply.`,
+    ];
   return [
     `You draft an individualized care plan for one patient enrolled in ${programName || 'a care program'}. A care manager reviews every item before the plan is signed.`,
     '',
     'Rules:',
-    `- First pick up to ${MAX_TEMPLATES} templates from TEMPLATES that best fit this patient, each with why and the facts it rests on. Pick none if none fit.`,
-    `- Then draft a tailored set: up to ${MAX_GOALS} goals, up to ${MAX_INTERVENTIONS} interventions and up to ${MAX_BARRIERS} barriers. Use the chosen templates' goals where they fit this patient, add what this patient specifically needs, and leave out what doesn't apply.`,
+    ...pick,
     '- Reuse the LIBRARY: when an item means the same as a library entry, return its id as libraryId and its exact title. Only use libraryId null for something the library lacks.',
+    ...(facts.some(f => f.kind === 'description')
+      ? ['- A fact of kind "description" is the care manager\'s own account of the patient, not yet in the record. Plan from it and cite it, but do not add diagnoses, lab values or dates it does not state.']
+      : []),
     '- Every item must cite at least one fact id from FACTS that shows why this patient needs it, and give a one-sentence rationale that refers to those facts. Never cite a fact that does not support the item. Do not invent data: no dates, lab values, diagnoses or targets that are not in FACTS.',
     '- Link each intervention to the goal it serves by goalTitle (exactly as you titled the goal), and each barrier to the goals it blocks by goalTitles.',
     '- summary: one plain sentence describing the plan\'s focus for this patient.',
@@ -199,6 +270,7 @@ export function buildIndividualizedPrompt({ facts, templates, catalog, programNa
     '',
     'TEMPLATES (JSON):',
     JSON.stringify(templates),
+    ...(matches.length ? ['', 'MATCHES (JSON):', JSON.stringify(matches)] : []),
     '',
     'LIBRARY (JSON):',
     JSON.stringify(catalog),
@@ -222,7 +294,7 @@ function resolveRef(ref, { byId, byTitle }) {
  * and library items only when they exist, links resolved to drafted goals,
  * and any item left with no citation dropped. Null when no goal survives.
  */
-export function normalizeIndividualizedDraft(raw, { facts = [], templates = [], catalog = { goals: [], interventions: [], barriers: [] } }) {
+export function normalizeIndividualizedDraft(raw, { facts = [], templates = [], catalog = { goals: [], interventions: [], barriers: [] }, recommended = [] }) {
   if (!raw || typeof raw !== 'object') return null;
   const factById = new Map(facts.map(f => [f.id, f]));
   const cite = (ids) => [...new Set((Array.isArray(ids) ? ids : []).map(x => String(x).trim().toUpperCase()))]
@@ -230,18 +302,28 @@ export function normalizeIndividualizedDraft(raw, { facts = [], templates = [], 
     .map(f => ({ fact: f.id, kind: f.kind, text: f.text, date: f.date }));
   const idx = { goals: indexCatalog(catalog.goals), interventions: indexCatalog(catalog.interventions), barriers: indexCatalog(catalog.barriers) };
   const templateById = new Map(templates.map(t => [String(t.id), t]));
+  const matches = recommendedForPrompt(recommended, templates);
+  const ruleOf = new Map(matches.map(m => [m.templateId, m.rule]));
+  const limits = draftLimits(matches.length);
 
   const pickedTemplates = [];
   for (const t of Array.isArray(raw.templates) ? raw.templates : []) {
     const tpl = templateById.get(String(t?.templateId));
     const c = cite(t?.citations);
-    if (!tpl || !c.length || pickedTemplates.some(p => p.id === tpl.id) || pickedTemplates.length >= MAX_TEMPLATES) continue;
-    pickedTemplates.push({ id: tpl.id, name: tpl.name, why: clip(t.why, 300), citations: c });
+    if (!tpl || !c.length || pickedTemplates.some(p => p.id === tpl.id) || pickedTemplates.length >= limits.templates) continue;
+    if (matches.length && !ruleOf.has(String(tpl.id))) continue;
+    pickedTemplates.push({ id: tpl.id, name: tpl.name, why: clip(t.why, 300), citations: c, ...(ruleOf.has(String(tpl.id)) ? { automation: ruleOf.get(String(tpl.id)) } : {}) });
+  }
+  // Every automation match stays on record even if the model left it out.
+  for (const m of matches) {
+    if (pickedTemplates.some(p => String(p.id) === m.templateId)) continue;
+    const tpl = templateById.get(m.templateId);
+    pickedTemplates.push({ id: tpl.id, name: tpl.name, why: clip(`Matched by automation: ${m.rule}`, 300), citations: [], automation: m.rule });
   }
 
   const goals = [];
   for (const g of Array.isArray(raw.goals) ? raw.goals : []) {
-    if (goals.length >= MAX_GOALS) break;
+    if (goals.length >= limits.goals) break;
     const r = resolveRef(g, idx.goals);
     const c = cite(g?.citations);
     if (!r.title || !c.length || goals.some(x => norm(x.title) === norm(r.title))) continue;
@@ -260,7 +342,7 @@ export function normalizeIndividualizedDraft(raw, { facts = [], templates = [], 
 
   const interventions = [];
   for (const i of Array.isArray(raw.interventions) ? raw.interventions : []) {
-    if (interventions.length >= MAX_INTERVENTIONS) break;
+    if (interventions.length >= limits.interventions) break;
     const r = resolveRef(i, idx.interventions);
     const c = cite(i?.citations);
     if (!r.title || !c.length || interventions.some(x => norm(x.title) === norm(r.title))) continue;
@@ -276,7 +358,7 @@ export function normalizeIndividualizedDraft(raw, { facts = [], templates = [], 
 
   const barriers = [];
   for (const b of Array.isArray(raw.barriers) ? raw.barriers : []) {
-    if (barriers.length >= MAX_BARRIERS) break;
+    if (barriers.length >= limits.barriers) break;
     const r = resolveRef(b, idx.barriers);
     const c = cite(b?.citations);
     if (!r.title || !c.length || barriers.some(x => norm(x.title) === norm(r.title))) continue;

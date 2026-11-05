@@ -11,7 +11,7 @@ fi
 # which is always inside the repo regardless of the cwd we were invoked
 # from. The previous `git rev-parse --show-toplevel` fallback failed
 # silently inside $(…) when the env-level setup script ran us from
-# /home/user/ — `cd ""` left cwd unchanged and `bun install` then crashed
+# /home/user/: `cd ""` left cwd unchanged and `bun install` then crashed
 # with "could not find a package.json".
 if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
   PROJECT_DIR="$CLAUDE_PROJECT_DIR"
@@ -29,7 +29,7 @@ if ! command -v bun >/dev/null 2>&1; then
 fi
 
 # Persist Bun on PATH for the rest of the session. CLAUDE_ENV_FILE is only
-# defined for SessionStart hook runs — skip the write when running as the
+# defined for SessionStart hook runs: skip the write when running as the
 # environment-level setup script (where it's empty/unset).
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   echo "export PATH=\"\$HOME/.bun/bin:\$PATH\"" >> "$CLAUDE_ENV_FILE"

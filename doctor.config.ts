@@ -1,6 +1,6 @@
 // React Doctor config. `defineConfig` from the package isn't resolvable
 // through react-doctor's own config loader (CJS interop), so we export a
-// plain object — it's just an identity helper anyway.
+// plain object: it's just an identity helper anyway.
 export default {
   ignore: {
     rules: [
@@ -8,8 +8,8 @@ export default {
       // Each of these spans dozens-to-hundreds of sites; fixing them blind in
       // one pass is riskier than the warnings themselves. Re-enable one at a
       // time when there's appetite for a dedicated migration PR.
-      'react-doctor/no-array-index-as-key',      // 204 sites — key changes alter list reconciliation
-      'react-doctor/exhaustive-deps',            // 72 sites — dep additions can loop/change behavior
+      'react-doctor/no-array-index-as-key',      // 204 sites, key changes alter list reconciliation
+      'react-doctor/exhaustive-deps',            // 72 sites, dep additions can loop/change behavior
       'react-doctor/prefer-useReducer',          // pure refactor preference
       'react-doctor/prefer-use-effect-event',    // needs React experimental useEffectEvent
       // ── Accepted codebase patterns (verified by reading the sites) ──────
@@ -25,7 +25,7 @@ export default {
       'react-doctor/no-prop-callback-in-effect',
       // Every localStorage read in this repo goes through a try/catch +
       // shape-check helper with a default fallback (_readJson etc.), so a
-      // payload shape change degrades to defaults instead of crashing —
+      // payload shape change degrades to defaults instead of crashing,
       // version envelopes would add migration risk for no real safety gain.
       'react-doctor/client-localstorage-no-version',
       // ── Deferred maintainability (2026-09, react-doctor@latest) ─────────
@@ -66,7 +66,7 @@ export default {
       // of these breaks production, so the rule is scoped off these paths
       // rather than left to mislead the next person reading the report.
       //
-      // Note this suppresses ONLY unused-file — every other rule still applies
+      // Note this suppresses ONLY unused-file: every other rule still applies
       // here, which matters because api/share.js has had real security
       // findings (see the jsonForScript escape).
       {
@@ -74,7 +74,7 @@ export default {
           'api/**',
           'supabase/functions/**',
         ],
-        // Note the `deslop/` prefix — dead-code analysis comes from deslop-js,
+        // Note the `deslop/` prefix: dead-code analysis comes from deslop-js,
         // not the react-doctor oxlint plugin, so `react-doctor/unused-file`
         // silently matches nothing.
         rules: ['deslop/unused-file'],
@@ -98,11 +98,11 @@ export default {
       },
 
       // ProductTour reads/writes its own row keyed by a `user_id` taken from
-      // supabase.auth.getUser() — there is no client-side change that makes a
+      // supabase.auth.getUser(): there is no client-side change that makes a
       // client filter into a security boundary. Enforcement lives in the
       // database: user_tour_status is scoped to auth.uid() and defaults the
       // owner column server-side (applied; 0 anon policies remain on it).
-      // Covers ProductTour.utils.js too — the helpers were extracted there and
+      // Covers ProductTour.utils.js too, the helpers were extracted there and
       // a path-scoped suppression does not follow a refactor.
       {
         files: [
@@ -125,13 +125,13 @@ export default {
       //
       // Recording a correction: the AccountPanel entry above was justified as
       // "a read/derive of role for display", which was true of the site that
-      // triggered it but incomplete — AccountPanel also contained these invite
+      // triggered it but incomplete: AccountPanel also contained these invite
       // writes. Splitting them into this file surfaced that, so the write now
       // carries its own reasoning instead of inheriting a partial one.
       //
       // SECOND CORRECTION (2026-08). The justification above was still too
       // generous. "Admins can update any profile" gates WHICH ROW you may
-      // write, never WHICH COLUMNS — and `Users can update own profile`
+      // write, never WHICH COLUMNS, and `Users can update own profile`
       // (auth.uid() = id) let ANY authenticated user write their own
       // admin_role. PreferencesDrawer was doing exactly that, defaulting the
       // field to 'Business/Practice Owner', so saving preferences promoted you
@@ -147,7 +147,7 @@ export default {
       // Verified against production inside a rolled-back transaction: 8/8
       // assertions, including a real non-admin self-escalation attempt.
       //
-      // The remaining hit is on InviteUserDrawer.utils.js's assignUserRoles —
+      // The remaining hit is on InviteUserDrawer.utils.js's assignUserRoles,
       // the RPC wrapper itself. The rule pattern-matches "supabase call near
       // role-ish identifiers", so it flags the very fix it recommends. There is
       // no client-side change that clears it, short of not naming the fields.
@@ -160,7 +160,7 @@ export default {
       },
 
       // App.jsx's dev-login password env var reads like a shipped credential,
-      // and any VITE_-prefixed var normally would be — but this one is only ever
+      // and any VITE_-prefixed var normally would be, but this one is only ever
       // read inside `import.meta.env.DEV ? … : null`, which Vite replaces with
       // `false` in a production build and then eliminates along with the branch.
       //
@@ -176,13 +176,13 @@ export default {
       // Renaming the variable would satisfy the detector without changing one
       // byte of what reaches the browser, so the name stays and the finding is
       // recorded here instead. If this credential is ever read outside a DEV
-      // guard, delete this entry — the rule would then be correct.
+      // guard, delete this entry, the rule would then be correct.
       {
         files: ['src/App.jsx'],
         rules: ['react-doctor/public-env-secret-name'],
       },
 
-      // The iframe editor's cleanup IS total — it removes the `load` listener,
+      // The iframe editor's cleanup IS total: it removes the `load` listener,
       // removes the current document's input/click listeners via
       // unsubscribeDoc(), and clears the debounce timer, all from one cleanup
       // function. The rule still fires because the setTimeout lives two
@@ -195,7 +195,7 @@ export default {
         rules: ['react-doctor/effect-needs-cleanup'],
       },
 
-      // ConfigurePanel's `form` is not derived state — it is editable state
+      // ConfigurePanel's `form` is not derived state: it is editable state
       // hydrated ONCE from an async fetch (guarded by formLoadedRef) and then
       // owned by the user as they type. Computing it during render, which is
       // what the rule asks for, would recompute it from builderConfig on every
@@ -209,7 +209,7 @@ export default {
       },
 
       // no-impure-state-updater false positives: `onTriggerEnter(recordRect)`
-      // is a custom hover-delay helper, not a React state setter — the rule
+      // is a custom hover-delay helper, not a React state setter, the rule
       // mis-flags `recordRect`'s getBoundingClientRect as an impure updater.
       {
         files: [
@@ -221,7 +221,7 @@ export default {
       // effect-needs-cleanup: each of these effects DOES clean up its timers
       // and listeners, but the allocation happens inside a nested callback
       // (a setTimeout/setInterval body), which the rule's static analysis
-      // can't pair with the cleanup — so it flags correct code. Verified by
+      // can't pair with the cleanup: so it flags correct code. Verified by
       // reading each: all return a cleanup that clears every timer/listener.
       // (PopulationGroupsView's interval lives in an upload event handler,
       // not an effect, and self-clears on completion.)
@@ -233,7 +233,7 @@ export default {
 
       // no-create-object-url-without-revoke: both of these DO revoke, but not in
       // a shape the rule can pair. It models "create and release in one scope",
-      // which is structurally unsatisfiable for a *preview* URL — the URL has to
+      // which is structurally unsatisfiable for a *preview* URL, the URL has to
       // outlive the handler that made it or there is nothing to show.
       //
       //   ImagePreviewOverlay  creates the URL only when there is no stored
@@ -266,7 +266,7 @@ export default {
       // impact" and ask for a measured hot path before editing. None of these
       // sites is one.
       //
-      // js-flatmap-filter — the rule suggests .flatMap(), but its OWN doc warns
+      // js-flatmap-filter: the rule suggests .flatMap(), but its OWN doc warns
       // "a flatMap callback that returns empty or singleton arrays is not
       // allocation-free and is not automatically faster". Every site here is a
       // small collection: a mention-picker selection (TaskDetailDrawer), a
@@ -281,7 +281,7 @@ export default {
         rules: ['react-doctor/js-flatmap-filter'],
       },
 
-      // js-combine-iterations — .filter().map() over ordinary collections. The
+      // js-combine-iterations: .filter().map() over ordinary collections. The
       // doc is explicit that "for ordinary collections, the readable chain is
       // often the better tradeoff". evaluateRules.js is the clearest case: it
       // runs once at module load. The others walk a static field catalog, a
@@ -296,7 +296,7 @@ export default {
         rules: ['react-doctor/js-combine-iterations'],
       },
 
-      // async-await-in-loop — MedicationReconciliation's two loops are
+      // async-await-in-loop: MedicationReconciliation's two loops are
       // deliberately sequential and already carry eslint-disable-next-line
       // no-await-in-loop. ocrPdf drives a SINGLE Tesseract worker, which
       // processes one image at a time, and reports "Reading page N of M" as it
@@ -308,7 +308,7 @@ export default {
         rules: ['react-doctor/async-await-in-loop'],
       },
 
-      // rerender-state-only-in-handlers — savedQuery is indeed only read in
+      // rerender-state-only-in-handlers: savedQuery is indeed only read in
       // handlers, so a ref would avoid one re-render when a group is saved. Left
       // as state deliberately: converting state to a ref is the kind of change
       // that silently stops working the moment someone adds it to a dependency
@@ -325,7 +325,7 @@ export default {
       { files: ['src/features/home/WelcomeCard.jsx'], rules: ['react-doctor/no-fetch-in-effect'] },
 
       // no-prevent-default: PreviewCanvas renders the email's own <a> markup
-      // inside the WYSIWYG canvas — clicks must select the block, never
+      // inside the WYSIWYG canvas: clicks must select the block, never
       // navigate. Sidebar's anchor is a functioning Help toggle (semantics
       // nit). ActiveCallCard's ↗ is a decorative link styled via a
       // `.patientName a` element selector.
@@ -341,15 +341,15 @@ export default {
       // ResetPasswordPage deliberately KEEPS loading=true on the success path
       // so the submit button stays disabled through the 900–1200ms redirect
       // timeout (prevents a double-submit that would burn the OTP token).
-      // Every failure path resets it — the reset is in a finally, just gated
+      // Every failure path resets it: the reset is in a finally, just gated
       // on a `redirecting` flag, which the rule reads as conditional.
       { files: ['src/features/auth/ResetPasswordPage.jsx'], rules: ['react-doctor/no-loading-flag-reset-outside-finally'] },
 
-      // dangerous-html-sink — the four sinks that render untrusted HTML now go
+      // dangerous-html-sink: the four sinks that render untrusted HTML now go
       // through src/lib/sanitizeHtml.js (DOMPurify). These remaining four are
       // deliberate and were each read before being ruled out:
-      //   • InlineEditable (x2) is the email builder's contenteditable surface
-      //     — the user is authoring markup for their own email, and the DOM is
+      //   • InlineEditable (x2) is the email builder's contenteditable surface,
+      //     the user is authoring markup for their own email, and the DOM is
       //     the editing model. Sanitizing would fight the editor.
       //   • PreviewCanvas's RawHtml block IS the "paste raw HTML" feature.
       //   • ChatPanel HTML-escapes msg.content in renderMessageMarkup() before
@@ -363,11 +363,11 @@ export default {
         rules: ['react-doctor/dangerous-html-sink'],
       },
 
-      // iframe-missing-sandbox — verified empirically in the Browser pane
+      // iframe-missing-sandbox: verified empirically in the Browser pane
       // (2026-08): adding ANY sandbox attribute disables Chromium's built-in
       // PDF viewer. Tested blob: and data: sources against sandbox="",
       // allow-same-origin, allow-same-origin allow-scripts,
-      // …allow-popups and allow-downloads allow-same-origin — the unsandboxed
+      // …allow-popups and allow-downloads allow-same-origin: the unsandboxed
       // baseline rendered, every sandboxed variant rendered blank. Sandboxing
       // these would break chart / letter / evidence document viewing, so the
       // rule is suppressed for the four document previewers rather than
@@ -401,7 +401,7 @@ export default {
       },
 
       // RangeSliderPopover re-seeds its slider values when reopened with a
-      // different range — the standard controlled-reopen sync.
+      // different range: the standard controlled-reopen sync.
       { files: ['src/components/RangeSliderPopover/RangeSliderPopover.jsx'], rules: ['react-doctor/no-derived-state'] },
 
       {
@@ -431,7 +431,7 @@ export default {
           // setTimeout until schedule-x has rendered the grid, then subscribes.
           // `timer` is reassigned on each retry and the cleanup clears the
           // latest one; the listeners are removed from the exact nodes captured
-          // in `subscribedDays` (see #154 — re-querying at cleanup time was the
+          // in `subscribedDays` (see #154: re-querying at cleanup time was the
           // original bug). A recursive timer is simply not something the
           // detector can follow.
           'src/features/calendar/useCalendarView.js',

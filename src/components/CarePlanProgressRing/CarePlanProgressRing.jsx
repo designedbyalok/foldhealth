@@ -180,10 +180,10 @@ function ProgressRingMedium({ pct, label, className }) {
 }
 
 /**
- * CarePlanProgressRing — goal/intervention progress indicator.
+ * CarePlanProgressRing: goal/intervention progress indicator.
  *
- * @param {'bar'|'ring'} variant — bar for dense tables; ring for drawers and cards.
- * @param {'S'|'M'} size — ring sizes only: S (24px), M (46px).
+ * @param {'bar'|'ring'} variant: bar for dense tables; ring for drawers and cards.
+ * @param {'S'|'M'} size: ring sizes only: S (24px), M (46px).
  */
 export function CarePlanProgressRing({ progress = 0, variant = 'ring', size = 'M', className, title }) {
   const pct = clampPct(progress);

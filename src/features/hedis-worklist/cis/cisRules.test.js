@@ -108,10 +108,19 @@ describe('evaluateCis', () => {
     expect(status(evaluateCis({ dob: fmt(dob), immunizations: imms, today: TODAY }), 'flu').valid).toHaveLength(1);
   });
 
-  it("is Can't be met when the remaining PCV doses cannot fit before the 2nd birthday", () => {
+  it("keeps missing doses Overdue, not Can't be met, while the 2nd birthday is ahead", () => {
     const dob = new Date(2024, 10, 5); // 2nd birthday Nov 5, 2026
     const imms = fullSeries(dob).filter(s => s.title !== 'PCV20');
     imms.push(shot('PCV20', '216', atMonths(dob, 2)));
+    const r = evaluateCis({ dob: fmt(dob), immunizations: imms, today: TODAY });
+    // No minimum interval between doses is assumed, so the 3 doses still fit.
+    expect(status(r, 'pcv').status).toBe(CIS_ANTIGEN_STATUS.overdue);
+    expect(r.evaluation).toBe(CIS_EVALUATION.atRisk);
+  });
+
+  it("is Can't be met once the 2nd birthday has passed", () => {
+    const dob = new Date(2024, 8, 1); // 2nd birthday Sep 1, 2026
+    const imms = fullSeries(dob).filter(s => s.title !== 'PCV20');
     const r = evaluateCis({ dob: fmt(dob), immunizations: imms, today: TODAY });
     expect(status(r, 'pcv').status).toBe(CIS_ANTIGEN_STATUS.cannotMeet);
     expect(r.evaluation).toBe(CIS_EVALUATION.cannotMeet);
@@ -119,9 +128,10 @@ describe('evaluateCis', () => {
 
   it('is At risk when a dose is overdue but still fits', () => {
     const dob = new Date(2024, 11, 15); // 2nd birthday Dec 15, 2026: 70 days left
-    const imms = fullSeries(dob).filter(s => !(s.title === 'Influenza' && s.dateAdministered === atMonths(dob, 7)));
+    // DTaP dose 4's window (15-18 months) ended Jun 15, 2026.
+    const imms = fullSeries(dob).filter(s => s.title !== 'DTaP');
     const r = evaluateCis({ dob: fmt(dob), immunizations: imms, today: TODAY });
-    expect(status(r, 'flu').status).toBe(CIS_ANTIGEN_STATUS.overdue);
+    expect(status(r, 'dtap').status).toBe(CIS_ANTIGEN_STATUS.overdue);
     expect(r.evaluation).toBe(CIS_EVALUATION.atRisk);
   });
 
@@ -167,11 +177,11 @@ describe('dose rows', () => {
     expect(dtap.rows.map(r => r.number)).toEqual([1, 2, 3, 4]);
     const third = dtap.rows[2];
     expect(third.recommended).toBe('6 months');
+    // Window: 6 months up to the day before 15 months (dose 4).
     expect(fmt(third.start)).toBe('10/10/2026');
-    expect(fmt(third.due)).toBe('11/10/2026');
-    // 28 days after dose 2 (Aug 10) is Sep 7, but ACIP's minimum age for
-    // dose 3 (98 days) is earlier still, so the interval wins.
-    expect(fmt(third.earliest)).toBe('09/07/2026');
+    expect(fmt(third.due)).toBe('07/09/2027');
+    // HEDIS earliest allowed: 42 days after birth, the same for every dose.
+    expect(fmt(third.earliest)).toBe('05/22/2026');
     expect(third.status).toBe(CIS_DOSE_STATUS.upcoming);
     expect(dtap.rows[3].recommended).toBe('15–18 months');
   });
@@ -234,7 +244,7 @@ describe('does not count', () => {
 
 describe('completed late', () => {
   it('a dose after its recommended window but before the 2nd birthday counts, flagged late', () => {
-    const dob = new Date(2025, 0, 10); // 4-month DTaP window ends 06/10/2025
+    const dob = new Date(2025, 0, 10); // 4-month DTaP window ends 07/09/2025
     const imms = [shot('DTaP', '20', atMonths(dob, 2)), shot('DTaP', '20', '08/01/2025')];
     const r = evaluateCis({ dob: fmt(dob), immunizations: imms, today: TODAY });
     const dtap = status(r, 'dtap');
@@ -242,7 +252,7 @@ describe('completed late', () => {
     expect(dtap.rows[1]).toMatchObject({
       counts: true,
       status: CIS_DOSE_STATUS.completedLate,
-      reason: 'Given after the recommended window (ended 06/10/2025)',
+      reason: 'Given after the recommended window (ended 07/09/2025)',
     });
     expect(dtap.valid).toHaveLength(2);
   });
@@ -252,5 +262,44 @@ describe('completed late', () => {
     const dtap = status(evaluateCis({ dob: fmt(dob), immunizations: [shot('DTaP', '20', atMonths(dob, 2, 20))], today: TODAY }), 'dtap');
     expect(dtap.rows[0]).toMatchObject({ status: CIS_DOSE_STATUS.completed });
     expect(dtap.rows[0].reason).toBeUndefined();
+  });
+});
+
+// The CIS-10 Vaccine Calendar sheet's worked example: DOB 08/05/2025.
+describe('vaccine calendar sheet dates', () => {
+  const r = evaluateCis({ dob: '08/05/2025', immunizations: [], today: new Date(2025, 7, 20) });
+  const row = (key, n) => status(r, key).rows[n - 1];
+  const dates = (x) => [fmt(x.start), fmt(x.due), fmt(x.earliest)];
+
+  it('matches the window start, window end and earliest allowed columns', () => {
+    expect(dates(row('hepb', 1))).toEqual(['08/05/2025', '09/04/2025', '08/05/2025']);
+    expect(dates(row('hepb', 3))).toEqual(['02/05/2026', '02/05/2027', '08/05/2025']);
+    expect(dates(row('dtap', 1))).toEqual(['10/05/2025', '12/04/2025', '09/16/2025']);
+    expect(dates(row('dtap', 3))).toEqual(['02/05/2026', '11/04/2026', '09/16/2025']);
+    expect(dates(row('hib', 2))).toEqual(['12/05/2025', '08/04/2026', '09/16/2025']);
+    expect(dates(row('rv', 3))).toEqual(['02/05/2026', '04/05/2026', '09/16/2025']);
+    expect(dates(row('mmr', 1))).toEqual(['08/05/2026', '11/05/2026', '08/05/2026']);
+    expect(dates(row('hepa', 1))).toEqual(['08/05/2026', '07/05/2027', '08/05/2026']);
+    expect(dates(row('flu', 1))).toEqual(['02/01/2026', '03/04/2026', '02/01/2026']);
+    // Dose 1 not given yet: dose 2 opens 4 weeks after dose 1's window start.
+    expect(dates(row('flu', 2))).toEqual(['03/01/2026', '08/05/2027', '03/01/2026']);
+  });
+
+  it('opens flu dose 2 four weeks after dose 1 was given', () => {
+    const given = evaluateCis({ dob: '08/05/2025', immunizations: [shot('Influenza', '140', '02/10/2026')], today: new Date(2026, 1, 20) });
+    const flu2 = status(given, 'flu').rows[1];
+    expect(fmt(flu2.start)).toBe('03/10/2026');
+    expect(fmt(flu2.earliest)).toBe('03/10/2026');
+    expect(flu2.status).toBe(CIS_DOSE_STATUS.upcoming);
+  });
+
+  it('bases status on the window start, not the earliest allowed date', () => {
+    // 09/20/2025: past DTaP's earliest allowed (09/16) but before its window (10/05).
+    const early = evaluateCis({ dob: '08/05/2025', immunizations: [], today: new Date(2025, 8, 20) });
+    expect(status(early, 'dtap').rows[0].status).toBe(CIS_DOSE_STATUS.upcoming);
+    const open = evaluateCis({ dob: '08/05/2025', immunizations: [], today: new Date(2025, 9, 5) });
+    expect(status(open, 'dtap').rows[0].status).toBe(CIS_DOSE_STATUS.dueNow);
+    const late = evaluateCis({ dob: '08/05/2025', immunizations: [], today: new Date(2025, 11, 5) });
+    expect(status(late, 'dtap').rows[0].status).toBe(CIS_DOSE_STATUS.overdue);
   });
 });

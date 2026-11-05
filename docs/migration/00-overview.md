@@ -42,12 +42,12 @@ If PHI touches this project, every AWS service we land on must be HIPAA-eligible
 
 Three scripts and three docs. **Zero AWS resources provisioned.** This PR is tooling and runbooks only.
 
-- `scripts/migration/export-supabase-db.sh` — `pg_dump` the production DB to `~/foldhealth-migration/db-YYYYMMDD-HHMM.sql.gz`.
-- `scripts/migration/export-storage.sh` — enumerate every Supabase Storage bucket and download its contents.
-- `scripts/migration/export-auth-users.mjs` — dump the `auth.users` roster (minus password hashes, which Supabase doesn't expose) to JSON.
-- `docs/migration/00-overview.md` — this file.
-- `docs/migration/00-prep.md` — step-by-step runbook for executing Phase 00.
-- `docs/migration/env-mapping.md` — mapping from every current env var to its AWS equivalent.
+- `scripts/migration/export-supabase-db.sh`: `pg_dump` the production DB to `~/foldhealth-migration/db-YYYYMMDD-HHMM.sql.gz`.
+- `scripts/migration/export-storage.sh`, enumerate every Supabase Storage bucket and download its contents.
+- `scripts/migration/export-auth-users.mjs`, dump the `auth.users` roster (minus password hashes, which Supabase doesn't expose) to JSON.
+- `docs/migration/00-overview.md`, this file.
+- `docs/migration/00-prep.md`, step-by-step runbook for executing Phase 00.
+- `docs/migration/env-mapping.md`, mapping from every current env var to its AWS equivalent.
 
 ## How to use this directory
 

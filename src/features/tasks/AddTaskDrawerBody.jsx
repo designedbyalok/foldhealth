@@ -82,7 +82,7 @@ export function AddTaskDrawerBody({
   // Only care-plan-scoped mounts opt in to the schedule block + Linked
   // Goals section. The plain Tasks-list drawer keeps its original layout.
   showScheduleFields = false,
-  // Care-plan kind — 'patient-task' (default) or 'internal-task'. Internal
+  // Care-plan kind: 'patient-task' (default) or 'internal-task'. Internal
   // tasks hide Task Pool / Repeat / Subtasks and keep the Assigned To
   // picker limited to platform users (no members).
   taskKind,
@@ -199,11 +199,11 @@ export function AddTaskDrawerBody({
       <span className={styles.detailLabel}>Task Pool</span>
       <DetailDropdown
         value={pool}
-        options={['— Direct assign —', ...(taskPools || []).map(p => p.name)]}
-        onSelect={v => setPool(v === '— Direct assign —' ? '' : v)}
+        options={['Direct assign', ...(taskPools || []).map(p => p.name)]}
+        onSelect={v => setPool(v === 'Direct assign' ? '' : v)}
       >
         <span style={{ color: pool ? 'var(--neutral-400)' : 'var(--neutral-200)' }}>
-          {pool || '— Direct assign —'}
+          {pool || 'Direct assign'}
         </span>
       </DetailDropdown>
     </div>
@@ -214,7 +214,7 @@ export function AddTaskDrawerBody({
       <span className={styles.detailLabel}>Labels</span>
       <div className={styles.detailValueLabels}>
         {selectedLabels.map(l => (
-          <Badge key={l} variant="overflow" label={l} trailingIcon="solar:close-circle-linear" onClick={() => toggleLabel(l)} />
+          <Badge key={l} label={l} trailingIcon="solar:close-circle-linear" onClick={() => toggleLabel(l)} />
         ))}
         <CreatableLabelDropdown selectedLabels={selectedLabels} onToggle={toggleLabel} />
       </div>
@@ -234,14 +234,14 @@ export function AddTaskDrawerBody({
           onInput={e => setDescription(e.currentTarget.innerHTML)}
         />
         <div className={styles.descToolbar}>
-          <ActionButton icon="solar:paperclip-linear" size="S" tooltip="Attach" />
+          <ActionButton icon="solar:paperclip-linear" size="sm" tooltip="Attach" />
           <span className={styles.toolbarDivider} />
-          <ActionButton icon="solar:text-bold-linear" size="S" tooltip="Bold" onClick={() => document.execCommand('bold')} />
-          <ActionButton icon="solar:text-italic-linear" size="S" tooltip="Italic" onClick={() => document.execCommand('italic')} />
-          <ActionButton icon="solar:text-underline-linear" size="S" tooltip="Underline" onClick={() => document.execCommand('underline')} />
-          <ActionButton icon="solar:text-cross-linear" size="S" tooltip="Strikethrough" onClick={() => document.execCommand('strikeThrough')} />
+          <ActionButton icon="solar:text-bold-linear" size="sm" tooltip="Bold" onClick={() => document.execCommand('bold')} />
+          <ActionButton icon="solar:text-italic-linear" size="sm" tooltip="Italic" onClick={() => document.execCommand('italic')} />
+          <ActionButton icon="solar:text-underline-linear" size="sm" tooltip="Underline" onClick={() => document.execCommand('underline')} />
+          <ActionButton icon="solar:text-cross-linear" size="sm" tooltip="Strikethrough" onClick={() => document.execCommand('strikeThrough')} />
           <span className={styles.toolbarDivider} />
-          <ActionButton icon="solar:list-linear" size="S" tooltip="List" onClick={() => document.execCommand('insertUnorderedList')} />
+          <ActionButton icon="solar:list-linear" size="sm" tooltip="List" onClick={() => document.execCommand('insertUnorderedList')} />
         </div>
       </div>
     </div>
@@ -258,16 +258,16 @@ export function AddTaskDrawerBody({
             style={{ width: 120 }}
             options={STATUS_ORDER.map(s => ({ value: s, label: STATUS_LABELS[s] }))}
             value={status}
-            onChange={setStatus}
+            onValueChange={setStatus}
           />
           <div className={styles.drawerToolbarRight}>
-            <ActionButton icon="solar:paperclip-linear" size="L" tooltip="Attachments" />
+            <ActionButton icon="solar:paperclip-linear" tooltip="Attachments" />
             <span className={styles.iconDivider} />
-            <ActionButton icon="solar:link-minimalistic-linear" size="L" tooltip="Copy link" state="disabled" />
+            <ActionButton icon="solar:link-minimalistic-linear" tooltip="Copy link" disabled />
             <span className={styles.iconDivider} />
-            <ActionButton icon="solar:clipboard-text-linear" size="L" tooltip="Copy ID" state="disabled" />
+            <ActionButton icon="solar:clipboard-text-linear" tooltip="Copy ID" disabled />
             <span className={styles.iconDivider} />
-            <ActionButton icon="solar:trash-bin-trash-linear" size="L" tooltip="Delete" state="disabled" />
+            <ActionButton icon="solar:trash-bin-trash-linear" tooltip="Delete" disabled />
           </div>
         </div>
       )}
@@ -340,13 +340,13 @@ export function AddTaskDrawerBody({
           placeholder="Add a description..."
           value={description}
           rows={3}
-          onChange={(html) => setDescription(html)}
+          onValueChange={(html) => setDescription(html)}
         />
       )}
 
       <div className={styles.drawerDetails}>
         {!showScheduleFields && taskPoolRow}
-        {/* Assigned To — kept visible whether a pool is picked or not.
+        {/* Assigned To: kept visible whether a pool is picked or not.
             When a pool is chosen, useAddTaskDrawer.handleSave nulls the
             direct-assignee at save time; showing the field lets the user
             see (and change) their intent explicitly. */}
@@ -356,14 +356,14 @@ export function AddTaskDrawerBody({
             value={assignedTo}
             options={assigneeChoices}
             onSelect={setAssignedTo}
-            // Only Internal Task lets the user reassign — Patient Task
+            // Only Internal Task lets the user reassign, Patient Task
             // runs on the member and the assignee stays locked to them.
             disabled={!isInternalTask}
             renderOption={opt => {
               const label = typeof opt === 'string' ? opt : opt.label;
               const val = typeof opt === 'string' ? opt : opt.value;
               const initials = (val || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-              // A member (patient) can be the assignee too — match by name
+              // A member (patient) can be the assignee too, match by name
               // against the memberOptions list so their picker row renders
               // with the patient avatar variant, consistent with the Member
               // row and the InterventionDrawer's assignee list.
@@ -459,14 +459,14 @@ export function AddTaskDrawerBody({
         </div>
         {!showScheduleFields && labelsRow}
 
-        {/* Care-plan tail — Task Pool and Labels sit ABOVE Creation Date
+        {/* Care-plan tail: Task Pool and Labels sit ABOVE Creation Date
             per the task-drawer ordering ask. Task Pool is hidden for
             internal tasks (they never route through a pool). */}
         {showScheduleFields && !isInternalTask && taskPoolRow}
         {showScheduleFields && labelsRow}
 
         {showScheduleFields && (<>
-        {/* Creation Date — badge in immediate mode, count+unit input when
+        {/* Creation Date: badge in immediate mode, count+unit input when
             day/week is chosen. Mirrors the intervention drawer. */}
         <div className={styles.detailRow}>
           <span className={styles.detailLabel}>
@@ -483,7 +483,7 @@ export function AddTaskDrawerBody({
                 aria-expanded={creationTimingOpen}
                 onClick={() => setCreationTimingOpen(v => !v)}
               >
-                <Badge tone="white" size="M" label="immediate" chevron />
+                <Badge variant="outline" size="md" label="immediate" chevron />
               </button>
             ) : (
               <Input
@@ -551,7 +551,7 @@ export function AddTaskDrawerBody({
               aria-expanded={creationTriggerOpen}
               onClick={() => setCreationTriggerOpen(v => !v)}
             >
-              <Badge tone="white" size="M" label={creationTrigger} chevron />
+              <Badge variant="outline" size="md" label={creationTrigger} chevron />
             </button>
             {creationTriggerOpen && (
               <MenuPopover
@@ -709,7 +709,7 @@ export function AddTaskDrawerBody({
         </>)}
       </div>
 
-      {/* Subtasks — same collapsible section + row treatment as Linked
+      {/* Subtasks: same collapsible section + row treatment as Linked
           Goals so both compound sections read consistently. Each row is
           inline-editable (click title, input, blur commits). Hidden for
           internal tasks (only patient tasks carry subtasks). */}
@@ -733,7 +733,7 @@ export function AddTaskDrawerBody({
             </button>
             <ActionButton
               icon="solar:add-linear"
-              size="S"
+              size="sm"
               tooltip="Add subtask"
               onClick={() => { setShowAddSubtask(true); setSubtaskName(''); }}
             />
@@ -790,7 +790,7 @@ export function AddTaskDrawerBody({
                     <div className={scheduleStyles.linkActions}>
                       <ActionButton
                         icon="solar:trash-bin-trash-linear"
-                        size="S"
+                        size="sm"
                         tooltip="Delete"
                         onClick={() => removeStagedSubtask(i)}
                       />
@@ -864,8 +864,8 @@ export function AddTaskDrawerBody({
                 onKeyDown={e => { if (e.key === 'Enter') addStagedSubtask(); if (e.key === 'Escape') { setShowAddSubtask(false); setSubtaskName(''); } }}
                 autoFocus
               />
-              <Button variant="primary" size="S" onClick={addStagedSubtask} disabled={!subtaskName.trim()}>Add</Button>
-              <Button variant="secondary" size="S" onClick={() => { setShowAddSubtask(false); setSubtaskName(''); }}>Cancel</Button>
+              <Button size="sm" onClick={addStagedSubtask} disabled={!subtaskName.trim()}>Add</Button>
+              <Button variant="outline" size="sm" onClick={() => { setShowAddSubtask(false); setSubtaskName(''); }}>Cancel</Button>
             </div>
           )}
           {stagedSubtasks.map((sub, i) => (
@@ -876,7 +876,7 @@ export function AddTaskDrawerBody({
                   <span className={styles.subtaskCardName}>{sub?.name ?? ''}</span>
                 </div>
               </div>
-              <ActionButton icon="solar:close-circle-linear" size="S" tooltip="Remove" onClick={() => removeStagedSubtask(i)} />
+              <ActionButton icon="solar:close-circle-linear" size="sm" tooltip="Remove" onClick={() => removeStagedSubtask(i)} />
             </div>
           ))}
           {stagedSubtasks.length === 0 && !showAddSubtask && (
@@ -885,7 +885,7 @@ export function AddTaskDrawerBody({
         </div>
       )}
 
-      {/* Linked Goals — collapsible section matching the intervention +
+      {/* Linked Goals: collapsible section matching the intervention +
           barrier drawers, so plan-authored tasks carry the same linkage
           affordance. Only rendered when the caller opts into the
           care-plan schedule fields AND supplies goals. */}
@@ -907,7 +907,7 @@ export function AddTaskDrawerBody({
             </button>
             <ActionButton
               icon="solar:add-linear"
-              size="S"
+              size="sm"
               tooltip="Link goal"
               onClick={() => setLinkGoalPickerOpen(true)}
               disabled={goalsForPicker.length === 0}
@@ -947,14 +947,14 @@ export function AddTaskDrawerBody({
                       <div className={scheduleStyles.linkActions}>
                         <ActionButton
                           icon="solar:arrow-right-up-linear"
-                          size="S"
+                          size="sm"
                           tooltip="Open goal"
                           onClick={() => onOpenGoal?.(g)}
                         />
                         <span className={scheduleStyles.linkActionsDivider} aria-hidden />
                         <ActionButton
                           icon="solar:link-broken-minimalistic-linear"
-                          size="S"
+                          size="sm"
                           tooltip="Unlink"
                           onClick={() => unlinkGoal?.(g.id)}
                         />

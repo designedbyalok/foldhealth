@@ -13,12 +13,12 @@
 --
 -- WHAT THIS DOES
 --   1. Replaces the allow-all policy with four:
---        SELECT  — every signed-in staff member (unchanged; the practice-wide
+--        SELECT: every signed-in staff member (unchanged; the practice-wide
 --                  read model in RLS_POSTURE.md still applies).
---        INSERT  — author_id must be the caller. The BEFORE INSERT trigger
+--        INSERT: author_id must be the caller. The BEFORE INSERT trigger
 --                  already stamps it, so a normal post always passes.
---        UPDATE  — own comments only.
---        DELETE  — own comments only.
+--        UPDATE: own comments only.
+--        DELETE: own comments only.
 --      Legacy rows with no author_id (unattributable 'You' rows) become
 --      read-only for everyone, matching what the UI already shows.
 --      The service role (seed script, SQL editor) bypasses RLS as before.

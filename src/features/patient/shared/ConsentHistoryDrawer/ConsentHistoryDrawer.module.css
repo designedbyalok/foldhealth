@@ -1,0 +1,43 @@
+.body {
+  padding: 0;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.search { flex: 1; }
+
+.divider {
+  width: 0.5px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+}
+
+.accepted { color: var(--status-success); }
+.refused { color: var(--status-error); }
+.reason { color: var(--neutral-300); }

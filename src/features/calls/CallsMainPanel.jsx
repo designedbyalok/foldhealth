@@ -22,7 +22,6 @@ export function CallsMainPanel({
               <span className={styles.profileName}>Clara Mitchell</span>
               <ActionButton
                 icon="solar:square-top-down-linear"
-                size="L"
                 tooltip="Open patient record"
                 iconColor="var(--primary-300)"
               />
@@ -37,19 +36,19 @@ export function CallsMainPanel({
               <span>(581) 824-1591</span>
             </div>
             <div className={styles.profileActions}>
-              <ActionButton icon="solar:home-2-linear"           size="L" tooltip="Home" />
+              <ActionButton icon="solar:home-2-linear" tooltip="Home" />
               <span className={styles.profileActionDivider} />
-              <ActionButton icon="solar:phone-linear"            size="L" tooltip="Call" />
+              <ActionButton icon="solar:phone-linear" tooltip="Call" />
               <span className={styles.profileActionDivider} />
-              <ActionButton icon="solar:letter-linear"           size="L" tooltip="Email" />
+              <ActionButton icon="solar:letter-linear" tooltip="Email" />
               <span className={styles.profileActionDivider} />
-              <ActionButton icon="solar:chat-round-dots-linear"  size="L" tooltip="Chat" />
+              <ActionButton icon="solar:chat-round-dots-linear" tooltip="Chat" />
               <span className={styles.profileActionDivider} />
-              <ActionButton icon="solar:videocamera-linear"      size="L" tooltip="Video" />
+              <ActionButton icon="solar:videocamera-linear" tooltip="Video" />
               <span className={styles.profileActionDivider} />
-              <ActionButton icon="solar:folder-linear"           size="L" tooltip="Files" />
+              <ActionButton icon="solar:folder-linear" tooltip="Files" />
               <span className={styles.profileActionDivider} />
-              <ActionButton icon="solar:phone-calling-linear"    size="L" tooltip="Call history" />
+              <ActionButton icon="solar:phone-calling-linear" tooltip="Call history" />
             </div>
           </div>
         </div>
@@ -82,7 +81,7 @@ export function CallsMainPanel({
           <div className={styles.loadMoreWrap}>
             <Button
               variant="ghost"
-              size="S"
+              size="sm"
               onClick={onLoadMore}
               disabled={callDetailsLoading}
             >

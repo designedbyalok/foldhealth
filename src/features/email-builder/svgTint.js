@@ -1,7 +1,7 @@
 // Apply a tint color to inline SVG markup by replacing every fill= and
 // stroke= attribute that isn't already "none" or "transparent" with the
 // provided hex. Also adds a fill on the <svg> root if neither it nor its
-// direct children declare one — covers icons that rely on `currentColor`.
+// direct children declare one: covers icons that rely on `currentColor`.
 //
 // This is intentionally a regex pass (not a DOM parse) so it runs in the
 // renderer's hot path without pulling DOMParser/serialization in. The

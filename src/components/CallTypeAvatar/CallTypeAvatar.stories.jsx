@@ -16,7 +16,7 @@ export default {
     dir: {
       control: 'select',
       options: ['outgoing', 'incoming', 'answered', 'missed', 'declined'],
-      description: 'Call direction/outcome — drives icon and color scheme.',
+      description: 'Call direction/outcome: drives icon and color scheme.',
       table: { type: { summary: "'outgoing' | 'incoming' | 'answered' | 'missed' | 'declined'" } },
     },
     size: {

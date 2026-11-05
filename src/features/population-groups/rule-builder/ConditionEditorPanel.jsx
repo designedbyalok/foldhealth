@@ -19,7 +19,7 @@ const effectiveOperator = (rule, field) => {
 };
 
 /**
- * ConditionEditorPanel — the docked 400px editor (Figma 9:44005 right pane).
+ * ConditionEditorPanel: the docked 400px editor (Figma 9:44005 right pane).
  * Dispatches to value editors by field.valueType: number, select, date, text
  * (profile-column originals) and codedTerm, observation, eventCount (new
  * healthcare types).
@@ -49,9 +49,9 @@ export function ConditionEditorPanel({ rule, onSave, onClose }) {
         <div className={styles.editorHeader}>
           <span className={styles.editorTitle}>{field.label}</span>
           <div className={styles.editorHeaderActions}>
-            <Button variant="primary" size="L" disabled={!canSave} onClick={commit}>Save</Button>
+            <Button disabled={!canSave} onClick={commit}>Save</Button>
             <span className={styles.headerDivider} />
-            <ActionButton icon="solar:close-circle-linear" size="L" tooltip="Close" onClick={onClose} />
+            <ActionButton icon="solar:close-circle-linear" tooltip="Close" onClick={onClose} />
           </div>
         </div>
 
@@ -68,11 +68,11 @@ export function ConditionEditorPanel({ rule, onSave, onClose }) {
           <Select
             options={field.operators.map(o => ({ value: o.name, label: o.label }))}
             value={draft.operator}
-            onChange={(v) => set('operator', v)}
+            onValueChange={(v) => set('operator', v)}
             style={{ width: '100%' }}
           />
 
-          {/* Value editor — dispatched by field type */}
+          {/* Value editor: dispatched by field type */}
           {vt === 'codedTerm' && (
             <CodedTermEditor draft={draft} field={field} onChange={set} onPatch={setDraft} />
           )}
@@ -96,7 +96,7 @@ export function ConditionEditorPanel({ rule, onSave, onClose }) {
             <TextEditor draft={draft} field={field} onChange={set} />
           )}
 
-          {/* As-of — date-anchored fields only (e.g. Patient Age) */}
+          {/* As-of: date-anchored fields only (e.g. Patient Age) */}
           {field.supportsAsOf && (
             <>
               <span className={styles.editorSectionLabel}>As of</span>
@@ -106,7 +106,7 @@ export function ConditionEditorPanel({ rule, onSave, onClose }) {
                   { value: 'date', label: 'Date' },
                 ]}
                 value={draft.asOfMode}
-                onChange={(v) => set('asOfMode', v)}
+                onValueChange={(v) => set('asOfMode', v)}
                 style={{ width: '100%' }}
               />
               {draft.asOfMode === 'today' ? (
@@ -147,11 +147,11 @@ function CodedTermEditor({ draft, field, onChange, onPatch }) {
       />
       {draft.code && (
         <div className={styles.selectedCode}>
-          <Badge tone="info" size="S" label={draft.code} />
+          <Badge tone="info" size="sm" label={draft.code} />
           <span className={styles.selectedCodeText}>{draft.display}</span>
           <ActionButton
             icon="solar:close-circle-linear"
-            size="S"
+            size="sm"
             tooltip="Clear"
             onClick={() => onPatch(d => ({ ...d, code: '', display: '', system: '' }))}
           />
@@ -179,11 +179,11 @@ function ObservationEditor({ draft, field, onChange, onPatch }) {
       />
       {draft.analyte?.code && (
         <div className={styles.selectedCode}>
-          <Badge tone="info" size="S" label={draft.analyte.code} />
+          <Badge tone="info" size="sm" label={draft.analyte.code} />
           <span className={styles.selectedCodeText}>{draft.analyte.display}</span>
           <ActionButton
             icon="solar:close-circle-linear"
-            size="S"
+            size="sm"
             tooltip="Clear"
             onClick={() => onPatch(d => ({ ...d, analyte: null }))}
           />
@@ -222,7 +222,7 @@ function EventCountEditor({ draft, field, onChange, onPatch }) {
       <Select
         options={EVENT_TYPES.map(e => ({ value: e.value, label: e.label }))}
         value={draft.eventType || ''}
-        onChange={v => onChange('eventType', v)}
+        onValueChange={v => onChange('eventType', v)}
         placeholder="Select event type"
         style={{ width: '100%' }}
       />
@@ -245,11 +245,11 @@ function EventCountEditor({ draft, field, onChange, onPatch }) {
       />
       {draft.filter?.code && (
         <div className={styles.selectedCode}>
-          <Badge tone="info" size="S" label={draft.filter.code} />
+          <Badge tone="info" size="sm" label={draft.filter.code} />
           <span className={styles.selectedCodeText}>{draft.filter.display}</span>
           <ActionButton
             icon="solar:close-circle-linear"
-            size="S"
+            size="sm"
             tooltip="Clear"
             onClick={() => onPatch(d => ({ ...d, filter: null }))}
           />
@@ -283,7 +283,7 @@ function SelectEditor({ draft, field, onChange }) {
     <Select
       options={field.options.map(o => ({ value: o, label: o }))}
       value={draft.text}
-      onChange={v => onChange('text', v)}
+      onValueChange={v => onChange('text', v)}
       placeholder={`Select ${field.label}`}
       style={{ width: '100%' }}
     />

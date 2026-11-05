@@ -15,7 +15,7 @@ import styles from './AssessmentFormView.module.css';
 // don't re-run on every render before the first answer is given.
 const EMPTY_ANSWERS = {};
 
-// Answerable leaves only — groups just nest, display blocks aren't answers.
+// Answerable leaves only: groups just nest, display blocks aren't answers.
 function flattenLeaves(items) {
   const leaves = [];
   const walk = (arr) => (arr || []).forEach(f => {
@@ -42,7 +42,7 @@ function defaultAnswerFor(field) {
   }
 }
 
-// Recursively render the saved form's fields exactly as defined — sections,
+// Recursively render the saved form's fields exactly as defined: sections,
 // display blocks, and numbered leaf questions (numbering only the answerable
 // leaves, matching the Review view). Branching (visibility) and recall (piped
 // text) are honored via the shared form engine.
@@ -86,7 +86,9 @@ function renderNode(field, ctx) {
 }
 
 /**
- * Renders the form saved under `formName` (from Settings → Content → Forms)
+ * Renders the form saved under `formName` (from Settings → Content → Forms),
+ * or the one with `formId` when given (a step linked to a form keeps working
+ * if the form is renamed),
  * inside the program window, in the Review layout: a stats strip (progress /
  * score / interpretation) above the form's own questions.
  *
@@ -94,6 +96,7 @@ function renderNode(field, ctx) {
  * (e.g. the TOC queue drawer rendering PHQ-9 from the validated instrument).
  */
 export function AssessmentFormView({
+  formId = null,
   formName,
   interpretation = 'High Risk',
   fallbackForm = null,
@@ -103,6 +106,7 @@ export function AssessmentFormView({
   prefill = false,
 }) {
   const fetchFormByName = useAppStore(s => s.fetchFormByName);
+  const fetchFormById = useAppStore(s => s.fetchFormById);
   const [form, setForm] = useState(null);
   // Which form the loaded `form` belongs to. `loading` is derived from it
   // rather than set at the top of the fetch effect, so switching forms shows
@@ -111,7 +115,7 @@ export function AssessmentFormView({
   const loading = loadedFor !== formName;
   // Answers keyed by form name, so pointing at a different form starts from a
   // clean sheet without an explicit reset. `initialAnswers` seeds the map on
-  // mount — used by the TOC drawer to show an already-filled assessment.
+  // mount: used by the TOC drawer to show an already-filled assessment.
   const [answersByForm, setAnswersByForm] = useState(() =>
     initialAnswers ? { [formName]: initialAnswers } : {},
   );
@@ -119,7 +123,7 @@ export function AssessmentFormView({
 
   useEffect(() => {
     let active = true;
-    fetchFormByName(formName)
+    (formId ? fetchFormById(formId).then(f => f || fetchFormByName(formName)) : fetchFormByName(formName))
       .then(f => {
         if (!active) return;
         setForm(f || fallbackForm || null);
@@ -131,11 +135,11 @@ export function AssessmentFormView({
         setLoadedFor(formName);
       });
     return () => { active = false; };
-  }, [formName, fetchFormByName, fallbackForm]);
+  }, [formId, formName, fetchFormById, fetchFormByName, fallbackForm]);
 
   const items = useMemo(() => form?.schema?.items || [], [form]);
 
-  // Seed a fully-answered demo state once, on load — never overwrites a
+  // Seed a fully-answered demo state once, on load, never overwrites a
   // form that already has answers (prefilled or user-edited), and never
   // goes through onAnswer/onAnswersChange so Save stays disabled until the
   // reviewer actually touches a question.
@@ -181,11 +185,11 @@ export function AssessmentFormView({
   const interpLabel = scoredBand?.label || interpretation;
   const interpTone = scoredBand
     ? (scoredBand.severity === SEVERITY.CRITICAL || scoredBand.severity === SEVERITY.HIGH
-      ? 'error'
+      ? 'danger'
       : scoredBand.severity === SEVERITY.WARNING ? 'warning'
       : scoredBand.severity === SEVERITY.INFO ? 'info'
-      : 'grey')
-    : 'error';
+      : 'neutral')
+    : 'danger';
 
   if (loading) return <AssessmentFormSkeleton />;
   if (!form) {
@@ -212,11 +216,11 @@ export function AssessmentFormView({
           <span className={styles.stripDot} />
           <span className={styles.stripItem}>Assessment Score: <span className={styles.stripValue}>{score}</span></span>
           <span className={styles.stripDot} />
-          <span className={styles.stripItem}>Interpretation Score : <Badge tone={interpTone} size="S" label={interpLabel} /></span>
+          <span className={styles.stripItem}>Interpretation Score : <Badge tone={interpTone} size="sm" label={interpLabel} /></span>
         </div>
       )}
 
-      {/* Form questions — rendered from the saved definition */}
+      {/* Form questions: rendered from the saved definition */}
       <div className={styles.formScroll}>
         {items.length === 0
           ? <p className={styles.state}>This form has no questions yet.</p>

@@ -2,8 +2,8 @@
 -- (AWV, IPPE, Annual Physical, Telehealth Visit, ER Visit, TCM, CCM, …)
 -- survives reload.
 --
--- Every HCC upload surface — UploadChartDrawer, the DiagPanel inline
--- DocumentsUploader, and the ChartDetailDrawer right-pane upload — captures
+-- Every HCC upload surface: UploadChartDrawer, the DiagPanel inline
+-- DocumentsUploader, and the ChartDetailDrawer right-pane upload, captures
 -- Visit Type via a <Select> populated from reference/visitTypes.js and
 -- threads it through makeUploadedChartDoc → doc.vt. updateChartDocMeta writes
 -- patch.vt to visit_type when the DB column is present; without this column

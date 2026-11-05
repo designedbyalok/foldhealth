@@ -42,7 +42,7 @@ try {
   console.log('Sample policies (forms + spot-check tables):');
   for (const r of policies.rows) console.log(' ', r);
 } catch (e) {
-  console.error('MIGRATION FAILED — transaction rolled back.\n', e.message);
+  console.error('MIGRATION FAILED: transaction rolled back.\n', e.message);
   process.exit(1);
 } finally {
   await client.end();

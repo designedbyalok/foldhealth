@@ -1,10 +1,10 @@
 /**
- * Prev-month nav — `<` chevron inside a rounded-square outline. Ships
+ * Prev-month nav: `<` chevron inside a rounded-square outline. Ships
  * as a single filled SVG so `DatePickerPopover` can drop it into
  * `<ActionButton>` without needing additional CSS chrome.
  *
  * SVG path taken verbatim from Fold-Pixel-1.0 Figma design (updated
- * variant with pure rounded-square outline — no calendar tabs).
+ * variant with pure rounded-square outline: no calendar tabs).
  *
  * @param {object} props
  * @param {number} [props.size=20]                    – Width & height in px

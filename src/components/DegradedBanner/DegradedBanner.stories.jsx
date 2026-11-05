@@ -8,7 +8,7 @@ export default {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: 'Global banner shown when the app is running in a degraded state (e.g. Supabase unreachable, real-time channel down). Reads its own status from the store — no props.',
+        component: 'Global banner shown when the app is running in a degraded state (e.g. Supabase unreachable, real-time channel down). Reads its own status from the store, no props.',
       },
     },
   },

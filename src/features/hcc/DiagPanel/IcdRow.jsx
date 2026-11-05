@@ -13,7 +13,7 @@ import { reviewedByLabel } from '../reviewedBy';
 import { IcdRowExpansionPanel } from './IcdRowExpansionPanel';
 import styles from './IcdRow.module.css';
 
-// Type-badge color spec — Suspect blue, Recapture purple, Manual blue,
+// Type-badge color spec: Suspect blue, Recapture purple, Manual blue,
 // Added-in-EHR amber. Mirrors the prototype's TYPE_BADGE map (line 1401).
 const TYPE_BADGE = {
   Suspect:        { className: 'typeSuspect',     label: 'Suspect' },
@@ -25,7 +25,7 @@ const TYPE_BADGE = {
 const isAISuggested = (icd) => ['Suspect', 'Recapture'].includes(icd.type || '');
 
 /**
- * IcdRow v2 — vertical card layout for a single ICD inside an HCC group.
+ * IcdRow v2: vertical card layout for a single ICD inside an HCC group.
  *
  * Three logical bands:
  *   1. Code + description (top row)
@@ -53,7 +53,7 @@ export function IcdRow({ icd }) {
   const isSelected = diagActivityIcd === icd.code;
   // When this ICD was just added via the NewDiagGapPanel, pulse the border
   // and scroll into view so the user sees where their manual add landed in
-  // the current list (per Figma UX note — draw attention).
+  // the current list (per Figma UX note: draw attention).
   const isJustAdded = useAppStore(s => s.hccJustAddedCode) === icd.code;
   const rowRef = useRef(null);
   useEffect(() => {
@@ -62,7 +62,7 @@ export function IcdRow({ icd }) {
     }
   }, [isJustAdded]);
 
-  // Unified expansion panel — opens either via the confidence-score badge
+  // Unified expansion panel: opens either via the confidence-score badge
   // (panel='confidence', confidence section open) or via Accept on an AI
   // ICD (panel='meat', meat section open). 'none' = no panel rendered.
   const [panel, setPanel] = useState('none'); // 'none' | 'confidence' | 'meat'
@@ -128,7 +128,7 @@ export function IcdRow({ icd }) {
 
   const handleMore = (e) => {
     e.stopPropagation();
-    showToast('ICD actions — coming in Phase 3');
+    showToast('ICD actions: coming in Phase 3');
   };
 
   // Clicking the notes count button opens the unified expansion panel with
@@ -138,7 +138,7 @@ export function IcdRow({ icd }) {
   const handleNotesClick = (e) => {
     e.stopPropagation();
     if (isClosed) {
-      showToast('Notes — coming in Phase 3');
+      showToast('Notes: coming in Phase 3');
       return;
     }
     const meatAlreadyOpen = panel === 'meat' && meatOpen;
@@ -164,7 +164,7 @@ export function IcdRow({ icd }) {
       ].filter(Boolean).join(' ')}
       data-status={icd.status}
     >
-      {/* Title sub-stack — code + description, then Last Reviewed, then the
+      {/* Title sub-stack: code + description, then Last Reviewed, then the
           badge cluster (HCC / Suspect / Confidence). All three sit inside
           the stack with a tight 4px gap so the badges read as part of the
           title block, not as a separate section. Outer .row gap (12px)
@@ -223,7 +223,7 @@ export function IcdRow({ icd }) {
         </div>
       </div>
 
-      {/* Dismiss-reason explanation row — visible when this ICD has been
+      {/* Dismiss-reason explanation row: visible when this ICD has been
           dismissed with a reason. Matches the prototype line 1186. */}
       {icd.dismissReason && isDismissed && (
         <div className={styles.dismissExplanation}>
@@ -310,7 +310,6 @@ export function IcdRow({ icd }) {
 
           <ActionButton
             icon="solar:menu-dots-linear"
-            size="L"
             tooltip="More actions"
             onClick={handleMore}
           />

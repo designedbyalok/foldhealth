@@ -2,24 +2,24 @@
 //
 // This is the single source of truth used by `engine.js` to pick an assignee
 // at every role transition (Support → Coder → Reviewer → Reviewer 2). "Reviewer 3"
-// does not exist as a role — the review pipeline has exactly four stages.
+// does not exist as a role, the review pipeline has exactly four stages.
 // Members of the roster are real names used by the existing mock data + the
 // story examples so the engine's output looks consistent with what already
 // appears in the worklist and activity log.
 //
 // Each entry exposes:
-//   id        — short stable handle (e.g. 'EJ', 'DH'). Used everywhere internally.
-//   name      — full display name surfaced in the UI.
-//   initials  — 2-letter avatar initials.
-//   role      — primary role this person works ('support' | 'coder' | 'reviewer' | 'reviewer2').
-//   active    — false = on leave / inactive. Excluded from auto-assignment.
-//   tins      — TIN strings this person owns (Support + Coder use these).
-//   vendors   — vendor codes routed to this person (Coder + R2/R3 use these).
-//   capacity  — soft monthly DOS cap. The workload-balancer prefers members
+//   id: short stable handle (e.g. 'EJ', 'DH'). Used everywhere internally.
+//   name: full display name surfaced in the UI.
+//   initials: 2-letter avatar initials.
+//   role: primary role this person works ('support' | 'coder' | 'reviewer' | 'reviewer2').
+//   active: false = on leave / inactive. Excluded from auto-assignment.
+//   tins: TIN strings this person owns (Support + Coder use these).
+//   vendors: vendor codes routed to this person (Coder + R2/R3 use these).
+//   capacity: soft monthly DOS cap. The workload-balancer prefers members
 //               whose current count is furthest from capacity.
 //
 // Role pools deliberately overlap a bit (e.g. K. Patel handles R1 and R2 at
-// different times) to mirror real life — the engine never picks the same
+// different times) to mirror real life, the engine never picks the same
 // person for two roles on the same DOS (see engine.js `excludePeer`).
 
 export const ASTRANA_STAFF = [
@@ -78,14 +78,14 @@ export function staffById(id) { return _byId[id] || null; }
 export function staffForRole(role)       { return _byRole[role] || []; }
 export function activeStaffForRole(role) { return (_byRole[role] || []).filter(s => s.active); }
 
-// TIN mapping — returns the (active) staff in `role` who owns the given TIN.
+// TIN mapping: returns the (active) staff in `role` who owns the given TIN.
 // Multiple matches are allowed; the caller (engine) workload-balances among them.
 export function staffForTin(role, tin) {
   if (!tin) return [];
   return activeStaffForRole(role).filter(s => s._tinSet.has(tin));
 }
 
-// Vendor mapping — same shape as `staffForTin`.
+// Vendor mapping: same shape as `staffForTin`.
 export function staffForVendor(role, vendor) {
   if (!vendor) return [];
   return activeStaffForRole(role).filter(s => s._vendorSet.has(vendor));

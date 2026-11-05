@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Fold Health — All Patients demographics backfill
+ * Fold Health: All Patients demographics backfill
  *
  * Fills the patient-data parity columns added by
  * supabase/all_patients_patient_data_parity_migration.sql (dob, ipa,
@@ -9,7 +9,7 @@
  * - dob: copied from the `patients` table when the member_id matches;
  *   otherwise derived with the exact same math the UI used at render time
  *   (deriveDob + the row's "Ny Mm" age derivation), anchored to a fixed
- *   date — so the stored DOB matches what users have been seeing, and stops
+ *   date: so the stored DOB matches what users have been seeing, and stops
  *   drifting as the calendar moves.
  * - ipa / hp_code / zip: deterministic per-row picks from the value pools
  *   the other worklist tables use; zip matches the row's city when known.
@@ -23,7 +23,7 @@ import pg from 'pg';
 import { readFileSync } from 'node:fs';
 
 const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD;
-if (!DB_PASSWORD) { console.error('SUPABASE_DB_PASSWORD missing — add it to .env'); process.exit(1); }
+if (!DB_PASSWORD) { console.error('SUPABASE_DB_PASSWORD missing: add it to .env'); process.exit(1); }
 
 let poolerHost = 'aws-1-ap-southeast-1.pooler.supabase.com';
 let poolerUser = 'postgres.osnihfqqrcchsaqhagcx';
@@ -38,7 +38,7 @@ try {
 const TODAY = new Date('2026-08-12T12:00:00');
 
 // Mirrors src/lib/patientDob.js nameHash + deriveDob and the "Ny Mm"
-// derivation in AllPatientsRow.jsx — keep in sync if those change.
+// derivation in AllPatientsRow.jsx, keep in sync if those change.
 function nameHash(s) {
   let h = 0;
   const str = String(s || '');
@@ -69,7 +69,7 @@ const CITY_ZIPS = {
 // EXACT replica of fillDummy() in src/features/all-patients/AllPatientsTable.jsx
 // (hash, pools, bit-shifts). The table has been inventing these display values
 // at render time for rows with NULL columns; persisting the same derivations
-// makes the DB the source of truth without changing anything the user sees —
+// makes the DB the source of truth without changing anything the user sees,
 // and lets the p360 banner seed read the same values the table shows.
 // Keep in sync with fillDummy if it ever changes.
 const CITIES = [
@@ -178,14 +178,14 @@ async function main() {
     );
     filled++;
   }
-  // Zips seeded before cities existed fell back to a hash value — realign
+  // Zips seeded before cities existed fell back to a hash value, realign
   // them with the now-persisted city so location and zip agree.
   for (const [city, zip] of Object.entries(CITY_ZIPS)) {
     await db.query(`update all_patients set zip = $2 where city = $1 and zip <> $2`, [city, zip]);
   }
   const { rows: [stats] } = await db.query(`select count(*) total, count(dob) with_dob, count(ipa) with_ipa, count(hp_code) with_hp, count(zip) with_zip from all_patients`);
   console.log(`  ✓ derived fills: ${filled} rows`);
-  console.log(`\nDone — ${stats.total} rows: dob ${stats.with_dob}, ipa ${stats.with_ipa}, hp_code ${stats.with_hp}, zip ${stats.with_zip}.\n`);
+  console.log(`\nDone: ${stats.total} rows: dob ${stats.with_dob}, ipa ${stats.with_ipa}, hp_code ${stats.with_hp}, zip ${stats.with_zip}.\n`);
   await db.end();
 }
 

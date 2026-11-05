@@ -1,25 +1,25 @@
 import { useId } from 'react';
 
 /**
- * PriorityIcon — task priority glyph shared across the tasks module, the
+ * PriorityIcon: task priority glyph shared across the tasks module, the
  * patient profile drawer's Tasks tab, and anywhere else a task priority
  * needs an at-a-glance indicator.
  *
  * Variants (Figma Fold-Pixel-1.0 task priority set):
- *   • high    — coral stacked double-chevron-up (gradient #FF623E → #ED876F)
- *   • medium  — amber double-bar (#FFAB00)
- *   • low     — blue stacked double-chevron-down (gradient #6AA3F9 → #0065FF)
- *   • none / undefined — neutral outlined circle
+ *   • high: coral stacked double-chevron-up (gradient #FF623E → #ED876F)
+ *   • medium: amber double-bar (#FFAB00)
+ *   • low: blue stacked double-chevron-down (gradient #6AA3F9 → #0065FF)
+ *   • none / undefined: neutral outlined circle
  *
  * Props:
- *   • priority — 'high' | 'medium' | 'low' | 'none'
- *   • size     — number (px). Default 16.
- *   • title    — optional accessible title. When omitted the icon is
+ *   • priority: 'high' | 'medium' | 'low' | 'none'
+ *   • size: number (px). Default 16.
+ *   • title: optional accessible title. When omitted the icon is
  *                aria-hidden (decorative), matching the row-P-column use
  *                where the priority is already announced elsewhere.
  */
 export function PriorityIcon({ priority, size = 16, title }) {
-  // Unique IDs per render — two icons on the same page were sharing the
+  // Unique IDs per render: two icons on the same page were sharing the
   // static `priorityHigh` / `priorityLow` gradient defs, which merges
   // fine visually but is invalid HTML.
   const uid = useId().replace(/:/g, '');

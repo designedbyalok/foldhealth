@@ -2,7 +2,7 @@ import { useId } from 'react';
 import Signature from '@uiw/react-signature';
 import { Icon } from '../../components/Icon/Icon';
 import { Input } from '../../components/Input/Input';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { SIGNATURE_HINT, SIGNATURE_MODES, SIGNATURE_OPTIONS } from './attestationModalUtils';
 import styles from './AttestationModal.module.css';
 
@@ -88,17 +88,17 @@ export function AttestationSignatoryForm({
             <span className={styles.label}>
               Digital Signature <span className={styles.required}>*</span>
             </span>
-            <Toggle
+            <SegmentedControl
               items={SIGNATURE_MODES}
-              active={signatureMode}
-              onChange={onSignatureModeChange}
-              size="S"
+              value={signatureMode}
+              onValueChange={onSignatureModeChange}
+              size="sm"
             />
           </div>
 
           {signatureMode === 'type' ? (
             <Input
-              variant={errors.signature ? 'error' : 'default'}
+              invalid={errors.signature}
               placeholder="Type your full name as your digital signature"
               value={signature}
               onChange={onSignatureChange}

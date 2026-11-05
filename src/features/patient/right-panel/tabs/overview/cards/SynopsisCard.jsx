@@ -27,7 +27,8 @@ function formatGenerated(iso) {
   return d.toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
-export function SynopsisCard({ overview }) {
+// `action`: the header's right side (the Recap button); "Powered by Unity" without it.
+export function SynopsisCard({ overview, action }) {
   const showToast = useAppStore(s => s.showToast);
   const [feedback, setFeedback] = useState(null);
 
@@ -48,13 +49,13 @@ export function SynopsisCard({ overview }) {
       tone="ai"
       icon="custom:ai"
       title="Patient Synopsis"
-      actions={<span className={styles.poweredBy}>Powered by Unity</span>}
+      actions={action ?? <span className={styles.poweredBy}>Powered by Unity</span>}
       footer={overview?.synopsis ? (
         <>
           <span>Was this helpful?</span>
-          <ActionButton icon="solar:like-linear" size="S" tooltip="Helpful" active={feedback === 'up'} iconColor={feedback === 'up' ? 'var(--primary-300)' : undefined} onClick={() => setFeedback(f => (f === 'up' ? null : 'up'))} />
-          <ActionButton icon="solar:dislike-linear" size="S" tooltip="Not helpful" active={feedback === 'down'} iconColor={feedback === 'down' ? 'var(--primary-300)' : undefined} onClick={() => setFeedback(f => (f === 'down' ? null : 'down'))} />
-          <ActionButton icon="solar:copy-linear" size="S" tooltip="Copy" onClick={copy} />
+          <ActionButton icon="solar:like-linear" size="sm" tooltip="Helpful" active={feedback === 'up'} iconColor={feedback === 'up' ? 'var(--primary-300)' : undefined} onClick={() => setFeedback(f => (f === 'up' ? null : 'up'))} />
+          <ActionButton icon="solar:dislike-linear" size="sm" tooltip="Not helpful" active={feedback === 'down'} iconColor={feedback === 'down' ? 'var(--primary-300)' : undefined} onClick={() => setFeedback(f => (f === 'down' ? null : 'down'))} />
+          <ActionButton icon="solar:copy-linear" size="sm" tooltip="Copy" onClick={copy} />
         </>
       ) : null}
     >

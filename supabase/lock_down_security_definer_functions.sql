@@ -6,7 +6,7 @@
 --
 -- WHY THESE THREE ARE WRONG
 -- This database has ten SECURITY DEFINER functions. Eight of them are trigger
--- functions and carry the correct ACL — postgres + service_role only:
+-- functions and carry the correct ACL, postgres + service_role only:
 --
 --   handle_new_user, handle_user_first_login, rls_auto_enable,
 --   sync_form_response_count, touch_campaigns_updated_by, touch_forms_updated
@@ -25,8 +25,8 @@
 -- HOW MUCH THIS ACTUALLY MATTERS: less than the WARN suggests. Both return
 -- `trigger`, so PostgREST does not expose them on /rest/v1/rpc at all, and a
 -- direct call fails with "trigger functions can only be called as triggers"
--- before the body ever runs. This is hygiene — removing a grant that can never
--- be a useful one — not an open door being closed.
+-- before the body ever runs. This is hygiene, removing a grant that can never
+-- be a useful one: not an open door being closed.
 --
 -- is_profile_admin(uuid) is the one with a real, if small, edge. It IS callable
 -- by any signed-in user via /rest/v1/rpc/is_profile_admin, it returns boolean,
@@ -37,18 +37,18 @@
 --
 -- WHY REVOKING IS SAFE
 --   • Triggers ignore EXECUTE. Postgres does not check the invoking user's
---     privilege on a trigger function when the trigger fires — it runs as the
+--     privilege on a trigger function when the trigger fires, it runs as the
 --     trigger's owner regardless. profiles_guard_authz_fields keeps working for
 --     every signed-in user, and so does the last_sign_in sync.
 --   • is_profile_admin has no client caller. `grep -rn is_profile_admin src api
 --     scripts` returns nothing, and the app makes exactly one .rpc() call in the
---     whole codebase — admin_set_user_roles. Its only real callers are
+--     whole codebase: admin_set_user_roles. Its only real callers are
 --     enforce_profile_authz_fields() and admin_set_user_roles(), both SECURITY
 --     DEFINER and owned by postgres, so they reach it through postgres's own
 --     grant and never consult the authenticated one.
 --   • No RLS policy references it either (checked against pg_policies: zero
 --     rows match '%is_profile_admin%'). If a future policy ever calls it, that
---     policy will need `grant execute ... to authenticated` restored — a policy
+--     policy will need `grant execute ... to authenticated` restored: a policy
 --     is evaluated as the querying role, so this revoke would break it. Noted
 --     here so the next person hits the note before the outage.
 --   • service_role keeps EXECUTE throughout, so seeds, api/ and edge functions
@@ -76,7 +76,7 @@ commit;
 --   Expect: postgres=X/postgres | service_role=X/postgres
 --
 -- The guard must still fire. As a NON-admin user from the app (not the SQL
--- editor — it has no auth.uid() and is intentionally exempt):
+-- editor: it has no auth.uid() and is intentionally exempt):
 --   update profiles set admin_role = 'Business/Practice Owner' where id = auth.uid();
 --   Expect: ERROR 42501 "Only an administrator may change role, ..."
 --
@@ -98,6 +98,6 @@ commit;
 -- It is the sanctioned door from profiles_guard_authz_fields.sql: the client
 -- calls it (SettingsUsers → .rpc('admin_set_user_roles')), and it re-derives the
 -- caller's admin status from the database on every call rather than trusting the
--- browser. Revoking it does not make role assignment safer — it removes the only
+-- browser. Revoking it does not make role assignment safer, it removes the only
 -- safe path and pushes role writes back onto direct table UPDATEs, which is the
 -- privilege-escalation hole that file was written to close.

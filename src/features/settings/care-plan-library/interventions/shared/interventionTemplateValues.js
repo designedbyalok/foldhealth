@@ -4,7 +4,7 @@
 // a field added to the drawer survives a save without touching either call
 // site.
 
-/** Fields that are columns of their own — everything else is config. */
+/** Fields that are columns of their own, everything else is config. */
 const COLUMN_FIELDS = new Set(['kind', 'title', 'description']);
 
 /** Drawer values → the row shape `saveCarePlanInterventionTemplate` expects. */

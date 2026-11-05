@@ -3,7 +3,7 @@
 -- campaign is run: the audience is resolved from all_patients, merge tags are
 -- substituted per recipient, and a row is logged with a simulated delivery
 -- status. The campaigns table's audience/delivered/opened stats are aggregates
--- of these rows. Starts empty; populated by running a campaign (no seed — the
+-- of these rows. Starts empty; populated by running a campaign (no seed: the
 -- data is produced by user action, not a static mock).
 
 create table if not exists public.campaign_sends (

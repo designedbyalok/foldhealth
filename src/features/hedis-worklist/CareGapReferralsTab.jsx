@@ -5,7 +5,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { SearchBar } from '../../components/SearchBar/SearchBar';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { HeaderCell } from '../../components/HeaderCell/HeaderCell';
 import { useTableSort } from '../../components/HeaderCell/useTableSort';
 import { REFERRAL_CHANNELS, REFERRAL_STATUS } from './useCareGapReferralForm';
@@ -105,8 +105,8 @@ export function CareGapReferralsTab({ referrals = [], providers = [], onOpen, on
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar}>
-        <Toggle
-          size="S"
+        <SegmentedControl
+          size="sm"
           items={FOLDERS.map(f => ({
             key: f.key,
             label: (
@@ -117,8 +117,8 @@ export function CareGapReferralsTab({ referrals = [], providers = [], onOpen, on
               </span>
             ),
           }))}
-          active={folder}
-          onChange={setFolder}
+          value={folder}
+          onValueChange={setFolder}
         />
         <div className={styles.toolbarActions}>
           {searchOpen ? (
@@ -130,11 +130,11 @@ export function CareGapReferralsTab({ referrals = [], providers = [], onOpen, on
               onClose={() => { setSearchOpen(false); setSearch(''); }}
             />
           ) : (
-            <ActionButton size="S" icon="solar:magnifer-linear" tooltip="Search" onClick={() => setSearchOpen(true)} />
+            <ActionButton size="sm" icon="solar:magnifer-linear" tooltip="Search" onClick={() => setSearchOpen(true)} />
           )}
           <span className={styles.divider} />
           <ActionButton
-            size="S"
+            size="sm"
             icon="custom:filter"
             tooltip={chipsOpen ? 'Hide filters' : 'Filter'}
             tooltipLeft
@@ -164,7 +164,7 @@ export function CareGapReferralsTab({ referrals = [], providers = [], onOpen, on
             {rows.length === 0 ? 'No referrals for this member yet.' : 'No referrals match these filters.'}
           </p>
           {rows.length === 0 && onNew && (
-            <Button variant="primary" size="M" leadingIcon="solar:square-share-line-linear" onClick={onNew}>Send Referral</Button>
+            <Button leadingIcon="solar:square-share-line-linear" onClick={onNew}>Send Referral</Button>
           )}
         </div>
       ) : (
@@ -206,7 +206,7 @@ export function CareGapReferralsTab({ referrals = [], providers = [], onOpen, on
                 <td className={[styles.td, STATUS_CLASS[r.folder]].join(' ')}>{r.status}</td>
                 <td className={[styles.td, styles.actionsTd].join(' ')} onClick={e => e.stopPropagation()}>
                   <ActionButton
-                    size="S"
+                    size="sm"
                     icon="solar:menu-dots-linear"
                     tooltip="More actions"
                     tooltipLeft

@@ -9,11 +9,11 @@ import { SimpleTableSkeleton } from '../../../../components/SimpleTableSkeleton/
 import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialog';
 
 const CATEGORY_BADGE = {
-  General: 'ai-care',
-  Appointments: 'outreach-appointment',
-  Medications: 'ai-med',
-  Labs: 'compliance-warn',
-  Compliance: 'ai-risk',
+  General: 'primary',
+  Appointments: 'info',
+  Medications: 'success',
+  Labs: 'warning',
+  Compliance: 'danger',
 };
 
 const CATEGORIES = ['General', 'Appointments', 'Medications', 'Labs', 'Compliance'];
@@ -56,13 +56,12 @@ function FaqDrawer({ mode, faq, onClose, onSave, saving }) {
   const headerRight = (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
       <Button
-        variant="primary"
-        size="S"
+        size="sm"
         onClick={() => canSave && onSave(form)}
-        disabled={!canSave || saving}
-        style={{ opacity: saving ? 0.6 : 1 }}
+        disabled={!canSave}
+        style={{ opacity: saving ? 0.6 : 1 }} loading={saving}
       >
-        {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add FAQ'}
+        {isEdit ? 'Save Changes' : 'Add FAQ'}
       </Button>
     </div>
   );
@@ -123,7 +122,7 @@ function FaqDrawer({ mode, faq, onClose, onSave, saving }) {
           <div style={{ fontWeight: 500, fontSize: 'var(--font-base)', color: 'var(--neutral-500)', marginBottom: 6 }}>{form.question}</div>
           {form.answer.trim() && <div style={{ fontSize: 'var(--font-md)', color: 'var(--neutral-300)', lineHeight: 1.5 }}>{form.answer}</div>}
           <div style={{ marginTop: 10 }}>
-            <Badge variant={CATEGORY_BADGE[form.category] || 'ai-neutral'} label={form.category} />
+            <Badge tone={CATEGORY_BADGE[form.category] || 'neutral'} label={form.category} />
           </div>
         </div>
       )}
@@ -255,15 +254,15 @@ export function KnowledgeBasePanel({ searchQuery = '' }) {
                 <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)', lineHeight: 1.4 }}>{faq.answer}</div>
               </td>
               <td style={tdStyle}>
-                <Badge variant={CATEGORY_BADGE[faq.category] || 'ai-neutral'} label={faq.category} />
+                <Badge tone={CATEGORY_BADGE[faq.category] || 'neutral'} label={faq.category} />
               </td>
               <td style={{ ...tdStyle, fontSize: 'var(--font-sm)', color: 'var(--neutral-200)', whiteSpace: 'nowrap' }}>{faq.updatedAt}</td>
               <td style={tdStyle} onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <ActionButton icon="solar:pen-linear" size="L" tooltip="Edit FAQ"
+                  <ActionButton icon="solar:pen-linear" tooltip="Edit FAQ"
                     onClick={() => handleOpenEdit(faq)} />
                   <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-                  <ActionButton icon="solar:trash-bin-minimalistic-linear" size="L" tooltip="Delete FAQ"
+                  <ActionButton icon="solar:trash-bin-minimalistic-linear" tooltip="Delete FAQ"
                     onClick={() => setDeleteTarget(faq)} />
                 </div>
               </td>

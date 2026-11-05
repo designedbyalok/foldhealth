@@ -195,9 +195,9 @@ export function averageScoreSeries(scoring, responses) {
     .map((b) => ({ month: b.label, value: Math.round((b.sum / b.n) * 10) / 10 }));
 }
 
-/** An NPS as shown: signed, e.g. "+40", "-15", "0"; "—" with no answers. */
+/** An NPS as shown: signed, e.g. "+40", "-15", "0"; "-" with no answers. */
 export function formatNps(score) {
-  if (score == null) return '—';
+  if (score == null) return '-';
   return score > 0 ? `+${score}` : String(score);
 }
 
@@ -205,9 +205,9 @@ export function formatNps(score) {
 export function answerAverage(field, responses) {
   const stats = questionStats(field, responses);
   if (stats.kind === 'nps') return formatNps(stats.nps.score);
-  if (stats.kind === 'numeric') return stats.average == null ? '—' : `~${Math.round(stats.average)}`;
-  if (stats.kind === 'choice') return stats.mostVoted?.count ? stats.mostVoted.label : '—';
-  return '—';
+  if (stats.kind === 'numeric') return stats.average == null ? '-' : `~${Math.round(stats.average)}`;
+  if (stats.kind === 'choice') return stats.mostVoted?.count ? stats.mostVoted.label : '-';
+  return '-';
 }
 
 /** Per-response completion: answered / total leaf counts. */

@@ -133,7 +133,7 @@
   position: relative;
 }
 
-/* Input component fills this wrapper — override padding for search icon */
+/* Input component fills this wrapper: override padding for search icon */
 
 .convSearchIcon {
   position: absolute;
@@ -279,7 +279,7 @@
 
 .convUnread {
   background: var(--secondary-300);
-  /* Was --neutral-500 (#16181D, near-black) on the orange fill — it read as
+  /* Was --neutral-500 (#16181D, near-black) on the orange fill, it read as
      grey and did not match the sidebar nav badge, which is the same pill in
      the same colour. --neutral-0 is what that badge uses, so the two now
      agree and both invert together in dark themes. */

@@ -1,0 +1,139 @@
+.wrapper {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--neutral-0);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.search {
+  width: 260px;
+}
+
+.divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+}
+
+.guideLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+
+.subRight {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.errorsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--font-base);
+  color: var(--status-error);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.errorsLink:hover {
+  text-decoration: underline;
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--neutral-50);
+}
+
+.contentTable {
+  overflow: hidden;
+  background: var(--neutral-0);
+}
+
+.tableWrap {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--space-4);
+}
+
+.section .grid {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-300);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-4);
+}
+
+.emptyCell {
+  padding: var(--space-12) 0;
+}
+
+.emptyActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.subRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2);
+  border-bottom: 0.5px solid var(--neutral-150);
+}

@@ -34,7 +34,7 @@ build-storybook.log
 !.claude/skills/
 .vercel
 
-# Impeccable — the Claude Code skill lives under .claude/skills/impeccable and is
+# Impeccable: the Claude Code skill lives under .claude/skills/impeccable and is
 # shared. Its parallel mirrors for other tools (Codex CLI, Copilot) and its
 # session cache are not, so we don't pollute .github/ or add megabytes of
 # duplicate skill files.

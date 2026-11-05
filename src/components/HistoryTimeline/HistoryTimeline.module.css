@@ -16,7 +16,7 @@
   gap: var(--space-2);
 }
 
-/* Left rail — top connector + icon + bottom connector */
+/* Left rail: top connector + icon + bottom connector */
 .rail {
   width: 24px;
   flex-shrink: 0;
@@ -26,14 +26,14 @@
 }
 
 /* Height matches `.body { padding-top }` so the icon's top edge aligns
-   with the meta text's top edge — icon + meta read as one baseline. */
+   with the meta text's top edge: icon + meta read as one baseline. */
 .connectorTop {
   width: 0.5px;
   height: var(--space-4);
   background: var(--neutral-150);
   flex-shrink: 0;
 }
-/* First-row stub — a small hairline above the very first icon so the
+/* First-row stub: a small hairline above the very first icon so the
    timeline reads as a bounded strand starting from the top rather than
    the icon floating. Matches `.bodyFirst { padding-top }` for the same
    top-align rule. */
@@ -41,14 +41,14 @@
   height: calc(var(--space-1) + calc(var(--space-1) / 2));
 }
 
-/* Bottom connector flows from the icon directly into the next row — no
+/* Bottom connector flows from the icon directly into the next row, no
    top margin so the line reads continuous between entries. */
 .connectorBottom {
   width: 0.5px;
   flex: 1;
   background: var(--neutral-150);
 }
-/* Last-row stub — mirrors .connectorTopFirst so the trail line has a
+/* Last-row stub: mirrors .connectorTopFirst so the trail line has a
    clear terminating tick below the final icon (matches Figma). */
 .connectorBottomLast {
   flex: 0 0 auto;
@@ -69,9 +69,9 @@
   border-style: dashed;
 }
 
-/* Body — meta + headline + supporting blocks. Slight top pad aligns the
+/* Body: meta + headline + supporting blocks. Slight top pad aligns the
    meta baseline with the icon's centerline, matching the HCC source.
-   No padding-bottom — row-to-row rhythm comes from the next row's
+   No padding-bottom: row-to-row rhythm comes from the next row's
    padding-top, and the last row hugs the container's own edge. */
 .body {
   flex: 1;
@@ -174,7 +174,7 @@
   font-size: var(--font-sm);
 }
 
-/* Pill border tints are 20%-opacity color-matches of each status hue —
+/* Pill border tints are 20%-opacity color-matches of each status hue,
    the visual language HCC's Figma spec uses. No opaque token equivalent
    in tokens.css, so the rgba values stay in place. */
 .pillOpen,
@@ -286,7 +286,7 @@
   flex-wrap: wrap;
 }
 
-/* Figma ICD-Import 4724:144684 — avatar + name sit inline, no grey pill
+/* Figma ICD-Import 4724:144684, avatar + name sit inline, no grey pill
    background. The avatar itself carries the tinted swatch; wrapping it
    in another chip made the transition read heavier than the surrounding
    meta text. */
@@ -362,7 +362,7 @@
   flex-shrink: 0;
 }
 
-/* Inline comment body — used when an entry is a comment. Plain neutral-300
+/* Inline comment body: used when an entry is a comment. Plain neutral-300
    paragraph under the headline. */
 .commentBody {
   font-size: var(--font-md);

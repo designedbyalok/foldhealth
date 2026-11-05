@@ -15,11 +15,11 @@
   transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
 
-/* Compact 28px variant — used inside section-title bars where the chip sits
+/* Compact 28px variant: used inside section-title bars where the chip sits
    next to a page title and 32px reads too heavy. */
 .sizeS { height: 28px; font-size: var(--font-sm); }
 .sizeS .chipExtra { font-size: var(--font-sm); }
-/* Extra-small 20px variant — sits in a row with size-S Badges (e.g. a
+/* Extra-small 20px variant: sits in a row with size-S Badges (e.g. a
    section header's "possible duplicates" badge) and matches their height. */
 .sizeXS { height: 20px; padding: 0 var(--space-1); font-size: var(--font-sm); }
 .sizeXS .chipExtra { font-size: var(--font-sm); }
@@ -31,7 +31,7 @@
 }
 .chipActive:hover { background: var(--primary-100); border-color: var(--primary-400); }
 
-/* Neutral active — paired with `noClear` for never-empty pickers
+/* Neutral active: paired with `noClear` for never-empty pickers
    (e.g. Measurement Year). Overrides the active primary tint so the
    pill reads as an information display, not a filter to clear. Value
    text drops a shade darker than the label to preserve hierarchy. */
@@ -73,7 +73,7 @@
 }
 .clearIcon:hover { background: var(--primary-100); }
 
-/* Info tooltip trigger — a passive hover target next to the chip
+/* Info tooltip trigger: a passive hover target next to the chip
    value, separated from the trailing glyph by a hairline divider so
    it reads as its own affordance, not part of the value. */
 .infoIcon {

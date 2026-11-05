@@ -3,12 +3,13 @@ import { useAppStore } from '../../../store/useAppStore';
 import { WorklistRow, WORKLIST_MIDDLE_COLUMNS } from './WorklistRow';
 import { BulkBar } from '../../../components/BulkBar/BulkBar';
 import { TableSkeleton } from '../../../components/TableSkeleton/TableSkeleton';
-import { ErrorState } from '../../../components/ErrorState/ErrorState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
+import { Button } from '../../../components/Button/Button';
 import { Icon } from '../../../components/Icon/Icon';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { HeaderCell } from '../../../components/HeaderCell/HeaderCell';
 import { ColumnsHeaderButton } from '../../../components/WorklistColumns/ColumnsHeaderButton';
-import { useWorklistColumns } from '../../../components/WorklistColumns/useWorklistColumns';
+import { useWorklistColumns } from '../../worklists/useWorklistColumns';
 
 function EmptySearch() {
   return (
@@ -122,7 +123,7 @@ export function WorklistTable() {
   const patientsLoading = useAppStore(s => s.patientsLoading);
   const patientsError = useAppStore(s => s.patientsError);
   const fetchPatients = useAppStore(s => s.fetchPatients);
-  // `fetchPatients` was only wired to the ErrorState retry — the initial load
+  // `fetchPatients` was only wired to the error state's retry, the initial load
   // came from SubNav prefetching `patients` on every Population route. SubNav
   // fetches counts only now, so this table owns its own data. Store-guarded
   // single-fire, so the retry path still works and costs nothing extra.
@@ -138,7 +139,7 @@ export function WorklistTable() {
   const activeFilters = useAppStore(s => s.activeFilters);
   const [expandedSections, setExpandedSections] = useState({});
 
-  // Patients are fetched once by SubNav on mount — no per-tab fetch effect
+  // Patients are fetched once by SubNav on mount, no per-tab fetch effect
   // here (the store's `patientsDidFetch` guard would short-circuit anyway,
   // but skipping the call avoids the effect-churn entirely).
   const toggleExpand = (key) => setExpandedSections(s => ({ ...s, [key]: !s[key] }));
@@ -190,7 +191,7 @@ export function WorklistTable() {
     else clearSelected();
   };
 
-  // Column prefs — WorklistTable is bespoke (doesn't ride WorklistShell), so
+  // Column prefs: WorklistTable is bespoke (doesn't ride WorklistShell), so
   // we call useWorklistColumns directly for the middle-column band. The
   // sticky checkbox / Members / Actions columns bracket it.
   const columnPrefs = useWorklistColumns('tcm-worklist', WORKLIST_MIDDLE_COLUMNS);
@@ -205,7 +206,17 @@ export function WorklistTable() {
   const colCount = 2 + visibleMiddle.length + 1;
 
   if (patientsLoading) return <TableSkeleton rows={perPage} />;
-  if (patientsError) return <ErrorState title="Failed to load patients" message={patientsError} onRetry={fetchPatients} />;
+  if (patientsError) {
+    return (
+      <EmptyState
+        tone="danger"
+        icon="solar:danger-triangle-linear"
+        title="Failed to load patients"
+        description={patientsError}
+        action={<Button variant="soft" leadingIcon="solar:refresh-linear" onClick={fetchPatients}>Try Again</Button>}
+      />
+    );
+  }
 
   const buildStatusGroupedRows = () => {
     const rows = [];

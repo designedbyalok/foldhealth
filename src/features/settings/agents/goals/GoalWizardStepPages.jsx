@@ -44,7 +44,7 @@ export function GoalWizardDescribeStep({ active, isEdit, nlInput, setNlInput, ai
       <div className={s.nlBox}>
         <div className={s.nlBoxHeader}>
           <span className={s.nlBadge}>AI POWERED</span>
-          <Button variant="secondary" size="S"
+          <Button variant="outline" size="sm"
             onClick={() => setNlInput('Complete a post-discharge follow-up within 72 hours including identity verification, medication adherence check, symptom assessment, and scheduling based on severity.')}>
             Try Example
           </Button>
@@ -56,7 +56,7 @@ export function GoalWizardDescribeStep({ active, isEdit, nlInput, setNlInput, ai
         />
         <div className={s.nlBoxFooter}>
           <span className={s.nlHint}>AI will generate steps, scoring, and success criteria</span>
-          <Button variant="primary" size="S" leadingIcon="custom:ai-mono"
+          <Button size="sm" leadingIcon="custom:ai-mono"
             onClick={generateFromNL} disabled={aiGenerating}>
             {aiGenerating ? 'Generating...' : 'Generate'}
           </Button>
@@ -106,12 +106,12 @@ export function GoalWizardConfigureStep({ active, isEdit, name, setName, nameErr
           <Select
             options={PROGRAMS.map(p => ({ value: p, label: p }))}
             value={program}
-            onChange={setProgram}
+            onValueChange={setProgram}
           />
         </div>
         <div className={s.formGroup} style={{ flex: 1 }}>
           <div className={s.formLabel}>Completion Mode</div>
-          <Select options={MODES} value={mode} onChange={setMode} />
+          <Select options={MODES} value={mode} onValueChange={setMode} />
         </div>
       </div>
       <div className={s.formGroup}>
@@ -174,7 +174,7 @@ export function GoalWizardStepsStep({
             <span style={{ color: 'var(--status-success)' }}>●</span> Required <span style={{ color: 'var(--status-warning)' }}>●</span> Optional
           </span>
         </div>
-        <Button variant="secondary" size="S" onClick={() => setShowAddStep(true)}>+ Add Step</Button>
+        <Button variant="outline" size="sm" onClick={() => setShowAddStep(true)}>+ Add Step</Button>
       </div>
 
       {steps.map((st, i) => (
@@ -199,8 +199,8 @@ export function GoalWizardStepsStep({
             <Input type="text" style={{ marginBottom: 8 }} value={st.condition || ''}
               onChange={e => updateStep(i, { condition: e.target.value })} placeholder="Dependency condition (optional)" />
             <div style={{ display: 'flex', gap: 6 }}>
-              <Button variant="primary" size="S" onClick={() => setEditingStepIdx(null)}>Save</Button>
-              <Button variant="ghost" size="S" onClick={() => setEditingStepIdx(null)}>Cancel</Button>
+              <Button size="sm" onClick={() => setEditingStepIdx(null)}>Save</Button>
+              <Button variant="ghost" size="sm" onClick={() => setEditingStepIdx(null)}>Cancel</Button>
             </div>
           </div>
         ) : (
@@ -209,7 +209,7 @@ export function GoalWizardStepsStep({
             <div className={s.stepContent}>
               <div className={s.stepNameRow}>
                 <span style={{ fontSize: 'var(--font-base)', fontWeight: 500, color: 'var(--neutral-400)' }}>{st.name}</span>
-                <Badge variant={st.type === 'mandatory' ? 'compliance-pass' : 'status-queued'} label={st.type === 'mandatory' ? 'Required' : 'Optional'} />
+                <Badge tone={st.type === 'mandatory' ? 'success' : 'warning'} label={st.type === 'mandatory' ? 'Required' : 'Optional'} />
                 {weighted && <span className={s.scoreChip}>{st.score}pt</span>}
               </div>
               {st.desc && <div className={s.stepDesc}>{st.desc}</div>}
@@ -220,9 +220,9 @@ export function GoalWizardStepsStep({
               )}
             </div>
             <div className={s.stepControls} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <ActionButton icon="solar:pen-linear" size="L" tooltip="Edit step" onClick={() => setEditingStepIdx(i)} />
+              <ActionButton icon="solar:pen-linear" tooltip="Edit step" onClick={() => setEditingStepIdx(i)} />
               <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-              <ActionButton icon="solar:trash-bin-minimalistic-linear" size="L" tooltip="Delete step" onClick={() => removeStep(i)} />
+              <ActionButton icon="solar:trash-bin-minimalistic-linear" tooltip="Delete step" onClick={() => removeStep(i)} />
             </div>
           </div>
         )
@@ -249,8 +249,8 @@ export function GoalWizardStepsStep({
           <Input type="text" style={{ marginBottom: 8 }} placeholder="Dependency condition (optional)"
             value={newStep.condition} onChange={e => setNewStep({ ...newStep, condition: e.target.value })} />
           <div style={{ display: 'flex', gap: 6 }}>
-            <Button variant="primary" size="S" onClick={addStepItem}>Add Step</Button>
-            <Button variant="ghost" size="S" onClick={() => setShowAddStep(false)}>Cancel</Button>
+            <Button size="sm" onClick={addStepItem}>Add Step</Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowAddStep(false)}>Cancel</Button>
           </div>
         </div>
       )}
@@ -302,7 +302,7 @@ export function GoalWizardReviewStep({
             onChange={e => setNewMetric(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && addMetricItem()} />
         </div>
-        <Button variant="secondary" size="L" style={{ flexShrink: 0 }} onClick={addMetricItem}>+ Add</Button>
+        <Button variant="outline" style={{ flexShrink: 0 }} onClick={addMetricItem}>+ Add</Button>
       </div>
 
       <hr className={s.divider} />
@@ -313,7 +313,7 @@ export function GoalWizardReviewStep({
       <div className={s.successContainer}>
         <div className={s.reviewRow}>
           <div className={s.reviewLabel}>Goal Name</div>
-          <div className={s.reviewValue}>{name || '—'}</div>
+          <div className={s.reviewValue}>{name || '-'}</div>
         </div>
         <div className={s.reviewRow} style={{ display: 'flex', gap: 24 }}>
           <div style={{ flex: 1 }}>

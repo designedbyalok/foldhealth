@@ -1,0 +1,48 @@
+/* Add Family, Caregivers & Decision Makers (Figma Mar-Present 2026 4801:13694). */
+
+.body { display: flex; flex-direction: column; gap: var(--space-6); }
+.section { display: flex; flex-direction: column; gap: var(--space-3); }
+.sectionTitle { margin: 0; font-size: var(--font-base); font-weight: 500; line-height: 1.2; color: var(--neutral-500); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.phones { display: flex; flex-direction: column; gap: var(--space-2); }
+.phoneRow { display: flex; align-items: center; gap: var(--space-2); }
+.phoneRow > :first-child { flex: 1; min-width: 0; }
+.addLink { display: inline-flex; align-items: center; gap: var(--space-1); align-self: flex-start; font-size: var(--font-sm); }
+
+.card {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-3); border: 0.5px solid var(--neutral-150); border-radius: var(--space-2);
+}
+.cardTitle { font-size: var(--font-base); line-height: 1.2; color: var(--neutral-400); }
+.inline { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-4); }
+.check { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--font-base); color: var(--neutral-400); cursor: pointer; }
+.subLabel { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-base); line-height: 1.2; color: var(--neutral-300); }
+.req { width: 4px; height: 4px; border-radius: 50%; background: var(--status-error); }
+
+.docList {
+  display: flex; flex-direction: column; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3); border: 0.5px solid var(--neutral-150); border-radius: var(--space-1);
+}
+.docListTitle { font-size: var(--font-sm); color: var(--neutral-300); }
+.docRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.docCard {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-3); background: var(--neutral-50); border-radius: var(--space-2);
+}
+.docFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.actions { display: flex; align-items: center; gap: var(--space-2); }
+
+.notMember { display: flex; justify-content: center; padding: var(--space-3) 0; }
+.notMemberText { font-size: var(--font-base); color: var(--neutral-300); }
+
+.emptyCard {
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-4) var(--space-3); border: 0.5px solid var(--neutral-150); border-radius: var(--space-3);
+}
+.list { display: flex; flex-direction: column; }
+.person { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 0.5px solid var(--neutral-100); }
+.person:last-child { border-bottom: none; }
+.personText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.personName { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-base); color: var(--neutral-500); }
+.personMeta { font-size: var(--font-sm); color: var(--neutral-300); }
+.roles { display: flex; flex-wrap: wrap; gap: var(--space-1); }

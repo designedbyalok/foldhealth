@@ -23,7 +23,7 @@ export function HolidaysDrawer({ onClose }) {
         bodyClassName={styles.flushBody}
         headerRight={(
           <>
-            <Button variant="secondary" size="L" leadingIcon="solar:add-circle-linear" onClick={h.openNew}>New Configuration</Button>
+            <Button variant="outline" leadingIcon="solar:add-circle-linear" onClick={h.openNew}>New Configuration</Button>
             <span className={styles.headerDivider} aria-hidden="true" />
           </>
         )}

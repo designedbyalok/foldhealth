@@ -17,7 +17,7 @@ export default {
   },
   argTypes: {
     anchorRef: {
-      description: 'Ref to the anchor element (usually the bell icon) — used by the click-outside handler.',
+      description: 'Ref to the anchor element (usually the bell icon): used by the click-outside handler.',
       table: { type: { summary: 'RefObject<HTMLElement>' } },
       control: false,
     },

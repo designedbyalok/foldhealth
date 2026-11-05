@@ -1,7 +1,7 @@
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Input } from '../../components/Input/Input';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Select } from '../../components/Select/Select';
 import { CallListItem, CallListSkeleton } from './CallsViewHelpers';
 import styles from './CallsView.module.css';
@@ -42,15 +42,14 @@ export function CallsConvPanel({
         <div className={styles.convHeaderActions}>
           <ActionButton
             icon="solar:magnifer-linear"
-            size="L"
             tooltip="Search"
             active={showSearch}
             onClick={onToggleSearch}
           />
           <div className={styles.convDivider} />
-          <ActionButton icon="solar:refresh-linear" size="L" tooltip="Refresh" />
+          <ActionButton icon="solar:refresh-linear" tooltip="Refresh" />
           <div className={styles.convDivider} />
-          <ActionButton icon="custom:filter"  size="L" tooltip="Filter" />
+          <ActionButton icon="custom:filter" tooltip="Filter" />
         </div>
       </div>
 
@@ -62,7 +61,7 @@ export function CallsConvPanel({
             className={styles.callLineTrigger}
             options={callLines.map(line => ({ value: line.id, label: line.label }))}
             value={callLine}
-            onChange={onCallLineChange}
+            onValueChange={onCallLineChange}
           />
         )}
       </div>
@@ -85,15 +84,15 @@ export function CallsConvPanel({
       )}
 
       <div className={styles.convTabs}>
-        <Toggle
+        <SegmentedControl
           items={[
             { key: 'all',      label: 'All' },
             { key: 'incoming', label: 'Incoming' },
             { key: 'outgoing', label: 'Outgoing' },
           ]}
-          active={listFilter}
-          onChange={onListFilterChange}
-          size="S"
+          value={listFilter}
+          onValueChange={onListFilterChange}
+          size="sm"
           fullWidth
         />
       </div>
@@ -122,7 +121,7 @@ export function CallsConvPanel({
               { value: 'in', label: '🇮🇳 +91' },
             ]}
             value={dialCountry}
-            onChange={onDialCountryChange}
+            onValueChange={onDialCountryChange}
           />
           <div className={styles.dialInputWrap}>
             <Input

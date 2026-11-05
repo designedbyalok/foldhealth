@@ -1,4 +1,4 @@
-/* Fold Health AvatarGroup — overlapping stack of Avatar tiles with an
+/* Fold Health AvatarGroup: overlapping stack of Avatar tiles with an
    overflow "+N" chip when the group exceeds `max`. Sizes XS/S/M/L/XL
    mirror the Figma Fold-Pixel-1.0 spec (node 25:12371). */
 
@@ -16,7 +16,7 @@
   flex-shrink: 0;
   box-sizing: border-box;
   font-weight: 400;
-  /* Ring so overlapping tiles read as separate — matches Figma spec. */
+  /* Ring so overlapping tiles read as separate, matches Figma spec. */
   box-shadow: 0 0 0 1.5px var(--neutral-0);
 }
 
@@ -30,7 +30,7 @@
 .group > *:nth-child(n+4) { z-index: 4; }
 .group > *:nth-child(n+5) { z-index: 5; }
 
-/* Variant fills — patient uses primary, provider uses secondary. Kept in
+/* Variant fills: patient uses primary, provider uses secondary. Kept in
    sync with Avatar.module.css so a lone Avatar and a single-tile group
    look identical. */
 .patient {
@@ -50,7 +50,7 @@
   cursor: default;
 }
 
-/* Sizes — width, height, radius, and font scale together. Font ratio is
+/* Sizes: width, height, radius, and font scale together. Font ratio is
    ~44% of tile size (matches Avatar's default 14/32). */
 .xs { --avatar-tile-size: 20px; width: 20px; height: 20px; border-radius: 5px; font-size: 0.5625rem; }
 .s  { --avatar-tile-size: 24px; width: 24px; height: 24px; border-radius: 6px; font-size: var(--font-2xs); }
@@ -58,7 +58,7 @@
 .l  { --avatar-tile-size: 40px; width: 40px; height: 40px; border-radius: 10px; font-size: var(--font-lg); }
 .xl { --avatar-tile-size: 48px; width: 48px; height: 48px; border-radius: 12px; font-size: var(--font-xl); }
 
-/* Overflow popover — appears on hover/focus of the +N chip. Lists every
+/* Overflow popover: appears on hover/focus of the +N chip. Lists every
    member with their initials tile + name. */
 .overflowWrap {
   position: relative;

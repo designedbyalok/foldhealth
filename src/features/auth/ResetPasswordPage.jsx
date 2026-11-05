@@ -10,12 +10,12 @@ import styles from './LoginPage.module.css';
 import { isPendingApprovalSession, EMAIL_CONFIRMED_PENDING_NOTICE } from './pendingApproval';
 
 /**
- * ResetPasswordPage — shown when the user arrives via a Supabase
+ * ResetPasswordPage: shown when the user arrives via a Supabase
  * password-recovery or invite/confirmation email link.
  *
  * Two arrival modes:
  *
- * 1. Token-hash links (preferred — requires the custom email templates):
+ * 1. Token-hash links (preferred: requires the custom email templates):
  *    the email points at `{{ .SiteURL }}/#/reset-password?token_hash=…&type=…`
  *    so the link is on OUR domain (not *.supabase.co, which corporate
  *    firewalls block) and merely opening it consumes nothing. The one-time
@@ -53,7 +53,7 @@ export function ResetPasswordPage({ onDone }) {
   const [success, setSuccess] = useState('');
   // null = still checking; true/false once known.
   const [hasSession, setHasSession] = useState(null);
-  // Invited-user flow lands here for their first password — treat it as a
+  // Invited-user flow lands here for their first password, treat it as a
   // "Set Password" welcome rather than a recovery, and drop them straight
   // into the app on success instead of sending them back to login.
   const [isInvited, setIsInvited] = useState(false);
@@ -63,7 +63,7 @@ export function ResetPasswordPage({ onDone }) {
   const [tokenParams] = useState(readTokenFromUrl);
 
   // Detect whether Supabase managed to establish a recovery session from
-  // the email link. If not — and there's no token_hash to redeem later —
+  // the email link. If not, and there's no token_hash to redeem later,
   // the link is expired or the user navigated here directly; show a
   // dead-end state instead of letting them submit into a failure.
   useEffect(() => {
@@ -73,7 +73,7 @@ export function ResetPasswordPage({ onDone }) {
     });
   }, []);
 
-  // First-time setup (invite / signup confirmation) vs recovery — drives the
+  // First-time setup (invite / signup confirmation) vs recovery, drives the
   // heading copy before any session exists. Token links carry the answer in
   // `type`; legacy links fall back to the session's invited metadata.
   const setupFlow = tokenParams ? tokenParams.type !== 'recovery' : isInvited;
@@ -94,7 +94,7 @@ export function ResetPasswordPage({ onDone }) {
     try {
       // Token-hash flow: redeem the one-time token NOW, at submit time.
       // Deferring redemption to a human interaction is what makes the links
-      // immune to mail-security prefetchers — a GET of the page burns nothing.
+      // immune to mail-security prefetchers: a GET of the page burns nothing.
       let invited = isInvited;
       if (tokenParams) {
         const { data: otpData, error: otpError } = await supabase.auth.verifyOtp({
@@ -103,7 +103,7 @@ export function ResetPasswordPage({ onDone }) {
         });
         if (otpError) {
           // The token may already be redeemed (e.g. an earlier submit failed
-          // after verifyOtp) — if a session exists we can still proceed.
+          // after verifyOtp): if a session exists we can still proceed.
           const { data: { session } } = await supabase.auth.getSession();
           if (!session) {
             track('auth.password_reset_failed', { reason: otpError.message || 'unknown', stage: 'verify' });
@@ -145,7 +145,7 @@ export function ResetPasswordPage({ onDone }) {
       track(invited ? 'auth.invite_accepted' : 'auth.password_reset_completed');
       redirecting = true;
       if (invited || setupFlow) {
-        // Session is already valid — send them into the app.
+        // Session is already valid: send them into the app.
         setSuccess('Password set. Welcome to Foldhealth!');
         setTimeout(() => { onDone?.({ enterApp: true }); }, 900);
       } else {
@@ -163,7 +163,7 @@ export function ResetPasswordPage({ onDone }) {
       <div className={styles.leftPanel}>
         <div className={styles.heroWrap}>
           <div className={styles.gridBg} />
-          <img src={loginHero} alt="Healthcare illustration" className={styles.heroImg} />
+          <img src={loginHero} alt="Healthcare illustration" width={1200} height={675} className={styles.heroImg} />
         </div>
         <div className={styles.dots}>
           <span className={styles.dotActive} />
@@ -213,7 +213,7 @@ export function ResetPasswordPage({ onDone }) {
                 <Icon name="solar:danger-triangle-linear" size={14} color="var(--status-error)" />
                 Reset links expire shortly after they're sent and can only be used once.
               </div>
-              <Button variant="primary" size="L" fullWidth onClick={() => onDone?.()}>
+              <Button fullWidth onClick={() => onDone?.()}>
                 Back to Login
               </Button>
             </div>
@@ -267,7 +267,7 @@ export function ResetPasswordPage({ onDone }) {
               </div>
             )}
 
-            <Button variant="primary" size="L" fullWidth disabled={loading} type="submit">
+            <Button fullWidth disabled={loading} type="submit">
               {loading
                 ? (setupFlow ? 'Setting password...' : 'Updating password...')
                 : (setupFlow ? 'Set Password' : 'Update Password')}

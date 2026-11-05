@@ -28,7 +28,7 @@ export function DoseDateField({ row, label, dob, onChange }) {
           aria-disabled="true"
           aria-label={`${label} dose ${row.number} given date: opens ${fmtDate(row.earliest)}`}
         >
-          <Badge tone="disabled" size="M" icon="solar:lock-keyhole-minimalistic-linear" label="Select Date" />
+          <Badge disabled size="md" icon="solar:lock-keyhole-minimalistic-linear" label="Select Date" />
         </span>
       </Tooltip>
     );
@@ -44,8 +44,8 @@ export function DoseDateField({ row, label, dob, onChange }) {
         aria-label={`${label} dose ${row.number} given date: ${row.record ? fmtDate(row.record.date) : 'not given'}`}
       >
         <Badge
-          tone="white"
-          size="M"
+          variant="outline"
+          size="md"
           label={row.record ? fmtDate(row.record.date) : 'Select Date'}
           className={row.record ? undefined : styles.placeholder}
         />
@@ -61,7 +61,7 @@ export function DoseDateField({ row, label, dob, onChange }) {
           onClose={() => setPickerRect(null)}
           footer={row.record ? (
             <div className={styles.pickerFooter}>
-              <Button variant="secondary" size="S" onClick={() => pick('')}>Clear date</Button>
+              <Button variant="outline" size="sm" onClick={() => pick('')}>Clear date</Button>
             </div>
           ) : null}
         />

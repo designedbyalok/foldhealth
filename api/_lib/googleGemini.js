@@ -50,7 +50,7 @@ export async function geminiGenerateContent({
 
   for (const model of models) {
     lastModel = model;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
     const maxAttempts = models.indexOf(model) === 0 ? 3 : 2;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -59,7 +59,8 @@ export async function geminiGenerateContent({
       try {
         response = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          // In a header, not the query string, so the key stays out of URL logs.
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
           body: bodyStr,
           signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined,
         });

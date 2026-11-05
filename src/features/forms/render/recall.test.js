@@ -17,8 +17,8 @@ describe('resolveRecall', () => {
   };
 
   it('interpolates field / score / hidden tokens', () => {
-    expect(resolveRecall('Hi {{field:name}}, MRN {{hidden:mrn}} — PHQ-9 {{score:phq9}}', ctx))
-      .toBe('Hi Jane, MRN A123 — PHQ-9 14');
+    expect(resolveRecall('Hi {{field:name}}, MRN {{hidden:mrn}}, PHQ-9 {{score:phq9}}', ctx))
+      .toBe('Hi Jane, MRN A123, PHQ-9 14');
   });
   it('supports the {{var:…}} alias for scores', () => {
     expect(resolveRecall('Total: {{var:phq9}}', ctx)).toBe('Total: 14');

@@ -1,13 +1,13 @@
 ---
 title: "HCC Worklist"
-description: "Member-level risk-adjustment coding — Support → Coder → QA → Compliance → ASM, with MEAT evidence, ICD-10 lookup, and document intake."
+description: "Member-level risk-adjustment coding: Support → Coder → QA → Compliance → ASM, with MEAT evidence, ICD-10 lookup, and document intake."
 ---
 
-The **HCC Worklist** is where risk-adjustment coding happens. Medicare Advantage plans get paid for the acuity of their members — each ICD-10 diagnosis maps to a **Hierarchical Condition Category** (current model **V28**) carrying a **RAF weight** (Risk Adjustment Factor). This worklist is where coders confirm which diagnoses are supported by the chart and move each record toward the **ASM** output file handed to Astrana.
+The **HCC Worklist** is where risk-adjustment coding happens. Medicare Advantage plans get paid for the acuity of their members, each ICD-10 diagnosis maps to a **Hierarchical Condition Category** (current model **V28**) carrying a **RAF weight** (Risk Adjustment Factor). This worklist is where coders confirm which diagnoses are supported by the chart and move each record toward the **ASM** output file handed to Astrana.
 
 ## Two rules that drive everything
 
-- **Recapture.** Every chronic condition must be **re-documented each calendar year** against a claimable DOS (Date of Service). If it isn't, the plan loses that HCC's revenue — a **recapture gap**.
+- **Recapture.** Every chronic condition must be **re-documented each calendar year** against a claimable DOS (Date of Service). If it isn't, the plan loses that HCC's revenue: a **recapture gap**.
 - **MEAT.** A diagnosis only counts if the note shows **MEAT** evidence: the provider **M**onitored, **E**valuated, **A**ssessed, or **T**reated the condition.
 
 ## Columns
@@ -32,26 +32,26 @@ Each row is a **member**; the table shows both risk signals and pipeline state.
 Every DOS flows through a staged human pipeline before its diagnoses reach the ASM file. The `sup / cdr / r1 / r2` columns mirror each stage's progress on the row.
 
 <Steps>
-  <Step title="Support Team — chart chasing">
-    Collect documents (upload, SFTP, EHR), run OCR, fix patient matching, and **Pass/Fail** each attached document. **Hard sequencing gate:** a Coder cannot begin a record until Support has cleared its document — the row is visibly blocked. Lab/imaging documents don't create rows or count toward a coder's denominator.
+  <Step title="Support Team: chart chasing">
+    Collect documents (upload, SFTP, EHR), run OCR, fix patient matching, and **Pass/Fail** each attached document. **Hard sequencing gate:** a Coder cannot begin a record until Support has cleared its document, the row is visibly blocked. Lab/imaging documents don't create rows or count toward a coder's denominator.
   </Step>
-  <Step title="Coder — the primary reviewer">
+  <Step title="Coder: the primary reviewer">
     Open the **Diagnosis Gaps** side-car drawer from the row and review each ICD × DOS:
-    - **Accept** — MEAT-supported → goes on the claim
-    - **Reject** — unsupported by the chart
-    - **Missed opportunity** — condition exists but this DOS can't support it; flags for provider education
-    - **Defer** — needs more info
+    - **Accept**: MEAT-supported → goes on the claim
+    - **Reject**: unsupported by the chart
+    - **Missed opportunity**: condition exists but this DOS can't support it; flags for provider education
+    - **Defer**: needs more info
 
     Suspects and recaptures use **Missed / Dismiss** instead. Coders can Add ICD codes the pipeline missed via live **ICD-11 lookup**, and use **Sweep Mode** to clear a code across all of a member's DOSs at once.
   </Step>
-  <Step title="QA (Reviewer 2) — sampling review">
+  <Step title="QA (Reviewer 2): sampling review">
     Reviews a configured **sampling percentage** of completed records. Returning a record with a reason sets its status to **Rebuttal** and routes it back to the Coder without losing prior work.
   </Step>
-  <Step title="Compliance (Reviewer 3) — random pull">
+  <Step title="Compliance (Reviewer 3): random pull">
     A random pull that explicitly includes records QA's sampling skipped. View-only while a downstream stage is still in progress.
   </Step>
   <Step title="ASM generation">
-    Once the pipeline completes, the progress popover's final action reads **Ready for ASM generation** — the file produced for Astrana.
+    Once the pipeline completes, the progress popover's final action reads **Ready for ASM generation**, the file produced for Astrana.
   </Step>
 </Steps>
 
@@ -62,10 +62,10 @@ A **Manager** persona handles assignment: per-role Assign links on rows, **Bulk 
 DOS-level status moves through **New → In Progress → Completed**, plus **Return**, **Reject**, **Records Requested**, and **Insufficient**.
 
 <Note>
-The user-facing status **Rebuttal** replaces the internal "Returned" everywhere. The default sort is **Created Date, descending** — the **Due Date** chip in the header is a *filter*, not the sort. This is a common point of confusion.
+The user-facing status **Rebuttal** replaces the internal "Returned" everywhere. The default sort is **Created Date, descending**, the **Due Date** chip in the header is a *filter*, not the sort. This is a common point of confusion.
 </Note>
 
-## Intake — Add DOS, Upload & OCR
+## Intake: Add DOS, Upload & OCR
 
 New encounters enter through document intake.
 
@@ -84,21 +84,21 @@ New encounters enter through document intake.
   </Step>
 </Steps>
 
-Batch intake comes through the **SFTP review** drawer. A nightly job auto-adds records when all required fields extract cleanly. Extraction failures surface immediately — never silently dropped.
+Batch intake comes through the **SFTP review** drawer. A nightly job auto-adds records when all required fields extract cleanly. Extraction failures surface immediately, never silently dropped.
 
 ## Diagnosis Gaps drawer (Coder view)
 
-- **Left column** — Chart preview with clickable references; the row header shows DOS, provider, and place of service.
-- **Right column** — ICD queue for this DOS with MEAT prompts, Accept / Reject / Missed / Defer buttons, and an ICD-11 lookup field for adding codes.
-- **Sweep Mode** — a toggle at the top that applies your decision to the same ICD across every DOS on the member's record.
+- **Left column**: Chart preview with clickable references; the row header shows DOS, provider, and place of service.
+- **Right column**: ICD queue for this DOS with MEAT prompts, Accept / Reject / Missed / Defer buttons, and an ICD-11 lookup field for adding codes.
+- **Sweep Mode**: a toggle at the top that applies your decision to the same ICD across every DOS on the member's record.
 
 ## Filters and saved filters
 
 The HCC filter bar defaults to a **role-scoped view** (e.g. Coders see "assigned to me + In Progress"). Additional chips: Risk, DOS, Due Date, Assignee, Status, and any custom columns configured via the **Column Config popover**.
 
-Save the current filter combo via **Saved Filters** — pinned filters appear in the header for one-click reuse.
+Save the current filter combo via **Saved Filters**, pinned filters appear in the header for one-click reuse.
 
 ## Where to read more
 
-- `docs/features/hcc-coding-workflow.md` — the deep operational spec (ASM/Rebuttal/Missed-Dismiss terminology, edge cases).
-- `docs/features/hcc-activity-log-spec.md` — the audit-log field schema and rendering rules.
+- `docs/features/hcc-coding-workflow.md`, the deep operational spec (ASM/Rebuttal/Missed-Dismiss terminology, edge cases).
+- `docs/features/hcc-activity-log-spec.md`, the audit-log field schema and rendering rules.

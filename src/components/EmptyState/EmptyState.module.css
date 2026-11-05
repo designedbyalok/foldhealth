@@ -1,0 +1,81 @@
+.emptyWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* The card hugs its medallion and caption; callers own the space around it. */
+.emptyCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.emptyIcon {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.emptyIcon::before,
+.emptyIcon::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed var(--neutral-150);
+}
+.emptyIcon::before { width: 120px; height: 120px; }
+.emptyIcon::after { width: 102px; height: 102px; }
+.iconInner {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(142deg, var(--neutral-50) 13%, var(--neutral-100) 91%);
+}
+/* Caption and its optional action read as one block, per the Figma spec. */
+.emptyTextGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+.emptyText {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+  line-height: 1.2;
+}
+/* With a description under it, the title reads as the heading. */
+.emptyTitle {
+  color: var(--neutral-300);
+  font-weight: 500;
+}
+.emptyDescription {
+  max-width: 20rem;
+  font-size: var(--font-sm);
+  line-height: 1.4;
+  color: var(--neutral-200);
+  text-align: center;
+}
+
+/* Compact: an 80px medallion (Figma Eventus 16898:43570). */
+.sizeS .emptyCard { gap: var(--space-1); }
+.sizeS .emptyIcon,
+.sizeS .emptyIcon::before { width: 80px; height: 80px; }
+.sizeS .emptyIcon::after { width: 68px; height: 68px; }
+.sizeS .iconInner { width: 56px; height: 56px; }
+
+/* Extra small: a 48px medallion beside text in a row (Figma 2955:4919). */
+.sizeXS { flex: 0 0 auto; }
+.sizeXS .emptyIcon,
+.sizeXS .emptyIcon::before { width: 48px; height: 48px; }
+.sizeXS .emptyIcon::after { width: 41px; height: 41px; }
+.sizeXS .iconInner { width: 34px; height: 34px; }
+/* Thinner rings at this size, or the dashes crowd the medallion. */
+.sizeXS .emptyIcon::before,
+.sizeXS .emptyIcon::after { border-width: 0.5px; }

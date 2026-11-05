@@ -1,0 +1,311 @@
+/* SlideshowDialog: steps on a white left pane, the current slide on a
+   tinted right pane where white cards stand out. Both panes end on one
+   footer rule. */
+.dialog {
+  max-width: calc(var(--space-16) * 16.5);
+  padding: 0;
+  overflow: hidden;
+}
+
+/* A fixed height, so long slides scroll inside the right pane. */
+.panes {
+  display: grid;
+  grid-template-columns: calc(var(--space-16) * 4.75) minmax(0, 1fr);
+  height: min(calc(100vh - var(--space-16)), calc(var(--space-16) * 10.5));
+}
+
+/* ── Left: steps ── */
+.left {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-right: 0.5px solid var(--neutral-150);
+  background: var(--neutral-0);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5) var(--space-5) var(--space-3);
+}
+
+.leading {
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-xl);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  color: var(--neutral-500);
+}
+
+.subtitle {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}
+
+.headerExtra {
+  margin-top: var(--space-3);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: var(--space-1) var(--space-3) var(--space-3);
+  list-style: none;
+  overflow-y: auto;
+}
+
+.step {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--space-2);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.step {
+  transition: background-color 120ms ease-out;
+}
+
+.step:hover {
+  background: var(--neutral-50);
+}
+
+.step:active {
+  background: var(--neutral-75);
+  transition: none;
+}
+
+.step:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: -2px;
+}
+
+.stepActive,
+.stepActive:hover {
+  background: var(--primary-50);
+  box-shadow: inset 0 0 0 0.5px var(--primary-200);
+}
+
+/* The accent bar sits on the pane's inner edge, left of the row. */
+.bar {
+  position: absolute;
+  top: var(--space-2);
+  bottom: var(--space-2);
+  left: calc(-1 * var(--space-3));
+  width: 2px;
+  border-radius: 0 1px 1px 0;
+  overflow: hidden;
+}
+
+.stepActive .bar {
+  background: var(--primary-200);
+}
+
+.barFill {
+  position: absolute;
+  inset: 0;
+  background: var(--primary-300);
+}
+
+/* While autoplaying, the bar fills top to bottom over the step's time. */
+.barPlaying {
+  transform-origin: top;
+  animation-name: fill;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+
+@keyframes fill {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+.stepIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding-top: calc(var(--space-1) / 2);
+}
+
+.stepText {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  flex: 1;
+  min-width: 0;
+}
+
+.stepTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.stepTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+}
+
+.stepActive .stepTitle {
+  color: var(--primary-400);
+}
+
+.stepCount {
+  flex-shrink: 0;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+  font-variant-numeric: tabular-nums;
+}
+
+.stepSummary {
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Right: the slide ── */
+.right {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--neutral-50);
+}
+
+.slide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-5) var(--space-6) var(--space-5);
+  overflow-y: auto;
+  animation: slideIn 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* The slide arrives from the direction of travel: from below when moving
+   down the steps, from above when going back. */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(var(--space-2)); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes slideInBack {
+  from { opacity: 0; transform: translateY(calc(-1 * var(--space-2))); }
+  to { opacity: 1; transform: none; }
+}
+
+.slideBack {
+  animation-name: slideInBack;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide { animation: none; }
+}
+
+/* Clear of the dialog's close button in the top right corner. */
+.slideHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-right: var(--space-8);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: var(--leading-normal);
+  color: var(--primary-300);
+}
+
+.heading {
+  margin: 0;
+  max-width: 40em;
+  font-size: var(--font-2xl);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  color: var(--neutral-500);
+  text-wrap: balance;
+}
+
+.description {
+  margin: 0;
+  max-width: 52em;
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}
+
+.preview,
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+/* ── Footers: one rule across both panes ── */
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  min-height: var(--space-12);
+  padding: var(--space-2) var(--space-5);
+  border-top: 0.5px solid var(--neutral-150);
+}
+
+.footerEnd {
+  padding: var(--space-2) var(--space-6);
+  background: var(--neutral-0);
+}
+
+.position {
+  margin-right: auto;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  font-variant-numeric: tabular-nums;
+}
+
+.primary {
+  display: inline-flex;
+  margin-left: var(--space-2);
+}
+
+/* Narrow screens: the slide alone, stepped with Previous / Next. */
+@media (max-width: 45rem) {
+  .panes { grid-template-columns: minmax(0, 1fr); }
+  .left { border-right: 0; }
+  .steps,
+  .footerStart { display: none; }
+  .head { padding-bottom: 0; }
+}

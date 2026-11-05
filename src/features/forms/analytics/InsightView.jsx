@@ -1,5 +1,5 @@
 /**
- * Insight tab — form-level overview: question count, completion rate, response
+ * Insight tab: form-level overview: question count, completion rate, response
  * count, a Responded/In-Progress/Not-Started donut, the average-score trend,
  * and one card per score group with its mean + interpretation band.
  */
@@ -119,12 +119,12 @@ export function InsightView({ fields, scoring, completed, pending, onViewRespons
                 <div className={styles.sgFooter}>
                   <div className={styles.sgCol}>
                     <span className={styles.sgKey}>Average Score</span>
-                    <span className={styles.sgVal}>{g.average == null ? '—' : Math.round(g.average * 10) / 10}</span>
+                    <span className={styles.sgVal}>{g.average == null ? '-' : Math.round(g.average * 10) / 10}</span>
                   </div>
                   <div className={`${styles.sgCol} ${styles.sgColRight}`}>
                     <span className={styles.sgKey}>Interpretation</span>
                     <span className={styles.sgInterp} style={{ color: g.band ? SEV_COLOR[g.band.severity] : 'var(--neutral-300)' }}>
-                      {g.band?.label || '—'}
+                      {g.band?.label || '-'}
                     </span>
                   </div>
                 </div>

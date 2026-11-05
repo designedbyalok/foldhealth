@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip,
 } from '../../../../../components/LazyRecharts/LazyRecharts';
-import { Toggle } from '../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../components/SegmentedControl/SegmentedControl';
 import { ActionButton } from '../../../../../components/ActionButton/ActionButton';
 import { Button } from '../../../../../components/Button/Button';
 import { Icon } from '../../../../../components/Icon/Icon';
@@ -152,22 +152,22 @@ export function HealthMapWidget({ compact = false }) {
       actions={(
         <>
           {!isLoading && (
-            <Toggle
-              size="S"
-              active={activeToggle}
+            <SegmentedControl
+              size="sm"
+              value={activeToggle}
               items={[
                 { key: 'clinic', icon: <span className={styles.toggleItem}><Icon name="solar:stethoscope-linear" size={14} color="currentColor" />Clinic</span> },
                 { key: 'patient', icon: <span className={styles.toggleItem}><Icon name="solar:user-linear" size={14} color="currentColor" />Patient</span> },
               ]}
-              onChange={(key) => {
+              onValueChange={(key) => {
                 setActiveToggle(key);
                 if (key === 'patient') setView('patientGenerated');
                 else if (view !== 'generated' && view !== 'open') setView('generated');
               }}
             />
           )}
-          {!isLoading && <ActionButton icon="solar:refresh-linear" size="S" tooltip="Regenerate" onClick={() => setView('open')} />}
-          <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More" />
+          {!isLoading && <ActionButton icon="solar:refresh-linear" size="sm" tooltip="Regenerate" onClick={() => setView('open')} />}
+          <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More" />
         </>
       )}
     >
@@ -175,15 +175,17 @@ export function HealthMapWidget({ compact = false }) {
         <LoadingState onComplete={() => setView('generated')} />
       ) : (
         <>
-          <div className={[styles.chart, compact ? styles.compact : ''].join(' ')}>
-            <HealthRadarChart data={chartData} name={activeToggle === 'clinic' ? 'Clinic' : 'Patient'} />
+          <div className={styles.container}>
+            <div className={[styles.chart, compact ? styles.compact : ''].join(' ')}>
+              <HealthRadarChart data={chartData} name={activeToggle === 'clinic' ? 'Clinic' : 'Patient'} />
+            </div>
           </div>
 
           {view === 'patientGenerated' && (
             <div className={styles.sharePrompt}>
               <span className={styles.sharePromptText}>Share this health map with the patient?</span>
-              <Button variant="ghost" size="S" onClick={() => setView('generated')}>Don&apos;t Share</Button>
-              <Button variant="tertiary" size="S" onClick={() => setView('shared')}>Share</Button>
+              <Button variant="ghost" size="sm" onClick={() => setView('generated')}>Don&apos;t Share</Button>
+              <Button variant="soft" size="sm" onClick={() => setView('shared')}>Share</Button>
             </div>
           )}
 
@@ -195,14 +197,14 @@ export function HealthMapWidget({ compact = false }) {
               <>
                 <ActionButton
                   icon="solar:like-linear"
-                  size="S"
+                  size="sm"
                   tooltip="Helpful"
                   iconColor={feedback === 'up' ? 'var(--primary-300)' : undefined}
                   onClick={() => setFeedback(v => (v === 'up' ? null : 'up'))}
                 />
                 <ActionButton
                   icon="solar:dislike-linear"
-                  size="S"
+                  size="sm"
                   tooltip="Not helpful"
                   iconColor={feedback === 'down' ? 'var(--primary-300)' : undefined}
                   onClick={() => setFeedback(v => (v === 'down' ? null : 'down'))}

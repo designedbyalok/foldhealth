@@ -12,11 +12,11 @@ import { AddIconMinimalist } from '../../../../../../components/Icon/AddIconMini
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
 import { ChronicConditionSelect } from '../../../../../settings/care-plan-library/shared/ChronicConditionSelect/ChronicConditionSelect';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { toast } from '../../../../../../components/Toast/sonnerToast';
 import { todayIso, toIsoDate, formatClinicalDate } from '../../../../../../lib/clinicalDates';
-import { Collapse } from '../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import styles from './AddProblemsDrawer.module.css';
 
 // Controlled is still a live problem, so only Resolved closes one out and the
@@ -65,9 +65,9 @@ function ProblemDraft({ title, eyebrow, initial, onSave, onCancel }) {
       </div>
       <div className={styles.draftFields}>
         <Input label="Since" type="date" value={since} onChange={e => setSince(e.target.value)} />
-        <Select portal label="Status" options={STATUS_OPTIONS} value={status} onChange={setStatus} />
-        <Select portal label="Severity" options={SEVERITY_OPTIONS} value={severity} onChange={setSeverity} />
-        <Select portal label="Type" options={TYPE_OPTIONS} value={type} onChange={setType} />
+        <Select portal label="Status" options={STATUS_OPTIONS} value={status} onValueChange={setStatus} />
+        <Select portal label="Severity" options={SEVERITY_OPTIONS} value={severity} onValueChange={setSeverity} />
+        <Select portal label="Type" options={TYPE_OPTIONS} value={type} onValueChange={setType} />
       </div>
       {!noteOpen && (
         <Link className={styles.draftAddNote} onClick={() => setNoteOpen(true)}>
@@ -79,7 +79,7 @@ function ProblemDraft({ title, eyebrow, initial, onSave, onCancel }) {
         <div className={styles.draftNote}>
           <div className={styles.draftNoteHead}>
             <span className={styles.draftNoteLabel}>Note</span>
-            <ActionButton size="S" tooltip="Discard note" aria-label="Discard note" onClick={() => { setNote(''); setNoteOpen(false); }}>
+            <ActionButton size="sm" tooltip="Discard note" aria-label="Discard note" onClick={() => { setNote(''); setNoteOpen(false); }}>
               <CloseIcon size={14} color="var(--neutral-300)" />
             </ActionButton>
           </div>
@@ -87,7 +87,7 @@ function ProblemDraft({ title, eyebrow, initial, onSave, onCancel }) {
         </div>
       )}
       <div className={styles.draftActions}>
-        <Button variant="primary" size="M" disabled={saving} onClick={save}>Save</Button>
+        <Button disabled={saving} onClick={save}>Save</Button>
         <span className={styles.draftDivider} aria-hidden="true" />
         <Link variant="secondary" onClick={onCancel}>Cancel</Link>
       </div>
@@ -129,22 +129,22 @@ function ProblemRow({ problem, onStatusChange, onEdit, dimmed }) {
         portal
         options={STATUS_OPTIONS}
         value={problem.status || 'Active'}
-        onChange={v => onStatusChange(problem, v)}
+        onValueChange={v => onStatusChange(problem, v)}
         className={styles.statusSelect}
       />
       <span className={styles.rowDivider} aria-hidden="true" />
       <ActionButton
         icon="solar:pen-linear"
-        size="S"
+        size="sm"
         tooltip="Edit"
         aria-label={`Edit ${problem.title}`}
         onClick={() => onEdit(problem)}
       />
       </div>
       {problem.note && (
-        <Collapse open={noteOpen}>
+        <CollapsibleContent open={noteOpen}>
           <p className={styles.rowNote}><span className={styles.rowNoteLabel}>Note:</span> {problem.note}</p>
-        </Collapse>
+        </CollapsibleContent>
       )}
     </div>
   );
@@ -157,7 +157,7 @@ const Section = forwardRef(function Section({ title, count, open, onToggle, chil
         type="button"
         className={[styles.sectionHead, dimmed ? styles.dimmed : ''].filter(Boolean).join(' ')} onClick={onToggle} aria-expanded={open}>
         <span className={styles.sectionTitle}>{title}</span>
-        {count > 0 && <Badge tone="grey" size="S" label={String(count)} className={styles.countBadge} />}
+        {count > 0 && <Badge size="sm" label={String(count)} className={styles.countBadge} />}
         <DownChevronIcon size={14} className={open ? styles.chevron : styles.chevronClosed} />
       </button>
       <div className={[styles.sectionBody, open ? styles.sectionBodyOpen : ''].filter(Boolean).join(' ')}>
@@ -168,7 +168,7 @@ const Section = forwardRef(function Section({ title, count, open, onToggle, chil
 });
 
 /**
- * Add Problems — the PAMI/Hx Problems section's `+` opens this.
+ * Add Problems: the PAMI/Hx Problems section's `+` opens this.
  * Figma P360 8207:293083.
  *
  * Search adds a problem to the patient's list; the two sections below are the
@@ -306,7 +306,7 @@ export function AddProblemsDrawer({ patientId, focus, onClose }) {
             >
               {active.length === 0 ? (
                 <div className={styles.emptyCard}>
-                  <RingEmptyState icon="solar:health-linear" label="No Active Problems" iconSize={31} />
+                  <EmptyState icon="solar:health-linear" title="No Active Problems" iconSize={31} />
                 </div>
               ) : active.map(p => renderRow(p))}
             </Section>

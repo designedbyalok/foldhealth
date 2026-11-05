@@ -7,7 +7,7 @@ import { useState, useCallback } from 'react';
  * Mirrors the pattern the Forms/Emails content tables use, extracted so every
  * settings table shares one implementation.
  *
- * @param {*} resetKey  When this value changes the mode + selection reset —
+ * @param {*} resetKey  When this value changes the mode + selection reset,
  *   pass the active tab / list id so selections never bleed across lists.
  */
 export function useBulkSelect(resetKey) {
@@ -16,7 +16,7 @@ export function useBulkSelect(resetKey) {
 
   // Reset mode + selection when the surface changes (tab switch, list change),
   // so selections never bleed across lists. This is React's "adjust state
-  // while rendering" pattern for resetting on a prop change — cheaper and more
+  // while rendering" pattern for resetting on a prop change, cheaper and more
   // correct than an effect (no extra render, no flash of stale selection).
   const [prevKey, setPrevKey] = useState(resetKey);
   if (resetKey !== prevKey) {
@@ -45,7 +45,7 @@ export function useBulkSelect(resetKey) {
     });
   }, []);
 
-  // Explicit add/remove of a batch — for a header select-all checkbox that
+  // Explicit add/remove of a batch: for a header select-all checkbox that
   // passes the desired boolean state rather than a toggle.
   const setMany = useCallback((ids, on) => {
     setSelectedIds((prev) => {
@@ -71,7 +71,7 @@ export function useBulkSelect(resetKey) {
   return {
     bulkMode,
     selectedIds,                 // Set
-    selectedIdList: [...selectedIds], // Array — for WorklistShell / BulkBar
+    selectedIdList: [...selectedIds], // Array, for WorklistShell / BulkBar
     count: selectedIds.size,
     isSelected: (id) => selectedIds.has(id),
     toggleId,

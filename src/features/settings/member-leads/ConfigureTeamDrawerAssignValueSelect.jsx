@@ -5,7 +5,7 @@ import { valueOptionsForDimension } from './teamTypeConfig';
 import drawerStyles from './ConfigureTeamDrawer.module.css';
 
 /**
- * AssignValueSelect — custom dropdown for the Assign-To "value" column.
+ * AssignValueSelect: custom dropdown for the Assign-To "value" column.
  * Replaces the native <select> so each dimension can render the right
  * kind of row:
  *   - TIN     → icon bubble + number + provider count + "Assigned: X%"
@@ -109,7 +109,7 @@ export function AssignValueSelect({ dim, value, onChange, tinAssignedPct, staffA
                 </button>
               );
             }
-            // vendor / fallback — plain row
+            // vendor / fallback: plain row
             return (
               <button
                 key={opt.value}

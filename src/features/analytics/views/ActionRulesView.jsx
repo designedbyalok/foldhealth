@@ -109,7 +109,7 @@ export function ActionRulesView({ showToast, editing = false, resetTick = 0 }) {
   const renderBuilder = () => (
     <Card
       title="Rules Builder"
-      actions={<Button variant="primary" size="S" onClick={() => showToast?.('Opening no-code rules builder')}>+ New Rule</Button>}
+      actions={<Button size="sm" onClick={() => showToast?.('Opening no-code rules builder')}>+ New Rule</Button>}
     >
       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '10px 14px', background: 'var(--neutral-0)', border: '1px solid var(--neutral-150)', borderRadius: 8, fontSize: 'var(--font-base)', color: 'var(--neutral-300)', lineHeight: 1.6 }}>
         <span style={{ fontSize: 'var(--font-base)', marginTop: 1 }}>{'ℹ️'}</span>

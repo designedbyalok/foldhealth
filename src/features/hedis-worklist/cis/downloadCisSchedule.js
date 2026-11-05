@@ -1,3 +1,5 @@
+import { fmtDate, seriesStartDate } from './cisStatusConfig';
+
 // jsPDF, Inter and the brand images load on first use only.
 const generate = async (params) => {
   const [{ generateCisSchedulePdf }, { loadCisPdfAssets }] = await Promise.all([
@@ -27,4 +29,10 @@ export async function downloadCisSchedule(params) {
 export async function cisPdfFile(params) {
   const { blob, filename } = await generate(params);
   return new File([blob], filename, { type: 'application/pdf' });
+}
+
+/** The immunization record PDF plus its caption, for Documents or the EHR. */
+export async function cisRecordEvidence({ member, result, notes }) {
+  const file = await cisPdfFile({ member, result, notes, startedOn: seriesStartDate(result), mode: 'record', brand: 'astrana' });
+  return { file, caption: `Immunization Record (CIS-CMB10) ${fmtDate(new Date())}` };
 }

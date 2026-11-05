@@ -7,12 +7,12 @@ import { Button } from '../../components/Button/Button';
 import { Input } from '../../components/Input/Input';
 import { useAppStore } from '../../store/useAppStore';
 // Reuses the HCC bulk-change dialog's CSS so both worklists' bulk flows
-// read as one system — the HEDIS variant just drops role selection since
+// read as one system: the HEDIS variant just drops role selection since
 // HEDIS gaps have a single assignee rather than a per-role pool.
 import styles from '../hcc/BulkChangeAssigneesDialog.module.css';
 
 /**
- * BulkChangeHedisAssigneeDialog — centred modal that opens from the HEDIS
+ * BulkChangeHedisAssigneeDialog: centred modal that opens from the HEDIS
  * worklist BulkBar's "Change Assignee" action when one or more rows are
  * selected. Picks one user from the platform roster and applies them as
  * the assignee for every open gap on every selected member.
@@ -88,7 +88,7 @@ export function BulkChangeHedisAssigneeDialog({ open, selectedIds, onClose, onAp
     } else if (updated) {
       showToast(`Reassigned ${updated} gap${updated === 1 ? '' : 's'} to ${targetLabel}`);
     } else if (skipped) {
-      showToast(`No changes — all ${skipped} gap${skipped === 1 ? '' : 's'} are already closed`);
+      showToast(`No changes: all ${skipped} gap${skipped === 1 ? '' : 's'} are already closed`);
     }
   };
 
@@ -153,10 +153,8 @@ export function BulkChangeHedisAssigneeDialog({ open, selectedIds, onClose, onAp
         </div>
 
         <div className={styles.footer}>
-          <Button variant="secondary" size="M" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button
-            variant="primary"
-            size="M"
             disabled={!pickedId}
             onClick={handleApply}
           >

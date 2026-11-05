@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogTitle,
   DialogDescription,
-} from '../ShadcnDialog/ShadcnDialog';
+} from '../Dialog/Dialog';
 
 const AGENTS = [
   { name: 'Ricardo', role: 'SNP Agent' },
@@ -106,7 +106,7 @@ export function InvokeAgentModal() {
                 {isSelected && (
                   <ActionButton
                     icon="solar:play-linear"
-                    size="S"
+                    size="sm"
                     tooltip="Preview agent"
                     onClick={(e) => e.stopPropagation()}
                   />
@@ -121,8 +121,7 @@ export function InvokeAgentModal() {
           display: 'flex', gap: 12, padding: 8,
         }}>
           <Button
-            variant="secondary"
-            size="L"
+            variant="outline"
             fullWidth
             style={{ flex: 1, minWidth: 0 }}
             onClick={() => setShowInvokeModal(false)}
@@ -130,8 +129,6 @@ export function InvokeAgentModal() {
             Cancel
           </Button>
           <Button
-            variant="primary"
-            size="L"
             fullWidth
             style={{ flex: 1, minWidth: 0 }}
             disabled={!selected}

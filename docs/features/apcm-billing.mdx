@@ -1,9 +1,9 @@
 ---
 title: "APCM Billing"
-description: "Advanced Primary Care Management billing — attestation-first, month-close ready, with a strict signatory flow."
+description: "Advanced Primary Care Management billing: attestation-first, month-close ready, with a strict signatory flow."
 ---
 
-The **APCM Billing** worklist is CMS **Advanced Primary Care Management** (G0556 / G0557 / G0558) billing. Unlike CCM, APCM is **not time-based** — it's tier-based (Level 1 / 2 / 3 by patient acuity and complexity). This worklist handles the attestation and month-close for those tiers.
+The **APCM Billing** worklist is CMS **Advanced Primary Care Management** (G0556 / G0557 / G0558) billing. Unlike CCM, APCM is **not time-based**, it's tier-based (Level 1 / 2 / 3 by patient acuity and complexity). This worklist handles the attestation and month-close for those tiers.
 
 Route: `#/population/apcm` (opened from Settings → Billing or from the row menu on CCM).
 
@@ -21,7 +21,7 @@ Route: `#/population/apcm` (opened from Settings → Billing or from the row men
 | **Assignee** | Billing analyst |
 | **Actions** | Open Attestation, ⋯ menu |
 
-## Walkthrough — month-close for APCM
+## Walkthrough: month-close for APCM
 
 <Steps>
   <Step title="Open APCM Billing">
@@ -34,8 +34,8 @@ Route: `#/population/apcm` (opened from Settings → Billing or from the row men
     Click a row → **Open Attestation**. The **Attestation Modal** walks:
     1. Consent confirmation
     2. Level attestation (auto-computed, reviewer can override with reason)
-    3. Signatory form — the billing provider signs off
-    4. Result view — locked and ready to bill
+    3. Signatory form: the billing provider signs off
+    4. Result view: locked and ready to bill
   </Step>
   <Step title="Bulk attest">
     For high-volume close, check rows and use BulkBar → **Bulk Attest** (skips rows missing prerequisites).
@@ -49,10 +49,10 @@ Route: `#/population/apcm` (opened from Settings → Billing or from the row men
 
 A tightly scripted flow (`AttestationModal.jsx`) that enforces four steps in order:
 
-- **Consent Options** — required before proceeding.
-- **Level Attestation** — the modal pre-computes based on member data; overrides require a reason.
-- **Signatory Form** — the billing provider's name and NPI; auto-stamps a timestamp.
-- **Result View** — the locked view. Attestation cannot be edited without unlocking and re-signing.
+- **Consent Options**: required before proceeding.
+- **Level Attestation**: the modal pre-computes based on member data; overrides require a reason.
+- **Signatory Form**: the billing provider's name and NPI; auto-stamps a timestamp.
+- **Result View**: the locked view. Attestation cannot be edited without unlocking and re-signing.
 
 ## Tips
 

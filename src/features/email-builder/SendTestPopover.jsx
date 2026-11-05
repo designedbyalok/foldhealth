@@ -21,7 +21,7 @@ const SENDER_LABELS = {
 };
 
 /**
- * SendTestPopover — pop-over launched by the "Test Mail" button in both
+ * SendTestPopover: pop-over launched by the "Test Mail" button in both
  * the EmailBuilder and CampaignBuilder. Renders the current email template
  * to HTML, posts it to `/api/send-test-email`, and surfaces Resend's actual
  * error message verbatim so failures are diagnosable.
@@ -80,7 +80,7 @@ export function SendTestPopover({ onClose, campaignId }) {
     const doc = liveDoc || campaign?.emailTemplate;
     if (!doc) {
       setStatus('error');
-      setErrorMsg('No email template found for this campaign yet — edit one first.');
+      setErrorMsg('No email template found for this campaign yet, edit one first.');
       return;
     }
     // Test sends resolve merge tags with sample data (so the author sees
@@ -132,7 +132,7 @@ export function SendTestPopover({ onClose, campaignId }) {
       setErrorMsg(failed[0].reason?.message || 'All sends failed');
     } else if (failed.length > 0) {
       setStatus('error');
-      setErrorMsg(`Sent ${results.length - failed.length}/${results.length} — ${failed[0].reason?.message}`);
+      setErrorMsg(`Sent ${results.length - failed.length}/${results.length}, ${failed[0].reason?.message}`);
     } else {
       setStatus('ok');
     }
@@ -162,10 +162,10 @@ export function SendTestPopover({ onClose, campaignId }) {
         </div>
       )}
       <div className={styles.testEmailActions}>
-        <Button variant="primary" size="S" onClick={handleSend} disabled={status === 'sending' || !email}>
+        <Button size="sm" onClick={handleSend} disabled={status === 'sending' || !email}>
           {status === 'sending' ? 'Sending…' : 'Send'}
         </Button>
-        <Button variant="secondary" size="S" onClick={onClose}>Cancel</Button>
+        <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
       </div>
       {recents.length > 0 && (
         <>
@@ -178,8 +178,8 @@ export function SendTestPopover({ onClose, campaignId }) {
             {recents.map(addr => (
               <Button
                 key={addr}
-                variant="tertiary"
-                size="S"
+                variant="soft"
+                size="sm"
                 leadingIcon="solar:letter-linear"
                 className={styles.testEmailRecentChip}
                 onClick={() => {

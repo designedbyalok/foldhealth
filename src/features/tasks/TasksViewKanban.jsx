@@ -75,7 +75,7 @@ export function KanbanCardContent({ task, onToggle }) {
         {labels.length > 0 && (
           <div className={styles.cardLabels}>
             {labels.map(l => (
-              <Badge key={l} variant="overflow" label={l} />
+              <Badge key={l} label={l} />
             ))}
           </div>
         )}
@@ -203,12 +203,12 @@ function DroppableKanbanColumn({ groupKey, label, tasks, onToggle, onTaskClick }
         <div className={styles.kanbanColumnTitle}>
           <div className={styles.kanbanStatusDot} style={{ background: `var(--status-${groupKey}, var(--neutral-200))` }} />
           <span className={styles.kanbanStatusLabel}>{label}</span>
-          <Badge variant="ai-neutral" label={tasks.length.toString()} />
+          <Badge label={tasks.length.toString()} />
         </div>
         <div className={styles.kanbanColumnActions}>
           <span className={styles.kanbanSort}>Due Date</span>
           <Icon name="solar:alt-arrow-down-linear" size={14} color="var(--neutral-300)" />
-          <ActionButton icon="solar:add-circle-linear" size="S" tooltip="Add task" />
+          <ActionButton icon="solar:add-circle-linear" size="sm" tooltip="Add task" />
         </div>
       </div>
       <div
@@ -311,7 +311,7 @@ export function KanbanBoard({ kanbanGroups, onToggle, onTaskMove, onTaskClick })
       </div>
       <DragOverlay dropAnimation={{
         duration: 200,
-        // ease-out-quart — smooth deceleration, no overshoot.
+        // ease-out-quart: smooth deceleration, no overshoot.
         easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
       }}>
         {activeTask && (

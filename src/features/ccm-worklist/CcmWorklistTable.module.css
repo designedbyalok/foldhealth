@@ -63,7 +63,7 @@
   min-width: 1400px;
 }
 
-/* Empty search — mirrors the TOC empty state. */
+/* Empty search: mirrors the TOC empty state. */
 .emptySearch {
   display: flex;
   flex-direction: column;

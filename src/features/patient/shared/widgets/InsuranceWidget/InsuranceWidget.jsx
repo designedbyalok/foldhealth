@@ -5,20 +5,21 @@ import { PanelSection, PanelSectionDivider, PanelSectionItem } from '../../../..
 import styles from './InsuranceWidget.module.css';
 
 const POLICIES = [
-  { id: 1, name: 'BlueCross Blue Shield', status: 'Insured', badgeVariant: 'toc-enrolled', relationship: 'Self' },
-  { id: 2, name: 'American Heritage-Workplace Division', status: 'Expired', badgeVariant: 'status-failed', relationship: 'Mother' },
+  { id: 1, name: 'BlueCross Blue Shield', status: 'Insured', badgeVariant: 'success', relationship: 'Self' },
+  { id: 2, name: 'American Heritage-Workplace Division', status: 'Expired', badgeVariant: 'danger', relationship: 'Mother' },
 ];
 
 export function InsuranceWidget() {
   return (
     <PanelSection
+      icon="solar:shield-check-linear"
       title="Insurance"
       actions={(
         <>
           <span className={styles.lastChecked}>Last checked 02/19/2024</span>
-          <ActionButton icon="solar:refresh-linear" size="S" tooltip="Refresh" />
+          <ActionButton icon="solar:refresh-linear" size="sm" tooltip="Refresh" />
           <PanelSectionDivider />
-          <ActionButton icon="solar:add-circle-linear" size="S" tooltip="Add Insurance" />
+          <ActionButton icon="solar:add-circle-linear" size="sm" tooltip="Add Insurance" />
         </>
       )}
     >
@@ -28,7 +29,7 @@ export function InsuranceWidget() {
           leading={<Avatar type="icon" variant="patient" iconName="solar:umbrella-linear" size="M" />}
           title={p.name}
           meta={[p.relationship]}
-          trailing={<Badge variant={p.badgeVariant} label={p.status} />}
+          trailing={<Badge tone={p.badgeVariant} label={p.status} />}
         />
       ))}
     </PanelSection>

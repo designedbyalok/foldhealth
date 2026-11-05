@@ -1,9 +1,9 @@
 /**
  * POST /api/referral-email
  *
- * Server-side Gemini proxy for the Care Gap "Send Referral" email: drafts a
- * { subject, body } from the referral details. Keeps GOOGLE_AI_API_KEY off
- * the client. The signature is added by the UI, so the body ends at the
+ * Server-side AI drafting (OpenAI; see _lib/aiJson.js) for the Care Gap
+ * "Send Referral" email: drafts a { subject, body } from the referral details.
+ * Keeps the AI keys off the client. The signature is added by the UI, so the body ends at the
  * sign-off.
  *
  * Body: { patientName, patientAge?, patientSex?, gap?, providerName,
@@ -15,16 +15,27 @@
  */
 
 import { requireUser } from '../_lib/requireUser.js';
-
-const MODEL = process.env.GOOGLE_AI_MODEL || 'gemini-3.8-flash';
-const ENDPOINT = (key) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`;
+import { bodyWithinLimit } from '../_lib/limits.js';
+import { aiConfigured, generateJson } from '../_lib/aiJson.js';
 
 const RESPONSE_SCHEMA = {
   type: 'object',
   properties: { subject: { type: 'string' }, body: { type: 'string' } },
   required: ['subject', 'body'],
 };
+
+const REFERRAL_FIELDS = ['patientName', 'patientAge', 'patientSex', 'gap', 'providerName', 'providerSpecialty', 'reason', 'note', 'attachments', 'senderName'];
+const PATIENT_FIELDS = ['patientName', 'subject', 'notes', 'senderName'];
+
+// Only the documented fields reach the prompt, so extra body keys can't pad it.
+function pickFields(body, patient) {
+  if (!body || typeof body !== 'object') return null;
+  const d = {};
+  for (const k of patient ? PATIENT_FIELDS : REFERRAL_FIELDS) {
+    if (body[k] != null) d[k] = body[k];
+  }
+  return d;
+}
 
 function buildPatientPrompt(d) {
   return [
@@ -67,45 +78,29 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: { message: 'Method not allowed' } });
   }
-  const key = process.env.GOOGLE_AI_API_KEY;
-  if (!key) {
-    return res.status(500).json({ error: { message: 'GOOGLE_AI_API_KEY is not set.' } });
+  if (!aiConfigured()) {
+    console.error('[referral-email] no AI key is set');
+    return res.status(500).json({ error: { message: 'AI drafting is not set up on this deployment.' } });
   }
-  const d = req.body && typeof req.body === 'object' ? req.body : null;
-  const patientMode = d?.mode === 'patient';
+  if (!bodyWithinLimit(req, res)) return;
+  const patientMode = req.body?.mode === 'patient';
+  const d = pickFields(req.body, patientMode);
   if (!d || (!patientMode && !d.providerName)) {
     return res.status(400).json({ error: { message: 'Missing referral details' } });
   }
 
-  const requestBody = JSON.stringify({
-    contents: [{ role: 'user', parts: [{ text: patientMode ? buildPatientPrompt(d) : buildPrompt(d) }] }],
-    generationConfig: { temperature: 0.4, responseMimeType: 'application/json', responseSchema: RESPONSE_SCHEMA },
-  });
-
   try {
-    let upstream;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      upstream = await fetch(ENDPOINT(key), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      });
-      if (upstream.ok || (upstream.status !== 503 && upstream.status !== 429)) break;
-      await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
-    }
-    if (!upstream.ok) {
-      console.error('[referral-email] gemini error', upstream.status, await upstream.text());
-      return res.status(502).json({ error: { message: 'The AI service is unavailable right now.' } });
-    }
-    const json = await upstream.json();
-    const text = json?.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
-    let draft;
-    try {
-      draft = JSON.parse(text);
-    } catch {
-      console.error('[referral-email] non-JSON model output:', text.slice(0, 500));
-      return res.status(502).json({ error: { message: 'AI returned an unreadable draft.' } });
-    }
+    const ai = await generateJson({
+      prompt: patientMode ? buildPatientPrompt(d) : buildPrompt(d),
+      schema: RESPONSE_SCHEMA,
+      name: 'email_draft',
+      temperature: 0.4,
+      logTag: 'referral-email',
+      timeoutMs: 25000,
+      deadlineMs: 50000,
+    });
+    if (!ai.ok) return res.status(502).json({ error: { message: 'The AI service is unavailable right now.' } });
+    const draft = ai.data;
     return res.status(200).json({
       email: { subject: String(draft.subject || ''), body: String(draft.body || '') },
     });

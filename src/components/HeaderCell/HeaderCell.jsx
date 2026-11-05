@@ -13,7 +13,7 @@ const SORT_LABELS = {
 };
 
 /**
- * HeaderCell — the design system's column header cell for every worklist
+ * HeaderCell: the design system's column header cell for every worklist
  * / data-table in the app. Replaces the older `SortableHeader` primitive.
  *
  * Behaviour:
@@ -87,7 +87,7 @@ export function HeaderCell({
     ? `${label} • Sorted ${activeDir === 'desc' ? labels.desc : labels.asc}`
     : `${label} • Sort ${labels.asc}`;
 
-  // Three-part morphing icon — top chevron, bottom chevron, tail — each
+  // Three-part morphing icon, top chevron, bottom chevron, tail, each
   // fades independently so idle ↔ asc ↔ desc reads as one motion.
   const hideTop    = isActive && activeDir === 'desc';
   const hideBottom = isActive && activeDir === 'asc';

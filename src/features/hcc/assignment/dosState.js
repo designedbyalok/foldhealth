@@ -30,14 +30,15 @@
 //   `assignee` is always the Active one. The full audit trail is in `history`.
 //
 // Composite key: the locked identity for a DOS record is
-// Patient ID + DOS + Rendering Provider + POS — two DOS rows sharing a date
+// Patient ID + DOS + Rendering Provider + POS, two DOS rows sharing a date
 // but differing provider/POS have independent created dates and independent
 // SLA clocks, so they must never collapse into the same dosState record.
 
 import { ROLES } from './astranaStaff';
+import { isEmptyDash } from '../../../lib/emptyDash';
 
 export const dosKey = (patientId, dosDate, renderingProvider, pos) =>
-  `${patientId}::${dosDate}::${renderingProvider || '—'}::${pos || '—'}`;
+  `${patientId}::${dosDate}::${renderingProvider || '-'}::${pos || '-'}`;
 
 // Splits a composite key back into its parts. None of today's call sites
 // need this yet, but it's the natural inverse of dosKey() and cheap to keep
@@ -47,8 +48,8 @@ export function parseDosKey(key) {
   return {
     patientId,
     dosDate,
-    renderingProvider: renderingProvider === '—' ? null : renderingProvider,
-    pos: pos === '—' ? null : pos,
+    renderingProvider: isEmptyDash(renderingProvider) ? null : renderingProvider,
+    pos: isEmptyDash(pos) ? null : pos,
   };
 }
 
@@ -66,7 +67,7 @@ export const STATUS = {
   REBUTTAL:         'Rebuttal',         // QA / Compliance sent the record back
   INSUFFICIENT:     'Insufficient',
   REJECT:           'Reject',
-  SKIPPED:          'Skipped',          // role bypassed — a later role acted first
+  SKIPPED:          'Skipped',          // role bypassed, a later role acted first
   BILLING_READY:    'Billing Ready',
 };
 
@@ -89,20 +90,20 @@ export function blankDosState(patientId, dosDate, renderingProvider = null, pos 
     reviewer:  EMPTY_ROLE_STATE(),
     reviewer2: EMPTY_ROLE_STATE(),
     // Only Reviewer→Reviewer2 is a sampled transition (Coder→Reviewer is
-    // unconditional) — no equivalent "sampling.reviewer" field exists.
+    // unconditional): no equivalent "sampling.reviewer" field exists.
     sampling: { reviewer2: null },
     billingReady: false,
     asmGenerated: false,
     // Provenance for records created via +ICD from QA / Compliance:
-    //   originatorRole      — 'reviewer' | 'reviewer2' when a QA / Compliance
+    //   originatorRole: 'reviewer' | 'reviewer2' when a QA / Compliance
     //                         user added the ICD; null for pipeline records.
-    //   originatorAssignee  — snapshot of that user's staff id so the DOS can
+    //   originatorAssignee: snapshot of that user's staff id so the DOS can
     //                         be returned to the same person on Coder complete
     //                         (bypasses the QA / Compliance sampling picker).
-    //   manuallyAdded       — true iff the DOS was created via +ICD (worklist
+    //   manuallyAdded: true iff the DOS was created via +ICD (worklist
     //                         chip). Independent of originatorRole so a Coder
     //                         adding a code doesn't get the QA-return branch.
-    //   visitType           — snapshot of the DOS's Visit Type at creation time
+    //   visitType: snapshot of the DOS's Visit Type at creation time
     //                         (used for downstream routing rules).
     originatorRole: null,
     originatorAssignee: null,
@@ -112,7 +113,7 @@ export function blankDosState(patientId, dosDate, renderingProvider = null, pos 
   };
 }
 
-// Pure setter — returns a new DOS-state with `role` partially merged. Always
+// Pure setter: returns a new DOS-state with `role` partially merged. Always
 // keeps `history` immutable + appends rather than overwriting.
 export function setRoleState(state, role, patch, meta = {}) {
   if (!ROLES.includes(role)) {
@@ -162,7 +163,7 @@ export function pushActivity(state, entry) {
 
 // Compute the workload map across all DOS-state records in the store. A
 // staff member's workload is the count of DOSs where they are the current
-// Active assignee at any role (open status — not Completed / Reject).
+// Active assignee at any role (open status: not Completed / Reject).
 const TERMINAL_STATUSES = new Set([STATUS.COMPLETED, STATUS.REJECT, STATUS.SKIPPED, STATUS.BILLING_READY]);
 export function computeWorkload(dosStateMap) {
   const workload = {};
@@ -189,7 +190,7 @@ export function computePatientHistory(dosStateMap) {
     for (const role of ROLES) {
       const rs = state[role];
       if (!rs?.assignee) continue;
-      // First write wins per (patient, role) — Astrana pins to the first
+      // First write wins per (patient, role), Astrana pins to the first
       // person who ever held the role.
       if (!history[pid][role]) {
         history[pid][role] = {
@@ -223,14 +224,14 @@ export function inferStaffIdFromName(name) {
 // We now seed every DOS identically from the legacy fields (previously
 // only DOS index 0 was seeded, which left later DOSs in a "Support
 // Awaiting" state that diverged from the rest of the worklist). The
-// Astrana invariant still holds — every DOS of a patient is pinned to
-// the same staff member at every role — and the engine can override
+// Astrana invariant still holds: every DOS of a patient is pinned to
+// the same staff member at every role, and the engine can override
 // per-DOS state via real lifecycle transitions later.
 export function hydrateFromMember(member, dosDate, _idx = 0, renderingProvider = null, pos = null) {
   const initial = blankDosState(member.id, dosDate, renderingProvider, pos);
 
   // Legacy member fields keep their historical r1/r1s/r2/r2s names (and the
-  // Supabase columns behind them) — only the engine's internal role keys
+  // Supabase columns behind them): only the engine's internal role keys
   // are renamed to reviewer/reviewer2. There is no r3 seed: the role no
   // longer exists.
   const seed = [

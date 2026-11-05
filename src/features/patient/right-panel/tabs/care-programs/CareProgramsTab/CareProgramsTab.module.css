@@ -88,7 +88,7 @@
 
 /* ── Empty state ── */
 /* Empty state extracted to the shared RingEmptyState primitive. */
-/* ── New Program picker — tertiary Button + SearchListPopover ── */
+/* ── New Program picker: tertiary Button + SearchListPopover ── */
 .npWrap { display: inline-flex; flex-shrink: 0; }
 /* Tertiary Button fills purple on hover; keep its icons legible (white). */
 .npWrap button:hover svg { color: var(--neutral-0) !important; }
@@ -140,7 +140,7 @@
 }
 .checkCell { width: 28px; padding-left: var(--space-2); padding-right: var(--space-2); }
 
-/* Trailing three-dot cell — the button is revealed on row hover (or while its
+/* Trailing three-dot cell: the button is revealed on row hover (or while its
    menu is open) and sits flush to the right edge. */
 .actionsCell { width: 40px; text-align: right; }
 .rowMenuBtn { opacity: 0; transition: opacity 0.12s; }
@@ -166,7 +166,7 @@
 .assigneeCell { width: 170px; }
 .pcpCell { width: 180px; }
 
-/* Assignee cell — mirrors the HCC worklist "Assign" pill / reassign trigger. */
+/* Assignee cell: mirrors the HCC worklist "Assign" pill / reassign trigger. */
 .assignPill {
   display: inline-flex;
   align-items: center;

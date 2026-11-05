@@ -6,7 +6,7 @@ import { DownChevronIcon } from '../Icon/DownChevronIcon';
 import styles from './AssigneeChange.module.css';
 
 /**
- * AssigneeChange — worklist row cell for assigning / re-assigning a user.
+ * AssigneeChange: worklist row cell for assigning / re-assigning a user.
  *
  * States (per Figma Fold-Pixel-1.0 node 8629:178):
  *   • Assigned  → provider avatar + name (+ optional role). Fixed pill
@@ -17,8 +17,8 @@ import styles from './AssigneeChange.module.css';
  *   • disabled   → greyed, non-interactive.
  *
  * Sizes:
- *   • 'M' (default) — 24px avatar, 14px name, 12px role.
- *   • 'S'           — 20px (Avatar size XS) + 12px name for tighter rows.
+ *   • 'M' (default): 24px avatar, 14px name, 12px role.
+ *   • 'S', 20px (Avatar size XS) + 12px name for tighter rows.
  *
  * When `users` is supplied, the button owns its own portaled searchable
  * picker: click opens a list of `{id, name, initials, role?}` rows, and
@@ -28,7 +28,7 @@ import styles from './AssigneeChange.module.css';
  * Hover / keyboard focus fills the pill with a subtle neutral-50
  * background and reveals a chevron (disabled states skip the reveal).
  */
-// v2 — added fillContainer prop for row-cell full-width pills.
+// v2: added fillContainer prop for row-cell full-width pills.
 export const AssigneeChange = forwardRef(function AssigneeChange({
   name,
   initials,
@@ -51,7 +51,7 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
   disabled = false,
   // Opt-in for table rows: drop the fixed 140px pill width and fill the
   // parent cell so long names use every pixel the column allocates.
-  // Ignored in avatarOnly mode — that variant is always a tight pill.
+  // Ignored in avatarOnly mode: that variant is always a tight pill.
   fillContainer = false,
   users,
   onSelect,
@@ -66,7 +66,7 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
   const [query, setQuery] = useState('');
   const hasPicker = Array.isArray(users);
 
-  // Hover / focus tooltip — only for the avatar-only variant where the pill
+  // Hover / focus tooltip: only for the avatar-only variant where the pill
   // hides the name and role. Matches the HCC RoleTooltip visual spec (Figma
   // node 50:297369): white card, 24×24 initials avatar, name + role stacked,
   // 6px arrow tail centred under the card.
@@ -76,7 +76,7 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
   useEffect(() => () => tipTimer.current && clearTimeout(tipTimer.current), []);
   const openTip = () => {
     // Show the informational avatar tooltip even when the pill is
-    // disabled — the tooltip tells the reader who's assigned, and
+    // disabled: the tooltip tells the reader who's assigned, and
     // that context is just as useful (arguably more so) on read-only
     // rows where the name text is hidden and the affordance is
     // muted.
@@ -139,7 +139,7 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
   const avatarSize = size === 'S' ? 'XS' : 'S';
 
   // Chevron picks up the pill's tone in avatar-only mode: variant
-  // maps 1:1 to the token — patient → primary purple, staff → the
+  // maps 1:1 to the token, patient → primary purple, staff → the
   // secondary orange. Everywhere else it stays grey until hover
   // reveals it. Figma node 8629:178.
   const chevronColor = avatarOnly && !unassigned
@@ -161,7 +161,7 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
     unassigned ? styles.unassigned : styles.assigned,
     size === 'S' ? styles.sizeS : styles.sizeM,
     avatarOnly ? styles.avatarOnly : '',
-    /* Variant modifier — drives the avatar-only hover tint so
+    /* Variant modifier: drives the avatar-only hover tint so
        patient rows fill with a primary halo instead of the default
        secondary one. */
     avatarOnly && !unassigned && avatarVariant === 'patient' ? styles.variantPatient : '',
@@ -207,7 +207,7 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
       onClick={handleClick}
       aria-label={label}
       /* Native browser title as a guaranteed fallback for the hover
-         name — the styled tooltip below is nicer, but on avatar-only
+         name: the styled tooltip below is nicer, but on avatar-only
          cells any missed tooltip would leave the reader without any
          way to tell who's assigned. */
       title={avatarOnly && !unassigned && name ? name : undefined}

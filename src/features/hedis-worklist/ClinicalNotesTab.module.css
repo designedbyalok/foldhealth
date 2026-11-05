@@ -1,4 +1,4 @@
-/* Flat Clinical Notes list — mirrors Figma 1030:78586. Column-header row
+/* Flat Clinical Notes list: mirrors Figma 1030:78586. Column-header row
    on top, cards below. No timeline rail (that lives on the Activity Log). */
 
 .wrap {
@@ -45,7 +45,7 @@
 }
 
 /* Reset the ActivityLog's detailCard margin-top since we control spacing
-   here via .list gap. Padding is inherited from .detailCard now — the
+   here via .list gap. Padding is inherited from .detailCard now, the
    shared 8px on all sides per Figma 1030:78586 applies to both surfaces. */
 .cardHost {
   margin-top: 0;

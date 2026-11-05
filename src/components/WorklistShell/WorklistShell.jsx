@@ -2,13 +2,15 @@ import { useMemo, useState } from 'react';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { SearchIconButton } from '../SearchIconButton/SearchIconButton';
 import { SearchBar } from '../SearchBar/SearchBar';
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
+import { Tooltip } from '../Tooltip/Tooltip';
 import { HeaderCell } from '../HeaderCell/HeaderCell';
 import { Pagination } from '../Pagination/Pagination';
 import { BulkBar } from '../BulkBar/BulkBar';
 import { TableSkeleton } from '../TableSkeleton/TableSkeleton';
 import { ColumnsHeaderButton } from '../WorklistColumns/ColumnsHeaderButton';
-import { useWorklistColumns } from '../WorklistColumns/useWorklistColumns';
+import { warnDeprecated } from '../../lib/legacyProps';
+import { splitWorklistColumns } from './splitWorklistColumns';
 import { ConfirmDialog } from '../ConfirmDialog/ConfirmDialog';
 import { BulkSelectToggle } from '../BulkSelect/BulkSelectToggle';
 import { useBulkSelect } from '../BulkSelect/useBulkSelect';
@@ -17,7 +19,7 @@ import styles from './WorklistShell.module.css';
 const EMPTY_SELECTED_IDS = [];
 
 /**
- * WorklistShell — the reusable outer chrome for every worklist in the app
+ * WorklistShell: the reusable outer chrome for every worklist in the app
  * (TOC, HCC, CCM, HEDIS, AWV, …). Composes the header (title as an active
  * tab, right-side Search / Filter / History / Export actions), an optional
  * filter chip row, a sticky-column table body, a floating BulkBar, and
@@ -32,7 +34,7 @@ const EMPTY_SELECTED_IDS = [];
  *  - title              Left-side header label (rendered like a TOC tab).
  *  - onHistory / onExport  Called by the right-side icons; icons are
  *                          hidden when the handler is omitted.
- *  - searchValue / onSearchChange  Controlled search — clicking the
+ *  - searchValue / onSearchChange  Controlled search: clicking the
  *                          Search icon expands a SearchBar in place.
  *  - showFilters / onToggleFilters + filters  Filter chip node rendered
  *                          only when `showFilters` is true.
@@ -40,7 +42,7 @@ const EMPTY_SELECTED_IDS = [];
  *                          width?, align?, showCheckbox? }]
  *                          The first column with `showCheckbox` gets a
  *                          select-all checkbox in the header.
- *  - sortKey / sortDir / onSort  Header sort state — passed through to
+ *  - sortKey / sortDir / onSort  Header sort state, passed through to
  *                          HeaderCell.
  *  - rows / renderRow     Row data + render function. renderRow receives
  *                          (row, index) and should return a `<tr>`.
@@ -65,6 +67,9 @@ const EMPTY_SELECTED_IDS = [];
  *                          scroller (see prop default above).
  *  - embeddedNoScroll     With `embedded`, skip the per-table horizontal
  *                          scroller so columns align across stacked tables.
+ *  - selectAll            Optional { checked, disabled, tooltip } for the
+ *                          header checkbox, when "all" isn't every row (e.g.
+ *                          some rows can't be picked) or picking is blocked.
  */
 // Stable identities for omitted array props. An inline `= []` default allocates
 // a fresh array on every render, which breaks the referential-equality checks
@@ -72,7 +77,7 @@ const EMPTY_SELECTED_IDS = [];
 const EMPTY_COLUMNS = [];
 const EMPTY_ROWS = [];
 
-// Capitalise the first letter — used for the bulk-delete confirm button label.
+// Capitalise the first letter: used for the bulk-delete confirm button label.
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function WorklistShell({
@@ -82,13 +87,13 @@ export function WorklistShell({
   searchValue,
   onSearchChange,
   searchPlaceholder = 'Search by member name…',
-  // Optional header override — when a caller passes their own header
+  // Optional header override: when a caller passes their own header
   // (e.g. <SectionTitleBar variant="titleOnly" …/>), that node renders
   // in place of the built-in TabBar-style header. The shell's other
   // built-in header props (title, onHistory, onExport, search*) are then
-  // ignored — the caller owns those handlers on its own header. Filter
+  // ignored: the caller owns those handlers on its own header. Filter
   // chip row + table + bulk bar + pagination stay unchanged.
-  // A node, OR — when using the built-in `bulkSelect` below — a render function
+  // A node, OR, when using the built-in `bulkSelect` below, a render function
   // `(bulk) => node` that receives `{ bulkToggle, bulkActive, toggleBulk }` so
   // the caller can drop `bulk.bulkToggle` into its SectionTitleBar's
   // rightExtras. Passing a node keeps every existing caller working unchanged.
@@ -108,9 +113,10 @@ export function WorklistShell({
   onSelectAll: onSelectAllProp,
   onClearSelection: onClearSelectionProp,
   bulkActions: bulkActionsProp,
+  selectAll,
   // Opt-in, self-contained bulk-select + bulk-delete. When provided, the shell
   // OWNS the whole interaction: a toggle button (exposed to `header` as
-  // `bulk.bulkToggle`), the sticky select column (auto-injected — the caller's
+  // `bulk.bulkToggle`), the sticky select column (auto-injected: the caller's
   // `columns` stay bulk-agnostic), the per-row checkbox context (`ctx.bulk`
   // passed to renderRow), the floating BulkBar, and a Delete confirm dialog.
   // Shape:
@@ -138,7 +144,7 @@ export function WorklistShell({
   // Care Plan uses a parent-level bulk bar across goals/interventions/barriers.
   hideBulkBar = false,
   // Auto-height mode. The default shell fills its pane (flex: 1) and owns an
-  // internal scroller — correct for a full-page worklist, wrong for a table
+  // internal scroller: correct for a full-page worklist, wrong for a table
   // stacked with siblings inside a parent that already scrolls (care-gap
   // sections, pre-visit blocks). `embedded` drops the flex/overflow so the
   // table grows to its content and the parent keeps the scroll.
@@ -153,8 +159,9 @@ export function WorklistShell({
   //   • passes { visibleColumns, hiddenSet } to renderRow so callers can
   //     skip hidden cells / render cells in the ordered sequence
   // Sticky columns (checkbox, sticky-left member, sticky-right actions) are
-  // never reordered/hidden — they're locked in the popover.
+  // never reordered/hidden: they're locked in the popover.
   worklistKey,
+  columnPrefs,
   // Optional `(ctx) => node` rendered inside <tbody> after the rows, with the
   // same row ctx plus `colSpan`. Lets a caller append a collapsible group
   // (e.g. completed items) that honours the user's hidden/ordered columns.
@@ -177,7 +184,7 @@ export function WorklistShell({
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const getRowId = useMemo(() => bulkSelect?.getRowId || ((r) => r.id), [bulkSelect]);
 
-  // Effective values — the built-in bulk state takes over the selection props
+  // Effective values: the built-in bulk state takes over the selection props
   // when `bulkSelect` is set, otherwise the caller's props pass through.
   const columns = useMemo(() => {
     if (!bulkActive) return columnsProp;
@@ -197,7 +204,7 @@ export function WorklistShell({
   const onClearSelection = bulkSelect ? bulk.clearSelection : onClearSelectionProp;
   const bulkActions = bulkSelect
     ? [
-        { label: 'Delete', icon: 'solar:trash-bin-trash-linear', variant: 'secondary', onClick: () => setBulkDeleteOpen(true) },
+        { label: 'Delete', icon: 'solar:trash-bin-trash-linear', variant: 'outline', onClick: () => setBulkDeleteOpen(true) },
         ...(bulkSelect.extraActions || []),
       ]
     : bulkActionsProp;
@@ -240,45 +247,17 @@ export function WorklistShell({
   //   • useWorklistColumns keeps it out of the hidden set.
   const {
     customisableColumns, lockedTop, lockedBottom, lockedKeys,
-  } = useMemo(() => {
-    const top = [];
-    const botSticky = [];
-    const inPlaceLocked = [];
-    const mid = [];
-    for (const c of columns) {
-      if (c.sticky === 'left' && !c.showCheckbox) top.push(c);
-      else if (c.sticky === 'right') botSticky.push(c);
-      else if (c.locked && !c.showCheckbox) {
-        mid.push(c);              // still rendered in-place in the row
-        inPlaceLocked.push(c);    // and tagged for the popover locked band
-      }
-      else if (!c.showCheckbox) mid.push(c);
-    }
-    return {
-      customisableColumns: mid,
-      lockedKeys: new Set(inPlaceLocked.map(c => c.key)),
-      lockedTop: top.map(c => ({ k: c.key, lb: c.popoverLabel || c.label })),
-      lockedBottom: [...inPlaceLocked, ...botSticky].map(c => ({
-        k: c.key, lb: c.popoverLabel || c.label,
-      })),
-    };
-  }, [columns]);
+  } = useMemo(() => splitWorklistColumns(columns), [columns]);
 
-  // `prefs` is only wired when the caller opts in with worklistKey. Otherwise
-  // pass through the raw column list so existing worklists keep working.
-  const hiddenByDefault = useMemo(
-    () => customisableColumns.filter(c => c.defaultHidden).map(c => c.key || c.k),
-    [customisableColumns],
-  );
-  const prefs = useWorklistColumns(
-    worklistKey || '__off__',
-    customisableColumns,
-    { hiddenByDefault },
-  );
-  // Locked columns are immune to the hidden set — a stale pref from
+  // Column customisation is on when the caller passes `columnPrefs` (the
+  // connected features/worklists/WorklistShell does, from its worklistKey).
+  // Otherwise the raw column list renders as declared.
+  if (worklistKey && !columnPrefs) warnDeprecated('WorklistShell', 'worklistKey', true, 'features/worklists/WorklistShell, or pass columnPrefs');
+  const prefs = columnPrefs;
+  // Locked columns are immune to the hidden set, a stale pref from
   // before a column got flagged `locked` must not keep it hidden any
   // longer. Filter prefs.orderedColumns manually so we can override.
-  const activeCustomisable = worklistKey
+  const activeCustomisable = prefs
     ? prefs.orderedColumns.filter(c => {
         const key = c.key || c.k;
         return lockedKeys.has(key) || !prefs.hiddenSet.has(key);
@@ -286,15 +265,15 @@ export function WorklistShell({
     : customisableColumns;
   // Same immunity for the row-render side: never treat a locked column
   // as hidden, otherwise the header renders but the body td doesn't.
-  const hiddenSet = worklistKey
+  const hiddenSet = prefs
     ? new Set(Array.from(prefs.hiddenSet).filter(k => !lockedKeys.has(k)))
     : null;
-  const orderedColumnsForRow = worklistKey
+  const orderedColumnsForRow = prefs
     ? [
         ...columns.filter(c => c.showCheckbox),
         ...columns.filter(c => c.sticky === 'left' && !c.showCheckbox),
         // Locked columns are already inside `activeCustomisable` at their
-        // declared position — no separate lockedInFlow tail any more.
+        // declared position: no separate lockedInFlow tail any more.
         ...activeCustomisable,
         ...columns.filter(c => c.sticky === 'right'),
       ]
@@ -308,10 +287,10 @@ export function WorklistShell({
   const checkboxCol = columns.find((c) => c.showCheckbox);
 
   const columnsToRender = orderedColumnsForRow;
-  // The last sticky-right column hosts the columns button when worklistKey
-  // is provided. If none, we still let the caller pass one manually via
+  // The last sticky-right column hosts the columns button when column prefs
+  // are on. If none, we still let the caller pass one manually via
   // their header render (existing HCC pattern).
-  const actionsColKey = worklistKey
+  const actionsColKey = prefs
     ? [...columns].reverse().find(c => c.sticky === 'right')?.key
     : null;
   const rowCtx = { visibleColumns: activeCustomisable, hiddenSet, orderedColumns: orderedColumnsForRow, bulk: bulkRowCtx };
@@ -322,7 +301,7 @@ export function WorklistShell({
         /* Default header (mirrors src/layouts/TabBar): title as an active
            tab on the left, right-side action icons with dividers. Callers
            can pass a `header` prop (e.g. <SectionTitleBar>) to replace
-           this entire block with their own chrome — pass `null` to skip
+           this entire block with their own chrome, pass `null` to skip
            the header entirely (e.g. when the parent already renders one). */
         <div className={styles.header}>
           <div className={styles.left}>
@@ -349,7 +328,6 @@ export function WorklistShell({
                 <span className={styles.iconDivider} />
                 <ActionButton
                   icon="custom:filter"
-                  size="L"
                   tooltip="Filter"
                   className={showFilters ? styles.iconActive : ''}
                   onClick={() => onToggleFilters(!showFilters)}
@@ -359,23 +337,23 @@ export function WorklistShell({
             {onHistory && (
               <>
                 <span className={styles.iconDivider} />
-                <ActionButton icon="solar:history-linear" size="L" tooltip="History" onClick={onHistory} />
+                <ActionButton icon="solar:history-linear" tooltip="History" onClick={onHistory} />
               </>
             )}
             {onExport && (
               <>
                 <span className={styles.iconDivider} />
-                <ActionButton icon="solar:upload-minimalistic-linear" size="L" tooltip="Export" onClick={onExport} />
+                <ActionButton icon="solar:upload-minimalistic-linear" tooltip="Export" onClick={onExport} />
               </>
             )}
           </div>
         </div>
       )}
 
-      {/* Filter chip row — visible only when the caller toggles showFilters. */}
+      {/* Filter chip row: visible only when the caller toggles showFilters. */}
       {showFilters && filters && <div className={styles.filterBar}>{filters}</div>}
 
-      {/* Table body — sticky-left checkbox + Members col, sticky-right
+      {/* Table body: sticky-left checkbox + Members col, sticky-right
           Actions col by convention. Callers control which columns are
           sticky via `sticky: 'left' | 'right'` on the column def. */}
       <div className={embedded
@@ -422,11 +400,16 @@ export function WorklistShell({
                         className={`${styles.th} ${styles.thCheck}`}
                         style={{ ...stickyStyle, width: col.width || 36, textAlign: 'left' }}
                       >
-                        <Checkbox
-                          checked={someSelected ? 'indeterminate' : allSelected}
-                          onCheckedChange={(v) => onSelectAll?.(!!v)}
-                          aria-label="Select all rows"
-                        />
+                        <Tooltip label={selectAll?.tooltip || ''} maxWidth={240} align="left">
+                          <span className={selectAll?.disabled ? styles.checkBlocked : undefined}>
+                            <Checkbox
+                              checked={selectAll ? selectAll.checked : (someSelected ? 'indeterminate' : allSelected)}
+                              disabled={!!selectAll?.disabled}
+                              onCheckedChange={(v) => onSelectAll?.(!!v)}
+                              aria-label="Select all rows"
+                            />
+                          </span>
+                        </Tooltip>
                       </th>
                     );
                   }
@@ -458,7 +441,7 @@ export function WorklistShell({
                   // whenever the caller opted into column prefs. Replaces the
                   // plain label with a { label · button } cluster so every
                   // WorklistShell caller gets the popover for free.
-                  const isColumnsAnchor = worklistKey && col.key === actionsColKey;
+                  const isColumnsAnchor = prefs && col.key === actionsColKey;
                   return (
                     <th
                       key={col.key || idx}
@@ -472,7 +455,7 @@ export function WorklistShell({
                         <ColumnsHeaderButton
                           /* Locked columns render in-place in the row
                              but must be filtered out of the togglable
-                             list — they surface in the popover's
+                             list: they surface in the popover's
                              `lockedBottom` band instead so the user
                              sees them as always-on. */
                           columns={prefs.orderedColumns.filter(c => !lockedKeys.has(c.key || c.k))}

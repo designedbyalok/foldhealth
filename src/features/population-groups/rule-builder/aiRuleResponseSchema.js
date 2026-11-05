@@ -1,6 +1,6 @@
 /**
  * Gemini responseSchema for pop-group NL rules.
- * Leaf nodes must declare field/operator/value explicitly — a bare `object`
+ * Leaf nodes must declare field/operator/value explicitly, a bare `object`
  * item schema causes the model to emit `{}` placeholders.
  */
 

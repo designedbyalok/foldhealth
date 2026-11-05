@@ -79,11 +79,11 @@ export function CarePlanViewOverlays(o) {
             else if (k === 'rename' && isBarrier) setBarrierDrawer({ barrier: item });
             // Intervention "Edit" goes straight to the kind-specific
             // editor, skipping the Preview drawer. No `previewOnClose`
-            // is set here — closing the editor returns to the plan
+            // is set here: closing the editor returns to the plan
             // screen, matching what the user picked from the menu.
             else if (k === 'rename' && !isGoal) setIntvSpecialDrawer({ kind: item.kind, intervention: item });
             // Goal rename happens inline via EditableTitle; nudge the user there.
-            else if (k === 'rename' && isGoal) showToast('Open the goal to review details — use Remove to delete it.');
+            else if (k === 'rename' && isGoal) showToast('Open the goal to review details, use Remove to delete it.');
           }}
           onClose={() => setStatusMenu(null)}
         />

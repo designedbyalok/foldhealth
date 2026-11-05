@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { SideNav } from '../SideNav/SideNav';
 import { useAppStore } from '../../store/useAppStore';
 import { HEDIS_MEMBERS } from '../../features/hedis-worklist/data/mock';
+import { CMP_MEMBERS } from '../../features/cmp-worklist/data/mock';
 import styles from './SubNav.module.css';
 
 // Define which lists map to which filter criteria
@@ -14,6 +15,7 @@ const WORKLISTS = [
   { label: 'HEDIS', filter: null, view: 'hedis' },
   { label: 'CCM', filter: null, view: 'ccm' },
   { label: 'JSA', filter: null, view: 'jsa' },
+  { label: 'CMP', filter: null, view: 'cmp' },
   { label: 'High Utilizers', filter: { readmission: 'Yes' } },
   { label: 'DM', filter: null },
   { label: 'TCM', filter: null },
@@ -32,6 +34,7 @@ export function SubNav({ collapsed, width = 200 }) {
   const snpWorklistMembers = useAppStore(s => s.snpWorklistMembers || []);
   const jsaMembers = useAppStore(s => s.jsaMembers || []);
   const pharmacyMembers = useAppStore(s => s.pharmacyWorklistMembers);
+  const cmpMembers = useAppStore(s => s.cmpMembers || []);
   const worklistCounts = useAppStore(s => s.worklistCounts);
   const fetchWorklistCounts = useAppStore(s => s.fetchWorklistCounts);
   const fetchWorklistOrder = useAppStore(s => s.fetchWorklistOrder);
@@ -46,7 +49,7 @@ export function SubNav({ collapsed, width = 200 }) {
   // fetchPatients + fetchCallDetails on mount, which meant every Population
   // route pulled every worklist table in full: opening the 9-row CCM list
   // transferred ~275 KB, ~40x what the screen renders, and HCC came to 38
-  // requests. The badges were the only reason — seven integers.
+  // requests. The badges were the only reason, seven integers.
   //
   // fetchWorklistCounts asks for just the id columns those integers need
   // (6.7 KB, measured). Each worklist's own view fetches its own rows, which
@@ -58,7 +61,7 @@ export function SubNav({ collapsed, width = 200 }) {
     fetchWorklistColumnPrefs();
   }, []);
 
-  // User-ordered worklists — store order or the default until the fetch
+  // User-ordered worklists: store order or the default until the fetch
   // resolves. Reconciled here as well (not just in the store) because the
   // localStorage-cached order may predate a newly added worklist.
   const orderedWorklists = useMemo(() => {
@@ -73,7 +76,7 @@ export function SubNav({ collapsed, width = 200 }) {
     return order.map(l => WORKLIST_BY_LABEL[l]);
   }, [worklistOrder]);
 
-  // HCC's data model has one row per coding record — a patient with multiple
+  // HCC's data model has one row per coding record, a patient with multiple
   // records repeats in `hccMembers` (Annette Brave = 4 rows, one per record).
   // The badge and worklist table both show unique patients, so we count fold
   // IDs the same way the table dedupes (see `dedupedMembers` in
@@ -98,7 +101,7 @@ export function SubNav({ collapsed, width = 200 }) {
     // list; `worklistCounts` covers the lists they have not opened. A slice
     // that is genuinely empty and a slice that is merely not fetched are
     // indistinguishable by length, so an empty list shows its counted value
-    // (also 0) — same answer either way.
+    // (also 0): same answer either way.
     const wc = worklistCounts;
     const pick = (slice, counted) => (slice.length > 0 ? slice.length : (counted ?? 0));
     const counts = {};
@@ -109,6 +112,9 @@ export function SubNav({ collapsed, width = 200 }) {
       else if (list.view === 'snp') counts[list.label] = pick(snpWorklistMembers, wc?.snp);
       else if (list.view === 'jsa') counts[list.label] = pick(jsaMembers, wc?.jsa);
       else if (list.view === 'pharmacy') counts[list.label] = pick(pharmacyMembers, wc?.pharmacy);
+      // Members, not enrollments (one per CMP sub-program). Until cmp_members
+      // is in the badge counts, the mock (also the seed) gives the number.
+      else if (list.view === 'cmp') counts[list.label] = new Set((cmpMembers.length ? cmpMembers : CMP_MEMBERS).map(m => m.memberId || m.id)).size;
       else if (list.label === 'Annual Visit') counts[list.label] = pick(awvMembers, wc?.awv);
       else if (list.label === 'TCM') counts[list.label] = pick(patients, wc?.tcm);
       else if (list.label === 'TOC IP') {
@@ -118,16 +124,16 @@ export function SubNav({ collapsed, width = 200 }) {
       } else counts[list.label] = 0;
     }
     return counts;
-  }, [patients, hccUniquePatientCount, awvMembers, ccmWorklistMembers, snpWorklistMembers, jsaMembers, pharmacyMembers, worklistCounts]);
+  }, [patients, hccUniquePatientCount, awvMembers, ccmWorklistMembers, snpWorklistMembers, jsaMembers, cmpMembers, pharmacyMembers, worklistCounts]);
 
   // Unique patient count across every worklist. Different worklists use
   // different id spaces (p1, hcc-42, ccmw-001), so we key the union on a
-  // normalized memberId (# stripped, trimmed, lowercased) — that's the one
+  // normalized memberId (# stripped, trimmed, lowercased), that's the one
   // field every worklist shares. Patients missing a memberId fall back to
   // their row id so they still count once.
   const allPatientsCount = useMemo(() => {
     // Every slice is empty until the user opens a worklist, so the union has
-    // to come from `worklistCounts` — which computes it the same way, over
+    // to come from `worklistCounts`, which computes it the same way, over
     // the same normalized key, from the id-only queries. Once slices ARE
     // loaded we recompute locally so the badge tracks live edits; the union
     // still needs the counted value as its floor, because a locally-computed

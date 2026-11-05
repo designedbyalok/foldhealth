@@ -1,0 +1,29 @@
+/* Fold theme for review-dock: map the kit's type, ink and brand colors onto
+   Fold tokens. Surfaces, radius and shadow stay the kit's own so its glass
+   look comes through. */
+:root {
+  --rk-font-xs: var(--font-xs);
+  --rk-font-sm: var(--font-sm);
+  --rk-font-md: var(--font-md);
+
+  --rk-space-1: var(--space-1);
+  --rk-space-2: var(--space-2);
+  --rk-space-3: var(--space-3);
+  --rk-space-4: var(--space-4);
+
+  --rk-text: var(--neutral-500);
+  --rk-text-muted: var(--neutral-300);
+  --rk-accent: var(--primary-300);
+  --rk-accent-soft: var(--primary-100);
+  --rk-accent-text: var(--neutral-0);
+  --rk-danger: var(--status-error);
+  --rk-warning: var(--status-warning);
+  --rk-success: var(--status-success);
+
+  --rk-overlay: var(--surface-overlay);
+
+  /* Above everything, drawers and popovers included, so the box stays usable
+     over whatever is being reviewed. Its container is the last thing in
+     <body>, so it also wins ties with Fold's other max-z layers. */
+  --rk-z: 2147483647;
+}

@@ -1,10 +1,10 @@
 /**
- * CMS Place of Service (POS) code set — the standard US POS codes used on
+ * CMS Place of Service (POS) code set: the standard US POS codes used on
  * professional claims (CMS POS code set, maintained by the National Uniform
  * Claim Committee). Source of truth for every POS dropdown in the HCC flows;
  * also seeded into the Supabase `pos_codes` table via `bun run seed`.
  *
- * Names are the FoldHealth short labels — the full CMS descriptions read as
+ * Names are the FoldHealth short labels, the full CMS descriptions read as
  * legal sentences that don't fit column cells or dropdown rows. See
  * `docs/features/hcc-coding-workflow.md` for the canonical short-name policy.
  */
@@ -31,7 +31,7 @@ export const POS_CODES = [
   { code: '20', name: 'Urgent Care' },
   { code: '21', name: 'Inpatient Hospital' },
   { code: '22', name: 'On-Campus OP Hospital' },
-  { code: '23', name: 'ER — Hospital' },
+  { code: '23', name: 'ER: Hospital' },
   { code: '24', name: 'ASC' },
   { code: '25', name: 'Birthing Center' },
   { code: '26', name: 'MTF' },
@@ -63,7 +63,7 @@ export const POS_CODES = [
   { code: '99', name: 'Other' },
 ];
 
-/** Options shaped for the shared <Select searchable> — `11 - Office`. */
+/** Options shaped for the shared <Select searchable>, `11 - Office`. */
 export const POS_SELECT_OPTIONS = POS_CODES.map(({ code, name }) => ({
   value: code,
   label: `${code} - ${name}`,
@@ -75,5 +75,5 @@ export const posLabel = (code) => {
   return hit ? `${hit.code} - ${hit.name}` : code || '';
 };
 
-/** Quick short-name lookup by code, e.g. `posName('23')` → `'ER — Hospital'`. */
+/** Quick short-name lookup by code, e.g. `posName('23')` → `'ER: Hospital'`. */
 export const posName = (code) => POS_CODES.find((p) => p.code === code)?.name || '';

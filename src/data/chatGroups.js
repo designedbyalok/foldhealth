@@ -26,9 +26,9 @@ export const availableRoles = [
 export const defaultRules = [
   { id: 1, name: 'Emergency detection', type: 'safety', locked: true, enabled: true, condition: 'Message contains emergency keywords (chest pain, can\'t breathe, severe bleeding, overdose)', action: 'Immediate 911 guidance + alert care team', priority: 'Always first' },
   { id: 2, name: 'Crisis detection', type: 'safety', locked: true, enabled: true, condition: 'Message contains crisis keywords (suicide, self-harm, want to die)', action: '988 Lifeline guidance + alert care team', priority: 'Always second' },
-  { id: 3, name: 'Staff is typing', type: 'system', locked: true, enabled: true, condition: 'Staff member is actively typing in thread', action: 'Agent holds — defers to human' },
+  { id: 3, name: 'Staff is typing', type: 'system', locked: true, enabled: true, condition: 'Staff member is actively typing in thread', action: 'Agent holds: defers to human' },
   { id: 4, name: 'Staff already replied', type: 'system', locked: true, enabled: true, condition: 'Staff has replied in this session', action: 'Agent holds for rest of session' },
-  { id: 5, name: 'Thread assigned to staff', type: 'system', locked: true, enabled: true, condition: 'Thread assigned to a specific staff member', action: 'Agent holds — staff owns thread' },
+  { id: 5, name: 'Thread assigned to staff', type: 'system', locked: true, enabled: true, condition: 'Thread assigned to a specific staff member', action: 'Agent holds: staff owns thread' },
   { id: 6, name: 'After-hours acknowledgement', type: 'system', locked: true, enabled: true, condition: 'Message outside business hours + first message of session', action: 'Send after-hours acknowledgement message' },
   { id: 7, name: 'Start debounce timer', type: 'system', locked: true, enabled: true, condition: 'Patient message + unassigned + no staff reply + staff not typing', action: 'Start 90s debounce timer' },
   { id: 8, name: 'FAQ match', type: 'system', locked: true, enabled: true, condition: 'Debounce complete + KB match above confidence threshold', action: 'Reply with matched KB answer' },
@@ -38,7 +38,7 @@ export const defaultRules = [
 
 export const customRules = [
   { id: 11, name: 'Billing disputes to human', type: 'custom', locked: false, enabled: true, condition: 'Message contains "billing dispute" or "overcharged" or "wrong charge"', action: 'Route to billing team immediately' },
-  { id: 12, name: 'VIP patients to human', type: 'custom', locked: false, enabled: false, condition: 'Patient flag = VIP', action: 'Route to staff immediately — skip chatbot' },
+  { id: 12, name: 'VIP patients to human', type: 'custom', locked: false, enabled: false, condition: 'Patient flag = VIP', action: 'Route to staff immediately: skip chatbot' },
 ];
 
 export const groupSettings = [

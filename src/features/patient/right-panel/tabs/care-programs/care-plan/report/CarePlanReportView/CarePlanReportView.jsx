@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { CloseButton } from '../../../../../../../../components/CloseButton/CloseButton';
-import { RingEmptyState } from '../../../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../../../components/EmptyState/EmptyState';
 import { TableSkeleton } from '../../../../../../../../components/TableSkeleton/TableSkeleton';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import styles from './CarePlanReportView.module.css';
@@ -75,7 +75,7 @@ export function CarePlanReportView({ patientId, programs, onClose }) {
       {loading && !report ? (
         <TableSkeleton rows={6} />
       ) : !agg.hasPlans ? (
-        <RingEmptyState icon="solar:chart-2-linear" label="No Care Plan Data Yet" />
+        <EmptyState icon="solar:chart-2-linear" title="No Care Plan Data Yet" />
       ) : (
         <div className={styles.body}>
           <div className={styles.tiles}>

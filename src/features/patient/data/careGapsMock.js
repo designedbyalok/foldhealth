@@ -54,7 +54,7 @@ export const DIAGNOSIS_GAP_ITEMS = [
 ];
 
 // Tabs shown on the P360 (full page) left-panel gaps strip. Tasks and
-// Profile are intentionally excluded here — they live on the right-panel
+// Profile are intentionally excluded here: they live on the right-panel
 // tab bar in P360 so the same nav isn't duplicated on both sides.
 export const CARE_GAP_TABS = ['Gaps(11)', 'PAMI/Hx', 'Vitals/Labs', 'Comms', 'Outreach', 'Summary', 'CRM'];
 

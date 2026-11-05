@@ -1,9 +1,21 @@
 /* Overrides on top of the shared Care Gap Details drawer styles. */
 
-/* The gap title reads as a heading without the heavy 17px/600 near-black. */
-.gapTitle {
-  font-size: var(--font-lg);
-  font-weight: 500;
-  line-height: var(--leading-tight);
+/* An outreach rule's next step (escalate, pickup reminder) under the
+   suggested actions. */
+.ruleHint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--font-md);
+  line-height: var(--leading-normal);
   color: var(--neutral-400);
 }
+.ruleHint b { font-weight: 500; color: var(--neutral-500); }
+
+/* Every pharmacy gap of the member, between the header and the actions. */
+.gapsSection { padding: var(--space-3) var(--space-3) var(--space-2); }
+
+/* "Working on [gaps]" then the actions: the scope the actions and tabs use. */
+.actionRow { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+
+.contacts { display: flex; flex-direction: column; gap: var(--space-3); }

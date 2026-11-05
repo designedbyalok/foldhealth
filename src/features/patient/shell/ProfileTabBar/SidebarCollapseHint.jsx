@@ -9,7 +9,7 @@ import {
   getUserId,
   markDbTourSeen,
   markLocalTourSeen,
-} from '../../../../components/ProductTour/ProductTour.utils';
+} from '../../../tours/tourStore';
 import styles from './SidebarCollapseHint.module.css';
 
 const TOUR_ID = 'patient-profile-sidebar-collapse';
@@ -62,7 +62,7 @@ function HintCard({ anchorRef, onDismiss }) {
         <p id="sidebar-collapse-hint-desc" className={styles.desc}>
           You can collapse this section for a clearer view and more working area.
         </p>
-        <Button variant="primary" size="L" className={styles.cta} onClick={onDismiss}>
+        <Button className={styles.cta} onClick={onDismiss}>
           Got it
         </Button>
       </div>

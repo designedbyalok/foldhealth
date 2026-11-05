@@ -107,7 +107,7 @@ const TABS = ['Ongoing Call', 'In Queue', 'Call Log'];
 
 /* ── Shared components ── */
 
-// Presentational only — the enclosing <tr> owns the row's click behaviour.
+// Presentational only: the enclosing <tr> owns the row's click behaviour.
 function MemberCell({ initials, name, subtitle, selected }) {
   return (
     <div className={`${styles.memberCell} ${selected ? styles.memberCellSelected : ''}`}>
@@ -165,7 +165,7 @@ export function GoalDetailPanel({ call }) {
           <div className={styles.goalProgressHeader}>
             <span className={styles.goalProgressLabel}>Goal Progress</span>
             <Badge
-              variant={goalsMet ? 'compliance-pass' : 'compliance-fail'}
+              tone={goalsMet ? 'success' : 'danger'}
               label={goalsMet ? 'Goals Met' : 'Goals Not Met'}
               icon="solar:info-circle-linear"
             />
@@ -187,7 +187,7 @@ export function GoalDetailPanel({ call }) {
                   <span className={styles.goalCardName}>{g.name}</span>
                   <span className={styles.goalCardDesc}>{g.desc}</span>
                 </div>
-                <Badge variant={g.pass ? 'compliance-pass' : 'compliance-fail'} label={g.pass ? 'Pass' : 'Fail'} />
+                <Badge tone={g.pass ? 'success' : 'danger'} label={g.pass ? 'Pass' : 'Fail'} />
               </div>
             ))}
           </div>
@@ -204,7 +204,7 @@ export function GoalDetailPanel({ call }) {
                   <span className={styles.goalCardName}>{g.name}</span>
                   <span className={styles.goalCardDesc}>{g.desc}</span>
                 </div>
-                <Badge variant={g.pass ? 'compliance-pass' : 'compliance-fail'} label={g.pass ? 'Pass' : 'Fail'} />
+                <Badge tone={g.pass ? 'success' : 'danger'} label={g.pass ? 'Pass' : 'Fail'} />
               </div>
             ))}
           </div>
@@ -245,7 +245,7 @@ export function GoalDetailPanel({ call }) {
             <div className={styles.callQualitySentiment}>
               <span className={styles.callQualitySentimentLabel}>Sentiment &middot; From Transcript</span>
               <div>
-                <Badge variant={goalsMet ? 'sentiment-positive' : 'sentiment-negative'} label={goalsMet ? 'Positive' : 'Negative'} />
+                <Badge tone={goalsMet ? 'success' : 'danger'} label={goalsMet ? 'Positive' : 'Negative'} />
               </div>
               <span className={styles.callQualitySentimentDesc}>Based on the end of the conversation (LLM). Re-check the transcript if needed.</span>
             </div>
@@ -298,9 +298,9 @@ function OngoingCallTab({ searchQuery }) {
                   <Icon name="solar:translation-2-linear" size={16} color="var(--neutral-300)" />
                   Live Transcript
                 </button>
-                <ActionButton icon="solar:headphones-round-sound-linear" size="L" tooltip="Listen" />
+                <ActionButton icon="solar:headphones-round-sound-linear" tooltip="Listen" />
                 <span className={styles.actionDivider} />
-                <ActionButton icon="solar:menu-dots-bold" size="L" tooltip="More Options" />
+                <ActionButton icon="solar:menu-dots-bold" tooltip="More Options" />
               </div>
             </td>
           </tr>
@@ -378,9 +378,9 @@ function InQueueTab({ searchQuery }) {
                     <Icon name="solar:alt-arrow-down-linear" size={16} color="var(--neutral-300)" />
                   </button>
                 </div>
-                <ActionButton icon="solar:close-circle-linear" size="L" tooltip="Remove from Queue" onClick={() => removeMember(idx)} />
+                <ActionButton icon="solar:close-circle-linear" tooltip="Remove from Queue" onClick={() => removeMember(idx)} />
                 <span className={styles.actionDivider} />
-                <ActionButton icon="solar:menu-dots-bold" size="L" tooltip="More Options" />
+                <ActionButton icon="solar:menu-dots-bold" tooltip="More Options" />
               </div>
             </td>
           </tr>
@@ -489,7 +489,7 @@ export function CallLogTab({ onSelectCall, selectedCallId, searchQuery }) {
           </div>
 
           <div className={styles.dateGroupContent}>
-            {/* The expander is the inner button, not the header row — the row
+            {/* The expander is the inner button, not the header row, the row
                 also holds an ActionButton, and nesting controls is invalid. */}
             <div className={styles.dateGroupHeader}>
               <button
@@ -512,7 +512,7 @@ export function CallLogTab({ onSelectCall, selectedCallId, searchQuery }) {
                   />
                 </div>
               </button>
-              <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More Options" />
+              <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More Options" />
             </div>
 
             {!collapsedGroups[gi] && (
@@ -546,7 +546,7 @@ export function CallLogTab({ onSelectCall, selectedCallId, searchQuery }) {
                               />
                             </td>
                             <td>
-                              <Badge variant={isFailed ? 'status-failed' : 'status-completed'} label={call.status} />
+                              <Badge tone={isFailed ? 'danger' : 'success'} label={call.status} />
                             </td>
                             <td>
                               <span className={isFailed ? styles.durationFailed : styles.duration}>
@@ -557,14 +557,14 @@ export function CallLogTab({ onSelectCall, selectedCallId, searchQuery }) {
                             <td>
                               <div className={styles.rowActions} onClick={e => e.stopPropagation()}>
                                 {isFailed ? (
-                                  <ActionButton icon="solar:refresh-linear" size="L" tooltip="Retry" />
+                                  <ActionButton icon="solar:refresh-linear" tooltip="Retry" />
                                 ) : (
                                   <>
-                                    <ActionButton icon="solar:document-text-linear" size="L" tooltip="Summary" />
-                                    <ActionButton icon="solar:play-linear" size="L" tooltip="Play Recording" />
+                                    <ActionButton icon="solar:document-text-linear" tooltip="Summary" />
+                                    <ActionButton icon="solar:play-linear" tooltip="Play Recording" />
                                   </>
                                 )}
-                                <ActionButton icon="solar:menu-dots-bold" size="L" tooltip="More Options" />
+                                <ActionButton icon="solar:menu-dots-bold" tooltip="More Options" />
                               </div>
                             </td>
                           </tr>
@@ -723,8 +723,8 @@ export function CallQueueDrawer({ agent, onClose, initialTab }) {
               </div>
             </div>
             <div className={styles.bannerActions}>
-              <Button variant="secondary" size="M" leadingIcon="solar:pen-linear">Edit Configuration</Button>
-              <Button variant="error" size="M" leadingIcon="solar:forbidden-circle-linear">Stop</Button>
+              <Button variant="outline" leadingIcon="solar:pen-linear">Edit Configuration</Button>
+              <Button variant="soft" tone="danger" leadingIcon="solar:forbidden-circle-linear">Stop</Button>
             </div>
           </div>
 
@@ -742,11 +742,11 @@ export function CallQueueDrawer({ agent, onClose, initialTab }) {
               ))}
             </div>
             <div className={styles.tabActions}>
-              <ActionButton icon="solar:refresh-linear" size="L" tooltip="Refresh" />
+              <ActionButton icon="solar:refresh-linear" tooltip="Refresh" />
               <span className={styles.tabDivider} />
-              <ActionButton icon="custom:filter" size="L" tooltip="Filter" />
+              <ActionButton icon="custom:filter" tooltip="Filter" />
               <span className={styles.tabDivider} />
-              <ActionButton icon="solar:magnifer-linear" size="L" tooltip="Search" onClick={() => { setSearchOpen(v => !v); if (searchOpen) setSearchQuery(''); }} />
+              <ActionButton icon="solar:magnifer-linear" tooltip="Search" onClick={() => { setSearchOpen(v => !v); if (searchOpen) setSearchQuery(''); }} />
             </div>
           </div>
 

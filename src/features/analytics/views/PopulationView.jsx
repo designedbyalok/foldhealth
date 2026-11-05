@@ -115,7 +115,7 @@ export function PopulationView({ showToast, editing = false, resetTick = 0 }) {
             </div>
             <div style={{ fontSize: 'var(--font-3xl)', fontWeight: 500, color: 'var(--neutral-500)' }}>{bm.count.toLocaleString()}</div>
             <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)' }}>members</div>
-            <Button variant="ghost" size="S" style={{ alignSelf: 'flex-start', marginTop: 4 }} onClick={() => showToast?.(bm.toast)}>
+            <Button variant="ghost" size="sm" style={{ alignSelf: 'flex-start', marginTop: 4 }} onClick={() => showToast?.(bm.toast)}>
               View List &rarr;
             </Button>
           </div>
@@ -139,7 +139,7 @@ export function PopulationView({ showToast, editing = false, resetTick = 0 }) {
   );
 
   const renderDetail = () => (
-    <Card title="Actionable Member Lists — Detail" flush>
+    <Card title="Actionable Member Lists: Detail" flush>
       <div className={s.tblWrap}>
         <table className={s.tbl}>
           <thead>

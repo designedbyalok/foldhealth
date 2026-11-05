@@ -9,11 +9,11 @@ export const ASSESSMENT_COMPLETED = 'Completed';
 
 /**
  * How a reading for this goal is entered, from the goal's own measure:
- *   assessment — no value; the goal is marked completed on a date
- *   dual       — two parts joined by a separator (Blood Pressure 130/80)
- *   select     — a fixed scale (Pain 0–10)
- *   number     — one numeric value in the measure's unit
- *   text       — free-form ("Others", or a measure with no config)
+ *   assessment: no value; the goal is marked completed on a date
+ *   dual: two parts joined by a separator (Blood Pressure 130/80)
+ *   select: a fixed scale (Pain 0–10)
+ *   number: one numeric value in the measure's unit
+ *   text: free-form ("Others", or a measure with no config)
  */
 export function goalReadingSpec(goal) {
   const category = normalizeCategory(goal?.category);
@@ -35,7 +35,7 @@ export function goalReadingSpec(goal) {
   return { kind: 'text', unit: goalTargetUnit(goal || {}) };
 }
 
-/** Unit stored with a new reading — the measure's unit, or the goal's own. */
+/** Unit stored with a new reading, the measure's unit, or the goal's own. */
 export function goalReadingUnit(goal) {
   return goalReadingSpec(goal).unit || '';
 }
@@ -63,7 +63,7 @@ function meets(value, comparator, a, b) {
  * fall back to the clinician's own call when this returns null.
  *
  * Dual measures (Blood Pressure) compare each part against its own target
- * part — a reading is in target only when both parts are.
+ * part: a reading is in target only when both parts are.
  */
 export function evaluateReading(goal, value) {
   if (!goal || goal.setTarget === false || !goal.targetValue) return null;

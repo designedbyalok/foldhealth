@@ -15,6 +15,7 @@ export const PAGES = [
   { section: 'CARE PROGRAMS', items: [
     { id: 'care', label: 'Care Management', icon: 'solar:clipboard-text-linear' },
     { id: 'network', label: 'Network Analytics', icon: 'solar:global-linear' },
+    { id: 'pharmacy', label: 'Pharmacy Adherence', icon: 'solar:pill-linear' },
   ]},
   { section: 'BUSINESS OUTCOMES', items: [
     { id: 'shared', label: 'Shared Savings', icon: 'solar:hand-money-linear' },
@@ -39,6 +40,7 @@ export const VIEW_TITLES = {
   utilization:  { title: 'Utilization Management', sub: 'Admissions, readmissions, ED & SNF' },
   care:         { title: 'Care Management', sub: 'Program ROI, productivity & team metrics' },
   network:      { title: 'Network Analytics', sub: 'Provider scorecards & referral leakage' },
+  pharmacy:     { title: 'Pharmacy Adherence', sub: 'MAC, MAD & MAH outcomes, productivity & claim data quality' },
   shared:       { title: 'Shared Savings', sub: 'MSSP benchmark & trajectory' },
   roi:          { title: 'ROI & Simulators', sub: 'What-if modeling & scenario planning' },
   tools:        { title: 'Tool Usage', sub: 'Sidecar adoption & automation performance' },
@@ -51,8 +53,8 @@ export const VIEW_TITLES = {
 export const PERSONA_ACCESS = {
   exec: null, // all access
   manager_risk: ['population','financial','risk','network','sdoh','platformops'],
-  manager_quality: ['population','quality','care','sdoh'],
-  manager_care: ['population','care','quality','sdoh','actionrules'],
+  manager_quality: ['population','quality','care','sdoh','pharmacy'],
+  manager_care: ['population','care','quality','sdoh','actionrules','pharmacy'],
   manager_utilization: ['population','financial','utilization','care','network','platformops'],
   analyst: null, // all access (SQL overlay)
 };

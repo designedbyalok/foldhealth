@@ -1,6 +1,6 @@
 /**
  * Next-year `>>` chevron inside a rounded-square outline. Same outline
- * as `CalendarNextIcon`; the `>` chevron is rendered twice — once at
+ * as `CalendarNextIcon`; the `>` chevron is rendered twice: once at
  * the base position and once shifted 3px right so the pair reads as `>>`.
  *
  * @param {object} props

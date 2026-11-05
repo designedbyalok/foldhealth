@@ -46,7 +46,7 @@ export function AccountLockPanel({ lock, canUnlock, onUnlock, onResendLink }) {
             <span className={styles.note}>{details}</span>
           </div>
           {canUnlock && (
-            <Button variant="secondary" size="S" leadingIcon="solar:lock-keyhole-unlocked-linear" onClick={onUnlock}>
+            <Button variant="outline" size="sm" leadingIcon="solar:lock-keyhole-unlocked-linear" onClick={onUnlock}>
               Unlock
             </Button>
           )}
@@ -86,14 +86,13 @@ export function AccountLockPanel({ lock, canUnlock, onUnlock, onResendLink }) {
         </div>
         {canUnlock && onResendLink && (
           <Button
-            variant="secondary"
-            size="S"
+            variant="outline"
+            size="sm"
             leadingIcon="solar:letter-linear"
             leadingIconElement={resending ? <Icon name="solar:restart-linear" size={14} className={styles.spin} /> : undefined}
-            disabled={resending}
-            onClick={resend}
+            onClick={resend} loading={resending}
           >
-            {resending ? 'Sending…' : 'Resend Link'}
+            Resend Link
           </Button>
         )}
       </div>

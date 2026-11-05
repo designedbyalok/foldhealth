@@ -1,4 +1,4 @@
--- Care Plan AI summary — the cross-program recap the Comprehensive Care Plan
+-- Care Plan AI summary: the cross-program recap the Comprehensive Care Plan
 -- generates on demand ("Summarize active programs").
 --
 -- THE HOLE THIS CLOSES
@@ -8,13 +8,13 @@
 -- fresh generation overwrites the previous one.
 --
 -- WHAT THIS DOES
---   patient_care_plan_summaries — one row per patient. `summary` is the
+--   patient_care_plan_summaries: one row per patient. `summary` is the
 --   { intro, points, actions } object the /api/care-plan-summary proxy returns.
 --   patient_id is the primary key so the app can upsert (generate = overwrite).
 --   generated_by / generated_at record who produced the current recap and when.
 --
 -- RLS
--- Per RLS_POSTURE.md: on, wide open to `authenticated`, closed to `anon` —
+-- Per RLS_POSTURE.md: on, wide open to `authenticated`, closed to `anon`,
 -- consistent with the other care-plan tables. The app scopes by patient_id.
 
 CREATE TABLE IF NOT EXISTS public.patient_care_plan_summaries (

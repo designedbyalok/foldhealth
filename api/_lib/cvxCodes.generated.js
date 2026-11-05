@@ -1,4 +1,4 @@
-// GENERATED FILE — do not edit by hand.
+// GENERATED FILE: do not edit by hand.
 //
 // The CDC CVX code set, cached so /api/reference/immunizations can answer
 // without a network call or an API key. Regenerate with:

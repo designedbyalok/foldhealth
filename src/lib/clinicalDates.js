@@ -4,7 +4,7 @@
  * touches `Date` parsing or `toISOString`.
  *
  * That matters: `new Date('9/22/2026')` builds LOCAL midnight, and
- * `.toISOString()` then converts to UTC — which in any timezone east of
+ * `.toISOString()` then converts to UTC: which in any timezone east of
  * Greenwich lands on the previous day. Storing a display string and reparsing
  * it that way moved a date back one day on every edit. Parsing the digits
  * directly removes the timezone from the problem entirely.
@@ -19,7 +19,7 @@ const US_RE = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
 
 const pad = n => String(n).padStart(2, '0');
 
-/** Today as a local ISO date — not `toISOString()`, which reports UTC. */
+/** Today as a local ISO date, not `toISOString()`, which reports UTC. */
 export function todayIso() {
   const d = new Date();
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;

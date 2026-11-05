@@ -1,7 +1,7 @@
 @import './tokens/tokens.css';
 
 /* Self-hosted Inter (Latin variable). Single woff2 covers weights 100–900.
-   File is in /public/fonts so it has a stable URL — that lets index.html
+   File is in /public/fonts so it has a stable URL, that lets index.html
    <link rel="preload"> the font and start fetching it in parallel with
    the JS/CSS, instead of waiting for this CSS file to parse before the
    browser discovers the font reference. */
@@ -14,7 +14,7 @@
 }
 
 /* NOTE: Tailwind CSS 4 preflight handles box-sizing/margin/padding reset in @layer base.
-   Do NOT add an unlayered * reset here — it would override Tailwind utility classes. */
+   Do NOT add an unlayered * reset here, it would override Tailwind utility classes. */
 
 body {
   line-height: 1.2;
@@ -27,7 +27,7 @@ body {
 }
 
 /* Neutralizes native <button> chrome so a semantic button can carry a
-   CSS-module class that fully controls the look — used for clickable
+   CSS-module class that fully controls the look, used for clickable
    cards, tabs, checkbox rows, and toggles that previously used <div onClick>. */
 .buttonReset {
   appearance: none;
@@ -67,7 +67,7 @@ svg.iconify [stroke-width="1.5"] {
    Only fires while a theme flip is in progress. src/lib/theme/applyTheme.js
    sets [data-theme-transitioning] on <html>, waits one frame, changes the
    [data-theme] value, then removes the attribute after --duration-base.
-   Between flips, no transition is applied globally — per-element CSS
+   Between flips, no transition is applied globally, per-element CSS
    handles hover/focus color changes at its own cost.
    ═══════════════════════════════════════════════════════════ */
 html[data-theme-transitioning],
@@ -80,7 +80,7 @@ html[data-theme-transitioning] *::after {
     border-color var(--duration-base) var(--ease-hover),
     fill var(--duration-base) var(--ease-hover),
     stroke var(--duration-base) var(--ease-hover) !important;
-  /* box-shadow deliberately dropped from the theme cross-fade — the shadow
+  /* box-shadow deliberately dropped from the theme cross-fade, the shadow
      tokens don't retint on theme change enough to justify the paint cost. */
 }
 
@@ -117,7 +117,7 @@ html[data-theme-transitioning] *::after {
   overflow: hidden;
 }
 
-/* Custom Checkbox — Fold Pixel 1.0 (Size: S, 16×16) */
+/* Custom Checkbox: Fold Pixel 1.0 (Size: S, 16×16) */
 input[type="checkbox"] {
   -webkit-appearance: none;
   appearance: none;
@@ -186,7 +186,7 @@ input[type="checkbox"]:disabled:checked::after {
   border-color: var(--neutral-0);
 }
 
-/* Custom Radio — Fold Pixel 1.0 */
+/* Custom Radio: Fold Pixel 1.0 */
 input[type="radio"] {
   -webkit-appearance: none;
   appearance: none;

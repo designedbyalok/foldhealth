@@ -72,7 +72,7 @@ describe('NPS', () => {
   it('formats the score signed', () => {
     expect(answerAverage(nps, rs.slice(0, 3))).toBe('+67');
     expect(answerAverage(nps, [{ answers: { n: '3' } }])).toBe('-100');
-    expect(answerAverage(nps, [])).toBe('—');
+    expect(answerAverage(nps, [])).toBe('-');
   });
 });
 

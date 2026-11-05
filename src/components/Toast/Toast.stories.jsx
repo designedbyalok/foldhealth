@@ -26,26 +26,26 @@ function Playground_() {
       <Toaster />
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <Button
-          variant="success"
+          variant="soft" tone="success"
           onClick={() => toast.success('Uploaded chart.pdf', desc('Sent to the Coder queue for review.'))}
         >
           Success
         </Button>
         <Button
-          variant="danger"
+          variant="soft" tone="danger"
           onClick={() => toast.error('Upload failed', desc('The file exceeds the 100 MB limit. Try a smaller file.'))}
         >
           Error
         </Button>
         <Button
-          variant="info"
+          tone="info"
           onClick={() => toast.info('New Foldhealth version available', desc('Reload to pick up the latest build.'))}
         >
           Info
         </Button>
         <Button
-          variant="alt"
-          onClick={() => toast.warning('Session will expire in 2 minutes', desc('Save any open work — unsaved changes will be lost.'))}
+          variant="outline" tone="primary"
+          onClick={() => toast.warning('Session will expire in 2 minutes', desc('Save any open work: unsaved changes will be lost.'))}
         >
           Warning
         </Button>

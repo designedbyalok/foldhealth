@@ -1,4 +1,4 @@
-/* DatePicker in single mode delegates to `<Input type="date">` — no
+/* DatePicker in single mode delegates to `<Input type="date">`, no
    local styles needed. Range mode renders a text field + calendar
    overlay button, so the wrapper positions the icon over the trailing
    edge of the input. */

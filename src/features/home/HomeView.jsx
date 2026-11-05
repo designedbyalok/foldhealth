@@ -10,6 +10,8 @@ import { AssignedToMeCard } from './AssignedToMeCard';
 import { TodayCalendarCard } from './TodayCalendarCard';
 import { TasksCard } from './TasksCard';
 import { QuickNotesCard } from './QuickNotesCard';
+import { TeamProgramsCard } from './TeamProgramsCard';
+import { useProgramAccess } from '../patient/hooks/useProgramAccess';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import styles from './HomeView.module.css';
@@ -21,20 +23,29 @@ const ROW_HEIGHT = 40;
 
 const DEFAULT_LAYOUT = [
   { i: 'welcome',  x: 0, y: 0,  w: 6, h: 4,  minW: 4, minH: 4, maxH: 6 },
-  { i: 'alerts',   x: 0, y: 4,  w: 6, h: 16, minW: 4, minH: 8 },
+  // Supervisors only; hidden for everyone else (see visibleLayout).
+  { i: 'team',     x: 0, y: 4,  w: 6, h: 8,  minW: 4, minH: 5 },
+  { i: 'alerts',   x: 0, y: 12, w: 6, h: 16, minW: 4, minH: 8 },
   { i: 'assigned', x: 6, y: 0,  w: 3, h: 5,  minW: 2, minH: 3 },
   { i: 'calendar', x: 9, y: 0,  w: 3, h: 20, minW: 2, minH: 6 },
   { i: 'tasks',    x: 6, y: 5,  w: 3, h: 11, minW: 2, minH: 4 },
   { i: 'notes',    x: 6, y: 16, w: 3, h: 4,  minW: 2, minH: 3 },
 ];
 
+const DEFAULT_ORDER = Object.fromEntries(DEFAULT_LAYOUT.map((l, idx) => [l.i, idx]));
+
 function loadLayout() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_LAYOUT;
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length !== DEFAULT_LAYOUT.length) return DEFAULT_LAYOUT;
-    return parsed;
+    if (!Array.isArray(parsed)) return DEFAULT_LAYOUT;
+    const known = new Set(DEFAULT_LAYOUT.map(l => l.i));
+    const kept = parsed.filter(l => known.has(l?.i));
+    // A card added since the layout was saved joins at its default spot
+    // rather than resetting the whole layout.
+    const have = new Set(kept.map(l => l.i));
+    return [...kept, ...DEFAULT_LAYOUT.filter(l => !have.has(l.i))];
   } catch {
     return DEFAULT_LAYOUT;
   }
@@ -54,6 +65,7 @@ const CARD_RENDERERS = {
   calendar: TodayCalendarCard,
   tasks:    TasksCard,
   notes:    QuickNotesCard,
+  team:     TeamProgramsCard,
 };
 
 export function HomeView() {
@@ -75,15 +87,34 @@ export function HomeView() {
     return () => ro.disconnect();
   }, []);
 
-  const handleLayoutChange = useCallback((next) => {
-    setLayout(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  }, []);
+  // Supervisors see Team programs for the programs they supervise; admins for
+  // every program (codes null).
+  const access = useProgramAccess();
+  const supervisedCodes = useMemo(
+    () => (access.admin ? null : access.programs.filter(code => access.levels[code] === 'supervisor')),
+    [access.admin, access.programs, access.levels],
+  );
+  const showTeam = access.admin || supervisedCodes.length > 0;
+  // In default order: where two cards claim the same spot (Team programs
+  // appearing once access loads), the grid keeps the earlier one in place
+  // and pushes the other down.
+  const visibleLayout = useMemo(() => layout
+    .filter(l => l.i !== 'team' || showTeam)
+    .sort((a, b) => DEFAULT_ORDER[a.i] - DEFAULT_ORDER[b.i]), [layout, showTeam]);
 
-  const resetLayout = useCallback(() => {
-    setLayout(DEFAULT_LAYOUT);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_LAYOUT));
+  // The grid only reports visible cards, so a hidden card keeps its spot.
+  const handleLayoutChange = useCallback((next) => {
+    setLayout(prev => {
+      const seen = new Set(next.map(l => l.i));
+      return [...next, ...prev.filter(l => !seen.has(l.i))];
+    });
   }, []);
+  // Saved here rather than in the updater, which React may run twice.
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(layout)); } catch { /* private mode */ }
+  }, [layout]);
+
+  const resetLayout = useCallback(() => setLayout(DEFAULT_LAYOUT), []);
 
   const changeView = useCallback((next) => {
     setView(next);
@@ -91,14 +122,14 @@ export function HomeView() {
     try { localStorage.setItem(VIEW_KEY, next); } catch { /* private mode */ }
   }, []);
 
-  const items = useMemo(() => layout.map(l => {
+  const items = useMemo(() => visibleLayout.map(l => {
     const Card = CARD_RENDERERS[l.i];
     return (
       <div key={l.i}>
-        <Card dragHandleClassName={editing ? DRAG_HANDLE : undefined} />
+        <Card dragHandleClassName={editing ? DRAG_HANDLE : undefined} {...(l.i === 'team' ? { codes: supervisedCodes } : {})} />
       </div>
     );
-  }), [layout, editing]);
+  }), [visibleLayout, editing, supervisedCodes]);
 
   return (
     <div className={styles.page}>
@@ -107,7 +138,7 @@ export function HomeView() {
         <Select
           options={VIEW_OPTIONS}
           value={view}
-          onChange={changeView}
+          onValueChange={changeView}
           variant="ghost"
           leadingIcon={view === 'today' ? 'solar:sun-linear' : 'solar:chart-linear'}
           style={{ width: 148 }}
@@ -139,7 +170,7 @@ export function HomeView() {
       >
         <GridLayout
           className="layout"
-          layout={layout}
+          layout={visibleLayout}
           cols={COLS}
           rowHeight={ROW_HEIGHT}
           width={width}

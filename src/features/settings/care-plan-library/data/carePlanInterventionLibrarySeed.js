@@ -1,7 +1,7 @@
 // Care Plan Interventions Library (reusable templates)
 // Generated from structured_care_plan_goals_library.md. Upserted by
 // `bun run seed` (onConflict: 'id'). Priorities in config assigned by
-// scripts/applyCarePlanLibraryPriorities.mjs — re-run after library content changes.
+// scripts/applyCarePlanLibraryPriorities.mjs, re-run after library content changes.
 
 export const CARE_PLAN_INTERVENTION_LIBRARY = [
   {

@@ -1,0 +1,144 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.for {
+  margin: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+.for strong {
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+
+.error {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: 8px;
+  background: var(--status-error-light);
+  color: var(--status-error);
+  font-size: var(--font-sm);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+
+.days {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+}
+
+.day {
+  flex: 0 0 auto;
+  width: 56px;
+  padding: var(--space-2) 0;
+  border: 1px solid var(--neutral-150);
+  border-radius: 8px;
+  background: var(--neutral-0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+  color: var(--neutral-400);
+  transition: border-color var(--duration-base) var(--ease-hover), background-color var(--duration-base) var(--ease-hover);
+}
+
+.day:hover {
+  border-color: var(--primary-200);
+}
+
+.dayActive,
+.dayActive:hover {
+  border-color: var(--primary-300);
+  background: var(--primary-50);
+}
+
+.dayWeekday,
+.dayMonth {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+.dayNumber {
+  font-size: var(--font-lg);
+  font-weight: 500;
+}
+
+.zone {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.times {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--space-2);
+}
+
+.time {
+  padding: var(--space-2);
+  border: 1px solid var(--neutral-150);
+  border-radius: 8px;
+  background: var(--neutral-0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+  cursor: pointer;
+  transition: border-color var(--duration-base) var(--ease-hover), background-color var(--duration-base) var(--ease-hover);
+}
+
+.time:hover {
+  border-color: var(--primary-200);
+}
+
+.timeActive,
+.timeActive:hover {
+  border-color: var(--primary-300);
+  background: var(--primary-300);
+  color: var(--neutral-0);
+}
+
+.timeProvider {
+  font-size: var(--font-2xs);
+  opacity: 0.8;
+}
+
+.day:focus-visible,
+.time:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+}
+
+.where {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+}

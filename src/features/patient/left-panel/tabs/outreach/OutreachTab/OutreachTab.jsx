@@ -3,6 +3,7 @@ import { OutreachIcon } from '../../../../../../components/Icon/OutreachIcon';
 import { ScheduleDrawer } from '../../../../../../components/ScheduleDrawer/ScheduleDrawer';
 import { AddTaskDrawer } from '../../../../../tasks/AddTaskDrawer';
 import { useOutreachTab } from './useOutreachTab';
+import { OutreachComposer } from '../OutreachComposer/OutreachComposer';
 import { OutreachTabForm } from './OutreachTabForm';
 import { OutreachTabActivity } from './OutreachTabActivity';
 import styles from './OutreachTab.module.css';
@@ -13,6 +14,7 @@ export function OutreachTab(props) {
     programsLabel = 'Select Programs/Gaps',
     hideLogForRow = false,
     hideActivity = false,
+    classicForm = false,
     ...hookProps
   } = props;
 
@@ -24,6 +26,7 @@ export function OutreachTab(props) {
       programsLabel={programsLabel}
       hideLogForRow={hideLogForRow}
       hideActivity={hideActivity}
+      classicForm={classicForm}
       taskMember={hookProps.memberName}
     />
   );
@@ -43,6 +46,8 @@ export function OutreachTab(props) {
  *                     Actions row created
  *   onLogNew        : replaces the inline form when "Log New Outreach" is
  *                     clicked (host opens its own outreach workspace)
+ *   classicForm     : the pre-chat outreach form instead of the composer
+ *                     (the patient profile's Outreach tab)
  */
 export function OutreachTabView({
   tab,
@@ -57,14 +62,18 @@ export function OutreachTabView({
   onTaskCreated,
   onAppointmentScheduled,
   onLogNew,
+  classicForm = false,
 }) {
+  // A host with its own outcome list (the Pharmacy program's Intervention
+  // Schema) keeps the form with the Select Outcome menu: its outcomes drive
+  // fills and interventions, which the composer's outcome chips can't carry.
+  const Form = tab.outcomeItems || classicForm ? OutreachTabForm : OutreachComposer;
   return (
-    <div className={`${styles.wrapper} ${flush ? styles.wrapperFlush : ''}`}>
+    <div className={`${styles.wrapper} ${flush ? styles.wrapperFlush : ''} ${classicForm ? styles.wrapperClassic : ''}`}>
       {hideForm ? null : !tab.formOpen && !tab.scopedProgram ? (
         <div className={styles.emptyCard}>
           <Button
-            variant="alt"
-            size="L"
+            variant="outline" tone="primary"
             leadingIconElement={<OutreachIcon size={16} color="var(--primary-300)" />}
             onClick={() => {
               // A host with its own outreach workspace (Care Gap drawer's
@@ -78,13 +87,15 @@ export function OutreachTabView({
           </Button>
         </div>
       ) : (
-        <OutreachTabForm
+        <Form
+          defaultExpanded={tab.formOpen}
           hideLogForRow={hideLogForRow}
           scopedProgram={tab.scopedProgram}
           logFor={tab.logFor}
           isHccGaps={tab.isHccGaps}
           type={tab.type}
           setType={tab.setType}
+          contactWarning={tab.contactWarning}
           datetime={tab.datetime}
           setDatetime={tab.setDatetime}
           showCallDetails={tab.showCallDetails}
@@ -120,6 +131,7 @@ export function OutreachTabView({
           sharedPanelTitle={tab.sharedPanelTitle}
           addOutcome={tab.addOutcome}
           removeOutcome={tab.removeOutcome}
+          setOutcomes={tab.setOutcomes}
           handleNoteChange={tab.handleNoteChange}
           canSave={tab.canSave}
           handleLogForChange={tab.handleLogForChange}

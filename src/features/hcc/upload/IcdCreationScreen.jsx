@@ -15,14 +15,14 @@ import { HccSftpReviewDrawer } from './HccSftpReviewDrawer';
 import styles from './IcdCreationScreen.module.css';
 
 /**
- * ICD Creation — unified entry point for adding HCC records.
+ * ICD Creation: unified entry point for adding HCC records.
  *
  * Replaces the legacy 3-item popover (New Record Manually / Extract from
  * Document / Open SFTP Server) with a single screen that handles all
  * three flows in one surface:
  *
- *   Left  — Upload & Review Document (dropzone + "Sync via SFTP" trigger)
- *   Right — Session records list (extracted encounters waiting for confirm)
+ *   Left: Upload & Review Document (dropzone + "Sync via SFTP" trigger)
+ *   Right: Session records list (extracted encounters waiting for confirm)
  *           with an "Add Manually" CTA when empty.
  *
  * Dropped files run through queueHccDocumentForOcr (the same pipeline as
@@ -32,7 +32,7 @@ import styles from './IcdCreationScreen.module.css';
  * Wired from the HCC worklist's Upload Document toolbar button.
  */
 
-// Demo files mapped to mockOcr's deterministic outputs — clicking one
+// Demo files mapped to mockOcr's deterministic outputs: clicking one
 // stages it in the queue exactly as if the user had dropped the real PDF.
 // Each entry shows the OCR tier the file will land in so users can pick
 // the scenario they want to walk through.
@@ -77,7 +77,7 @@ export function IcdCreationScreen() {
     // Close the ICD Creation surface and hand off to the canonical manual
     // entry workflow (UploadDocumentDrawer, phase: 'single'). When the
     // user finishes there, the added records show up next time they open
-    // ICD Creation — no duplicated form to maintain here.
+    // ICD Creation: no duplicated form to maintain here.
     close?.();
     startHccUpload?.(null);
     setHccUploadPhase?.('single');
@@ -96,7 +96,7 @@ export function IcdCreationScreen() {
   };
   const [whatNextOpen, setWhatNextOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  // Staged-files queue — files are added here by the dropzone but OCR
+  // Staged-files queue: files are added here by the dropzone but OCR
   // doesn't run until Start Extraction. Each entry:
   //   { id, file, status: 'complete'|'extracting'|'done' }
   // 'complete' = upload finished, ready for extraction (per Figma 1:18181).
@@ -104,13 +104,13 @@ export function IcdCreationScreen() {
   const [extracting, setExtracting] = useState(false);
 
   // Declared above the early return below so hook order stays stable across
-  // renders — a hook after the guard gets skipped whenever `open` is false,
+  // renders: a hook after the guard gets skipped whenever `open` is false,
   // which lets React attach state to the wrong hook.
   const sessionIdSet = useMemo(() => new Set(sessionIds), [sessionIds]);
 
   if (!open) return null;
 
-  // Encounters extracted in this session — the right panel's records list.
+  // Encounters extracted in this session: the right panel's records list.
   // We pull them from the batches the store knows about, then filter to
   // only the ones added during this Upload Document session.
   const sessionBatches = batches.filter(b => sessionIdSet.has(b.id));
@@ -119,13 +119,13 @@ export function IcdCreationScreen() {
   );
 
   // Once batches land in this session, the screen transforms from "upload
-  // phase" to "results phase" — dropzone → categorized file list, single
+  // phase" to "results phase", dropzone → categorized file list, single
   // records list → tabbed Pending/Added/Deleted (Figma 1:18602).
   const inResults = sessionBatches.length > 0;
 
   const handleDrop = (file) => {
     if (!file) return;
-    // Stage the file — DON'T kick off OCR until the user clicks
+    // Stage the file: DON'T kick off OCR until the user clicks
     // Start Extraction. Matches Figma 1:18181: uploaded files appear
     // in a queue below the dropzone with eye/trash actions; OCR is a
     // separate explicit step.
@@ -189,7 +189,7 @@ export function IcdCreationScreen() {
         </header>
 
         {reviewInline ? (
-          /* Inline Document Review — renders in THIS surface instead of a
+          /* Inline Document Review: renders in THIS surface instead of a
              second drawer (Figma 4001:179835). Back arrow returns to the
              categorized document list. */
           <div className={styles.reviewInlineHost}>
@@ -202,13 +202,12 @@ export function IcdCreationScreen() {
             <div className={styles.colHeader}>
               <h3 className={styles.colTitle}>Upload &amp; Review Document</h3>
               <Button
-                variant="alt"
-                size="S"
+                variant="outline" tone="primary"
+                size="sm"
                 leadingIcon="solar:refresh-linear"
-                disabled={syncing}
-                onClick={handleSftpSync}
+                onClick={handleSftpSync} loading={syncing}
               >
-                {syncing ? 'Syncing…' : 'Sync via SFTP'}
+                Sync via SFTP
               </Button>
             </div>
 
@@ -243,7 +242,7 @@ export function IcdCreationScreen() {
   );
 }
 
-// ─── UploadPhase — initial dropzone + queue ─────────────────────────────
+// ─── UploadPhase: initial dropzone + queue ─────────────────────────────
 
 function UploadPhase({ queue, extracting, onRemoveQueued, onStart, onDiscard, whatNextOpen, toggleWhatNext, onPick, onReject }) {
   // Stage a sample as a synthetic File. mockOcr matches on filename so
@@ -272,7 +271,7 @@ function UploadPhase({ queue, extracting, onRemoveQueued, onStart, onDiscard, wh
         <div className={styles.samples}>
           <div className={styles.samplesHeader}>
             <Icon name="solar:gallery-linear" size={12} color="var(--neutral-300)" />
-            <span>Try a sample document — pick several to see categorization</span>
+            <span>Try a sample document: pick several to see categorization</span>
           </div>
           <div className={styles.samplesList}>
             {SAMPLE_FILES.map(s => (
@@ -340,15 +339,13 @@ function UploadPhase({ queue, extracting, onRemoveQueued, onStart, onDiscard, wh
       {queue.length > 0 && (
         <div className={styles.queueFooter}>
           <Button
-            variant="primary"
-            size="M"
             leadingIcon="custom:ai-mono"
             disabled={extracting}
             onClick={onStart}
           >
             {extracting ? 'Extracting…' : 'Start Extraction'}
           </Button>
-          <Button variant="secondary" size="M" disabled={extracting} onClick={onDiscard}>
+          <Button variant="outline" disabled={extracting} onClick={onDiscard}>
             Discard
           </Button>
         </div>
@@ -372,14 +369,14 @@ function UploadPhase({ queue, extracting, onRemoveQueued, onStart, onDiscard, wh
         <ol className={styles.whatNextList}>
           <li>AI runs OCR + the 5-point compliance check on the document.</li>
           <li>Pages flagged as Unreadable route to Support for re-scan.</li>
-          <li>Extracted records show on the right — confirm each one to add it to the worklist.</li>
+          <li>Extracted records show on the right, confirm each one to add it to the worklist.</li>
         </ol>
       )}
     </>
   );
 }
 
-// ─── CategorizedFileList — post-extraction grouping by OCR tier ─────────
+// ─── CategorizedFileList: post-extraction grouping by OCR tier ─────────
 
 function CategorizedFileList({ batches, onReview }) {
   const groups = [
@@ -439,7 +436,7 @@ function TierSection({ tier, label, docs, onReview }) {
 }
 
 function TierDocRow({ doc, tier, onReview }) {
-  // Pass count = records (encounters) that came out clean — matched
+  // Pass count = records (encounters) that came out clean: matched
   // member + no missing fields + no ID mismatch. Drives the inline
   // "✓ Pass · X/Y" badge per the design reference.
   const encounters = doc.encounters || [];
@@ -460,7 +457,7 @@ function TierDocRow({ doc, tier, onReview }) {
       <div className={styles.tierDocMeta}>
         <div className={styles.tierDocNameRow}>
           <span className={styles.tierDocName}>{doc.fileName}</span>
-          {/* Inline check-count badge — sits directly next to the file
+          {/* Inline check-count badge: sits directly next to the file
               name (✓ Pass · 12/12). Clicking it opens the document review
               (same target as the Review button). */}
           {total > 0 && (
@@ -486,13 +483,12 @@ function TierDocRow({ doc, tier, onReview }) {
         </div>
       </div>
       {tier === 'unreadable' ? (
-        <Button variant="secondary" size="S" leadingIcon="solar:refresh-linear">
+        <Button variant="outline" size="sm" leadingIcon="solar:refresh-linear">
           Retry
         </Button>
       ) : (
         <Button
-          variant="primary"
-          size="S"
+          size="sm"
           leadingIcon="custom:ai-mono"
           onClick={() => onReview(doc.id)}
         >
@@ -506,7 +502,7 @@ function TierDocRow({ doc, tier, onReview }) {
   );
 }
 
-// ─── RightColumn — empty / records / manual / tabbed (results mode) ─────
+// ─── RightColumn: empty / records / manual / tabbed (results mode) ─────
 
 function RightColumn({ inResults, sessionEncounters, onAdd, onAddManually }) {
   if (inResults) {
@@ -527,7 +523,7 @@ function RightColumn({ inResults, sessionEncounters, onAdd, onAddManually }) {
           <div className={styles.emptyMsg}>
             Records that have been successfully added to the worklist will appear here.
           </div>
-          <Button variant="primary" size="M" leadingIcon="solar:pen-linear" onClick={onAddManually}>
+          <Button leadingIcon="solar:pen-linear" onClick={onAddManually}>
             Add Manually
           </Button>
         </div>
@@ -538,7 +534,7 @@ function RightColumn({ inResults, sessionEncounters, onAdd, onAddManually }) {
   );
 }
 
-// ─── TabbedRecords — Pending Review / Added / Deleted (results mode) ─────
+// ─── TabbedRecords: Pending Review / Added / Deleted (results mode) ─────
 
 function isEncounterReady(enc) {
   return !!enc.patient?.matchedMemberId
@@ -583,7 +579,7 @@ function TabbedRecords({ encounters, onAdd, onAddManually }) {
           Deleted<span className={styles.tabCount}>({deletedEncs.length})</span>
         </button>
         <span className={styles.tabSpacer} />
-        <Button variant="secondary" size="S" leadingIcon="solar:pen-linear" onClick={onAddManually}>
+        <Button variant="outline" size="sm" leadingIcon="solar:pen-linear" onClick={onAddManually}>
           Add New Record
         </Button>
       </div>
@@ -704,7 +700,7 @@ function RecordsList({ encounters, onAdd, onAddManually }) {
           <div className={styles.recordsTitle}>Records</div>
           <div className={styles.recordsSubtitle}>{encounters.length} extracted</div>
         </div>
-        <Button variant="secondary" size="S" leadingIcon="solar:pen-linear" onClick={onAddManually}>
+        <Button variant="outline" size="sm" leadingIcon="solar:pen-linear" onClick={onAddManually}>
           Add Manually
         </Button>
       </header>
@@ -715,16 +711,16 @@ function RecordsList({ encounters, onAdd, onAddManually }) {
               <div className={styles.recordTitleRow}>
                 <div className={styles.recordName}>{enc.patient?.name || 'Unknown patient'}</div>
                 {enc._ocrTier && (
-                  <Badge size="M"
-                    variant={enc._ocrTier === 'clean' ? 'success' : enc._ocrTier === 'degraded' ? 'warning' : 'error'}
+                  <Badge size="md"
+                    tone={enc._ocrTier === 'clean' ? 'success' : enc._ocrTier === 'degraded' ? 'warning' : 'danger'}
                     label={`OCR · ${enc._ocrTier[0].toUpperCase()}${enc._ocrTier.slice(1)}`}
                   />
                 )}
               </div>
               <div className={styles.recordMeta}>
-                <span><strong>DOS</strong> {enc.dos || '—'}</span>
-                <span><strong>Provider</strong> {enc.provider || '—'}</span>
-                <span><strong>POS</strong> {enc.pos ? `${enc.pos} · ${POS_LABEL[enc.pos] || ''}` : '—'}</span>
+                <span><strong>DOS</strong> {enc.dos || '-'}</span>
+                <span><strong>Provider</strong> {enc.provider || '-'}</span>
+                <span><strong>POS</strong> {enc.pos ? `${enc.pos} · ${POS_LABEL[enc.pos] || ''}` : '-'}</span>
               </div>
               <div className={styles.recordIcds}>
                 {(enc.icds || []).map((c, i) => (
@@ -733,7 +729,7 @@ function RecordsList({ encounters, onAdd, onAddManually }) {
               </div>
             </div>
             <div className={styles.recordActions}>
-              <Button variant="primary" size="S" onClick={() => onAdd(enc)}>
+              <Button size="sm" onClick={() => onAdd(enc)}>
                 Add to Worklist
               </Button>
             </div>

@@ -7,7 +7,7 @@ export function dispatch(routes, routeForPath) {
   return function handler(req, res) {
     const url = new URL(req.url, 'http://localhost');
     const route = url.searchParams.get('route') || routeForPath[url.pathname.replace(/\/+$/, '')];
-    const target = routes[route];
+    const target = route && Object.hasOwn(routes, route) ? routes[route] : null;
     if (!target) return res.status(404).json({ error: { message: 'Not found' } });
     return target(req, res);
   };

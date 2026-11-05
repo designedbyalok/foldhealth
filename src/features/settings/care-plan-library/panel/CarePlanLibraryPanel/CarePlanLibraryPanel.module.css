@@ -5,7 +5,7 @@
   flex-direction: column;
   min-height: 0;
 }
-/* Flex column so WorklistShell's `flex: 1` actually stretches — otherwise the
+/* Flex column so WorklistShell's `flex: 1` actually stretches: otherwise the
    shell shrinks to its content and the white table background stops short of
    the viewport. The shell owns the scrolling, so no overflow here. */
 .content {
@@ -39,8 +39,8 @@
 }
 
 /* Pin the identity + actions columns so only the middle of the table scrolls
-   sideways. WorklistShell only applies sticky to the <th>s — body cells are
-   the caller's job — so the <td>s need it here or the columns drift under the
+   sideways. WorklistShell only applies sticky to the <th>s: body cells are
+   the caller's job: so the <td>s need it here or the columns drift under the
    scrolling content. Each cell paints its own background (otherwise scrolled
    content shows through) and repeats the row's bottom border, which the
    background would otherwise cover. */
@@ -215,7 +215,7 @@
   padding: var(--space-2) 0;
 }
 
-/* Empty library — the ring state stands alone (no table chrome), centred in
+/* Empty library: the ring state stands alone (no table chrome), centred in
    the pane with the tab's primary action beneath it. */
 /* The white ground fills the pane; the card itself sits near the top rather
    than centred in all that height. */
@@ -226,11 +226,11 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
-  /* 80px — the scale stops at --space-16 (64px). */
+  /* 80px: the scale stops at --space-16 (64px). */
   padding-top: 5rem;
   background: var(--neutral-0);
 }
-/* RingEmptyState's own wrapper is `flex: 1` — inside this column that made it
+/* RingEmptyState's own wrapper is `flex: 1`, inside this column that made it
    soak up the height and shove the button to the bottom. Pin it to its content
    so the ring, label and action stay together as one centred group. */
 .emptyPane > :first-child {
@@ -309,14 +309,14 @@
 
 /* Measured, not assumed: the table's left edge sits 20px left of the "Plan
    Template" label (tab strip pads 16px, the tab item another 4px). The first
-   cell takes that 20px so its text — or its checkbox — starts on the same
+   cell takes that 20px so its text, or its checkbox, starts on the same
    vertical line as the tab. */
 .firstCol {
   padding-left: var(--space-5);
 }
 
 /* WorklistShell renders the select-all header through its own branch, which
-   ignores a column's thStyle — so the header checkbox needs the 20px inset
+   ignores a column's thStyle: so the header checkbox needs the 20px inset
    applied here to land on the same line as the row checkboxes. */
 .bulkOn :global(thead th:first-child) {
   padding-left: var(--space-5);
@@ -384,4 +384,50 @@
   flex-wrap: wrap;
   padding: var(--space-2) var(--space-4);
   border-bottom: 0.5px solid var(--neutral-150);
+}
+
+/* Template name over its audience and version, as plain secondary text. */
+.nameStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.nameMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+/* The version number opens its versions. */
+.versionLink {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: inherit;
+  color: inherit;
+}
+.versionLink:hover {
+  color: var(--primary-300);
+}
+
+.emptyHint {
+  max-width: 52ch;
+  margin: 0;
+  font-size: var(--font-md);
+  line-height: var(--leading-normal);
+  text-align: center;
+  color: var(--neutral-300);
+}
+
+/* Retire dialog: replacement picker and reason. */
+/* Wider than the default confirm so the date, replacement and reason fields breathe. */
+.retireDialog.retireDialog { max-width: 480px; width: 100%; }
+.retireFields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: left;
 }

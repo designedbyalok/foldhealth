@@ -56,15 +56,26 @@
 .stack > * { align-self: flex-start; }
 .cellText { font-size: var(--font-base); color: var(--neutral-400); white-space: nowrap; }
 .subText { font-size: var(--font-md); color: var(--neutral-300); white-space: nowrap; }
+/* Days to Save: amber at two weeks or less, red once none are left. */
+.daysToSave { font-size: var(--font-base); color: var(--neutral-400); white-space: nowrap; }
+.daysToSave.daysToSaveSoon { color: var(--status-warning-dark); }
+.daysToSave.daysToSaveOut { color: var(--status-error); }
 .subText.toneError, .subStatus.toneError { color: var(--status-error); }
 .dateText { font-size: var(--font-base); color: var(--neutral-400); white-space: nowrap; }
+/* A due date's status under it (Next Fill Due), as in the HEDIS worklist. */
+.dueLine { font-size: var(--font-xs); font-weight: 500; color: var(--status-warning); white-space: nowrap; }
+.dueOverdue { color: var(--status-error); }
 .mutedDash { color: var(--neutral-200); font-size: var(--font-base); }
 .pdc { font-size: var(--font-base); font-weight: 500; }
-/* Underlined values carry a tooltip: projected (an estimate until a claim
-   confirms it) and alert (red, act on it). */
-.projected { color: var(--neutral-400); border-bottom: 1px dashed var(--neutral-300); }
-.alert { color: var(--status-error); border-bottom: 1px dashed var(--status-error); }
+/* Values with a tooltip: projected (an estimate until a claim confirms it)
+   and alert (red, act on it). The dashed underline shows only on hover. */
+.projected { color: var(--neutral-400); border-bottom: 1px dashed transparent; }
+.projected:hover { border-bottom-color: var(--neutral-300); }
+.alert { color: var(--status-error); border-bottom: 1px dashed transparent; }
+.alert:hover { border-bottom-color: var(--status-error); }
 .sep { margin: 0 var(--space-1); color: var(--neutral-300); }
+/* The P column: the priority icon, set by rule; its tooltip says why. */
+.priorityIcon { display: inline-flex; align-items: center; justify-content: center; padding: var(--space-1); cursor: default; }
 
 .toneError { color: var(--status-error); }
 
@@ -76,10 +87,10 @@
   display: inline-flex; align-items: center;
 }
 
-.leadNote { display: inline-flex; align-items: center; gap: var(--space-1); max-width: 200px; }
-.truncate {
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-size: var(--font-md); color: var(--neutral-300);
+/* The whole note in a narrow column, wrapping down into the row's height. */
+.leadNote {
+  display: block; width: 180px; white-space: normal; overflow-wrap: anywhere;
+  font-size: var(--font-md); line-height: var(--leading-tight); color: var(--neutral-300);
 }
 
 .actionsCell { display: flex; align-items: center; gap: var(--space-2); justify-content: flex-end; }
@@ -115,7 +126,7 @@
 /* Row under the gaps when more than 2: "View More N" in Pharmacy Gaps, an
    empty spacer in the other gap columns so they stay aligned. */
 .gapFooter {
-  min-height: 32px;
+  min-height: 28px;
   display: flex;
   align-items: center;
   border-top: 0.5px solid var(--neutral-150);
@@ -136,14 +147,15 @@
 }
 .viewMoreBtn:hover { color: var(--primary-300); }
 
-/* Count cells with the full list in a hover card. */
+/* Count cells with the full list in a hover card; underlined on hover. */
 .countLink {
   font-size: var(--font-base);
   color: var(--neutral-400);
   white-space: nowrap;
-  border-bottom: 1px dashed var(--neutral-200);
+  border-bottom: 1px dashed transparent;
   cursor: default;
 }
+.countLink:hover { border-bottom-color: var(--neutral-200); }
 .hoverList { display: flex; flex-direction: column; gap: var(--space-2); text-align: left; }
 .hoverItem { font-size: var(--font-sm); color: var(--neutral-400); white-space: normal; }
 .gapBadgeButton {
@@ -161,38 +173,33 @@
 }
 .gapBadgeButton:focus-visible { outline: 2px solid var(--primary-200); outline-offset: 2px; }
 
-/* Open Care Gaps hover card: one row per gap, each opening its Care Gap Details. */
-.gapLinks { display: flex; flex-direction: column; }
-.gapLink, .gapLinkStatic {
-  display: grid;
-  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border: none;
-  border-radius: 6px;
-  background: none;
-  text-align: left;
-  font-size: var(--font-sm);
-  color: var(--neutral-400);
+/* Open Care Gaps hover card, laid out like the HCC Open ICDs popup. */
+.gapCard { display: flex; flex-direction: column; max-height: 320px; }
+.gapCardHeader {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  background: var(--neutral-50);
+  border-bottom: 0.5px solid var(--neutral-100);
+  font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300);
 }
-.gapLink { cursor: pointer; }
-.gapLink:hover { background: var(--primary-50); color: var(--primary-300); }
-.gapLinkName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gapLinkStatus { color: var(--neutral-300); }
+.gapCardList { display: flex; flex-direction: column; overflow-y: auto; }
+.gapCardRow {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: none; background: var(--neutral-0); text-align: left;
+}
+.gapCardRow + .gapCardRow { border-top: 0.5px solid var(--neutral-100); }
+.gapCardLink { cursor: pointer; transition: background 0.12s; }
+.gapCardLink:hover { background: var(--neutral-50); }
+.gapCardName { font-size: var(--font-md); line-height: var(--leading-tight); color: var(--neutral-400); white-space: normal; }
+.gapCardName b { font-weight: 600; }
 
-/* Claim detail is capped so the column stays narrow; full text on hover. */
-.reconDetail { display: block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
-
-/* "Claim not matched" rework flag: opens the drug's claim history. */
+/* "Rework task open" under Claim Reconciliation: opens the task. */
 .reworkLink {
   background: none; border: none; padding: 0; cursor: pointer;
   font-size: var(--font-md); color: var(--status-error);
   text-align: left; white-space: nowrap;
 }
 .reworkLink:hover { text-decoration: underline; }
-.subStatusBtn { background: none; border: none; padding: 0; cursor: pointer; text-align: left; }
-.subStatusBtn:hover { text-decoration: underline; }
 
 /* Chevrons are DownChevronIcon, turned for right (collapsed) and up. */
 .chevron { flex-shrink: 0; transition: transform 0.15s ease; }

@@ -11,7 +11,7 @@
   opacity: 1;
   transition: opacity var(--drawer-duration, 250ms) var(--ease-out);
 }
-/* Mount state — opacity starts at 0 and transitions to 1 on paint.
+/* Mount state: opacity starts at 0 and transitions to 1 on paint.
    Chromium 117+, Firefox 129+, Safari 17.5+ support @starting-style. */
 @starting-style {
   .overlay { opacity: 0; }
@@ -36,19 +36,23 @@
   transform: translateX(0);
   /* `width` is also transitioned so consumers that swap the panel width
      (e.g. Care Gap drawer widening from 700→1280 when the Add Task left
-     workspace opens) slide open smoothly from the right edge — the same
+     workspace opens) slide open smoothly from the right edge, the same
      motion the HCC DiagPanel uses. Width lives on the inline style set
      by Drawer.jsx, but the transition runs from CSS. */
   transition:
     transform var(--drawer-duration) var(--ease-drawer),
     width var(--drawer-duration) var(--ease-drawer);
-  /* Source of truth for the close duration — Drawer.jsx reads this via
+  /* Source of truth for the close duration, Drawer.jsx reads this via
      getComputedStyle(). Keep in ms so parseFloat works. */
   --drawer-duration: 250ms;
 }
 @starting-style {
   .panel { transform: translateX(100%); }
 }
+/* Focused programmatically on open so keyboard users start inside it; it
+ * isn't a control, so no ring. */
+.panel:focus { outline: none; }
+
 .panel[data-closing='true'] {
   transform: translateX(100%);
 }
@@ -93,7 +97,7 @@
 }
 
 /* Vertical hairline between the header actions and the close button. The
-   Drawer shell renders this as a real `<span>` — the close button never
+   Drawer shell renders this as a real `<span>`, the close button never
    paints its own border. Consumers get the divider automatically whenever
    they pass `headerRight`, `primaryAction`, or `secondaryAction`. */
 .headerDivider {
@@ -105,7 +109,7 @@
 
 /* Full-bleed slot between header and body. Callers pass their own
    fully-styled element (typically PatientBanner) that should hug the
-   drawer edges — no side padding here. */
+   drawer edges: no side padding here. */
 .banner {
   flex-shrink: 0;
 }

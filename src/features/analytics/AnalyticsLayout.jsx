@@ -24,6 +24,7 @@ import { AiAnalyticsView } from './views/AiAnalyticsView';
 import { SdohView } from './views/SdohView';
 import { ActionRulesView } from './views/ActionRulesView';
 import { EmployerImpactView } from './views/employer/EmployerImpactView';
+import { PharmacyReportsView } from './views/pharmacy/PharmacyReportsView';
 import s from './AnalyticsLayout.module.css';
 
 class ViewErrorBoundary extends React.Component {
@@ -45,7 +46,7 @@ const VIEW_MAP = {
   care: CareView, network: NetworkView, shared: SharedSavingsView,
   roi: RoiView, tools: ToolUsageView, platformops: PlatformOpsView,
   aianalytics: AiAnalyticsView, sdoh: SdohView, actionrules: ActionRulesView,
-  employer: EmployerImpactView,
+  employer: EmployerImpactView, pharmacy: PharmacyReportsView,
 };
 
 // Views that render their own title and filters in place of the shared header.
@@ -53,9 +54,10 @@ const SELF_HEADED_VIEWS = new Set(['employer']);
 // Views laid out edge to edge, with their own full-bleed rows, instead of padded.
 const FLUSH_CANVAS_VIEWS = new Set(['employer']);
 // Views that leave out the data-source recency bar.
-const NO_RECENCY_VIEWS = new Set(['employer']);
+const NO_RECENCY_VIEWS = new Set(['employer', 'pharmacy']);
 // Views that leave out the global slicer bar (Organization, Period, Quarter, Persona).
-const NO_SLICER_VIEWS = new Set(['employer']);
+// Pharmacy has its own filters (health plan, IPA, measure).
+const NO_SLICER_VIEWS = new Set(['employer', 'pharmacy']);
 
 const PERIODS = [
   { value: '2026-03', label: 'Mar 2026' },
@@ -101,7 +103,7 @@ export function AnalyticsLayout() {
   const isEditableView = EDITABLE_VIEWS.has(view);
   const editing = editingDashboard && isEditableView;
 
-  // Auto-exit edit mode when switching views — avoids stale state when the
+  // Auto-exit edit mode when switching views, avoids stale state when the
   // user navigates to a non-editable view while editing.
   useEffect(() => { setEditingDashboard(false); }, [view]);
 
@@ -139,7 +141,7 @@ export function AnalyticsLayout() {
   // When the user has opted into the floating sidebar shape, portal the
   // Analytics SideNav into the floating card's slot so the rail and the
   // Analytics nav read as one combined card (same shape Population uses).
-  // Everything else — state, callbacks, canvas scroll ref — stays in this
+  // Everything else, state, callbacks, canvas scroll ref, stays in this
   // layout; only the DOM moves.
   const sidebarShape = useAppStore(st => st.sidebarShape);
   const floatingSlot = useFloatingSubNavSlot();
@@ -169,7 +171,7 @@ export function AnalyticsLayout() {
     <div className={s.wrap}>
       {/* ── Body (nav + canvas) ── */}
       <div className={s.body}>
-        {/* Page Navigator — portaled into the floating NavBar when the user
+        {/* Page Navigator: portaled into the floating NavBar when the user
             is on the floating shape, otherwise rendered inline here. */}
         {floating ? createPortal(sideNavEl, floatingSlot) : sideNavEl}
 
@@ -184,7 +186,7 @@ export function AnalyticsLayout() {
                 className={s.filterSelect}
                 options={ORGANIZATIONS}
                 value={analyticsOrg}
-                onChange={setAnalyticsOrg}
+                onValueChange={setAnalyticsOrg}
               />
             </div>
 
@@ -202,7 +204,7 @@ export function AnalyticsLayout() {
                 className={s.filterSelect}
                 options={QUARTERS}
                 value={analyticsQuarter}
-                onChange={setAnalyticsQuarter}
+                onValueChange={setAnalyticsQuarter}
               />
             </div>
 
@@ -217,12 +219,12 @@ export function AnalyticsLayout() {
                   label: (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ width: 7, height: 7, borderRadius: '50%', background: d.dot, flexShrink: 0, display: 'inline-block' }} />
-                      {d.name} — {d.role}
+                      {d.name}, {d.role}
                     </span>
                   ),
                 }))}
                 value={analyticsPersona}
-                onChange={setAnalyticsPersona}
+                onValueChange={setAnalyticsPersona}
               />
             </div>
 
@@ -274,12 +276,14 @@ export function AnalyticsLayout() {
               <div className={s.viewSub}>{meta.sub}</div>
             </div>
             <div className={s.filterBar}>
-              {/* Practice — FilterChip singleSelect. The 'all' sentinel used
+              {/* Practice: FilterChip singleSelect. The 'all' sentinel used
                   by the underlying store maps to an empty chip selection so
                   the chip reads "Practice ⌄" idle and
                   "Practice : Patel Family Medicine ✕" once picked. Options
                   are the label strings (all entries except the "All
-                  Practices" sentinel); we look up the value on change. */}
+                  Practices" sentinel); we look up the value on change.
+                  Views without the global slicers don't take it either. */}
+              {!NO_SLICER_VIEWS.has(view) && (
               <FilterChip
                 label="Practice"
                 options={PRACTICES.filter(p => p.value !== 'all').map(p => p.label)}
@@ -294,9 +298,9 @@ export function AnalyticsLayout() {
                 }}
                 singleSelect
               />
+              )}
               <Button
-                variant="secondary"
-                size="L"
+                variant="outline"
                 leadingIcon="solar:download-minimalistic-linear"
                 onClick={() => showToast('Exporting report...')}
               >
@@ -304,8 +308,7 @@ export function AnalyticsLayout() {
               </Button>
               {isEditableView && editing && (
                 <Button
-                  variant="secondary"
-                  size="L"
+                  variant="outline"
                   leadingIcon="solar:refresh-linear"
                   onClick={() => setResetTick(t => t + 1)}
                 >
@@ -314,8 +317,7 @@ export function AnalyticsLayout() {
               )}
               {isEditableView && (
                 <Button
-                  variant={editing ? 'tertiary' : 'secondary'}
-                  size="L"
+                  variant={editing ? 'soft' : 'outline'}
                   leadingIcon={editing ? 'solar:check-circle-linear' : 'solar:pen-linear'}
                   onClick={() => setEditingDashboard(v => !v)}
                 >

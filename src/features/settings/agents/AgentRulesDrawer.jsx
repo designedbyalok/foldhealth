@@ -7,9 +7,9 @@ import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { useAppStore } from '../../../store/useAppStore';
 import { Switch } from '../../../components/Switch/Switch';
-import { defaultRules, customRules, groupSettings } from '../../../data/chatGroups'; // Rules defaults — TODO: move to store
+import { defaultRules, customRules, groupSettings } from '../../../data/chatGroups'; // Rules defaults, TODO: move to store
 
-const RULE_BADGE_VARIANT = { safety: 'status-failed', system: 'ai-care', custom: 'status-completed' };
+const RULE_BADGE_VARIANT = { safety: 'danger', system: 'primary', custom: 'success' };
 const RULE_TYPE_LABEL = { safety: 'Safety', system: 'System', custom: 'Custom' };
 
 export function AgentRulesDrawer() {
@@ -63,7 +63,7 @@ export function AgentRulesDrawer() {
         <Icon name="solar:alt-arrow-right-linear" size={12} color="var(--neutral-200)" />
         <button type="button" style={{ cursor: 'pointer', color: 'var(--primary-300)', font: 'inherit' }} onClick={() => setAgentRulesGroupId(null)}>{group.name}</button>
         <Icon name="solar:alt-arrow-right-linear" size={12} color="var(--neutral-200)" />
-        <span style={{ color: 'var(--neutral-400)', fontWeight: 500 }}>Care Assistant — Rules</span>
+        <span style={{ color: 'var(--neutral-400)', fontWeight: 500 }}>Care Assistant: Rules</span>
       </div>
 
       {/* Agent Header Card */}
@@ -73,8 +73,8 @@ export function AgentRulesDrawer() {
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 'var(--font-lg)', fontWeight: 500, color: 'var(--neutral-500)', display: 'flex', alignItems: 'center', gap: 6 }}>
               Care Assistant
-              <Badge variant="ai-care" label="AI Agent" />
-              <Badge variant="compliance-na" label="FAQ Responder" />
+              <Badge tone="primary" label="AI Agent" />
+              <Badge label="FAQ Responder" />
             </div>
             <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)', marginTop: 2 }}>
               Assigned to: <strong style={{ color: 'var(--neutral-300)' }}>{group.name}</strong> · Global defaults + group overrides
@@ -126,7 +126,7 @@ export function AgentRulesDrawer() {
               {rules.filter(r => r.type !== 'custom').length} default · {rules.filter(r => r.type === 'custom').length} custom · Evaluated top to bottom
             </span>
           </div>
-          <Button variant="primary" size="S" leadingIcon="solar:add-circle-linear" onClick={() => setShowAddRule(!showAddRule)}>
+          <Button size="sm" leadingIcon="solar:add-circle-linear" onClick={() => setShowAddRule(!showAddRule)}>
             Add Custom Rule
           </Button>
         </div>
@@ -173,7 +173,7 @@ export function AgentRulesDrawer() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
-              <Button variant="primary" size="S" onClick={() => {
+              <Button size="sm" onClick={() => {
                 if (!newRuleName.trim()) return;
                 const newRule = {
                   id: Date.now(), name: newRuleName.trim(), type: 'custom', locked: false, enabled: true,
@@ -193,7 +193,7 @@ export function AgentRulesDrawer() {
                 setShowAddRule(false);
                 showToast('Custom rule added');
               }}>Add Rule</Button>
-              <Button variant="secondary" size="S" onClick={() => setShowAddRule(false)}>Cancel</Button>
+              <Button variant="outline" size="sm" onClick={() => setShowAddRule(false)}>Cancel</Button>
             </div>
           </div>
         )}
@@ -218,7 +218,7 @@ export function AgentRulesDrawer() {
             {/* Content */}
             <div style={{ flex: 1, padding: '10px 14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                <Badge variant={RULE_BADGE_VARIANT[r.type]} label={RULE_TYPE_LABEL[r.type]} />
+                <Badge tone={RULE_BADGE_VARIANT[r.type]} label={RULE_TYPE_LABEL[r.type]} />
                 <span style={{ fontWeight: 500, fontSize: 'var(--font-md)', color: 'var(--neutral-500)' }}>{r.name}</span>
                 {r.locked && <Icon name="solar:shield-check-linear" size={12} color="var(--neutral-200)" />}
                 {r.priority && (
@@ -240,10 +240,10 @@ export function AgentRulesDrawer() {
               <Switch checked={r.enabled} onChange={() => toggleRule(r.id)} disabled={r.locked} />
               {!r.locked && (
                 <>
-                  <ActionButton icon="solar:pen-linear" size="L" tooltip="Edit rule"
+                  <ActionButton icon="solar:pen-linear" tooltip="Edit rule"
                     onClick={() => setEditingRuleId(editingRuleId === r.id ? null : r.id)} />
                   <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-                  <ActionButton icon="solar:trash-bin-minimalistic-linear" size="L" tooltip="Delete rule"
+                  <ActionButton icon="solar:trash-bin-minimalistic-linear" tooltip="Delete rule"
                     onClick={() => { setRules(prev => prev.filter(rule => rule.id !== r.id)); showToast('Rule deleted'); }} />
                 </>
               )}
@@ -269,7 +269,7 @@ export function AgentRulesDrawer() {
                     style={{ width: '100%', marginTop: 4, padding: '8px 12px', borderRadius: 4, border: '0.5px solid var(--neutral-150)', fontSize: 'var(--font-md)', fontFamily: "'Inter', sans-serif", outline: 'none', boxSizing: 'border-box' }} />
                 </div>
               </div>
-              <Button variant="primary" size="S" onClick={() => { setEditingRuleId(null); showToast('Rule updated'); }}>Save Changes</Button>
+              <Button size="sm" onClick={() => { setEditingRuleId(null); showToast('Rule updated'); }}>Save Changes</Button>
             </div>
           )}
           </div>
@@ -283,7 +283,7 @@ export function AgentRulesDrawer() {
       }}>
         <Icon name="solar:danger-triangle-linear" size={20} color="var(--status-warning)" />
         <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-400)', lineHeight: 1.6 }}>
-          <strong>Key Constraints:</strong> Emergency (#1) and Crisis (#2) always fire first — cannot be reordered, disabled, or overridden. Default Fallback (#10) always fires last. Each message matches at most one rule (first match wins). Custom rules are inserted above #10. Changes take effect immediately for new messages.
+          <strong>Key Constraints:</strong> Emergency (#1) and Crisis (#2) always fire first: cannot be reordered, disabled, or overridden. Default Fallback (#10) always fires last. Each message matches at most one rule (first match wins). Custom rules are inserted above #10. Changes take effect immediately for new messages.
         </div>
       </div>
     </Drawer>

@@ -5,7 +5,7 @@ import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import styles from './HccUploadProgressRibbon.module.css';
 
 /**
- * HccUploadProgressRibbon — slim purple ribbon that sits at the top of
+ * HccUploadProgressRibbon: slim purple ribbon that sits at the top of
  * the HCC worklist when one or more documents are extracting in the
  * background (drawer closed). Mirrors Figma 121:82599.
  *
@@ -17,7 +17,7 @@ import styles from './HccUploadProgressRibbon.module.css';
  * Visibility rules:
  *   - Hidden if there are no batches at all OR if the upload drawer is
  *     currently open (the drawer carries its own progress UI).
- *   - User can dismiss with the × button — local state hides the
+ *   - User can dismiss with the × button, local state hides the
  *     ribbon for the remainder of the session.
  */
 export function HccUploadProgressRibbon() {
@@ -26,7 +26,7 @@ export function HccUploadProgressRibbon() {
   const sftpReviewOpen = useAppStore(s => s.hccSftpReviewOpen);
   const openSftpReview = useAppStore(s => s.openHccSftpReview);
   // Remember which batches the user dismissed so the ribbon doesn't
-  // reappear every render — but DO reset when a new batch arrives so
+  // reappear every render: but DO reset when a new batch arrives so
   // the next upload always surfaces.
   const [dismissedIds, setDismissedIds] = useState(() => new Set());
   const seenIdsRef = useRef(new Set());
@@ -72,7 +72,7 @@ export function HccUploadProgressRibbon() {
     );
   }
 
-  // Pending state — show running progress.
+  // Pending state: show running progress.
   return (
     <div className={styles.ribbon}>
       <Icon name="custom:ai" size={14} color="var(--primary-300)" />

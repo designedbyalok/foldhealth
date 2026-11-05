@@ -1,13 +1,14 @@
 import { useMemo, useRef, useState, useLayoutEffect } from 'react';
 import { FilterChip } from '../FilterChip/FilterChip';
-import { useAppStore } from '../../store/useAppStore';
-import { FilterNameDialog } from '../../features/hcc/FilterNameDialog';
-import { MoreFiltersPopover } from '../../features/hcc/MoreFiltersPopover';
-import { filterDefsForList, resolveOptions, mergeRefs } from './filterBarUtils';
+import { FilterNameDialog } from './FilterNameDialog';
+import { MoreFiltersPopover } from './MoreFiltersPopover';
+import { mergeRefs } from './filterBarUtils';
 import { SingleSelectFilter } from './SingleSelectFilter';
-import { DefaultViewByToggle } from './DefaultViewByToggle';
 import { FilterBarTail } from './FilterBarTail';
 import styles from './FilterBar.module.css';
+
+const NO_DEFS = [];
+const NO_FILTERS = {};
 
 export function FilterBar({
   filterDefs,
@@ -38,22 +39,28 @@ export function FilterBar({
   // onSelect(key)).
   clearAllLabel,
   saveLabel,
-  // Spec mode (worklist filter allocation): the chip row stays on one line.
-  // Primary chips fill it in roster order; the ones that don't fit move into
-  // More Filters (under "Primary", above the secondary filters grouped by
-  // `group` / domain). A filter picked there shows in the row; unchecking it
+  // Spec mode (worklist filter allocation): the primary chips that fit on the
+  // first line (next to More Filters / Clear All / Save Filter) show, in
+  // roster order; the rest move into More Filters (under "Primary", above the
+  // secondary filters grouped by `group` / domain). Filters picked there, or
+  // with a value but not among those primaries, follow them and wrap onto
+  // more lines as needed, so they never push a primary out. Unchecking a pick
   // clears its value. Picks are kept here, not in `visibleKeys`, so an old
-  // stored visible set can't push the row onto a second line.
+  // stored visible set can't reshuffle the primaries.
   pinPrimary = false,
   saveMenuItems,
   onSaveMenuSelect,
+  // 'inline': the bar sits inside a section (P360 tabs, Figma 6063:261110)
+  // rather than under a page header: no border or background, tighter
+  // spacing, and Clear All as a primary link with its icon.
+  variant = 'page',
+  // More Filters' grouped layout: the order of the domain headings.
+  groupOrder,
+  // The worklist's filter row is closed: show only the filters that have a
+  // value (still clearable) and Clear All, so the user can see what's
+  // narrowing the list. Nothing renders when no filter is set.
+  collapsed = false,
 } = {}) {
-  const storeActiveFilters = useAppStore(s => s.activeFilters);
-  const storeSetFilter = useAppStore(s => s.setFilter);
-  const storeClearAllFilters = useAppStore(s => s.clearAllFilters);
-  const storePatients = useAppStore(s => s.patients);
-  const storeActiveSubnavList = useAppStore(s => s.activeSubnavList);
-  const storeSaveSavedFilter = useAppStore(s => s.saveSavedFilter);
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [customVisible, setCustomVisible] = useState(null);
@@ -68,16 +75,12 @@ export function FilterBar({
 
   // Memoised: filterDefsForList builds new defs each call, and the auto-fit
   // effect below depends on them.
-  const effectiveDefs = useMemo(
-    () => filterDefs ?? filterDefsForList(storeActiveSubnavList),
-    [filterDefs, storeActiveSubnavList],
-  );
-  const effectiveFilters = filters ?? storeActiveFilters;
-  const effectiveGetOptions = getOptions ?? ((def) => resolveOptions(def, storePatients));
-  const listForSave = storeActiveSubnavList || 'TCM';
-  const effectiveOnFilterChange = onFilterChange ?? ((key, next) => storeSetFilter(key, next));
-  const effectiveOnClearAll = onClearAll ?? storeClearAllFilters;
-  const effectiveOnSaveFilter = onSaveFilter ?? ((name) => storeSaveSavedFilter(listForSave, name));
+  const effectiveDefs = filterDefs ?? NO_DEFS;
+  const effectiveFilters = filters ?? NO_FILTERS;
+  const effectiveGetOptions = getOptions ?? ((def) => def.options ?? []);
+  const effectiveOnFilterChange = onFilterChange ?? (() => {});
+  const effectiveOnClearAll = onClearAll ?? (() => {});
+  const effectiveOnSaveFilter = onSaveFilter ?? (() => {});
   const effectiveMoreItems = moreFilterItems ?? effectiveDefs.map(fd => ({ k: fd.key, label: fd.label, primary: fd.primary, group: fd.group }));
   const fitToRow = autoFit || pinPrimary;
   // Spec mode: the filters picked from More Filters.
@@ -137,13 +140,19 @@ export function FilterBar({
       if (tailW) budget -= tailW + GAP;
       const leadW = leadingRef.current?.offsetWidth ?? 0;
       if (leadW) budget -= leadW + GAP;
-      activeKeys.forEach(k => { budget -= widthOf(k) + GAP; });
-      // Spec mode: picks already hold their place in the row.
-      picks.filter(k => !activeKeySet.has(k)).forEach(k => { budget -= widthOf(k) + GAP; });
       const fit = new Set();
-      const pickSet = new Set(picks);
+      if (pinPrimary) {
+        // First line: primaries in roster order (with their values) until
+        // one doesn't fit. Picks and other values go on the second line.
+        for (const k of primaryKeys) {
+          const w = widthOf(k) + GAP;
+          if (budget - w >= 0) { budget -= w; fit.add(k); } else break;
+        }
+        setAutoInactive(prev => (prev && prev.size === fit.size && [...fit].every(k => prev.has(k)) ? prev : fit));
+        return;
+      }
+      activeKeys.forEach(k => { budget -= widthOf(k) + GAP; });
       for (const k of inactivePrimary) {
-        if (pickSet.has(k)) continue;
         const w = widthOf(k) + GAP;
         if (budget - w >= 0) { budget -= w; fit.add(k); } else break;
       }
@@ -154,14 +163,21 @@ export function FilterBar({
     const ro = new ResizeObserver(compute);
     ro.observe(container);
     return () => ro.disconnect();
-  }, [fitToRow, pinPrimary, picks, activeKeySet, visibleKeysProp, customized, activeKeys, inactivePrimary]);
+  }, [fitToRow, pinPrimary, primaryKeys, effectiveFilters, visibleKeysProp, customized, activeKeys, inactivePrimary]);
 
+
+  // Spec mode: the primaries that fit, then everything else that shows
+  // (picks, values on other filters).
+  const { firstLine, secondLine } = useMemo(() => {
+    if (!pinPrimary) return { firstLine: [], secondLine: [] };
+    const first = autoInactive ? primaryKeys.filter(k => autoInactive.has(k)) : primaryKeys;
+    const firstSet = new Set(first);
+    return { firstLine: first, secondLine: orderKeys([...activeKeys, ...picks]).filter(k => !firstSet.has(k)) };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinPrimary, autoInactive, primaryKeys, activeKeys, picks]);
 
   const visibleKeys = useMemo(() => {
-    if (pinPrimary) {
-      const fit = autoInactive ? inactivePrimary.filter(k => autoInactive.has(k)) : inactivePrimary;
-      return orderKeys([...activeKeys, ...picks, ...fit]);
-    }
+    if (pinPrimary) return [...firstLine, ...secondLine];
     if (visibleKeysProp !== undefined) {
       return orderKeys([...visibleKeysProp, ...activeKeys]);
     }
@@ -175,7 +191,7 @@ export function FilterBar({
     const base = customVisible ?? primaryKeys;
     return orderKeys([...base, ...activeKeys]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pinPrimary, picks, visibleKeysProp, customVisible, activeKeys, primaryKeys, autoFit, autoInactive, inactivePrimary]);
+  }, [pinPrimary, firstLine, secondLine, visibleKeysProp, customVisible, activeKeys, primaryKeys, autoFit, autoInactive, inactivePrimary]);
 
   // Spec mode: primaries already in the row that weren't picked from More
   // Filters (they fit, or a value put them there). More Filters leaves these
@@ -206,7 +222,7 @@ export function FilterBar({
     }
     if (onToggleVisible) {
       // Pass the current computed visible set so callers can toggle *just this
-      // key* against auto-fit's live selection — otherwise, when `visibleKeys`
+      // key* against auto-fit's live selection: otherwise, when `visibleKeys`
       // is uncontrolled and auto-fit has narrowed the row to a subset, the
       // caller has no way to know which chips were shown and typically falls
       // back to the full primary list, which reveals every hidden chip at once.
@@ -256,7 +272,7 @@ export function FilterBar({
     if (showSaveFilter) next.push(showInternalSaveDialog ? 'saveFilterDialog' : 'saveFilter');
     return next;
   }, [showMoreFilters, showSaveFilter, showInternalSaveDialog]);
-  const leadingNode = leading === undefined ? <DefaultViewByToggle /> : leading;
+  const leadingNode = leading ?? null;
 
   const renderOne = (k, mirror = false) => {
     if (renderChip) return renderChip(k, mirror);
@@ -285,29 +301,55 @@ export function FilterBar({
     );
   };
 
+  // More Filters | Clear All | Save Filter: always after the last chip.
+  const tailNode = (
+    <FilterBarTail
+      tailRef={setTailRef}
+      moreBtnRef={moreBtnRef}
+      actions={tailActions}
+      moreRect={moreRect}
+      onOpenMore={openMore}
+      onCloseMore={() => setMoreRect(null)}
+      hasActive={hasActive}
+      onClearAll={() => effectiveOnClearAll()}
+      onSaveFilter={() => effectiveOnSaveFilter()}
+      onOpenSaveDialog={() => setSaveDialogOpen(true)}
+      clearAllLabel={clearAllLabel}
+      clearAllIcon={variant === 'inline'}
+      saveLabel={saveLabel}
+      saveMenuItems={saveMenuItems}
+      onSaveMenuSelect={(key) => (key === 'new' && showInternalSaveDialog ? setSaveDialogOpen(true) : onSaveMenuSelect?.(key))}
+    />
+  );
+
+  if (collapsed) {
+    if (!hasActive || activeKeys.length === 0) return null;
+    return (
+      <div className={[styles.filterBar, variant === 'inline' ? styles.inline : ''].filter(Boolean).join(' ')}>
+        <div className={styles.filterRow}>
+          {orderKeys(activeKeys).map(k => (
+            <span key={k}>{renderOne(k, false)}</span>
+          ))}
+          <FilterBarTail
+            actions={[]}
+            hasActive
+            onClearAll={() => effectiveOnClearAll()}
+            clearAllLabel={clearAllLabel}
+            clearAllIcon={variant === 'inline'}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.filterBar}>
+    <div className={[styles.filterBar, variant === 'inline' ? styles.inline : ''].filter(Boolean).join(' ')}>
       <div className={styles.filterRow} ref={setChipsRef}>
         {leadingNode && <span ref={leadingRef} className={styles.leading}>{leadingNode}</span>}
         {visibleKeys.map(k => (
           <span key={k}>{renderOne(k, false)}</span>
         ))}
-        <FilterBarTail
-          tailRef={setTailRef}
-          moreBtnRef={moreBtnRef}
-          actions={tailActions}
-          moreRect={moreRect}
-          onOpenMore={openMore}
-          onCloseMore={() => setMoreRect(null)}
-          hasActive={hasActive}
-          onClearAll={() => effectiveOnClearAll()}
-          onSaveFilter={() => effectiveOnSaveFilter()}
-          onOpenSaveDialog={() => setSaveDialogOpen(true)}
-          clearAllLabel={clearAllLabel}
-          saveLabel={saveLabel}
-          saveMenuItems={saveMenuItems}
-          onSaveMenuSelect={(key) => (key === 'new' && showInternalSaveDialog ? setSaveDialogOpen(true) : onSaveMenuSelect?.(key))}
-        />
+        {tailNode}
       </div>
 
       {fitToRow && (
@@ -328,6 +370,7 @@ export function FilterBar({
           visibleKeys={visibleKeys}
           moreFilterItems={effectiveMoreItems}
           grouped={pinPrimary}
+          groupOrder={groupOrder}
           hiddenKeys={inRow}
           onToggle={toggleVisible}
           onClear={clearVisible}

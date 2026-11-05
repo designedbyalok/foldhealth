@@ -1,5 +1,5 @@
 import { parseLocalDate } from '../../../../../../../lib/localDate';
-// Shared helpers for the comprehensive (cross-program) care plan snapshot —
+// Shared helpers for the comprehensive (cross-program) care plan snapshot,
 // used by CarePlanSummaryView to render and by the Care Management Download
 // CTA to export the same data.
 
@@ -59,7 +59,7 @@ function matchesDatePreset(d, preset) {
 
 // Row-agnostic date extractors. Goals have targetDate (Figma "Due Date"
 // on the goal form); interventions don't carry an ISO due date, so their
-// due chip filter is a no-op there — leaving them visible avoids
+// due chip filter is a no-op there, leaving them visible avoids
 // mysterious disappearances. All three types carry createdAt.
 function dueDateOf(row) {
   return parseLocalDate(row?.targetDate);
@@ -72,7 +72,7 @@ function createdDateOf(row) {
 
 /**
  * Apply the toolbar filters to a snapshot's rows. Every filter is an
- * array — empty array means "inactive" (the same shape FilterChip
+ * array: empty array means "inactive" (the same shape FilterChip
  * emits).
  */
 export function filterCarePlanSnapshot(snapshot, {
@@ -126,7 +126,7 @@ const csvCell = (v) => {
 
 /** Render a snapshot as a two-section CSV (Goals, then Interventions). */
 export function carePlanSnapshotToCsv({ conditions, goals, interventions }) {
-  const lines = ['Care Plan — All programs'];
+  const lines = ['Care Plan: All programs'];
   if (conditions.length) lines.push(['Conditions', conditions.join('; ')].map(csvCell).join(','));
   lines.push('');
   lines.push('Goals');

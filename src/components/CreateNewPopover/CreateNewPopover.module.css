@@ -54,7 +54,7 @@
 
 .item:hover { background: var(--primary-50); color: var(--primary-300); }
 
-/* Item icon — rests one shade lighter than the label (matching the old
+/* Item icon: rests one shade lighter than the label (matching the old
    pinned neutral-300), then tints with the label on hover and pops with a
    gentle back-out overshoot. Transform + color are split so the color snaps
    in step with the text while the scale gets the springier curve. */
@@ -68,7 +68,7 @@
   color: var(--primary-300);
   transform: scale(1.18);
 }
-/* Press feedback — the icon dips under the cursor before the action fires. */
+/* Press feedback: the icon dips under the cursor before the action fires. */
 .item:active .itemIcon {
   transform: scale(0.92);
   transition-duration: var(--duration-fast), var(--duration-instant);

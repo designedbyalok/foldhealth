@@ -1,5 +1,8 @@
+import { useMemo } from 'react';
 import { SideNav } from '../../components/SideNav/SideNav';
 import { SETTINGS_MENU_ITEMS } from './settingsNavItems';
+import { useCan } from '../../lib/useCan';
+import { settingsPermissionKey } from '../../lib/accessControl';
 
 const SECTIONS = [{
   key: 'settings',
@@ -11,10 +14,15 @@ const SECTIONS = [{
 }];
 
 export function SettingsSubNav({ activeItem = 'agents', onItemClick, width = 180 }) {
+  const can = useCan();
+  const sections = useMemo(
+    () => SECTIONS.map(sec => ({ ...sec, items: sec.items.filter(item => can(settingsPermissionKey(item.key))) })),
+    [can],
+  );
   return (
     <SideNav
       width={width}
-      sections={SECTIONS}
+      sections={sections}
       activeKey={activeItem}
       onSelect={(key) => onItemClick?.(key)}
     />

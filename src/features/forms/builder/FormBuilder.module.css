@@ -1,4 +1,4 @@
-/* Full-screen form builder. Tokens only — Inter, Fold greys/purple. */
+/* Full-screen form builder. Tokens only, Inter, Fold greys/purple. */
 
 .builder {
   position: fixed;
@@ -184,7 +184,7 @@
 .propsBody::-webkit-scrollbar { display: none; }
 .propsBody { scrollbar-width: none; }
 
-/* Form settings (Properties empty state) — uses email-builder panel classes */
+/* Form settings (Properties empty state): uses email-builder panel classes */
 .settingRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .settingLabel { font-size: var(--font-base); color: var(--neutral-400); }
 .settingHint { font-size: var(--font-sm); color: var(--neutral-300); line-height: 1.5; margin: 0 0 4px; }
@@ -254,7 +254,7 @@
 
 /* Member Consent health component configuration */
 .consentDivider { height: 0.5px; background: var(--neutral-150); margin: 0.375rem 0; }
-/* Global "Show decline option" switch — a row rather than a .propCheck because
+/* Global "Show decline option" switch: a row rather than a .propCheck because
    it's a Switch, not a checkbox, and reads as its own setting. */
 .consentToggleRow {
   display: flex; align-items: center; justify-content: space-between;
@@ -274,7 +274,7 @@
   text-transform: uppercase; color: var(--neutral-300);
 }
 .consentGroupCount { flex: 1 1 0; font-size: var(--font-sm); color: var(--neutral-200); }
-/* One consent item — the summary line plus the collapsible description editor.
+/* One consent item: the summary line plus the collapsible description editor.
    The whole block is the sortable unit, so hover lives here, not on the row. */
 .consentItemBlock { border-radius: 6px; }
 .consentItemBlock:hover { background: var(--neutral-50); }
@@ -341,7 +341,7 @@
 .previewStage { flex: 1 1 0; display: flex; flex-direction: column; min-height: 0; background: var(--neutral-0); }
 .deviceToolbar { display: flex; justify-content: center; padding: 12px; border-bottom: 0.5px solid var(--neutral-150); flex-shrink: 0; }
 .deviceArea { flex: 1 1 0; overflow: auto; display: grid; place-items: center; padding: 24px; }
-/* "Form" preview — the form on its own, no device frame. */
+/* "Form" preview: the form on its own, no device frame. */
 .plainArea { flex: 1 1 0; min-height: 0; background: var(--neutral-50); }
 .deviceArea::-webkit-scrollbar { width: 8px; height: 8px; }
 .deviceArea::-webkit-scrollbar-thumb { background: var(--neutral-150); border-radius: 4px; }

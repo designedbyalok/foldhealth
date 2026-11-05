@@ -1,4 +1,4 @@
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Icon } from '../../../components/Icon/Icon';
 import { EvidenceStatusBadge } from './LabStatusBadge';
 import { EvaluationBox, ResultTable } from './CareGapLabsTab';

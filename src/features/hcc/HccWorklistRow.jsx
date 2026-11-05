@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useAppStore } from '../../store/useAppStore';
 import { FoldIdTag } from '../../components/FoldIdTag/FoldIdTag';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Icon } from '../../components/Icon/Icon';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
@@ -135,7 +135,7 @@ function HccWorklistRowImpl({ member, hiddenCols, columns, staggerIndex = 0 }) {
       || rejectedStatuses.has(member.r1s)
       || rejectedStatuses.has(member.r2s);
   })();
-  // Billed is the post-billing terminal state — locks the row read-only
+  // Billed is the post-billing terminal state, locks the row read-only
   // the same way Rejected does, but with a green Billed treatment
   // (dollar badge on the avatar, green Billed chip in the Assignee cell).
   // A rejected row wins visually over billed so a rejection late in the
@@ -167,10 +167,10 @@ function HccWorklistRowImpl({ member, hiddenCols, columns, staggerIndex = 0 }) {
     return null;
   })();
   const rejectedTooltip = isRecordRejected
-    ? `Rejected${rejectingRole ? ` by ${rejectingRole}` : ''} — record is read-only. Expand DOSs or open the record to review comments.`
+    ? `Rejected${rejectingRole ? ` by ${rejectingRole}` : ''}: record is read-only. Expand DOSs or open the record to review comments.`
     : undefined;
   const billedTooltip = isRecordBilled
-    ? 'Billed — record is read-only. Open the row to review the submitted claim.'
+    ? 'Billed: record is read-only. Open the row to review the submitted claim.'
     : undefined;
 
   return (
@@ -283,7 +283,6 @@ function HccWorklistRowImpl({ member, hiddenCols, columns, staggerIndex = 0 }) {
         <div className={styles.actionsRow}>
           <ActionButton
             icon="solar:eye-linear"
-            size="L"
             tooltip={hasUnreadMention ? 'View Diagnosis Gaps (you were mentioned)' : 'View Diagnosis Gaps'}
             dot={hasUnreadMention}
             dotPulse
@@ -297,7 +296,6 @@ function HccWorklistRowImpl({ member, hiddenCols, columns, staggerIndex = 0 }) {
           <span className={styles.actionsDivider} />
           <ActionButton
             icon="custom:add-dos"
-            size="L"
             tooltip="Add DOS"
             onClick={(e) => { e.stopPropagation(); openAddDos(member); }}
           />
@@ -305,7 +303,6 @@ function HccWorklistRowImpl({ member, hiddenCols, columns, staggerIndex = 0 }) {
           <ActionButton
             ref={actionsBtnRef}
             icon="solar:menu-dots-linear"
-            size="L"
             tooltip="More actions"
             onClick={openActions}
           />
@@ -360,7 +357,7 @@ function HccWorklistRowImpl({ member, hiddenCols, columns, staggerIndex = 0 }) {
               initials: member.initials,
               gender: member.gender,
               age: member.age,
-              // The drawer's DOB helpers only accept a string — normalize
+              // The drawer's DOB helpers only accept a string, normalize
               // any Date / ISO / mm-dd-yyyy shape to mm/dd/yyyy up front.
               dob: formatDobDisplay(member.dob) || deriveDob(member.age, member.name),
               email: member.email,
@@ -368,7 +365,7 @@ function HccWorklistRowImpl({ member, hiddenCols, columns, staggerIndex = 0 }) {
             });
             return;
           }
-          showToast(`${label} — coming soon`);
+          showToast(`${label}: coming soon`);
         }}
       />
     )}
@@ -456,7 +453,7 @@ function HccEmptyPatientRowImpl({ patient, hiddenCols, columns, staggerIndex = 0
 
       <td className={`${styles.actionsCell} ${styles.stickyRight} ${styles.colActions}`}>
         <div className={styles.actionsRow}>
-          <Button variant="alt" size="S" leadingIcon="solar:add-circle-linear" onClick={handleRecord}>Add DOS</Button>
+          <Button variant="outline" tone="primary" size="sm" leadingIcon="solar:add-circle-linear" onClick={handleRecord}>Add DOS</Button>
         </div>
       </td>
     </tr>

@@ -19,3 +19,14 @@
   flex-wrap: wrap;
   gap: var(--space-1);
 }
+
+/* Common / category switch for a template with categories. */
+.categories {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.categoryNote {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}

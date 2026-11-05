@@ -7,7 +7,7 @@ import { useAppStore } from '../../store/useAppStore';
 import styles from './UpdateCard.module.css';
 
 /**
- * UpdateCard — floating announcement card: gradient hero with the Fold mark,
+ * UpdateCard: floating announcement card: gradient hero with the Fold mark,
  * a title with an optional pill tag, a short description, up to three highlight lines,
  * and a primary + secondary action. Pinned to the bottom-right corner above
  * everything else unless `floating` is false (e.g. inside a story canvas).
@@ -38,7 +38,7 @@ export function UpdateCard({
       <div className={styles.body}>
         <div className={styles.titleRow}>
           <h2 className={styles.title}>{title}</h2>
-          {tag && <Badge tone="primary" size="S" label={tag} />}
+          {tag && <Badge tone="primary" size="sm" label={tag} />}
         </div>
         {description && <p className={styles.description}>{description}</p>}
         {highlights.length > 0 && (
@@ -52,10 +52,10 @@ export function UpdateCard({
           </ul>
         )}
         <div className={styles.actions}>
-          <Button variant="primary" size="L" fullWidth onClick={onPrimary}>
+          <Button fullWidth onClick={onPrimary}>
             {primaryLabel}
           </Button>
-          <Button variant="ghost" size="L" fullWidth onClick={onSecondary}>
+          <Button variant="ghost" fullWidth onClick={onSecondary}>
             {secondaryLabel}
           </Button>
         </div>

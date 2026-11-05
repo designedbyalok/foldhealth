@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { toast } from '../../../../../../../components/Toast/sonnerToast';
 import { PROGRAM_LETTERS_MOCK } from '../../../../../data/programActivityMock';
-import { statusColorFor } from '../../../../../data/programStatus';
+import { statusColorFor, isProgramClosed } from '../../../../../data/programStatus';
 import {
   ASSESSMENT_STEPS,
   DEFAULT_LETTER_NAMES,
@@ -20,6 +20,7 @@ import {
 import { showsProgramCarePlan } from '../../care-plan/lib/carePlanMode';
 import { deriveStepStatus, programProgressOf, STEP_STATUS } from './stepStatus';
 import { useProgramActivityLog } from '../shared/useProgramActivityLog';
+import { isEmptyDash } from '../../../../../../../lib/emptyDash';
 
 const EMPTY_LIST = [];
 const EMPTY_MAP = {};
@@ -30,6 +31,10 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
   // Step definitions only; each step's status is worked out per patient below.
   // Patient-level orgs keep the care plan in Care Management, not here.
   const programCarePlan = showsProgramCarePlan(useAppStore(s => s.carePlanMode));
+  // Steps come from Care Program Configuration once it has loaded; a change there redraws them.
+  const programTypes = useAppStore(s => s.careProgramTypes);
+  const fetchCareProgramTypes = useAppStore(s => s.fetchCareProgramTypes);
+  useEffect(() => { fetchCareProgramTypes?.(); }, [fetchCareProgramTypes]);
   const stepsForProgram = (code) => (programCarePlan ? stepsFor(code) : withoutCarePlanStep(stepsFor(code)));
   const baseStepList = stepsForProgram(program.code);
   const ALL_STEPS = flatSteps(baseStepList);
@@ -40,7 +45,7 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
   // this program falls back to the program's default step.
   const storedStep = useAppStore(s => s.careProgramStep);
   const setActiveStep = useAppStore(s => s.setCareProgramStep);
-  const defaultStep = isCcm ? 'ccm-billing' : firstStep?.id;
+  const defaultStep = isCcm && ALL_STEPS.some(st => st.id === 'ccm-billing') ? 'ccm-billing' : firstStep?.id;
   const activeStep = (storedStep && ALL_STEPS.some(s => s.id === storedStep)) ? storedStep : defaultStep;
   const [expandedSections, setExpandedSections] = useState({});
   const [activeLetterTab, setActiveLetterTab] = useState('All');
@@ -107,6 +112,7 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
   });
   const patientId = useAppStore(s => s.selectedPatientId);
   const updateCareProgram = useAppStore(s => s.updateCareProgram);
+  const resumeCareProgramInstance = useAppStore(s => s.resumeCareProgramInstance);
   const storeLetters = useAppStore(s => s.letters);
   const fetchLetters = useAppStore(s => s.fetchLetters);
 
@@ -161,7 +167,7 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
     [patientPrograms],
   );
   const otherPrograms = useMemo(
-    () => (patientPrograms || []).filter(p => p.id !== program.id && p.status !== 'Closed'),
+    () => (patientPrograms || []).filter(p => p.id !== program.id && !isProgramClosed(p.status)),
     [patientPrograms, program.id],
   );
 
@@ -200,7 +206,7 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
     step.type === 'section'
       ? { ...step, children: step.children.map(c => ({ ...c, ...deriveStepStatus(c, stepCtx) })) }
       : { ...step, ...deriveStepStatus(step, stepCtx) }
-  )), [program.code, stepCtx, programCarePlan]); // eslint-disable-line react-hooks/exhaustive-deps
+  )), [program.code, stepCtx, programCarePlan, programTypes]); // eslint-disable-line react-hooks/exhaustive-deps
   const programProgress = programProgressOf(flatSteps(stepList));
 
   // Keep the enrollment's stored progress in step, so the program list and
@@ -220,7 +226,12 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
   const changeStatus = (newStatus) => {
     const patch = { status: newStatus, statusColor: statusColorFor(newStatus) };
     const cur = liveProgram || program;
-    if (newStatus === 'Enrolled' && (!cur.startDate || cur.startDate === '—')) {
+    // Leaving Paused resumes the program and its care plan.
+    if (cur.status === 'Paused' && newStatus !== 'Paused') {
+      resumeCareProgramInstance(patientId, cur, { status: newStatus });
+      return;
+    }
+    if (newStatus === 'Enrolled' && (!cur.startDate || isEmptyDash(cur.startDate))) {
       const d = new Date();
       patch.startDate = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
     }
@@ -259,7 +270,13 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
   };
   const stepName = activeStepObj?.name || '';
   const isMandatoryStep = !!activeStepObj?.mandatory;
-  const assessmentCfg = ASSESSMENT_STEPS[stepName];
+  // What the step opens (Care Program Configuration): a linked form wins, else
+  // its built-in screen, else the screen its name matches.
+  const linkedFormId = activeStepObj?.formId || null;
+  const screenName = linkedFormId ? '' : (activeStepObj?.screen || stepName);
+  const assessmentCfg = linkedFormId
+    ? { formId: linkedFormId, formName: activeStepObj.formName || stepName, title: stepName }
+    : ASSESSMENT_STEPS[screenName];
 
   const activeStepIdx = ALL_STEPS.findIndex(s => s.id === activeStep);
   const nextStep = activeStepIdx >= 0 && activeStepIdx < ALL_STEPS.length - 1 ? ALL_STEPS[activeStepIdx + 1] : null;
@@ -267,18 +284,19 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
   const toggleSection = (id) => setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
 
   const stepFlags = {
-    isBillingStep: activeStepObj?.kind === 'billing',
-    isOutreachStep: stepName === 'Outreach',
-    isPreVisitStep: /^pre-?visit$/i.test(stepName),
-    isCarePlanStep: stepName === 'Care Plan',
-    isAppointmentStep: /appointment/i.test(stepName),
-    isOpenCareGapsStep: stepName === 'Open Care Gaps' || stepName === 'Care Gaps',
-    isMedReconStep: stepName === 'Medication Reconciliation' || stepName === 'Medication Review',
-    isProgramTasksStep: stepName === 'Program Related Task' || stepName === 'Tasks',
-    isProgramFilesStep: stepName === 'Program Related Files' || stepName === 'Program Documents' || stepName === 'Documents',
-    isReferralStep: stepName === 'Referral Review',
-    isLettersStep: stepName === 'Letters' || stepName === 'Letters/eFax',
-    isDiagnosisGapsStep: stepName === 'Open Diagnosis Gaps',
+    isBillingStep: !linkedFormId && (activeStepObj?.kind === 'billing' || screenName === 'Billing Review'),
+    isOutreachStep: screenName === 'Outreach',
+    isPreVisitStep: /^pre-?visit$/i.test(screenName),
+    isSnapshotStep: screenName === 'Snapshot',
+    isCarePlanStep: screenName === 'Care Plan',
+    isAppointmentStep: /appointment/i.test(screenName),
+    isOpenCareGapsStep: screenName === 'Open Care Gaps' || screenName === 'Care Gaps',
+    isMedReconStep: screenName === 'Medication Reconciliation' || screenName === 'Medication Review',
+    isProgramTasksStep: screenName === 'Program Related Task' || screenName === 'Tasks',
+    isProgramFilesStep: screenName === 'Program Related Files' || screenName === 'Program Documents' || screenName === 'Documents',
+    isReferralStep: screenName === 'Referral Review',
+    isLettersStep: screenName === 'Letters' || screenName === 'Letters/eFax',
+    isDiagnosisGapsStep: screenName === 'Open Diagnosis Gaps',
   };
 
   return {
@@ -299,7 +317,7 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
     patientId, updateCareProgram, letters, shownLetters, status, assignee,
     isUnassigned, otherPrograms, prevTrigger, nextTrigger, triggerNum,
     changeStatus, allLettersSelected, someLettersSelected, toggleAllLetters,
-    toggleLetter, previewLetter, downloadSelectedLetters, stepName,
+    toggleLetter, previewLetter, downloadSelectedLetters, stepName, screenName,
     isMandatoryStep, assessmentCfg, goNextStep, toggleSection, stepFlags,
     initialsOf, progressForCode: progressFor, onSwitchProgram,
     activeStepStatus, activeStepSource: activeStepObj?.source || null, markStep, logActivity,

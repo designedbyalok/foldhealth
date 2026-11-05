@@ -9,6 +9,17 @@
   animation: filterSlide .15s ease;
 }
 
+/* Inline variant: inside a section, under its own header (Figma 6063:261110). */
+.inline {
+  background: none;
+  border-bottom: none;
+  padding: 0 calc(var(--space-3) / 2);
+}
+.inline .filterRow,
+.inline .tail { gap: calc(var(--space-3) / 2); }
+.inline .clearAll { color: var(--primary-300); }
+.inline .clearAll:hover { color: var(--primary-400); }
+
 .filterRow {
   display: flex;
   align-items: center;
@@ -22,7 +33,7 @@
   flex-shrink: 0;
 }
 
-/* Hidden mirror — measures chip widths for the auto-fit calculation.
+/* Hidden mirror: measures chip widths for the auto-fit calculation.
    Rendered inside FilterBar itself when `autoFit` is on. */
 .measure {
   position: absolute;
@@ -147,7 +158,7 @@
   font-size: var(--font-sm);
 }
 
-/* "More Filters" trigger — matches the HCC FilterChipBar's version so the
+/* "More Filters" trigger: matches the HCC FilterChipBar's version so the
    two worklists read as one system. Sits at the end of the chip row and
    opens the shared MoreFiltersPopover. */
 .moreBtn {
@@ -175,7 +186,7 @@
   color: var(--primary-300);
 }
 
-/* Tail cluster — More Filters | Clear All | Save Filter grouped as one
+/* Tail cluster: More Filters | Clear All | Save Filter grouped as one
    inline-flex unit that sits immediately after the last chip. Vertical
    dividers between the buttons. Mirrors HCC's FilterChipBar pattern. */
 .tail {
@@ -192,6 +203,9 @@
 }
 
 .clearAll {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   font-size: var(--font-md);
   color: var(--neutral-300);
   cursor: pointer;
@@ -202,7 +216,7 @@
 }
 .clearAll:hover { color: var(--neutral-400); }
 
-/* Save Filter — same link style as Clear All but tinted primary to draw
+/* Save Filter: same link style as Clear All but tinted primary to draw
    the eye since saving is the commit action. */
 .saveFilter {
   display: inline-flex;
@@ -261,7 +275,9 @@
 .viewByBtn:hover { background: var(--neutral-50); }
 .viewByBtn.active { background: var(--primary-100); color: var(--primary-300); }
 
+/* Opacity only: animating height pushed the table down on every page load
+   for lists whose filter bar starts open. */
 @keyframes filterSlide {
-  from { opacity: 0; max-height: 0; }
-  to { opacity: 1; max-height: 200px; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

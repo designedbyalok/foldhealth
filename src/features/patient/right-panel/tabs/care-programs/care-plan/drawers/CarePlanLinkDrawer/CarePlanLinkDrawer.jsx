@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
-import { RingEmptyState } from '../../../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import styles from './CarePlanLinkDrawer.module.css';
 import { parseLocalDate } from '../../../../../../../../lib/localDate';
@@ -21,7 +21,7 @@ function CarePlanLinkRow({ type, id, icon, title, meta, linked, onToggle }) {
         {meta && <span className={styles.rowMeta}>{meta}</span>}
       </span>
       {linked
-        ? <Badge tone="green" size="S" label="Linked" />
+        ? <Badge tone="success" size="sm" label="Linked" />
         : <span className={styles.addLink}><Icon name="solar:add-circle-linear" size={16} color="var(--primary-300)" />Link</span>}
     </button>
   );
@@ -70,7 +70,7 @@ export function CarePlanLinkDrawer({ patientId, program, patientName, owner, onC
       <div className={styles.body}>
         <div className={styles.ownerLine}>
           Linking to <strong>{owner.item.title}</strong>
-          {ownerLinks.length > 0 && <Badge tone="grey" size="S" label={`${ownerLinks.length} linked`} />}
+          {ownerLinks.length > 0 && <Badge size="sm" label={`${ownerLinks.length} linked`} />}
         </div>
 
         <div className={styles.section}>
@@ -110,7 +110,7 @@ export function CarePlanLinkDrawer({ patientId, program, patientName, owner, onC
         </div>
 
         {patientTasks.length === 0 && patientAppointments.length === 0 && (
-          <RingEmptyState icon="solar:link-linear" label="Nothing to link yet" />
+          <EmptyState icon="solar:link-linear" title="Nothing to link yet" />
         )}
       </div>
     </Drawer>

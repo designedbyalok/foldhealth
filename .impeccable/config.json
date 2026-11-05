@@ -16,7 +16,7 @@
         "rule": "overused-font",
         "value": "inter",
         "createdAt": "2026-08-17T13:37:54.965Z",
-        "reason": "Inter is a pinned brand commitment for Fold Health — CLAUDE.md and PRODUCT.md both require it as the only font"
+        "reason": "Inter is a pinned brand commitment for Fold Health, CLAUDE.md and PRODUCT.md both require it as the only font"
       },
       {
         "rule": "layout-transition",
@@ -43,7 +43,7 @@
           "src/features/population-groups/popgroups.css"
         ],
         "createdAt": "2026-08-19T08:12:02.738Z",
-        "reason": "background is a paint-only property, not a layout property — no thrash"
+        "reason": "background is a paint-only property, not a layout property, no thrash"
       },
       {
         "rule": "layout-transition",

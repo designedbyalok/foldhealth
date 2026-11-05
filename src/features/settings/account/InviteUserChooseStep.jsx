@@ -12,13 +12,13 @@ export function InviteUserChooseStep({ onClose, onChooseSingle, onChooseBulk }) 
           <Icon name="solar:user-plus-linear" size={32} color="var(--primary-300)" />
           <h4>Single Invite</h4>
           <p>Invite one team member at a time by filling out a form</p>
-          <Button variant="secondary" size="L">Invite Individual</Button>
+          <Button variant="outline">Invite Individual</Button>
         </div>
         <div className={`${styles.inviteCard} ${styles.inviteCardBulk}`} onClick={onChooseBulk}>
           <Icon name="solar:users-group-rounded-linear" size={32} color="var(--secondary-300)" />
           <h4>Bulk Import</h4>
           <p>Upload a CSV file to add multiple team members at once</p>
-          <Button variant="secondary" size="L" className={styles.inviteCardBulkButton}>Import Multiple</Button>
+          <Button variant="outline" className={styles.inviteCardBulkButton}>Import Multiple</Button>
         </div>
       </div>
     </Drawer>

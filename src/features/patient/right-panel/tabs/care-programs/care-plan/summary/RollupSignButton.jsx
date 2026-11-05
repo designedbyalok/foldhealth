@@ -60,8 +60,6 @@ export function RollupSignButton({ patientId, programs }) {
   return (
     <>
       <Button
-        variant="primary"
-        size="M"
         leadingIcon="solar:pen-2-linear"
         disabled={pending.length === 0}
         onClick={() => setConfirmOpen(true)}

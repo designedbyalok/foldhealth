@@ -1,7 +1,7 @@
 .titleWrap {
   display: flex;
   flex-direction: column;
-  /* 2px — below the --space-1 (4px) floor of the spacing scale. */
+  /* 2px: below the --space-1 (4px) floor of the spacing scale. */
   gap: 0.125rem;
 }
 .titleRow {

@@ -3,10 +3,10 @@ import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescripti
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { Button } from '../../../components/Button/Button';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import styles from './DiagPanel.module.css';
 // Record-level Reject reasons. Multi-select; a comment is ALWAYS required
-// (no "optional" branch, unlike Insufficient) — reject is terminal and
+// (no "optional" branch, unlike Insufficient), reject is terminal and
 // downstream reviewers need the specific reason on the audit trail.
 const REJECT_RECORD_REASONS = [
   'All documents belong to wrong patient',
@@ -19,7 +19,7 @@ const REJECT_RECORD_REASONS = [
 
 /**
  * Modal shown when a reviewer picks "Rejected" in the DosStatusMenu.
- * Same shape as InsufficientDosDialog on ChartDetailDrawer — white card,
+ * Same shape as InsufficientDosDialog on ChartDetailDrawer, white card,
  * multi-select reasons, MANDATORY comment. Confirm applies the reject.
  */
 export function RejectRecordDialog({ onCancel, onConfirm }) {
@@ -81,14 +81,14 @@ export function RejectRecordDialog({ onCancel, onConfirm }) {
         />
         <div className={styles.rejectDialogActions}>
           <Button
-            variant="danger"
-            size="S"
+            variant="soft" tone="danger"
+            size="sm"
             disabled={!canSubmit}
             onClick={() => onConfirm({ reasons: REJECT_RECORD_REASONS.filter(r => reasons.has(r)), note: note.trim() })}
           >
             Confirm
           </Button>
-          <Button variant="secondary" size="S" onClick={onCancel}>Cancel</Button>
+          <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
         </div>
       </AlertDialogContent>
     </AlertDialog>

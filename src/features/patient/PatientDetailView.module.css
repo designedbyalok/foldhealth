@@ -2,7 +2,7 @@
 .body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 .rightPanel { display: flex; flex-direction: column; flex: 1; min-width: 0; overflow: hidden; }
 
-/* Left panel collapse/expand — the width animates while a fixed-width inner
+/* Left panel collapse/expand: the width animates while a fixed-width inner
    clips, so the panel slides away (and its content fades + eases left) rather
    than snapping. Easing is an expo-out curve for a soft, premium settle. */
 .leftPanel {
@@ -27,7 +27,7 @@
   transition: opacity 0.2s ease;
 }
 
-/* Drag handle between panels — 0.5px neutral divider; 1px primary on hover.
+/* Drag handle between panels: 0.5px neutral divider; 1px primary on hover.
    ::before widens the invisible hit area so neighboring panes stay flush. */
 .dragHandle {
   flex: 0 0 1px;

@@ -11,7 +11,7 @@ export default {
     docs: {
       description: {
         component:
-          'Renders any Iconify icon by name — the app standardizes on the Solar set at 1px stroke (see `solar:*-linear` variants) with a handful of in-repo `custom:*` icons for shapes Solar doesn\'t cover. Use this instead of importing SVGs directly so sizing, color, and stroke-width stay consistent. Toggle `showCatalog` to browse the commonly-used names and the branded in-repo icons.',
+          'Renders any Iconify icon by name, the app standardizes on the Solar set at 1px stroke (see `solar:*-linear` variants) with a handful of in-repo `custom:*` icons for shapes Solar doesn\'t cover. Use this instead of importing SVGs directly so sizing, color, and stroke-width stay consistent. Toggle `showCatalog` to browse the commonly-used names and the branded in-repo icons.',
       },
     },
   },
@@ -27,7 +27,7 @@ export default {
   args: { name: 'solar:home-2-linear', size: 24, showCatalog: false },
 };
 
-// In-repo `custom:*` icons for the PAMI/Hx sections and their empty states —
+// In-repo `custom:*` icons for the PAMI/Hx sections and their empty states,
 // shapes Solar doesn't have (or, for the wine glass, kept local alongside
 // its siblings). Rendered through <Icon> so the registry itself is exercised.
 const CLINICAL_ICONS = [

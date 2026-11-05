@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Drawer } from '../../../../../components/Drawer/Drawer';
 import { Button } from '../../../../../components/Button/Button';
-import { Toggle } from '../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../components/SegmentedControl/SegmentedControl';
 import { Badge } from '../../../../../components/Badge/Badge';
 import { Icon } from '../../../../../components/Icon/Icon';
 import { Select } from '../../../../../components/Select/Select';
@@ -56,7 +56,7 @@ const MEASURES = {
   Diet: {
     label: 'Select Diet Measure',
     options: [
-      // Nutrient targets — simple, action-oriented labels so goals read
+      // Nutrient targets: simple, action-oriented labels so goals read
       // as "Consume calories …", "Maintain sodium …" instead of the
       // clinical "Calorie Intake" phrasing.
       'Calories', 'Sodium', 'Carbohydrates', 'Protein', 'Fiber', 'Water',
@@ -74,19 +74,19 @@ const MEASURES = {
       'Immunization Review', 'Advance Care Planning',
     ],
   },
-  // No Others entry — the measure row is hidden for Others so a free-
+  // No Others entry: the measure row is hidden for Others so a free-
   // form target is authored instead. `measureCfg` falls back to
   // GOAL_CATEGORIES[0] (`Vitals`) if the map is ever consulted, but
   // isOther gates every consumer of that config.
 };
 
-// Chronic conditions come from the NLM Clinical Table Search Service — a
+// Chronic conditions come from the NLM Clinical Table Search Service, a
 // public terminology lookup. Only the typed search term leaves the app; no
 // patient data is sent.
-// Select takes { value, label } pairs — plain strings render blank rows.
+// Select takes { value, label } pairs, plain strings render blank rows.
 const asOptions = (list) => (list || []).map(v => ({ value: v, label: v }));
 
-/* Lab and assessment names run long — they need a wider field. */
+/* Lab and assessment names run long, they need a wider field. */
 const WIDE_MEASURE_CATEGORIES = ['Labs', 'Assessment'];
 
 const COMPARATORS = ['=', '<', '<=', '>', '>=', 'between'];
@@ -101,7 +101,7 @@ const LINKED_SECTIONS = [
   { key: 'automations', label: 'Automations', addTooltip: 'Add Automations' },
 ];
 
-/* Figma 14109:303516 — the intervention types a goal can link to. */
+/* Figma 14109:303516, the intervention types a goal can link to. */
 const INTERVENTION_ITEMS = [
   { key: 'send-form', label: 'Send Form', icon: 'solar:document-add-linear' },
   { key: 'patient-education', label: 'Patient Education', icon: 'solar:book-2-linear' },
@@ -116,7 +116,7 @@ const INTERVENTION_LABELS = Object.fromEntries(
   INTERVENTION_ITEMS.filter(i => i.key).map(i => [i.key, { label: i.label, icon: i.icon }]),
 );
 
-// "execute after" — the due offset, compacted to 7d / 2w.
+// "execute after", the due offset, compacted to 7d / 2w.
 function dueBadgeLabel(config) {
   if (!config?.dueOffset) return '';
   return `${config.dueOffset}${(config.dueUnit || 'day')[0]}`;
@@ -149,7 +149,7 @@ const PRIORITIES = [
 ];
 
 /**
- * Create New Goals — Figma Care-Plan-Creation 14109:299594.
+ * Create New Goals: Figma Care-Plan-Creation 14109:299594.
  * Category → measure → chronic condition → title, with the goal's priority
  * picked from a segment inside the title field.
  */
@@ -163,7 +163,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
   const [targetValue, setTargetValue] = useState(goal?.targetValue || '');
   const [targetValue2, setTargetValue2] = useState(goal?.targetValue2 || '');
   // Vitals authors an Initial Value alongside the Target Value when
-  // Set Target is on — the shipped baseline the goal starts from.
+  // Set Target is on: the shipped baseline the goal starts from.
   // Kept as two slots so a dual measure (Blood Pressure, Height) can
   // capture both parts the same way targetValue2 handles the target
   // side. Other categories don't collect this today.
@@ -207,13 +207,13 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
   const [priorityMenuFor, setPriorityMenuFor] = useState(null);
   const [interventionEditing, setInterventionEditing] = useState(null);
   const [interventionDraft, setInterventionDraft] = useState('');
-  // { kind, index } — index null while adding, a row index while editing.
+  // { kind, index }, index null while adding, a row index while editing.
   const [interventionDrawer, setInterventionDrawer] = useState(null);
   const durationUnitRef = useRef(null);
   const priorityRef = useRef(null);
 
   const measureCfg = MEASURES[category] || MEASURES[GOAL_CATEGORIES[0]];
-  // Others (formerly 'Other') is the catch-all bucket — it hides the
+  // Others (formerly 'Other') is the catch-all bucket: it hides the
   // measure picker and the measure-driven target-value fields, letting
   // the goal author enter a free-form target instead.
   const isOther = category === 'Others' || category === 'Other';
@@ -276,7 +276,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
         : `${shortenDualPh(placeholders[0])}${separator}${shortenDualPh(placeholders[1])}`)
     : placeholders[0];
   // Sanitize whatever the user types into a dual-value input into
-  // "<digits>[<separator><digits>]" — non-digit characters (letters,
+  // "<digits>[<separator><digits>]", non-digit characters (letters,
   // punctuation) are stripped, and each half is capped so the pair
   // stays inside a realistic Blood Pressure / Height envelope. First 3
   // digits ⇒ part A (systolic / feet), remainder up to 3 digits ⇒
@@ -321,7 +321,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
   };
   // A goal is valid when it names WHAT it tracks (a measure for the structured
   // types; "Other" tracks via a typed unit) and, when a target is set, the
-  // value(s) that target needs — so saved goals are structured, not blank.
+  // value(s) that target needs: so saved goals are structured, not blank.
   const hasMeasure = isOther || measure.trim().length > 0;
   // Others and Assessment carry no target value, so the gate collapses
   // to "always valid" for those buckets. Every other category still
@@ -329,7 +329,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
   const hasTargetValue = isOther || isAssessment || !setTarget || (
     targetValue.trim().length > 0 && (!twoValues || targetValue2.trim().length > 0)
   );
-  // Vitals requires both baseline and target when Set Target is on — a
+  // Vitals requires both baseline and target when Set Target is on, a
   // goal like "Blood Pressure < 120/80 mmHg" is only actionable when
   // the current reading is captured too.
   const hasInitialValue = !isVitals || !setTarget || (
@@ -368,7 +368,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
     cancelBarrier();
   };
 
-  // Same name as one already staged on this goal — excluding the row being
+  // Same name as one already staged on this goal, excluding the row being
   // edited, which is allowed to keep its own title.
   const duplicateBarrier = barriers.some((b, i) => i !== barrierEditing
     && b.title.trim().toLowerCase() === barrierDraft.trim().toLowerCase())
@@ -399,8 +399,6 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
   const headerRight = (
     <>
       <Button
-        variant="primary"
-        size="L"
         disabled={!canSave}
         onClick={() => onSave?.({ category, measure, conditions, title: title.trim(), priority, comparator, targetValue, targetValue2, initialValue, initialValue2, customUnit, setTarget, duration, durationUnit, frequency, targetDate, heightUnit: isHeight ? heightUnit : undefined, interventions: [...interventions, ...barriers] })}
       >
@@ -413,12 +411,12 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
   return (
     <Drawer title={goal ? 'Edit Goal' : 'Create New Goals'} onClose={onClose} headerRight={headerRight} noCloseDivider>
       <div className={styles.body}>
-        <Toggle
-          size="S"
+        <SegmentedControl
+          size="sm"
           className={styles.categoryToggle}
           items={GOAL_CATEGORIES}
-          active={category}
-          onChange={(next) => { setCategory(next); setMeasure(''); }}
+          value={category}
+          onValueChange={(next) => { setCategory(next); setMeasure(''); }}
         />
 
         {!isOther && (
@@ -426,7 +424,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
           <Select
             options={asOptions(measureCfg.options)}
             value={measure}
-            onChange={setMeasure}
+            onValueChange={setMeasure}
             placeholder={measureCfg.label}
             className={`${styles.measureSelect} ${WIDE_MEASURE_CATEGORIES.includes(category) ? styles.measureSelectWide : ''}`}
             searchable
@@ -443,7 +441,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
           <span className={styles.fieldLabel}>
             Goal Title<span className={styles.mandatoryDot} aria-hidden="true" />
           </span>
-          {/* Priority sits inside the field, divided from the text input —
+          {/* Priority sits inside the field, divided from the text input,
               the design treats it as one control, not two. */}
           <div className={styles.titleField}>
             <button
@@ -484,7 +482,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
           )}
         </div>
 
-        {/* Others has no predefined measure but still authors a target — the
+        {/* Others has no predefined measure but still authors a target, the
             value is free text with a typed unit. Assessment goes the other
             way: no target value at all, only the date the instrument should
             be completed by. */}
@@ -492,7 +490,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
           <Switch checked={setTarget} onChange={setSetTarget} label="Set Target" />
         )}
 
-        {/* Current Value read-only placeholder — used by every structured
+        {/* Current Value read-only placeholder: used by every structured
             category except Vitals. Vitals author an editable Initial
             Value inside the Set Target reveal below instead. */}
         {!isOther && !isAssessment && !isVitals && (
@@ -501,7 +499,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
         </div>
         )}
 
-        {/* Vitals reveal on Set Target = on — Initial Value + Target
+        {/* Vitals reveal on Set Target = on, Initial Value + Target
             Value share one row (Figma reference). Each column carries
             the same trailing-unit chrome the single-column Target Value
             uses, so a dual measure like Blood Pressure still splits
@@ -510,7 +508,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
             and m (both single-value) so the reviewer picks the system
             they measured in. */}
         {isVitals && setTarget && (() => {
-          // Trailing unit for the Height dropdown — same visual as the
+          // Trailing unit for the Height dropdown, same visual as the
           // Duration unit chevron. Non-Height measures reuse the
           // regular unit string.
           const heightTrigger = isHeight ? (
@@ -539,12 +537,12 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
                 <Select
                   options={asOptions(cfg.options)}
                   value={initialValue}
-                  onChange={setInitialValue}
+                  onValueChange={setInitialValue}
                   placeholder="Select Value"
                   className={styles.valueSelect}
                 />
               ) : (
-                /* One merged input even for dual measures — the user
+                /* One merged input even for dual measures, the user
                    types "120/80" and the string is split on the
                    configured separator on commit so the underlying
                    `initialValue` / `initialValue2` state contract
@@ -575,14 +573,14 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
               <Select
                 options={asOptions(COMPARATORS)}
                 value={comparator}
-                onChange={setComparator}
+                onValueChange={setComparator}
                 className={twoValues ? styles.comparatorCompact : styles.comparator}
               />
               {cfg.kind === 'select' ? (
                 <Select
                   options={asOptions(cfg.options)}
                   value={targetValue}
-                  onChange={setTargetValue}
+                  onValueChange={setTargetValue}
                   placeholder="Select Value"
                   className={styles.valueSelect}
                 />
@@ -612,7 +610,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
               onSelect={(next) => {
                 setHeightUnit(next);
                 // Clear the dual second half when switching to a
-                // single-value unit — it would otherwise ride along
+                // single-value unit: it would otherwise ride along
                 // as a stale digit stored under initialValue2 /
                 // targetValue2 that nothing renders.
                 if (next !== 'Ft/In') { setInitialValue2(''); setTargetValue2(''); }
@@ -625,7 +623,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
           );
         })()}
 
-        {/* Legacy single-column Target Value — every non-Vitals,
+        {/* Legacy single-column Target Value: every non-Vitals,
             non-Assessment category still uses this shape. */}
         {!isAssessment && !isVitals && setTarget && (
         <div className={styles.field}>
@@ -636,14 +634,14 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
             <Select
               options={asOptions(COMPARATORS)}
               value={comparator}
-              onChange={setComparator}
+              onValueChange={setComparator}
               className={styles.comparator}
             />
             {cfg.kind === 'select' ? (
               <Select
                 options={asOptions(cfg.options)}
                 value={targetValue}
-                onChange={setTargetValue}
+                onValueChange={setTargetValue}
                 placeholder="Select Value"
                 className={styles.valueSelect}
               />
@@ -660,7 +658,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
               />
             )}
             {isOther && (
-              // The unit is typed here — "Other" has no predefined measure.
+              // The unit is typed here: "Other" has no predefined measure.
               <Input
                 value={customUnit}
                 onChange={e => setCustomUnit(e.target.value)}
@@ -686,14 +684,14 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
         </div>
         )}
 
-        {/* Duration + Frequency — always visible for Vitals since those
+        {/* Duration + Frequency: always visible for Vitals since those
             two define the cadence the goal tracks against regardless
             of a target being set. Every other category still reveals
             them only when Set Target is on. Assessment hides them. */}
         {!isAssessment && (setTarget || isVitals) && (
         <div className={styles.twoUp}>
           <div className={styles.field}>
-            {/* One field — the unit is the trailing segment, same treatment as
+            {/* One field: the unit is the trailing segment, same treatment as
                 the mmHg suffix, but it opens a picker. */}
             <Input
               label="Target Duration"
@@ -749,7 +747,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
               required
               options={asOptions(FREQUENCIES)}
               value={frequency}
-              onChange={setFrequency}
+              onValueChange={setFrequency}
             />
           </div>
         </div>
@@ -758,7 +756,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
         {/* Assessment goals still need a concrete deadline (they don't
             author a Target Duration), so keep the DatePicker there.
             Every other structured category derives its Target Date
-            from Care Plan sign date + Target Duration — same rule the
+            from Care Plan sign date + Target Duration, same rule the
             intervention Due Date uses, so no separate date field is
             authored here. */}
         {isAssessment && (
@@ -783,12 +781,12 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
                   <span className={styles.linkedLabel}>
                     {sec.label}
                     {sec.key === 'interventions' && interventions.length > 0
-                      && <Badge tone="grey" size="S" label={String(interventions.length)} />}
+                      && <Badge size="sm" label={String(interventions.length)} />}
                     {sec.key === 'barriers' && barriers.length > 0
-                      && <Badge tone="grey" size="S" label={String(barriers.length)} />}
+                      && <Badge size="sm" label={String(barriers.length)} />}
                   </span>
                   <ActionButton
-                    size="S"
+                    size="sm"
                     tooltip={sec.addTooltip}
                     onClick={sec.key === 'interventions'
                       ? () => setAddInterventionsOpen(true)
@@ -835,11 +833,10 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
                             <PriorityIcon priority={it.config?.priority?.toLowerCase() || 'medium'} size={16} />
                           </button>
                           <span className={styles.interventionKind}>
-                            {/* Reads as a cell, not a control — it only names
+                            {/* Reads as a cell, not a control, it only names
                                 the intervention kind. */}
                             <Button
                               variant="ghost"
-                              size="L"
                               leadingIcon={kind.icon}
                               className={styles.interventionKindLabel}
                             >
@@ -884,8 +881,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
                                 )}
                               >
                                 <Badge
-                                  tone="grey"
-                                  size="S"
+                                  size="sm"
                                   label={due}
                                   trailingIcon="solar:refresh-linear"
                                 />
@@ -919,14 +915,14 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
                   />
                 )}
                 {sec.key === 'barriers' && (barriers.length > 0 || barrierEditing !== null) && (
-                  /* The very first barrier is just the field — the white card
+                  /* The very first barrier is just the field, the white card
                      only earns its place once there is a list to hold. */
                   <div className={barriers.length === 0 ? undefined : styles.linkedList}>
                     {barriers.map((b, i) => (barrierEditing === i ? (
                       <div key={`edit-${i}`}>{barrierInput}</div>
                     ) : (
                       <div key={`${b.title}-${i}`} className={styles.linkedRow}>
-                        {/* Only the label opens the editor — the row also
+                        {/* Only the label opens the editor, the row also
                             carries its own actions, which can't nest here. */}
                         <button
                           type="button"
@@ -940,8 +936,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
                           {(b.config?.linkCount || 0) > 0 && (
                             <>
                               <Badge
-                                tone="grey"
-                                size="S"
+                                size="sm"
                                 icon="solar:link-minimalistic-linear"
                                 label={String(b.config.linkCount)}
                               />
@@ -950,7 +945,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
                           )}
                           <ActionButton
                             icon="solar:trash-bin-minimalistic-linear"
-                            size="S"
+                            size="sm"
                             tooltip="Delete"
                             onClick={() => removeBarrier(i)}
                           />
@@ -1002,6 +997,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
         return (
           <Editor
             kind={interventionDrawer.kind}
+            taskTemplate
             intervention={editing ? interventions[interventionDrawer.index]?.config : undefined}
             onClose={() => setInterventionDrawer(null)}
             onSave={(config) => {

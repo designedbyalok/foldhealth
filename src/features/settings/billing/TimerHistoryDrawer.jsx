@@ -52,7 +52,6 @@ export function TimerHistoryDrawer({ program, setting, onClose }) {
           {/* Shows / hides the filter bar; the count says how many filters are applied (as in SectionTitleBar). */}
           <ActionButton
             icon="custom:filter"
-            size="L"
             tooltip="Filter"
             tooltipBelow
             tooltipLeft

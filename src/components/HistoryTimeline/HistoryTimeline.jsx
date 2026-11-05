@@ -33,11 +33,11 @@ const STATUS_META = {
 // Stored values that display under a different name.
 const STATUS_ALIAS = { Reject: 'Rejected', 'Action Needed': 'Awaiting', Deferred: 'Defer' };
 const statusMeta = (label) => STATUS_META[STATUS_ALIAS[label] || label];
-const toneFor = (label) => statusMeta(label)?.tone || 'grey';
+const toneFor = (label) => statusMeta(label)?.tone || 'neutral';
 // Stored status values render under the names the worklist uses.
 const STATUS_LABEL = { Reject: 'Rejected', Deferred: 'Defer' };
 const labelFor = (value) => STATUS_LABEL[value] || value;
-const isBlankStatus = (v) => !v || v === '—' || v === '-';
+const isBlankStatus = (v) => !v || v === '\u2014' || v === '-';
 
 // Rail bubble colors per Badge tone, so the icon matches the pill beside it.
 const TONE_BUBBLE = {
@@ -100,7 +100,7 @@ export function AvatarPill({ initials, name }) {
 }
 
 /**
- * HistoryTimeline — wrapper that lays rows out vertically. Callers still
+ * HistoryTimeline: wrapper that lays rows out vertically. Callers still
  * decide how items are grouped (month headers, etc.) upstream; this only
  * takes an already-flattened list of `{ item, isFirst, isLast, key }`.
  */
@@ -122,33 +122,33 @@ export function HistoryTimeline({ items = [], renderEntry }) {
 }
 
 /**
- * HistoryTimelineEntry — one row (icon rail + body).
+ * HistoryTimelineEntry: one row (icon rail + body).
  *
  * Item contract (mirrors HCC's DiagPanel entries):
- *   t         string   — key into ACT_ICON for the default icon config
- *   date, time, by, role, dos — meta line inputs
- *   headline  string   — the primary line under the meta
- *   from, to  string   — status transition pills
- *   tag       string   — outreach tag row
- *   file, fileType — attachment card
- *   fromAvatar, toAvatar — { initials, name } for the avatar-transition row
- *   details   Array    — per-ICD details rendered inside the expandable card
- *   commentBody string — inline paragraph rendered under the headline
+ *   t         string: key into ACT_ICON for the default icon config
+ *   date, time, by, role, dos, meta line inputs
+ *   headline  string: the primary line under the meta
+ *   from, to  string, status transition pills
+ *   tag       string: outreach tag row
+ *   file, fileType, attachment card
+ *   fromAvatar, toAvatar, { initials, name } for the avatar-transition row
+ *   details   Array: per-ICD details rendered inside the expandable card
+ *   commentBody string: inline paragraph rendered under the headline
  *
  * Slot props:
- *   iconConfig    — override the ACT_ICON lookup (icon, color, bg, border)
- *   singleStatus  — render one pill (no arrow) when there's no from/to pair
- *   onPreviewFile — called when the file card is clicked
- *   detailsContent — JSX rendered inside the expandable card (replaces the
+ *   iconConfig: override the ACT_ICON lookup (icon, color, bg, border)
+ *   singleStatus: render one pill (no arrow) when there's no from/to pair
+ *   onPreviewFile: called when the file card is clicked
+ *   detailsContent: JSX rendered inside the expandable card (replaces the
  *                    default HCC per-ICD list when the caller has a
  *                    different payload shape, e.g. HccHistoryDrawer)
- *   showDetailsToggle — force-show or force-hide the Details toggle; when
+ *   showDetailsToggle: force-show or force-hide the Details toggle; when
  *                       unset it appears whenever there's expandable content
- *   headlineExtra — extra JSX rendered after the headline (kept inline with
+ *   headlineExtra: extra JSX rendered after the headline (kept inline with
  *                   the Details toggle)
- *   renderStatusIcon — (status, color) => node | null; replaces the rail glyph
+ *   renderStatusIcon: (status, color) => node | null; replaces the rail glyph
  *                   for status changes with a product-specific status icon
- *   children      — arbitrary JSX rendered at the end of the body, before
+ *   children: arbitrary JSX rendered at the end of the body, before
  *                   the details card
  */
 export function HistoryTimelineEntry({
@@ -165,7 +165,7 @@ export function HistoryTimelineEntry({
   children,
 }) {
   const [expanded, setExpanded] = useState(false);
-  // Separate toggle for the composer-note inline expand — status-role
+  // Separate toggle for the composer-note inline expand, status-role
   // rows that were gated on a note (e.g. Coder → Record Requested)
   // ship the copy on `item.note` and reveal it under a View Note link.
   const [noteOpen, setNoteOpen] = useState(false);
@@ -253,9 +253,9 @@ export function HistoryTimelineEntry({
         {hasTransition && (
           <>
             <div className={styles.transition}>
-              <Badge size="S" tone={toneFor(item.from)} label={labelFor(item.from)} />
+              <Badge size="sm" tone={toneFor(item.from)} label={labelFor(item.from)} />
               <Icon name="solar:arrow-right-linear" size={12} color="var(--neutral-300)" />
-              <Badge size="S" tone={toneFor(item.to)} label={labelFor(item.to)} />
+              <Badge size="sm" tone={toneFor(item.to)} label={labelFor(item.to)} />
               {item.note && (
                 <button
                   type="button"
@@ -280,7 +280,7 @@ export function HistoryTimelineEntry({
         )}
         {hasSingleStatus && (
           <div className={styles.transition}>
-            <Badge size="S" tone={toneFor(singleStatusValue)} label={labelFor(singleStatusValue)} />
+            <Badge size="sm" tone={toneFor(singleStatusValue)} label={labelFor(singleStatusValue)} />
           </div>
         )}
 
@@ -339,13 +339,13 @@ export function HistoryTimelineEntry({
                   </div>
                   {d.from && d.to && (
                     <div className={styles.detailBadges}>
-                      <Badge size="S" tone={toneFor(d.from)} label={d.from} />
+                      <Badge size="sm" tone={toneFor(d.from)} label={d.from} />
                       <Icon name="solar:arrow-right-linear" size={12} color="var(--neutral-300)" />
-                      <Badge size="S" tone={toneFor(d.to)} label={d.to} />
+                      <Badge size="sm" tone={toneFor(d.to)} label={d.to} />
                     </div>
                   )}
                   {!d.from && !d.to && (
-                    <Badge size="S" tone="grey" label="Deleted" />
+                    <Badge size="sm" label="Deleted" />
                   )}
                 </div>
               ))}

@@ -26,7 +26,7 @@ export function ItemRow({ leading, label, after, tone = 'default', actions = [] 
       {actions.map((a, i) => (
         <Fragment key={a.key}>
           {i > 0 && <span className={styles.divider} aria-hidden="true" />}
-          <ActionButton icon={a.icon} size="S" tooltip={a.tooltip} onClick={a.onClick} />
+          <ActionButton icon={a.icon} size="sm" tooltip={a.tooltip} onClick={a.onClick} />
         </Fragment>
       ))}
     </div>

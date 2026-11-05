@@ -1,4 +1,4 @@
-/* ─────────── Drawer body override — full-bleed two-pane layout ─────────── */
+/* ─────────── Drawer body override: full-bleed two-pane layout ─────────── */
 .body {
   padding: 0 !important;
   display: flex;
@@ -32,7 +32,7 @@
 }
 
 /* Stacked variant: main title on top, small icon+text status row
-   beneath — used in the sign-off review flow so the drawer title mirrors
+   beneath: used in the sign-off review flow so the drawer title mirrors
    the read-only preview and the CareGap pane header. */
 .titleBlockStacked {
   display: inline-flex;
@@ -93,7 +93,7 @@
   padding: var(--space-3);
 }
 
-/* Pinned above the scroll region — runs edge-to-edge because .leftPane has
+/* Pinned above the scroll region: runs edge-to-edge because .leftPane has
    no padding of its own. */
 .patientBannerSlot { flex-shrink: 0; }
 
@@ -146,7 +146,7 @@
 
 /* ─────────── Consolidated body (stacked, editable) ─────────── */
 /* Single-column stacked authoring layout used by the leftPane workspace
-   mode 'clinical-note-consolidated' — reached by clicking Edit on a
+   mode 'clinical-note-consolidated', reached by clicking Edit on a
    Pending Review note's preview. One shared DOS card at the top, then
    one collapsible section per gap that the submitted note bundled. Info
    banner pins above the scroll. */
@@ -214,7 +214,7 @@
 .gapSectionBody {
   padding: var(--space-4);
 }
-/* Consolidated view empty state — shown when no gap has been marked
+/* Consolidated view empty state: shown when no gap has been marked
    Ready for Review yet. Sits inside .consolidatedScroll below the shared
    DOS card. */
 .consolidatedEmpty {
@@ -240,7 +240,7 @@
   line-height: 1.4;
 }
 
-/* Multi-file upload wrapper — vertical stack of file cards + one live
+/* Multi-file upload wrapper: vertical stack of file cards + one live
    dropzone at the bottom. Reuses UploadDropField for each slot. */
 .multiUpload {
   display: flex;
@@ -250,7 +250,7 @@
 
 /* Read-only assignee chip (Avatar + full name) used in the ClinicalNote
    two-pane drawer where reassignment isn't wired. Name renders in full
-   with no ellipsis and no hover state — sits inside .gapRowAssignee and
+   with no ellipsis and no hover state, sits inside .gapRowAssignee and
    .gapEvidenceStatusRow. */
 .assigneeDisplay {
   display: inline-flex;
@@ -601,7 +601,7 @@
 }
 
 /* ─────────── CBP Visit Note form ─────────── */
-/* Card container that groups the BP reading + Location — mirrors the
+/* Card container that groups the BP reading + Location, mirrors the
    bordered "Initial Blood Pressure" block in the Figma spec (node 1247:110720). */
 .cbpCard {
   border: 0.5px solid var(--neutral-150);
@@ -718,7 +718,7 @@
   margin: 0;
 }
 
-/* Floating section jumper — pinned to the bottom of the consolidated
+/* Floating section jumper: pinned to the bottom of the consolidated
    authoring surface. Rests inside .consolidatedBody as a sibling of
    .consolidatedScroll, so the scroll region can flex above it while
    the pill stays visible. */

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import styles from './InlineEditable.module.css';
 
 /**
- * Fold Health InlineEditable — click-to-edit single-line text.
+ * Fold Health InlineEditable: click-to-edit single-line text.
  *
  * Renders as a static span until clicked, then swaps to an input. Commits on
  * blur or Enter, cancels on Escape. Useful for editable list titles, column

@@ -22,12 +22,19 @@ export function enrichGoalRows(rows) {
   }));
 }
 
+export function enrichBarrierRows(rows) {
+  return (rows || []).map(b => ({
+    ...b,
+    _sortPriority: GBI_PRIORITY_RANK[String(b.priority || '').toLowerCase()] ?? 99,
+  }));
+}
+
 export function enrichInterventionRows(rows) {
   return (rows || []).map((i) => {
     // Due date sort key = createdAt + parsed duration (ISO string).
     // Empty/unparseable rows sort last (the shared sorter groups
     // empty strings at the end for date columns).
-    // Same precedence as computeDueDate — user-picked override wins,
+    // Same precedence as computeDueDate: user-picked override wins,
     // otherwise createdAt + duration; unparseable rows sort last.
     let dueSortKey = '';
     const override = i.config?.dueDateOverride;

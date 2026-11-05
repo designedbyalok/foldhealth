@@ -1,12 +1,12 @@
 /**
- * Record Received status icon — amber disc with a download arrow.
+ * Record Received status icon: amber disc with a download arrow.
  * Provided verbatim from Figma (Jan-Feb 2026 file). The fill color comes
  * through as a prop so the icon stays in lockstep with the status spec's
  * `color` field (defaults to `--status-warning`).
  *
  * @param {object}  props
- * @param {number}  [props.size=12]            — Width & height in px
- * @param {string}  [props.color='#D9A50B']    — Disc fill (warning amber)
+ * @param {number}  [props.size=12], Width & height in px
+ * @param {string}  [props.color='#D9A50B']: Disc fill (warning amber)
  * @param {string}  [props.className]
  */
 export function RecordReceivedIcon({ size = 12, color = '#D9A50B', className, ...rest }) {

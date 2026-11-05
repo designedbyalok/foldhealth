@@ -1,16 +1,16 @@
 import { Icon } from '../../components/Icon/Icon';
-import { ClinicalNoteCardActions } from '../../components/ActivityLog/ActivityLog';
+import { ClinicalNoteCardActions } from '../activity/ActivityEntries';
 import activityStyles from '../../components/ActivityLog/ActivityLog.module.css';
 import styles from './ClinicalNotesTab.module.css';
 
 /**
- * ClinicalNotesTab — flat list of Clinical Notes for a member.
+ * ClinicalNotesTab: flat list of Clinical Notes for a member.
  *
  * Rendered inside CareGapDetailDrawer's "Clinical Notes" tab. Matches
  * Figma 1030:78586: column-headed list of note cards (no timeline rail,
  * no month grouping). Each row reuses the shared `ClinicalNoteCardActions`
  * component so eye / pencil / task-arrow behave identically to the
- * Activity Log entries — one source of truth for card affordances.
+ * Activity Log entries: one source of truth for card affordances.
  */
 export function ClinicalNotesTab({ entries, onOpenNote, onOpenTask }) {
   const noteEntries = (entries || []).filter(e => e.t === 'clinical_note');
@@ -49,7 +49,7 @@ function NoteRow({ entry, onOpenNote, onOpenTask }) {
   const dateTime = [entry.date, time24].filter(Boolean).join(', ');
   const author = entry.by ? `${entry.by}${entry.role ? ` (${entry.role})` : ''}` : null;
   // Per Figma 1030:78586 the meta line reads
-  // `<date>, <time> • <author> • <template name>` — the form-type label
+  // `<date>, <time> • <author> • <template name>`, the form-type label
   // rides inline as a third bullet-separated segment (dropped from its own
   // sub-meta row inside the card body).
   const metaLine = [dateTime, author, dc.subMeta].filter(Boolean).join(' • ');

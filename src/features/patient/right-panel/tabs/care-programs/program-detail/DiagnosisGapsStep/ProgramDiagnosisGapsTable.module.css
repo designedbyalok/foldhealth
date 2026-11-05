@@ -53,7 +53,7 @@
 
 /* Inline "N ICDs" toggle: link-styled count with a trailing chevron
    that rotates 180deg when the ICD list is expanded (matches the
-   Figma spec — chevron up when open, down when closed). */
+   Figma spec: chevron up when open, down when closed). */
 .icdLink {
   background: none; border: none; padding: 0; cursor: pointer;
   display: inline-flex; align-items: center; gap: calc(var(--space-1) / 2);
@@ -66,7 +66,7 @@
 .moreBtn { display: flex; align-items: center; padding: var(--space-2); flex-shrink: 0; opacity: 0; transition: opacity 0.1s; }
 .row:hover .moreBtn { opacity: 1; }
 
-/* Expanded ICD list — a two-column table (ICD Code | Description) with
+/* Expanded ICD list: a two-column table (ICD Code | Description) with
    its own greyed header row. Sits inside the HCC's rowGroup so the
    group divider still separates each HCC after the list ends. The
    primary-300 left accent bar visually ties the list back to the HCC

@@ -3,7 +3,7 @@ import { Drawer } from '../../../../../../../components/Drawer/Drawer';
 import { SplitDrawerLayout } from '../../../../../../../components/Drawer/SplitDrawerLayout';
 import { Button } from '../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
-import { TabStrip } from '../../../../../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../../../../../components/Tabs/Tabs';
 import { PdfPreview } from '../../../../../../../components/PdfPreview/PdfPreview';
 import { PreviewLoader } from '../../../../../../../components/PreviewLoader/PreviewLoader';
 import { useAppStore } from '../../../../../../../store/useAppStore';
@@ -33,7 +33,7 @@ const EDITOR_TABS = [
   { key: 'steps', label: 'Program Steps' },
   { key: 'personalize', label: 'Personalize' },
 ];
-const CLINIC_SIZE = { width: 190, height: 150, format: 'PNG' };
+const CLINIC_SIZE = { width: 170, height: 150, format: 'PNG' };
 // How long the first preview waits for the fonts and logos before building without them.
 const ASSET_WAIT_MS = 3000;
 const EMPTY = [];
@@ -107,7 +107,7 @@ export function ProgramReportDrawer({ program, stepList, stepCtx, progress, acti
   const [generatedAt] = useState(() => new Date());
   useEffect(() => {
     let live = true;
-    Promise.all([loadPng(clinicLogoUrl, 190, 150), loadPng(clinicLogoWhiteUrl, 190, 150), loadInter()])
+    Promise.all([loadPng(clinicLogoUrl, 510, 450), loadPng(clinicLogoWhiteUrl, 510, 450), loadInter()])
       .then(([clinicLogo, clinicLogoWhite, fonts]) => { if (live) setAssets({ clinicLogo, clinicLogoWhite, fonts }); });
     return () => { live = false; };
   }, []);
@@ -240,8 +240,6 @@ export function ProgramReportDrawer({ program, stepList, stepCtx, progress, acti
   const headerRight = (
     <>
       <Button
-        variant="primary"
-        size="L"
         leadingIcon="solar:download-minimalistic-linear"
         disabled={nothingSelected}
         onClick={() => { downloadBlob(generate().blob, `${filename}.pdf`); onExport?.('pdf'); }}
@@ -251,11 +249,10 @@ export function ProgramReportDrawer({ program, stepList, stepCtx, progress, acti
       <span className={styles.headerDivider} aria-hidden="true" />
       <ActionButton
         icon="solar:printer-minimalistic-linear"
-        size="L"
         tooltip="Print"
         tooltipBelow
         aria-label="Print report"
-        state={nothingSelected ? 'disabled' : 'active'}
+        disabled={nothingSelected}
         onClick={() => { printBlob(generate().blob); onExport?.('print'); }}
       />
       <span className={styles.headerDivider} aria-hidden="true" />
@@ -265,7 +262,7 @@ export function ProgramReportDrawer({ program, stepList, stepCtx, progress, acti
   const editor = (
     <div className={styles.editorScroll}>
       <div className={styles.tabBar}>
-        <TabStrip items={EDITOR_TABS} activeKey={editorTab} onChange={setEditorTab} fullWidth={false} />
+        <Tabs items={EDITOR_TABS} value={editorTab} onValueChange={setEditorTab} fullWidth={false} />
       </div>
       <div className={styles.body}>
         {editorTab === 'steps' ? (

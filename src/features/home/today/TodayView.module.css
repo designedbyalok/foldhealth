@@ -6,7 +6,7 @@
   flex-direction: column;
 }
 
-/* Greeting + Panel Pulse — a padded, bordered container above the tab strip.
+/* Greeting + Panel Pulse: a padded, bordered container above the tab strip.
    Never scrolls; the table below owns the scroll. */
 .headerRegion {
   flex-shrink: 0;
@@ -26,7 +26,7 @@
   background: var(--neutral-0);
 }
 
-/* Table region — fills the remaining height; WorklistShell scrolls inside it. */
+/* Table region: fills the remaining height; WorklistShell scrolls inside it. */
 .tableRegion {
   flex: 1;
   min-height: 0;
@@ -61,7 +61,7 @@
   color: var(--neutral-500);
 }
 
-/* Compact day summary — the numbers users can't get from Panel Pulse below
+/* Compact day summary: the numbers users can't get from Panel Pulse below
    (touches + minutes). Reads as one line, no eyebrow labels. */
 .headSummary {
   display: flex;
@@ -197,7 +197,7 @@
 .dotSlipping { background: var(--status-warning); }
 .dotOffPlan { background: var(--status-error); }
 
-/* Panel Health link — layout only; <Link> owns the color + weight. */
+/* Panel Health link: layout only; <Link> owns the color + weight. */
 .panelHealthLink {
   margin-left: auto;
   display: inline-flex;
@@ -275,7 +275,7 @@
   line-height: var(--leading-normal);
 }
 
-/* Suggested-action link — layout only; <Link> owns the color + weight. */
+/* Suggested-action link: layout only; <Link> owns the color + weight. */
 .suggestedLink {
   align-self: flex-start;
   display: inline-flex;

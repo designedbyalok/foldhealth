@@ -1,4 +1,4 @@
-// Merged platform-user pool — Astrana HCC staff (Support / Coder / Reviewer /
+// Merged platform-user pool: Astrana HCC staff (Support / Coder / Reviewer /
 // Reviewer 2) + Account → Users, deduped by id. Astrana wins on conflict
 // because it carries the engine role keys the assignment engine uses.
 //

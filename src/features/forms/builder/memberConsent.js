@@ -1,9 +1,9 @@
 // `mandatory` is retained on each item for backwards compatibility with forms
-// already saved with it, but it is no longer author-editable — the per-item
+// already saved with it, but it is no longer author-editable, the per-item
 // Required switch was removed, so every default ships non-mandatory. A consent
 // question the member is forced to tick isn't consent; the top-level "Is this
 // field required?" still governs whether the component itself must be present.
-const DEFAULT_ITEMS = [
+export const DEFAULT_ITEMS = [
   {
     id: 'ccm',
     name: 'CCM',
@@ -34,7 +34,7 @@ const DEFAULT_ITEMS = [
     category: 'service',
     included: true,
     mandatory: false,
-    agreement: 'Primary Care provides ongoing, whole-person medical care — routine checkups, preventive screenings, and coordination of the member’s overall treatment.',
+    agreement: 'Primary Care provides ongoing, whole-person medical care, routine checkups, preventive screenings, and coordination of the member’s overall treatment.',
   },
   {
     id: 'podiatry',
@@ -85,7 +85,7 @@ export const CONSENT_CATEGORY_OPTIONS = [
 ];
 
 // `showDecline` is a component-level switch (field.showDecline). Off by
-// default, each item is a single "I give my consent" checkbox — an unchecked
+// default, each item is a single "I give my consent" checkbox: an unchecked
 // box already records the absence of consent. When the author turns it on, a
 // matching "I decline" option is added to every item at once.
 export function consentQuestion(item, showDecline = false) {

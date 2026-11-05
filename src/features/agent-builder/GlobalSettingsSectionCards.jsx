@@ -41,9 +41,9 @@ export function GlobalSettingsIdentitySection({ settings, update, errors, markTo
       >
         <Textarea aria-label="Use case name"
           className={styles.textarea}
-          variant={showUseCaseError ? 'error' : 'default'}
+          invalid={showUseCaseError}
           value={settings.useCaseName}
-          onChange={e => update('useCaseName', e.target.value.slice(0, 500))}
+          onValueChange={text => update('useCaseName', text.slice(0, 500))}
           onBlur={() => markTouched('useCaseName')}
           maxLength={500}
           rows={2}
@@ -67,7 +67,7 @@ export function GlobalSettingsPromptAndUtilitySection({ settings, update }) {
           <Select
             options={LLM_MODELS.map(m => ({ value: m.id, label: m.label }))}
             value={settings.llmModel}
-            onChange={v => update('llmModel', v)}
+            onValueChange={v => update('llmModel', v)}
           />
         </Field>
         <Textarea aria-label="Global prompt"
@@ -106,7 +106,7 @@ export function GlobalSettingsInterfaceAndVoiceSection({ settings, update }) {
         icon="solar:monitor-linear"
         title="Interface"
         defaultOpen={false}
-        description="How the agent connects with users — voice, chat, or both — and which languages it speaks."
+        description="How the agent connects with users, voice, chat, or both, and which languages it speaks."
       >
         <Field label="Modality">
           <Select
@@ -116,7 +116,7 @@ export function GlobalSettingsInterfaceAndVoiceSection({ settings, update }) {
               { value: 'both', label: 'Both' },
             ]}
             value={settings.interfaceMode}
-            onChange={v => update('interfaceMode', v)}
+            onValueChange={v => update('interfaceMode', v)}
           />
         </Field>
         <ToggleRow
@@ -144,7 +144,7 @@ export function GlobalSettingsInterfaceAndVoiceSection({ settings, update }) {
             <Select
               options={LANGUAGES.map(l => ({ value: l, label: l }))}
               value={settings.agentLanguage}
-              onChange={v => update('agentLanguage', v)}
+              onValueChange={v => update('agentLanguage', v)}
             />
           )}
         </Field>
@@ -159,7 +159,7 @@ export function GlobalSettingsInterfaceAndVoiceSection({ settings, update }) {
           <Select
             options={VOICES.map(v => ({ value: v.id, label: v.label }))}
             value={settings.voiceId}
-            onChange={v => update('voiceId', v)}
+            onValueChange={v => update('voiceId', v)}
           />
         </Field>
         <SliderField
@@ -204,7 +204,7 @@ export function GlobalSettingsSpeechAndCallSection({ settings, update }) {
           <Select
             options={BACKGROUND_SOUNDS.map(s => ({ value: s.id, label: s.label }))}
             value={settings.backgroundSound}
-            onChange={v => update('backgroundSound', v)}
+            onValueChange={v => update('backgroundSound', v)}
           />
         </Field>
 
@@ -290,7 +290,7 @@ export function GlobalSettingsSpeechAndCallSection({ settings, update }) {
               <Select
                 options={VOICEMAIL_ACTIONS.map(a => ({ value: a.id, label: a.label }))}
                 value={settings.voicemailAction}
-                onChange={v => update('voicemailAction', v)}
+                onValueChange={v => update('voicemailAction', v)}
               />
             </Field>
             {settings.voicemailAction === 'leave' && (
@@ -341,7 +341,7 @@ export function GlobalSettingsSpeechAndCallSection({ settings, update }) {
               { value: 'user', label: 'User speaks first' },
             ]}
             value={settings.speakerPriority}
-            onChange={v => update('speakerPriority', v)}
+            onValueChange={v => update('speakerPriority', v)}
           />
         </Field>
       </Section>
@@ -376,7 +376,7 @@ export function GlobalSettingsSecurityAndMessagesSection({ settings, update }) {
           <Select
             options={FALLBACK_BEHAVIORS.map(f => ({ value: f.id, label: f.label }))}
             value={settings.fallbackBehavior}
-            onChange={v => update('fallbackBehavior', v)}
+            onValueChange={v => update('fallbackBehavior', v)}
           />
         </Field>
       </Section>

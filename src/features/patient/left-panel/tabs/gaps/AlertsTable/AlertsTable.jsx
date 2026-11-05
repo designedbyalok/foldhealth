@@ -1,5 +1,8 @@
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
+import { ProfileTable } from '../../../../../../components/ProfileTable/ProfileTable';
+import { profileRowClass, profileCellClass } from '../../../../../../components/ProfileTable/profileTableClasses';
 import { ALERT_ITEMS } from '../../../../data/careGapsMock';
+import { GAP_TABLE_COLUMNS } from '../gapTableColumns';
 import styles from './AlertsTable.module.css';
 
 function FlagIcon({ severity }) {
@@ -14,38 +17,37 @@ function FlagIcon({ severity }) {
 
 function AlertRow({ item }) {
   return (
-    <div className={styles.row}>
-      <div className={styles.content}>
-        <span className={styles.title}>{item.title}</span>
-        <div className={styles.meta}>
-          <FlagIcon severity={item.severity} />
-          <span className={styles.metaDot}>•</span>
-          <span className={styles.metaText}>{item.category} • {item.time}</span>
+    <tr className={`${profileRowClass} ${styles.row}`}>
+      <td className={profileCellClass}>
+        <div className={styles.content}>
+          <span className={styles.title}>{item.title}</span>
+          <div className={styles.meta}>
+            <FlagIcon severity={item.severity} />
+            <span className={styles.metaDot}>•</span>
+            <span className={styles.metaText}>{item.category} • {item.time}</span>
+          </div>
         </div>
-      </div>
-      <div className={styles.statusCell}>
+      </td>
+      <td className={profileCellClass}>
         <span className={styles.status}>{item.status}</span>
-      </div>
-      <div className={styles.moreBtn}>
-        <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More" />
-      </div>
-    </div>
+      </td>
+      <td className={profileCellClass}>
+        <div className={styles.moreBtn}>
+          <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More" />
+        </div>
+      </td>
+    </tr>
   );
 }
 
 export function AlertsTable() {
   return (
     <div className={styles.wrapper}>
-      <div className={styles.card}>
-        <div className={styles.colHeader}>
-          <span className={styles.colTitle}>Title</span>
-          <span className={styles.colStatus}>Status</span>
-          <span className={styles.colActions} />
-        </div>
-        {ALERT_ITEMS.map(item => (
-          <AlertRow key={item.id} item={item} />
-        ))}
-      </div>
+      <ProfileTable
+        columns={GAP_TABLE_COLUMNS}
+        rows={ALERT_ITEMS}
+        renderRow={item => <AlertRow key={item.id} item={item} />}
+      />
     </div>
   );
 }

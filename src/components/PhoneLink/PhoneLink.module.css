@@ -1,5 +1,9 @@
 .link {
   display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
   align-items: center;
   gap: var(--space-1);
   font-size: var(--font-md);

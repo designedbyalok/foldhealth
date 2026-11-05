@@ -22,7 +22,7 @@
 }
 .required { color: var(--status-error); }
 
-/* "Performed by" option row — avatar + name + optional clinical role
+/* "Performed by" option row: avatar + name + optional clinical role
    subline. Used inside Select's option label so the trigger and menu
    items render identically. */
 .performedByOption {
@@ -34,7 +34,7 @@
 /* Radio glyph inside each Performed by option. Empty circle by
    default; when the parent <li> carries aria-selected="true" (Select
    sets it on the current pick), the border thickens to a filled
-   primary-300 dot — matching the SelectAssigneeModal picker's radio
+   primary-300 dot: matching the SelectAssigneeModal picker's radio
    pattern so the two people-pickers read the same way. */
 .performedByRadio {
   width: 16px;
@@ -160,7 +160,7 @@
   gap: var(--space-4);
 }
 
-/* PHQ-2 Score card — wraps the label + question list + save-score
+/* PHQ-2 Score card: wraps the label + question list + save-score
    button so the section reads as one bordered card, matching the
    Care Plan panel treatment below it. */
 .phq2Card {
@@ -193,7 +193,7 @@
    padding to the very edges, and a slim top divider replaces the
    card's inner gap so the banner reads as part of the same container
    rather than a floating chip. Only the card's bottom corners stay
-   rounded — the top corners of the strip are squared so the join is
+   rounded: the top corners of the strip are squared so the join is
    invisible. */
 .phq2Card .phq2InfoBarAttached {
   margin: 0 calc(var(--space-3) * -1) calc(var(--space-3) * -1);
@@ -204,7 +204,7 @@
   border-bottom-left-radius: var(--radius-md, 8px);
   border-bottom-right-radius: var(--radius-md, 8px);
 }
-/* InfoBar's `.body` span is a min-width:0 wrapper — force it to grow
+/* InfoBar's `.body` span is a min-width:0 wrapper, force it to grow
    so our two-column layout inside can span end-to-end. */
 .phq2Card .phq2InfoBarAttached :global([class*="body"]) {
   flex: 1;
@@ -270,7 +270,7 @@
   color: var(--neutral-500);
 }
 .carePlanBullets {
-  /* Native list layout — flex on a <ul> hides the disc markers because
+  /* Native list layout: flex on a <ul> hides the disc markers because
      ::marker isn't rendered on flex items. */
   margin: 0;
   padding: var(--space-3) var(--space-3) var(--space-3) calc(var(--space-3) + var(--space-4));
@@ -290,7 +290,7 @@
 }
 /* Tighten the shared Textarea's label-to-input rhythm inside the
    Care Plan panel so "Outreach Notes" sits 6px above its textarea
-   (design ask on the DSF surface only — other Textarea usages keep
+   (design ask on the DSF surface only, other Textarea usages keep
    the default var(--space-2) gap). */
 .carePlanFooter :global([class*="enhRoot"]) {
   gap: calc(var(--space-1) + var(--space-1) / 2);
@@ -311,7 +311,7 @@
   font-weight: 400;
 }
 
-/* Standing "Decline follow-up" checkbox — same shape as
+/* Standing "Decline follow-up" checkbox: same shape as
    .carePlanCheckboxRow but with an emphasized left indent + amber
    accent so it never blends into a body form field. */
 .declineRow {
@@ -350,7 +350,7 @@
   font-weight: 500;
   color: var(--neutral-400);
 }
-/* Bulleted body — mirrors the care-plan card list: soft indent, muted
+/* Bulleted body: mirrors the care-plan card list: soft indent, muted
    text, tight leading so the two clinical criteria read as one prompt. */
 .subQuestionBullets {
   margin: 0;

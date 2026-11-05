@@ -26,6 +26,13 @@
 /* Mirror the sidebar icon when the left panel is collapsed (points to expand). */
 .sidebarFlipped svg { transform: scaleX(-1); }
 
+.actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: var(--space-1);
+}
+
 .tabsArea {
   flex: 1;
   min-width: 0;

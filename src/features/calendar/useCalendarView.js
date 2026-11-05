@@ -59,6 +59,8 @@ export function useCalendarView({ onOooSlot } = {}) {
   const holidayConfigs = useAppStore(s => s.holidayConfigs);
   const platformUsers = useAppStore(s => (s.platformPeople?.length ? s.platformPeople : s.platformUsers));
   const [currentView, setCurrentView] = useState('week');
+  // Calendar grid or the List view (VBC-25651); the list covers the same period.
+  const [layout, setLayout] = useState('calendar');
   const [showSchedule, setShowSchedule] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const calendarRef = useRef(null);
@@ -106,7 +108,7 @@ export function useCalendarView({ onOooSlot } = {}) {
       .select('id, full_name, email, status')
       .order('full_name')
       .then(({ data, error }) => {
-        // postgrest resolves (never rejects) on failure — without this the
+        // postgrest resolves (never rejects) on failure: without this the
         // Users chip just renders empty with no signal that the query failed.
         if (error) { console.error('Failed to load users for the calendar filter', error); return; }
         if (data?.length) {
@@ -121,7 +123,8 @@ export function useCalendarView({ onOooSlot } = {}) {
 
   // People are picked by id (`filterUser` holds personKeys): two staff can
   // share a name. Week shows one user at a time: the picked one, else the
-  // signed-in user, else the first user. Day and Month take any number.
+  // signed-in user, else the first user. Day, Month, the List view and
+  // Available Slots take any number.
   const me = useAppStore(s => s.currentUserProfile);
   const meName = me?.name;
   const meUser = users.find(u => samePerson(u, me || {}));
@@ -129,8 +132,8 @@ export function useCalendarView({ onOooSlot } = {}) {
     || (meUser ? personKey(meUser) : users[0] ? personKey(users[0]) : null)
     || null;
   const viewUsers = useMemo(
-    () => (currentView === 'week' ? [weekUser].filter(Boolean) : filterUser),
-    [currentView, weekUser, filterUser],
+    () => (currentView === 'week' && layout === 'calendar' ? [weekUser].filter(Boolean) : filterUser),
+    [currentView, layout, weekUser, filterUser],
   );
   // A key back to { id, name, email }; an unknown key is a name (older data).
   const personFor = useCallback((key) => users.find(u => personKey(u) === key) || personOf(key), [users]);
@@ -155,17 +158,24 @@ export function useCalendarView({ onOooSlot } = {}) {
     return filtered;
   }, [appointments, reminderEvents, viewPeople, filterType, filterLocation, filterStatus]);
 
-  // Month → Day: show that date in the Day view.
-  const openDay = (isoDate) => {
+  // Show the period holding that date, in the current view.
+  const goToDate = (isoDate) => {
     const app = calendarRef.current;
     const T = globalThis.Temporal;
     if (app?.$app && T) app.$app.datePickerState.selectedDate.value = T.PlainDate.from(isoDate);
     setSelectedDate(isoDate);
+  };
+
+  // Month → Day: show that date in the Day view.
+  const openDay = (isoDate) => {
+    goToDate(isoDate);
     handleViewChange('day');
   };
 
   const handleViewChange = (view) => {
     setCurrentView(view);
+    // Available Slots has no Month, so Month goes back to the calendar.
+    if (view === 'month-grid' && layout === 'availability') setLayout('calendar');
     const app = calendarRef.current;
     if (app?.$app?.calendarState) {
       const selectedDate = app.$app.datePickerState?.selectedDate?.value || new Date().toISOString().split('T')[0];
@@ -276,7 +286,7 @@ export function useCalendarView({ onOooSlot } = {}) {
     const ep = eventsPluginRef.current;
     // Must check the event exists first. schedule-x's remove() does
     // splice(findIndex(...), 1) with no guard, so removing an id that isn't
-    // there splices at -1 and silently deletes the LAST real appointment —
+    // there splices at -1 and silently deletes the LAST real appointment,
     // which is every drawer close that didn't start from a slot click.
     if (ep?.get('__selection__')) ep.remove('__selection__');
   }, []);
@@ -383,7 +393,7 @@ export function useCalendarView({ onOooSlot } = {}) {
     if (T && dateTime?.epochMilliseconds && dateTime.add) {
       const clickStart = dateTime.epochMilliseconds;
       const clickEnd = dateTime.add({ minutes: 30 }).epochMilliseconds;
-      // Check against ALL appointments, not the calendar's event list — that
+      // Check against ALL appointments, not the calendar's event list: that
       // list only holds what the filter chips currently show, so filtering
       // would otherwise hide a conflict and let you double-book the slot.
       const hasOverlap = (appointments || []).some(a => {
@@ -434,7 +444,7 @@ export function useCalendarView({ onOooSlot } = {}) {
     setClickedAppointment(null);
     clearSelection();
     // A status change refetches appointments, and the re-rendered events carry
-    // their own is-cancelled class — no post-render class patching needed.
+    // their own is-cancelled class: no post-render class patching needed.
   }, [clearSelection]);
 
   const hoverRef = useRef(null);
@@ -511,11 +521,11 @@ export function useCalendarView({ onOooSlot } = {}) {
     let timer;
     let attempts = 0;
 
-    // The grid is ready when the CURRENT view's DOM exists — the column
+    // The grid is ready when the CURRENT view's DOM exists: the column
     // count check matters on view switches, when the previous view's
     // columns linger in the DOM for a frame or two.
     const gridReady = () => {
-      // Wait for the CELLS, not just the wrapper — the wrapper mounts a beat
+      // Wait for the CELLS, not just the wrapper, the wrapper mounts a beat
       // earlier, and decorating against zero cells would silently no-op with
       // no retry (month view would lose its past-day shading).
       if (currentView === 'month-grid') return document.querySelectorAll('.sx__month-grid-day').length > 0;
@@ -588,6 +598,7 @@ export function useCalendarView({ onOooSlot } = {}) {
     renderTick,
     selectedDate,
     openDay,
+    goToDate,
     viewUsers,
     meName,
     setClickedAppointment,
@@ -595,6 +606,8 @@ export function useCalendarView({ onOooSlot } = {}) {
     setShowSchedule,
     calendarTitle,
     currentView,
+    layout,
+    setLayout,
     showSchedule,
     selectedSlot,
     calendarRef,

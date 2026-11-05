@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Fold Health — P360 banner data seed
+ * Fold Health: P360 banner data seed
  *
  * Gives every patient in `patients` a meaningful p360_profiles row so the
  * patient-profile banner (collapsed metrics + expanded 4-column panel) shows
@@ -8,7 +8,7 @@
  *
  * - Deterministic: each patient's data is generated from a PRNG seeded by
  *   their id, so re-running produces identical rows.
- * - Non-destructive: upserts with `coalesce(existing, excluded)` — existing
+ * - Non-destructive: upserts with `coalesce(existing, excluded)`, existing
  *   hand-crafted values (p1 / p2 / p17) are kept; only NULL fields are filled.
  * - Requires supabase/p360_upcoming_appointments_migration.sql to have run.
  *
@@ -20,7 +20,7 @@ import pg from 'pg';
 import { readFileSync } from 'node:fs';
 
 const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD;
-if (!DB_PASSWORD) { console.error('SUPABASE_DB_PASSWORD missing — add it to .env'); process.exit(1); }
+if (!DB_PASSWORD) { console.error('SUPABASE_DB_PASSWORD missing: add it to .env'); process.exit(1); }
 
 let poolerHost = 'aws-1-ap-southeast-1.pooler.supabase.com';
 let poolerUser = 'postgres.osnihfqqrcchsaqhagcx';
@@ -30,7 +30,7 @@ try {
   poolerUser = decodeURIComponent(u.username);
 } catch { /* fall back to the hardcoded pooler */ }
 
-// mulberry32 — tiny deterministic PRNG so seeds are stable per patient
+// mulberry32: tiny deterministic PRNG so seeds are stable per patient
 function rngFor(seedStr) {
   let h = 1779033703;
   for (let i = 0; i < seedStr.length; i++) { h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
@@ -46,7 +46,7 @@ const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)];
 const between = (rng, lo, hi) => lo + rng() * (hi - lo);
 const int = (rng, lo, hi) => Math.floor(between(rng, lo, hi + 1));
 
-// "Today" for date math — anchored so re-runs stay deterministic.
+// "Today" for date math: anchored so re-runs stay deterministic.
 const TODAY = new Date('2026-08-12T12:00:00');
 const fmtDate = (d) => `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
 const fmtDateShort = (d) => fmtDate(d).replace(/\/\d\d(\d\d)$/, '/$1');
@@ -79,7 +79,7 @@ const GIVEN_NAMES = {
 
 const CITIES = ['Los Angeles, CA', 'San Diego, CA', 'Fresno, CA', 'Sacramento, CA', 'Long Beach, CA', 'Pasadena, CA', 'Riverside, CA', 'Anaheim, CA'];
 
-// Clinical archetypes — conditions, tags and vitals stay internally consistent
+// Clinical archetypes: conditions, tags and vitals stay internally consistent
 const ARCHETYPES = [
   { conditions: ['Diabetes Type 2', 'Hypertension'],        tags: ['Diabetes', 'Hypertension'],  hba1c: [7.1, 8.4], bp: [[132, 152], [82, 94]] },
   { conditions: ['CHF (Class II)', 'Atrial Fibrillation'],  tags: ['CHF', 'AFib'],               hba1c: [5.6, 6.4], bp: [[110, 128], [68, 80]] },
@@ -226,7 +226,7 @@ async function upsertProfile(db, patientId, profile) {
   const cols = Object.keys(profile);
   const params = [patientId, ...cols.map(c => JSONB_COLS.has(c) ? JSON.stringify(profile[c]) : profile[c])];
   const placeholders = cols.map((c, i) => JSONB_COLS.has(c) ? `$${i + 2}::jsonb` : `$${i + 2}`);
-  // Only unfilled fields get filled — hand-crafted rows survive re-seeds.
+  // Only unfilled fields get filled: hand-crafted rows survive re-seeds.
   // "Unfilled" = NULL, or (for jsonb) an empty array left by column defaults.
   const setClause = cols.map(c => JSONB_COLS.has(c)
     ? `${c} = case when p360_profiles.${c} is null or p360_profiles.${c} = '[]'::jsonb then excluded.${c} else p360_profiles.${c} end`
@@ -243,7 +243,7 @@ async function upsertProfile(db, patientId, profile) {
 }
 
 // Banner fields carried over when an All Patients row mirrors a patients-table
-// member — copying keeps the two entry points showing identical data.
+// member: copying keeps the two entry points showing identical data.
 const BANNER_COLS = ['profile_type', 'health_plan_name', 'health_plan_desc', 'consent_given', 'consent_total', 'acuity', 'raf_score', 'raf_change', 'next_appointment_date', 'last_contact_type', 'last_contact_days', 'programs', 'patient_type', 'condition_tags', 'location', 'location_count', 'languages', 'language_preference', 'emails', 'plan_numbers_primary', 'plan_numbers_secondary', 'chronic_conditions', 'recent_vitals', 'opted_out_comms', 'family_caregiver_count', 'family_members', 'care_team', 'care_team_profile_type', 'upcoming_appointments'];
 
 async function main() {
@@ -306,7 +306,7 @@ async function main() {
   }
   console.log(`  ✓ all_patients: ${apInserted} inserted, ${apMerged} merged`);
 
-  console.log(`\nDone — patients: ${inserted} inserted / ${merged} merged; all_patients: ${apInserted} inserted / ${apMerged} merged.\n`);
+  console.log(`\nDone: patients: ${inserted} inserted / ${merged} merged; all_patients: ${apInserted} inserted / ${apMerged} merged.\n`);
   await db.end();
 }
 

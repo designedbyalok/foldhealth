@@ -16,6 +16,24 @@
   border-radius: var(--space-2);
   background: var(--neutral-0);
 }
+/* A horizontal scrollbar that shows only while the cursor is on the table.
+   The 6px track is always reserved (only the thumb fades in), so the table
+   doesn't jump on hover. Scrollbars are hidden app-wide (index.css). */
+/* Chrome and Safari drop ::-webkit-scrollbar styling once scrollbar-width or
+   scrollbar-color is set, so both go back to auto here; Firefox, which has
+   no ::-webkit-scrollbar, gets the thin standard version below. */
+.tableScroll {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+@supports not selector(::-webkit-scrollbar) {
+  .tableScroll { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+  .tableScroll:hover { scrollbar-color: var(--neutral-150) transparent; }
+}
+.tableScroll::-webkit-scrollbar { height: 6px; }
+.tableScroll::-webkit-scrollbar-thumb { background: transparent; }
+.tableScroll:hover::-webkit-scrollbar-thumb { background: var(--neutral-150); }
+.tableScroll:hover::-webkit-scrollbar-thumb:hover { background: var(--neutral-200); }
 .table { width: 100%; border-collapse: collapse; }
 .table th {
   text-align: left;
@@ -76,11 +94,35 @@
 .detail {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
+  /* Room below the last section so the pane doesn't end on it. */
+  padding-bottom: var(--space-8);
 }
 .detailHead { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-4); }
-.detailMeta { font-size: var(--font-md); color: var(--neutral-400); font-weight: 500; }
-.detailMeta span { color: var(--primary-300); margin-right: var(--space-1); }
+/* Cancels the gap drawer pane's padding (12px top, 16px sides) so the tabs
+   and their divider span the pane. */
+/* Pinned to the top of the scrolling pane (top offsets its 12px padding),
+   so the drug's tabs stay put while its details scroll under them. */
+.tabsFlush {
+  position: sticky;
+  top: calc(-1 * var(--space-3));
+  z-index: 2;
+  margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-4)) 0;
+  background: var(--neutral-0);
+}
+/* One titled block of the Details tab; a hairline sets each apart. */
+.detailSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 0.5px solid var(--neutral-100);
+}
+/* The first section right under the tabs: no hairline or padding of its
+   own, so it sits the drawer's usual 16px below them. */
+.detailSectionFirst { border-top: none; padding-top: 0; margin-top: calc(-1 * var(--space-1)); }
+/* Two fields side by side, top-aligned. */
+.detailRow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); align-items: start; }
 
 .detailGrid {
   display: grid;
@@ -88,10 +130,18 @@
   gap: var(--space-4);
   align-items: start;
 }
-.field { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
-.fieldLabel { font-size: var(--font-sm); font-weight: 500; color: var(--primary-300); }
-.radios { display: flex; gap: var(--space-4); flex-wrap: wrap; }
-.checks { display: flex; flex-direction: column; gap: 0.375rem; }
+.field { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+/* Same as the library's field labels (Select, Input), for the one group
+   without a labelled component: Condition. */
+.fieldLabel { font-size: var(--font-base); font-weight: 400; line-height: 1.2; color: var(--neutral-200); }
+/* A read-only value under its label (Dose Form, Route). */
+.fieldValue { font-size: var(--font-base); color: var(--neutral-500); }
+/* Med Status beside the reason Select: the same 4px label gap and label
+   grey, and the radios side by side, centred on the Select's 32px box. */
+.detailRow > .medStatus { gap: var(--space-1); }
+.medStatus > span:first-child { color: var(--neutral-200); line-height: 1.2; }
+.medStatus [role='radiogroup'] { flex-direction: row; align-items: center; gap: var(--space-4); min-height: 2rem; }
+.checks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2) var(--space-4); }
 .checkRow { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--font-md); color: var(--neutral-400); cursor: pointer; }
 
 .card {
@@ -103,22 +153,25 @@
   border-radius: var(--space-2);
   min-width: 0;
 }
-.cardTitle { font-size: var(--font-sm); font-weight: 500; color: var(--primary-300); display: flex; gap: var(--space-2); flex-wrap: wrap; }
-.cardName { color: var(--neutral-400); font-weight: 500; }
+.cardTitle { font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300); display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.cardName { color: var(--neutral-500); font-weight: 500; }
 .cardGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Six tracks: phone and fax take half each; city, state and zip a third. */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: var(--space-2) var(--space-3);
   margin: 0;
 }
-.cardGrid div { min-width: 0; }
-.cardGrid dt { font-size: var(--font-xs); color: var(--primary-300); }
+.cardGrid div { min-width: 0; grid-column: span 2; }
+.cardGrid dt { font-size: var(--font-xs); color: var(--neutral-300); }
 .cardGrid dd { margin: 0; font-size: var(--font-md); color: var(--neutral-400); overflow-wrap: anywhere; }
-.fullRow { grid-column: 1 / -1; }
-/* The click-to-dial number needs room: it doesn't wrap. */
-.wideCell { grid-column: span 2; }
+.cardGrid .fullRow, .fullRow { grid-column: 1 / -1; }
+/* Phone numbers keep to one line. */
+.cardGrid .halfCell { grid-column: span 3; }
+.noWrap { white-space: nowrap; }
 
 .subTitle { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+.subTitleRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 
 .empty {
   display: flex;
@@ -132,18 +185,6 @@
 }
 .empty p { margin: 0; }
 
-/* Barrier & Intervention log entries for the medication's measure. */
-.barrierEntry {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-2) var(--space-3);
-  border: 0.5px solid var(--neutral-150);
-  border-radius: var(--space-2);
-}
-.barrierLatest { background: var(--neutral-25); }
-.barrierMeta { font-size: var(--font-sm); color: var(--neutral-300); }
-.barrierChips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .muted { font-size: var(--font-md); color: var(--neutral-300); }
 
 /* Open gaps together at the top; the one opened from the worklist first. */
@@ -176,22 +217,17 @@
 .dateCell > * + * { margin-top: var(--space-1); }
 .gapCardHead, .gapCardMeta { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 
-/* Bulk Recent Fill: shows once drugs are picked, in any gap. */
-.bulkBar {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-  padding: var(--space-2) var(--space-3);
-  background: var(--primary-50);
-  border: 0.5px solid var(--primary-200);
-  border-radius: var(--space-2);
+/* The floating bulk bar (BulkBar) covers the bottom of the list; room below
+   the last row lets it scroll above the bar. */
+.wrapWithBulk { padding-bottom: 6rem; }
+/* In the gap drawer the bar sits at the drawer's bottom, centred in it,
+   rather than at the page's (as HCC's DiagPanel does). */
+.bulkBarInDrawer {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: var(--space-8) !important;
+  transform: translateX(-50%) !important;
 }
-.bulkCount { font-size: var(--font-md); font-weight: 500; color: var(--neutral-500); margin-right: auto; }
-.bulkField { display: inline-flex; align-items: center; gap: var(--space-2); }
 .pickCol { width: 2.25rem; }
 
 /* Manual fill dates are projected, not a closure. */
@@ -210,3 +246,130 @@
 .chevron { flex-shrink: 0; transition: transform 0.15s ease; }
 .chevronRight { transform: rotate(-90deg); }
 .chevronUp { transform: rotate(180deg); }
+
+/* ── Compact (Pharmacy Gap Details), after the CIS dose list ── */
+.cGroup { display: flex; flex-direction: column; }
+/* Gap title line, styled like the HEDIS CIS vaccine row: 44px, white,
+   grey on hover, a stroke below. */
+.cGroupHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3) var(--space-2) calc(1.5 * var(--space-1));
+  border: none;
+  border-bottom: 0.5px solid var(--neutral-150);
+  background: var(--neutral-0);
+  text-align: left;
+  cursor: pointer;
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+}
+.cGroupHead:hover { background: var(--neutral-50); }
+.cGroupHead:focus-visible { outline: 2px solid var(--primary-200); outline-offset: -2px; }
+.cCode { font-weight: 500; color: var(--neutral-400); }
+.cName { font-weight: 400; color: var(--neutral-400); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cCount { margin-left: auto; display: inline-flex; align-items: center; gap: var(--space-1); }
+
+/* Checkbox, Rx, Last Fill, Recent Fill, Next Fill, PDC, Barrier, actions. */
+/* Select all lines up with the row checkboxes (12px inset). */
+.cToolbar { padding-inline: var(--space-3) var(--space-1); }
+.cToolbar .checkRow { gap: var(--space-1); }
+/* An open gap's drugs on a primary-25 ground, like the CIS dose table. */
+.cTable { display: flex; flex-direction: column; background: var(--primary-25); }
+.cRow {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 88px 100px 88px 44px 24px;
+  column-gap: var(--space-2);
+  align-items: center;
+  /* 12px in on the left as in the CIS dose table; 8px on the right for the
+     note icon. */
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+  color: var(--neutral-500);
+}
+.cHead {
+  box-sizing: border-box;
+  height: 28px;
+  padding-block: 0;
+  background: var(--neutral-50);
+  border-bottom: 0.5px solid var(--neutral-150);
+  font-size: var(--font-sm);
+  font-weight: 400;
+  color: var(--placeholder-text);
+  white-space: nowrap;
+}
+.cMedRow { min-height: 51px; border-bottom: 0.5px solid var(--neutral-100); cursor: pointer; }
+.cMedRow:hover { background: var(--neutral-25); }
+/* The medication whose details are open, as worklists mark a selected row. */
+.cMedRowActive,
+.cMedRowActive:hover { background: var(--primary-50); }
+/* A primary bar on the row's left edge; the row's 12px left padding keeps
+   air between it and the checkbox. */
+.cMedRowActive { position: relative; }
+.cMedRowActive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--primary-300);
+}
+/* The gap title's stroke below already separates groups. */
+.cMedRow:last-child { border-bottom: none; }
+.cDiscontinued { color: var(--neutral-300); }
+.cPick { display: inline-flex; }
+/* Last Fill, Next Fill and PDC read grey unless flagged red for action. */
+.cValue:not(.toneError) { color: var(--neutral-300); }
+.cRx { min-width: 0; overflow-wrap: anywhere; color: var(--neutral-400); }
+/* Recent Fill: a light chip that opens the calendar. */
+.cChip { border: none; background: none; padding: 0; cursor: pointer; display: inline-flex; }
+.cChip:focus-visible { outline: 2px solid var(--primary-200); outline-offset: 2px; border-radius: 4px; }
+.cChipEmpty { color: var(--neutral-200); }
+/* The note icon, fixed at the right of the row (the row opens details). */
+.cActions { display: inline-flex; align-items: center; justify-content: flex-end; gap: var(--space-1); }
+/* Info under the Rx details: prescriber and pharmacy on hover, one per line. */
+.cInfoLink {
+  border: none; background: none; padding: 0; cursor: default;
+  font-size: var(--font-sm); color: var(--primary-300);
+}
+.cInfoLink:hover { text-decoration: underline; }
+/* Info and the barrier count share one line under the supply. */
+.cLinks { display: inline-flex; align-items: center; white-space: nowrap; }
+.cSource { display: flex; flex-direction: column; gap: 0.125rem; }
+/* Rx or Recent Fill with its details stacked below, centered in the row. */
+.cStack { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 0.125rem; }
+/* Under the drug name: quantity and supply, then Info and the barrier count.
+   One line each, cut short rather than wrapped. */
+.cMeta {
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  font-size: var(--font-sm);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+  cursor: default;
+}
+/* Beside Info and Barrier on the second line: plain text, not a link. */
+.cRefills { color: var(--neutral-300); white-space: nowrap; }
+.cMetaLine { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Under the Recent Fill chip: the fill's claim match. */
+.cMatch {
+  font-size: var(--font-md);
+  line-height: var(--leading-tight);
+  cursor: default;
+}
+.cMatchOk { color: var(--status-success); }
+.cMatchPending { color: var(--status-warning); }
+.cBarrierText { color: var(--status-error); }
+
+/* Refill History rows (the Notes table's layout): fill details, then source. */
+.refillGrid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; }
+.refillCell { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+.refillDate { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+.refillMeta { font-size: var(--font-sm); color: var(--neutral-300); }

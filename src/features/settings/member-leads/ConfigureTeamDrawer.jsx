@@ -126,7 +126,7 @@ export function ConfigureTeamDrawer({ kind = 'hcc', editTeam = null, defaultTeam
       noCloseDivider
       headerRight={
         <>
-          <Button variant="primary" size="L" disabled={!canSave} onClick={handleSave}>Save</Button>
+          <Button disabled={!canSave} onClick={handleSave}>Save</Button>
           <span className={drawerStyles.headerDivider} />
         </>
       }

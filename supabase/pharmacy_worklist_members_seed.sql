@@ -78,7 +78,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
    {
     "date": "10/08/2026",
     "contact": "Pharmacy",
-    "outcome": "Pending — Pick up",
+    "outcome": "Pending: Pick up",
     "result": "failed",
     "by": "Priya Natarajan",
     "note": "Ready since 10/01.",
@@ -103,7 +103,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
     "actor": "Priya Natarajan",
     "t": "outreach",
     "title": "Outreach · Pharmacy (MAD)",
-    "outcome": "Pending — Pick up",
+    "outcome": "Pending: Pick up",
     "outcomeColor": "var(--status-error)",
     "note": "Ready since 10/01."
    }
@@ -305,7 +305,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
   "assignee_id": null,
   "assignee_name": "Priya Natarajan",
   "assignee_initials": "PN",
-  "lead_note": "Pickup confirmed 3 weeks ago but plan still shows the gap — check with plan.",
+  "lead_note": "Pickup confirmed 3 weeks ago but plan still shows the gap, check with plan.",
   "follow_up_due": "10/14/2026",
   "barrier": "Forgetfulness",
   "days_in_queue": 15,
@@ -359,7 +359,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
    {
     "date": "09/18/2026",
     "contact": "Pharmacy",
-    "outcome": "Pending — Pick up",
+    "outcome": "Pending: Pick up",
     "result": "failed",
     "by": "Priya Natarajan",
     "note": "",
@@ -392,7 +392,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
     "actor": "Priya Natarajan",
     "t": "outreach",
     "title": "Outreach · Pharmacy (MAC)",
-    "outcome": "Pending — Pick up",
+    "outcome": "Pending: Pick up",
     "outcomeColor": "var(--status-error)"
    }
   ],
@@ -509,7 +509,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
   "assignee_id": null,
   "assignee_name": "Marcus Reyes",
   "assignee_initials": "MR",
-  "lead_note": "Needs pharmacist review — plan PDC lower than our fills.",
+  "lead_note": "Needs pharmacist review: plan PDC lower than our fills.",
   "follow_up_due": "10/13/2026",
   "barrier": "Side Effects",
   "days_in_queue": 22,
@@ -552,7 +552,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
    {
     "date": "10/02/2026",
     "contact": "Member",
-    "outcome": "Side effects — Experienced",
+    "outcome": "Side effects: Experienced",
     "result": "success",
     "by": "Marcus Reyes",
     "note": "Muscle aches on atorvastatin.",
@@ -616,7 +616,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
     "actor": "Marcus Reyes",
     "t": "outreach",
     "title": "Outreach · Member (MAC)",
-    "outcome": "Side effects — Experienced",
+    "outcome": "Side effects: Experienced",
     "outcomeColor": "var(--status-success)",
     "note": "Muscle aches on atorvastatin."
    },
@@ -804,7 +804,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
       "doseForm": "Tablet",
       "route": "Oral",
       "nonAdherenceReason": "Side Effects",
-      "notesToMd": "Muscle aches — consider switching statin.",
+      "notesToMd": "Muscle aches: consider switching statin.",
       "internalNotes": "",
       "id": "19403-mac-1",
       "name": "Atorvastatin",
@@ -1012,7 +1012,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
   "assignee_id": null,
   "assignee_name": "Marcus Reyes",
   "assignee_initials": "MR",
-  "lead_note": "Daughter manages meds — call her line.",
+  "lead_note": "Daughter manages meds: call her line.",
   "follow_up_due": "10/12/2026",
   "barrier": "Transportation",
   "days_in_queue": 31,
@@ -1057,7 +1057,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
    {
     "date": "09/29/2026",
     "contact": "Pharmacy",
-    "outcome": "Pending — Pick up",
+    "outcome": "Pending: Pick up",
     "result": "failed",
     "by": "Marcus Reyes",
     "note": "Fill never picked up; claim reversed.",
@@ -1090,7 +1090,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
     "actor": "Marcus Reyes",
     "t": "outreach",
     "title": "Outreach · Pharmacy (MAH)",
-    "outcome": "Pending — Pick up",
+    "outcome": "Pending: Pick up",
     "outcomeColor": "var(--status-error)",
     "note": "Fill never picked up; claim reversed."
    },
@@ -1327,7 +1327,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
    {
     "date": "09/24/2026",
     "contact": "Pharmacy",
-    "outcome": "Pending — Pick up",
+    "outcome": "Pending: Pick up",
     "result": "failed",
     "by": "Priya Natarajan",
     "note": "",
@@ -1352,7 +1352,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
     "actor": "Priya Natarajan",
     "t": "outreach",
     "title": "Outreach · Pharmacy (MAD)",
-    "outcome": "Pending — Pick up",
+    "outcome": "Pending: Pick up",
     "outcomeColor": "var(--status-error)"
    }
   ],
@@ -1624,7 +1624,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
     "outcome": "Cost/financial barrier",
     "result": "success",
     "by": "Marcus Reyes",
-    "note": "Copay $47 — asked prescriber about generic.",
+    "note": "Copay $47: asked prescriber about generic.",
     "measures": [
      "MAD"
     ]
@@ -1681,7 +1681,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
     "title": "Outreach · Member (MAD)",
     "outcome": "Cost/financial barrier",
     "outcomeColor": "var(--status-success)",
-    "note": "Copay $47 — asked prescriber about generic."
+    "note": "Copay $47: asked prescriber about generic."
    },
    {
     "at": "2026-10-01T05:30:00.000Z",
@@ -1718,7 +1718,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
       "doseForm": "Tablet",
       "route": "Oral",
       "nonAdherenceReason": "Cost Issue",
-      "notesToMd": "Brand copay too high — request generic or formulary alternative.",
+      "notesToMd": "Brand copay too high: request generic or formulary alternative.",
       "internalNotes": "",
       "id": "19408-mad-1",
       "name": "Januvia",
@@ -2127,7 +2127,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
    {
     "date": "10/11/2026",
     "contact": "Pharmacy",
-    "outcome": "Pending — Pick up",
+    "outcome": "Pending: Pick up",
     "result": "failed",
     "by": "Marcus Reyes",
     "note": "Recheck pickup 10/14.",
@@ -2154,7 +2154,7 @@ FROM   jsonb_populate_recordset(NULL::public.pharmacy_worklist_members, '[
     "actor": "Marcus Reyes",
     "t": "outreach",
     "title": "Outreach · Pharmacy (MAH)",
-    "outcome": "Pending — Pick up",
+    "outcome": "Pending: Pick up",
     "outcomeColor": "var(--status-error)",
     "note": "Recheck pickup 10/14."
    },

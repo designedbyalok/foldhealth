@@ -1,4 +1,4 @@
-/* Figma 2937:268403 — Link Goal to Barrier.
+/* Figma 2937:268403, Link Goal to Barrier.
    Body: gap-16, no inner padding (the shared Drawer shell already
    provides 16px). Search: 32h border-input rounded-4. Rows: 8px inline
    padding, rounded-4, gap-8 between checkbox / stack / type badge,

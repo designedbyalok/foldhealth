@@ -12,7 +12,7 @@ import styles from './DosStatusMenu.module.css';
 // keys on); `label` is the coder-facing display name. Record Requested /
 // Record Received only appear for the Coder; Support gets Action Needed /
 // Insufficient; QA + Compliance get Returned but not the record-request
-// statuses — per the HCC role/status spec.
+// statuses: per the HCC role/status spec.
 function itemsForRole(role) {
   const values = ROLE_STATUS_OPTIONS[role] || ALL_STATUS_OPTIONS;
   return values.map((value) => ({
@@ -74,7 +74,7 @@ export function DosStatusMenu({ value, onChange, disabled = false, disabledReaso
         title={disabled ? disabledReason : undefined}
       >
         <Badge
-          size="M"
+          size="md"
           style={{ color: spec.color, background: spec.bg, borderColor: spec.border }}
           chevron={!disabled}
           label={(

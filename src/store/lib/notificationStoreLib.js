@@ -8,6 +8,7 @@ export function mapNotificationRow(row) {
     taskId: row.task_id ?? null,
     hccMemberId: row.hcc_member_id ?? null,
     referralId: row.referral_id ?? null,
+    reassignmentJobId: row.reassignment_job_id ?? null,
     read: !!row.read,
     ts: row.created_at ? Date.parse(row.created_at) : Date.now(),
     actorName: row.actor_name || null,

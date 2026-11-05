@@ -1,4 +1,4 @@
--- Patient allergy list — the allergies shown in the PAMI/Hx tab's "Allergies"
+-- Patient allergy list: the allergies shown in the PAMI/Hx tab's "Allergies"
 -- section and its Add Allergies drawer. One row per allergen per patient.
 -- Read with the anon key, so RLS needs a permissive policy or the table
 -- returns 0 rows and the section renders empty.

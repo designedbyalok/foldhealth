@@ -1,6 +1,6 @@
 /* The tag is a real <button> so it can be reached and copied from the
    keyboard. This resets the UA button chrome back to the inline span it used
-   to be — typography and color still come from the row, and the caller's
+   to be: typography and color still come from the row, and the caller's
    own class (cursor/hover) layers on top. */
 .tag {
   display: inline;
@@ -21,7 +21,7 @@
 
 /* Label swap animation: fade + tiny slide in when the tooltip text
    flips between "Click to copy Fold ID" and "Copied: #10070", triggered
-   by remounting the keyed inner span on state change. Kept subtle — motion
+   by remounting the keyed inner span on state change. Kept subtle, motion
    over ~180ms so the confirmation registers without feeling flashy. */
 .labelFade {
   display: inline-block;

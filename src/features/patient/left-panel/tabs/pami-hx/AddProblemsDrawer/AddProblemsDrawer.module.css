@@ -145,7 +145,7 @@
 .draftHead {
   display: flex;
   flex-direction: column;
-  /* 2px — below the --space-1 (4px) floor of the spacing scale. */
+  /* 2px: below the --space-1 (4px) floor of the spacing scale. */
   gap: 0.125rem;
 }
 .draftEyebrow {
@@ -345,6 +345,52 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+}
+
+/* Heading and Add New Relation, above the table. The drawer body's gap
+   would push them apart from the table, so pull the table up to 8px. */
+.famHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: calc(var(--space-2) * -1);
+}
+
+/* Family History draws the table as a bordered card, its add rows inside it.
+   No overflow clip (the condition search opens inside a cell), so the card
+   paints the white and the table's own layers stay clear of the corners. */
+.famTable {
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  background: var(--neutral-0);
+}
+.famTable > div,
+.famTable > div > div,
+.famTable > div > div > div,
+.famTable table thead tr th {
+  background: transparent;
+}
+/* Corner cells follow the card's curve, so a row's hover tint can't square
+   them off. */
+.famTable table thead tr th:first-child { border-top-left-radius: 8px; }
+.famTable table thead tr th:last-child { border-top-right-radius: 8px; }
+.famTable table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+.famTable table tbody tr:last-child td:last-child { border-bottom-right-radius: 8px; }
+
+/* The worklist dividers: after the first column and before Actions. */
+.famTable table thead tr th:first-child,
+.famTable .famRelationCell {
+  border-right: 0.5px solid var(--neutral-150);
+}
+.famTable table thead tr th:last-child,
+.famTable .famActionsCell {
+  border-left: 0.5px solid var(--neutral-150);
+}
+
+.famEmpty {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
 }
 
 .famAddLink {

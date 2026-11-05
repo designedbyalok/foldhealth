@@ -10,8 +10,8 @@ import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialo
 import { AuditLogDrawer } from '../../shared/AuditLogDrawer';
 import s from './GoalsPanel.module.css';
 
-const PROGRAM_VARIANT = { purple: 'ai-care', blue: 'outreach-appointment', amber: 'outreach-care-gap' };
-const STATUS_VARIANT = { active: 'status-completed', draft: 'status-queued' };
+const PROGRAM_VARIANT = { purple: 'primary', blue: 'info', amber: 'warning' };
+const STATUS_VARIANT = { active: 'success', draft: 'warning' };
 
 const GOALS_TH_STYLE = {
   padding: '8px 16px', fontSize: 'var(--font-sm)', fontWeight: 500, color: 'var(--neutral-300)',
@@ -31,10 +31,10 @@ function GoalCard({ goal, onOpen, onEdit }) {
     <div className={s.card} onClick={() => onOpen(goal.id)}>
       <div className={s.cardTop}>
         <div className={s.cardTopLeft}>
-          <Badge variant={PROGRAM_VARIANT[goal.programColor] || 'ai-care'} label={goal.program} />
-          {goal.weightedScoring && <Badge variant="compliance-warn" label="Scored" icon="solar:chart-linear" />}
+          <Badge tone={PROGRAM_VARIANT[goal.programColor] || 'primary'} label={goal.program} />
+          {goal.weightedScoring && <Badge tone="warning" label="Scored" icon="solar:chart-linear" />}
         </div>
-        <Badge variant={STATUS_VARIANT[goal.status] || 'status-completed'} label={goal.status === 'active' ? 'Active' : 'Draft'} />
+        <Badge tone={STATUS_VARIANT[goal.status] || 'success'} label={goal.status === 'active' ? 'Active' : 'Draft'} />
       </div>
       <div className={s.cardTitle}>{goal.name}</div>
       <div className={s.cardDesc}>{goal.description}</div>
@@ -42,7 +42,7 @@ function GoalCard({ goal, onOpen, onEdit }) {
         {goal.steps.map(st => (
           <Badge
             key={st.id}
-            variant={st.type === 'mandatory' ? 'compliance-pass' : 'status-queued'}
+            tone={st.type === 'mandatory' ? 'success' : 'warning'}
             label={st.name}
           />
         ))}
@@ -54,7 +54,7 @@ function GoalCard({ goal, onOpen, onEdit }) {
         </div>
         <div className={s.cardStat}>
           <div className={`${s.cardStatVal} ${goal.totalRuns === 0 ? s.cardStatValAmber : ''}`}>
-            {goal.totalRuns > 0 ? goal.totalRuns.toLocaleString() : '—'}
+            {goal.totalRuns > 0 ? goal.totalRuns.toLocaleString() : '-'}
           </div>
           <div className={s.cardStatLabel}>Runs</div>
         </div>
@@ -73,7 +73,7 @@ function GoalCard({ goal, onOpen, onEdit }) {
             </>
           )}
         </div>
-        <Button variant="secondary" size="S" onClick={(e) => { e.stopPropagation(); onEdit(goal.id); }}>Edit</Button>
+        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onEdit(goal.id); }}>Edit</Button>
       </div>
     </div>
   );
@@ -127,11 +127,11 @@ function GoalsTable({ goals, onOpen, onEdit, onDelete }) {
                 <td style={tdStyle}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                     <span style={{ fontWeight: 500, fontSize: 'var(--font-base)', color: 'var(--neutral-400)' }}>{g.name}</span>
-                    {g.status === 'draft' && <Badge variant="status-queued" label="Draft" />}
+                    {g.status === 'draft' && <Badge tone="warning" label="Draft" />}
                   </div>
                   <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-300)', maxWidth: 280, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.description}</div>
                 </td>
-                <td style={tdStyle}><Badge variant={PROGRAM_VARIANT[g.programColor] || 'ai-care'} label={g.program} /></td>
+                <td style={tdStyle}><Badge tone={PROGRAM_VARIANT[g.programColor] || 'primary'} label={g.program} /></td>
                 <td style={tdStyle}>
                   <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap', maxWidth: 80 }}>
                     {g.steps.map(st => (
@@ -149,23 +149,23 @@ function GoalsTable({ goals, onOpen, onEdit, onDelete }) {
                   </div>
                 </td>
                 <td style={{ ...tdStyle, fontVariantNumeric: 'tabular-nums' }}>
-                  {g.totalRuns > 0 ? g.totalRuns.toLocaleString() : '—'}
+                  {g.totalRuns > 0 ? g.totalRuns.toLocaleString() : '-'}
                 </td>
                 <td style={tdStyle}>
-                  {g.agents.length > 0 ? g.agents.length : '—'}
+                  {g.agents.length > 0 ? g.agents.length : '-'}
                 </td>
                 <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
-                  {g.created || '—'}
+                  {g.created || '-'}
                 </td>
                 <td style={tdStyle} onClick={e => e.stopPropagation()}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <ActionButton icon="solar:pen-linear" size="L" tooltip="Edit goal"
+                    <ActionButton icon="solar:pen-linear" tooltip="Edit goal"
                       onClick={() => onEdit(g.id)} />
                     <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-                    <ActionButton icon="solar:history-linear" size="L" tooltip="Audit Log"
+                    <ActionButton icon="solar:history-linear" tooltip="Audit Log"
                       onClick={() => setAuditDrawerEntity({ type: 'Goal', name: g.name, id: g.id })} />
                     <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-                    <ActionButton icon="solar:trash-bin-minimalistic-linear" size="L" tooltip="Delete goal"
+                    <ActionButton icon="solar:trash-bin-minimalistic-linear" tooltip="Delete goal"
                       onClick={() => setDeleteTarget(g)} />
                   </div>
                 </td>

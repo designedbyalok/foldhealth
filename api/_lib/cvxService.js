@@ -16,9 +16,9 @@ const MIN_CHARS = 2;
  * Codes a clinician can actually record.
  *
  * Dropped:
- *  • `nonVaccine` rows — administrative placeholders ("no vaccine
+ *  • `nonVaccine` rows: administrative placeholders ("no vaccine
  *    administered"), not something to add to an immunization list.
- *  • `Never Active` — assigned but never usable, so it can only ever be a
+ *  • `Never Active`, assigned but never usable, so it can only ever be a
  *    mis-pick.
  *
  * Inactive and Non-US codes stay: a patient's history legitimately contains

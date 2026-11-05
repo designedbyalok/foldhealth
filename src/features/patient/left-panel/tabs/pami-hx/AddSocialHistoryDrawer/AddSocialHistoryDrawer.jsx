@@ -155,7 +155,7 @@ function Question({ question, answers, onSave }) {
       label={question.label}
       options={asOptions(question.options)}
       value={multiple ? (Array.isArray(value) ? value : []) : (value || '')}
-      onChange={save}
+      onValueChange={save}
       multiple={multiple}
       checkboxes={multiple}
       badges={multiple}
@@ -169,8 +169,8 @@ function Question({ question, answers, onSave }) {
  * Exercise, SDOH, and Alcohol and other substances), defined in
  * src/reference-data/socialHistoryQuestionnaire.js.
  *
- * Every section is stacked as a collapsible card, all open, so the whole
- * questionnaire can be scanned at once. SDOH and AUDIT-C render as forms: the
+ * Every section is stacked as a collapsible card. The first opens on its own
+ * and the rest start folded, so the drawer opens on one short form. SDOH and AUDIT-C render as forms: the
  * same locked fields the Form Builder offers (src/reference-data/
  * sdohScreening.js, validatedInstruments.js).
  *
@@ -201,10 +201,8 @@ export function AddSocialHistoryDrawer({ patientId, onClose }) {
         {loading ? (
           <CardSkeleton rows={6} />
         ) : (
-          // Every section stacked, each a card that folds away, so the whole
-          // questionnaire can be scanned and walked top to bottom.
-          SOCIAL_HISTORY_SECTIONS.map(sec => (
-            <CollapsibleSection key={sec.id} icon={SECTION_ICONS[sec.id]} title={sec.title}>
+          SOCIAL_HISTORY_SECTIONS.map((sec, i) => (
+            <CollapsibleSection key={sec.id} icon={SECTION_ICONS[sec.id]} title={sec.title} defaultOpen={i === 0}>
               {/* SDOH and AUDIT-C are the Form Builder's own fields, drawn by
                   the form renderer and keyed by the drawer's answer ids; any
                   other questions in the section follow as before. */}

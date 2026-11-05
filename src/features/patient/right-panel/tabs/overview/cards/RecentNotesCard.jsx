@@ -33,6 +33,7 @@ function formatDate(iso) {
 export function RecentNotesCard({ patientId, actions }) {
   const notes = useAppStore(s => s.clinicalNotesByPatient[patientId]);
   const fetchNotes = useAppStore(s => s.fetchClinicalNotesForPatient);
+  const openNotePreview = useAppStore(s => s.openNotePreview);
   const setPatientProfileTab = useAppStore(s => s.setPatientProfileTab);
   const [fetched, setFetched] = useState(false);
 
@@ -45,34 +46,43 @@ export function RecentNotesCard({ patientId, actions }) {
 
   if (!notes && !fetched) return <DashboardCardSkeleton icon="solar:notes-linear" title="Recent Notes" />;
 
-  const list = notes || [];
+  // Unfinished notes (draft, pending review) first; signed ones after, newest first.
+  const STATUS_ORDER = { draft: 0, submitted: 1 };
+  const list = [...(notes || [])].sort((a, b) => (STATUS_ORDER[a.status] ?? 2) - (STATUS_ORDER[b.status] ?? 2));
+  const unfinished = list.filter(n => n.status !== 'signed').length;
   const openNotes = () => setPatientProfileTab('Notes');
 
   return (
     <DashboardCard
       icon="solar:notes-linear"
       title="Recent Notes"
-      count={list.length || null}
+      count={unfinished || null}
       actions={(
         <>
-          <Button variant="ghost" size="S" onClick={actions.addNote}>Create note</Button>
-          {list.length > VISIBLE && <Button variant="ghost" size="S" onClick={openNotes}>View all</Button>}
+          <Button variant="ghost" size="sm" onClick={actions.addNote}>Create note</Button>
+          {list.length > VISIBLE && <Button variant="ghost" size="sm" onClick={openNotes}>View all</Button>}
         </>
       )}
     >
-      <DashboardCardBody>
+      <DashboardCardBody className={styles.listBody}>
         {list.length === 0 ? (
           <p className={styles.empty}>No clinical notes yet.</p>
         ) : list.slice(0, VISIBLE).map(n => {
           const status = noteStatus(n.status);
           return (
-            <PanelSectionItem
-              key={n.id}
-              leading={<span className={styles.tile}><Icon name="solar:notes-linear" size={16} /></span>}
-              title={<button type="button" className={styles.titleButton} onClick={openNotes}>{noteTitle(n)}</button>}
-              meta={[n.authorName, formatDate(n.updatedAt || n.createdAt)]}
-              trailing={<Badge tone={status.tone} size="S" label={status.label} />}
-            />
+            <div key={n.id} className={styles.clickRow}>
+              <PanelSectionItem
+                inset
+                leading={<span className={styles.tile}><Icon name="solar:notes-linear" size={16} /></span>}
+                title={(
+                  <button type="button" className={`${styles.titleButton} ${styles.stretch}`} onClick={() => openNotePreview(n)}>
+                    {noteTitle(n)}
+                  </button>
+                )}
+                meta={[n.authorName, formatDate(n.updatedAt || n.createdAt)]}
+                trailing={<span className={styles.statusSlotWide}><Badge tone={status.tone} size="sm" label={status.label} /></span>}
+              />
+            </div>
           );
         })}
       </DashboardCardBody>

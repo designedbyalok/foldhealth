@@ -1,21 +1,29 @@
 /**
  * POST /api/care-plan-template-draft
  *
- * Drafts a care plan template from a plain-English description via Gemini.
+ * Drafts a care plan template from a plain-English description (OpenAI; see _lib/aiJson.js).
  * The client sends the description and a compact catalog of the care plan
  * library; the answer is checked against that catalog (normalizeTemplateDraft)
- * so every library reference is real. GOOGLE_AI_API_KEY stays server-side.
+ * so every library reference is real. The AI keys stay server-side.
  *
- * Body: { description: string, catalog: { goals, interventions, barriers } }
+ * Body: { description: string, catalog: { goals, interventions, barriers },
+ *         protocol?: { title, version, organization, guidance },
+ *         reference?: { name, goals, interventions, barriers } (titles),
+ *         options?: { categories?: boolean, libraryOnly?: boolean,
+ *                     scope?: true | { categories, commonGoals } } }
  * Returns: { draft } or { error: { message } }
  */
 
-import { geminiGenerateContent } from '../_lib/googleGemini.js';
+import { aiBusy, aiConfigured, generateJson } from '../_lib/aiJson.js';
 import { requireUser } from '../_lib/requireUser.js';
+import { bodyWithinLimit } from '../_lib/limits.js';
 import {
   TEMPLATE_DESCRIPTION_MAX,
   TEMPLATE_DRAFT_SCHEMA,
+  TEMPLATE_SCOPE_SCHEMA,
+  buildScopeRequest,
   buildTemplateDraftPrompt,
+  buildTemplateReference,
   normalizeTemplateDraft,
 } from '../../src/features/settings/care-plan-library/lib/aiTemplateDraft.js';
 
@@ -27,10 +35,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: { message: 'Method not allowed' } });
   }
 
-  const key = process.env.GOOGLE_AI_API_KEY;
-  if (!key) {
-    return res.status(500).json({ error: { message: 'AI drafting is not set up on this deployment (GOOGLE_AI_API_KEY is missing).' } });
+  if (!aiConfigured()) {
+    return res.status(500).json({ error: { message: 'AI drafting is not set up on this deployment.' } });
   }
+
+  // The library catalog rides along, so allow more than the default cap.
+  if (!bodyWithinLimit(req, res, 200 * 1024)) return;
 
   const body = req.body && typeof req.body === 'object' ? req.body : {};
   const description = typeof body.description === 'string' ? body.description.trim() : '';
@@ -40,54 +50,48 @@ export default async function handler(req, res) {
   if (description.length > TEMPLATE_DESCRIPTION_MAX) {
     return res.status(400).json({ error: { message: `Keep the description under ${TEMPLATE_DESCRIPTION_MAX} characters.` } });
   }
+  // An Active clinical protocol the draft must follow, as plain guidance lines.
+  const p = body.protocol && typeof body.protocol === 'object' ? body.protocol : null;
+  const protocol = p && typeof p.guidance === 'string' && p.guidance.trim()
+    ? { title: String(p.title || ''), version: String(p.version || ''), organization: String(p.organization || ''), guidance: p.guidance }
+    : null;
+  // Drafting from an approved protocol: Common + categories, library items only.
+  const options = {
+    categories: !!protocol && body.options?.categories === true,
+    libraryOnly: body.options?.libraryOnly === true,
+    // An existing template the draft starts from.
+    reference: buildTemplateReference(body.reference),
+    // A protocol's scope (plain-language plan), maybe as a reviewer edited it.
+    scope: protocol && body.options?.scope ? (buildScopeRequest(body.options.scope) || true) : null,
+  };
   const catalog = {
     goals: asList(body.catalog?.goals),
     interventions: asList(body.catalog?.interventions),
     barriers: asList(body.catalog?.barriers),
   };
 
-  const requestBody = {
-    contents: [{ role: 'user', parts: [{ text: buildTemplateDraftPrompt(description, catalog) }] }],
-    generationConfig: {
-      temperature: 0.3,
-      responseMimeType: 'application/json',
-      responseSchema: TEMPLATE_DRAFT_SCHEMA,
-      // Matching a description to the catalog needs little reasoning; low
-      // thinking roughly halves the wait.
-      thinkingConfig: { thinkingLevel: 'low' },
-    },
-  };
-
   try {
-    const { response: upstream, model } = await geminiGenerateContent({
-      apiKey: key,
-      requestBody,
+    const ai = await generateJson({
+      prompt: buildTemplateDraftPrompt(description, catalog, protocol, options),
+      schema: options.scope ? TEMPLATE_SCOPE_SCHEMA : TEMPLATE_DRAFT_SCHEMA,
+      name: 'care_plan_template',
+      temperature: 0.3,
+      geminiThinking: 'low',
       logTag: 'care-plan-template-draft',
       // A stalled call fails over instead of leaving the editor waiting; a
       // busy model's quick 503 falls through to the next, within a minute.
-      timeoutMs: 25000,
-      deadlineMs: 60000,
+      timeoutMs: options.scope ? 45000 : 25000,
+      deadlineMs: options.scope ? 90000 : 60000,
     });
-    if (!upstream.ok) {
-      const detail = await upstream.text();
-      console.error('[care-plan-template-draft] gemini error', upstream.status, model, detail.slice(0, 400));
-      const message = [503, 504, 429].includes(upstream.status)
+    if (!ai.ok) {
+      const message = aiBusy(ai.status)
         ? 'The AI service is busy right now. Please try again in a moment.'
         : 'Could not draft the template. Please try again.';
       return res.status(502).json({ error: { message } });
     }
+    const parsed = ai.data;
 
-    const json = await upstream.json();
-    const text = json?.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
-    let parsed;
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      console.error('[care-plan-template-draft] non-JSON:', text.slice(0, 500));
-      return res.status(502).json({ error: { message: 'The AI returned an unreadable draft. Please try again.' } });
-    }
-
-    const draft = normalizeTemplateDraft(parsed, catalog);
+    const draft = normalizeTemplateDraft(parsed, catalog, options);
     if (!draft) {
       return res.status(422).json({ error: { message: 'Could not draft goals from that description. Try adding the condition or focus.' } });
     }

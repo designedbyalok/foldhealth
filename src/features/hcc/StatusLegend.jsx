@@ -3,7 +3,7 @@ import { StatusIcon } from './StatusIcon';
 import styles from './StatusLegend.module.css';
 
 /**
- * StatusLegend — horizontal bar at the bottom of the HCC worklist that
+ * StatusLegend: horizontal bar at the bottom of the HCC worklist that
  * explains the colored status icons in role cells. Icon + color come from
  * `statusSpec.js` so the legend stays in sync with the row cells and the
  * DiagPanel status pill.

@@ -40,7 +40,7 @@ const WIDGETS = {
       {args.bannerVariant === 'amber' ? (
         <InsightBanner
           icon="solar:chart-linear"
-          title="Key Drivers — Where to Focus"
+          title="Key Drivers: Where to Focus"
           variant="amber"
           text="Cost: <strong>Inpatient $23 over benchmark</strong>. Quality: <strong>AWV 19pp below target</strong>."
           buttons={[
@@ -52,7 +52,7 @@ const WIDGETS = {
       ) : (
         <InsightBanner
           icon="solar:lightbulb-minimalistic-linear"
-          title="AI Insight Summary — YTD 2025"
+          title="AI Insight Summary: YTD 2025"
           text="Readmissions up <strong>+20% vs Q3</strong>. RAF gap on <strong>1,840 members</strong> = <strong>$2.1M</strong>."
           buttons={[
             { label: 'Utilization Detail', primary: true, navTo: 'utilization' },

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
 import { AssigneeChange } from '../../../../../../../components/AssigneeChange/AssigneeChange';
 import { UserPickerPopover } from '../../../../../../../components/UserPickerPopover/UserPickerPopover';
-import { WorklistShell } from '../../../../../../../components/WorklistShell/WorklistShell';
+import { WorklistShell } from '../../../../../../worklists/WorklistShell';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
 import { useTableSort } from '../../../../../../../components/HeaderCell/useTableSort';
 import { DatePickerPopover } from '../../../../../../../components/DatePicker/DatePickerPopover';
@@ -88,7 +88,7 @@ export function computeDueDate(intv, pairedTask = null) {
 // YYYY-MM-DD strings so the calendar popover can paint each cell
 // with the "will fire here" grey-50 marker.
 //
-// Semantics — matches the Add Task drawer's repeat block:
+// Semantics: matches the Add Task drawer's repeat block:
 //   • The first occurrence IS the due date (also the primary
 //     selection, so it shows in primary purple, not grey).
 //   • repeatEvery + repeatEveryUnit sets the interval between runs.
@@ -136,7 +136,7 @@ function isoDay(d) {
   return `${y}-${m}-${day}`;
 }
 
-// "day" / "days" / "week" / "weeks" — used by the recurrence tooltip
+// "day" / "days" / "week" / "weeks", used by the recurrence tooltip
 // so "every 1 week" reads as "every week" and "every 2 weeks" pluralizes.
 function pluralUnit(unit, count) {
   if (!unit) return '';
@@ -170,7 +170,7 @@ export function formatRecurrenceLabel(intv) {
   return parts.join(' · ');
 }
 
-// Due Date column width — separate from the shared assignee width
+// Due Date column width: separate from the shared assignee width
 // (kept at the GBI default) so the assignee pill can render the full
 // name + avatar pair again.
 const DUE_DATE_COL_WIDTH  = 108;
@@ -199,7 +199,7 @@ const INTERVENTION_COLUMNS_WITH_DUE = insertBefore(INTERVENTION_COLUMNS, 'assign
 // Look up the assignee in the merged users+patients list (`role`
 // field). Fall back to a `patients` name match so a member whose
 // intervention has an isMemberTask override still lands in the
-// patient bucket. Never guess by intervention kind — the identity
+// patient bucket. Never guess by intervention kind, the identity
 // is what colors the pill.
 export function isMemberAssignee(name, users, patients) {
   if (!name || name === 'Unassigned') return false;
@@ -242,21 +242,21 @@ export function CarePlanInterventionsTable({
   onRecurrenceChange,
   // Notes icon → open the intervention drawer at its Note section.
   onOpenNotes,
-  // (intervention, title) => void — saves an in-place title edit.
+  // (intervention, title) => void: saves an in-place title edit.
   onTitleChange,
-  // (intervention) => boolean — whether it has a current (undeleted) note.
+  // (intervention) => boolean: whether it has a current (undeleted) note.
   hasNote,
   linked,
   platformUsers,
   // Merged into the inline picker so a member (patient) can be assigned
-  // to an intervention from the row as well — matches the picker in the
+  // to an intervention from the row as well, matches the picker in the
   // Intervention drawer (Figma 8629:178).
   patients,
   template = false,
   emptyState,
 }) {
   const [completedOpen, setCompletedOpen] = useState(false);
-  // Inline due-date popover state — one popover shared by every row.
+  // Inline due-date popover state: one popover shared by every row.
   // The active intervention plus the anchor rect drive positioning
   // and the seeded value in the calendar.
   const [duePicker, setDuePicker] = useState(null); // { intv, rect } | null
@@ -336,7 +336,7 @@ export function CarePlanInterventionsTable({
   );
 
   // Look up the kind-based icon so rows stay in sync with the Add
-  // Intervention menu (single source of truth) — legacy rows saved with a
+  // Intervention menu (single source of truth): legacy rows saved with a
   // stale `icon` still show the right glyph as long as `kind` is set.
   const kindIcon = (i) => CARE_PLAN_INTERVENTION_ICONS[i.kind] || i.icon || 'solar:clipboard-list-linear';
 
@@ -385,7 +385,7 @@ export function CarePlanInterventionsTable({
           <td className={styles.actionsTd} onClick={e => e.stopPropagation()}>
             <ActionButton
               icon="solar:menu-dots-linear"
-              size="S"
+              size="sm"
               tooltip="More"
               tooltipBelow
               tooltipLeft
@@ -503,7 +503,7 @@ export function CarePlanInterventionsTable({
         )}
         <td className={styles.statusTd} onClick={e => e.stopPropagation()}>
           <GbiStatusButton
-            value={i.status}
+            value={i.status} reason={i.statusReason}
             disabled={!canEdit}
             onOpen={rect => onStatusMenu({ kind: 'intv', item: i, rect })}
           />
@@ -512,7 +512,7 @@ export function CarePlanInterventionsTable({
           <GbiRowActions
             linked={linked(i)}
             note={hasNote?.(i) || null}
-            onNotes={() => onOpenNotes?.(i)}
+            onNotes={e => onOpenNotes?.(i, e?.currentTarget?.getBoundingClientRect?.())}
             onMenu={(e) => openRowMenu(i, e)}
             menuDisabled={!canEdit}
           />

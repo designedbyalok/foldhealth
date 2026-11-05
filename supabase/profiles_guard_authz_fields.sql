@@ -2,7 +2,7 @@
 --
 -- THE HOLE THIS CLOSES
 -- `profiles` has two UPDATE policies for `authenticated` whose only test is
--- `auth.uid() = id`. They gate WHICH ROW you may write, never WHICH COLUMNS —
+-- `auth.uid() = id`. They gate WHICH ROW you may write, never WHICH COLUMNS,
 -- so any signed-in user could set their own `admin_role`, and `Admins can
 -- update any profile` reads `admin_role` back to decide who is an admin. That
 -- is a self-service privilege escalation.
@@ -21,7 +21,7 @@
 --      SECURITY DEFINER and re-derives the caller's admin status from the
 --      database, so the privilege decision never trusts the browser.
 --
--- The trigger is the enforcement; the RPC is the door. Both are needed — the
+-- The trigger is the enforcement; the RPC is the door. Both are needed, the
 -- RPC alone would just be another client-chosen path.
 --
 -- Deliberately NOT changed: the existing RLS policies. They still decide row
@@ -59,7 +59,7 @@ declare
   caller uuid := auth.uid();
 begin
   -- No JWT: service_role, the SQL editor, the handle_new_user() signup trigger,
-  -- and the seed scripts. Those are already trusted paths — RLS does not apply
+  -- and the seed scripts. Those are already trusted paths, RLS does not apply
   -- to them either, so guarding here would only break provisioning.
   if caller is null then
     return new;
@@ -105,7 +105,7 @@ create trigger profiles_guard_authz_fields
   for each row execute function public.enforce_profile_authz_fields();
 
 -- ── 3. The sanctioned door ──────────────────────────────────────────────────
--- SECURITY DEFINER, so it runs past the trigger — but only after proving the
+-- SECURITY DEFINER, so it runs past the trigger, but only after proving the
 -- caller is an admin operating on someone else.
 create or replace function public.admin_set_user_roles(
   target_id          uuid,
@@ -160,7 +160,7 @@ commit;
 --   select count(*) from profiles
 --    where admin_role in ('Admin/Practice Manager','Business/Practice Owner');
 --
--- Escalation is refused — run as a NON-admin user from the app, not here
+-- Escalation is refused: run as a NON-admin user from the app, not here
 -- (the SQL editor has no auth.uid() and is intentionally exempt):
 --   update profiles set admin_role = 'Business/Practice Owner' where id = auth.uid();
 --   Expect: ERROR 42501 "Only an administrator may change role, ..."

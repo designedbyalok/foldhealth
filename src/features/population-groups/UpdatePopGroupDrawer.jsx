@@ -5,7 +5,7 @@ import { Input as FoldInput } from '../../components/Input/Input';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Icon } from '../../components/Icon/Icon';
 import { CloseIcon } from '../../components/Icon/CloseIcon';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { FOLD_DB, FOLD_DB_MAP } from './data/fold-db.js';
 import { fmtAge } from './data/formatters.js';
 import { TableIcon } from './components/icons.jsx';
@@ -36,7 +36,7 @@ function StaticSelect({ value, disabled }) {
 
 const CHIP_STYLE = { display:'inline-flex', alignItems:'center', gap:6, height:24, padding:'0 6px 0 8px', background:'var(--neutral-50)', border:'0.5px solid var(--neutral-150)', borderRadius:6, fontSize: 'var(--font-md)', color:'var(--neutral-300)', whiteSpace:'nowrap', flexShrink: 0, boxSizing:'border-box' };
 
-/* Single-line patient chips field — type to search; shows as many chips as fit,
+/* Single-line patient chips field: type to search; shows as many chips as fit,
    then a "+N" overflow badge directly after the last visible chip. Fixed height. */
 function PatientChipsField({ members, onRemove, query, setQuery, open, onOpen, inputRef }) {
   const fieldRef = useRef(null);
@@ -70,7 +70,7 @@ function PatientChipsField({ members, onRemove, query, setQuery, open, onOpen, i
       onClick={() => { onOpen(); inputRef.current?.focus(); }}
       style={{ height:36, padding:'0 8px', boxSizing:'border-box', display:'flex', alignItems:'center', gap:6, border:`0.5px solid ${open ? 'var(--primary-300)' : 'var(--neutral-200)'}`, borderRadius:6, background:'var(--neutral-0)', cursor:'text', overflow:'hidden' }}
     >
-      {/* hidden measuring layer — all chips, so widths survive across resizes */}
+      {/* hidden measuring layer: all chips, so widths survive across resizes */}
       <div ref={measureRef} aria-hidden="true" style={{ position:'absolute', visibility:'hidden', pointerEvents:'none', display:'flex', gap:6, whiteSpace:'nowrap', height:0, overflow:'hidden' }}>
         {members.map(m => <span key={m.id} data-chip style={CHIP_STYLE}>{m.name}<span style={{ width:14, flexShrink:0 }} /></span>)}
       </div>
@@ -100,7 +100,7 @@ function PatientChipsField({ members, onRemove, query, setQuery, open, onOpen, i
 }
 
 /**
- * UpdatePopGroupDrawer — edit-phase-2 drawer for a saved Static (CSV) group.
+ * UpdatePopGroupDrawer: edit-phase-2 drawer for a saved Static (CSV) group.
  * Matches the "Update Population Group" design: segment name, description,
  * (locked) EHR + filter, file preview with download, removable patient chips
  * with an add dropdown, and an automation search placeholder.
@@ -155,7 +155,7 @@ export function UpdatePopGroupDrawer({ group, onClose, onSubmit }) {
   };
 
   // Name is the only genuine requirement. Requiring members too made every
-  // group without a CSV member list uneditable — Dynamic groups are defined
+  // group without a CSV member list uneditable, Dynamic groups are defined
   // by a rule and carry none, so their Submit button could never enable and
   // a rename or description edit was impossible to save.
   const canSubmit = Boolean(name.trim());
@@ -166,7 +166,7 @@ export function UpdatePopGroupDrawer({ group, onClose, onSubmit }) {
       onClose={onClose}
       headerRight={(
         <>
-          <Button variant="primary" size="L" disabled={!canSubmit} onClick={() => canSubmit && onSubmit({ name: name.trim(), description: description.trim(), members })}>Submit</Button>
+          <Button disabled={!canSubmit} onClick={() => canSubmit && onSubmit({ name: name.trim(), description: description.trim(), members })}>Submit</Button>
           <span className="pg-header-divider" />
         </>
       )}
@@ -200,7 +200,7 @@ export function UpdatePopGroupDrawer({ group, onClose, onSubmit }) {
             <StaticSelect value="Static (Upload From CSV File)" />
           </div>
 
-          {/* Uploaded file preview — download on the far right */}
+          {/* Uploaded file preview: download on the far right */}
           <div style={{ display:'flex', alignItems:'center', gap:16, padding:12, border:'0.5px solid var(--neutral-150)', borderRadius:8, background:'var(--neutral-0)', width:'100%', boxSizing:'border-box' }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, flex:'1 0 0', minWidth:0 }}>
             <div style={{ width:32, height:32, borderRadius:8, background:'var(--neutral-50)', border:'0.5px solid var(--neutral-200)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -220,7 +220,7 @@ export function UpdatePopGroupDrawer({ group, onClose, onSubmit }) {
           </div>
         </div>
 
-        {/* Patients — single-line chips field (type to search) + checkbox dropdown */}
+        {/* Patients: single-line chips field (type to search) + checkbox dropdown */}
         <div ref={patRef} style={{ position:'relative' }}>
           <Label required>Patients</Label>
           <PatientChipsField members={members} onRemove={removeMember} query={patQuery} setQuery={setPatQuery} open={patOpen} onOpen={() => setPatOpen(true)} inputRef={patInputRef} />

@@ -65,9 +65,9 @@ export function GoalDetailDrawer() {
   // Simplified header: Edit button + more menu (instead of 3 buttons)
   const headerRight = (
     <div className={s.detailHeaderActions}>
-      <Button variant="secondary" size="S" leadingIcon="solar:pen-linear" onClick={handleEdit}>Edit</Button>
+      <Button variant="outline" size="sm" leadingIcon="solar:pen-linear" onClick={handleEdit}>Edit</Button>
       <div className={s.moreMenuWrap}>
-        <ActionButton icon="solar:menu-dots-bold" size="L" tooltip="More" onClick={() => setShowMore(!showMore)} />
+        <ActionButton icon="solar:menu-dots-bold" tooltip="More" onClick={() => setShowMore(!showMore)} />
         {showMore && (
           <div className={s.moreMenu}>
             <button className={s.moreMenuItem} onClick={() => { handleDuplicate(); setShowMore(false); }}>
@@ -93,8 +93,8 @@ export function GoalDetailDrawer() {
       >
         {/* Program + Status bar */}
         <div className={s.detailTopBar}>
-          <Badge variant={goal.programColor === 'purple' ? 'ai-care' : goal.programColor === 'blue' ? 'outreach-appointment' : 'outreach-care-gap'} label={goal.program} />
-          <Badge variant={goal.status === 'active' ? 'status-completed' : 'status-queued'} label={goal.status === 'active' ? 'Active' : 'Draft'} />
+          <Badge tone={goal.programColor === 'purple' ? 'primary' : goal.programColor === 'blue' ? 'info' : 'warning'} label={goal.program} />
+          <Badge tone={goal.status === 'active' ? 'success' : 'warning'} label={goal.status === 'active' ? 'Active' : 'Draft'} />
           {goal.weightedScoring && (
             <span className={s.detailScoreInfo}>
               <Icon name="solar:chart-linear" size={12} color="var(--primary-300)" />
@@ -124,7 +124,7 @@ export function GoalDetailDrawer() {
           </div>
         </div>
 
-        {/* Steps — Required */}
+        {/* Steps: Required */}
         <div className={s.detailSectionHeader}>
           <Icon name="solar:clipboard-list-linear" size={14} color="var(--neutral-300)" />
           <span>Required Steps ({requiredSteps.length})</span>
@@ -140,7 +140,7 @@ export function GoalDetailDrawer() {
                   <span>{i + 1}. {step.name}</span>
                   <div className={s.stepNameRight}>
                     {goal.weightedScoring && <span className={s.scoreChip}>{step.score}pt</span>}
-                    <Badge variant="compliance-pass" label="Required" />
+                    <Badge tone="success" label="Required" />
                   </div>
                 </div>
                 <div className={s.stepNote}>{step.desc}</div>
@@ -154,7 +154,7 @@ export function GoalDetailDrawer() {
           ))}
         </div>
 
-        {/* Steps — Optional */}
+        {/* Steps: Optional */}
         {optionalSteps.length > 0 && (
           <>
             <div className={s.detailSectionHeader}>
@@ -172,7 +172,7 @@ export function GoalDetailDrawer() {
                       <span>{requiredSteps.length + i + 1}. {step.name}</span>
                       <div className={s.stepNameRight}>
                         {goal.weightedScoring && <span className={s.scoreChip}>{step.score}pt</span>}
-                        <Badge variant="status-queued" label="Optional" />
+                        <Badge tone="warning" label="Optional" />
                       </div>
                     </div>
                     <div className={s.stepNote}>{step.desc}</div>

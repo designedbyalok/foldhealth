@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { Button } from '../../../components/Button/Button';
+import { Icon } from '../../../components/Icon/Icon';
+import { Tooltip } from '../../../components/Tooltip/Tooltip';
+import { PriorityIcon } from '../../../components/PriorityIcon/PriorityIcon';
+import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
+import { DownChevronIcon } from '../../../components/Icon/DownChevronIcon';
 import { Select } from '../../../components/Select/Select';
 import { Input } from '../../../components/Input/Input';
 import { Textarea } from '../../../components/Textarea/Textarea';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
 import { toast } from '../../../components/Toast/sonnerToast';
 import { supabase } from '../../../lib/supabase';
 import { renderPreviewHtml } from '../../email-builder/renderEmail';
@@ -20,6 +24,12 @@ import { toE164 } from './commsUtils';
 import {
   firstNameOf, educationBlock, formsBlock, composeWithTemplate, educationSms, assessmentSms,
 } from './patientSendTemplates';
+import { useAppStore } from '../../../store/useAppStore';
+import {
+  personMeta, withDecisionMakers, pickOneDecisionMaker, verifyForSendTo, DEFAULT_ID_VERIFICATION, verifyBlockers, protectSms, protectHtml, SECURE_SMS_PREFIX, SEND_TO_INFO, SEND_TO_PLACEHOLDER, sendToChipLabel,
+} from './sendTo';
+import { VerifyIdCard, VerifyIdField, VerifyIdReveal } from './VerifyIdCard';
+import { PersonOption, PersonTip } from './PersonOption';
 import styles from './PatientSendDrawers.module.css';
 
 const FROM_ADDRESS = 'noreply@foldhealth.org';
@@ -38,6 +48,44 @@ const SEND_VIA = [
   { value: 'both', label: 'Email and SMS' },
   { value: 'emailOrSms', label: 'Email, or SMS if there is no email' },
 ];
+
+/**
+ * The Member (patient) the send is about: starts on the one the drawer was
+ * opened for, and can be changed like in New SMS / Compose Email.
+ */
+function useMember(initialPatient) {
+  const { patients } = useCommsPeople();
+  const [memberId, setMemberId] = useState(initialPatient?.id != null ? String(initialPatient.id) : '');
+  const options = useMemo(() => {
+    const list = initialPatient && !patients.some(p => String(p.id) === String(initialPatient.id))
+      ? [initialPatient, ...patients] : patients;
+    return list.map(p => ({
+      value: String(p.id),
+      triggerLabel: p.name,
+      searchText: p.name,
+      label: <PersonOption name={p.name} initials={p.initials} meta={personMeta(p)} />,
+    }));
+  }, [patients, initialPatient]);
+  const member = patients.find(p => String(p.id) === memberId)
+    || (initialPatient && String(initialPatient.id) === memberId ? initialPatient : null);
+  // Opened for a patient (P360, a worklist row), the member is fixed.
+  return { memberId, setMemberId, options, member, locked: initialPatient?.id != null };
+}
+
+function MemberField({ memberId, setMemberId, options, locked }) {
+  return (
+    <Select
+      disabled={locked}
+      searchable
+      options={options}
+      value={memberId}
+      onValueChange={setMemberId}
+      placeholder="Search Member"
+      searchPlaceholder="Search by name"
+      emptyText="No matching patients."
+    />
+  );
+}
 
 /** The patient record behind a worklist row: the all_patients row when found. */
 function useRecipient(patient) {
@@ -81,33 +129,151 @@ function channelsFor(via, recipient) {
   return { email: hasEmail, sms: !hasEmail && hasPhone };
 }
 
-async function deliver({ recipient, me, channels, subject, html, smsBody, meta }) {
+/**
+ * Send to each picked person (Send To) on the channels `via` allows for them.
+ * Everything stays in the patient's own email / SMS thread.
+ */
+async function deliver({ recipient, targets, via, me, subject, html, smsBody, meta, verifyId }) {
   const sender = { id: me?.id, name: me?.name || 'Care team' };
+  // Verify ID: links go out as secure links; the settings ride in meta.
+  if (verifyId?.on) {
+    const email = protectHtml(html);
+    const sms = protectSms(smsBody);
+    html = email.html;
+    smsBody = sms.text;
+    meta = { ...meta, verifyId, secureLinks: [...email.links, ...sms.links] };
+  }
   const results = [];
-  if (channels.email) {
-    const conv = await findOrCreateConversation('email', recipient, { patient_email: recipient.email, subject });
+  const emails = targets.filter(t => channelsFor(via, t).email).map(t => t.email);
+  const phones = targets.filter(t => channelsFor(via, t).sms).map(t => toE164(t.phone));
+  if (emails.length) {
+    const conv = await findOrCreateConversation('email', recipient, { patient_email: recipient.email || emails[0], subject });
     results.push(['Email', await sendEmail({
-      conversation: conv, sender, from: FROM_ADDRESS, to: [recipient.email], subject, html,
+      conversation: conv, sender, from: FROM_ADDRESS, to: emails, subject, html,
       body: new DOMParser().parseFromString(html, 'text/html').body?.innerText || '', meta,
     })]);
   }
-  if (channels.sms) {
-    const phone = toE164(recipient.phone);
-    const conv = await findOrCreateConversation('sms', { ...recipient, phone }, { patient_phone: phone });
-    results.push(['SMS', await sendSms({ conversation: conv, sender, to: phone, body: smsBody, meta })]);
+  if (phones.length) {
+    const own = recipient.phone ? toE164(recipient.phone) : phones[0];
+    const conv = await findOrCreateConversation('sms', { ...recipient, phone: own }, { patient_phone: own });
+    // The drawer is locked to this patient, so every copy (caregivers' too)
+    // is logged for them (FCS-5677: tag to the selected user).
+    const loggedFor = recipient.id != null ? { id: String(recipient.id), name: recipient.name } : undefined;
+    for (const phone of phones) results.push(['SMS', await sendSms({ conversation: conv, sender, to: phone, body: smsBody, meta, loggedFor })]);
   }
   const failed = results.filter(([, m]) => m?.status === 'failed');
-  if (!results.length) toast.error('Nothing sent: this patient has no email or phone for the chosen channel.');
+  const channels = [...new Set(results.map(([c]) => c))];
+  if (!results.length) toast.error('Nothing sent: no one picked has an email or phone for the chosen channel.');
   else if (failed.length) toast.error(`${failed.map(([c]) => c).join(' and ')} not sent: ${failed[0][1].failure_reason}`);
-  else toast.success(`Sent by ${results.map(([c]) => c).join(' and ')}`);
+  else toast.success(`${channels.join(' and ')} Sent Successfully`);
   return results.length > 0;
 }
 
-function Row({ label, required, children }) {
+/**
+ * Send To (as in Compose Email): the patient and their recorded contacts.
+ * Someone with neither an email nor a phone is listed but can't be picked.
+ */
+function useSendTo(recipient, onVerifyChange) {
+  const contacts = useAppStore(st => (recipient?.id != null ? st.patientContacts[recipient.id] : null));
+  const fetchPatientContacts = useAppStore(st => st.fetchPatientContacts);
+  useEffect(() => { if (recipient?.id != null) fetchPatientContacts(recipient.id); }, [recipient?.id, fetchPatientContacts]);
+  const people = useMemo(() => [
+    { value: 'patient', name: recipient.name, email: recipient.email, phone: recipient.phone, dob: recipient.dob, type: 'Patient', meta: personMeta(recipient), initials: recipient.initials },
+    ...(contacts ? withDecisionMakers(contacts) : []).map(c => ({ value: String(c.id), name: c.name, email: c.email, phone: c.phone, dob: c.dob, type: c.type, missing: c.missing, meta: personMeta(c) })),
+  ], [recipient, contacts]);
+  const [picked, setPicked] = useState(['patient']);
+  // A different member starts Send To on them.
+  const [pickedFor, setPickedFor] = useState(recipient?.id);
+  if (pickedFor !== recipient?.id) { setPickedFor(recipient?.id); setPicked(['patient']); }
+  // The patient starts picked only if they can be reached (an email or a
+  // phone on record); otherwise Send To starts empty.
+  const reachable = !!(recipient.email || recipient.phone);
+  const shown = reachable ? picked : picked.filter(v => v !== 'patient');
+  // Send To only shows when the member has other people on record (care
+  // giver, decision maker…); otherwise it goes to the member.
+  const hasRoles = (contacts || []).length > 0;
+  const targets = hasRoles ? people.filter(p => shown.includes(p.value)) : (reachable ? [people[0]] : []);
+  const pick = (v) => {
+    const next = pickOneDecisionMaker(v, shown, x => people.find(p => p.value === x)?.type);
+    // Anyone but the patient turns Verify identity on; patient only, off.
+    const on = verifyForSendTo(next, shown);
+    if (on !== null) onVerifyChange?.(on);
+    setPicked(next);
+  };
+  // Protect links only matters once someone besides the member is picked.
+  const withOthers = hasRoles && shown.some(v => v !== 'patient');
+  return { people, picked: shown, setPicked: pick, targets, hasRoles, withOthers };
+}
+
+function SendToField({ people, picked, setPicked, error }) {
+  const reach = (p) => [p.email, p.phone].filter(Boolean).join(' • ');
   return (
-    <div className={styles.row}>
+    <Select
+      multiple
+      checkboxes
+      badges
+      searchable
+      searchPlaceholder="Search by name"
+      options={people.map(p => ({
+        value: p.value,
+        triggerLabel: sendToChipLabel(p.name, p.type),
+        searchText: `${p.name} ${p.type} ${p.email || ''} ${p.phone || ''}`,
+        disabled: !p.email && !p.phone,
+        label: <PersonOption name={p.name} initials={p.initials} meta={reach(p) || 'No email or phone on record'} tag={p.type} />,
+        badgeTooltip: <PersonTip name={p.name} initials={p.initials} email={reach(p)} tag={p.type} />,
+      }))}
+      value={picked}
+      onValueChange={setPicked}
+      placeholder={SEND_TO_PLACEHOLDER}
+      errorText={error}
+    />
+  );
+}
+
+/** Priority as an inline icon + text picker (as in Add Intervention). */
+function PriorityPicker({ value, onChange }) {
+  const ref = useRef(null);
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        ref={ref}
+        type="button"
+        className={styles.priorityTrigger}
+        aria-label={`Priority: ${value}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen(v => !v)}
+      >
+        <PriorityIcon priority={value.toLowerCase()} size={16} />
+        <span>{value}</span>
+        <DownChevronIcon size={12} color="var(--neutral-300)" />
+      </button>
+      {open && (
+        <MenuPopover
+          anchorRef={ref}
+          align="left"
+          width={140}
+          ariaLabel="Priority"
+          items={PRIORITIES.map(p => ({ key: p.value, label: p.label, iconElement: <PriorityIcon priority={p.value.toLowerCase()} size={16} /> }))}
+          onSelect={onChange}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function Row({ label, required, info, children, className }) {
+  return (
+    <div className={[styles.row, className].filter(Boolean).join(' ')}>
       <span className={styles.rowLabel}>
         {label}
+        {info && (
+          <Tooltip label={info} maxWidth={280}>
+            <Icon name="solar:info-circle-linear" size={12} color="var(--neutral-300)" className={styles.labelInfo} aria-label={info} />
+          </Tooltip>
+        )}
         {required && <span className={styles.req} aria-hidden="true" />}
       </span>
       <div className={styles.rowField}>{children}</div>
@@ -117,11 +283,12 @@ function Row({ label, required, children }) {
 
 // ── Send Content (Send Education) ────────────────────────────────────────
 export function SendContentDrawer({ patient, onClose }) {
-  const { recipient, me } = useRecipient(patient);
+  const memberPick = useMember(patient);
+  const { recipient, me } = useRecipient(memberPick.member || patient);
   const templates = useEmailTemplates(recipient, me);
   const [content, setContent] = useState([]);
   const [contentId, setContentId] = useState('');
-  const [priority, setPriority] = useState('');
+  const [priority, setPriority] = useState('Medium');
   const [taskTitle, setTaskTitle] = useState('');
   const [via, setVia] = useState('emailOrSms');
   const [tab, setTab] = useState('email');
@@ -132,7 +299,15 @@ export function SendContentDrawer({ patient, onClose }) {
   const [smsEdited, setSmsEdited] = useState(false);
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [verifyId, setVerifyId] = useState(DEFAULT_ID_VERIFICATION);
   const canvasRef = useRef(null);
+  const sendTo = useSendTo(recipient, (on) => setVerifyId(x => ({ ...x, on })));
+  // Verify identity only applies once someone besides the member is picked;
+  // sending to the member alone isn't protected.
+  const activeVerify = sendTo.withOthers ? verifyId : { ...verifyId, on: false };
+  const blockers = verifyBlockers(activeVerify, sendTo.targets);
+  // Verify ID's opening line takes part of the SMS limit.
+  const smsLimit = activeVerify.on ? SMS_LIMIT - SECURE_SMS_PREFIX : SMS_LIMIT;
 
   useEffect(() => { listEducationContent().then(setContent); }, []);
 
@@ -154,16 +329,16 @@ export function SendContentDrawer({ patient, onClose }) {
 
   const send = async () => {
     setTouched(true);
-    if (!item || !priority || (showEmail && !subject.trim()) || (showSms && !smsText.trim())) return;
+    if (!sendTo.targets.length || !item || !priority || blockers.length || (showEmail && !subject.trim()) || (showSms && !smsText.trim())) return;
     setBusy(true);
     try {
       const ok = await deliver({
-        recipient, me,
-        channels: channelsFor(via, recipient),
+        recipient, me, via, targets: sendTo.targets,
         subject: subject.trim(),
         html: canvasRef.current?.getHtml() || html,
         smsBody: smsText.trim(),
         meta: { kind: 'education', contentId: item.id, priority, taskTitle: taskTitle.trim() || null },
+        verifyId: activeVerify,
       });
       if (ok) onClose();
     } catch {
@@ -177,44 +352,65 @@ export function SendContentDrawer({ patient, onClose }) {
     <Drawer
       title="Send Content"
       onClose={onClose}
-      secondaryAction={<Button variant="secondary" size="L" onClick={onClose}>Cancel</Button>}
-      primaryAction={<Button variant="primary" size="L" onClick={send} disabled={busy}>{busy ? 'Sending…' : 'Send'}</Button>}
+      secondaryAction={<Button variant="outline" onClick={onClose}>Cancel</Button>}
+      primaryAction={<Button onClick={send} loading={busy}>Send</Button>}
     >
-      <p className={styles.to}>To <strong>{recipient.name || 'this patient'}</strong>{recipient.email ? ` • ${recipient.email}` : ''}{recipient.phone ? ` • ${recipient.phone}` : ''}</p>
       <div className={styles.card}>
+        <Row label="Member" required>
+          <MemberField {...memberPick} />
+        </Row>
+        {sendTo.hasRoles && (
+          <Row label="Send To" required info={SEND_TO_INFO}>
+            <SendToField {...sendTo} error={touched && !sendTo.targets.length ? 'Choose who to send to.' : undefined} />
+          </Row>
+        )}
+        {/* Protect links right under Send To, the choice that calls for it. */}
+        {sendTo.withOthers && (
+          <Row className={styles.verifyRow} label="Protect links">
+            <VerifyIdField
+              value={verifyId}
+              onChange={setVerifyId}
+              blockers={blockers}
+              className={styles.contents}
+              detailsClassName={styles.verifyDetails}
+              editClassName={styles.verifyEdit}
+              settingsClassName={styles.verifySettings}
+            />
+          </Row>
+        )}
         <Row label="Member Education" required>
           <Select
             searchable
             searchPlaceholder="Search content"
             options={content.map(c => ({ value: c.id, label: c.title }))}
             value={contentId}
-            onChange={(v) => { setContentId(v); setSmsEdited(false); }}
+            onValueChange={(v) => { setContentId(v); setSmsEdited(false); }}
             placeholder="Search Content"
             errorText={touched && !item ? 'Choose the content to send.' : undefined}
           />
         </Row>
         <Row label="Priority" required>
-          <Select options={PRIORITIES} value={priority} onChange={setPriority} placeholder="Select Priority" errorText={touched && !priority ? 'Choose a priority.' : undefined} />
+          <PriorityPicker value={priority} onChange={setPriority} />
         </Row>
         <Row label="Member Task Title">
           <Input value={taskTitle} onChange={e => setTaskTitle(e.target.value)} placeholder="Enter Task Title" maxLength={150} />
         </Row>
         <Row label="Send Via">
-          <Select options={SEND_VIA} value={via} onChange={setVia} />
+          <Select options={SEND_VIA} value={via} onValueChange={setVia} />
         </Row>
 
         <div className={styles.channel}>
-          <TabStrip items={tabs} activeKey={activeTab} onChange={setTab} fullWidth={false} />
+          <Tabs items={tabs} value={activeTab} onValueChange={setTab} fullWidth={false} />
           {activeTab === 'email' ? (
             <div className={styles.channelBody}>
               <Row label="Template" required>
-                <Select searchable options={templates} value={templateId} onChange={setTemplateId} placeholder="Search Template" />
+                <Select searchable options={templates} value={templateId} onValueChange={setTemplateId} placeholder="Search Template" />
               </Row>
               <Row label="Subject" required>
                 <Input value={subject} onChange={e => setSubject(e.target.value)} maxLength={200} errorText={touched && !subject.trim() ? 'Add a subject.' : undefined} />
               </Row>
               <div className={styles.previewHead}>
-                <ActionButton icon={editing ? 'solar:check-circle-linear' : 'solar:pen-linear'} size="L" tooltip={editing ? 'Done editing' : 'Edit email'} onClick={() => setEditing(v => !v)} />
+                <ActionButton icon={editing ? 'solar:check-circle-linear' : 'solar:pen-linear'} tooltip={editing ? 'Done editing' : 'Edit email'} onClick={() => setEditing(v => !v)} />
               </div>
               <div className={styles.preview}>
                 <EmailCanvas ref={canvasRef} html={html} editing={editing} />
@@ -224,14 +420,15 @@ export function SendContentDrawer({ patient, onClose }) {
             <div className={styles.channelBody}>
               <Row label="Body" required>
                 <Textarea
+                  highlightLinks
                   value={smsText}
-                  onChange={e => { setSmsEdited(true); setSmsBody(e.target.value.slice(0, SMS_LIMIT)); }}
+                  onChange={e => { setSmsEdited(true); setSmsBody(e.target.value.slice(0, smsLimit)); }}
                   placeholder="Enter SMS Body"
                   rows={5}
                 />
                 <div className={styles.smsFoot}>
                   <span>SMS body length is limited to {SMS_LIMIT} characters</span>
-                  <span>{smsText.length}/{SMS_LIMIT}</span>
+                  <span>{smsText.length + (activeVerify.on ? SECURE_SMS_PREFIX : 0)}/{SMS_LIMIT}</span>
                 </div>
               </Row>
             </div>
@@ -243,13 +440,15 @@ export function SendContentDrawer({ patient, onClose }) {
 }
 
 // ── Send Assessment ──────────────────────────────────────────────────────
-export function SendAssessmentDrawer({ patient, onClose }) {
-  const { recipient, me } = useRecipient(patient);
+export function SendAssessmentDrawer({ patient, initialFormIds, onClose }) {
+  const memberPick = useMember(patient);
+  const { recipient, me } = useRecipient(memberPick.member || patient);
   const templates = useEmailTemplates(recipient, me);
   const [forms, setForms] = useState([]);
-  const [formIds, setFormIds] = useState([]);
+  const [formIds, setFormIds] = useState(() => (initialFormIds || []).map(String));
   const [templateId, setTemplateId] = useState(DEFAULT_TEMPLATE);
   const [busy, setBusy] = useState(false);
+  const [verifyId, setVerifyId] = useState(DEFAULT_ID_VERIFICATION);
 
   useEffect(() => {
     let alive = true;
@@ -267,20 +466,42 @@ export function SendAssessmentDrawer({ patient, onClose }) {
     blockHtml: picked.length ? formsBlock(picked) : '',
     sender: { name: me?.name },
   });
-  const channels = channelsFor('emailOrSms', recipient);
+  const sendTo = useSendTo(recipient, (on) => setVerifyId(x => ({ ...x, on })));
+  // What each picked person gets: email, else SMS, else nothing.
+  const reachText = sendTo.targets.map((t) => {
+    const ch = channelsFor('emailOrSms', t);
+    return ch.email ? `${t.name} by email` : ch.sms ? `${t.name} by SMS` : null;
+  }).filter(Boolean);
+
+  // Verify identity only applies once someone besides the member is picked;
+  // sending to the member alone isn't protected.
+  const activeVerify = sendTo.withOthers ? verifyId : { ...verifyId, on: false };
+  const blockers = verifyBlockers(activeVerify, sendTo.targets);
 
   const send = async () => {
-    if (!picked.length) return;
+    if (!picked.length || !sendTo.targets.length || blockers.length) return;
     setBusy(true);
     try {
       const ok = await deliver({
-        recipient, me, channels,
+        recipient, me, via: 'emailOrSms', targets: sendTo.targets,
         subject: 'Forms from your care team',
         html,
         smsBody: assessmentSms(first, picked),
         meta: { kind: 'assessment', formIds: picked.map(f => f.id) },
+        verifyId: activeVerify,
       });
-      if (ok) onClose();
+      if (ok) {
+        useAppStore.getState().recordAssessmentSends({
+          patientId: recipient.id,
+          formIds: picked.map(f => f.id),
+          sentByName: me?.name,
+          channels: [...new Set(sendTo.targets.flatMap((t) => {
+            const ch = channelsFor('emailOrSms', t);
+            return ch.email ? ['email'] : ch.sms ? ['sms'] : [];
+          }))],
+        });
+        onClose();
+      }
     } catch {
       toast.error('Could not send the forms.');
     } finally {
@@ -292,12 +513,48 @@ export function SendAssessmentDrawer({ patient, onClose }) {
     <Drawer
       title="Send Assessment"
       onClose={onClose}
-      primaryAction={<Button variant="primary" size="L" onClick={send} disabled={busy || !picked.length}>{busy ? 'Sending…' : 'Send Forms'}</Button>}
+      primaryAction={(
+        <Button
+          onClick={send}
+          disabled={!picked.length || !reachText.length || blockers.length > 0}
+          disabledReason={
+            busy ? null
+              : !picked.length ? 'Pick a form'
+                : !reachText.length ? (sendTo.hasRoles ? 'Pick someone with an email or phone on record' : "This member doesn't have an email or phone on record")
+                  : blockers.length ? "Someone in Send To can't verify their identity"
+                    : null
+          } loading={busy}
+        >
+          Send Forms
+        </Button>
+      )}
     >
       <div className={styles.form}>
-        <Select label="Template" searchable options={templates} value={templateId} onChange={setTemplateId} />
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>Member<span className={styles.req} aria-hidden="true" /></span>
+          <MemberField {...memberPick} />
+        </div>
+        {sendTo.hasRoles && (
+          <div className={styles.field}>
+            <span className={styles.fieldLabel}>
+              Send To
+              <Tooltip label={SEND_TO_INFO} maxWidth={280}>
+                <Icon name="solar:info-circle-linear" size={12} color="var(--neutral-300)" className={styles.labelInfo} aria-label={SEND_TO_INFO} />
+              </Tooltip>
+              <span className={styles.req} aria-hidden="true" />
+            </span>
+            <SendToField {...sendTo} />
+          </div>
+        )}
+        {/* Forms are required, so there are always links: Protect links shows
+            right under Send To once someone besides the member is picked. */}
+        <VerifyIdReveal show={sendTo.withOthers}>
+          <VerifyIdCard value={verifyId} onChange={setVerifyId} blockers={blockers} />
+        </VerifyIdReveal>
+        <Select label="Template" searchable options={templates} value={templateId} onValueChange={setTemplateId} />
         <Select
           label="Form List"
+          required
           multiple
           checkboxes
           badges
@@ -305,14 +562,9 @@ export function SendAssessmentDrawer({ patient, onClose }) {
           searchPlaceholder="Search form"
           options={forms.map(f => ({ value: String(f.id), label: f.name }))}
           value={formIds}
-          onChange={setFormIds}
+          onValueChange={setFormIds}
           placeholder="Search Form"
         />
-        <InfoBar>
-          {channels.email ? `Goes to ${recipient.email} by email.`
-            : channels.sms ? `No email on file, so this goes by SMS to ${recipient.phone}.`
-              : 'This patient has no email or phone on file.'}
-        </InfoBar>
         <div className={styles.preview}>
           <EmailCanvas html={html} editing={false} />
         </div>

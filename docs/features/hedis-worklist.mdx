@@ -1,15 +1,15 @@
 ---
 title: "HEDIS Worklist"
-description: "Close quality-measure gaps with a clinical-note review drawer — grouped by measure (BCS, COL, CDC, and the full HEDIS set)."
+description: "Close quality-measure gaps with a clinical-note review drawer, grouped by measure (BCS, COL, CDC, and the full HEDIS set)."
 ---
 
-The **HEDIS Worklist** is the care-gap closure surface. HEDIS (Healthcare Effectiveness Data and Information Set) measures — Breast Cancer Screening (BCS), Colorectal Cancer Screening (COL), Comprehensive Diabetes Care (CDC), and dozens more — determine your plan's quality score. This worklist is where you close those gaps.
+The **HEDIS Worklist** is the care-gap closure surface. HEDIS (Healthcare Effectiveness Data and Information Set) measures, Breast Cancer Screening (BCS), Colorectal Cancer Screening (COL), Comprehensive Diabetes Care (CDC), and dozens more, determine your plan's quality score. This worklist is where you close those gaps.
 
 Route: `#/hedis`.
 
 ## What the rows are
 
-Unlike other worklists where rows are patients, HEDIS rows are **care gaps** — one row per (member × measure). A single patient with three open gaps shows as three rows. This makes bulk-actions per-measure natural.
+Unlike other worklists where rows are patients, HEDIS rows are **care gaps**, one row per (member × measure). A single patient with three open gaps shows as three rows. This makes bulk-actions per-measure natural.
 
 ## Columns
 
@@ -24,7 +24,7 @@ Unlike other worklists where rows are patients, HEDIS rows are **care gaps** —
 | **Provider** | Attending provider or PCP |
 | **Actions** | Open the **Care Gap Detail** drawer, place a call, ⋯ menu |
 
-## Walkthrough — close a batch of BCS gaps
+## Walkthrough: close a batch of BCS gaps
 
 <Steps>
   <Step title="Open HEDIS">
@@ -40,12 +40,12 @@ Unlike other worklists where rows are patients, HEDIS rows are **care gaps** —
     Click any row. The **Care Gap Detail drawer** opens with two panes: a **Clinical Note panel** on the left (fetches the patient's relevant notes) and gap-specific actions on the right.
   </Step>
   <Step title="Review evidence">
-    In the Clinical Note panel, scan for evidence of a completed screening. Notes are ranked by relevance to the current measure — mammograms surface first for BCS.
+    In the Clinical Note panel, scan for evidence of a completed screening. Notes are ranked by relevance to the current measure, mammograms surface first for BCS.
   </Step>
   <Step title="Close, exclude, or reach out">
-    - **Close** — evidence found; the gap flips to Compliant with a required source-citation.
-    - **Exclude** — patient meets an exclusion (e.g. bilateral mastectomy for BCS); record the reason.
-    - **Reach out** — no evidence; open the ⋯ menu and add to a HEDIS campaign or place a call.
+    - **Close**: evidence found; the gap flips to Compliant with a required source-citation.
+    - **Exclude**: patient meets an exclusion (e.g. bilateral mastectomy for BCS); record the reason.
+    - **Reach out**: no evidence; open the ⋯ menu and add to a HEDIS campaign or place a call.
   </Step>
   <Step title="Return to the list">
     The row updates in place. Move to the next gap.
@@ -57,19 +57,19 @@ Unlike other worklists where rows are patients, HEDIS rows are **care gaps** —
 The panel is a purpose-built reader for chart notes:
 
 - **Ranked by relevance** to the current measure (e.g. HbA1c results float to the top for CDC-HbA1c gaps).
-- **Highlight the evidence** — click a phrase and the drawer's right pane pre-fills the closure with a citation to that phrase and note.
-- **Provider metadata** — every note shows author, date, and encounter type. Filter to a specific provider from the panel header.
+- **Highlight the evidence**: click a phrase and the drawer's right pane pre-fills the closure with a citation to that phrase and note.
+- **Provider metadata**: every note shows author, date, and encounter type. Filter to a specific provider from the panel header.
 
 ## Bulk actions
 
 Select rows via the checkbox column and the BulkBar surfaces:
 
-- **Add to campaign** — send a HEDIS-appropriate outreach.
-- **Assign** — hand off a batch to a care manager or agent.
-- **Exclude with reason** — for measures where a bulk exclusion is common.
+- **Add to campaign**: send a HEDIS-appropriate outreach.
+- **Assign**: hand off a batch to a care manager or agent.
+- **Exclude with reason**: for measures where a bulk exclusion is common.
 
 ## Tips
 
-- **Measures roll up in Analytics.** Every closure here immediately re-scores the **Analytics → Quality** dashboard — no batch job.
+- **Measures roll up in Analytics.** Every closure here immediately re-scores the **Analytics → Quality** dashboard, no batch job.
 - **Patient duplicates are intentional.** One patient can appear in multiple rows because they may have multiple open gaps.
-- **HEDIS is its own route.** The URL is `#/hedis` (not `#/population/hedis`) — this preserves the deep-link pattern for embedded contexts.
+- **HEDIS is its own route.** The URL is `#/hedis` (not `#/population/hedis`): this preserves the deep-link pattern for embedded contexts.

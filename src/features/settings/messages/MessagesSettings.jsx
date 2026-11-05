@@ -29,7 +29,7 @@ export function MessagesSettings() {
   const isChatSettings = messageTab === 'chat-settings';
   const isEfax = messageTab === 'efax';
 
-  // Chat groups back the Chat Settings tab only — placeholder tabs
+  // Chat groups back the Chat Settings tab only, placeholder tabs
   // (Inboxes / Template Responses) and eFax must not trigger the query, and
   // repeat visits reuse the store copy.
   const chatGroupsFetched = useAppStore(s => s.chatGroupsFetched);

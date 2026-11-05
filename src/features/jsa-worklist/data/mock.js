@@ -27,7 +27,7 @@ export const JSA_COLUMNS = [
   { k: 'task',          lb: 'Tasks',                w: 90 },
 ];
 
-// Program sub status — shapes the colored pill.
+// Program sub status: shapes the colored pill.
 export const JSA_STATUS = {
   'New':                          { color: C.blue,    bg: 'rgba(20,94,204,0.08)'  },
   'Open':                         { color: C.blue,    bg: 'rgba(20,94,204,0.08)'  },

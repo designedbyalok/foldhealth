@@ -188,7 +188,7 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-300) 8%, transparent);
 }
 
-/* Transition blocks — two-column layout */
+/* Transition blocks: two-column layout */
 .transitionBlock {
   display: flex;
   gap: 6px;

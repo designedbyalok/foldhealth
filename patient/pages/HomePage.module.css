@@ -1,0 +1,266 @@
+.grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(260px, 340px) 1fr;
+}
+
+.column {
+  min-width: 0;
+  overflow: auto;
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border-right: 1px solid var(--neutral-100);
+}
+
+.column:last-child {
+  border-right: 0;
+}
+
+.events {
+  background: var(--neutral-50);
+}
+
+.columnTitle {
+  margin: 0;
+  font-size: var(--font-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--neutral-300);
+}
+
+.card {
+  border: 1px solid var(--neutral-100);
+  border-radius: 8px;
+  background: var(--neutral-0);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cardHead {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--neutral-100);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.identityText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--font-lg);
+  color: var(--neutral-500);
+}
+
+.meta {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.promoHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.promoIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--primary-50);
+  color: var(--primary-300);
+}
+
+.promoClose {
+  border: 0;
+  padding: var(--space-1);
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  background: none;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+
+.promoClose:hover {
+  background: var(--neutral-50);
+}
+
+.promoClose:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+}
+
+.promoTitle {
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+}
+
+.promoText {
+  font-size: var(--font-sm);
+  line-height: 1.5;
+  color: var(--neutral-300);
+}
+
+.editProfile {
+  align-self: flex-start;
+  border: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+  cursor: pointer;
+}
+
+.editProfile:hover {
+  text-decoration: underline;
+}
+
+.editProfile:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+}
+
+.contact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  overflow-wrap: anywhere;
+}
+
+.visits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.visit {
+  border: 1px solid var(--neutral-100);
+  border-radius: 8px;
+  background: var(--neutral-0);
+  padding: var(--space-3);
+  display: flex;
+  gap: var(--space-3);
+}
+
+.visitDate {
+  flex-shrink: 0;
+  width: 56px;
+  padding: var(--space-2) 0;
+  border: 1px solid var(--neutral-100);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.visitMonth {
+  font-size: var(--font-xs);
+  text-transform: uppercase;
+  color: var(--status-error);
+}
+
+.visitDay {
+  font-size: var(--font-2xl);
+  color: var(--neutral-500);
+}
+
+.visitBody {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.visitTitle {
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+}
+
+.visitMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.visitNote {
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+}
+
+.error {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--status-error);
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .column {
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--neutral-100);
+  }
+}
+
+.team {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.teamRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.teamRow .identityText {
+  flex: 1;
+}
+
+.teamName {
+  font-size: var(--font-sm);
+  color: var(--neutral-500);
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: calc(-1 * var(--space-3));
+}
+
+.tabBody {
+  padding: var(--space-3);
+}

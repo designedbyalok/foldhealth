@@ -28,7 +28,7 @@ export default {
     decision: {
       control: 'select',
       options: ['pass', 'fail'],
-      description: 'Which decision is being confirmed — controls copy + button color.',
+      description: 'Which decision is being confirmed: controls copy + button color.',
       table: { type: { summary: "'pass' | 'fail'" }, defaultValue: { summary: 'fail' } },
     },
     standardReasons: {
@@ -55,7 +55,7 @@ function Wrapper(props) {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: 24 }}>
-      <Button variant="danger" onClick={() => setOpen(true)}>Open ReasonDialog</Button>
+      <Button variant="soft" tone="danger" onClick={() => setOpen(true)}>Open ReasonDialog</Button>
       {open && (
         <ReasonDialog
           {...props}

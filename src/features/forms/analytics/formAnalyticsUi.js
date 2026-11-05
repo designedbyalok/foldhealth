@@ -13,7 +13,7 @@ export const SEV_COLOR = {
   critical: 'var(--status-error)',
 };
 
-/** Solar icon for a field, by type/control — used in the question chips. */
+/** Solar icon for a field, by type/control, used in the question chips. */
 export function fieldIcon(field) {
   if (field.type === 'choice') return 'solar:chart-2-linear';
   if (field.type === 'integer' || field.type === 'decimal') return 'solar:hashtag-linear';
@@ -32,9 +32,9 @@ export function initials(name) {
 }
 
 export function fmtDate(iso) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
+  if (Number.isNaN(d.getTime())) return '-';
   return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
@@ -53,8 +53,8 @@ export function dateRangeLabel(responses) {
 }
 
 export function formatAnswerValue(v) {
-  if (v == null || v === '') return '—';
-  if (Array.isArray(v)) return v.length ? v.join(', ') : '—';
+  if (v == null || v === '') return '-';
+  if (Array.isArray(v)) return v.length ? v.join(', ') : '-';
   if (typeof v === 'boolean') return v ? 'Yes' : 'No';
   return String(v);
 }

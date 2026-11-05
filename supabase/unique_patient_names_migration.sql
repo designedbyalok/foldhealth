@@ -1,4 +1,4 @@
--- Unique patient names — generated (see scratchpad gen-unique-names.mjs)
+-- Unique patient names: generated (see scratchpad gen-unique-names.mjs)
 -- Every duplicate (same name, different member_id) gets a fresh unique
 -- name; the canonical member_id (prefer the one with a patients row)
 -- keeps the original. Applied consistently across all patient tables;
@@ -169,7 +169,7 @@ AND    p.name <> s.name;
 
 COMMIT;
 -- Straggler: snpw-006 carried the same member_id (10003) as snpw-004
--- ("Ralph Halvorson") under a different name — one member_id, two names.
+-- ("Ralph Halvorson") under a different name: one member_id, two names.
 -- The generator keyed renames by member_id, so this row's rename was
 -- clobbered by Ralph's. Renamed explicitly; the self-link rule re-applies.
 BEGIN;
@@ -182,7 +182,7 @@ WHERE  s.patient_id = p.id
 AND    p.name <> s.name;
 COMMIT;
 
--- snpw-006 also SHARED snpw-004's member_id (10003) — one id, two people.
+-- snpw-006 also SHARED snpw-004's member_id (10003): one id, two people.
 -- Mint a fresh, globally-unused member id so identity-keyed features
 -- (search dedupe, All Patients union, worklist sync) treat them as the
 -- distinct patients they are.

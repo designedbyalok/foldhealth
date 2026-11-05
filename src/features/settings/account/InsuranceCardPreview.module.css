@@ -85,7 +85,7 @@
   color: #16181d;
 }
 
-/* Group badge — colors from theme via inline style */
+/* Group badge: colors from theme via inline style */
 .cardBadge {
   height: 22px;
   min-width: 22px;
@@ -142,7 +142,7 @@
   line-height: 1.2;
 }
 
-/* Divider — 0.5px #D0D6E1 full width */
+/* Divider: 0.5px #D0D6E1 full width */
 .cardDivider {
   height: 0.5px;
   background: #d0d6e1;
@@ -204,7 +204,7 @@
   gap: 2px;
 }
 
-/* Footer motto bar — bg/color from theme via inline style */
+/* Footer motto bar: bg/color from theme via inline style */
 .cardFooterBar {
   padding: 4px 12px;
   font-size: 0.5rem;
@@ -282,7 +282,7 @@
   gap: 2px;
 }
 
-/* Note bar — bg from theme (noteBg), italic 10px #3A485F */
+/* Note bar: bg from theme (noteBg), italic 10px #3A485F */
 .backNoteBar {
   padding: 8px 12px;
   flex-shrink: 0;
@@ -319,7 +319,7 @@
   position: relative;
 }
 
-/* Trigger — 260px bordered field, 44px tall */
+/* Trigger: 260px bordered field, 44px tall */
 .themeSelectBtn {
   display: flex;
   align-items: center;
@@ -357,7 +357,7 @@
   text-overflow: ellipsis;
 }
 
-/* Dropdown — opens above the trigger */
+/* Dropdown: opens above the trigger */
 .themeSelectMenu {
   position: absolute;
   bottom: calc(100% + 6px);

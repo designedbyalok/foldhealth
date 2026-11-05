@@ -34,7 +34,7 @@
   margin: 0 4px;
 }
 
-/* ── Stage indicator (fixed header — does not scroll) ── */
+/* ── Stage indicator (fixed header: does not scroll) ── */
 .stageNavRow {
   display: flex;
   align-items: center;
@@ -111,7 +111,7 @@
   flex-shrink: 0;
 }
 
-/* ── Left: form panel — expands to fill when preview is hidden ── */
+/* ── Left: form panel, expands to fill when preview is hidden ── */
 .leftPanel {
   flex: 1;
   min-width: 0;
@@ -121,7 +121,7 @@
   overflow: hidden;
 }
 
-/* Scrollable form body — stage bar above stays fixed */
+/* Scrollable form body: stage bar above stays fixed */
 .leftScroll {
   flex: 1;
   min-height: 0;
@@ -447,7 +447,7 @@
   color: var(--neutral-500, #16181d);
 }
 
-/* ── Logo tiles (Plan Identifiers) — Figma 2012:44664 ── */
+/* ── Logo tiles (Plan Identifiers): Figma 2012:44664 ── */
 .logoTileRow {
   display: flex;
   gap: 16px;
@@ -559,7 +559,7 @@
   border-color: var(--neutral-150);
 }
 
-/* Active tier (the one being worked on) — Primary 300, 1px border */
+/* Active tier (the one being worked on): Primary 300, 1px border */
 .tierAccordionActive {
   border: 1px solid var(--primary-300);
 }

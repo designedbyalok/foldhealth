@@ -2,7 +2,7 @@
  * Single source of truth for node type config across the agent builder.
  * Both NodePanel (left sidebar palette) and ConversationNode (rendered on
  * the canvas) read from this module. When adding a new node type, add an
- * entry here — the panel and canvas pick it up automatically.
+ * entry here: the panel and canvas pick it up automatically.
  *
  * Each entry exposes:
  *  - type            internal id stored in node.data.nodeType
@@ -175,7 +175,7 @@ export const NODE_CONFIG = {
   },
 };
 
-/* Order in the left sidebar palette — matches the Figma design (1041:126567). */
+/* Order in the left sidebar palette, matches the Figma design (1041:126567). */
 export const NODE_PALETTE_ORDER = [
   'conversation',
   'subagents',

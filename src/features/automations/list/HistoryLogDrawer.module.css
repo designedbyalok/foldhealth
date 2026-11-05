@@ -1,0 +1,131 @@
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+
+.subtitle {
+  overflow: hidden;
+  font-size: var(--font-base);
+  font-weight: 400;
+  color: var(--neutral-300);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.body {
+  background: var(--neutral-50);
+}
+
+.empty {
+  padding: var(--space-12) 0;
+}
+
+.timeline,
+.entries {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* The vertical rail behind the markers. */
+.timeline::before {
+  position: absolute;
+  top: var(--space-6);
+  bottom: 0;
+  left: 15px;
+  width: 1px;
+  background: var(--neutral-150);
+  content: '';
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dayLabel {
+  padding-left: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.entry {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.marker {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  color: var(--neutral-300);
+}
+
+.markerRun {
+  color: var(--primary-300);
+}
+
+.card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3);
+  border-radius: var(--space-3);
+  background: var(--neutral-0);
+}
+
+.by {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+
+.text {
+  font-size: var(--font-base);
+  line-height: 1.4;
+  color: var(--neutral-400);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.badgeButton {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.status {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}

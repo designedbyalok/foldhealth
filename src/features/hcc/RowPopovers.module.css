@@ -399,7 +399,7 @@
   font-weight: 600;
 }
 
-/* Single neutral chip beneath the ICD code+description — Figma node
+/* Single neutral chip beneath the ICD code+description, Figma node
    11864:523333. No status badge, no chevron, no extra metadata. */
 .icdHccChip {
   display: inline-flex;
@@ -421,7 +421,7 @@
   gap: 6px;
 }
 
-/* Type tag (Suspect / Recapture) — mirrors the DiagPanel IcdRow .typeSuspect
+/* Type tag (Suspect / Recapture): mirrors the DiagPanel IcdRow .typeSuspect
    / .typeRecapture treatment so the popover reads identically to the
    diag-panel card list. */
 .icdTypeSuspect,

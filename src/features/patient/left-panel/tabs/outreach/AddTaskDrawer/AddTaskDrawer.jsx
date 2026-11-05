@@ -39,7 +39,7 @@ export function AddTaskDrawer({ onClose, onSave }) {
       context: context.trim(),
       priority,
       status: 'Pending',
-      due: fmtDue(due) || '—',
+      due: fmtDue(due) || '-',
       overdue: false,
       subtasks: 0,
       attachments: 0,
@@ -54,8 +54,8 @@ export function AddTaskDrawer({ onClose, onSave }) {
       onClose={onClose}
       footer={(
         <div className={styles.footer}>
-          <Button variant="secondary" size="L" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" size="L" onClick={handleSave} disabled={!canSave}>Add Task</Button>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSave} disabled={!canSave}>Add Task</Button>
         </div>
       )}
     >
@@ -70,7 +70,7 @@ export function AddTaskDrawer({ onClose, onSave }) {
         </label>
         <label className={styles.field}>
           <span className={styles.label}>Priority</span>
-          <Select options={PRIORITY_OPTIONS} value={priority} onChange={setPriority} />
+          <Select options={PRIORITY_OPTIONS} value={priority} onValueChange={setPriority} />
         </label>
         <label className={styles.field}>
           <span className={styles.label}>Due Date</span>

@@ -7,11 +7,11 @@ import { isGradient } from './colorHelpers';
 import styles from './EmailBuilder.module.css';
 
 /**
- * Color field — a swatch dot + hex input that opens the full ColorPicker
+ * Color field: a swatch dot + hex input that opens the full ColorPicker
  * popover (solid/gradient, hue, hex, brand variables, recent). Shared by the
  * email-builder Properties panel and the form-builder settings.
  */
-// Must match the popover's transition duration (--duration-fast) — the node
+// Must match the popover's transition duration (--duration-fast): the node
 // stays mounted this long after close so it can animate out.
 const EXIT_MS = 160;
 

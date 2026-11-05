@@ -59,13 +59,16 @@ const ROTARIX_RE = /rotarix/i;
 // Live attenuated influenza only counts when given on the 2nd birthday.
 const LAIV_CVX = ['111', '149'];
 const LAIV_RE = /laiv|flumist/i;
-// No routine rotavirus dose after 8 months 0 days of age (ACIP).
-const RV_MAX_AGE_DAYS = 243;
+// No rotavirus dose after 8 months of age (ACIP); the last dose's window
+// ends there.
+const RV_MAX_AGE_MONTHS = 8;
 
 /**
- * `schedule` is the ACIP routine age in months per dose ({ from, by }; past
- * `by` is Overdue). `minAgeDays` / `intervalDays` are ACIP minimums used for
- * planning only. `hedisMinAgeDays` / `window` are the HEDIS counting rules.
+ * `schedule` is the recommended window per dose, from the CIS-10 Vaccine
+ * Calendar sheet: it opens at `from` months and ends at `to` months (the day
+ * before when `open`, i.e. when the next dose's window starts). The window
+ * drives Due now / Overdue. `hedisMinAgeDays` / `window` are the HEDIS
+ * counting rules, which also give each dose its earliest allowed date.
  * `record` is the unspecified-brand vaccine written to patient_immunizations
  * when a dose is entered in the tracker. `measureCode` is the HEDIS CIS
  * indicator. Listed in the order the routine schedule starts them.
@@ -77,8 +80,7 @@ export const CIS_ANTIGENS = [
     hedisMinAgeDays: 0,
     cvx: ['08', '45', '51', '110', '146'],
     match: /hep(atitis)?[\s-]*b\b|engerix|recombivax|pediarix|vaxelis/i,
-    schedule: [{ from: 0, by: 2 }, { from: 1, by: 3 }, { from: 6, by: 19 }],
-    minAgeDays: [0, 28, 164], intervalDays: [28, 56],
+    schedule: [{ from: 0, to: 1, open: true }, { from: 1, to: 2 }, { from: 6, to: 18 }],
   },
   {
     key: 'dtap', measureCode: 'CISDTP', label: 'DTaP', name: 'Diphtheria, tetanus, pertussis', doses: 4,
@@ -86,8 +88,7 @@ export const CIS_ANTIGENS = [
     hedisMinAgeDays: 42,
     cvx: ['20', '50', '106', '107', '110', '120', '130', '146'],
     match: /dtap|pediarix|pentacel|vaxelis|kinrix|quadracel|infanrix|daptacel/i,
-    schedule: [{ from: 2, by: 3 }, { from: 4, by: 5 }, { from: 6, by: 7 }, { from: 15, by: 19 }],
-    minAgeDays: [42, 70, 98, 365], intervalDays: [28, 28, 182],
+    schedule: [{ from: 2, to: 4, open: true }, { from: 4, to: 6, open: true }, { from: 6, to: 15, open: true }, { from: 15, to: 18 }],
   },
   {
     key: 'ipv', measureCode: 'CISOPV', label: 'IPV', name: 'Polio', doses: 3,
@@ -95,8 +96,7 @@ export const CIS_ANTIGENS = [
     hedisMinAgeDays: 42,
     cvx: ['10', '89', '110', '120', '130', '146'],
     match: /\bipv\b|polio|ipol|pediarix|pentacel|vaxelis|kinrix|quadracel/i,
-    schedule: [{ from: 2, by: 3 }, { from: 4, by: 5 }, { from: 6, by: 19 }],
-    minAgeDays: [42, 70, 98], intervalDays: [28, 28],
+    schedule: [{ from: 2, to: 4, open: true }, { from: 4, to: 6, open: true }, { from: 6, to: 18 }],
   },
   {
     key: 'hib', measureCode: 'CISHIB', label: 'HiB', name: 'Haemophilus influenzae type b', doses: 3,
@@ -104,8 +104,7 @@ export const CIS_ANTIGENS = [
     hedisMinAgeDays: 42,
     cvx: ['17', '46', '47', '48', '49', '50', '51', '120', '146', '148'],
     match: /\bhib\b|pedvax|acthib|hiberix|pentacel|vaxelis/i,
-    schedule: [{ from: 2, by: 3 }, { from: 4, by: 5 }, { from: 12, by: 16 }],
-    minAgeDays: [42, 70, 365], intervalDays: [28, 56],
+    schedule: [{ from: 2, to: 4, open: true }, { from: 4, to: 12, open: true, label: '4 months' }, { from: 12, to: 15 }],
   },
   {
     key: 'pcv', measureCode: 'CISPNEU', label: 'PCV', name: 'Pneumococcal conjugate', doses: 4,
@@ -113,8 +112,7 @@ export const CIS_ANTIGENS = [
     hedisMinAgeDays: 42,
     cvx: ['100', '133', '152', '215', '216'],
     match: /\bpcv|pneumococcal conjugate|prevnar|vaxneuvance/i,
-    schedule: [{ from: 2, by: 3 }, { from: 4, by: 5 }, { from: 6, by: 7 }, { from: 12, by: 16 }],
-    minAgeDays: [42, 70, 98, 365], intervalDays: [28, 28, 56],
+    schedule: [{ from: 2, to: 4, open: true }, { from: 4, to: 6, open: true }, { from: 6, to: 12, open: true, label: '6 months' }, { from: 12, to: 15 }],
   },
   {
     key: 'rv', measureCode: 'CISROTA', label: 'Rotavirus', name: 'Rotavirus', doses: 3,
@@ -122,8 +120,7 @@ export const CIS_ANTIGENS = [
     hedisMinAgeDays: 42,
     cvx: ['116', '119', '122'],
     match: /rota/i,
-    schedule: [{ from: 2, by: 3 }, { from: 4, by: 5 }, { from: 6, by: 7 }],
-    minAgeDays: [42, 70, 98], intervalDays: [28, 28],
+    schedule: [{ from: 2, to: 4, open: true }, { from: 4, to: 6, open: true }, { from: 6, to: RV_MAX_AGE_MONTHS, label: '6 months' }],
   },
   {
     key: 'flu', measureCode: 'CISINFL', label: 'Influenza', name: 'Influenza', doses: 2,
@@ -131,8 +128,12 @@ export const CIS_ANTIGENS = [
     hedisMinAgeDays: 180,
     cvx: ['88', '111', '140', '141', '149', '150', '153', '155', '158', '161', '171', '186', '197', '205'],
     match: /influenza|\bflu|fluzone|fluarix|flulaval|afluria|flucelvax/i,
-    schedule: [{ from: 6, by: 8 }, { from: 7, by: 9 }],
-    minAgeDays: [180, 208], intervalDays: [28],
+    // Dose 1 opens at 180 days; dose 2 opens 4 weeks after dose 1 (its date
+    // given, else its window start) and runs to the 2nd birthday.
+    schedule: [
+      { from: 6, to: 7, open: true, fromDays: 180, label: '6 months (180 days)' },
+      { from: 7, to: 24, afterPrevDays: 28, label: '4 weeks after Dose 1', short: '4 wk after Dose 1' },
+    ],
   },
   {
     key: 'mmr', measureCode: 'CISMMR', label: 'MMR', name: 'Measles, mumps, rubella', doses: 1,
@@ -140,8 +141,7 @@ export const CIS_ANTIGENS = [
     window: true,
     cvx: ['03', '94'],
     match: /\bmmr|proquad/i,
-    schedule: [{ from: 12, by: 16 }],
-    minAgeDays: [0], intervalDays: [],
+    schedule: [{ from: 12, to: 15 }],
   },
   {
     key: 'vzv', measureCode: 'CISVZV', label: 'VZV', name: 'Varicella (chickenpox)', doses: 1,
@@ -149,8 +149,7 @@ export const CIS_ANTIGENS = [
     window: true,
     cvx: ['21', '94'],
     match: /varicella|varivax|\bvzv\b|mmrv|proquad/i,
-    schedule: [{ from: 12, by: 16 }],
-    minAgeDays: [0], intervalDays: [],
+    schedule: [{ from: 12, to: 15 }],
   },
   {
     key: 'hepa', measureCode: 'CISHEPA', label: 'Hep A', name: 'Hepatitis A', doses: 1,
@@ -158,8 +157,7 @@ export const CIS_ANTIGENS = [
     window: true,
     cvx: ['31', '83', '85'],
     match: /hep(atitis)?[\s-]*a\b|havrix|vaqta/i,
-    schedule: [{ from: 12, by: 24 }],
-    minAgeDays: [0], intervalDays: [],
+    schedule: [{ from: 12, to: 23 }],
   },
 ];
 
@@ -173,8 +171,8 @@ const maxDate = (...ds) => ds.filter(Boolean).reduce((a, b) => (b > a ? b : a));
 const sameDay = (a, b) => daysBetween(a, b) === 0;
 const normCvx = (code) => String(code ?? '').trim().replace(/^0+(?=\d)/, '');
 
-/** Last routine month of a schedule slot, within the 2nd year. */
-export const scheduleEndMonth = (slot) => (slot.from === 0 || slot.by - slot.from <= 1 ? slot.from : Math.min(slot.by - 1, 23));
+/** Last month a schedule slot's window reaches, within the 2nd year. */
+export const scheduleEndMonth = (slot) => Math.min(slot.open ? slot.to - 1 : slot.to, 23);
 
 /** Whole months between `dob` and `on`. */
 export function ageInMonths(dob, on) {
@@ -220,10 +218,18 @@ const minDate = (...ds) => ds.filter(Boolean).reduce((a, b) => (b < a ? b : a));
 // Doses whose window opens within this many days read as Upcoming.
 const UPCOMING_DAYS = 30;
 
+// ACIP recommended age, as the sheet words it: one age when the window runs
+// up to the next dose, else the range.
 function recommendedLabel(slot) {
+  if (slot.label) return slot.label;
   if (slot.from === 0) return 'Birth (0 mo)';
-  if (slot.by - slot.from <= 1) return `${slot.from} months`;
-  return `${slot.from}–${slot.by - 1} months`;
+  if (slot.open) return `${slot.from} months`;
+  return `${slot.from}–${slot.to} months`;
+}
+function recommendedShort(slot) {
+  if (slot.short) return slot.short;
+  if (slot.open || slot.label) return `${slot.from} mo`;
+  return `${slot.from}-${slot.to} mo`;
 }
 
 /**
@@ -257,39 +263,29 @@ function evaluateAntigen(antigen, doses, ctx, pending = 0, seriesDoses = null) {
     ? (rvNeedsThree ? 3 : seriesDoses ?? (valid.length > 0 ? 2 : 3))
     : antigen.doses;
 
-  // Routine window + earliest allowed date for the dose filling `slotIdx`.
+  // Recommended window (sheet columns D / E) and HEDIS earliest allowed
+  // date (column G) for the dose filling `slotIdx`. `prev` is the previous
+  // dose's date given (else its window start); only flu dose 2 uses it.
   const slotMeta = (slotIdx, prev) => {
     const slot = antigen.schedule[Math.min(slotIdx, antigen.schedule.length - 1)];
-    const lastMin = antigen.minAgeDays[antigen.minAgeDays.length - 1] ?? 0;
-    const earliest = maxDate(
-      addDays(dob, antigen.minAgeDays[slotIdx] ?? lastMin),
-      addDays(dob, antigen.hedisMinAgeDays ?? 0),
-      prev ? addDays(prev, antigen.intervalDays[slotIdx - 1] ?? 28) : null,
-      antigen.window ? firstBirthday : null,
-    );
-    const start = maxDate(addMonths(dob, slot.from), antigen.window ? firstBirthday : null);
-    const due = minDate(
-      addMonths(dob, slot.by),
-      secondBirthday,
-      antigen.key === 'rv' ? addDays(dob, RV_MAX_AGE_DAYS) : null,
-    );
-    // Last month of the routine range (2 months → the 2-month date;
-    // 6–18 months → the 18-month date), for "start – end" display.
-    const recommendedEnd = slot.from === 0 || slot.by - slot.from <= 1 ? null : minDate(addMonths(dob, slot.by - 1), secondBirthday);
-    const recommendedShort = slot.from === 0 || slot.by - slot.from <= 1
-      ? `${slot.from} mo`
-      : `${slot.from}-${slot.by - 1} mo`;
-    // `ageMonths` (routine age the dose starts at) drives the by-age view;
-    // `ageEndMonths` is the last month of its range, for the timeline.
+    const start = slot.afterPrevDays && prev
+      ? addDays(prev, slot.afterPrevDays)
+      : slot.fromDays ? addDays(dob, slot.fromDays) : addMonths(dob, slot.from);
+    const end = minDate(slot.open ? addDays(addMonths(dob, slot.to), -1) : addMonths(dob, slot.to), secondBirthday);
+    const hedisEarliest = antigen.window ? firstBirthday : addDays(dob, antigen.hedisMinAgeDays ?? 0);
+    // Flu dose 2 can't count until 4 weeks after dose 1 (sheet G32).
+    const earliest = slot.afterPrevDays ? maxDate(hedisEarliest, start) : hedisEarliest;
+    // `ageMonths` (age the window opens) drives the by-age view;
+    // `ageEndMonths` is the last month it reaches, for the timeline.
     return {
       recommended: recommendedLabel(slot),
-      recommendedShort,
+      recommendedShort: recommendedShort(slot),
       ageMonths: slot.from,
       ageEndMonths: scheduleEndMonth(slot),
       earliest,
       start,
-      recommendedEnd,
-      due,
+      recommendedEnd: end,
+      due: end,
     };
   };
 
@@ -325,21 +321,22 @@ function evaluateAntigen(antigen, doses, ctx, pending = 0, seriesDoses = null) {
     rows.push({ kind: 'pending', counts: false, status: CIS_DOSE_STATUS.pending, ...slotMeta(slotIdx, prevValid) });
   }
 
-  // Remaining doses planned at ACIP minimums, never earlier than today.
+  // Remaining doses: status comes from the recommended window only (opens at
+  // `start`, Overdue after `due`); the earliest allowed date does not move it.
+  const rvLastDay = antigen.key === 'rv' ? addMonths(dob, RV_MAX_AGE_MONTHS) : null;
   let prev = prevValid;
   let completion = valid.length >= required ? valid[required - 1].date : null;
   for (; slotIdx < required; slotIdx++) {
     const meta = slotMeta(slotIdx, prev);
-    const planned = maxDate(meta.earliest, today);
-    const eligibleFrom = maxDate(meta.start, meta.earliest);
+    const planned = maxDate(meta.start, today);
     let status;
-    if (planned > meta.due && (planned > secondBirthday || antigen.key === 'rv')) status = CIS_DOSE_STATUS.cannotMeet;
+    if (planned > secondBirthday || (rvLastDay && planned > rvLastDay)) status = CIS_DOSE_STATUS.cannotMeet;
     else if (today > meta.due) status = CIS_DOSE_STATUS.overdue;
-    else if (today >= eligibleFrom) status = CIS_DOSE_STATUS.dueNow;
-    else if (daysBetween(eligibleFrom, today) <= UPCOMING_DAYS) status = CIS_DOSE_STATUS.upcoming;
+    else if (today >= meta.start) status = CIS_DOSE_STATUS.dueNow;
+    else if (daysBetween(meta.start, today) <= UPCOMING_DAYS) status = CIS_DOSE_STATUS.upcoming;
     else status = CIS_DOSE_STATUS.onTrack;
-    rows.push({ kind: 'planned', counts: false, status, plannedDate: planned, nextDue: eligibleFrom, ...meta });
-    prev = planned;
+    rows.push({ kind: 'planned', counts: false, status, plannedDate: planned, nextDue: meta.start, ...meta });
+    prev = meta.start;
     completion = planned;
   }
   rows.forEach((r, i) => { r.number = i + 1; });

@@ -1,7 +1,7 @@
 -- Care-program documents: a patient's Program Documents library, scoped by
 -- program_code + patient_id. Rows are created when a user uploads a file via
 -- the inline DocumentUploader on the Program Documents step. The step is empty
--- by default (no seed rows) — documents accrue as they are uploaded.
+-- by default (no seed rows): documents accrue as they are uploaded.
 
 CREATE TABLE IF NOT EXISTS program_documents (
   id           TEXT PRIMARY KEY,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS program_documents (
 ALTER TABLE program_documents ENABLE ROW LEVEL SECURITY;
 
 -- The policy this replaces was `FOR ALL USING (true) WITH CHECK (true)` granted
--- to PUBLIC. In Postgres PUBLIC means every role, including `anon` — the key
+-- to PUBLIC. In Postgres PUBLIC means every role, including `anon`, the key
 -- that ships in the browser bundle. Verified against production before this
 -- change: as the anon role, SELECT, INSERT and DELETE on patient program
 -- documents were all ALLOWED.
@@ -33,7 +33,7 @@ ALTER TABLE program_documents ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all program_documents" ON program_documents;
 
 -- Reads: any signed-in staff member, matching how every other clinical table
--- in this schema is scoped — whoever is looking at a patient sees that
+-- in this schema is scoped: whoever is looking at a patient sees that
 -- patient's library. Deliberately FOR SELECT alone, so a future widening of
 -- reads cannot silently widen writes.
 DROP POLICY IF EXISTS program_documents_select ON program_documents;
@@ -42,8 +42,8 @@ CREATE POLICY program_documents_select
   USING (true);
 
 -- Writes: the caller must correspond to an active row in `profiles`. That is a
--- trusted membership table — `profiles` role columns are server-owned and
--- guarded by profiles_guard_authz_fields.sql — rather than a client-supplied
+-- trusted membership table: `profiles` role columns are server-owned and
+-- guarded by profiles_guard_authz_fields.sql, rather than a client-supplied
 -- column such as updated_by, which the browser chooses freely. `Invited`
 -- profiles cannot write until their account is actually active.
 DROP POLICY IF EXISTS program_documents_insert ON program_documents;

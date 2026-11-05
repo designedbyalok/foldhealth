@@ -21,7 +21,7 @@ const STATUS_TONE = {
   Booked: 'primary',
   'Checked In': 'success',
   'No Show': 'warning',
-  Cancelled: 'error',
+  Cancelled: 'danger',
   Pending: 'warning',
   Completed: 'success',
 };
@@ -104,7 +104,7 @@ const fmtDate = (d) => (d
   : '');
 
 /**
- * Care Gap drawer — Appt/Reminders tab (Figma 225:93430). A table of the
+ * Care Gap drawer: Appt/Reminders tab (Figma 225:93430). A table of the
  * member's appointments with a View By (Upcoming / Past / All) switch,
  * search, and Type / Assignee filter chips. Rows carry the appointment
  * type, reason, date and time, and an assignee picker.
@@ -222,11 +222,11 @@ export function CareGapAppointmentsTab({
               onClose={() => { setSearchOpen(false); setSearch(''); }}
             />
           ) : (
-            <ActionButton size="S" icon="solar:magnifer-linear" tooltip="Search" onClick={() => setSearchOpen(true)} />
+            <ActionButton size="sm" icon="solar:magnifer-linear" tooltip="Search" onClick={() => setSearchOpen(true)} />
           )}
           <span className={styles.divider} />
           <ActionButton
-            size="S"
+            size="sm"
             icon="custom:filter"
             tooltip={chipsOpen ? 'Hide filters' : 'Filter'}
             iconColor={chipsOpen || anyFilter ? 'var(--primary-300)' : undefined}
@@ -320,12 +320,12 @@ export function CareGapAppointmentsTab({
                 </td>
                 <td className={styles.td}>
                   <div className={styles.dateCell}>
-                    <span>{fmtDate(r.date) || '—'}</span>
+                    <span>{fmtDate(r.date) || '-'}</span>
                     {r.time && <span>{r.time}</span>}
                   </div>
                 </td>
                 <td className={styles.td}>
-                  <Badge size="S" tone={STATUS_TONE[r.status] || 'grey'} label={r.status} />
+                  <Badge size="sm" tone={STATUS_TONE[r.status] || 'neutral'} label={r.status} />
                 </td>
                 <td className={styles.td}>
                   <AssigneeChange
@@ -346,7 +346,7 @@ export function CareGapAppointmentsTab({
                 <td className={[styles.td, styles.actionsTd].join(' ')}>
                   <ActionButton
                     icon="solar:menu-dots-linear"
-                    size="S"
+                    size="sm"
                     tooltip="More actions"
                     onClick={(e) => {
                       const rect = e.currentTarget.getBoundingClientRect();

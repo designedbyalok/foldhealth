@@ -6,7 +6,7 @@
 -- of normalized member ids across every slice. Both have to happen in SQL
 -- or we would still be shipping the id columns to the client.
 --
--- SECURITY INVOKER so RLS on the underlying tables still applies — a
+-- SECURITY INVOKER so RLS on the underlying tables still applies, a
 -- security-definer view would leak every tenant's roster to any
 -- authenticated session.
 --

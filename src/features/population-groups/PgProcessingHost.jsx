@@ -52,7 +52,7 @@ export function PgProcessingHost() {
               <div style={{ fontSize: 'var(--font-base)', fontWeight: 600, color:'var(--neutral-400)' }}>Processing File</div>
               <div style={{ fontSize: 'var(--font-base)', color:'var(--neutral-200)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{pgSession.fileName || pgSession.segName || 'New Group'}</div>
             </div>
-            <ActionButton icon="solar:maximize-square-linear" size="L" tooltip="Expand" onClick={expand} />
+            <ActionButton icon="solar:maximize-square-linear" tooltip="Expand" onClick={expand} />
           </div>
           <div style={{ padding:'14px 16px' }}>
             {PROC_STEPS.map((step, i) => {
@@ -90,10 +90,10 @@ export function PgProcessingHost() {
               <div style={{ fontSize: 'var(--font-base)', fontWeight: 600, color:'var(--neutral-400)' }}>File Extracted &amp; Processed</div>
               <div style={{ fontSize: 'var(--font-base)', color:'var(--neutral-300)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{pgSession.fileName || pgSession.segName}</div>
             </div>
-            <ActionButton icon="solar:close-circle-linear" size="L" onClick={() => closePgSession()} />
+            <ActionButton icon="solar:close-circle-linear" onClick={() => closePgSession()} />
           </div>
           <div style={{ padding:'14px 16px' }}>
-            <Button variant="primary" size="L" fullWidth onClick={expand}>Show Summary</Button>
+            <Button fullWidth onClick={expand}>Show Summary</Button>
           </div>
         </div>
       )}

@@ -5,7 +5,7 @@ import { useLayoutEffect, useState } from 'react';
  *
  * Reading `ref.current.getBoundingClientRect()` *during render* is a React
  * 19 lint error (`Cannot access refs during render`) and produces a stale
- * rect on the first paint — it works today only because the popover is
+ * rect on the first paint: it works today only because the popover is
  * rendered inside a portal AFTER the anchor mounted. On scroll or resize
  * the popover doesn't reposition either.
  *
@@ -24,7 +24,7 @@ export function usePopoverPosition(anchorRef, open, { offset = 4, estimatedHeigh
    * Measure-then-setState in useLayoutEffect is the canonical DOM-read
    * pattern this hook exists to encapsulate: the render must commit before
    * the anchor rect is known. The rule's own guidance allows setState in
-   * an effect callback triggered by external state — here, DOM geometry.
+   * an effect callback triggered by external state, here, DOM geometry.
    */
   useLayoutEffect(() => {
     if (!open) { setPos(null); return; }

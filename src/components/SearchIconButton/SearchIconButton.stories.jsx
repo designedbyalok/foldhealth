@@ -6,7 +6,7 @@ export default {
   tags: ['autodocs'],
   parameters: {
     docs: {
-      description: { component: 'Icon-only search button — expands into a search input on click. Preset shape used across toolbars.' },
+      description: { component: 'Icon-only search button: expands into a search input on click. Preset shape used across toolbars.' },
     },
   },
   argTypes: {

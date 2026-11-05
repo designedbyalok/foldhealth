@@ -1,6 +1,6 @@
 ---
 title: "Population Groups"
-description: "Reusable static and dynamic cohorts — build a group once and use it across worklists, campaigns, and analytics."
+description: "Reusable static and dynamic cohorts: build a group once and use it across worklists, campaigns, and analytics."
 ---
 
 **Population Groups** are named cohorts of members. Build one, then reuse it as an audience filter for campaigns, a saved worklist filter, or a slice for analytics.
@@ -14,11 +14,11 @@ Routes: `#/population/population-groups`, `#/population/population-groups-static
     A frozen list of members you upload or select once. Members never change unless you edit the group. Good for one-time outreach, pilots, or manually curated cohorts.
   </Card>
   <Card title="Dynamic" icon="filter">
-    A saved filter definition. The group's membership is re-evaluated every time it's used — so "Members overdue for HbA1c" always reflects today's data.
+    A saved filter definition. The group's membership is re-evaluated every time it's used: so "Members overdue for HbA1c" always reflects today's data.
   </Card>
 </CardGroup>
 
-## Walkthrough — build a dynamic group
+## Walkthrough: build a dynamic group
 
 <Steps>
   <Step title="Open Population Groups">
@@ -28,7 +28,7 @@ Routes: `#/population/population-groups`, `#/population/population-groups-static
     Click **+ New Group**. The **Create Drawer** slides in (wide variant for complex filters).
   </Step>
   <Step title="Name and describe">
-    Name the group ("HbA1c overdue — Q4 push"), add a description (this appears everywhere the group is used).
+    Name the group ("HbA1c overdue: Q4 push"), add a description (this appears everywhere the group is used).
   </Step>
   <Step title="Compose the filter">
     Add filter chips: **HEDIS Measure = CDC-HbA1c**, **Gap Type = Open**, **State = TX**, **Assignee = None**. The **Summary panel** on the right shows the live member count as you refine.
@@ -38,7 +38,7 @@ Routes: `#/population/population-groups`, `#/population/population-groups-static
   </Step>
 </Steps>
 
-## Walkthrough — build a static group by upload
+## Walkthrough: build a static group by upload
 
 <Steps>
   <Step title="Static → + New Group">
@@ -59,11 +59,11 @@ Routes: `#/population/population-groups`, `#/population/population-groups-static
 
 Population Groups are audiences everywhere:
 
-- **Campaigns** — pick a group as the include audience in the Campaign Builder.
-- **Worklist filters** — every worklist's **Population Group** filter chip accepts groups; the table narrows to just those members.
-- **Analytics** — filter any dashboard to a group to see program metrics for that cohort.
+- **Campaigns**: pick a group as the include audience in the Campaign Builder.
+- **Worklist filters**: every worklist's **Population Group** filter chip accepts groups; the table narrows to just those members.
+- **Analytics**: filter any dashboard to a group to see program metrics for that cohort.
 
 ## Updating groups
 
-- **Dynamic** — edit the filter definition; every consumer sees the new membership on next use.
-- **Static** — edit via **Update Population Group** drawer: add/remove members, re-upload a CSV to replace, or merge with another group.
+- **Dynamic**: edit the filter definition; every consumer sees the new membership on next use.
+- **Static**: edit via **Update Population Group** drawer: add/remove members, re-upload a CSV to replace, or merge with another group.

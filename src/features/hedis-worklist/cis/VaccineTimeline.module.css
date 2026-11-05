@@ -120,13 +120,12 @@
   align-items: flex-start;
   gap: calc(var(--space-1) / 2);
   min-width: 0;
-  padding: var(--space-1) calc(var(--space-1) / 2) var(--space-1) var(--space-1);
-  /* Flat bar: only the left stroke, coloured by the tone class. */
-  border: 0 solid transparent;
-  border-left-width: 3px;
-  border-radius: 0;
+  padding: var(--space-1) var(--space-2);
+  /* Rounded block with an even 0.5px stroke, coloured by the tone class. */
+  border: 0.5px solid transparent;
+  border-radius: var(--space-2);
   text-align: left;
-  cursor: default;
+  cursor: pointer;
   transition: box-shadow 160ms ease-out, transform 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out, opacity 120ms ease-out;
 }
 /* Hover / focus: the bar pops out of the grid. */
@@ -163,12 +162,6 @@
 .bell.bellLate {
   color: var(--status-warning-dark);
 }
-.detailReminder {
-  color: var(--primary-300);
-}
-.detailReminderLate {
-  color: var(--status-warning-dark);
-}
 .doseTitle {
   display: inline-flex;
   align-items: center;
@@ -193,15 +186,6 @@
 .toneError { background: var(--status-error-light); border-color: var(--status-error); color: var(--status-error); }
 .toneGrey { background: var(--neutral-75); border-color: var(--neutral-150); color: var(--neutral-400); }
 .toneWhite { background: var(--neutral-0); border-color: var(--neutral-150); color: var(--neutral-400); }
-/* Neutral blocks: a darker stroke so it reads against the light fill. */
-.dose.toneGrey { border-left-color: var(--neutral-300); }
-.dose.toneWhite { border-left-color: var(--neutral-200); }
-/* On track sits on white, so it keeps a 0.5px outline on the other sides. */
-.dose.toneWhite {
-  border-top-width: 0.5px;
-  border-right-width: 0.5px;
-  border-bottom-width: 0.5px;
-}
 
 .legend {
   display: flex;
@@ -237,18 +221,3 @@
   border-color: var(--primary-300);
 }
 
-.detail {
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--space-1) / 2);
-  font-size: var(--font-sm);
-  color: var(--neutral-400);
-  text-align: left;
-}
-.detailTitle {
-  font-weight: 500;
-  color: var(--neutral-500);
-}
-.detailReason {
-  color: var(--status-error-dark);
-}

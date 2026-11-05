@@ -1,4 +1,4 @@
-/* Settings → Account → Locations row — composes from the shared row shell
+/* Settings → Account → Locations row, composes from the shared row shell
    so it reads exactly like every other worklist row (hover tint, sticky
    columns, cell padding, load-in animation). */
 

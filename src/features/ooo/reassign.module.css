@@ -81,15 +81,17 @@
 /* ── Summary ── */
 .summary { display: flex; flex-direction: column; gap: var(--space-4); }
 .summaryField { display: flex; flex-direction: column; gap: var(--space-1); }
-.summaryLabel { font-size: var(--font-base); color: var(--neutral-500); }
+.summaryLabel { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+/* A person or detail card (Figma Eventus 17056:142200): 32px (M) avatar, then
+   a name over its secondary line, both 14px. */
 .summaryCard {
-  display: flex; align-items: center; gap: var(--space-3);
+  display: flex; align-items: center; gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
   border: 0.5px solid var(--neutral-150); border-radius: 8px;
 }
-.summaryCardText { display: flex; flex-direction: column; min-width: 0; }
-.summaryCardMain { font-size: var(--font-base); color: var(--neutral-500); }
-.summaryCardSub { font-size: var(--font-sm); color: var(--neutral-300); }
+.summaryCardText { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); min-width: 0; line-height: 1.2; }
+.summaryCardMain { font-size: var(--font-base); color: var(--neutral-400); }
+.summaryCardSub { font-size: var(--font-base); color: var(--neutral-300); }
 .conflictNote { padding: 0 var(--space-3) var(--space-1) calc(var(--space-3) * 2 + var(--space-10)); font-size: var(--font-sm); color: var(--neutral-300); }
 .conflictWith { margin: 0 var(--space-3) var(--space-2) calc(var(--space-3) * 2 + var(--space-10)); overflow: hidden; border: 0.5px solid var(--neutral-150); border-radius: 8px; }
 .failReason {
@@ -97,6 +99,7 @@
   padding: var(--space-1) var(--space-3) var(--space-2);
   font-size: var(--font-sm); color: var(--neutral-400);
 }
+.movedTo { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-3) var(--space-2); font-size: var(--font-sm); color: var(--status-success); }
 .tagMuted { font-size: var(--font-xs); color: var(--neutral-300); padding: 0 var(--space-1); border-radius: 4px; background: var(--neutral-50); }
 
 /* ── History ── */
@@ -132,3 +135,39 @@
   margin: calc(var(--space-3) - var(--space-4)) 0 var(--space-3);
 }
 .clearAll { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-sm); }
+
+/* A drawer title with a line under it (Appointment Rescheduling Summary). */
+.drawerTitle { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); }
+.drawerSubtitle { font-size: var(--font-sm); font-weight: 400; color: var(--neutral-300); }
+
+/* A flat list of appointment cards (Appointment Rescheduling Summary):
+   each its own white card, its outcome tinted along the bottom. */
+.cardList { display: flex; flex-direction: column; gap: var(--space-2); }
+.cardList > .apptRow,
+.cardList > .apptRow.tone_failed {
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+}
+.cardList > .apptRow { overflow: hidden; }
+/* One padding, 8px, on every side of a card's parts. */
+.cardList .apptMain { padding: var(--space-2); }
+/* The outcome line runs edge to edge along the card's bottom: grey when it
+   was rescheduled, red when it failed. */
+.cardList .failReason,
+.cardList .movedTo {
+  margin: 0;
+  padding: var(--space-2);
+  border-top: 0.5px solid var(--neutral-150);
+}
+.cardList .failReason { background: var(--status-error-light); }
+.cardList .movedTo { background: var(--neutral-50); color: var(--neutral-500); }
+
+/* The summary's switch hugs its options, with room under the label. */
+.summaryTabs { gap: var(--space-2); }
+.summarySwitch { align-self: flex-start; }
+.summaryEmpty { padding-top: var(--space-10); }
+/* 16px from the switch (8px gap + 8px), as from the cards below. */
+.summaryNote { margin-top: var(--space-2); font-size: var(--font-base); color: var(--neutral-300); }
+/* The reason itself reads first; "Reason:" is the quieter label. */
+.summaryNoteValue { font-weight: 500; color: var(--neutral-400); }

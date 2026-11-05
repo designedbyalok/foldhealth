@@ -72,7 +72,7 @@ export function OnCallScheduleDrawer({ preset, oooRecordId, excludeUser, onClose
       noCloseDivider
       headerRight={(
         <>
-          <Button variant="primary" size="L" disabled={!ready || saving} onClick={create}>{saving ? 'Creating…' : 'Create'}</Button>
+          <Button disabled={!ready} onClick={create} loading={saving}>Create</Button>
           <span className={styles.headerDivider} aria-hidden="true" />
         </>
       )}
@@ -88,7 +88,7 @@ export function OnCallScheduleDrawer({ preset, oooRecordId, excludeUser, onClose
             {i > 0 && (
               <div className={styles.scheduleBlockHead}>
                 <span className={styles.groupTitle}>Schedule {i + 1}</span>
-                <ActionButton icon="solar:trash-bin-minimalistic-linear" size="L" tooltip="Remove Schedule" tooltipLeft onClick={() => setBlocks(bs => bs.filter(x => x.key !== b.key))} />
+                <ActionButton icon="solar:trash-bin-minimalistic-linear" tooltip="Remove Schedule" tooltipLeft onClick={() => setBlocks(bs => bs.filter(x => x.key !== b.key))} />
               </div>
             )}
             <Input label="Schedule Name" placeholder="Enter a Schedule Name" value={b.name} maxLength={80} onChange={(e) => edit(b.key, { name: e.target.value })} />
@@ -98,7 +98,7 @@ export function OnCallScheduleDrawer({ preset, oooRecordId, excludeUser, onClose
               placeholder="Select Phone Tree Type"
               options={PHONE_TREE_TYPES.map(t => ({ value: t, label: t }))}
               value={b.phoneTreeType || undefined}
-              onChange={(v) => edit(b.key, { phoneTreeType: v })}
+              onValueChange={(v) => edit(b.key, { phoneTreeType: v })}
             />
             <div className={styles.dateRow}>
               <DatePicker
@@ -126,7 +126,7 @@ export function OnCallScheduleDrawer({ preset, oooRecordId, excludeUser, onClose
               placeholder="Select user"
               options={userOptions}
               value={b.userName || undefined}
-              onChange={(v) => edit(b.key, { userName: v })}
+              onValueChange={(v) => edit(b.key, { userName: v })}
             />
           </div>
         ))}

@@ -42,7 +42,7 @@
 .statusCell { color: var(--neutral-300); white-space: nowrap; }
 
 .assigneeCell { min-width: 0; white-space: nowrap; }
-/* Inner flex keeps the icon + name on one baseline with the old 6px gap —
+/* Inner flex keeps the icon + name on one baseline with the old 6px gap,
    `display: flex` on a <td> would break table column sizing. */
 .assigneeInner {
   display: inline-flex;

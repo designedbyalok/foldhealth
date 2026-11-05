@@ -11,23 +11,23 @@ import { TemplateAnswersForm } from './TemplateAnswersForm';
 import styles from './NonVisitNoteDrawer.module.css';
 
 /**
- * NonVisitNoteDrawer — Clinical Note authoring surface used from P360 →
+ * NonVisitNoteDrawer: Clinical Note authoring surface used from P360 →
  * Notes → New Note.
  *
  * A single drawer with two possible bodies:
  *
- *   1. Free-form (default) — title + body + optional gap chips. Payload:
+ *   1. Free-form (default): title + body + optional gap chips. Payload:
  *      { title, body, dateOfService }. This is the shape shipped in
  *      Phase-1 and is what earlier notes carry.
  *
- *   2. Template-driven — user picks a Note Template (either a Normal
+ *   2. Template-driven: user picks a Note Template (either a Normal
  *      template or a Care Gap × Non-Visit template). The template's
  *      schema fields render via TemplateAnswersForm and the payload
  *      becomes { formId, answers, dateOfService }. Care Gap templates
  *      also auto-attach their gap_code so the note lines up under the
  *      right care gap without an extra picker.
  */
-export function NonVisitNoteDrawer({ patient, onClose }) {
+export function NonVisitNoteDrawer({ patient, initialTitle = '', onClose }) {
   const upsertClinicalNote = useAppStore(s => s.upsertClinicalNote);
   const showToast = useAppStore(s => s.showToast);
   const hedisMembers = useAppStore(s => s.hedisMembers);
@@ -35,7 +35,7 @@ export function NonVisitNoteDrawer({ patient, onClose }) {
   const fetchNoteTemplates = useAppStore(s => s.fetchNoteTemplates);
 
   const [templateId, setTemplateId] = useState(''); // '' = free-form
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(initialTitle);
   const [body, setBody] = useState('');
   const [answers, setAnswers] = useState({});
   const [selectedGaps, setSelectedGaps] = useState([]);
@@ -61,8 +61,8 @@ export function NonVisitNoteDrawer({ patient, onClose }) {
     const normal = rows.filter(t => !t.gap_code).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     const care = rows.filter(t => !!t.gap_code).sort((a, b) => (a.gap_code || '').localeCompare(b.gap_code || ''));
     const opts = [{ value: '', label: 'Free-form (title + body)' }];
-    normal.forEach(t => opts.push({ value: String(t.id), label: `${t.name} — Normal` }));
-    care.forEach(t => opts.push({ value: String(t.id), label: `${t.name} — ${t.gap_code} · Non-Visit` }));
+    normal.forEach(t => opts.push({ value: String(t.id), label: `${t.name}, Normal` }));
+    care.forEach(t => opts.push({ value: String(t.id), label: `${t.name}, ${t.gap_code} · Non-Visit` }));
     return opts;
   }, [templatesById]);
 
@@ -127,7 +127,7 @@ export function NonVisitNoteDrawer({ patient, onClose }) {
         showToast?.(status === 'signed' ? 'Note signed' : 'Draft saved');
         onClose?.();
       } else {
-        showToast?.('Save failed — check console');
+        showToast?.('Save failed: check console');
       }
     } finally {
       setSaving(false);
@@ -145,12 +145,12 @@ export function NonVisitNoteDrawer({ patient, onClose }) {
       onClose={onClose}
       width={640}
       primaryAction={
-        <Button variant="primary" size="L" onClick={() => save('signed')} disabled={!canSave}>
+        <Button onClick={() => save('signed')} disabled={!canSave}>
           Sign &amp; Save
         </Button>
       }
       secondaryAction={
-        <Button variant="secondary" size="L" onClick={() => save('draft')} disabled={saving}>
+        <Button variant="outline" onClick={() => save('draft')} disabled={saving}>
           Save as Draft
         </Button>
       }
@@ -166,7 +166,7 @@ export function NonVisitNoteDrawer({ patient, onClose }) {
           <Select
             options={templateOptions}
             value={templateId}
-            onChange={(v) => { setTemplateId(v || ''); setSubmitted(false); }}
+            onValueChange={(v) => { setTemplateId(v || ''); setSubmitted(false); }}
             placeholder="Choose a template"
           />
           {template?.description && (
@@ -221,7 +221,7 @@ export function NonVisitNoteDrawer({ patient, onClose }) {
             <div className={styles.chipRow}>
               <span className={styles.chipActive}>
                 <Icon name="solar:link-linear" size={12} color="var(--primary-300)" />
-                <Badge tone="primary" size="S" label={`${templateGapCode} — ${MEASURE_NAMES[templateGapCode] || templateGapCode}`} />
+                <Badge tone="primary" size="sm" label={`${templateGapCode}: ${MEASURE_NAMES[templateGapCode] || templateGapCode}`} />
               </span>
             </div>
             <p className={styles.templateHelp}>Locked by the selected template.</p>
@@ -242,7 +242,7 @@ export function NonVisitNoteDrawer({ patient, onClose }) {
                     onClick={() => toggleGap(code)}
                   >
                     {active && <Icon name="solar:check-circle-linear" size={12} color="var(--primary-300)" />}
-                    <Badge tone={active ? 'primary' : 'grey'} size="S" label={code} />
+                    <Badge tone={active ? 'primary' : 'neutral'} size="sm" label={code} />
                   </button>
                 );
               })}

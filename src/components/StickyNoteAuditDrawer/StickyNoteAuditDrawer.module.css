@@ -1,4 +1,4 @@
-/* Audit Drawer — matches Figma exactly */
+/* Audit Drawer: matches Figma exactly */
 .drawerBody { padding: 0 !important; }
 
 /* Form section: Member Profile + Sticky Note + Buttons */
@@ -21,7 +21,7 @@
 .historyTitle { font-size: var(--font-base); font-weight: 600; color: var(--neutral-500); margin: 0; }
 .historyList { display: flex; flex-direction: column; gap: 0; }
 
-/* History item — timeline track with connecting line */
+/* History item: timeline track with connecting line */
 .historyItem { display: flex; gap: 4px; align-items: stretch; }
 .timelineTrack { display: flex; flex-direction: column; align-items: center; width: 24px; flex-shrink: 0; }
 .timelineLineTop { width: 0.5px; flex: 0 0 6px; }

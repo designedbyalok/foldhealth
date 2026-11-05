@@ -1,4 +1,4 @@
--- Patient Monitoring — the per-patient snapshot behind the P360 "Monitoring"
+-- Patient Monitoring: the per-patient snapshot behind the P360 "Monitoring"
 -- tab (the Care Management prototype's patient workspace).
 --
 -- THE HOLE THIS CLOSES
@@ -12,7 +12,7 @@
 -- SHAPE
 -- Snapshot scalars are columns (queryable: adherence, program minutes, risk).
 -- The repeating, ordered, UI-local structures (program steps, timeline items,
--- tasks, goals, gaps, header chips) are jsonb — same treatment as
+-- tasks, goals, gaps, header chips) are jsonb, same treatment as
 -- care_plan_templates, where the entries are ordered display rows rather than
 -- rows worth their own table + joins for this surface.
 --

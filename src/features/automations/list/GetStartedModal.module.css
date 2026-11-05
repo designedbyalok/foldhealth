@@ -1,0 +1,125 @@
+.modal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  width: calc(100vw - var(--space-8));
+  max-width: 920px;
+  max-height: calc(100vh - var(--space-8));
+  padding: 0;
+  overflow: hidden;
+}
+
+.poster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 360px;
+  padding: var(--space-8);
+  background: linear-gradient(30deg, var(--accent-purple), var(--primary-300) 45%, var(--accent-teal));
+  color: var(--neutral-0);
+  text-align: center;
+}
+
+.posterKicker {
+  font-size: var(--font-2xl);
+}
+
+.posterTitle {
+  font-size: var(--font-4xl);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.posterSub {
+  font-size: var(--font-base);
+  opacity: 0.9;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  padding: var(--space-6);
+  padding-right: var(--space-8);
+  overflow-y: auto;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-xl);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+
+.description {
+  margin: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.num {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary-50);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--primary-300);
+}
+
+.stepText {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+}
+
+.stepTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+
+.stepBody {
+  font-size: var(--font-md);
+  line-height: 1.45;
+  color: var(--neutral-300);
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+
+@media (width <= 720px) {
+  .modal {
+    grid-template-columns: 1fr;
+  }
+
+  .poster {
+    min-height: 180px;
+  }
+}

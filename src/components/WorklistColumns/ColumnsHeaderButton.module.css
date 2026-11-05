@@ -1,4 +1,4 @@
-/* ColumnsHeaderButton — the "Actions" cell that hosts the 3-panel icon
+/* ColumnsHeaderButton: the "Actions" cell that hosts the 3-panel icon
    opening ColumnConfigPopover. Matches HCC's inline actionsHeader treatment
    so the swap-in is visually identical across worklists. */
 
@@ -9,7 +9,7 @@
   width: 100%;
   justify-content: space-between;
 }
-/* Bare-icon variant (no label) — center the trigger in the header cell
+/* Bare-icon variant (no label): center the trigger in the header cell
    so it doesn't hug the right edge inside a narrow actions column. */
 .wrapIconOnly {
   justify-content: center;

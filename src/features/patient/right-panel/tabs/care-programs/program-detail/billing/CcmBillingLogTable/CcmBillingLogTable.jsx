@@ -9,6 +9,7 @@ import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
 import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChevronIcon';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { CCM_ACTIVITY_TYPES, secondsToTime, timeToSeconds } from '../../../../../../data/ccmBillingMock';
+import { toast } from '../../../../../../../../components/Toast/sonnerToast';
 import styles from './CcmBillingLogTable.module.css';
 import { useProgramActivityLog } from '../../shared/useProgramActivityLog';
 
@@ -100,7 +101,7 @@ function LogTableRow({
       <div className={[styles.tableGrid, styles.dataRow, warning ? styles.dataRowWarning : ''].filter(Boolean).join(' ')}>
         <div className={[styles.cell, warning ? styles.cellProgramWarning : ''].filter(Boolean).join(' ')}>
           <button type="button" className={styles.badgeTrigger} aria-label="Program">
-            <Badge tone="primary" size="S" label={row.program} trailingIconElement={<DownChevronIcon size={13} color="currentColor" />} />
+            <Badge tone="primary" size="sm" label={row.program} trailingIconElement={<DownChevronIcon size={13} color="currentColor" />} />
           </button>
         </div>
 
@@ -109,7 +110,7 @@ function LogTableRow({
             className={styles.selectCompact}
             options={CATEGORY_OPTIONS}
             value={row.activityType}
-            onChange={(v) => onPatch({ activityType: v })}
+            onValueChange={(v) => onPatch({ activityType: v })}
             placeholder="Select"
           />
         </div>
@@ -119,7 +120,7 @@ function LogTableRow({
             className={styles.selectCompact}
             options={DATE_OPTIONS}
             value={row.date}
-            onChange={(v) => onPatch({ date: v })}
+            onValueChange={(v) => onPatch({ date: v })}
           />
         </div>
 
@@ -155,7 +156,7 @@ function LogTableRow({
           <div className={styles.actions}>
             <ActionButton
               icon="solar:document-text-linear"
-              size="S"
+              size="sm"
               tooltip="Add Note"
               count={noteCount > 0 ? String(noteCount) : undefined}
               active={noteOpen}
@@ -164,7 +165,7 @@ function LogTableRow({
             <span className={styles.actionDivider} aria-hidden />
             <ActionButton
               icon="solar:trash-bin-trash-linear"
-              size="S"
+              size="sm"
               tooltip="Delete"
               onClick={onDelete}
             />
@@ -181,8 +182,8 @@ function LogTableRow({
             placeholder="Add a note for this activity…"
           />
           <div className={styles.noteActions}>
-            <Button variant="primary" size="S" onClick={onSaveNote}>Save</Button>
-            <Button variant="secondary" size="S" onClick={onCancelNote}>Cancel</Button>
+            <Button size="sm" onClick={onSaveNote}>Save</Button>
+            <Button variant="outline" size="sm" onClick={onCancelNote}>Cancel</Button>
           </div>
         </div>
       )}
@@ -253,7 +254,7 @@ export function CcmBillingLogTable({ patientId, periodId, activities = EMPTY_ACT
   const saveNote = async (row) => {
     patchRow(row.id, { description: noteDraft });
     if (row.kind === 'unlogged' && row.activityType && row.included === true && periodId) {
-      await addCcmBillableActivity({
+      const result = await addCcmBillableActivity({
         id: randomId(),
         periodId,
         patientId,
@@ -265,6 +266,11 @@ export function CcmBillingLogTable({ patientId, periodId, activities = EMPTY_ACT
         occurredAt: new Date().toISOString(),
         isUnlogged: true,
       });
+      // Consent gate: leave the row unclassified so the time isn't lost.
+      if (result?.blocked) {
+        toast.error(`${result.reason}. Capture consent to log this time.`);
+        return;
+      }
       logActivity(`Billable Time Logged: ${row.activityType}`, { activityKind: 'document', statusLabel: row.durationInput || '', statusType: 'neutral' });
       setUnloggedRows(prev => prev.filter(r => r.id !== row.id));
     }

@@ -14,7 +14,7 @@ import styles from './RepeatEditor.module.css';
 const REPEAT_UNITS = ['Days', 'Weeks'];
 
 /**
- * Repeat schedule editor — Figma Care Plan Creation 14599:200235.
+ * Repeat schedule editor: Figma Care Plan Creation 14599:200235.
  *
  * Layout (stacked, on a grey-50 panel):
  *   [Switch] Repeat
@@ -26,10 +26,10 @@ const REPEAT_UNITS = ['Days', 'Weeks'];
  * Value shape:
  *   {
  *     repeat: boolean,
- *     repeatCount: string | number,   // "1", "5" — how many times
- *     repeatEvery: string | number,   // "1", "2" — interval size
+ *     repeatCount: string | number,   // "1", "5", how many times
+ *     repeatEvery: string | number,   // "1", "2", interval size
  *     repeatEveryUnit: 'Days' | 'Weeks',
- *     repeatEnds: string | number,    // "0" — extra window after the last run
+ *     repeatEnds: string | number,    // "0", extra window after the last run
  *     repeatEndsUnit: 'Days' | 'Weeks',
  *   }
  *
@@ -53,7 +53,7 @@ export function RepeatEditor({ value, onChange }) {
   const everyRef = useRef(null);
   const endsRef = useRef(null);
 
-  // Count input — spans the panel width and carries the "time"/
+  // Count input: spans the panel width and carries the "time"/
   // "times" static suffix inside its own trailing slot so the noun
   // stays glued to the number, matching the task drawer pattern.
   const countInput = (

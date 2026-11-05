@@ -44,7 +44,7 @@ export function BrowserCallCard() {
   const seconds = call.connectedAt ? Math.max(0, Math.round((now - call.connectedAt) / 1000)) : 0;
   const token = call.meta?.chat?.patient_token;
   const copyLink = () => {
-    navigator.clipboard?.writeText(patientLink(token)).then(() => toast.success('Patient link copied'));
+    navigator.clipboard?.writeText(patientLink(token)).then(() => toast.success('Patient Link Copied Successfully'));
   };
 
   let status;
@@ -77,15 +77,14 @@ export function BrowserCallCard() {
       {active ? (
         <div className={styles.actions}>
           <Button
-            variant="secondary"
-            size="L"
+            variant="outline"
             leadingIcon={call.muted ? 'solar:microphone-slash-linear' : 'solar:microphone-linear'}
             onClick={call.toggleMute}
             disabled={call.status === 'ringing'}
           >
             {call.muted ? 'Unmute' : 'Mute'}
           </Button>
-          <Button variant="dangerFilled" size="L" leadingIcon="solar:end-call-rounded-linear" onClick={call.hangup}>
+          <Button tone="danger" leadingIcon="solar:end-call-rounded-linear" onClick={call.hangup}>
             {call.status === 'ringing' ? 'Cancel' : 'End'}
           </Button>
         </div>
@@ -94,7 +93,7 @@ export function BrowserCallCard() {
           {call.endReason === 'completed' && call.duration > 0 && (
             <span className={styles.duration}>{formatDuration(call.duration)}</span>
           )}
-          <Button variant="secondary" size="L" onClick={call.dismiss}>Close</Button>
+          <Button variant="outline" onClick={call.dismiss}>Close</Button>
         </div>
       )}
     </div>,

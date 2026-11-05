@@ -1,4 +1,4 @@
--- funnel_events_queries.sql — copy-paste recipes for the booking funnel.
+-- funnel_events_queries.sql, copy-paste recipes for the booking funnel.
 -- Run in the Supabase SQL editor (Database → SQL editor).
 -- Schema: see funnel_events_migration.sql. Events come from the ScheduleDrawer.
 
@@ -39,7 +39,7 @@ select
 from public.funnel_events
 where event_name = 'schedule.booking_completed';
 
--- ── 4. Daily trend — starts vs completions vs abandonment ──────────────────
+-- ── 4. Daily trend, starts vs completions vs abandonment ──────────────────
 select
   created_at::date                                                     as day,
   count(*) filter (where event_name = 'schedule.drawer_opened')        as opened,

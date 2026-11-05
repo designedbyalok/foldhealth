@@ -1,4 +1,4 @@
-// Update checker — detects when a fresh deploy has landed while the user's
+// Update checker: detects when a fresh deploy has landed while the user's
 // tab is still running the previous build. Without this, clicking a route
 // that lazy-imports a chunk with the old filename 404s and the app blanks
 // to white. The card (see UpdateCard) prompts a reload before
@@ -6,7 +6,7 @@
 //
 // How it works:
 //   • Vite bakes __APP_VERSION__ into the running bundle at build time
-//     (see vite.config.js) — the commit SHA on Vercel, a timestamp locally.
+//     (see vite.config.js), the commit SHA on Vercel, a timestamp locally.
 //   • Vite also emits /version.json with the same value. It's served fresh
 //     (no immutable cache) so a poll reflects reality within seconds.
 //   • Poll every 60s. On visibility change (tab foregrounded) poll once
@@ -83,7 +83,7 @@ export function startUpdateChecker() {
   const localVersion = currentVersion();
 
   // Chunk-load failures indicate the running bundle is trying to reach
-  // filenames that no longer exist on the server — always a stale-deploy
+  // filenames that no longer exist on the server, always a stale-deploy
   // symptom. Flag the card so users see it before the app blanks out.
   const onChunkError = (e) => {
     const msg = String(e?.reason?.message || e?.message || '');
@@ -99,7 +99,7 @@ export function startUpdateChecker() {
   // two listeners above never see.
   window.addEventListener('vite:preloadError', () => { markNewBuild(); reloadForStaleChunk(); });
 
-  // Dev — no /version.json is emitted, so polling would 404 every minute.
+  // Dev: no /version.json is emitted, so polling would 404 every minute.
   // Skip the poll but keep the chunk-error backstop in place.
   if (!localVersion) return;
 
@@ -108,7 +108,9 @@ export function startUpdateChecker() {
     if (remote && remote.version !== localVersion) markNewBuild(remote);
   };
   check();
-  setInterval(check, POLL_MS);
+  // Background tabs skip the poll; the visibilitychange check below catches
+  // up the moment the tab is looked at again.
+  setInterval(() => { if (!document.hidden) check(); }, POLL_MS);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) check();
   });

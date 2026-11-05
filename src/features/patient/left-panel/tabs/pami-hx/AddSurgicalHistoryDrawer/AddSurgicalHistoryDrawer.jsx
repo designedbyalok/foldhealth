@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../../../../../components/Drawer/Drawer';
 import { Input } from '../../../../../../components/Input/Input';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { toast } from '../../../../../../components/Toast/sonnerToast';
 import { todayIso, toIsoDate, isFutureDate } from '../../../../../../lib/clinicalDates';
@@ -68,7 +68,7 @@ function SurgeryRow({ entry, others, onDateChange, onRemove }) {
 }
 
 /**
- * Add Surgical History — a Name / Performed Date table. Picking a procedure
+ * Add Surgical History: a Name / Performed Date table. Picking a procedure
  * from the search adds its row straight away; the date is then filled in on
  * the row. Procedures come from the NLM procedure list, so each row carries
  * its key.
@@ -120,7 +120,7 @@ export function AddSurgicalHistoryDrawer({ patientId, onClose }) {
           <CardSkeleton rows={3} />
         ) : surgeries.length === 0 ? (
           <div className={styles.emptyCard}>
-            <RingEmptyState icon="custom:scalpel" label="No Surgical History" iconSize={31} />
+            <EmptyState icon="custom:scalpel" title="No Surgical History" iconSize={31} />
           </div>
         ) : (
           <HistoryTable

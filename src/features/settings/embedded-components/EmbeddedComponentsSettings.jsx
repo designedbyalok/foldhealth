@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { Button } from '../../../components/Button/Button';
 import { SectionTitleBar } from '../../../components/SectionTitleBar/SectionTitleBar';
-import { ProductTour } from '../../../components/ProductTour/ProductTour';
+import { ProductTour } from '../../tours/ProductTour';
 import { DomainRegistryPanel } from './DomainRegistryPanel';
 import { ComponentLibraryPanel } from './ComponentLibraryPanel';
 import styles from './EmbeddedComponentsSettings.module.css';
@@ -35,8 +35,7 @@ export function EmbeddedComponentsSettings() {
         onSearchChange={setSearchVal}
         rightExtras={
           <Button
-            variant="secondary"
-            size="L"
+            variant="outline"
             leadingIcon="solar:add-circle-linear"
             data-tour="embed-register-btn"
             onClick={() => {

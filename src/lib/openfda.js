@@ -3,7 +3,7 @@
 // forms + strength when a user types a query. Notes:
 //
 //  • We hit `/drug/ndc.json` (the National Drug Code directory) because it
-//    carries the fields we want for the picker rows — brand_name,
+//    carries the fields we want for the picker rows, brand_name,
 //    generic_name, dosage_form, active_ingredients (with strength), route.
 //  • The API works anonymously (rate-limited to ~40 req/min per IP). When
 //    the caller sets `VITE_OPENFDA_API_KEY` in .env the request adds the
@@ -63,7 +63,7 @@ function titleCase(s) {
 /**
  * Search OpenFDA for medications matching `query`.
  *
- * @param {string} query               user-typed text (min 2 chars — caller enforces)
+ * @param {string} query               user-typed text (min 2 chars: caller enforces)
  * @param {object} [opts]
  * @param {AbortSignal} [opts.signal]  aborts the in-flight fetch when a newer
  *                                     keystroke supersedes this one
@@ -76,7 +76,7 @@ export async function searchMedications(query, { signal, limit = 15 } = {}) {
 
   // Wildcard prefix match against brand_name OR generic_name. Splitting words
   // across both fields catches "atorva" (generic) and "lipi" (brand) alike.
-  const term = q.split(/\s+/)[0]; // first word — good enough for typeahead
+  const term = q.split(/\s+/)[0]; // first word, good enough for typeahead
   const searchExpr = `(brand_name:${term}*+OR+generic_name:${term}*)`;
 
   const params = new URLSearchParams();
@@ -97,7 +97,7 @@ export async function searchMedications(query, { signal, limit = 15 } = {}) {
     return [];
   }
 
-  // 404 is OpenFDA's "no results" — every other non-2xx is a real error.
+  // 404 is OpenFDA's "no results", every other non-2xx is a real error.
   if (response.status === 404) return [];
   if (!response.ok) {
     console.warn('OpenFDA search returned', response.status);
@@ -107,7 +107,7 @@ export async function searchMedications(query, { signal, limit = 15 } = {}) {
   const body = await response.json().catch(() => null);
   if (!body?.results?.length) return [];
 
-  // Dedupe on displayName — the NDC directory has many rows per drug
+  // Dedupe on displayName: the NDC directory has many rows per drug
   // (different packagers) that collapse to the same picker row.
   const seen = new Set();
   const out = [];

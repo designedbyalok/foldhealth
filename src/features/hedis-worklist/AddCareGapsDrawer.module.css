@@ -70,42 +70,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.gapMeta { display: inline-flex; flex-shrink: 0; }
-
-.parent {
-  margin: 0 var(--space-3) 0.625rem 2.375rem;
-  padding: 0.625rem var(--space-3);
-  border: 0.5px solid var(--neutral-150);
-  border-radius: 8px;
-  background: var(--neutral-0);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-.parentHead {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: var(--font-sm);
-  font-weight: 500;
-  color: var(--neutral-400);
-}
-.parentGrid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--space-3);
-  margin: 0;
-}
-.parentItem { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
-.parentItem dt { font-size: var(--font-xs); color: var(--neutral-300); }
-.parentItem dd {
-  margin: 0;
-  font-size: var(--font-md);
-  color: var(--neutral-500);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+.gapMeta { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+/* Already open: listed for context, not selectable. */
+.gapRowOpen .gapMain { cursor: not-allowed; }
+.gapRowOpen .gapCode,
+.gapRowOpen .gapName { color: var(--neutral-300); }
 
 .empty {
   padding: var(--space-5) var(--space-3);
@@ -114,4 +83,133 @@
   color: var(--neutral-300);
   border: 0.5px dashed var(--neutral-200);
   border-radius: 8px;
+}
+
+/* A selected gap's own setup: history in the measure year, workflow, reason. */
+.gapConfig {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0 var(--space-3) 0.625rem 2.375rem;
+  padding: 0.625rem var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  background: var(--neutral-0);
+}
+.subLabel { font-size: var(--font-sm); font-weight: 500; color: var(--neutral-400); }
+.configRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  gap: var(--space-3);
+  align-items: start;
+}
+.history {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+}
+.history th {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 0.5px solid var(--neutral-150);
+  font-weight: 500;
+  text-align: left;
+  color: var(--neutral-300);
+  white-space: nowrap;
+}
+.history td { padding: var(--space-1) var(--space-2); white-space: nowrap; }
+
+/* Member field (header Add Gap): mirrors HCC's Add Manually member picker. */
+.memberSection {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.memberField {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.memberField > svg {
+  position: absolute;
+  right: var(--space-3);
+  pointer-events: none;
+}
+.memberSelected,
+.memberInput {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  font-size: var(--font-md);
+  color: var(--neutral-500);
+}
+.memberSelected {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0 2.125rem 0 0.625rem;
+  text-align: left;
+  cursor: pointer;
+}
+.memberSelected:hover { background: var(--neutral-50); }
+.memberInput {
+  padding: 0 2.125rem 0 0.875rem;
+  outline: none;
+}
+.memberInput::placeholder { color: var(--neutral-300); }
+.memberInput:focus {
+  border-color: var(--primary-200);
+  box-shadow: 0 0 0 2px var(--primary-50);
+}
+.memberName { font-weight: 500; color: var(--neutral-500); }
+.memberMeta { font-size: var(--font-sm); color: var(--neutral-300); }
+.memberPop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: var(--space-1);
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  box-shadow: var(--shadow-popover);
+}
+.memberEmpty {
+  padding: var(--space-3) 0.625rem;
+  font-size: var(--font-md);
+  color: var(--neutral-300);
+  text-align: center;
+}
+.memberOption {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 0.375rem var(--space-2);
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  font-size: var(--font-md);
+  color: var(--neutral-500);
+}
+.memberOption:hover { background: var(--neutral-50); }
+.memberOptionMeta {
+  margin-left: auto;
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+/* Billing note: full drawer width, no rounded corners. */
+.billingBar {
+  border-radius: 0;
+  border-bottom: 0.5px solid var(--neutral-150);
 }

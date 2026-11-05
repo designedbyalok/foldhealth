@@ -1,5 +1,5 @@
 /**
- * Custom imaging icon — the Imaging Reports section and its empty state. The
+ * Custom imaging icon: the Imaging Reports section and its empty state. The
  * design's own glyph, supplied directly; no Solar icon matches it.
  *
  * Unlike AllergyIcon and ScalpelIcon this one is a filled outline, not a

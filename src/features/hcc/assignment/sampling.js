@@ -2,7 +2,7 @@
 //
 // AC-4 (Reviewer → Reviewer 2) requires a 10% sample. This rate must be
 // **configurable per client** (story implementation note #3). There is no
-// further tier to sample into — "Reviewer 3" does not exist in this
+// further tier to sample into: "Reviewer 3" does not exist in this
 // workflow, so Reviewer 2 is always the last possible review stage.
 //
 // We pick "deterministic" sampling rather than `Math.random()` so that:
@@ -35,7 +35,7 @@ function fnv1a(str) {
   return h >>> 0;
 }
 
-// Public — returns true if the given (patient, dos, provider, pos) should be
+// Public: returns true if the given (patient, dos, provider, pos) should be
 // promoted to the next sample tier. Pass either `'reviewer2'` (uses default
 // rate) or a numeric rate to override.
 export function isSampled(patientId, dosDate, renderingProvider, pos, rateOrTier) {
@@ -44,11 +44,11 @@ export function isSampled(patientId, dosDate, renderingProvider, pos, rateOrTier
     : DEFAULT_SAMPLING_RATES[rateOrTier] ?? 0;
   if (!rate || rate <= 0) return false;
   if (rate >= 1) return true;
-  const bucket = fnv1a(`${patientId}::${dosDate}::${renderingProvider || '—'}::${pos || '—'}`) % 10_000;
+  const bucket = fnv1a(`${patientId}::${dosDate}::${renderingProvider || '-'}::${pos || '-'}`) % 10_000;
   return bucket < Math.round(rate * 10_000);
 }
 
-// Convenience wrapper — easier to read at the call site in lifecycle.js.
+// Convenience wrapper: easier to read at the call site in lifecycle.js.
 export function sampledForReviewer2(patientId, dosDate, renderingProvider, pos, rates = DEFAULT_SAMPLING_RATES) {
   return isSampled(patientId, dosDate, renderingProvider, pos, rates.reviewer2);
 }
@@ -57,13 +57,13 @@ export function sampledForReviewer2(patientId, dosDate, renderingProvider, pos, 
 //
 // The requirements doc's "minimum two reviews before ASM generation" rule
 // does not exist in this codebase yet, and must not be implemented without
-// a product decision from Nalu — it's mathematically incompatible with the
+// a product decision from Nalu: it's mathematically incompatible with the
 // current ~10% Reviewer→Reviewer2 sampling rate (the overwhelming majority
 // of DOS would only ever get ONE review, since Reviewer entry is 100% but
 // promotion to Reviewer 2 is sampled). This function is a dormant tripwire:
 // `config.minReviewsBeforeAsm` doesn't exist anywhere else in the app today
-// (always falsy), so this is a no-op call until someone wires that flag up
-// — at which point it stops a broken combination from shipping silently.
+// (always falsy), so this is a no-op call until someone wires that flag up,
+// at which point it stops a broken combination from shipping silently.
 export function validateAsmReadinessConfig(config = {}) {
   const minReviewsBeforeAsm = !!config.minReviewsBeforeAsm;
   if (!minReviewsBeforeAsm) return { ok: true };

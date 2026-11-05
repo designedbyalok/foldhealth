@@ -5,7 +5,7 @@ import { paddingCss, bgProps, BUTTON_SIZE_STYLES, BUTTON_PRESET_RADIUS, NO_IMAGE
 import { ResizeWrap } from './PreviewCanvasResize';
 
 /**
- * Renders one leaf block for the *builder canvas only* — the email that
+ * Renders one leaf block for the *builder canvas only*, the email that
  * actually gets sent is produced separately by renderEmailHtml(). Because
  * nothing here is navigable, link-shaped blocks (Button, Social, NavBar)
  * render as styled spans rather than anchors that swallow their own clicks;
@@ -34,7 +34,7 @@ export function renderLeafBlock(type, ctx, { id, props, style, block }) {
       <div
         style={{ ...imgStyle, display: 'inline-block', lineHeight: 0 }}
         // svgRaw is fetched from a remote URL (or uploaded), and SVG can carry
-        // <script>/on* handlers — sanitize after tinting, so the tint pass
+        // <script>/on* handlers: sanitize after tinting, so the tint pass
         // can't reintroduce anything the sanitizer would have stripped.
         dangerouslySetInnerHTML={{
           __html: sanitizeSvg(props.tintColor ? tintSvgMarkup(props.svgRaw, props.tintColor) : props.svgRaw),
@@ -78,7 +78,7 @@ export function renderLeafBlock(type, ctx, { id, props, style, block }) {
     const markerSize = Math.max(8, thickness * 4);
     const orientation = props.orientation || 'horizontal';
 
-    // Vertical dividers ignore the endpoint markers — they're a horizontal
+    // Vertical dividers ignore the endpoint markers, they're a horizontal
     // pattern. Render a thin tall bar with an explicit height (defaults to
     // 40px, mirrors patchEmailHtml.js).
     if (orientation === 'vertical') {

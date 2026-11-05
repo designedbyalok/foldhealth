@@ -40,7 +40,7 @@
 .dragHandle:hover .dragGrip,
 .popoverDragging .dragGrip { background: var(--neutral-200); }
 
-/* Mid-drag the popover follows the cursor 1:1 — no transition on transform,
+/* Mid-drag the popover follows the cursor 1:1, no transition on transform,
    and pointer events off inside so a drag can't paint into the SV square. */
 .popoverDragging { user-select: none; }
 .popoverDragging > *:not(.dragHandle) { pointer-events: none; }
@@ -114,7 +114,7 @@
   border-radius: 50%;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
   pointer-events: none;
-  /* Glides when the color arrives from elsewhere — a swatch, the hex field,
+  /* Glides when the color arrives from elsewhere, a swatch, the hex field,
      an RGB channel. Position tweening is dropped mid-drag below. */
   transition:
     left var(--duration-base) var(--ease-out),
@@ -122,7 +122,7 @@
     transform var(--duration-instant) var(--ease-out);
 }
 .svSquare:hover .svPointer { transform: scale(1.12); }
-/* Mid-drag the pointer must sit exactly under the cursor — any position
+/* Mid-drag the pointer must sit exactly under the cursor, any position
    tween reads as lag. Only the grab scale survives. */
 .svSquare.dragging .svPointer {
   transition: transform var(--duration-instant) var(--ease-out);
@@ -357,7 +357,7 @@
   color: var(--neutral-400);
   flex-shrink: 0;
 }
-/* Shared Slider (Radix) — the row owns its width, the component owns its look. */
+/* Shared Slider (Radix): the row owns its width, the component owns its look. */
 .angleSlider {
   flex: 1;
   min-width: 0;
@@ -473,7 +473,7 @@
   gap: 6px;
 }
 
-/* Reduced motion — fewer and gentler, not zero. Color and opacity fades
+/* Reduced motion: fewer and gentler, not zero. Color and opacity fades
    stay (they carry state); every position/scale move is dropped. */
 @media (prefers-reduced-motion: reduce) {
   .modeBody { animation: none; }

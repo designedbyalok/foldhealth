@@ -1,26 +1,26 @@
 ---
 title: "Patient Profile"
-description: "Two-pane patient detail view — left-hand tabs for clinical context, right-hand tabs for care coordination. Deep-linked, always live."
+description: "Two-pane patient detail view: left-hand tabs for clinical context, right-hand tabs for care coordination. Deep-linked, always live."
 ---
 
-The **Patient Profile** is the deep view of a single patient. It's split into two synchronized panes so a clinician can review clinical context on the left while managing care programs on the right — no tab-switching cost.
+The **Patient Profile** is the deep view of a single patient. It's split into two synchronized panes so a clinician can review clinical context on the left while managing care programs on the right, no tab-switching cost.
 
 Route pattern: `#/population/{worklist}/patient/{memberId}` (or `#/hedis/patient/{memberId}`).
 
 ## Opening a profile
 
-- **From any worklist row** — click the patient name; the Quick View drawer opens. Click **Open Profile** in the drawer header to expand into the full two-pane view.
-- **From Home** — Alerts & Monitoring card → click a patient.
-- **From Calls** — click a patient in the call history left panel.
-- **From a deep link** — every profile URL is shareable.
+- **From any worklist row**: click the patient name; the Quick View drawer opens. Click **Open Profile** in the drawer header to expand into the full two-pane view.
+- **From Home**: Alerts & Monitoring card → click a patient.
+- **From Calls**: click a patient in the call history left panel.
+- **From a deep link**: every profile URL is shareable.
 
 ## Layout
 
 <CardGroup cols={2}>
-  <Card title="Left pane — clinical context" icon="notes-medical">
+  <Card title="Left pane: clinical context" icon="notes-medical">
     **Overview** · **PAMI/Hx** · **Vitals & Labs** · **Care Gaps** · **Outreach** · **Comms** · **Tasks**
   </Card>
-  <Card title="Right pane — care coordination" icon="user-doctor">
+  <Card title="Right pane: care coordination" icon="user-doctor">
     **Overview** · **Care Programs** · **Care Management**
   </Card>
 </CardGroup>
@@ -35,7 +35,7 @@ The **P360 banner** spans both panes at the top: acuity/RAF chip, consent status
 | **PAMI/Hx** | Problem list, Allergies, Medications, Immunizations, and clinical History |
 | **Vitals & Labs** | Time-series vitals with sparklines, and a labs table with trend arrows |
 | **Care Gaps** | Every open HEDIS/HCC gap; click a row to open the closure workflow |
-| **Outreach** | Full outreach timeline — calls, messages, letters — filtered by direction and status |
+| **Outreach** | Full outreach timeline, calls, messages, letters, filtered by direction and status |
 | **Comms** | Chat threads with the patient (SMS, secure messaging, email replies) |
 | **Tasks** | Every task linked to this patient (create, edit, complete) |
 
@@ -44,17 +44,17 @@ The **P360 banner** spans both panes at the top: acuity/RAF chip, consent status
 | Tab | What's in it |
 | --- | --- |
 | **Overview** | Program-level summary: which programs, current status, next steps |
-| **Care Programs** | The editable **Care Programs table** — Status dropdown (Engaged / Declined / Unable to Reach / Enrolled / Attempted), Assignee picker, three-dot row menu (Assign / Print Summary / Close Program), and a pie-fill completion ring per program |
+| **Care Programs** | The editable **Care Programs table**, Status dropdown (Engaged / Declined / Unable to Reach / Enrolled / Attempted), Assignee picker, three-dot row menu (Assign / Print Summary / Close Program), and a pie-fill completion ring per program |
 | **Care Management** | Care plan authoring, goals, and interdisciplinary team notes |
 
-## Walkthrough — patient prep before a call
+## Walkthrough: patient prep before a call
 
 <Steps>
   <Step title="Open the profile">
     From the worklist row, open Quick View → **Open Profile**.
   </Step>
   <Step title="Scan the banner">
-    RAF, consent, chronic conditions, next appointment — all at the top. Expand for full detail (appointments column, care team card).
+    RAF, consent, chronic conditions, next appointment, all at the top. Expand for full detail (appointments column, care team card).
   </Step>
   <Step title="Read PAMI/Hx and Vitals">
     Left pane → **PAMI/Hx** for the problem list and med list. Switch to **Vitals & Labs** for recent BP, HbA1c, weight sparklines.
@@ -66,11 +66,11 @@ The **P360 banner** spans both panes at the top: acuity/RAF chip, consent status
     Right pane → **Care Programs**. Which programs is the patient on? Any past enrollments closed? What's next in the current program's step list?
   </Step>
   <Step title="Place the call">
-    From the banner header, click **Call**. The call opens with everything you just read still on screen — no context loss.
+    From the banner header, click **Call**. The call opens with everything you just read still on screen, no context loss.
   </Step>
 </Steps>
 
-## Walkthrough — enroll a patient in a Care Program
+## Walkthrough: enroll a patient in a Care Program
 
 <Steps>
   <Step title="Right pane → Care Programs">
@@ -80,7 +80,7 @@ The **P360 banner** spans both panes at the top: acuity/RAF chip, consent status
     In the Status column, pick **Enrolled** from the dropdown. Enrolling stamps the **Start Date** with today automatically.
   </Step>
   <Step title="Assign a care manager">
-    Click the **Assignee** cell — a searchable picker (`RoleAssigneePicker`) opens. Pick a user.
+    Click the **Assignee** cell: a searchable picker (`RoleAssigneePicker`) opens. Pick a user.
   </Step>
   <Step title="Track progress">
     The **Completion ring** (pie fill) shows how many program steps have been completed. Click into the row → **Steps** to check off individual milestones.
@@ -94,13 +94,13 @@ The **P360 banner** spans both panes at the top: acuity/RAF chip, consent status
 
 Every tab, subtab, and drawer serializes into the URL:
 
-- `#/population/toc/patient/M12345` — TOC context, member M12345, default tab
-- `#/population/tcm/patient/M12345` — TCM context, member M12345, default tab
-- `#/population/toc/patient/M12345/care-gaps` — jump straight to the Care Gaps tab
-- `#/hedis/patient/M12345` — same member from the HEDIS context (preserves back-nav to HEDIS)
+- `#/population/toc/patient/M12345`, TOC context, member M12345, default tab
+- `#/population/tcm/patient/M12345`, TCM context, member M12345, default tab
+- `#/population/toc/patient/M12345/care-gaps`, jump straight to the Care Gaps tab
+- `#/hedis/patient/M12345`, same member from the HEDIS context (preserves back-nav to HEDIS)
 
 ## Tips
 
 - **The banner adapts.** P360 data is seeded for every member; hand-crafted rows survive the re-seed script (see `scripts/seed_p360_banner.js`).
 - **Tabs remember scroll.** Switching tabs preserves scroll positions per-tab so long tables don't reset.
-- **Care Programs row menu.** Hover a row to reveal the ⋯ menu — Assign / Print Summary / Close Program.
+- **Care Programs row menu.** Hover a row to reveal the ⋯ menu, Assign / Print Summary / Close Program.

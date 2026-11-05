@@ -4,7 +4,7 @@ import { IcdRow } from './IcdRow';
 import styles from './HccGroupRow.module.css';
 
 // Static map of HCCs that have known override counts. Ported from the
-// prototype's HCC_OVERRIDES (line 1251) — currently only HCC 18 has data.
+// prototype's HCC_OVERRIDES (line 1251): currently only HCC 18 has data.
 const HCC_OVERRIDES = {
   'HCC 18 - Diabetes w/ Complications': 2,
 };
@@ -12,15 +12,15 @@ const HCC_OVERRIDES = {
 const DEFAULT_PROVIDER = 'Robert Langdon';
 
 /**
- * HccGroupRow — collapsible card grouping one HCC's worth of ICDs.
+ * HccGroupRow: collapsible card grouping one HCC's worth of ICDs.
  *
  * Header layout (single line): HCC title (flex-1) · Overrides chip (if any) ·
  * RAF chip · Status pill (Open/Closed) · chevron.
  *
  * Body splits into two sections:
- *   1. "ICD Associated with DOS" — regular ICDs (and AI-suggested ones that
+ *   1. "ICD Associated with DOS", regular ICDs (and AI-suggested ones that
  *      have been Accepted).
- *   2. "ICD Not Associated with DOS" — AI suggestions still pending
+ *   2. "ICD Not Associated with DOS", AI suggestions still pending
  *      acceptance, plus genuinely unlinked ICDs. Marked with a small
  *      "Unity Suggested" tag.
  *
@@ -30,7 +30,7 @@ const DEFAULT_PROVIDER = 'Robert Langdon';
  *  - unlinked  (icd[])      AI-suggested or genuinely unlinked ICDs.
  *  - defaultOpen (boolean)  Initial collapsed/expanded state.
  *
- * Back-compat: the legacy `icds` + `rafImpact` props are still accepted —
+ * Back-compat: the legacy `icds` + `rafImpact` props are still accepted,
  * `icds` flows through as `assoc` so older call-sites keep rendering until
  * they migrate.
  */
@@ -39,7 +39,7 @@ export function HccCard({
   assoc,
   unlinked,
   icds,            // legacy
-  rafImpact,       // legacy — ignored if we can compute it from assoc
+  rafImpact,       // legacy, ignored if we can compute it from assoc
   defaultOpen = true,
 }) {
   const associated = assoc ?? icds ?? [];
@@ -52,7 +52,7 @@ export function HccCard({
     allICDs.length > 0 && allICDs.every(i => ['Accepted', 'Dismissed'].includes(i.status));
   const stateLabel = allResolved ? 'Closed' : 'Open';
 
-  // RAF sum — prefer accepted-only when there's at least one, otherwise sum
+  // RAF sum: prefer accepted-only when there's at least one, otherwise sum
   // every associated row so the chip has *something* to show before any
   // accept actions have been taken.
   const acceptedSum = associated
@@ -105,7 +105,7 @@ export function HccCard({
         />
       </button>
 
-      {/* Provider strip removed — assignee is shown at the DOS-row level in
+      {/* Provider strip removed: assignee is shown at the DOS-row level in
           DiagPanel header, not duplicated on every HCC group. */}
 
       {open && (
@@ -139,7 +139,7 @@ export function HccCard({
             </>
           )}
 
-          {/* Empty state (rare — both arrays empty) */}
+          {/* Empty state (rare: both arrays empty) */}
           {associated.length === 0 && notAssociated.length === 0 && (
             <div className={styles.empty}>No ICDs in this group.</div>
           )}

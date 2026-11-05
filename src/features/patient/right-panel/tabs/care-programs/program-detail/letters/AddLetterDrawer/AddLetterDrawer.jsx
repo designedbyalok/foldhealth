@@ -3,10 +3,10 @@ import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Avatar } from '../../../../../../../../components/Avatar/Avatar';
 import { Button } from '../../../../../../../../components/Button/Button';
-import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../../../components/SegmentedControl/SegmentedControl';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { WorklistShell } from '../../../../../../../../components/WorklistShell/WorklistShell';
 import styles from './AddLetterDrawer.module.css';
 
@@ -40,13 +40,13 @@ function LetterThumb() {
 }
 
 /**
- * Add Letter drawer — browse the letters library and add templates to the
+ * Add Letter drawer: browse the letters library and add templates to the
  * program. Figma 2334-319071. Built on the shared Drawer.
  */
 const AddButton = ({ letter, added, onAdd }) => (
   added
-    ? <Button variant="tertiary" size="S" className={styles.addBtn} disabled>Added</Button>
-    : <Button variant="tertiary" size="S" className={styles.addBtn} onClick={() => onAdd(letter)}>Add</Button>
+    ? <Button variant="soft" size="sm" className={styles.addBtn} disabled>Added</Button>
+    : <Button variant="soft" size="sm" className={styles.addBtn} onClick={() => onAdd(letter)}>Add</Button>
 );
 
 export function AddLetterDrawer({ letters = EMPTY_LETTERS, addedIds, onAdd, onPreview, onDownload, onClose }) {
@@ -88,7 +88,7 @@ export function AddLetterDrawer({ letters = EMPTY_LETTERS, addedIds, onAdd, onPr
         <FilterChip label="Type" options={typeOptions} selected={typeSel} onChange={setTypeSel} />
         <FilterChip label="Category" options={catOptions} selected={catSel} onChange={setCatSel} />
         <span className={styles.toolbarDivider} />
-        <Toggle items={VIEW_ITEMS} active={view} onChange={setView} size="S" />
+        <SegmentedControl items={VIEW_ITEMS} value={view} onValueChange={setView} size="sm" />
         <span className={styles.toolbarDivider} />
         <div className={styles.searchBox}>
           <Icon name="solar:magnifer-linear" size={16} color="var(--neutral-200)" />
@@ -124,14 +124,14 @@ export function AddLetterDrawer({ letters = EMPTY_LETTERS, addedIds, onAdd, onPr
                   </span>
                 </span>
               </td>
-              <td className={styles.dateCol}>{l.lastSent || '—'}</td>
+              <td className={styles.dateCol}>{l.lastSent || '-'}</td>
               <td className={styles.actionsCol}>
                 <span className={styles.actions}>
                   <AddButton letter={l} added={isAdded(l.id)} onAdd={onAdd} />
                   <span className={styles.actionDivider} />
-                  <ActionButton icon="solar:eye-linear" size="S" tooltip="Preview" onClick={() => onPreview(l)} />
+                  <ActionButton icon="solar:eye-linear" size="sm" tooltip="Preview" onClick={() => onPreview(l)} />
                   <span className={styles.actionDivider} />
-                  <ActionButton icon="solar:download-minimalistic-linear" size="S" tooltip="Download" onClick={() => onDownload(l)} />
+                  <ActionButton icon="solar:download-minimalistic-linear" size="sm" tooltip="Download" onClick={() => onDownload(l)} />
                 </span>
               </td>
             </tr>
@@ -155,10 +155,10 @@ export function AddLetterDrawer({ letters = EMPTY_LETTERS, addedIds, onAdd, onPr
                   </div>
                 )}
                 <div className={styles.previewOverlay}>
-                  <Button variant="secondary" size="M" onClick={() => onPreview(l)}>Preview</Button>
+                  <Button variant="outline" onClick={() => onPreview(l)}>Preview</Button>
                   {isAdded(l.id)
-                    ? <Button variant="primary" size="M" disabled>Added</Button>
-                    : <Button variant="primary" size="M" onClick={() => onAdd(l)}>Add File</Button>}
+                    ? <Button disabled>Added</Button>
+                    : <Button onClick={() => onAdd(l)}>Add File</Button>}
                 </div>
               </div>
               <div className={styles.cardFooter}>

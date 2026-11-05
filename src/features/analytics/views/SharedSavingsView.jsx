@@ -27,14 +27,14 @@ const SAVINGS_METADATA = [
   { label: 'Quality Withhold', value: '$320K' },
 ];
 const QUAL_COMPOSITE_FALLBACK = [
-  { label: 'AWV / Care Coordination', value: '61% / target 80%', pct: 61, color: 'amber', sub: 'Pulling composite down — 847 open AWVs' },
+  { label: 'AWV / Care Coordination', value: '61% / target 80%', pct: 61, color: 'amber', sub: 'Pulling composite down: 847 open AWVs' },
   { label: 'Diabetes HbA1c Control', value: '72% / target 70%', pct: 72, color: 'teal', sub: '✓ On target' },
-  { label: 'BP Control', value: '64% / target 70%', pct: 64, color: 'purple', sub: '6pp gap — 504 members' },
-  { label: 'Colorectal Screening', value: '58% / target 65%', pct: 58, color: 'red', sub: '7pp gap — 588 members' },
+  { label: 'BP Control', value: '64% / target 70%', pct: 64, color: 'purple', sub: '6pp gap: 504 members' },
+  { label: 'Colorectal Screening', value: '58% / target 65%', pct: 58, color: 'red', sub: '7pp gap: 588 members' },
   { label: 'Depression Screening PHQ-9', value: '83% / target 80%', pct: 83, color: 'green', sub: '✓ Above target' },
-  { label: 'Statin Therapy — Diabetes', value: '71% / target 75%', pct: 71, color: 'amber', sub: '4pp gap — 336 members' },
+  { label: 'Statin Therapy, Diabetes', value: '71% / target 75%', pct: 71, color: 'amber', sub: '4pp gap, 336 members' },
   { label: 'Patient Experience CAHPS', value: '4.3 / 5.0', pct: 86, color: 'green', sub: '✓ Strong' },
-  { label: 'Preventive Screening', value: '63% / target 70%', pct: 63, color: 'amber', sub: '7pp gap — colorectal gap' },
+  { label: 'Preventive Screening', value: '63% / target 70%', pct: 63, color: 'amber', sub: '7pp gap: colorectal gap' },
 ];
 
 function renderSharedSavingsTrajectory() {
@@ -98,7 +98,7 @@ export function SharedSavingsView({ showToast, editing = false, resetTick = 0 })
   };
 
   const renderLevers = () => (
-    <Card title="Key Savings Levers — Current Status">
+    <Card title="Key Savings Levers: Current Status">
       {leverRows.length > 0 ? (
         <div className={s.tblWrap}>
           <table className={s.tbl}>
@@ -128,21 +128,21 @@ export function SharedSavingsView({ showToast, editing = false, resetTick = 0 })
         </div>
       ) : (
         <>
-          <ProgressBar label="IP Admissions / 1000" value="287 vs 265 benchmark" pct={65} color="amber" sub="$23 PMPM over — top savings opportunity" />
-          <ProgressBar label="30-Day Readmission Rate" value="18.4% vs 15% threshold" pct={55} color="red" sub="3.4pp over — $840K projected cost" />
+          <ProgressBar label="IP Admissions / 1000" value="287 vs 265 benchmark" pct={65} color="amber" sub="$23 PMPM over: top savings opportunity" />
+          <ProgressBar label="30-Day Readmission Rate" value="18.4% vs 15% threshold" pct={55} color="red" sub="3.4pp over, $840K projected cost" />
           <ProgressBar label="RAF Recapture Gap" value="0.078 RAF pts · $2.1M revenue" pct={42} color="red" sub="Open HCC suspects unaddressed" />
           <ProgressBar label="Quality Composite" value="4.1 / 5.0 · above share threshold" pct={82} color="green" sub="100% quality withhold share secured" />
           <ProgressBar label="Pharmacy PMPM Growth" value="+18% QoQ · GLP-1 driving" pct={58} color="amber" sub="Risk to TCOC if not managed" />
         </>
       )}
-      <Button variant="primary" size="S" fullWidth style={{ marginTop: 10 }} onClick={() => showToast?.('Opening ROI Simulator')}>
+      <Button size="sm" fullWidth style={{ marginTop: 10 }} onClick={() => showToast?.('Opening ROI Simulator')}>
         &#9654; Run Scenario Simulator &rarr;
       </Button>
     </Card>
   );
 
   const renderComposite = () => (
-    <Card title="Quality Composite Breakdown" actions={<Button variant="ghost" size="S" onClick={() => showToast?.('Opening full Quality view')}>Full Quality View &rarr;</Button>}>
+    <Card title="Quality Composite Breakdown" actions={<Button variant="ghost" size="sm" onClick={() => showToast?.('Opening full Quality view')}>Full Quality View &rarr;</Button>}>
       <div className={s.g2}>
         <div>
           {qualFallback.slice(0, 4).map(b => (

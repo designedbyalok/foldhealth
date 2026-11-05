@@ -347,7 +347,7 @@
 }
 
 /* Divider between adjacent ActionButton icons inside a cluster. 1 x 16,
-   --neutral-150 — the same spec the drawer-header divider rule uses so
+   --neutral-150: the same spec the drawer-header divider rule uses so
    action-button separation reads identically across the app. */
 .trayDivider {
   display: inline-block;
@@ -520,7 +520,7 @@
 /* Below ~640 px of composer width, the meta row stacks into a column
    so the chip rail never clips, and the separate-notes switch slides
    under the chips rather than pushing them off the right edge. The
-   tray stays one row — flex-wrap on it handles minor overflow by
+   tray stays one row: flex-wrap on it handles minor overflow by
    dropping the save cluster onto a second line naturally. */
 @container (max-width: 640px) {
   .metaSep { display: none; }

@@ -11,6 +11,7 @@ import { TypeDropdown, FieldDropdown } from '../OutreachTab/OutreachTabDropdowns
 import { OutreachProgramChip } from './OutreachProgramChip';
 import { LOG_FOR_OPTIONS } from '../OutreachTab/OutreachTab.utils';
 import { RadioButton } from '../../../../../../components/RadioButton/RadioButton';
+import { Banner } from '../../../../../../components/Banner/Banner';
 import styles from './OutreachComposer.module.css';
 
 const RELATIVE_TIME_LABEL = (iso) => {
@@ -25,7 +26,7 @@ const RELATIVE_TIME_LABEL = (iso) => {
 };
 
 /**
- * OutreachComposer — chat-style replacement for the old OutreachTabForm.
+ * OutreachComposer: chat-style replacement for the old OutreachTabForm.
  *
  * Collapses the previous form (Log For radio + Type + Datetime + Call
  * Details block + Programs multi-select + Outreach Outcome radio +
@@ -45,11 +46,13 @@ const RELATIVE_TIME_LABEL = (iso) => {
  * drawer) keep working without changes.
  */
 export function OutreachComposer({
+  defaultExpanded = false,
   hideLogForRow,
   scopedProgram,
   logFor,
   isHccGaps,
   type, setType,
+  contactWarning,
   datetime, setDatetime,
   showCallDetails,
   callBannerVisible, setCallBannerVisible,
@@ -86,11 +89,12 @@ export function OutreachComposer({
   // The composer starts in a quiet one-row idle state: scoped chip,
   // placeholder note, Save hint. Any click or focus inside expands it
   // into the full meta row + tray. Once there's a note or an outcome
-  // on a chip, the expand sticks — collapsing on blur would hide the
+  // on a chip, the expand sticks, collapsing on blur would hide the
   // work the user just did.
   const hasContent = (sharedPanel.note || '').trim().length > 0
     || selectedProgs.some(p => (getPanel(p)?.outcomes || []).length > 0);
-  const [expanded, setExpanded] = useState(false);
+  // Opened on purpose (Log New Outreach), it starts in the full form.
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const [moreOpen, setMoreOpen] = useState(false);
   const [savedBeat, setSavedBeat] = useState(false);
   const [showDatetime, setShowDatetime] = useState(false);
@@ -204,6 +208,12 @@ export function OutreachComposer({
         </div>
       )}
 
+      {expanded && contactWarning && (
+        <Banner tone="warning" icon="solar:danger-triangle-linear" size="sm">
+          {contactWarning}. Log this only if the patient reached out.
+        </Banner>
+      )}
+
       {/* ── Meta row (expanded only): Type · logged-at · chips · Separate notes ── */}
       {expanded && (
         <div className={styles.metaRow}>
@@ -257,8 +267,7 @@ export function OutreachComposer({
       {!expanded && (
         <div className={styles.idleCard}>
           <Button
-            variant="alt"
-            size="L"
+            variant="outline" tone="primary"
             leadingIconElement={<OutreachIcon size={16} color="var(--primary-300)" />}
             onClick={() => setExpanded(true)}
           >
@@ -271,7 +280,7 @@ export function OutreachComposer({
       {showDatetime && expanded && (
         <div className={styles.datetimeRow}>
           <DateTimePicker value={datetime} onChange={setDatetime} />
-          <Button variant="ghost" size="S" onClick={() => setShowDatetime(false)}>Done</Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowDatetime(false)}>Done</Button>
         </div>
       )}
 
@@ -413,7 +422,7 @@ export function OutreachComposer({
       {/* ── Action tray + Save / Discard (expanded only) ──
          * One row at every reasonable composer width. Grouped action
          * clusters are set apart by the shared Fold divider rule (1 px
-         * tall, --neutral-150) — per the house convention noted in
+         * tall, --neutral-150), per the house convention noted in
          * CLAUDE.md: "always place a divider between distinct groups
          * of action buttons." */}
       {!hideFooter && expanded && (
@@ -421,7 +430,7 @@ export function OutreachComposer({
           <div className={styles.trayLeft}>
             <ActionButton
               icon="solar:checklist-minimalistic-linear"
-              size="S"
+              size="sm"
               tooltip="Add Task"
               iconColor="var(--neutral-300)"
               onClick={onAddTask}
@@ -429,7 +438,7 @@ export function OutreachComposer({
             <span className={styles.trayDivider} aria-hidden />
             <ActionButton
               icon="solar:calendar-add-linear"
-              size="S"
+              size="sm"
               tooltip="Schedule Appointment"
               iconColor="var(--neutral-300)"
               onClick={onSchedule}
@@ -437,7 +446,7 @@ export function OutreachComposer({
             <span className={styles.trayDivider} aria-hidden />
             <ActionButton
               icon="solar:alarm-linear"
-              size="S"
+              size="sm"
               tooltip="Set Reminder"
               iconColor="var(--neutral-300)"
             />
@@ -500,11 +509,10 @@ export function OutreachComposer({
               <Icon name="solar:check-circle-bold" size={12} color="currentColor" />
               Saved
             </span>
-            <Button variant="ghost" size="S" onClick={handleDiscard}>Discard</Button>
+            <Button variant="ghost" size="sm" onClick={handleDiscard}>Discard</Button>
             <span className={styles.trayGroupDivider} aria-hidden />
             <Button
-              variant="primary"
-              size="S"
+              size="sm"
               trailingIconElement={<span className={styles.kbdHint}>⌘⏎</span>}
               disabled={!canSave}
               onClick={onSaveClick}

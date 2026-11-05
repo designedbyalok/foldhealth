@@ -1,6 +1,6 @@
 {
   "primary": {
-    "500": { "$value": "#2A0519", "$type": "color", "$description": "Deepest plum — sidebar chrome." },
+    "500": { "$value": "#2A0519", "$type": "color", "$description": "Deepest plum: sidebar chrome." },
     "400": { "$value": "#4A0A30", "$type": "color" },
     "300": { "$value": "#6C0C46", "$type": "color", "$description": "Main Astrana plum." },
     "200": { "$value": "#C48FA9", "$type": "color" },

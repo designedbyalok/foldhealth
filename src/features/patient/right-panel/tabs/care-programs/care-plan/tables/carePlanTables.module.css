@@ -1,4 +1,4 @@
-/* Care-plan GBI tables — WorklistShell rows styled to Figma SNP-Story 8444:300069. */
+/* Care-plan GBI tables: WorklistShell rows styled to Figma SNP-Story 8444:300069. */
 
 .tableWrap {
   border: 0.5px solid var(--neutral-150);
@@ -74,6 +74,11 @@
 .row .priorityTd {
   padding: calc(var(--space-1) + var(--space-1) / 2) calc(var(--space-1) / 2);
 }
+/* A read-only priority is a bare block-level icon, which text-align can't
+   centre; centre it under the "P" like the button version. */
+.priorityTd > svg {
+  margin-inline: auto;
+}
 .titleTd {
   composes: membersTd from '../../../../../../../components/WorklistShell/WorklistRow.module.css';
   min-width: 0;
@@ -104,7 +109,7 @@
   max-width: var(--gbi-col-progress);
   text-align: left;
   vertical-align: middle;
-  /* Progress + Adherence read-only — cancel the row's pointer cursor
+  /* Progress + Adherence read-only: cancel the row's pointer cursor
      so the affordance only shows on truly interactive cells (Title,
      Target/Due date, Assigned To, Status, Actions). */
   cursor: default;
@@ -119,7 +124,7 @@
   max-width: var(--gbi-col-value);
   vertical-align: middle;
 }
-/* Goals table date columns — Start + Target. Width is set by the
+/* Goals table date columns: Start + Target. Width is set by the
    column definitions (GBI_COL_DATE_WIDTH for Start, GBI_COL_WIDTH.assignee
    for Target) so they line up column-for-column with the intervention
    table's Due Date + Assigned To slots. This cell only owns padding +
@@ -133,10 +138,17 @@
 }
 .statusTd,
 .barrierStatusTd {
-  width: 116px;
-  min-width: 116px;
-  max-width: 116px;
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
   vertical-align: middle;
+}
+/* The composed WorklistShell `.td` pads 12px a side, which pushed the badge
+   off the Status title and over Actions. Match the header's 6px instead. */
+.statusTd.statusTd,
+.barrierStatusTd.barrierStatusTd {
+  padding-left: calc(var(--space-1) + var(--space-1) / 2);
+  padding-right: calc(var(--space-1) + var(--space-1) / 2);
 }
 .actionsTd {
   composes: td from '../../../../../../../components/WorklistShell/WorklistRow.module.css';
@@ -155,7 +167,7 @@
   text-align: center;
 }
 
-/* Barriers table — shares GBI row + name cell patterns */
+/* Barriers table: shares GBI row + name cell patterns */
 .barrierStatusTd {
   composes: td from '../../../../../../../components/WorklistShell/WorklistRow.module.css';
   border-left: none;
@@ -214,16 +226,23 @@
 .nameCellStacked {
   align-items: center;
 }
-/* Rows with a second line (due date, assignee, target): the priority and
-   type icons sit on the title line, not between the two lines. The title
-   cell starts at the top too, so the priority's offset can be fixed. */
-.row:has(.nameCellStacked) .titleTd,
-.row:has(.nameCellStacked) .priorityTd {
+/* Rows with a second line (due date, assignee, target, description): the
+   priority and type icons sit on the title line, not between the two lines.
+   The title cell starts at the top too, so the priority's offset can be
+   fixed. Single-line rows keep both cells centred, so the icons line up
+   whatever else the title cell holds. */
+.row:has(.nameTextStacked > :nth-child(2)) .titleTd,
+.row:has(.nameTextStacked > :nth-child(2)) .priorityTd {
   vertical-align: top;
 }
-.row:has(.nameCellStacked) .priorityTd {
+.row:has(.nameTextStacked > :nth-child(2)) .priorityTd {
   /* The 24px button centred on the title's 16px line. */
   padding-top: var(--space-1);
+}
+/* A read-only priority is the bare 16px icon (templates): it lines up with
+   the title's type icon instead. */
+.row:has(.nameTextStacked > :nth-child(2)) .priorityTd:not(:has(button)) {
+  padding-top: var(--space-2);
 }
 .nameCellStacked:has(.nameTextStacked > :nth-child(2)) {
   align-items: flex-start;
@@ -297,14 +316,14 @@
   width: 16px;
   height: 16px;
 }
-/* Intervention title's subline — start date + duration. 12px in the
+/* Intervention title's subline: start date + duration. 12px in the
    grey200 hint color per spec (overrides the shared .nameSecondary
    default neutral-300 without leaking to Goals/Barriers). */
 .intvSubMeta {
   font-size: var(--font-sm);
   color: var(--neutral-200);
 }
-/* Due Date column — plain read-only text. Aligns to the left with
+/* Due Date column: plain read-only text. Aligns to the left with
    the Due Date header, uses the same 14px / neutral-300 hint tone
    that every other read-only date cell in the app reads in. */
 .dueDateText {
@@ -313,18 +332,18 @@
   font-size: var(--font-sm);
   font-variant-numeric: tabular-nums;
   /* Read-only date (Start Date, and any date cell without an editable
-     button) — cancel the row's pointer cursor so hovering doesn't
+     button): cancel the row's pointer cursor so hovering doesn't
      promise a click that isn't wired. */
   cursor: default;
 }
-/* Due Date cell wrapper — pairs the date label with the recurring
+/* Due Date cell wrapper: pairs the date label with the recurring
    glyph so cadence reads inline with the schedule. */
 .dueDateCell {
   display: inline-flex;
   align-items: center;
   gap: calc(var(--space-1) / 2);
 }
-/* Editable date cell — inherits the read-only date's tone so the
+/* Editable date cell: inherits the read-only date's tone so the
    column reads calm at rest and lights up primary on hover to
    telegraph the click affordance. */
 .dateBtn {
@@ -458,7 +477,7 @@
   color: var(--neutral-300);
 }
 
-/* Intervention table — shares GBI row + name cell patterns */
+/* Intervention table: shares GBI row + name cell patterns */
 .intvNameHeader {
   display: inline-flex;
   align-items: center;
@@ -510,7 +529,7 @@
 .metaDateOverdue {
   color: var(--status-error);
 }
-/* Editable date — same hover target as the status / priority buttons. */
+/* Editable date: same hover target as the status / priority buttons. */
 .metaDateBtn {
   padding: 0 var(--space-1);
   margin: 0 calc(-1 * var(--space-1));
@@ -545,13 +564,14 @@
   white-space: nowrap;
 }
 
-/* Fixed Actions cell: Linked items | Notes | More. */
+/* Fixed Actions cell: Linked items | Notes | More, starting under the
+   Actions title (the header pads 6px). */
 .actionsTd.actionsWide {
   width: auto;
   min-width: 0;
   max-width: none;
-  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-2);
-  text-align: right;
+  padding: calc(var(--space-1) + var(--space-1) / 2);
+  text-align: left;
 }
 .rowActions {
   display: inline-flex;
@@ -565,7 +585,7 @@
   flex-shrink: 0;
 }
 
-/* Completed group toggle — sits inside the table body as a full-width row. */
+/* Completed group toggle: sits inside the table body as a full-width row. */
 .completedToggleRow {
   border-top: 0.5px solid var(--neutral-100);
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { AddIconMinimalist } from '../../../../../../../components/Icon/AddIconMinimalist';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
@@ -15,7 +15,7 @@ import { CarePlanHeader } from '../../care-plan/CarePlanHeader/CarePlanHeader';
 import { EMPTY_TASK_FILTERS } from './ProgramDetailView.utils';
 import styles from './ProgramDetailView.module.css';
 
-// Sign dropdown actions — Figma SNP-Story 3039:621576. "Send for Sign Off"
+// Sign dropdown actions: Figma SNP-Story 3039:621576. "Send for Sign Off"
 // carries the right-chevron submenu affordance from the design; its submenu
 // isn't specced yet, so selecting it currently has no handler.
 const EMPTY_CHECKS = {};
@@ -67,17 +67,22 @@ export function ProgramDetailViewContentHeader({
       ? <Link variant="secondary" onClick={() => onMarkStep?.(null)}>Undo Skip</Link>
       : !reviewed && <Link variant="secondary" onClick={() => onMarkStep?.('skipped')}>Skip</Link>
   );
-  const reviewedButton = (size = 'L') => (
+  const reviewedButton = (size = 'md') => (
     <Button
-      variant={reviewed ? 'success' : 'tertiary'}
+      variant={reviewed ? 'soft' : 'outline'} tone={reviewed ? 'success' : 'primary'}
       size={size}
       leadingIcon="solar:check-circle-linear"
       disabled={lockedByRecords}
       onClick={() => onMarkStep?.(reviewed ? null : 'completed')}
     >
-      {reviewed ? 'Reviewed' : 'Mark as Reviewed'}
+      Reviewed
     </Button>
   );
+  // A divider between each action shown; hidden ones (Skip on a mandatory
+  // step, no assignee picker) don't leave two dividers side by side.
+  const withDividers = (...actions) => actions.filter(Boolean).flatMap((a, i) => (
+    i === 0 ? [<Fragment key={i}>{a}</Fragment>] : [<span key={`d${i}`} className={styles.headerDivider} />, <Fragment key={i}>{a}</Fragment>]
+  ));
   const [signOffOpen, setSignOffOpen] = useState(false);
   const patient = useAppStore(s => s.patients.find(p => p.id === s.selectedPatientId));
   const currentUserProfile = useAppStore(s => s.currentUserProfile);
@@ -117,7 +122,7 @@ export function ProgramDetailViewContentHeader({
       : 'Could not create the sign-off task');
   };
 
-  // Signing is gated on the mandatory Medication Checklist — every box has to
+  // Signing is gated on the mandatory Medication Checklist, every box has to
   // be ticked before Sign / Send for Sign Off is available.
   const medReconChecks = useAppStore(s => s.medReconChecks[s.selectedPatientId]) || EMPTY_CHECKS;
   const medReconChecklistDone = MED_RECON_MOCK.checklist.every(c => medReconChecks[c.id]);
@@ -131,7 +136,7 @@ export function ProgramDetailViewContentHeader({
   // what lands in the parenthetical role.
   const signMedRecon = (role) => {
     const name = currentUserProfile?.name;
-    if (!name) { showToast?.('Could not sign — no signed-in user'); return; }
+    if (!name) { showToast?.('Could not sign: no signed-in user'); return; }
     onSignMedRecon?.(name, role);
     showToast?.('Medication reconciliation signed');
   };
@@ -157,9 +162,11 @@ export function ProgramDetailViewContentHeader({
           <div className={styles.assessmentHeader}>
             <div className={styles.assessmentHeaderText}>
               <span className={styles.assessmentTitle}>{assessmentCfg.title}</span>
-              <span className={styles.assessmentMeta}>
-                Filled by {assessmentCfg.filledBy} on {assessmentCfg.filledDate} • Reviewed by {assessmentCfg.reviewedBy} on {assessmentCfg.reviewedDate}
-              </span>
+              {assessmentCfg.filledBy && (
+                <span className={styles.assessmentMeta}>
+                  Filled by {assessmentCfg.filledBy} on {assessmentCfg.filledDate} • Reviewed by {assessmentCfg.reviewedBy} on {assessmentCfg.reviewedDate}
+                </span>
+              )}
             </div>
           </div>
         ) : isMedReconStep ? (
@@ -197,21 +204,16 @@ export function ProgramDetailViewContentHeader({
         <div className={styles.contentActions}>
           {isMedReconStep ? (
             <>
-              {assigneePicker}
-              <span className={styles.headerDivider} />
-              {skipLink}
-              <span className={styles.headerDivider} />
-              {medReconSignature ? (
-                <Button variant="tertiary" size="L" leadingIcon="solar:check-circle-linear">Reviewed</Button>
+              {withDividers(assigneePicker, skipLink, medReconSignature ? (
+                <Button variant="soft" tone="success" leadingIcon="solar:check-circle-linear">Reviewed</Button>
               ) : (
                 <Button
-                  variant="alt"
-                  size="L"
+                  variant="outline" tone="primary"
                   menuItems={SIGN_MENU_ITEMS}
                   menuWidth={220}
                   menuAriaLabel="Sign options"
                   onMenuSelect={(key) => {
-                    // The Medication Checklist is mandatory — the control stays
+                    // The Medication Checklist is mandatory: the control stays
                     // enabled so the reason is discoverable, and the attempt
                     // surfaces it rather than a dead button.
                     if (!medReconChecklistDone) {
@@ -225,13 +227,12 @@ export function ProgramDetailViewContentHeader({
                 >
                   Sign
                 </Button>
-              )}
+              ), <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More" />)}
               <SelectAssigneeModal
                 open={signOffOpen}
                 onClose={() => setSignOffOpen(false)}
                 onConfirm={(user) => { setSignOffOpen(false); createSignOffTask(user); }}
               />
-              <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More" />
             </>
           ) : isProgramTasksStep ? (
             <>
@@ -240,12 +241,12 @@ export function ProgramDetailViewContentHeader({
                   onChange={e => setTaskSearchText(e.target.value)}
                   onClose={() => { setTaskSearchOpen(false); setTaskSearchText(''); }} />
               ) : (
-                <ActionButton icon="solar:magnifer-linear" size="S" tooltip="Search" onClick={() => setTaskSearchOpen(true)} />
+                <ActionButton icon="solar:magnifer-linear" size="sm" tooltip="Search" onClick={() => setTaskSearchOpen(true)} />
               )}
               <span className={styles.headerDivider} />
-              <Button variant="tertiary" size="L" leadingIconElement={<AddIconMinimalist size={16} />} onClick={() => setAddTaskOpen(true)}>Add Task</Button>
+              <Button variant="soft" leadingIconElement={<AddIconMinimalist size={16} />} onClick={() => setAddTaskOpen(true)}>Add Task</Button>
               <span className={styles.headerDivider} />
-              <ActionButton icon="solar:filter-linear" size="S" tooltip="Filter" active={taskFiltersOpen}
+              <ActionButton icon="solar:filter-linear" size="sm" tooltip="Filter" active={taskFiltersOpen}
                 iconColor={taskFiltersOpen ? 'var(--primary-300)' : undefined}
                 onClick={() => setTaskFiltersOpen(v => !v)} />
             </>
@@ -253,7 +254,7 @@ export function ProgramDetailViewContentHeader({
             <>
               {assigneePicker}
               <span className={styles.headerDivider} />
-              <Button variant="tertiary" size="L" onClick={goNextStep} disabled={!nextStep}>Next</Button>
+              <Button variant="soft" onClick={goNextStep} disabled={!nextStep}>Next</Button>
             </>
           ) : isProgramFilesStep ? (
             <>
@@ -261,9 +262,7 @@ export function ProgramDetailViewContentHeader({
             </>
           ) : isAppointmentStep ? (
             <>
-              {assigneePicker}
-              {skipLink}
-              <Button variant="tertiary" size="L" onClick={goNextStep} disabled={!nextStep}>Next</Button>
+              {withDividers(assigneePicker, skipLink, <Button variant="soft" onClick={goNextStep} disabled={!nextStep}>Next</Button>)}
             </>
           ) : isDiagnosisGapsStep ? (
             <>
@@ -278,20 +277,17 @@ export function ProgramDetailViewContentHeader({
               ) : (
                 <ActionButton
                   icon="solar:magnifer-linear"
-                  size="S"
+                  size="sm"
                   tooltip="Search"
                   onClick={() => setDiagGapsSearchOpen(true)}
                 />
               )}
-              {reviewedButton('M')}
-              <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More" />
+              <span className={styles.headerDivider} />
+              {withDividers(reviewedButton('md'), <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More" />)}
             </>
           ) : (
             <>
-              {assigneePicker}
-              {skipLink}
-              {reviewedButton('L')}
-              <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More" />
+              {withDividers(assigneePicker, skipLink, reviewedButton(), <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More" />)}
             </>
           )}
         </div>

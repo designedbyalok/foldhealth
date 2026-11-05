@@ -2,10 +2,11 @@ import { forwardRef, useCallback, useId, useImperativeHandle, useMemo, useRef, u
 import { Input } from '../Input/Input';
 import { CalendarIcon } from '../Icon/CalendarIcon';
 import { DatePickerPopover } from './DatePickerPopover';
+import { mdyFromIso } from '../../lib/localDate';
 import styles from './DatePicker.module.css';
 
 /**
- * Fold date field — thin API-compat wrapper over `<Input type="date">`
+ * Fold date field: thin API-compat wrapper over `<Input type="date">`
  * for single-date usage, or a range-formatted text input + popover for
  * `mode="range"`.
  *
@@ -14,9 +15,12 @@ import styles from './DatePicker.module.css';
  *   onSelect   (iso) => void
  *
  * Range mode (mode="range"):
- *   value      { start, end } — each an ISO string
- *   onSelect   (range) => void — fires only after both endpoints are set
+ *   value      { start, end }, each an ISO string
+ *   onSelect   (range) => void: fires only after both endpoints are set
  *   Displayed as "MM/DD/YYYY - MM/DD/YYYY"
+ *
+ * Single mode also takes `isDayDisabled`: (iso) => true greys that day out, or
+ * a string does and shows it as the day's tooltip (why it can't be picked).
  */
 export const DatePicker = forwardRef(function DatePicker({
   mode = 'single',
@@ -34,6 +38,7 @@ export const DatePicker = forwardRef(function DatePicker({
   label,
   required = false,
   helperText,
+  isDayDisabled,
 }, ref) {
   const isRange = mode === 'range';
   const autoId = useId();
@@ -57,9 +62,10 @@ export const DatePicker = forwardRef(function DatePicker({
         onChange={handleChange}
         disabled={disabled}
         placeholder={placeholder || 'MM/DD/YYYY'}
-        variant={hasError ? 'error' : undefined}
+        invalid={hasError}
         min={min}
         max={max}
+        isDayDisabled={isDayDisabled}
         label={label}
         required={required}
         helperText={helperText}
@@ -143,7 +149,7 @@ const RangeField = forwardRef(function RangeField({
         onFocus={openPopover}
         disabled={disabled}
         placeholder={placeholder || 'MM/DD/YYYY - MM/DD/YYYY'}
-        variant={hasError ? 'error' : undefined}
+        invalid={hasError}
         className={styles.dateInput}
         aria-label={accessibleName}
         aria-labelledby={ariaLabelledBy}
@@ -184,11 +190,3 @@ const RangeStub = forwardRef(function RangeStub(_, ref) {
   }), []);
   return <span aria-hidden="true" style={{ display: 'none' }} />;
 });
-
-// ── MM/DD/YYYY helper ───────────────────────────────────────────────
-
-function mdyFromIso(iso) {
-  if (!iso) return '';
-  const [y, m, d] = String(iso).split('-');
-  return (y && m && d) ? `${m}/${d}/${y}` : '';
-}

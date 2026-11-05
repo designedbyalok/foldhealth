@@ -60,7 +60,7 @@ export function matchesShareDateRange(item, range) {
   return day >= range.start && day <= range.end;
 }
 
-/** ISO timestamp on the row — prefers last update, then create. */
+/** ISO timestamp on the row: prefers last update, then create. */
 export function shareItemTimestamp(item) {
   const raw = item?.updatedAt || item?.createdAt;
   if (!raw) return null;

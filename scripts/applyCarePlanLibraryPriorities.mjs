@@ -32,7 +32,7 @@ const interventions = intvMod.CARE_PLAN_INTERVENTION_LIBRARY.map((row) => {
 const goalHeader = `// Structured Care Plan Goals Library
 // Generated from structured_care_plan_goals_library.md. Upserted by
 // \`bun run seed\` (onConflict: 'id'). Priorities assigned by
-// scripts/applyCarePlanLibraryPriorities.mjs — re-run after library content changes.
+// scripts/applyCarePlanLibraryPriorities.mjs, re-run after library content changes.
 
 export const CARE_PLAN_GOAL_LIBRARY = ${JSON.stringify(goals, null, 2)};
 `;
@@ -40,7 +40,7 @@ export const CARE_PLAN_GOAL_LIBRARY = ${JSON.stringify(goals, null, 2)};
 const intvHeader = `// Care Plan Interventions Library (reusable templates)
 // Generated from structured_care_plan_goals_library.md. Upserted by
 // \`bun run seed\` (onConflict: 'id'). Priorities in config assigned by
-// scripts/applyCarePlanLibraryPriorities.mjs — re-run after library content changes.
+// scripts/applyCarePlanLibraryPriorities.mjs, re-run after library content changes.
 
 export const CARE_PLAN_INTERVENTION_LIBRARY = ${JSON.stringify(interventions, null, 2)};
 `;

@@ -155,7 +155,7 @@
   padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;
   border: 0.5px solid var(--neutral-150); margin-top: 6px;
 }
-/* Legacy step condition — kept for wizard backward compat */
+/* Legacy step condition: kept for wizard backward compat */
 .stepCondition {
   font-size: var(--font-sm); color: var(--neutral-300); background: var(--neutral-50);
   padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;
@@ -235,7 +235,7 @@
 /* Templates */
 .templateGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
 /* A <button> so a template is selectable by keyboard. width/text-align restore
-   what the <div> had — a form control sizes to fit-content and centres text. */
+   what the <div> had: a form control sizes to fit-content and centres text. */
 .templateCard {
   display: block; width: 100%; text-align: left; font: inherit; color: inherit;
   background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: 8px; padding: 12px;

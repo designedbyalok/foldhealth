@@ -32,14 +32,4 @@
 .row:last-child { border-bottom: 0; }
 .rowLabel { flex: 1; min-width: 0; font-size: var(--font-base); line-height: var(--leading-tight); color: var(--neutral-400); }
 
-.handle {
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: var(--space-1); border: 0; border-radius: 4px; background: transparent;
-  cursor: grab; touch-action: none; flex-shrink: 0;
-}
-.handle:hover { background: var(--neutral-50); }
-.handle:active { cursor: grabbing; }
-.handle:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; }
 
-/* The item being dragged lifts above its neighbours. */
-.dragging { position: relative; z-index: 1; box-shadow: var(--shadow-popover); }

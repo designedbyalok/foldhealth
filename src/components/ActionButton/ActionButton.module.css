@@ -57,13 +57,37 @@
 .disabled {
   cursor: not-allowed;
 }
-/* Dim the icon and badges only — never the tooltip. Opacity on the button
+/* Dim the icon and badges only, never the tooltip. Opacity on the button
    root would cascade to the tooltip span (a child), and child opacity can't
    override parent opacity, so a long disabled-tooltip would render at 50% and
    look broken. Targeting non-tooltip descendants keeps the bubble crisp. */
 .disabled > *:not(.tooltip) {
   opacity: 0.5;
 }
+
+/* ── Loading ──
+ * Same timing as Button: busy at once, the icon swaps for a spinner after
+ * 150ms so quick actions don't flicker. */
+.loading {
+  cursor: progress;
+}
+.loading > :not(.spinnerSlot) {
+  animation: actionLoadingHide 1ms 150ms forwards;
+}
+@keyframes actionLoadingHide { to { visibility: hidden; } }
+.spinnerSlot {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  color: var(--neutral-300);
+  animation: actionLoadingShow 1ms 150ms forwards;
+}
+.root[data-tone='danger'] .spinnerSlot { color: var(--status-error); }
+@keyframes actionLoadingShow { to { opacity: 1; } }
 
 /* ── State: Error ── */
 .error:hover {

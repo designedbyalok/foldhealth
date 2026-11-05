@@ -1,4 +1,4 @@
-// Full custom email renderer — produces table-based HTML that matches
+// Full custom email renderer: produces table-based HTML that matches
 // the builder canvas exactly across all email clients.
 
 import { getFontStack, getGoogleFontsHref, resolveFont, GOOGLE_FONTS } from './googleFonts';
@@ -13,8 +13,8 @@ import { sanitizeEmailHtml } from '../../lib/sanitizeHtml';
 // ships to the recipient's inbox, so strip the executable surface (<script>,
 // on* handlers, <iframe>, …) while keeping the table layout and <style> email
 // markup needs. sanitizeEmailHtml relies on the DOM (DOMPurify + DOMParser);
-// renderEmailHtml only runs client-side, but guard so the node test env — and
-// any non-browser caller — passes the markup through untouched instead of
+// renderEmailHtml only runs client-side, but guard so the node test env, and
+// any non-browser caller: passes the markup through untouched instead of
 // throwing.
 function safeSanitizeEmailHtml(html) {
   if (!html) return '';
@@ -24,7 +24,7 @@ function safeSanitizeEmailHtml(html) {
 
 // ── Dark-mode color transforms ──────────────────────────────────────────
 // Real device dark mode (iOS Mail / Gmail auto-dark / Outlook) doesn't
-// just darken the backdrop — it inverts whiteish surfaces to dark and
+// just darken the backdrop: it inverts whiteish surfaces to dark and
 // dark text to light, while preserving vivid brand colors (a purple
 // gradient header stays purple). Approximated here with three small
 // helpers; tuned to the Fold token palette.
@@ -78,7 +78,7 @@ function lightenText(hex) {
   if (!rgb) return hex;
   if (_saturation(rgb) > 0.25) return hex; // vivid text stays
   const lum = _luminance(rgb);
-  if (lum > 200) return hex;         // already light — eg #FFF on a gradient
+  if (lum > 200) return hex;         // already light, eg #FFF on a gradient
   if (lum < 80)  return '#E4E5EE';   // very dark → very light
   if (lum < 140) return '#C7CBD4';   // mid dark → light gray
   if (lum < 180) return '#A0A6B2';   // gray → softer light gray
@@ -181,7 +181,7 @@ function perSideBorderCss(borderSides) {
 
 // Format a backgroundImage value for inline CSS. CSS gradient functions
 // (linear-gradient / radial-gradient / conic-gradient and their repeating
-// variants) must be emitted verbatim — wrapping them in url(...) produces
+// variants) must be emitted verbatim: wrapping them in url(...) produces
 // invalid CSS that mail clients reject, often discarding the surrounding
 // background-color fallback too (which is why a gradient header was showing
 // white-on-white in the actual sent email). URLs / paths still get wrapped.
@@ -227,7 +227,7 @@ function nl2br(s) {
 // ── Translucent colors for email ────────────────────────────────────────
 // The builder stores opacity as an 8-digit hex (#RRGGBBAA). No mail client
 // worth targeting reads that, and Word-engine Outlook (2007–2019, 365
-// desktop) discards any declaration it can't parse — including rgba() — so
+// desktop) discards any declaration it can't parse, including rgba(), so
 // the element ends up with no color at all rather than a wrong one.
 //
 // Three strategies, by where the color sits:
@@ -279,7 +279,7 @@ function styleStr(obj) {
   // The serialised string lives inside a double-quoted `style="…"` HTML
   // attribute, so values that contain literal `"` (e.g. font stacks like
   // 'Inter', "Segoe UI', sans-serif) would prematurely close the attribute.
-  // Swap any `"` for `'` — equivalent in CSS and safe inside attributes.
+  // Swap any `"` for `'`, equivalent in CSS and safe inside attributes.
   const parts = [];
   for (const [k, v] of Object.entries(obj)) {
     if (v == null || v === '') continue;
@@ -298,7 +298,7 @@ function renderBlock(doc, id) {
   const padding = pad(style.padding);
 
   switch (type) {
-    // RawHtml — verbatim passthrough wrapped in the block's padding/align.
+    // RawHtml: verbatim passthrough wrapped in the block's padding/align.
     // The canvas renderer trusts this string; the export ships it as-is so
     // imported pixel-perfect subtrees survive to the recipient inbox.
     case 'RawHtml': {
@@ -311,7 +311,7 @@ function renderBlock(doc, id) {
 
     case 'Heading':
     case 'Text': {
-      // Text supports list-style — bullet/number — by splitting on newlines.
+      // Text supports list-style, bullet/number, by splitting on newlines.
       const listStyle = type === 'Text' ? props.listStyle : null;
       const isList = listStyle === 'bullet' || listStyle === 'number';
       const tag = isList
@@ -323,7 +323,7 @@ function renderBlock(doc, id) {
       const textGradient = isGradient(style.color);
       // firstStopColor and gradient strings can both carry 8-digit hex from
       // the picker. The `color` property gets the dual fallback+rgba treatment
-      // via styleStr, so pass the raw translucent value in — the gradient
+      // via styleStr, so pass the raw translucent value in, the gradient
       // background-image below routes through the rgba-aware substitute.
       const textColor = textGradient ? firstStopColor(style.color) : (style.color || 'inherit');
       // Background: gradients render via background-image (the existing
@@ -363,7 +363,7 @@ function renderBlock(doc, id) {
         s['background-color'] = firstStopColor(style.backgroundColor);
         s['background-image'] = style.backgroundColor;
       }
-      // Border — per-side wins over the uniform shorthand when present.
+      // Border: per-side wins over the uniform shorthand when present.
       const perSideText = perSideBorderCss(style.borderSides);
       if (perSideText) {
         Object.assign(s, perSideText);
@@ -373,8 +373,8 @@ function renderBlock(doc, id) {
       if (style.borderRadius) s['border-radius'] = `${style.borderRadius}px`;
       if (isList) s['list-style-position'] = 'inside';
       // Body content. props.text is now an HTML string (so inline formatting
-      // from the floating SelectionToolbar — <strong>/<em>/<u>/<s>/<code>/<a>
-      // — round-trips correctly). For non-lists we just convert bare newlines
+      // from the floating SelectionToolbar: <strong>/<em>/<u>/<s>/<code>/<a>,
+      // round-trips correctly). For non-lists we just convert bare newlines
       // to <br>; for lists we split lines and wrap each in an <li> without
       // escaping (lines may contain their own inline tags).
       let body;
@@ -384,7 +384,7 @@ function renderBlock(doc, id) {
       } else {
         body = (props.text || '').replace(/\n/g, '<br/>');
       }
-      // Link wrap — if linkHref is set, wrap the inner content in an <a>.
+      // Link wrap: if linkHref is set, wrap the inner content in an <a>.
       // Render the anchor inside the tag so semantics + inheritance hold.
       if (props.linkHref) {
         const target = props.linkOpenInNewTab === false ? '' : ' target="_blank"';
@@ -481,7 +481,7 @@ function renderBlock(doc, id) {
 
     case 'Divider': {
       const thickness = props.lineHeight || 1;
-      // Stitched into `border` and SVG `stroke`/`fill` shorthands — neither
+      // Stitched into `border` and SVG `stroke`/`fill` shorthands: neither
       // takes an 8-digit hex, so flatten once at the top.
       const color = opaqueColor(props.lineColor || '#E1E4EA');
       const lineStyle = props.lineStyle || 'solid';
@@ -524,7 +524,7 @@ function renderBlock(doc, id) {
       const s = {
         padding,
         'border-radius': style.borderRadius ? `${style.borderRadius}px` : '',
-        // Container border — per-side overrides uniform when present.
+        // Container border: per-side overrides uniform when present.
         ...(perSideC || (style.borderWidth
           ? { border: `${style.borderWidth}px ${style.borderStyle || 'solid'} ${opaqueColor(style.borderColor || '#3A485F')}` }
           : {})),
@@ -547,7 +547,7 @@ function renderBlock(doc, id) {
       if (props.heightMode === 'fixed' && props.height) {
         s['height'] = typeof props.height === 'number' ? `${props.height}px` : props.height;
         s['overflow'] = 'hidden';
-        // Same flex-position story as the canvas — modern clients honour
+        // Same flex-position story as the canvas, modern clients honour
         // display:flex; older ones fall back to default block layout.
         s['display'] = 'flex';
         s['flex-direction'] = 'column';
@@ -556,7 +556,7 @@ function renderBlock(doc, id) {
         s['justify-content'] = vMap[props.contentAlign] || 'flex-start';
         s['align-items'] = hMap[props.contentAlignH] || 'stretch';
       }
-      // Imported-HTML fidelity — preserve max-width centring and min-height
+      // Imported-HTML fidelity: preserve max-width centring and min-height
       // so sent emails match what the user sees in the builder canvas.
       if (style.maxWidth) {
         s['max-width'] = typeof style.maxWidth === 'number' ? `${style.maxWidth}px` : style.maxWidth;
@@ -747,24 +747,24 @@ function buildDividerSvg(props) {
 }
 
 // Options:
-//   wrapperPadding — outer table-cell padding around the email body; pass '0'
+//   wrapperPadding: outer table-cell padding around the email body; pass '0'
 //     for thumbnail previews so the email sits flush. Default '24px 0'.
-//   theme — 'auto' | 'light' | 'dark'. When 'dark', simulates how a device
+//   theme: 'auto' | 'light' | 'dark'. When 'dark', simulates how a device
 //     in dark mode renders the email: page backdrop flips to a dark grey,
 //     the html element advertises color-scheme: dark so client/system text
 //     defaults pick up correctly, and a @media (prefers-color-scheme: dark)
 //     rule echoes the override. The email content itself (gradient headers,
-//     branded colors) stays untouched — most dark-mode-aware clients leave
+//     branded colors) stays untouched: most dark-mode-aware clients leave
 //     in-content colors alone and just darken the surrounding chrome.
 export function renderEmailHtml(doc, { wrapperPadding = '24px 0', theme = 'auto', compliance = null } = {}) {
   if (!doc) return '';
-  // Custom HTML body takes over ONLY when there are no parsed blocks —
+  // Custom HTML body takes over ONLY when there are no parsed blocks,
   // mirrors the canvas precedence in PreviewCanvas so block edits never
   // diverge from the exported HTML at send time.
   const hasBlocks = (doc.root?.data?.childrenIds?.length ?? 0) > 0;
   if (doc.root?.data?.customHtml && !hasBlocks) return safeSanitizeEmailHtml(doc.root.data.customHtml);
   // In dark mode, pre-transform every block in the document so individual
-  // backgrounds / text colors invert too — not just the outer backdrop.
+  // backgrounds / text colors invert too, not just the outer backdrop.
   // Vivid brand colors (gradient header, promo banner) pass through.
   const effectiveDoc = theme === 'dark' ? transformDocForDarkMode(doc) : doc;
   const root = effectiveDoc.root;
@@ -795,7 +795,7 @@ export function renderEmailHtml(doc, { wrapperPadding = '24px 0', theme = 'auto'
 
   // Compliance footer (CAN-SPAM): physical mailing address + unsubscribe link.
   // Appended below the template body so it is always present and can't be
-  // removed from the canvas. Colors are literal hex — this is email HTML, not
+  // removed from the canvas. Colors are literal hex, this is email HTML, not
   // app CSS, so design tokens don't apply.
   const footerHtml = compliance
     ? `<tr><td style="padding:20px 24px;text-align:center;font-family:${fontFamily.replace(/"/g, "'")};font-size:12px;line-height:18px;color:#98A2B3;border-top:1px solid #EAECF0;">
@@ -806,7 +806,7 @@ export function renderEmailHtml(doc, { wrapperPadding = '24px 0', theme = 'auto'
     : '';
 
   // Build a lean Google Fonts <link> covering only the families this email
-  // actually references — keeps the email payload small and avoids loading
+  // actually references: keeps the email payload small and avoids loading
   // 30+ fonts every recipient doesn't need.
   const usedFontValues = collectUsedFontFamilies(effectiveDoc);
   const usedFamilies = [];

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useCan } from '../../lib/useCan';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { Button } from '../../components/Button/Button';
 import { Input } from '../../components/Input/Input';
@@ -26,7 +27,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Icon } from '../../components/Icon/Icon';
 import { SearchBar } from '../../components/SearchBar/SearchBar';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
+import { Tabs } from '../../components/Tabs/Tabs';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { ActivityLog } from '../../components/ActivityLog/ActivityLog';
 import { CardSkeleton } from '../../components/CardSkeleton/CardSkeleton';
@@ -62,6 +63,7 @@ import { LabResultReview } from './labs/LabResultReview';
 import { CANCELLABLE_STATUSES, PERFORMING_LABS } from './labs/labRules';
 import { useCareGapReferralForm, REFERRAL_CHANNELS, REFERRAL_STATUS, isReferralDraft, CUSTOM_SENDER, isEmail, providerContact } from './useCareGapReferralForm';
 import { draftReferralEmail } from './referralEmail';
+import { useReferralDirectory } from './useReferralDirectory';
 import { ScheduleDrawer } from '../../components/ScheduleDrawer/ScheduleDrawer';
 import { FilePreview } from '../../components/FilePreview/FilePreview';
 import { useAppStore } from '../../store/useAppStore';
@@ -69,6 +71,7 @@ import { TABS, MORE_ACTIONS, MEASURE_NAMES, toActivityLogEntries, initialsOf } f
 import { NOTELESS_GAP_CODES, noteOpenGaps } from './ClinicalNotePanel.utils';
 import { CareGapDetailDrawerHeader } from './CareGapDetailDrawerHeader';
 import styles from './CareGapDetailDrawer.module.css';
+import { openSafeUrl } from '../../lib/openSafeUrl';
 
 // Compact MM/DD/YYYY formatter used by the preview subtitle. Kept local
 // so the drawer file doesn't reach into date-utils modules for a one-off.
@@ -109,7 +112,7 @@ const ACTIVITY_TYPE_LABEL = {
   assign_coder: 'Assignee Change', assignee_change: 'Assignee Change',
 };
 
-function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
+function CareGapDetailDrawerContent({ member, gapCode, instanceNo = null, year, onClose }) {
   const showToast = useAppStore(s => s.showToast);
   const updateGapStatus = useAppStore(s => s.updateGapStatus);
   const updateGapAssignee = useAppStore(s => s.updateGapAssignee);
@@ -147,34 +150,16 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
   // "Last N days" is measured from when the drawer opened.
   const [activityOpenedAt] = useState(() => Date.now());
   // Send Referral workspace (caregap_referrals): eFax / Email.
-  const directoryProviders = useAppStore(s => s.referralProviders);
-  const practiceSenderLines = useAppStore(s => s.referralSenderLines);
-  // eFax senders are the practice eFax numbers (Settings > Messages > eFax)
-  // that are active and linked to the signed-in user; email lines come from
-  // referral_sender_lines.
-  const efaxNumbers = useAppStore(s => s.efaxNumbers);
-  const fetchEfaxNumbers = useAppStore(s => s.fetchEfaxNumbers);
   const meId = useAppStore(s => s.currentUserProfile?.id);
-  useEffect(() => { fetchEfaxNumbers(); }, [fetchEfaxNumbers]);
-  const referralSenderLines = useMemo(() => [
-    ...efaxNumbers
-      .filter(n => n.isActive && meId && n.linkedUserIds.includes(meId))
-      .map((n, i) => ({ id: n.id, channel: 'efax', label: n.name, value: n.number, isDefault: i === 0 })),
-    ...practiceSenderLines.filter(l => l.channel !== 'efax'),
-  ], [efaxNumbers, meId, practiceSenderLines]);
-  const fetchReferralDirectory = useAppStore(s => s.fetchReferralDirectory);
+  const {
+    providers: referralProviders, senderLines: referralSenderLines, meProvider,
+    emailSignature: referralEmailSignature, senderDefaults: referralSenderDefaults,
+  } = useReferralDirectory();
   const memberReferrals = useAppStore(s => s.caregapReferrals[member?.id]) || EMPTY_REMINDERS;
   const fetchCaregapReferrals = useAppStore(s => s.fetchCaregapReferrals);
   const addCaregapReferral = useAppStore(s => s.addCaregapReferral);
   const updateCaregapReferral = useAppStore(s => s.updateCaregapReferral);
-  useEffect(() => { fetchReferralDirectory(); fetchCaregapReferrals(); }, [fetchReferralDirectory, fetchCaregapReferrals]);
-  // A user linked to an active practice eFax number can receive referrals on
-  // it, so that number fills in when their profile has no fax of its own.
-  const referralProviders = useMemo(() => directoryProviders.map(p => {
-    if (p.fax) return p;
-    const linked = efaxNumbers.find(n => n.isActive && n.linkedUserIds.includes(p.id));
-    return linked ? { ...p, fax: linked.number } : p;
-  }), [directoryProviders, efaxNumbers]);
+  useEffect(() => { fetchCaregapReferrals(); }, [fetchCaregapReferrals]);
   const referralForm = useCareGapReferralForm();
   const referralProvider = referralProviders.find(p => p.id === referralForm.values.providerId);
   const referralContact = providerContact(referralProvider, referralForm.values.channel);
@@ -187,17 +172,6 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     && (referralForm.values.channel !== 'email'
       || (referralForm.values.emailSubject.trim() && referralForm.values.emailBody.trim()))
   );
-  // Email signature: the sender's own directory entry (profile).
-  const meProvider = referralProviders.find(p => p.id === meId);
-  const referralEmailSignature = meProvider && {
-    name: meProvider.name,
-    lines: [meProvider.specialty, meProvider.practice, meProvider.address],
-    details: [
-      { label: 'Phone', value: meProvider.phone },
-      { label: 'Fax', value: meProvider.fax },
-      { label: 'Email', value: meProvider.email },
-    ],
-  };
   const [generatingReferralEmail, setGeneratingReferralEmail] = useState(false);
   const handleGenerateReferralEmail = async () => {
     const v = referralForm.values;
@@ -223,10 +197,6 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     referralForm.set('emailSubject')(draft.subject);
     referralForm.set('emailBody')(draft.body);
     showToast(draft.source === 'ai' ? 'Email drafted with UnityAI' : 'UnityAI is unavailable, drafted from the referral details');
-  };
-  const referralSenderDefaults = () => {
-    const defaultFor = (ch) => (referralSenderLines.find(l => l.channel === ch && l.isDefault) || referralSenderLines.find(l => l.channel === ch))?.id || '';
-    return { efax: defaultFor('efax'), email: defaultFor('email') };
   };
   const openReferral = () => {
     referralForm.reset(referralSenderDefaults());
@@ -394,7 +364,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
   const [apptToDelete, setApptToDelete] = useState(null);
   const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
   useEffect(() => { fetchPlatformUsers(); }, [fetchPlatformUsers]);
-  const caregapActivityLoaded = useAppStore(s => s.caregapActivityLoaded);
+  const caregapActivityLoaded = useAppStore(s => s.caregapActivityLoadedFor[member?.id] === true);
   const fetchCaregapActivity = useAppStore(s => s.fetchCaregapActivity);
   const memberComments = useAppStore(s => s.caregapComments[member?.id]);
   const fetchCaregapComments = useAppStore(s => s.fetchCaregapComments);
@@ -404,7 +374,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
   const currentUserProfile = useAppStore(s => s.currentUserProfile);
   const [commentToDelete, setCommentToDelete] = useState(null);
   useEffect(() => { fetchCaregapComments(); }, [fetchCaregapComments]);
-  useEffect(() => { fetchCaregapActivity(); }, [fetchCaregapActivity]);
+  useEffect(() => { fetchCaregapActivity(member?.id); }, [fetchCaregapActivity, member?.id]);
   const appointments = useAppStore(s => s.appointments);
   const fetchAppointments = useAppStore(s => s.fetchAppointments);
   useEffect(() => { fetchAppointments?.(); }, [fetchAppointments]);
@@ -436,9 +406,11 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
   // one; the drawer works on the active gap only.
   const gaps = useMemo(() => (member?.gaps ?? []).filter(g => !g.supersededAt), [member?.gaps]);
   const [currentCode, setCurrentCode] = useState(gapCode);
-  const gapKey = `${member?.id ?? ''}|${gapCode ?? ''}`;
+  // Instance shown in the header (null = the active one).
+  const [viewInstanceNo, setViewInstanceNo] = useState(instanceNo);
+  const gapKey = `${member?.id ?? ''}|${gapCode ?? ''}|${instanceNo ?? ''}`;
   const [prevGapKey, setPrevGapKey] = useState(gapKey);
-  if (prevGapKey !== gapKey) { setPrevGapKey(gapKey); setCurrentCode(gapCode); }
+  if (prevGapKey !== gapKey) { setPrevGapKey(gapKey); setCurrentCode(gapCode); setViewInstanceNo(instanceNo); }
 
   const [statusOpen, setStatusOpen] = useState(false);
   const [statusAnchorRect, setStatusAnchorRect] = useState(null);
@@ -521,18 +493,20 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     if (ok && (payload.inserts?.length || payload.updates?.length)) advanceCisStatus('Engaged');
     return ok;
   };
-  // Save to Document & Sync to EHR: the record goes to this gap's Documents
-  // and is synced to the patient's EHR. A non-standard note, so nothing is
-  // billed.
-  const saveCisRecord = ({ file, caption }) => {
+  // Sync to EHR (toolbar) or Save to Document (⋯ menu): either way the
+  // record goes to this gap's Documents; `sync` also sends it to the
+  // patient's EHR. A non-standard note, so nothing is billed.
+  const saveCisRecord = ({ file, caption, sync }) => {
     const doc = createMemberDocument({ file, caption, docType: CIS_RECORD_DOC_TYPE });
     if (!doc || !member?.id) return;
     logCareGapActivity(member.id, {
       when: new Date().toISOString(),
       actor: currentActorName(),
       t: 'immunization',
-      title: 'Immunization Record Synced to EHR',
-      outcome: `${caption} saved to Documents and synced to the patient's EHR. Non-billable.`,
+      title: sync ? 'Immunization Record Synced to EHR' : 'Immunization Record Saved to Documents',
+      outcome: sync
+        ? `${caption} synced to the patient's EHR and saved to Documents. Non-billable.`
+        : `${caption} saved to Documents. Non-billable.`,
       docId: doc.id,
       gapCodes: [CIS_CODE],
     });
@@ -624,13 +598,13 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     else if (a.key === 'reminder') openReminderNew();
     else if (a.key === 'referral') openReferral();
     else if (a.key === 'lab') openLabOrder();
-    else showToast(`${a.label} — coming soon`);
+    else showToast(`${a.label}, coming soon`);
   };
 
   // A CIS-CMB10 gap opens on its Immunizations tab (the first tab there).
   const [activeTab, setActiveTab] = useState(gapCode === CIS_CODE ? 'Immunizations' : 'Activity Log');
   const [showClinicalNote, setShowClinicalNote] = useState(false);
-  // Single-slot left workspace — only one workspace mounts at a time
+  // Single-slot left workspace: only one workspace mounts at a time
   // ('task' | 'schedule' | null). Sharing the slot means widening the
   // drawer, mounting the banner inline, and running the collapse
   // animation all key off the same state instead of two parallel flags.
@@ -649,6 +623,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
   // the newest saved note for that gap so nothing extra is needed on the
   // editable path.
   const [amendNoteId, setAmendNoteId] = useState(null);
+  const canAmendNotes = useCan()('notes:sign');
   const openNoteInWorkspace = (dc) => {
     if (!dc?.gapCode && !dc?.noteId && !dc?.id) return;
     if (dc.gapCode) {
@@ -663,22 +638,22 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     if (dc.noteId) setSelectedNoteId(dc.noteId);
     else if (dc.id) setSelectedNoteId(dc.id);
     else setSelectedNoteId(null);
-    // Eye behavior per role/state — same underlying note record for
+    // Eye behavior per role/state: same underlying note record for
     // both users. NEVER creates a duplicate note; permissions are
     // decided by the current user's relationship to the note.
     //   • Draft                            → inline editable (author).
     //   • Signed                           → read-only preview (Amend
     //                                        flips to editor per audit
-    //                                        rules — existing behavior).
+    //                                        rules: existing behavior).
     //   • Pending Review AND current user
     //     is the assigned reviewer         → editable consolidated view
     //                                        directly (no extra Edit
-    //                                        click) — Provider path.
+    //                                        click): Provider path.
     //   • Pending Review AND current user
     //     is anyone else (author / NP)     → read-only preview with
     //                                        Edit affordance to flip
     //                                        into the editable
-    //                                        consolidated view — NP
+    //                                        consolidated view: NP
     //                                        path.
     if (dc.status === 'Draft') {
       setAmendNoteId(dc.noteId || null);
@@ -766,7 +741,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     });
   };
   const logAppointmentScheduled = (row) => {
-    // Match Figma 1230:74055 — Activity entry is a detail card with the
+    // Match Figma 1230:74055, Activity entry is a detail card with the
     // appointment type as title, a "date, time · provider" subtitle, and
     // the appointment's own status pill (default Scheduled).
     const subtitleBits = [];
@@ -819,17 +794,22 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
       runLeftClose();
     },
     // hedisMemberId lets the Tasks tab filter reliably (member.name is
-    // fragile — two members can share a display name). extraFields is
+    // fragile: two members can share a display name). extraFields is
     // spread into the task payload by useAddTaskDrawer.
     extraFields: { hedisMemberId: member?.id, careGap: currentCode, measurementYear: selectedYear },
-    // These three fields have no columns in public.tasks — strip them
+    // These three fields have no columns in public.tasks, strip them
     // before the Supabase INSERT so the row is actually persisted (they
     // stay on the in-memory task object for the drawer's own use).
     dbOmit: ['hedisMemberId', 'careGap', 'measurementYear'],
   });
   // One outreach state backs both the left-pane form (Add Outreach) and
   // the Outreaches tab list, so a save in the pane shows up in the tab.
-  const outreach = useOutreachTab({ defaultPrograms: [currentCode], defaultLogFor: 'care-program', onSaved: logOutreachSaved });
+  // CIS members with no outreach on record start with an empty list instead
+  // of the shared sample log, so the demo can walk the workflow from scratch.
+  const outreach = useOutreachTab({
+    defaultPrograms: [currentCode], defaultLogFor: 'care-program', onSaved: logOutreachSaved,
+    initialLogGroups: isCis && !member?.outreachDate ? [] : undefined,
+  });
   const openOutreachWorkspace = () => {
     outreach.setDatetime(outreach.formatNow());
     // Pre-select the gap the drawer is focused on; the hook's reset after a
@@ -844,7 +824,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     runLeftClose();
   };
   // Pre-populate the patient using the current gap's member. Passing the
-  // synthesized object (not just an id) skips the patients.find lookup —
+  // synthesized object (not just an id) skips the patients.find lookup,
   // HEDIS members don't share ids with the appointments' patients table.
   // Shared by this drawer's scheduler and the outreach form's scheduler.
   const schedulePatient = member && {
@@ -941,11 +921,11 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     onSave: (row) => {
       showToast('Appointment scheduled');
       logAppointmentScheduled(row);
-      fetchAppointments?.();
+      fetchAppointments?.({ force: true });
     },
     initialSelectedPatient: schedulePatient,
   });
-  // Inline single-gap Clinical Note hook — always mounted (React rules) but
+  // Inline single-gap Clinical Note hook: always mounted (React rules) but
   // only wired into the UI when leftWorkspace === 'clinical-note' /
   // 'clinical-note-consolidated' / 'clinical-note-preview'. selectedNoteId
   // hydrates the form from the exact note the eye affordance opened;
@@ -972,9 +952,9 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
   });
 
   // Two-phase close so the drawer collapses with the same easing it opens
-  // with. Phase 1 (250ms) — drawer.width transitions 1280 → 700 while the
+  // with. Phase 1 (250ms): drawer.width transitions 1280 → 700 while the
   // left pane is still mounted; its flex space shrinks in lock-step so it
-  // reads as sliding back into the right pane. Phase 2 — actually unmount.
+  // reads as sliding back into the right pane. Phase 2, actually unmount.
   const [leftClosing, setLeftClosing] = useState(false);
   // DSF-B: incomplete-PHQ-9 exit modal. Set when the user tries to
   // leave a clinical-note workspace whose active DSF-B gap has some
@@ -986,11 +966,11 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
   };
   // DSF-B guard used by the Close and Save-as-Draft paths.
   //
-  // `mode: 'close'` — fires only when PHQ-9 is partially answered.
+  // `mode: 'close'`, fires only when PHQ-9 is partially answered.
   //   Navigating away with nothing typed shouldn't nag the user, and a
   //   fully-answered PHQ-9 will get signed through the normal flow.
   //
-  // `mode: 'save-draft'` — fires whenever DSF-B is on this note and
+  // `mode: 'save-draft'`, fires whenever DSF-B is on this note and
   //   the user isn't declining follow-up. Save as Draft never signs
   //   the gap, so the note leaves DSF-B still open regardless of PHQ-9
   //   completeness. The popup reminds the user of the 30-day window.
@@ -1009,7 +989,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
       if (dsfb.decline) return null;
       if (answered === 0 || answered >= 9) return null;
     }
-    // Save-as-Draft path fires whenever DSF-B is on the note — a draft
+    // Save-as-Draft path fires whenever DSF-B is on the note, a draft
     // leaves the gap Open even when the user has ticked Decline, so the
     // 30-day sign-off reminder still applies.
     // 30-day window anchor is centralised in computeDsfbDueDateISO so
@@ -1030,7 +1010,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     if (leftWorkspace === 'outreach') outreach.handleDiscard();
     if (leftWorkspace === 'document') docUpload.reset();
     if (leftWorkspace === 'document-preview') setPreviewDocId(null);
-    if (leftWorkspace === 'appointment-detail') { setOpenAppt(null); fetchAppointments?.(); }
+    if (leftWorkspace === 'appointment-detail') { setOpenAppt(null); fetchAppointments?.({ force: true }); }
     if (leftWorkspace === 'reminder') reminderForm.reset();
     if (leftWorkspace === 'cis-appointment') cisApptForm.reset();
     if (leftWorkspace === 'referral') referralForm.reset();
@@ -1057,7 +1037,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     clinicalNote.handleSaveDraft();
   };
   // DSF-B on the note keeps Save-as-Draft enabled even without dirty
-  // state — the popup nags the user about the 30-day sign-off window
+  // state: the popup nags the user about the 30-day sign-off window
   // whenever they try to park DSF-B as a draft.
   const canSaveDraftEffective = clinicalNote.hasChanges
     || !!detectPhq9Incomplete({ mode: 'save-draft' });
@@ -1067,11 +1047,19 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
   if (!member || gaps.length === 0) return null;
 
   const idx = Math.max(0, gaps.findIndex(g => g.code === currentCode));
-  const gap = gaps[idx] ?? gaps[0];
+  const activeGap = gaps[idx] ?? gaps[0];
+  // Every instance of this gap, newest first: the active one, then the
+  // superseded ones (Add Care Gaps inserts the new instance before the old).
+  const instances = (member.gaps || [])
+    .filter(g => g.code === activeGap.code && (g === activeGap || g.supersededAt))
+    .map((g, i, all) => ({ no: all.length - i, gap: g, active: g === activeGap }));
+  const viewed = instances.find(i => i.no === viewInstanceNo) || instances[0];
+  const gap = viewed?.gap ?? activeGap;
+  const viewingPrevious = !!viewed && !viewed.active;
   const canPrev = idx > 0;
   const canNext = idx < gaps.length - 1;
   const status = gap?.status ?? 'Open';
-  const statusLocked = status === 'Completed';
+  const statusLocked = status === 'Completed' || viewingPrevious;
   // Saved comments (caregap_comments) join the Activity feed as comment
   // entries; the author's own get Edit / Delete.
   const commentEntries = (memberComments || []).map(c => {
@@ -1139,11 +1127,11 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
           onClose={() => { setActivitySearchOpen(false); setActivitySearch(''); }}
         />
       ) : (
-        <ActionButton size="S" icon="solar:magnifer-linear" tooltip="Search" onClick={() => setActivitySearchOpen(true)} />
+        <ActionButton size="sm" icon="solar:magnifer-linear" tooltip="Search" onClick={() => setActivitySearchOpen(true)} />
       )}
       <span className={styles.activityToolbarDivider} />
       <ActionButton
-        size="S"
+        size="sm"
         icon="custom:filter"
         tooltip={activityChipsOpen ? 'Hide filters' : 'Filter'}
         tooltipLeft
@@ -1166,7 +1154,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     </div>
   );
   // Clinical Notes tab is DB-driven (clinicalNotesByMember) so it shows the
-  // current state per note — a Pending Review note that is later Signed
+  // current state per note: a Pending Review note that is later Signed
   // updates in place instead of appearing as two rows. Activity Log keeps
   // both history entries; the Notes tab mirrors the DB's single row per
   // note, which is what the user expects ("should have updated the Below
@@ -1183,7 +1171,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
       const chip = isMulti ? `${gapList.length} Gaps` : undefined;
       let subtitle = '';
       if (rawStatus === 'draft') {
-        subtitle = `Save as Draft by ${n.authorName || '—'}`;
+        subtitle = `Save as Draft by ${n.authorName || '-'}`;
       } else if (rawStatus === 'submitted') {
         subtitle = n.reviewerName ? `Submitted for Review to ${n.reviewerName}` : 'Submitted for Review';
       } else if (rawStatus === 'signed') {
@@ -1241,10 +1229,10 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     });
     return toActivityLogEntries(mapped);
   })();
-  // Count of actual note entries (excludes month-group headers) — used for
+  // Count of actual note entries (excludes month-group headers): used for
   // the tab label and empty-state gating.
   const clinicalNoteCount = clinicalNoteEntries.filter(e => e.t === 'clinical_note').length;
-  // Tasks tab lists every task tied to this HEDIS member — sign-off tasks
+  // Tasks tab lists every task tied to this HEDIS member, sign-off tasks
   // (created by createCareGapSignOffTask) always have hedisMemberId set;
   // manually created tasks land here via the `member` denormalized field.
   const memberTasks = (allTasks || []).filter(
@@ -1281,8 +1269,8 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     Tasks: memberTasks.length,
   };
 
-  const goPrev = () => { if (canPrev) { setCurrentCode(gaps[idx - 1].code); setStatusOpen(false); } };
-  const goNext = () => { if (canNext) { setCurrentCode(gaps[idx + 1].code); setStatusOpen(false); } };
+  const goPrev = () => { if (canPrev) { setCurrentCode(gaps[idx - 1].code); setViewInstanceNo(null); setStatusOpen(false); } };
+  const goNext = () => { if (canNext) { setCurrentCode(gaps[idx + 1].code); setViewInstanceNo(null); setStatusOpen(false); } };
 
 
   return (
@@ -1290,7 +1278,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
       {showClinicalNote && (
         <ClinicalNotePanel member={member} gapCode={gap.code} year={selectedYear} onClose={() => setShowClinicalNote(false)} />
       )}
-      {/* The task detail no longer opens as its own standalone Drawer —
+      {/* The task detail no longer opens as its own standalone Drawer,
           it renders inline as the left workspace when leftWorkspace ===
           'task-detail' (see the leftPane branches below). */}
       {labOrderToCancel && (
@@ -1431,7 +1419,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
         onClose={onClose}
         noCloseDivider
         // Mirror the Diagnosis Gaps drawer sizing so both surfaces feel like
-        // one system — 700px closed, 1280px expanded (640 + 640 split). The
+        // one system: 700px closed, 1280px expanded (640 + 640 split). The
         // right pane stays fixed at 640px so the Care Gap content doesn't
         // reflow when a workspace (Add Task / Add Note / Schedule) opens;
         // the drawer simply expands leftward and collapses back.
@@ -1440,8 +1428,8 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
         bodyClassName={inSplit ? `${styles.drawerBody} ${styles.drawerBodySplit}` : styles.drawerBody}
         headerRight={
           <div className={styles.headerNav}>
-            <ActionButton icon="solar:alt-arrow-left-linear" size="L" tooltip="Previous gap" state={canPrev ? 'active' : 'disabled'} onClick={goPrev} />
-            <ActionButton icon="solar:alt-arrow-right-linear" size="L" tooltip="Next gap" state={canNext ? 'active' : 'disabled'} onClick={goNext} />
+            <ActionButton icon="solar:alt-arrow-left-linear" tooltip="Previous gap" disabled={!canPrev} onClick={goPrev} />
+            <ActionButton icon="solar:alt-arrow-right-linear" tooltip="Next gap" disabled={!canNext} onClick={goNext} />
             <span className={styles.headerDivider} />
           </div>
         }
@@ -1526,7 +1514,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
                   : `${codes[0]} Visit Note`;
                 // Editable mode: gap-specific title (COL Visit Note /
                 // Consolidated Clinical Note) with a small icon+text status
-                // subtitle underneath — same icon vocabulary the HCC
+                // subtitle underneath: same icon vocabulary the HCC
                 // worklist uses (solar:sun-bold for Action Needed / In
                 // Progress). Preview mode keeps its Signed / Submitted /
                 // Draft attribution subtitle instead.
@@ -1555,7 +1543,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
                   const when = previewNote.signedAt ? ` · ${formatPreviewDate(previewNote.signedAt)}` : '';
                   subtitle = `Signed by ${signer}${when}`;
                 } else if (previewNote?.status === 'submitted') {
-                  subtitle = `Submitted for Review to ${previewNote.reviewerName || '—'}`;
+                  subtitle = `Submitted for Review to ${previewNote.reviewerName || '-'}`;
                 } else if (previewNote?.status === 'draft') {
                   subtitle = `Draft · ${previewNote.authorName || 'You'} · ${formatPreviewDate(previewNote.updatedAt || previewNote.createdAt)}`;
                 }
@@ -1573,30 +1561,29 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
               })()}
               <div className={styles.paneHeaderRight}>
                 {leftWorkspace === 'schedule' ? (
-                  <Button variant="primary" size="M" disabled={!scheduleDrawer.canSchedule} onClick={scheduleDrawer.handleSchedule}>
+                  <Button disabled={!scheduleDrawer.canSchedule} onClick={scheduleDrawer.handleSchedule}>
                     Schedule
                   </Button>
                 ) : leftWorkspace === 'outreach' ? (
-                  <Button variant="primary" size="M" disabled={!outreach.canSave} onClick={handleSaveOutreach}>
+                  <Button disabled={!outreach.canSave} onClick={handleSaveOutreach}>
                     Save
                   </Button>
                 ) : leftWorkspace === 'document' ? (
-                  <Button variant="primary" size="M" disabled={!docUpload.canSave} onClick={handleUploadDocument}>
+                  <Button disabled={!docUpload.canSave} onClick={handleUploadDocument}>
                     {docUpload.editingId ? 'Save' : 'Upload'}
                   </Button>
                 ) : leftWorkspace === 'document-preview' ? (
                   previewDoc?.fileUrl ? (
                     <ActionButton
                       icon="solar:square-top-down-linear"
-                      size="L"
                       tooltip="Open in new tab"
-                      onClick={() => { const w = window.open(previewDoc.fileUrl, '_blank', 'noopener'); try { w?.focus(); } catch { /* popup blocked */ } }}
+                      onClick={() => openSafeUrl(previewDoc.fileUrl, 'noopener')}
                     />
                   ) : null
                 ) : leftWorkspace === 'clinical-note' ? (
                   (() => {
                     // The author revisiting their own Pending Review note
-                    // sees Update-and-Save instead of Sign & Save — pushes
+                    // sees Update-and-Save instead of Sign & Save, pushes
                     // the revised state back to the same reviewer via
                     // handleSubmitForReview (which re-notifies). Signing is
                     // still available from the chevron menu as an escape
@@ -1635,8 +1622,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
                       </span>
                       <span className={styles.headerDivider} />
                       <Button
-                        variant="tertiary"
-                        size="M"
+                        variant="soft"
                         leadingIcon="solar:pen-new-square-linear"
                         onClick={() => {
                           const note = selectedNoteId ? memberNotes.find(n => n.id === selectedNoteId) : memberNotes.find(n => (n.gapCodes || []).includes(currentCode));
@@ -1656,26 +1642,26 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
                       <span className={styles.headerDivider} />
                       <ActionButton
                         icon="solar:printer-linear"
-                        size="L"
                         tooltip="Print"
                         onClick={() => {
                           const url = memberNotes.find(n => n.id === selectedNoteId)?.pdfDataUrl || memberNotes.find(n => (n.gapCodes || []).includes(currentCode))?.pdfDataUrl;
-                          if (url) { const w = window.open(url, '_blank'); try { w?.focus(); } catch {} }
+                          if (url) openSafeUrl(url);
                           else showToast('No PDF for this version');
                         }}
                       />
-                      <Button
-                        variant="tertiary"
-                        size="M"
-                        leadingIcon="solar:lock-keyhole-minimalistic-linear"
-                        onClick={() => {
-                          const note = selectedNoteId ? memberNotes.find(n => n.id === selectedNoteId) : memberNotes.find(n => (n.gapCodes || []).includes(currentCode));
-                          if (note?.id) setAmendNoteId(note.id);
-                          setLeftWorkspace('clinical-note');
-                        }}
-                      >
-                        Amend
-                      </Button>
+                      {canAmendNotes && (
+                        <Button
+                          variant="soft"
+                          leadingIcon="solar:lock-keyhole-minimalistic-linear"
+                          onClick={() => {
+                            const note = selectedNoteId ? memberNotes.find(n => n.id === selectedNoteId) : memberNotes.find(n => (n.gapCodes || []).includes(currentCode));
+                            if (note?.id) setAmendNoteId(note.id);
+                            setLeftWorkspace('clinical-note');
+                          }}
+                        >
+                          Amend
+                        </Button>
+                      )}
                     </>
                   )
                 ) : leftWorkspace === 'clinical-note-consolidated' ? (
@@ -1698,16 +1684,16 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
                   })()
                 ) : leftWorkspace === 'lab-order' ? (
                   <>
-                    <Button variant="secondary" size="M" onClick={closeLeftWorkspace}>Cancel</Button>
-                    <Button variant="primary" size="M" disabled={!canPlaceLabOrder} onClick={placeLabOrder}>Place Lab Order</Button>
+                    <Button variant="outline" onClick={closeLeftWorkspace}>Cancel</Button>
+                    <Button disabled={!canPlaceLabOrder} onClick={placeLabOrder}>Place Lab Order</Button>
                   </>
                 ) : leftWorkspace === 'lab-order-detail' ? (
                   labOrder && CANCELLABLE_STATUSES.includes(labOrder.status)
-                    ? <Button variant="secondary" size="M" onClick={() => setLabOrderToCancel(labOrder)}>Cancel Order</Button>
+                    ? <Button variant="outline" onClick={() => setLabOrderToCancel(labOrder)}>Cancel Order</Button>
                     : null
                 ) : leftWorkspace === 'lab-result' ? (
                   labResult && !labResult.reviewedAt ? (
-                    <Button variant="primary" size="M" onClick={() => { labs.reviewResult(labResult, { closeGap: labCloseGap }); setLabResultId(null); setLeftWorkspace(null); }}>
+                    <Button onClick={() => { labs.reviewResult(labResult, { closeGap: labCloseGap }); setLabResultId(null); setLeftWorkspace(null); }}>
                       Mark as Reviewed
                     </Button>
                   ) : null
@@ -1717,25 +1703,25 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
                   null
                 ) : leftWorkspace === 'referral' ? (
                   <>
-                    <Button variant="secondary" size="M" disabled={!canSaveReferralDraft} onClick={() => saveReferral(REFERRAL_STATUS.draft)}>
+                    <Button variant="outline" disabled={!canSaveReferralDraft} onClick={() => saveReferral(REFERRAL_STATUS.draft)}>
                       Save as Draft
                     </Button>
-                    <Button variant="primary" size="M" disabled={!canSendReferral} onClick={() => saveReferral(REFERRAL_STATUS.referred)}>
+                    <Button disabled={!canSendReferral} onClick={() => saveReferral(REFERRAL_STATUS.referred)}>
                       Sign &amp; Refer
                     </Button>
                   </>
                 ) : leftWorkspace === 'reminder' ? (
-                  <Button variant="primary" size="M" disabled={!reminderForm.canSave} onClick={handleSaveReminder}>
+                  <Button disabled={!reminderForm.canSave} onClick={handleSaveReminder}>
                     Save
                   </Button>
                 ) : leftWorkspace === 'cis-appointment' ? (
                   <>
                     {cisApptForm.editing && (
-                      <Button variant="secondary" size="M" onClick={cancelCisAppointmentPane}>
+                      <Button variant="outline" onClick={cancelCisAppointmentPane}>
                         Cancel Appointment
                       </Button>
                     )}
-                    <Button variant="primary" size="M" disabled={!cisApptForm.canSave} onClick={saveCisAppointmentPane}>
+                    <Button disabled={!cisApptForm.canSave} onClick={saveCisAppointmentPane}>
                       {cisApptForm.editing ? 'Save' : 'Schedule'}
                     </Button>
                   </>
@@ -1745,11 +1731,11 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
                   // there's no CTA to render alongside the close button.
                   null
                 ) : leftWorkspace === 'measure-info' ? (
-                  // Measure Details is a read-only reference pane — no
+                  // Measure Details is a read-only reference pane, no
                   // CTA next to the close button.
                   null
                 ) : (
-                  <Button variant="primary" size="M" disabled={!addTask.canSave} onClick={addTask.handleSave}>
+                  <Button disabled={!addTask.canSave} onClick={addTask.handleSave}>
                     Save Task
                   </Button>
                 )}
@@ -1815,7 +1801,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
                 ) : null
               ) : leftWorkspace === 'outreach' ? (
                 <OutreachTabView tab={outreach} hideLogForRow hideActivity hideFormFooter flush taskMember={member?.name} schedulePatient={schedulePatient}
-                  onTaskCreated={logTaskAdded} onAppointmentScheduled={(row) => { logAppointmentScheduled(row); fetchAppointments?.(); }} />
+                  onTaskCreated={logTaskAdded} onAppointmentScheduled={(row) => { logAppointmentScheduled(row); fetchAppointments?.({ force: true }); }} />
               ) : leftWorkspace === 'clinical-note' ? (
                 <ClinicalNoteWorkspaceBody v={clinicalNote} />
               ) : leftWorkspace === 'clinical-note-preview' ? (
@@ -1899,6 +1885,8 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
           )}
           <CareGapDetailDrawerHeader
             gap={gap} member={member} selectedYear={selectedYear} setSelectedYear={setSelectedYear}
+            instances={instances} viewedInstanceNo={viewed?.no ?? null}
+            onPickInstance={(no) => { setViewInstanceNo(no); setStatusOpen(false); }}
             yearOpen={yearOpen} setYearOpen={setYearOpen} yearOptions={yearOptions}
             status={status} statusLocked={statusLocked}
             statusOpen={statusOpen} setStatusOpen={setStatusOpen} statusAnchorRect={statusAnchorRect} setStatusAnchorRect={setStatusAnchorRect} updateGapStatus={updateGapStatus}
@@ -1916,23 +1904,23 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
             goPrev={goPrev} goNext={goNext} canPrev={canPrev} canNext={canNext}
           />
 
-          {/* Shared TabStrip — same underline motion the HCC drawer uses.
+          {/* Shared Tabs: same underline motion the HCC drawer uses.
               Counts are baked into `label` as "(N)" so we skip the Badge
               default that `count` renders. `fullWidth={false}` because
-              this drawer's `.drawerBody` already has `padding: 0` — the
+              this drawer's `.drawerBody` already has `padding: 0`, the
               default bleed would apply a -24px margin and push the row
               past the drawer's own edges. */}
-          <TabStrip
+          <Tabs
             items={visibleTabs.map((tab) => ({
               key: tab.key,
               label: tabCounts[tab.key] != null
                 ? `${tab.label} (${tabCounts[tab.key]})`
                 : tab.label,
             }))}
-            activeKey={shownTab}
-            onChange={setActiveTab}
+            value={shownTab}
+            onValueChange={setActiveTab}
             fullWidth={false}
-            size="S"
+            size="sm"
           />
 
           <div className={`${styles.tabContentWrap} ${(shownTab === 'Tasks' || shownTab === 'Outreaches') ? styles.tabContentWrapFlush : ''}`}>
@@ -1963,7 +1951,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
               // only the log so the same form isn't rendered twice.
               <OutreachTabView tab={outreach} hideLogForRow hideForm={leftWorkspace === 'outreach'} taskMember={member?.name} schedulePatient={schedulePatient}
                 onLogNew={openOutreachWorkspace}
-                onTaskCreated={logTaskAdded} onAppointmentScheduled={(row) => { logAppointmentScheduled(row); fetchAppointments?.(); }} />
+                onTaskCreated={logTaskAdded} onAppointmentScheduled={(row) => { logAppointmentScheduled(row); fetchAppointments?.({ force: true }); }} />
             ) : shownTab === 'Documents' ? (
               programDocumentsDidFetch ? (
                 <DocumentList
@@ -2028,12 +2016,12 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
                 onCancelOrder={setLabOrderToCancel}
               />
             ) : shownTab === 'Clinical Notes' ? (
-              // Flat column-headed list per Figma 1030:78586 — no timeline
+              // Flat column-headed list per Figma 1030:78586, no timeline
               // rail, no month grouping. Card affordances are shared with
               // the Activity Log via ClinicalNoteCardActions.
               <ClinicalNotesTab entries={clinicalNoteEntries} onOpenNote={openNoteInWorkspace} onOpenTask={handleOpenTaskInPlace} />
             ) : shownTab === 'Tasks' ? (
-              // Same layout as the P360 patient profile's Tasks tab —
+              // Same layout as the P360 patient profile's Tasks tab,
               // Pending / Overdue / Completed sections, checkbox rows,
               // priority + due columns, so a task looks identical in
               // both the drawer here and the P360 view.
@@ -2087,7 +2075,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
             ) : (
               <div className={styles.emptyTab}>
                 <Icon name="solar:hourglass-line-linear" size={36} color="var(--neutral-200)" />
-                <p className={styles.emptyTabTitle}>{shownTab} — coming soon</p>
+                <p className={styles.emptyTabTitle}>{shownTab}: coming soon</p>
               </div>
             )}
           </div>

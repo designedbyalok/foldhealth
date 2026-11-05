@@ -5,7 +5,7 @@ import styles from './ReviewProgressPopover.module.css';
 
 /**
  * Hover popover anchored to the DOS row's "With <Stage>" pill. Mirrors the
- * Figma node 1:67779 — a vertical timeline showing the four review stages
+ * Figma node 1:67779, a vertical timeline showing the four review stages
  * (Support → Coder → Reviewer → Reviewer 2). Each stage renders as:
  *
  *   ┊
@@ -155,7 +155,7 @@ function StatusBadge({ state, spec }) {
   );
 }
 
-// ── Progress ring — used by the trigger pill ─────────────────────────
+// ── Progress ring: used by the trigger pill ─────────────────────────
 
 export function ProgressRing({ progress = 0, size = 16, stroke = 2 }) {
   const r = (size - stroke) / 2;

@@ -11,10 +11,9 @@ function formatTimer(secs) {
 export function ActiveCallCard() {
   const activeCallPatient = useAppStore(s => s.activeCallPatient);
   const activeCallSeconds = useAppStore(s => s.activeCallSeconds);
-  const patients = useAppStore(s => s.patients);
+  const p = useAppStore(s => s.patients.find(x => x.id === s.activeCallPatient));
   const endActiveCall = useAppStore(s => s.endActiveCall);
 
-  const p = patients.find(x => x.id === activeCallPatient);
   const visible = !!activeCallPatient;
 
   return (

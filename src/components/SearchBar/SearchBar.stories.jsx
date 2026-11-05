@@ -7,7 +7,7 @@ export default {
   tags: ['autodocs'],
   parameters: {
     docs: {
-      description: { component: 'Search input with leading magnifier and (optional) trailing close button. Controlled — parent owns `value`.' },
+      description: { component: 'Search input with leading magnifier and (optional) trailing close button. Controlled, parent owns `value`.' },
     },
   },
   argTypes: {
@@ -28,7 +28,7 @@ export default {
     },
     showClose: {
       control: 'boolean',
-      description: 'Story-only prop — when true, wires an `onClose` handler and the ✕ button appears.',
+      description: 'Story-only prop: when true, wires an `onClose` handler and the ✕ button appears.',
       table: { type: { summary: 'boolean' } },
     },
     value: {
@@ -43,7 +43,7 @@ export default {
     },
     onClose: {
       action: 'onClose',
-      description: 'Fires when the ✕ button is clicked — button is hidden when omitted.',
+      description: 'Fires when the ✕ button is clicked, button is hidden when omitted.',
       table: { type: { summary: '() => void' } },
     },
   },

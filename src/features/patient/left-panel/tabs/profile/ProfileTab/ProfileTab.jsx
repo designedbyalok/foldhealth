@@ -4,17 +4,24 @@ import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIc
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
 import { Badge } from '../../../../../../components/Badge/Badge';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { Toggle } from '../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../components/SegmentedControl/SegmentedControl';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import { PatientAppActiveIndicator } from '../../../../../../components/PatientAppActiveIndicator/PatientAppActiveIndicator';
 import { resolvePatientDisplay } from '../../../../../../lib/patientDisplay';
+import { usePatientConsent } from '../../../../hooks/usePatientConsent';
+import { isProgramClosed } from '../../../../data/programStatus';
+import { CHANNEL_OPTIONS, CONTACT_STATUS_OPTIONS, CONTACT_STATUS_TONE, LITERACY_OPTIONS, mergeContactPoints, optionLabel } from '../../../../data/patientPreferences';
+import { PatientPreferencesDrawer } from '../PatientPreferencesDrawer/PatientPreferencesDrawer';
+import { PatientPortalAccess } from '../PatientPortalAccess/PatientPortalAccess';
 import styles from './ProfileTab.module.css';
 
 const PROFILE_VIEWS = [
   { key: 'demographics', label: 'Demographics' },
   { key: 'insurance',    label: 'Insurance' },
+  { key: 'preferences',  label: 'Preferences' },
 ];
 
-/** Collapsible section wrapper — matches the Figma section pattern:
+/** Collapsible section wrapper: matches the Figma section pattern:
  * title + optional edit button on the right, and a grid of label/value
  * cells below that flow into 2 columns on wider layouts. */
 function Section({ title, actionIcon = 'solar:pen-linear', onEdit, children }) {
@@ -29,19 +36,21 @@ function Section({ title, actionIcon = 'solar:pen-linear', onEdit, children }) {
           aria-expanded={!collapsed}
         >
           <span className={styles.sectionTitle}>{title}</span>
-          {/* Shared DownChevronIcon — rotated -90° when collapsed so a single
+          {/* Shared DownChevronIcon: rotated -90° when collapsed so a single
               chevron primitive covers both expanded (down) and collapsed
               (right) states without two separate icon glyphs. */}
           <DownChevronIcon
             size={12}
-            className={collapsed ? styles.chevronCollapsed : undefined}
+            className={[styles.chevron, collapsed ? styles.chevronCollapsed : ''].filter(Boolean).join(' ')}
           />
         </button>
         {onEdit && (
-          <ActionButton icon={actionIcon} size="S" tooltip={`Edit ${title.toLowerCase()}`} onClick={onEdit} />
+          <ActionButton icon={actionIcon} size="sm" tooltip={`Edit ${title.toLowerCase()}`} onClick={onEdit} />
         )}
       </div>
-      {!collapsed && <div className={styles.grid}>{children}</div>}
+      <CollapsibleContent open={!collapsed}>
+        <div className={styles.grid}>{children}</div>
+      </CollapsibleContent>
     </div>
   );
 }
@@ -58,7 +67,7 @@ function Field({ label, value, children }) {
   );
 }
 
-/** Contact card for family/caregiver — first line is name + relation +
+/** Contact card for family/caregiver: first line is name + relation +
  * optional Primary/Caregiver badge, second line is phone + hours. */
 function ContactField({ contact }) {
   return (
@@ -67,7 +76,7 @@ function ContactField({ contact }) {
         <span className={styles.fieldLabel}>
           {contact.name}{contact.relation ? ` (${contact.relation})` : ''}
         </span>
-        {contact.role && <Badge tone="grey" label={contact.role} size="S" />}
+        {contact.role && <Badge label={contact.role} size="sm" />}
       </div>
       <div className={styles.fieldValue}>
         {contact.phone}
@@ -78,7 +87,7 @@ function ContactField({ contact }) {
 }
 
 /**
- * Profile tab — the demographic / contact / address panel behind the
+ * Profile tab: the demographic / contact / address panel behind the
  * left-panel's "Profile" sub-tab in PatientDetailView. Reads from the
  * p360_profiles Supabase table via the store's fetchP360Profile action,
  * falls back to whatever slim identity fields already live on the
@@ -94,15 +103,17 @@ export function ProfileTab({ patient }) {
   const openEdit = useAppStore((s) => s.openPatientEdit);
   const showPatientAppIndicator = useAppStore((s) => s.showPatientAppIndicator);
   // Two-view segmented control: Demographics (current sections) vs Insurance
-  // (Primary Insurance + Plan Benefits). Local state — persistence isn't
+  // (Primary Insurance + Plan Benefits). Local state, persistence isn't
   // needed since the tab-switch is transient viewing chrome.
   const [view, setView] = useState('demographics');
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  const { preferences, programs } = usePatientConsent(patientId);
 
   useEffect(() => {
     if (patientId) fetchP360Profile(patientId);
   }, [patientId, fetchP360Profile]);
 
-  // Profile row we're rendering — the fetched p360 row wins on every field
+  // Profile row we're rendering: the fetched p360 row wins on every field
   // it defines, but fall through to the worklist row so a patient without
   // an extended profile still shows something usable.
   const p = p360Profile && p360Profile.patient_id === patientId ? p360Profile : null;
@@ -146,7 +157,7 @@ export function ProfileTab({ patient }) {
     Employer:    p?.employer,
   }), [p, patient]);
 
-  // Insurance — Figma P360 Revamp node 526:334385. First block is the
+  // Insurance: Figma P360 Revamp node 526:334385. First block is the
   // insurance identity + eligibility window; second is the plan-benefits
   // detail. All values fall through to '-' when the p360 row is missing
   // that field (identical shape to the demographics sections above).
@@ -172,30 +183,33 @@ export function ProfileTab({ patient }) {
     'Extra Benefits':          p?.insurance_extra_benefits,
   }), [p]);
 
+  const openProgramCodes = [...new Set(programs.filter(pr => !isProgramClosed(pr.status)).map(pr => pr.code))];
+  const contactPoints = mergeContactPoints(preferences?.contactPoints, p);
+
   if (p360Loading && !p) {
     return <div className={styles.wrapper}><CardSkeleton /></div>;
   }
 
   return (
     <div className={styles.wrapper}>
-      {/* Top row — Demographics/Insurance segmented control on the left,
+      {/* Top row: Demographics/Insurance segmented control on the left,
           single Edit action on the right. The per-section edit pencils were
           removed; this one button opens the drawer scrolled to a sensible
           starting section for the active view (basic for Demographics,
           insurance for Insurance). */}
       <div className={styles.viewRow}>
-        <Toggle
+        <SegmentedControl
           items={PROFILE_VIEWS}
-          active={view}
-          onChange={setView}
-          size="S"
+          value={view}
+          onValueChange={setView}
+          size="sm"
           className={styles.viewToggle}
         />
         <ActionButton
           icon="solar:pen-linear"
-          size="S"
-          tooltip={view === 'insurance' ? 'Edit insurance' : 'Edit profile'}
-          onClick={() => openEdit(view === 'insurance' ? 'insurance' : 'basic', patient)}
+          size="sm"
+          tooltip={view === 'insurance' ? 'Edit insurance' : view === 'preferences' ? 'Edit preferences' : 'Edit profile'}
+          onClick={() => (view === 'preferences' ? setPrefsOpen(true) : openEdit(view === 'insurance' ? 'insurance' : 'basic', patient))}
         />
       </div>
 
@@ -227,6 +241,10 @@ export function ProfileTab({ patient }) {
             )}
           </Section>
 
+          <Section title="Patient Portal">
+            <PatientPortalAccess patient={patient} defaultEmail={email} />
+          </Section>
+
           <Section title="Address">
             {Object.entries(address).map(([label, value]) => (
               <Field key={label} label={label} value={value} />
@@ -239,8 +257,35 @@ export function ProfileTab({ patient }) {
             ))}
           </Section>
         </>
+      ) : view === 'preferences' ? (
+        <>
+          <Section title="Communication">
+            {openProgramCodes.length === 0 && <Field label="Preferred channel" value="" />}
+            {openProgramCodes.map(code => (
+              <Field key={code} label={`${code} preferred channel`} value={optionLabel(CHANNEL_OPTIONS, preferences?.channelByProgram?.[code])} />
+            ))}
+          </Section>
+
+          <Section title="Language & Literacy">
+            <Field label="Preferred language" value={preferences?.preferredLanguage || display.primaryLanguage} />
+            <Field label="Needs an interpreter" value={preferences?.needsInterpreter ? 'Yes' : 'No'} />
+            <Field label="Health literacy" value={optionLabel(LITERACY_OPTIONS, preferences?.healthLiteracy || 'unknown')} />
+          </Section>
+
+          <Section title="Contact Validity">
+            {contactPoints.length === 0 && <Field label="Phone and email" value="" />}
+            {contactPoints.map(cp => (
+              <Field key={`${cp.kind}:${cp.value}`} label={cp.kind === 'email' ? 'Email' : 'Phone'}>
+                <span className={styles.contactValidity}>
+                  {cp.value}
+                  <Badge tone={CONTACT_STATUS_TONE[cp.status] || 'neutral'} label={optionLabel(CONTACT_STATUS_OPTIONS, cp.status) || 'Unverified'} size="sm" />
+                </span>
+              </Field>
+            ))}
+          </Section>
+        </>
       ) : (
-        // Insurance view — matches Figma P360 Revamp node 526:334385.
+        // Insurance view: matches Figma P360 Revamp node 526:334385.
         // Primary Insurance is a single collapsible block whose body holds
         // both the identity fields and a nested "Plan Benefits" heading +
         // grid. Edit routes through the top-row action button, not a
@@ -256,6 +301,16 @@ export function ProfileTab({ patient }) {
         </Section>
       )}
 
+      {prefsOpen && (
+        <PatientPreferencesDrawer
+          patientId={patientId}
+          preferences={preferences}
+          programCodes={openProgramCodes}
+          contactPoints={contactPoints}
+          profileLanguage={display.primaryLanguage}
+          onClose={() => setPrefsOpen(false)}
+        />
+      )}
     </div>
   );
 }

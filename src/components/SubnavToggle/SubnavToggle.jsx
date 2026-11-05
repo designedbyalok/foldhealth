@@ -12,7 +12,6 @@ export function SubnavToggle() {
   return (
     <ActionButton
       icon="solar:sidebar-minimalistic-linear"
-      size="L"
       tooltip={subnavCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       iconColor="var(--neutral-300)"
       onClick={toggleSubnav}

@@ -1,6 +1,6 @@
 /**
  * Prev-year `<<` chevron inside a rounded-square outline. Same outline
- * as `CalendarPrevIcon`; the `<` chevron is rendered twice — once at
+ * as `CalendarPrevIcon`; the `<` chevron is rendered twice: once at
  * the base position and once shifted 3px left so the pair reads as `<<`.
  *
  * @param {object} props

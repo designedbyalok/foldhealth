@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useAppStore } from '../../store/useAppStore';
 import { Button } from '../Button/Button';
 import { Avatar } from '../Avatar/Avatar';
 import { Icon } from '../Icon/Icon';
 import badgeStyles from '../Badge/Badge.module.css';
-import { SYSTEM_USERS } from '../../features/hcc/systemUsers';
+import { MentionRoster } from './MentionRoster';
 import styles from './CommentComposer.module.css';
 
 function handlePastePlainText(e) {
@@ -15,13 +14,13 @@ function handlePastePlainText(e) {
 }
 
 /**
- * CommentComposer — shared comment field + Comment/Cancel actions used by
+ * CommentComposer: shared comment field + Comment/Cancel actions used by
  * the TaskDetailDrawer and the DiagPanel Comments tab. Starts as a
  * single-line placeholder and expands to a taller field on focus with
  * primary / secondary action buttons.
  *
  * The input is a contenteditable div (not a <textarea>) so accepted
- * @mentions render as inline Badge chips right inside the text — matching
+ * @mentions render as inline Badge chips right inside the text, matching
  * the look of the DOS-source / mention pill. Chips are contenteditable=
  * "false" atoms: arrow keys jump over them, backspace at the boundary
  * removes the whole chip, and the composer serializes them back to
@@ -30,7 +29,7 @@ function handlePastePlainText(e) {
  *
  * Props:
  *  - onSubmit(text, mentions)
- *                    Fires on Comment. `text` is the serialized body —
+ *                    Fires on Comment. `text` is the serialized body,
  *                    mention chips become "@Name " tokens. `mentions` is the
  *                    structured list of chips actually left in the editor,
  *                    `[{ id, name }]`, where `id` is a profiles.id (null when
@@ -68,8 +67,8 @@ function serialize(root) {
 }
 
 // Build the DOM node for a mention chip. Rendering imperatively (rather
-// than via <Badge/>) keeps the chip out of React's reconciliation path —
-// which would otherwise fight the contenteditable's own DOM mutations —
+// than via <Badge/>) keeps the chip out of React's reconciliation path,
+// which would otherwise fight the contenteditable's own DOM mutations,
 // and lets us reuse Badge's CSS module classes for pixel-identical styling.
 //
 // The chip carries the picked profile id alongside the name. The id is the
@@ -120,7 +119,7 @@ function collectMentions(root) {
 // Detect the "@query" fragment before the caret inside the editor. Walks
 // the current selection's text node backwards to the last "@" and returns
 // { range, query } if that "@" is at start-of-input or preceded by
-// whitespace — otherwise null.
+// whitespace: otherwise null.
 function detectMention(editor) {
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount) return null;
@@ -175,14 +174,14 @@ export function CommentComposer({
   // comment" flow). Rendered into the contenteditable on mount with
   // `@Name` fragments re-hydrated into real mention chips so the
   // reader sees the same orange pill they saw in the read-only view.
-  // Later prop changes are ignored — this is a one-shot mount seed;
+  // Later prop changes are ignored: this is a one-shot mount seed;
   // key the component off the comment id if you want a fresh seed.
   initialValue,
   // Copy overrides for the Comment / Cancel actions, so the same
   // composer can label its primary CTA as "Save" in the edit flow.
   submitLabel,
   cancelLabel,
-  // Fires when the Cancel button is clicked — parent can use this to
+  // Fires when the Cancel button is clicked, parent can use this to
   // close the composer (e.g. leaving the "Edit comment" state).
   onCancel,
   // Optional mention roster ({ id, name, initials, roleLabel?, realProfile?,
@@ -201,31 +200,9 @@ export function CommentComposer({
   // ── Mention picker state ──────────────────────────────────────────────
   const [mention, setMention] = useState(null); // { range, query } | null
   const [mentionIdx, setMentionIdx] = useState(0);
-  const platformUsers = useAppStore(s => s.platformUsers);
-  const currentUserProfile = useAppStore(s => s.currentUserProfile);
-  const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
-  useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
-  // Fall back to the mock so the picker still renders before the fetch lands.
-  // Always include the signed-in user so someone can @-mention themselves
-  // (or write a note visible in their own Mentions tab). Deduped by id.
-  const users = useMemo(() => {
-    if (usersProp) return usersProp;
-    // `realProfile` marks entries whose `id` is an actual profiles.id, so
-    // createMentionChip knows which ids are safe to persist. platformUsers is
-    // read straight from `profiles`; SYSTEM_USERS is a fixture roster whose
-    // ids are not uuids and must never be stored as a mention target.
-    const hasReal = !!platformUsers?.length;
-    const base = hasReal
-      ? platformUsers.map(u => ({ ...u, realProfile: true }))
-      : SYSTEM_USERS;
-    if (!currentUserProfile?.name) return base;
-    if (base.some(u => u.id === currentUserProfile.id || u.name === currentUserProfile.name)) return base;
-    const initials = currentUserProfile.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    return [
-      { id: currentUserProfile.id, name: currentUserProfile.name, initials, role: currentUserProfile.role, source: 'self', realProfile: true },
-      ...base,
-    ];
-  }, [usersProp, platformUsers, currentUserProfile]);
+  const roster = useContext(MentionRoster);
+  useEffect(() => { if (!usersProp) roster.load?.(); }, [usersProp, roster]);
+  const users = useMemo(() => usersProp || roster.users || [], [usersProp, roster.users]);
   const matches = useMemo(() => {
     if (!mention) return [];
     const q = mention.query.toLowerCase();
@@ -255,7 +232,7 @@ export function CommentComposer({
     }
   }, [autoFocus, inStatusMode]);
 
-  // Seed the editor with `initialValue` on mount — split by mention
+  // Seed the editor with `initialValue` on mount: split by mention
   // regex, wrap `@Name` fragments in real chips so the edit view
   // matches the read-only rendering. Deliberately one-shot: later
   // prop changes are ignored (edit sessions get re-seeded by keying
@@ -265,7 +242,7 @@ export function CommentComposer({
     const editor = editorRef.current;
     // Re-hydrate against everyone we know, not just the pickable roster, so an
     // existing tag of someone outside the list survives an edit.
-    const known = [...users, ...(platformUsers || []).map(u => ({ ...u, realProfile: true }))];
+    const known = [...users, ...(roster.users || [])];
     if (!editor || !known.length) return;
     // Empty first so a re-mount with fresh initialValue doesn't stack.
     editor.innerHTML = '';
@@ -300,7 +277,7 @@ export function CommentComposer({
     setText(serialize(editor));
     setExpanded(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [users.length, platformUsers?.length]);
+  }, [users.length, roster.users?.length]);
 
   const refresh = useCallback(() => {
     const editor = editorRef.current;
@@ -360,7 +337,7 @@ export function CommentComposer({
   const submit = () => {
     const body = text.trim();
     if (!body) return;
-    // Second arg is additive — callers that only want the body ignore it.
+    // Second arg is additive: callers that only want the body ignore it.
     onSubmit?.(body, collectMentions(editorRef.current));
     resetEditor();
     setExpanded(false);
@@ -455,10 +432,10 @@ export function CommentComposer({
       )}
       {expanded && !hideActions && (
         <div className={styles.actions}>
-          <Button variant="primary" size="S" disabled={!text.trim()} onClick={submit}>
+          <Button size="sm" disabled={!text.trim()} onClick={submit}>
             {submitLabel || 'Comment'}
           </Button>
-          <Button variant="secondary" size="S" onClick={cancel}>
+          <Button variant="outline" size="sm" onClick={cancel}>
             {cancelLabel || 'Cancel'}
           </Button>
         </div>

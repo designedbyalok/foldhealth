@@ -1,4 +1,4 @@
-/* ── Row shell — white cells, 71px row height ── */
+/* ── Row shell: white cells, 71px row height ── */
 .row {
   border-bottom: 0.5px solid var(--neutral-150);
   transition: background var(--duration-instant) var(--ease-hover);
@@ -28,7 +28,7 @@
    changes routed through document.startViewTransition (see
    FilterChipBar.jsx) crossfade the row set instead of teleporting.
    The `root` snapshot animation is disabled so only this tbody area
-   participates — the sidebar / topbar / filters stay put. */
+   participates: the sidebar / topbar / filters stay put. */
 .tbody {
   view-transition-name: hcc-worklist-body;
 }
@@ -38,7 +38,7 @@
   animation-timing-function: var(--ease-out);
 }
 ::view-transition-old(hcc-worklist-body) {
-  /* Subtle blur mask on the outgoing state — hides the moment two row
+  /* Subtle blur mask on the outgoing state, hides the moment two row
      sets overlap during the crossfade so the swap reads as smooth
      rather than double-exposed. AUDIT calls out this exact pattern. */
   filter: blur(2px);
@@ -67,10 +67,10 @@
 .row:hover [class*="stickyLeft"],
 .row:hover [class*="stickyRight"] { background: var(--primary-25) !important; }
 
-/* Rejected record — a reviewer / QA / Compliance marked the DOS Rejected.
+/* Rejected record: a reviewer / QA / Compliance marked the DOS Rejected.
    The row is disabled: every interactive cell is muted and pointer-events
    are dropped so buttons don't fire. The only surviving action is the eye
-   ("View Diagnosis Gaps") in the sticky-right column — we opt it back in
+   ("View Diagnosis Gaps") in the sticky-right column: we opt it back in
    below. All text/icons drop to neutral-150 so the row reads "read-only." */
 .rowRejected > td,
 .rowRejected > td *,
@@ -78,7 +78,7 @@
 .rowRejected .patientNameLink { color: var(--neutral-150) !important; }
 .rowRejected svg { color: var(--neutral-150) !important; }
 /* Every action-column button (eye, Add DOS, ⋯) stays fully interactive
-   on rejected rows — even a rejected record needs to be inspected, have
+   on rejected rows: even a rejected record needs to be inspected, have
    DOS added, or the row menu opened. Restore the ActionButton icon tint
    so the sticky-right actions column reads as live, not greyed out. */
 .rowRejected .actionsRow button svg,
@@ -89,13 +89,13 @@
    inline color the StatusIcon already applies). */
 .rowRejected td[data-status="rejected"],
 .rowRejected td[data-status="rejected"] * { color: var(--neutral-300) !important; }
-/* The status icon stays in canonical error red — force it on the svg AND
+/* The status icon stays in canonical error red, force it on the svg AND
    its descendants (paths inherit fill from `currentColor`, which the
    `.rowRejected td[data-status="rejected"] *` rule above would otherwise
    drag back to neutral). */
 .rowRejected td[data-status="rejected"] svg,
 .rowRejected td[data-status="rejected"] svg * { color: var(--status-error) !important; }
-/* Read-only affordances survive on a rejected row — the reviewer still
+/* Read-only affordances survive on a rejected row, the reviewer still
    needs to inspect what got rejected. Every button inside the sticky-right
    actions column (eye, Add DOS, ⋯) stays fully interactive, along with
    the View More expander. Everything else in the row body drops
@@ -120,7 +120,7 @@
 .rowRejected:hover [class*="stickyLeft"],
 .rowRejected:hover [class*="stickyRight"] { background: var(--neutral-0) !important; }
 
-/* Billed record — same read-only treatment as .rowRejected but with a
+/* Billed record: same read-only treatment as .rowRejected but with a
    success-green feel. The DOS is post-billing and cannot be edited any
    more, but the row is a happy-path outcome (not a failure) so we keep
    the text at a live neutral-300 rather than the muted neutral-150 the
@@ -167,12 +167,12 @@
   border-left: 0.5px solid var(--neutral-150);
   z-index: 3;
 }
-/* Row-level sticky classes — scoped to <td> so the header row's own
+/* Row-level sticky classes: scoped to <td> so the header row's own
    .memberTh / .checkTh (which enforce the shared 32px header height)
    don't lose to the body padding on selector-specificity ties. */
 td.stickyCheck  { left: 0; padding: var(--space-2) calc(var(--space-3) - var(--space-1) / 2) !important; }
 /* Left padding trimmed from 12px to 4px so the patient avatar sits
-   closer to the selection column — same tightening shipped across
+   closer to the selection column: same tightening shipped across
    every worklist. */
 td.stickyMember { left: 36px; padding: var(--space-2) var(--space-3) var(--space-2) var(--space-1) !important; border-right: 0.5px solid var(--neutral-150); }
 /* Header cells still need the sticky offsets, but their padding + height
@@ -191,7 +191,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   vertical-align: top;
   padding: 0 !important;
 }
-/* Right bracket of the DOS group — full-height vertical divider after
+/* Right bracket of the DOS group, full-height vertical divider after
    POS (the left bracket is the Member column's own border-right). */
 .dosTdLast { border-right: 0.5px solid var(--neutral-150); }
 .dosStack {
@@ -200,7 +200,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
 }
 .dosStackItem {
   /* Bumped from 44px to 52px to accommodate the size="M" Badge (open-ICDs
-     count pill in the ICDs column) — the taller M badge was cramping the
+     count pill in the ICDs column), the taller M badge was cramping the
      row divider. Applied uniformly so every stacked DOS row stays aligned
      across columns. */
   min-height: 52px;
@@ -208,7 +208,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   display: flex;
   align-items: center;
 }
-/* Horizontal divider between stacked visits — spans the group because
+/* Horizontal divider between stacked visits: spans the group because
    every DOS-level column carries the same divider on adjacent tds. */
 .dosStackItem + .dosStackItem {
   border-top: 0.5px solid var(--neutral-150);
@@ -220,8 +220,8 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   align-items: center;
   gap: var(--space-1);
 }
-/* "Manually Added" chip — rendered on rows a QA / Compliance user created
-   via +ICD. Neutral tone, no border, tiny — sits inline next to the DOS
+/* "Manually Added" chip: rendered on rows a QA / Compliance user created
+   via +ICD. Neutral tone, no border, tiny, sits inline next to the DOS
    date so the row-owner sees the provenance at a glance. */
 .manualChip {
   display: inline-flex;
@@ -237,7 +237,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
-/* DOS source badge — subtle colour-coded circle (Paper 21UX): the letter
+/* DOS source badge: subtle colour-coded circle (Paper 21UX): the letter
    colours by source (M=manual/orange, C=Cozeva/purple, D=document/grey). */
 .dosSrcBadge {
   position: relative;
@@ -262,7 +262,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
 .dosSrcBadgeClickable { cursor: pointer; }
 .dosSrcBadgeClickable:hover { filter: brightness(0.97); }
 
-/* Hover tooltip — source of the encounter + its date. */
+/* Hover tooltip: source of the encounter + its date. */
 .dosSrcTip {
   position: fixed;
   z-index: 500;
@@ -275,7 +275,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   box-shadow: var(--shadow-popover);
   /* Interactive: the tooltip carries a clickable claim-number link, so it
      must accept the pointer. Previously locked to `none` when the tooltip
-     was purely informational — the hover-persist logic relies on this
+     was purely informational: the hover-persist logic relies on this
      picking up mouseenter to cancel the close timer. */
   pointer-events: auto;
   display: flex;
@@ -283,7 +283,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   gap: 2px;
 }
 /* Invisible hover-bridge across the 6px gap between the badge and the
-   tooltip — without it, moving the pointer straight down out of the
+   tooltip: without it, moving the pointer straight down out of the
    badge briefly hits the empty gap and closes the popover. */
 .dosSrcTip::before {
   content: '';
@@ -327,21 +327,21 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
 }
 
 /* Equal-height footer row inside the box across all 5 columns, divided
-   from the visits above by a hairline — keeps the box bottom aligned. */
+   from the visits above by a hairline, keeps the box bottom aligned. */
 .dosFooter {
-  min-height: 32px;
+  min-height: var(--space-6);
   display: flex;
   align-items: center;
   border-top: 0.5px solid var(--neutral-150);
 }
-/* "View More N ⌄" / "View Less ⌃" — lives in the DOS column's footer.
+/* "View More N ⌄" / "View Less ⌃", lives in the DOS column's footer.
    Neutral slate grey, matching the design (NOT purple). */
 .viewMoreBtn {
   display: inline-flex;
   align-items: center;
   gap: 3px;
   width: 100%;
-  padding: 6px 14px;
+  padding: var(--space-1) var(--space-3);
   background: none;
   border: none;
   cursor: pointer;
@@ -368,11 +368,11 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
 }
 .rowActive .stickyCheck { box-shadow: inset 2px 0 0 0 var(--primary-300); }
 
-/* ── Member cell — exact clone of TOC WorklistRow .patientCell ── */
+/* ── Member cell: exact clone of TOC WorklistRow .patientCell ── */
 .checkTd { vertical-align: middle; }
 .memberTd { vertical-align: middle; }
 
-/* Checkbox wrapper — matches the member identity block height (avatar +
+/* Checkbox wrapper: matches the member identity block height (avatar +
    name + meta) and centers the checkbox, so it aligns to the avatar's
    vertical center even when the cell top-aligns to the first DOS row of
    an expanded record. */
@@ -426,7 +426,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   transition: color .12s;
 }
 .foldId:hover { color: var(--primary-300); text-decoration: underline; }
-/* Plain text-link badge — sits inside .patientMeta. Grey by default, picks
+/* Plain text-link badge: sits inside .patientMeta. Grey by default, picks
    up the primary-300 underline on hover. Tooltip wrapper stays unchanged. */
 .langBadge {
   display: inline-flex;
@@ -472,7 +472,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   gap: 2px;
   min-width: 0;
   /* Fill the td so flex-start children always pin to the column's left
-     edge — without this, `<button>` shrinks to fit its widest child
+     edge: without this, `<button>` shrinks to fit its widest child
      (the status text), and the badge above visually shifts right or
      left depending on that text's width. */
   width: 100%;
@@ -490,7 +490,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
 }
 /* Cancel the S-badge's internal 4px padding-left so its icon lines up with
    the dot in the "All Passed" status row below. Without this the badge
-   sits 4px to the right of the status text — visually mis-aligned even
+   sits 4px to the right of the status text, visually mis-aligned even
    though both are technically flex-start. Also force align-self so the
    Badge component's own align-self:center doesn't win (which was letting
    the badge drift with the button width). */
@@ -502,7 +502,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   background: var(--neutral-50);
 }
 
-/* ── Last Visit cell — purple date + visits count ── */
+/* ── Last Visit cell: purple date + visits count ── */
 .lastVisitDate {
   font-size: var(--font-base);
   font-weight: 400;
@@ -535,7 +535,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   min-width: 0;
 }
 
-/* Date button — purple, no underline by default, no hover bg */
+/* Date button: purple, no underline by default, no hover bg */
 .lastVisitDateBtn {
   background: none;
   border: none;
@@ -547,7 +547,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   color: inherit;
 }
 
-/* Visits button — just a wrapper for the underlined "X of Y Visits" text */
+/* Visits button: just a wrapper for the underlined "X of Y Visits" text */
 .lastVisitVisitsBtn {
   background: none;
   border: none;
@@ -567,7 +567,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   text-underline-offset: 2px;
 }
 
-/* Non-claim variant — plain grey date (no button wrapper) */
+/* Non-claim variant: plain grey date (no button wrapper) */
 .lastVisitDateMuted {
   font-size: var(--font-base);
   font-weight: 400;
@@ -576,7 +576,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   white-space: nowrap;
 }
 
-/* ── Create Date cell — date + due line with clock icon ── */
+/* ── Create Date cell: date + due line with clock icon ── */
 .dateText {
   font-size: var(--font-base);
   color: var(--neutral-300);
@@ -592,7 +592,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   white-space: nowrap;
 }
 
-/* ── HCC Evidence cell — badge + status dot line ── */
+/* ── HCC Evidence cell: badge + status dot line ── */
 .evidenceBadge {
   display: inline-flex;
   align-items: center;
@@ -634,7 +634,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   color: var(--neutral-400);
 }
 
-/* ── Progress stepper (Figma) — 4 dots joined by connector lines. ── */
+/* ── Progress stepper (Figma): 4 dots joined by connector lines. ── */
 .progress {
   display: inline-flex;
   align-items: center;
@@ -672,7 +672,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   line-height: 1;
 }
 
-/* ── PCP cell — name + "+N More" pill. ── */
+/* ── PCP cell: name + "+N More" pill. ── */
 .pcpCell {
   display: flex;
   flex-direction: column;
@@ -733,7 +733,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   color: var(--primary-300);
 }
 
-/* ── Assign popover — portal-rendered list of candidate users. ── */
+/* ── Assign popover: portal-rendered list of candidate users. ── */
 .roleAssignMenu {
   position: fixed;
   z-index: 9999;
@@ -790,7 +790,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   color: var(--neutral-300);
   text-align: center;
 }
-/* Reassign trigger — an assigned, in-flight role cell that opens the picker. */
+/* Reassign trigger: an assigned, in-flight role cell that opens the picker. */
 .roleReassignTrigger {
   display: flex;
   flex-direction: column;
@@ -836,7 +836,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
 }
 .roleAssignItemActive { background: var(--primary-25); }
 
-/* ── RAF Impact badge — green with up arrow (or red with down) ── */
+/* ── RAF Impact badge: green with up arrow (or red with down) ── */
 .rafImpactBadge {
   display: inline-flex;
   align-items: center;
@@ -877,14 +877,14 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
-  /* Names only (specialty stripped) — cap so the Rendering Provider column
+  /* Names only (specialty stripped): cap so the Rendering Provider column
      stays narrow and long names ellipsize. */
   max-width: 150px;
 }
 .numText { font-variant-numeric: tabular-nums; }
 .muted { color: var(--neutral-200); }
 
-/* Empty (no-open-gaps) row — compact height, dashes centered.
+/* Empty (no-open-gaps) row: compact height, dashes centered.
    Overrides the primary row's `vertical-align: top` + 64px min-height. */
 .emptyRow > td {
   vertical-align: middle;
@@ -900,7 +900,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   vertical-align: middle;
 }
 
-/* Just-added row — the patient that was just recorded via the Add DOS
+/* Just-added row: the patient that was just recorded via the Add DOS
    drawer. Slides down from -8px into place while flashing a soft primary
    tint, then settles into the normal row look after ~700ms. Keyed off
    `justAddedHccMemberId` in the store so exactly one row runs the animation
@@ -921,14 +921,14 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   100% { background: var(--neutral-0); }
 }
 
-/* ── Column widths (match Figma frame 11436:432705 — Table Middle List) ── */
+/* ── Column widths (match Figma frame 11436:432705, Table Middle List) ── */
 .colMember      { min-width: 240px; }
 .colLastVisit   { min-width: 100px; }
 .colOpen        { min-width: 90px; }
 .colVt          { min-width: 72px; }
 .colDate        { min-width: 110px; }
 
-/* Visit Type — plain text (AWV / IPPE / TCM / HCC), per Figma 4680:138476. */
+/* Visit Type: plain text (AWV / IPPE / TCM / HCC), per Figma 4680:138476. */
 .vtText {
   font: 400 14px/1.2 'Inter', sans-serif;
   color: var(--neutral-300);
@@ -945,7 +945,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   gap: var(--space-1);
 }
 
-/* Assignee cell — Avatar + 2-line stack (name on top, current role below).
+/* Assignee cell: Avatar + 2-line stack (name on top, current role below).
    Mirrors the Member cell's typography so the column reads as a person. */
 .assigneeCell {
   display: flex;
@@ -975,7 +975,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   white-space: nowrap;
 }
 
-/* Variant 2 — current bucket has no assignee yet ("Awaiting Reviewer 2").
+/* Variant 2: current bucket has no assignee yet ("Awaiting Reviewer 2").
    Hollow circle in the avatar slot, muted name text. Sized to match the
    provider Avatar (32×32) so unassigned and assigned rows align visually. */
 .unassignedSlot {
@@ -998,7 +998,7 @@ th.stickyMember { left: 36px; border-right: 0.5px solid var(--neutral-150); }
   text-overflow: ellipsis;
 }
 
-/* Variant 3 — every stage completed, DOS is now in Billing. Green check
+/* Variant 3: every stage completed, DOS is now in Billing. Green check
    chip in the avatar slot. */
 .billingBadge {
   display: inline-flex;

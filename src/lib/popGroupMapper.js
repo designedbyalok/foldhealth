@@ -35,7 +35,7 @@ export function popGroupJsToDb(g) {
     member_ids: g.memberIds || [],
     active_count: g.count ?? 0,
     inactive_count: g.inactive ?? 0,
-    // Only written when the caller supplies it — an unconditional null here
+    // Only written when the caller supplies it, an unconditional null here
     // would wipe a Dynamic group's rule every time the edit drawer saves
     // name/description (it doesn't know about rules).
     ...('rule' in g ? { rule: g.rule } : {}),

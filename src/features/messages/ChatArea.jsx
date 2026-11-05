@@ -84,24 +84,28 @@ export function ChatArea({ currentUser, otherUser, onConversationUpdate }) {
   useEffect(() => {
     channelRef.current?.unsubscribe();
     const key = `dm-${[currentUser.id, otherUser.id].sort().join('-')}`;
+    const onInsert = (payload) => {
+      const msg = payload.new;
+      const relevant =
+        (msg.sender_id === currentUser.id && msg.recipient_id === otherUser.id) ||
+        (msg.sender_id === otherUser.id   && msg.recipient_id === currentUser.id);
+      if (!relevant) return;
+      setMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg]);
+      if (msg.recipient_id === currentUser.id) {
+        supabase.from('direct_messages').update({ read_at: new Date().toISOString() }).eq('id', msg.id)
+          .then(() => onUpdateRef.current?.());
+      }
+      scrollToBottom(false);
+    };
     channelRef.current = supabase
       .channel(key)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, (payload) => {
+      // Filtered to this user's rows, so Realtime doesn't check every message
+      // in the system against RLS. One binding per side of the conversation.
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `recipient_id=eq.${currentUser.id}` }, onInsert)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `sender_id=eq.${currentUser.id}` }, onInsert)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'direct_messages', filter: `sender_id=eq.${currentUser.id}` }, (payload) => {
         const msg = payload.new;
-        const relevant =
-          (msg.sender_id === currentUser.id && msg.recipient_id === otherUser.id) ||
-          (msg.sender_id === otherUser.id   && msg.recipient_id === currentUser.id);
-        if (!relevant) return;
-        setMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg]);
-        if (msg.recipient_id === currentUser.id) {
-          supabase.from('direct_messages').update({ read_at: new Date().toISOString() }).eq('id', msg.id)
-            .then(() => onUpdateRef.current?.());
-        }
-        scrollToBottom(false);
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'direct_messages' }, (payload) => {
-        const msg = payload.new;
-        if (msg.sender_id === currentUser.id && msg.read_at) {
+        if (msg.read_at) {
           setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, read_at: msg.read_at } : m));
         }
       })

@@ -70,8 +70,8 @@ export function TemplatePickerDrawer({ recipient, sender, currentId, onPick, onC
       <div className={styles.pickerBar}>
         <FilterChip label="Category" options={categoryOptions} selected={categories} onChange={setCategories} />
         <span className={styles.pickerDivider} />
-        <ActionButton icon="solar:widget-4-linear" size="S" tooltip="Grid" onClick={() => setView('grid')} />
-        <ActionButton icon="solar:list-linear" size="S" tooltip="List" onClick={() => setView('list')} />
+        <ActionButton icon="solar:widget-4-linear" size="sm" tooltip="Grid" onClick={() => setView('grid')} />
+        <ActionButton icon="solar:list-linear" size="sm" tooltip="List" onClick={() => setView('list')} />
         <div className={styles.pickerSearch}>
           <SearchBar placeholder="Search Template" value={query} onChange={e => setQuery(e.target.value)} onClose={() => setQuery('')} />
         </div>
@@ -98,7 +98,7 @@ export function TemplatePickerDrawer({ recipient, sender, currentId, onPick, onC
       ) : (
         <div className={styles.split}>
           <div className={styles.listCol}>
-            <Button variant="secondary" size="L" leadingIcon="solar:magic-stick-3-linear" fullWidth onClick={scratch}>Start from Scratch</Button>
+            <Button variant="outline" leadingIcon="solar:magic-stick-3-linear" fullWidth onClick={scratch}>Start from Scratch</Button>
             <div className={styles.list}>
               {shown.length === 0 && <div className={styles.pickerEmpty}>No templates match</div>}
               {shown.map(t => (
@@ -118,7 +118,7 @@ export function TemplatePickerDrawer({ recipient, sender, currentId, onPick, onC
             <div className={styles.previewCol}>
               <div className={styles.previewHead}>
                 <span className={styles.previewName}>{active.name}</span>
-                <Button variant="primary" size="L" onClick={() => pick(active)}>Use Template</Button>
+                <Button onClick={() => pick(active)}>Use Template</Button>
               </div>
               <div className={styles.previewBody}>
                 <Input label="Subject Line" required value={active.subject} readOnly />

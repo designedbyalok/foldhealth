@@ -1,4 +1,4 @@
--- SNP sample care plan (patient snpw-001, Annette Brave — T2DM + Hypertension).
+-- SNP sample care plan (patient snpw-001, Annette Brave, T2DM + Hypertension).
 -- A clinically vetted, customer-ready demo: distinct non-overlapping goals with
 -- structured targets, real reading histories (current value + trend), varied
 -- progress/priority/status, interventions assigned to real platform users with

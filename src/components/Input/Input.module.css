@@ -37,7 +37,7 @@
 .input::placeholder {
   color: var(--placeholder-text);
   font-weight: 400;
-  /* Chrome/Firefox default `::placeholder` to opacity: 0.55 — force full so
+  /* Chrome/Firefox default `::placeholder` to opacity: 0.55, force full so
      the token color hits the pixel we picked. */
   opacity: 1;
 }
@@ -69,7 +69,7 @@
   box-shadow: 0 0 0 2px var(--status-error-light);
 }
 
-/* ── Shell path — used whenever any slot / label / helper is present ── */
+/* ── Shell path: used whenever any slot / label / helper is present ── */
 
 .shell {
   height: 32px;
@@ -113,7 +113,7 @@
   background: var(--neutral-50);
 }
 
-/* The <input> inside .shell is borderless — the shell owns the visuals. */
+/* The <input> inside .shell is borderless, the shell owns the visuals. */
 .inputBorderless {
   flex: 1 1 auto;
   min-width: 0;
@@ -138,7 +138,7 @@
 .inputBorderless::placeholder {
   color: var(--placeholder-text);
   font-weight: 400;
-  /* Chrome/Firefox default `::placeholder` to opacity: 0.55 — force full so
+  /* Chrome/Firefox default `::placeholder` to opacity: 0.55, force full so
      the token color hits the pixel we picked. */
   opacity: 1;
 }
@@ -202,7 +202,7 @@
   flex-shrink: 0;
 }
 
-/* Unit segment — breaks out of `.shell`'s 8px padding and gap so it sits
+/* Unit segment: breaks out of `.shell`'s 8px padding and gap so it sits
    flush against the right edge, with its own divider and fill. */
 .trailingTextSegment {
   align-self: stretch;
@@ -281,7 +281,7 @@
 }
 
 /* The trailing button pill is a shared <Button variant="tertiary" size="S">
-   rendered inside the shell — this class only keeps it from stretching in
+   rendered inside the shell: this class only keeps it from stretching in
    the flex row. All chrome (bg, border, hover, focus) comes from Button. */
 .trailingButtonSlot {
   flex-shrink: 0;
@@ -325,7 +325,7 @@
   cursor: help;
 }
 
-/* Required indicator — Figma spec uses a 4×4 red dot to the right of the
+/* Required indicator: Figma spec uses a 4×4 red dot to the right of the
    label text, not an asterisk glyph. Kept `aria-hidden` since `required`
    is already forwarded to the underlying <input> for assistive tech. */
 .required {
@@ -350,10 +350,20 @@
   color: var(--status-error);
 }
 
-/* variant="quiet": reads as plain text in dense tables (inline-editable
+/* variant="ghost": reads as plain text in dense tables (inline-editable
    cells) and shows the field chrome only on hover / focus. */
-.inputQuiet:not(:hover):not(:focus),
-.shellQuiet:not(:hover):not(:focus-within) {
+.inputGhost:not(:hover):not(:focus),
+.shellGhost:not(:hover):not(:focus-within) {
   border-color: transparent;
   background: transparent;
+}
+
+/* size="sm": 28px, for filter rows and dense toolbars (matches Toggle sm). */
+.input.sizeSm,
+.shell.sizeSm {
+  height: 28px;
+  font-size: var(--font-md);
+}
+.sizeSm .inputBorderless {
+  font-size: var(--font-md);
 }

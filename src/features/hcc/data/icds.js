@@ -1,4 +1,4 @@
-// HCC ICD data — ported verbatim from /Users/alokk/Downloads/HCC/hcc_worklist_v2.tsx
+// HCC ICD data: ported verbatim from /Users/alokk/Downloads/HCC/hcc_worklist_v2.tsx
 // (ICD_DATA lines 175–357, NOT_LINKED_DATA lines 358–422). Keyed by member.name.
 // Members not in this map have no ICD data; the DiagPanel shows an empty state.
 
@@ -190,7 +190,7 @@ export const ICDS = {
 // member so every patient has related ICDs. Multi-DOS association is handled
 // downstream (DiagPanel spreads each ICD across the member's dos_list).
 
-// FNV-1a string hash — stable, so a member always gets the same generated set.
+// FNV-1a string hash: stable, so a member always gets the same generated set.
 function hashStr(s) {
   let h = 2166136261;
   for (let i = 0; i < String(s).length; i++) {
@@ -358,7 +358,7 @@ export const NOT_LINKED = {
 export const getNotLinkedForMember = (name) =>
   NOT_LINKED[name] || (name ? generateNotLinkedForMember(name) : []);
 
-// Single source of truth for "open ICDs" — the worklist count badge AND the
+// Single source of truth for "open ICDs", the worklist count badge AND the
 // hover popover both use this so they can never disagree. Open = not yet
 // Accepted or Dismissed. AI-suggested (Suspect/Recapture) linked ICDs are
 // grouped with the genuinely unlinked ones, matching the popover's sections.

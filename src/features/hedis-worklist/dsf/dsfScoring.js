@@ -104,7 +104,7 @@ export function computeDsfbDueDateISO({ dsfaSavedAt, dsfbGap } = {}) {
   return plus30(new Date());
 }
 
-// Human-readable band label — matches the scoring reference's
+// Human-readable band label: matches the scoring reference's
 // vocabulary exactly (Minimal / None, Mild, Moderate, Severe) so the
 // interpretation Badge reads the same as the clinical worksheet.
 export function phq9BandLabel(branch) {

@@ -3,7 +3,7 @@ import { FilePreview } from '../../../../../../../../components/FilePreview/File
 import styles from './ProgramDocPreviewDrawer.module.css';
 
 /**
- * ProgramDocPreviewDrawer — read-only preview for a Program Documents PDF/
+ * ProgramDocPreviewDrawer: read-only preview for a Program Documents PDF/
  * DOCX upload. Mirrors LetterPreviewDrawer's shell exactly (right-side
  * Drawer, "Preview <Thing>" + "Name: …" subtitle, full-bleed FilePreview) so
  * document previews look and behave the same everywhere in the app.

@@ -16,8 +16,8 @@ function UnassignedAssignTrigger({ role, memberId, dosDate }) {
       trigger={({ ref, onClick }) => (
         <RoleTooltip
           name="Unassigned"
-          role={`Awaiting ${ROLE_LABEL[role] || role} — click to assign`}
-          initials="—"
+          role={`Awaiting ${ROLE_LABEL[role] || role}: click to assign`}
+          initials="-"
           variant="staff"
         >
           <AssigneeChange
@@ -36,13 +36,13 @@ function UnassignedAssignTrigger({ role, memberId, dosDate }) {
 export function AssigneeAvatar({ member, dosState, currentDos, locked = false, billed = false }) {
   const a = resolveCurrentAssignee(member, dosState);
   if (!a) return null;
-  // Post-billing terminal state — same lock semantics as rejected but a
+  // Post-billing terminal state: same lock semantics as rejected but a
   // green Billed chip in place of the greyed assignee tile.
   if (billed || a.kind === 'billed') {
     return (
       <RoleTooltip name="Billed" role="Record submitted & billed" initials="$" variant="staff">
         <span
-          title="Billed — record is read-only"
+          title="Billed: record is read-only"
           style={{
             width: 24, height: 24, borderRadius: 6,
             background: 'var(--status-success-light)',
@@ -60,7 +60,7 @@ export function AssigneeAvatar({ member, dosState, currentDos, locked = false, b
     if (locked) {
       return (
         <span
-          title="Rejected — assignee is locked"
+          title="Rejected: assignee is locked"
           style={{
             width: 24, height: 24, borderRadius: 6,
             border: '1px dashed var(--neutral-200)',
@@ -104,7 +104,7 @@ export function AssigneeAvatar({ member, dosState, currentDos, locked = false, b
         variant="staff"
       >
         <span
-          title={`${a.name} — assignee locked (record Rejected)`}
+          title={`${a.name}, assignee locked (record Rejected)`}
           style={{
             width: 24, height: 24, borderRadius: 6,
             background: 'var(--secondary-100)', border: '0.5px solid var(--secondary-200)',
@@ -134,7 +134,7 @@ export function AssigneeAvatar({ member, dosState, currentDos, locked = false, b
           variant="staff"
         >
           {/* `name`/`role` intentionally omitted on AssigneeChange so its
-              internal avatar-only tooltip stays quiet — the wrapping
+              internal avatar-only tooltip stays quiet: the wrapping
               RoleTooltip already carries the hover card, and firing both
               would render two tips over the same trigger. */}
           <AssigneeChange

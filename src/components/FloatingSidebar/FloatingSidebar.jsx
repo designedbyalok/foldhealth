@@ -23,28 +23,28 @@ import styles from './FloatingSidebar.module.css';
  * reach for when there's an always-on sub-nav next to it.
  *
  * Props:
- *   - `items` — top-level rail items. `{ key, icon, filledIcon?, label,
+ *   - `items`, top-level rail items. `{ key, icon, filledIcon?, label,
  *       shortcut?, badge? }`. Required: `key` (identity), `icon` (Solar
  *       `*-linear` name), `label` (tooltip + a11y name). `filledIcon` paints
  *       the active tile; falls back to `icon`. `shortcut` renders in the
  *       hover tooltip (e.g. '⌘1'); omit for items with no shortcut.
- *   - `activeKey` / `onNavigate(key, item)` — controlled selection for the rail.
- *   - `bottomItems` — same shape as `items`, pinned to the rail's bottom.
- *   - `logo` — slot for the brand mark. Pass a custom node to override;
+ *   - `activeKey` / `onNavigate(key, item)`, controlled selection for the rail.
+ *   - `bottomItems`, same shape as `items`, pinned to the rail's bottom.
+ *   - `logo`, slot for the brand mark. Pass a custom node to override;
  *       omit to render the default Omni-style Fold mark (Figma 1256:45238).
- *   - `sections` / `activeSubKey` / `onSubSelect(key, item)` — forwarded straight
+ *   - `sections` / `activeSubKey` / `onSubSelect(key, item)`, forwarded straight
  *       to `<SideNav>`. Same shape, same semantics: pass the sub-nav the
  *       feature needs.
- *   - `searchable` (default true) — show the search input above the sections.
+ *   - `searchable` (default true): show the search input above the sections.
  *       `searchPlaceholder` / `searchValue` / `onSearchChange` let the caller
  *       control it; uncontrolled by default so the Storybook demos stay simple.
- *   - `showSubNav` (default true) — hide the right panel for icon-only mode.
- *   - `subPanel` — overrides the built-in search + sections sub-panel. Pass
+ *   - `showSubNav` (default true): hide the right panel for icon-only mode.
+ *   - `subPanel`, overrides the built-in search + sections sub-panel. Pass
  *       any node (e.g. the live `<SubNav />` so the floating variant shares
  *       exactly the same section data as the standard layout). When set,
  *       `sections` / `activeSubKey` / `onSubSelect` / `searchable` are
  *       ignored.
- *   - `width` (default 240) — total panel width when the sub-nav is on. The
+ *   - `width` (default 240): total panel width when the sub-nav is on. The
  *       rail stays 52px; the sub-nav takes the rest (minimum 160px).
  */
 export function FloatingSidebar({

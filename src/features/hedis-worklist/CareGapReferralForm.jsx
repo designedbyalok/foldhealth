@@ -9,6 +9,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { ProviderSelect } from '../../components/ProviderSelect/ProviderSelect';
 import { DocumentPickerDrawer } from '../../components/DocumentPickerDrawer/DocumentPickerDrawer';
 import { EmailComposer } from '../../components/EmailComposer/EmailComposer';
+import { UnityAIBar } from '../../components/UnityAIBar/UnityAIBar';
 import { REFERRAL_CHANNELS, MEDICAL_SPECIALTIES, CUSTOM_SENDER, isEmail, providerContact } from './useCareGapReferralForm';
 import styles from './CareGapReferralForm.module.css';
 
@@ -90,7 +91,7 @@ export function CareGapReferralForm({
           ...(values.channel === 'email' ? [{ value: CUSTOM_SENDER, label: '+ Custom Email' }] : []),
         ]}
         value={values.senderId}
-        onChange={set('senderId')}
+        onValueChange={set('senderId')}
         placeholder={values.channel === 'efax' && !channelSenders.length ? 'No eFax number linked to you' : 'Select'}
         helperText={values.channel === 'efax' && !channelSenders.length
           ? 'Ask an admin to link you to an eFax number in Settings > Messages > eFax.'
@@ -151,7 +152,7 @@ export function CareGapReferralForm({
                   <Icon name="solar:file-linear" size={18} color="var(--neutral-400)" />
                   <span className={styles.fileName}>{d.name}</span>
                   <span className={styles.fileSize}>From Documents</span>
-                  <ActionButton icon="solar:trash-bin-2-linear" size="S" tooltip="Remove" onClick={() => removeDoc(d.id)} />
+                  <ActionButton icon="solar:trash-bin-2-linear" size="sm" tooltip="Remove" onClick={() => removeDoc(d.id)} />
                 </li>
               ))}
               {values.files.map((f, i) => (
@@ -159,7 +160,7 @@ export function CareGapReferralForm({
                   <Icon name="custom:pdf-file" size={18} color="var(--neutral-400)" />
                   <span className={styles.fileName}>{f.name}</span>
                   <span className={styles.fileSize}>{formatBytes(f.size)}</span>
-                  <ActionButton icon="solar:trash-bin-2-linear" size="S" tooltip="Remove" onClick={() => removeFile(i)} />
+                  <ActionButton icon="solar:trash-bin-2-linear" size="sm" tooltip="Remove" onClick={() => removeFile(i)} />
                 </li>
               ))}
             </ul>
@@ -179,7 +180,7 @@ export function CareGapReferralForm({
           mandatory
           rows={3}
           value={values.reason}
-          onChange={set('reason')}
+          onValueChange={set('reason')}
           placeholder="Enter Reason"
         />
         </>
@@ -195,8 +196,7 @@ export function CareGapReferralForm({
             body={values.emailBody}
             onBodyChange={set('emailBody')}
             bodyRequired
-            onGenerate={onGenerateEmail}
-            generating={generatingEmail}
+            assistant={<UnityAIBar onGenerate={onGenerateEmail} generating={generatingEmail} />}
             signature={emailSignature}
             // The member the referral is about rides along in CC.
             cc={ccMember?.name ? [{ key: String(ccMember.id || ccMember.name), name: ccMember.name, initials: ccMember.initials, role: 'Member' }] : []}
@@ -224,7 +224,7 @@ export function CareGapReferralForm({
           title="Note"
           rows={3}
           value={values.note}
-          onChange={set('note')}
+          onValueChange={set('note')}
           placeholder="Add a note for the provider"
         />
       ) : (

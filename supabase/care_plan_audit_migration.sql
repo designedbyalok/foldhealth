@@ -1,20 +1,20 @@
--- Care Plan audit — an append-only trail of everything that happens to a
+-- Care Plan audit: an append-only trail of everything that happens to a
 -- patient's care plan: goal/intervention created, edited, status-changed,
 -- removed, and each share (roadmap #9). Feeds the History timeline.
 --
 -- THE HOLE THIS CLOSES
 -- Care plan changes left no trace. A goal's status could flip, a goal could be
--- removed, the plan could be shared to the EHR — and none of it was recoverable
+-- removed, the plan could be shared to the EHR, and none of it was recoverable
 -- or visible after the fact. Clinical care plans need a change trail; this is
 -- that trail, at the program level (and, unioned across programs, the patient
 -- level).
 --
 -- WHAT THIS DOES
---   care_plan_audit — one immutable row per event. entity_type + entity_id say
+--   care_plan_audit: one immutable row per event. entity_type + entity_id say
 --   what changed (a goal / intervention / share / the plan); action says how
 --   (created / updated / status_changed / deleted / shared); summary is the
 --   human line (usually the title) and detail carries the specifics (e.g.
---   "Not Started -> Met"). No updates or deletes are expected — it is a log.
+--   "Not Started -> Met"). No updates or deletes are expected, it is a log.
 --
 -- RLS
 -- Per RLS_POSTURE.md: on, wide open to `authenticated`, closed to `anon`.

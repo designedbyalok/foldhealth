@@ -53,7 +53,8 @@
   color: var(--neutral-200);
   pointer-events: none;
 }
-.editor a { color: var(--status-info); text-decoration: underline; }
+/* Same link look as SMS message boxes (Textarea highlightLinks). */
+.editor a { color: var(--status-info-dark, var(--status-info)); text-decoration: underline; text-underline-offset: 2px; }
 .editor img { max-width: 100%; }
 .editor p { margin: 0 0 var(--space-2); }
 

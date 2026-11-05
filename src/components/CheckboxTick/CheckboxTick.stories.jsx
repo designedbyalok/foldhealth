@@ -8,7 +8,7 @@ export default {
     docs: {
       description: {
         component:
-          'The *look* of a checkbox with none of the behaviour — decorative and always `aria-hidden`. Use it inside a control that already owns the interaction (a menu-item `<button role="menuitemcheckbox">`, a `role="checkbox"` row). A real `<input type="checkbox">` in that position nests one control inside another, which is invalid HTML and leaves the inner box unlabelled. The enclosing control must carry `aria-checked`; this only paints the state.',
+          'The *look* of a checkbox with none of the behaviour, decorative and always `aria-hidden`. Use it inside a control that already owns the interaction (a menu-item `<button role="menuitemcheckbox">`, a `role="checkbox"` row). A real `<input type="checkbox">` in that position nests one control inside another, which is invalid HTML and leaves the inner box unlabelled. The enclosing control must carry `aria-checked`; this only paints the state.',
       },
     },
   },

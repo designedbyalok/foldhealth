@@ -40,7 +40,7 @@ const fromIso = (iso) => {
   return m ? `${m[2]}/${m[3]}/${m[1]}` : '';
 };
 
-// Demo extraction payload — mirrors Figma 4687:127406 so the post-upload
+// Demo extraction payload: mirrors Figma 4687:127406 so the post-upload
 // state looks like the design (real integration would call the OCR
 // pipeline and populate these from the model's field-level output).
 const DEMO_EXTRACTION = {
@@ -68,7 +68,7 @@ function tier(score) {
   return score >= 85 ? 'high' : score >= 60 ? 'medium' : 'low';
 }
 
-// Confidence gauge + citation trigger — the small arc meter + % that sits
+// Confidence gauge + citation trigger: the small arc meter + % that sits
 // next to each auto-filled field's label. Clicking cites the source doc.
 function ConfGauge({ score, onCite }) {
   if (typeof score !== 'number') return null;
@@ -86,7 +86,7 @@ function ConfGauge({ score, onCite }) {
   );
 }
 
-// Orange "M" chip — shown in place of the AI confidence gauge once the user
+// Orange "M" chip: shown in place of the AI confidence gauge once the user
 // manually sets or overrides a field (Figma Task Drawer, node 6OC).
 function ManualBadge() {
   return (
@@ -112,7 +112,7 @@ function FieldRow({ label, required, confidence, manual, onCite, children, error
 }
 
 /**
- * Source-document viewer — slides in on the LEFT of the drawer (Figma Task
+ * Source-document viewer: slides in on the LEFT of the drawer (Figma Task
  * Drawer 5IX): dark PDF-style chrome with a toolbar (filename, page count,
  * zoom, download/print) over a white rendered page. The eye action and the
  * confidence gauges open it; ICD citations highlight the matching line.
@@ -170,7 +170,7 @@ function DocViewerPanel({ extracted, highlightCode, onClose }) {
             <ul className={styles.sheetIcds}>
               {extracted.icds.map(icd => (
                 <li key={icd.code} className={icd.code === highlightCode ? styles.sheetHl : undefined}>
-                  <strong>{icd.code}</strong> — {icd.desc} <span className={styles.sheetHcc}>({icd.hcc})</span>
+                  <strong>{icd.code}</strong>, {icd.desc} <span className={styles.sheetHcc}>({icd.hcc})</span>
                 </li>
               ))}
             </ul>
@@ -184,7 +184,7 @@ function DocViewerPanel({ extracted, highlightCode, onClose }) {
 }
 
 /**
- * In-flight upload/extract card — matches the Upload-process states in
+ * In-flight upload/extract card: matches the Upload-process states in
  * Figma (3D6): file row + `{size} • {status}` with a spinner, a green
  * progress bar, and an X to cancel. Renders in place of the dropzone
  * while the document is being processed, then hands off to the extracted
@@ -235,7 +235,7 @@ function DosBlock({ block, providerOptions, onChange, onRemove }) {
   const cite = (code = null) => setPreview({ code });
 
   const manual = block.manual || {};
-  // Mark a field as manually entered/overridden as the user edits it —
+  // Mark a field as manually entered/overridden as the user edits it,
   // its gauge flips to the M chip (only meaningful once extraction ran).
   const setField = (name, value) =>
     onChange({ ...block, [name]: value, manual: { ...manual, [name]: true } });
@@ -265,7 +265,7 @@ function DosBlock({ block, providerOptions, onChange, onRemove }) {
       const t = setTimeout(() => setProc(p => (p ? { ...p, phase: 'extracting', progress: 0 } : p)), 350);
       return () => clearTimeout(t);
     }
-    // Extraction complete — populate the block and drop the processing card.
+    // Extraction complete: populate the block and drop the processing card.
     const fileName = proc.name;
     const t = setTimeout(() => {
       setProc(null);
@@ -291,8 +291,15 @@ function DosBlock({ block, providerOptions, onChange, onRemove }) {
           <Icon name="solar:alt-arrow-right-linear" size={16} color="var(--neutral-400)" />
           <span className={styles.dosBlockTitle}>DOS: {block.dos || '-'}</span>
           {complete
-            ? <Badge size="M" variant="status-ready" icon="solar:check-circle-linear" label="Ready" />
-            : <Badge size="M" variant="status-review" icon="solar:hourglass-line-linear" label="Not Ready" />}
+            ? <Badge
+                size="md"
+                tone="success"
+                icon="solar:check-circle-linear"
+                label="Ready"
+                // A brighter green than the success tone, kept from the old status-ready look.
+                style={{ color: 'var(--status-success-bright)', borderColor: 'color-mix(in srgb, var(--status-success-bright) 20%, transparent)' }}
+              />
+            : <Badge size="md" tone="warning" icon="solar:hourglass-line-linear" label="Not Ready" />}
         </div>
         <button type="button" className={styles.trashBtn} onClick={onRemove} aria-label="Remove DOS">
           <Icon name="solar:trash-bin-trash-linear" size={16} color="var(--neutral-300)" />
@@ -372,7 +379,7 @@ function DosBlock({ block, providerOptions, onChange, onRemove }) {
             placeholder="Select Rendering Provider"
             searchable
             searchPlaceholder="Search team members…"
-            onChange={(v) => setField('provider', v)}
+            onValueChange={(v) => setField('provider', v)}
           />
         </FieldRow>
         <FieldRow
@@ -388,7 +395,7 @@ function DosBlock({ block, providerOptions, onChange, onRemove }) {
             placeholder="Select Place of Service"
             searchable
             searchPlaceholder="Search POS code or name…"
-            onChange={(v) => setField('pos', v)}
+            onValueChange={(v) => setField('pos', v)}
           />
         </FieldRow>
         <FieldRow
@@ -400,7 +407,7 @@ function DosBlock({ block, providerOptions, onChange, onRemove }) {
           error={extracted && !block.docType}
           hint={extracted && !block.docType ? extracted.docTypeHint : null}
         >
-          <Select options={DOC_TYPE_OPTIONS} value={block.docType || ''} placeholder="Select Document Type" onChange={(v) => setField('docType', v)} variant={extracted && !block.docType ? 'error' : 'default'} />
+          <Select options={DOC_TYPE_OPTIONS} value={block.docType || ''} placeholder="Select Document Type" onValueChange={(v) => setField('docType', v)} invalid={extracted && !block.docType} />
         </FieldRow>
       </div>
 
@@ -463,7 +470,7 @@ export function HccAddDosDrawer() {
 
   if (!member) return null;
 
-  // Every mandatory field must be present — including at least one ICD, so a
+  // Every mandatory field must be present, including at least one ICD, so a
   // worklist record is never created with a zero ICD count.
   const canSave = blocks.some(b => b.file && b.dos && b.provider && b.pos && b.docType && (b.icds?.length > 0));
 
@@ -487,7 +494,7 @@ export function HccAddDosDrawer() {
 
   const headerRight = (
     <>
-      <Button variant="primary" size="S" disabled={!canSave} onClick={doSave}>Save</Button>
+      <Button size="sm" disabled={!canSave} onClick={doSave}>Save</Button>
       <span className={styles.headerDivider} />
     </>
   );

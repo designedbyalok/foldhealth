@@ -22,9 +22,9 @@ export function LoginOAuthSection({ loading, onOAuthLogin, onBypass }) {
         </div>
       </div>
 
-      {onBypass && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+      {onBypass && import.meta.env.DEV && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
         <button className={styles.bypassLink} onClick={onBypass}>
-          Dev Login — Fold Demo
+          Dev Login: Fold Demo
         </button>
       )}
     </>

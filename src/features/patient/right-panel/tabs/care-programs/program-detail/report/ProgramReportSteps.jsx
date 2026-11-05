@@ -19,7 +19,7 @@ function StepRow({ step, on, onToggle, onFocus }) {
   return (
     <div className={styles.cardRow} onPointerDownCapture={onFocus}>
       <span className={styles.rowText}>{step.name}</span>
-      <Badge size="S" tone={badge.tone} label={badge.label} />
+      <Badge size="sm" tone={badge.tone} label={badge.label} />
       <Switch checked={on} onChange={onToggle} ariaLabel={`Include ${step.name}`} />
     </div>
   );
@@ -45,7 +45,7 @@ export function ProgramReportSteps({
           portal
           options={RANGE_PRESETS.map(p => ({ ...p, triggerLabel: p.value === 'custom' && customRange.length === 2 ? `Custom: ${rangeLabel}` : p.label }))}
           value={rangePreset}
-          onChange={(v) => { onRangePreset(v); if (v === 'custom') openCustom(); }}
+          onValueChange={(v) => { onRangePreset(v); if (v === 'custom') openCustom(); }}
         />
         <span className={styles.coverHint}>
           {rangeLabel}. Steps print what happened in this range.

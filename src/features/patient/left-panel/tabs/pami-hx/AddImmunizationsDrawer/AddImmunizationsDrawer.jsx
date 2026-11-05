@@ -11,12 +11,12 @@ import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIc
 import { CloseIcon } from '../../../../../../components/Icon/CloseIcon';
 import { AddIconMinimalist } from '../../../../../../components/Icon/AddIconMinimalist';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { toast } from '../../../../../../components/Toast/sonnerToast';
 import { ImmunizationSelect } from './ImmunizationSelect';
 import { todayIso, toIsoDate, formatClinicalDate } from '../../../../../../lib/clinicalDates';
-import { Collapse } from '../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import styles from '../AddProblemsDrawer/AddProblemsDrawer.module.css';
 
 // An immunization is either part of the current schedule or a finished
@@ -66,24 +66,24 @@ function ImmunizationRow({ immunization, onStatusChange, onEdit, dimmed }) {
           portal
           options={STATUS_OPTIONS}
           value={immunization.status || 'Active'}
-          onChange={v => onStatusChange(immunization, v)}
+          onValueChange={v => onStatusChange(immunization, v)}
           className={styles.statusSelect}
         />
         <span className={styles.rowDivider} aria-hidden="true" />
         <ActionButton
           icon="solar:pen-linear"
-          size="S"
+          size="sm"
           tooltip="Edit"
           aria-label={`Edit ${immunization.title}`}
           onClick={() => onEdit(immunization)}
         />
       </div>
       {immunization.note && (
-        <Collapse open={noteOpen}>
+        <CollapsibleContent open={noteOpen}>
           <p className={styles.rowNote}>
             <span className={styles.rowNoteLabel}>Note:</span> {immunization.note}
           </p>
-        </Collapse>
+        </CollapsibleContent>
       )}
     </div>
   );
@@ -138,7 +138,7 @@ function ImmunizationDraft({ title, eyebrow, initial, onSave, onCancel }) {
           onChange={e => setAdministered(e.target.value)}
           errorText={administeredInFuture ? 'Date administered cannot be in the future' : undefined}
         />
-        <Select portal label="Status" required options={STATUS_OPTIONS} value={status} onChange={setStatus} />
+        <Select portal label="Status" required options={STATUS_OPTIONS} value={status} onValueChange={setStatus} />
         <Input
           label="Dose Quantity"
           value={doseQuantity}
@@ -162,7 +162,7 @@ function ImmunizationDraft({ title, eyebrow, initial, onSave, onCancel }) {
         <div className={styles.draftNote}>
           <div className={styles.draftNoteHead}>
             <span className={styles.draftNoteLabel}>Note</span>
-            <ActionButton size="S" tooltip="Discard note" aria-label="Discard note" onClick={() => { setNote(''); setNoteOpen(false); }}>
+            <ActionButton size="sm" tooltip="Discard note" aria-label="Discard note" onClick={() => { setNote(''); setNoteOpen(false); }}>
               <CloseIcon size={14} color="var(--neutral-300)" />
             </ActionButton>
           </div>
@@ -170,9 +170,9 @@ function ImmunizationDraft({ title, eyebrow, initial, onSave, onCancel }) {
         </div>
       )}
       <div className={styles.draftActions}>
-        <Button variant="secondary" size="M" onClick={onCancel}>Cancel</Button>
+        <Button variant="outline" onClick={onCancel}>Cancel</Button>
         <span className={styles.draftDivider} aria-hidden="true" />
-        <Button variant="primary" size="M" disabled={!canSave || saving} onClick={save}>Save</Button>
+        <Button disabled={!canSave || saving} onClick={save}>Save</Button>
       </div>
     </div>
   );
@@ -188,7 +188,7 @@ const Section = forwardRef(function Section({ title, count, open, onToggle, chil
         aria-expanded={open}
       >
         <span className={styles.sectionTitle}>{title}</span>
-        {count > 0 && <Badge tone="grey" size="S" label={String(count)} className={styles.countBadge} />}
+        {count > 0 && <Badge size="sm" label={String(count)} className={styles.countBadge} />}
         <DownChevronIcon size={14} className={open ? styles.chevron : styles.chevronClosed} />
       </button>
       <div className={[styles.sectionBody, open ? styles.sectionBodyOpen : ''].filter(Boolean).join(' ')}>
@@ -199,7 +199,7 @@ const Section = forwardRef(function Section({ title, count, open, onToggle, chil
 });
 
 /**
- * Add Immunizations — the PAMI/Hx immunization list, editable in place.
+ * Add Immunizations: the PAMI/Hx immunization list, editable in place.
  * Vaccines are picked from CVX, so each row carries its code.
  *
  * @param {string} props.patientId
@@ -336,7 +336,7 @@ export function AddImmunizationsDrawer({ patientId, focus, onClose }) {
             >
               {active.length === 0 ? (
                 <div className={styles.emptyCard}>
-                  <RingEmptyState icon="solar:syringe-linear" label="No Active Immunizations" iconSize={31} />
+                  <EmptyState icon="solar:syringe-linear" title="No Active Immunizations" iconSize={31} />
                 </div>
               ) : active.map(i => renderRow(i))}
             </Section>

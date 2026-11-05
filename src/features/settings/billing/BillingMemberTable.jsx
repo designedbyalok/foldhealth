@@ -1,7 +1,7 @@
 import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { formatDos, initialsOf, money } from './careProgramBillingData';
 import styles from './CareProgramBilling.module.css';
 
@@ -41,7 +41,7 @@ export function BillingMemberTable({ rows, loading, onView, embedded = false }) 
         minTableWidth={columns.reduce((n, c) => n + c.width, 0)}
         emptyState={(
           <div className={styles.empty}>
-            <RingEmptyState icon="solar:bill-list-linear" label="No members match these filters" />
+            <EmptyState icon="solar:bill-list-linear" title="No members match these filters" />
           </div>
         )}
         renderRow={(r) => (
@@ -66,7 +66,7 @@ export function BillingMemberTable({ rows, loading, onView, embedded = false }) 
             </td>
             {onView && (
               <td className={`${styles.td} ${styles.stickyRight} ${styles.actionTd}`}>
-                <ActionButton icon="solar:eye-linear" size="L" tooltip="View billing details" tooltipLeft onClick={() => onView(r)} />
+                <ActionButton icon="solar:eye-linear" tooltip="View billing details" tooltipLeft onClick={() => onView(r)} />
               </td>
             )}
           </tr>

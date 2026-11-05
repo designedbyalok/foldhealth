@@ -15,22 +15,22 @@ function resolvePresetTree(preset) {
 }
 
 /**
- * LivePreview — renders a header/footer preset as a small thumbnail using
+ * LivePreview: renders a header/footer preset as a small thumbnail using
  * the same HTML renderer (patchEmailHtml.renderEmailHtml) the production
  * email export uses. Output is dropped into a sandboxed iframe via srcdoc
  * and CSS-scaled down so it fits in `width`. Auto-measures the rendered
  * body height after the iframe loads so the wrapper hugs the content.
  *
  * Going through the HTML renderer (rather than @usewaypoint/email-builder's
- * Reader) means all custom block types — NavBar, Social, Table — render
+ * Reader) means all custom block types, NavBar, Social, Table, render
  * correctly. Reader on its own throws on those because it only knows the
  * default set.
  *
  * Props:
- *  - preset (object) — built-in or user preset
- *  - width  (number) — final visible width in px; default 240
- *  - sourceWidth (number) — email canvas width the iframe renders at; default 600
- *  - fluid (boolean) — when true and the container is narrower than sourceWidth,
+ *  - preset (object): built-in or user preset
+ *  - width  (number): final visible width in px; default 240
+ *  - sourceWidth (number): email canvas width the iframe renders at; default 600
+ *  - fluid (boolean): when true and the container is narrower than sourceWidth,
  *    render the iframe at the real width so the email's own responsive CSS
  *    reflows (genuine mobile layout) instead of scaling a 600px design down.
  */
@@ -115,7 +115,7 @@ export function PresetLivePreview({ preset, width, sourceWidth = 600, fontFamily
       <iframe
         ref={iframeRef}
         title="Preset preview"
-        // allow-same-origin only — lets the parent measure body.scrollHeight
+        // allow-same-origin only: lets the parent measure body.scrollHeight
         // to size the wrapper. Without allow-scripts the email HTML still
         // can't execute any script content it may contain.
         sandbox="allow-same-origin"

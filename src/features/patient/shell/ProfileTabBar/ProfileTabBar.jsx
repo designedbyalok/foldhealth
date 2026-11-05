@@ -1,12 +1,13 @@
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
-import { OverflowTabStrip } from '../../../../components/TabStrip/OverflowTabStrip';
+import { OverflowTabs } from '../../../../components/Tabs/OverflowTabs';
 import { PROFILE_TABS } from '../../data/programActivityMock';
 import { SidebarCollapseHint } from './SidebarCollapseHint';
 import styles from './ProfileTabBar.module.css';
 
 const TAB_ITEMS = PROFILE_TABS.map(tab => ({ key: tab, label: tab }));
 
-export function ProfileTabBar({ activeTab, onTabChange, leftCollapsed = false, onToggleLeft, extraTabs }) {
+// `actions`: controls for the active tab (Overview's Customize), pinned right.
+export function ProfileTabBar({ activeTab, onTabChange, leftCollapsed = false, onToggleLeft, extraTabs, actions }) {
   // When the left panel is collapsed its tabs flow into this bar, leading the
   // primary tabs so the order reads left-panel first (Gaps → PAMI/Hx →
   // Vitals/Labs → …), then the right-panel tabs.
@@ -18,7 +19,7 @@ export function ProfileTabBar({ activeTab, onTabChange, leftCollapsed = false, o
       <SidebarCollapseHint enabled={!leftCollapsed}>
         <ActionButton
           icon="solar:sidebar-minimalistic-linear"
-          size="S"
+          size="sm"
           active
           aria-label={leftCollapsed ? 'Expand panel' : 'Collapse panel'}
           className={[leftCollapsed ? styles.sidebarFlipped : '', styles.sidebarToggle].filter(Boolean).join(' ')}
@@ -27,12 +28,18 @@ export function ProfileTabBar({ activeTab, onTabChange, leftCollapsed = false, o
       </SidebarCollapseHint>
       <span className={styles.divider} />
       <div className={styles.tabsArea}>
-        <OverflowTabStrip
+        <OverflowTabs
           items={items}
-          activeKey={activeTab}
-          onChange={onTabChange}
+          value={activeTab}
+          onValueChange={onTabChange}
         />
       </div>
+      {actions && (
+        <>
+          <span className={styles.divider} />
+          <div className={styles.actions}>{actions}</div>
+        </>
+      )}
     </div>
   );
 }

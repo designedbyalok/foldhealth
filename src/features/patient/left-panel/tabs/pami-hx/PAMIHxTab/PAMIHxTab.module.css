@@ -76,64 +76,18 @@
   border-bottom: 0.5px solid var(--neutral-100);
 }
 
-/* ── Column header ──
-   The header carries no padding of its own: each heading is padded like the
-   cell it labels, so headings and values share one vertical line. */
-.colHeader {
-  display: flex;
-  align-items: center;
-  height: 32px;
-  border-bottom: 0.5px solid var(--neutral-150);
-}
-
-.colName {
-  flex: 1;
-  padding-left: var(--space-2);
-  font-size: var(--font-base);
-  font-weight: 500;
-  color: var(--neutral-300);
-}
-
-.colStatus {
-  width: 100px;
-  flex-shrink: 0;
-  padding: 0 var(--space-2);
-  font-size: var(--font-base);
-  font-weight: 500;
-  color: var(--neutral-300);
-}
-
-.colActions {
-  width: 40px;
-  flex-shrink: 0;
-}
-
-/* ── Data row ── */
+/* ── Data row ──
+   Sits on ProfileTable's row class (divider, hover tint); this only adds the
+   pointer and the hook the hover-revealed actions key off. */
 .row {
-  display: flex;
-  align-items: center;
-  border-bottom: 0.5px solid var(--neutral-100);
   cursor: pointer;
-  transition: background 0.1s;
 }
-
-.row:last-child {
-  border-bottom: none;
-}
-
-.row:hover {
-  background: var(--primary-25);
-}
-
 
 /* ── Name cell ── */
 .nameCell {
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 8px 12px 8px 8px;
 }
 
 .name {
@@ -161,17 +115,9 @@
   line-height: 1.2;
 }
 
-/* Holds the actions column open on rows that have no menu, so every section's
-   Status column lands on the same vertical line. */
-.actionsSpacer {
-  width: 40px;
-  flex-shrink: 0;
-}
-
 .moreBtn {
   display: flex;
   align-items: center;
-  padding: 8px;
   flex-shrink: 0;
   opacity: 0;
   transition: opacity 0.1s;
@@ -182,16 +128,6 @@
 .historyRow:hover .moreBtn,
 .historyRow:focus-within .moreBtn {
   opacity: 1;
-}
-
-/* ── Status cell ── */
-.statusCell {
-  width: 100px;
-  flex-shrink: 0;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  align-self: stretch;
 }
 
 .statusActive {
@@ -240,14 +176,6 @@
 }
 
 /* ── Clinical event action ── */
-.eventAction {
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  align-self: stretch;
-  flex-shrink: 0;
-}
-
 .actionLink {
   background: none;
   border: none;
@@ -262,17 +190,23 @@
 }
 
 /* ── Report sections ── */
+.actionsTd { text-align: right; }
+
+/* Sort / Filter and View / Download sit flush right, under the section's
+   + button: they pull back over the cell's right padding. */
 .reportColActions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  margin-right: calc(var(--space-3) * -1);
   gap: 2px;
-  padding-right: var(--space-2);
 }
 
 .reportActionsCell {
   display: flex;
   align-items: center;
-  padding: 8px;
+  justify-content: flex-end;
+  margin-right: calc(var(--space-3) * -1);
   flex-shrink: 0;
   gap: 2px;
   opacity: 0;
@@ -322,7 +256,7 @@
 .historySubTitle {
   flex: 1;
   font-size: var(--font-base);
-  font-weight: 400;
+  font-weight: 500;
   color: var(--neutral-300);
 }
 

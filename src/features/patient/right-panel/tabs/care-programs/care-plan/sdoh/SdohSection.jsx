@@ -11,7 +11,7 @@ import {
 } from '../lib/sdohTaxonomy';
 import styles from './SdohSection.module.css';
 
-const REFERRAL_TONE = { Draft: 'grey', Sent: 'info', Accepted: 'warning', Completed: 'success', Declined: 'error' };
+const REFERRAL_TONE = { Draft: 'neutral', Sent: 'info', Accepted: 'warning', Completed: 'success', Declined: 'danger' };
 
 /**
  * Social Needs (SDOH): the six domains with the needs recorded under each.
@@ -83,9 +83,9 @@ export function SdohSection({
             <div className={styles.domainHead}>
               <Icon name={domain.icon} size={16} color="var(--neutral-400)" />
               <span className={styles.domainLabel}>{domain.label}</span>
-              {needs.length > 0 && <Badge tone="grey" size="XS" label={String(needs.length)} />}
+              {needs.length > 0 && <Badge size="xs" label={String(needs.length)} />}
               {onAddNeed && (
-                <ActionButton size="S" tooltip={`Add ${domain.label.toLowerCase()} need`} onClick={e => open('add', e, { domain })}>
+                <ActionButton size="sm" tooltip={`Add ${domain.label.toLowerCase()} need`} onClick={e => open('add', e, { domain })}>
                   <AddIconMinimalist size={16} color="var(--neutral-300)" />
                 </ActionButton>
               )}
@@ -112,24 +112,24 @@ export function SdohSection({
                           const canMenu = (mode === 'plan' && onReferralStatus) || onRemoveReferral;
                           return canMenu ? (
                             <button key={r.id || r.title} type="button" className={styles.referralBtn} onClick={e => open('referral', e, { referral: r })}>
-                              <Badge tone={mode === 'plan' ? REFERRAL_TONE[st] || 'grey' : 'primary'} size="S" icon={p?.icon} label={label} chevron />
+                              <Badge tone={mode === 'plan' ? REFERRAL_TONE[st] || 'neutral' : 'primary'} size="sm" icon={p?.icon} label={label} chevron />
                             </button>
                           ) : (
-                            <Badge key={r.id || r.title} tone={mode === 'plan' ? REFERRAL_TONE[st] || 'grey' : 'primary'} size="S" icon={p?.icon} label={label} />
+                            <Badge key={r.id || r.title} tone={mode === 'plan' ? REFERRAL_TONE[st] || 'neutral' : 'primary'} size="sm" icon={p?.icon} label={label} />
                           );
                         })}
                         {onRefer && (
-                          <ActionButton size="S" icon="solar:share-circle-linear" tooltip={mode === 'template' ? 'Suggest a referral' : 'Refer to a community partner'} onClick={e => open('refer', e, { barrier: b })} />
+                          <ActionButton size="sm" icon="solar:share-circle-linear" tooltip={mode === 'template' ? 'Suggest a referral' : 'Refer to a community partner'} onClick={e => open('refer', e, { barrier: b })} />
                         )}
                         {mode === 'plan' && (
                           <GbiStatusButton
-                            value={b.status || 'Not Started'}
+                            value={b.status || 'Not Started'} reason={b.statusReason}
                             disabled={!onStatusMenu}
                             onOpen={rect => onStatusMenu?.({ kind: 'barrier', item: b, rect })}
                           />
                         )}
                         {onRemoveNeed && (
-                          <ActionButton size="S" icon="solar:trash-bin-trash-linear" tooltip="Remove need" onClick={() => onRemoveNeed(b)} />
+                          <ActionButton size="sm" icon="solar:trash-bin-trash-linear" tooltip="Remove need" onClick={() => onRemoveNeed(b)} />
                         )}
                       </span>
                     </li>

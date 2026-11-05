@@ -23,6 +23,13 @@
   line-height: 1.2;
   color: var(--neutral-200);
 }
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
 .labelInfo {
   flex-shrink: 0;
   cursor: help;
@@ -48,7 +55,7 @@
   color: var(--status-error);
 }
 
-/* Trigger — mirrors Input's `.input` spec: 32px, 0.5px --neutral-200
+/* Trigger: mirrors Input's `.input` spec: 32px, 0.5px --neutral-200
    border, 4px radius. Hover + focus + open all flip the border to
    --primary-300 and paint a solid 2px --primary-100 ring via box-shadow. */
 .trigger {
@@ -112,7 +119,7 @@
   pointer-events: none;
 }
 
-/* Ghost variant — no border/ring; only a subtle hover/open background. */
+/* Ghost variant: no border/ring; only a subtle hover/open background. */
 .triggerGhost {
   border-color: transparent;
   background: transparent;
@@ -125,7 +132,7 @@
   box-shadow: none;
 }
 
-/* Error variant — red border, and hover/focus/open paint a 2px
+/* Error variant: red border, and hover/focus/open paint a 2px
    --status-error-light ring (matches Input's error hover state). */
 .triggerError,
 .triggerError:hover,
@@ -159,7 +166,6 @@
 }
 .chevronOpen { transform: rotate(180deg); }
 
-
 .menu {
   position: absolute;
   top: calc(100% + 4px);
@@ -185,7 +191,7 @@
 }
 @media (prefers-reduced-motion: reduce) { .menu { animation: none; } }
 
-/* Portaled variant — lives on document.body, so it's positioned against the
+/* Portaled variant: lives on document.body, so it's positioned against the
    viewport from the trigger's measured rect instead of its wrapper. Lets the
    menu escape a clipping scroll container (e.g. a horizontally-scrolling
    table). Coordinates come from inline styles set by the component. */
@@ -204,7 +210,7 @@
   overscroll-behavior: contain;
 }
 
-/* Flip-up variant — used when the trigger is near the bottom of the
+/* Flip-up variant: used when the trigger is near the bottom of the
    viewport and opening downward would clip. Pinned above the trigger. */
 .menuTop {
   top: auto;
@@ -217,83 +223,7 @@
   min-width: 100%;
 }
 
-/* Searchable variant — sticky filter input pinned to the top of the menu. */
-.emptyOption {
-  padding: 10px 12px;
-  font-size: var(--font-md);
-  color: var(--neutral-300);
-  text-align: center;
-}
-
-.item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: var(--font-md);
-  color: var(--neutral-400);
-  line-height: 1.3;
-  outline: none;
-  white-space: nowrap;
-}
-/* 4px between rows, so neighbouring selected (tinted, outlined) rows read
-   as separate items instead of one block. */
-.item + .item { margin-top: var(--space-1); }
-/* An option with an icon: icon and label together, filling the row. */
-.itemLabel {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-}
-
-/* Non-interactive section header — pinned inside the menu to label a
-   group of options that follow it. Callers pass options of shape
-   `{ type: 'header', label, value }` to render this variant. */
-.groupHeader {
-  padding: 8px 10px 4px;
-  margin-top: 4px;
-  font-size: var(--font-xs);
-  font-weight: 500;
-  color: var(--neutral-300);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  border-top: 0.5px solid var(--neutral-100);
-  cursor: default;
-  user-select: none;
-}
-.groupHeader:first-child {
-  margin-top: 0;
-  border-top: none;
-}
-
-.item:hover,
-.item:focus { background: var(--primary-50); color: var(--primary-400, #5020A0); }
-
-.itemActive {
-  background: var(--primary-50);
-  color: var(--primary-400, #5020A0);
-  /* Hairline stroke on the current pick so the selected row is
-     legible even when the menu opens on the same primary-50 tint the
-     hover state uses; inset so the border doesn't shift the row's
-     padding. */
-  box-shadow: inset 0 0 0 0.5px var(--primary-200);
-}
-
-.itemDisabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.itemDisabled:hover { background: transparent; }
-
-/* Checkbox rows lead with the control, so the label must sit next to it —
-   `.item`'s default `space-between` (built for label → trailing check) would
-   push every label to the right edge. */
-/* Badge summary in the trigger — one line only; anything past the edge is
+/* Badge summary in the trigger: one line only; anything past the edge is
    collapsed into a "+N" badge by the measuring effect. */
 .triggerBadges {
   position: relative;
@@ -310,7 +240,11 @@
   flex-shrink: 0;
   white-space: nowrap;
 }
-/* Off-screen mirror of the full badge set — measured for widths, never seen. */
+/* The first chip may shrink and ellipsize rather than fold into "+N". */
+.triggerBadges > .badgeShrink { flex-shrink: 1; min-width: 0; max-width: 100%; }
+.badgeText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Off-screen mirror of the full badge set, measured for widths, never seen. */
 .triggerBadgesMeasure {
   position: absolute;
   top: 0;
@@ -322,12 +256,30 @@
   white-space: nowrap;
 }
 
-.itemWithCheckbox {
-  justify-content: flex-start;
+/* Open multi-pick with chips: one line, the chip row (with its "+N") takes
+   what the search input leaves. */
+.triggerBadgesOpen {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+  height: 100%;
 }
-/* Row checkbox for `multiple` + `checkboxes` — purely a state indicator; the
-   row handles the click, so it must not swallow pointer events. */
-.itemCheckbox {
-  pointer-events: none;
-  flex-shrink: 0;
+.triggerBadgesOpenRow {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+.triggerInputInline {
+  flex: 0 0 6rem;
+  min-width: 0;
+  width: 6rem;
+}
+
+/* size="sm": 28px, for filter rows and dense toolbars (matches Toggle sm). */
+.triggerSm {
+  height: 28px;
+  font-size: var(--font-md);
 }

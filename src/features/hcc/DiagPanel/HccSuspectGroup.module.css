@@ -1,4 +1,4 @@
-/* SuspectCard — one card per AI suspect / recapture ICD (Paper 1WXT; suspect
+/* SuspectCard: one card per AI suspect / recapture ICD (Paper 1WXT; suspect
    row states from Figma ICD-Import 4278-67296). Rendered flat under
    "Suspects and Recaptures" (no per-HCC section header). */
 
@@ -12,7 +12,7 @@
   gap: 8px;
 }
 
-/* Bulk-select mode — bulk actions only apply to associated ICD cards, so
+/* Bulk-select mode: bulk actions only apply to associated ICD cards, so
    Suspect / Recapture cards go inert: dimmed, and pointer-events: none
    silences every inner control (combobox, DOS picker, counters, actions)
    in one rule. */
@@ -169,7 +169,7 @@
 .moreBtn:hover:not(:disabled) { background: var(--neutral-50); }
 .moreBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Missed Opportunity + Dismiss — icon-only, matched to the ICD-card
+/* Missed Opportunity + Dismiss: icon-only, matched to the ICD-card
    Accept/Reject shape so both action clusters read as one system. */
 .missedBtn,
 .dismissBtn {
@@ -237,7 +237,7 @@
 }
 .moreItem:hover { background: var(--neutral-50); }
 
-/* ── ICD combobox dropdown (portaled) — in-dropdown search + list ── */
+/* ── ICD combobox dropdown (portaled): in-dropdown search + list ── */
 .comboOverlay {
   position: fixed;
   inset: 0;
@@ -309,7 +309,7 @@
 .comboCheck { margin-left: auto; flex-shrink: 0; display: inline-flex; }
 .comboStatus { padding: 12px 8px; text-align: center; font-size: var(--font-md); color: var(--neutral-200); }
 
-/* ── DOS dropdown (portaled) — date + Provider/POS per encounter ── */
+/* ── DOS dropdown (portaled): date + Provider/POS per encounter ── */
 .dosOverlay {
   position: fixed;
   inset: 0;

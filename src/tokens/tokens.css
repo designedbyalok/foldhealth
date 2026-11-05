@@ -6,7 +6,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 :root {
-  /* Primary — WCAG AA (4.5:1 on white) enforced on 300. */
+  /* Primary: WCAG AA (4.5:1 on white) enforced on 300. */
   --primary-500: #1A0647;
   --primary-400: #5020A0;
   --primary-300: #7E4CD9;
@@ -15,16 +15,16 @@
   --primary-50:  #FCFAFF;
   --primary-25:  #FDFDFF;
 
-  /* Secondary (orange). Do NOT put white text on `--secondary-300` — pair it
+  /* Secondary (orange). Do NOT put white text on `--secondary-300`, pair it
      with dark text (e.g. `--neutral-500`) so contrast passes AA. For orange
      text on the `-light` surface, use `--secondary-300-fg`. */
   --secondary-300:    #F47A3E;
-  --secondary-300-fg: #A94B1B;  /* darker orange — text-on-light-surface, passes AA */
+  --secondary-300-fg: #A94B1B;  /* darker orange, text-on-light-surface, passes AA */
   --secondary-200: #FBCEB7;
   --secondary-100: #FEEEE7;
   --secondary-50:  #FFF8F5;
 
-  /* Neutral — 200/300 darkened so they pass AA as body text on white AND on
+  /* Neutral: 200/300 darkened so they pass AA as body text on white AND on
      `--neutral-50` (the app's default surface). 200 stays 1 step lighter
      than 300 to preserve the hierarchy for secondary/hint text. */
   --neutral-500: #16181D;
@@ -34,7 +34,7 @@
   /* Figma "Grey/200" (#8A94A8). Codebase's --neutral-200 was intentionally
      darkened for AA body-text contrast, but placeholder/hint text is
      allowed to sit at a lower ratio per WCAG. Use this token when the
-     Figma spec calls for the lighter grey — inputs use it for the
+     Figma spec calls for the lighter grey, inputs use it for the
      placeholder color at node 25:21239. */
   --placeholder-text: #8A94A8;
   --neutral-150: #D0D6E1;
@@ -43,8 +43,11 @@
   --neutral-50:  #F6F7F8;
   --neutral-25:  #FAFAFA;
   --neutral-0:   #FFFFFF;
+  /* Text on a filled brand or status color. Not redeclared under dark
+     themes, so it stays white where --neutral-0 turns dark. */
+  --on-color:    #FFFFFF;
 
-  /* Status — success darkened so it passes AA on the `-light` surface.
+  /* Status: success darkened so it passes AA on the `-light` surface.
      `--status-warning` stays brand-accurate; pair it with dark text
      (e.g. `--neutral-500`), not white. */
   --status-error:         #D72825;
@@ -59,7 +62,7 @@
   --status-info:          #145ECC;
   --status-info-light:    #F4F8FE;
 
-  /* Status — bright variant (presence indicators, badges over neutral surfaces) */
+  /* Status: bright variant (presence indicators, badges over neutral surfaces) */
   --status-success-bright: #087040;
 
   /* Agent column */
@@ -73,6 +76,7 @@
   --shadow-bulk-bar: 4px 15px 60px 24px rgba(0, 0, 0, 0.15);
   /* Fold Pixel tooltip shadow (e.g. Figma 2941:74217): tight halo + soft drop. */
   --shadow-tooltip: 0 0 6px rgba(0, 0, 0, 0.1), 0 12px 12px rgba(0, 0, 0, 0.1);
+  --shadow-tooltip-raised: 0 0 8px rgba(0, 0, 0, 0.1), 0 16px 32px rgba(0, 0, 0, 0.16);
   /* Something waiting on an answer (CCM timer's inactivity reminder): a
      higher lift with a soft red glow (--status-error-dark, #D72825). */
   --shadow-alert:   0 24px 56px -12px rgba(215, 40, 37, 0.28), 0 8px 20px -6px rgba(215, 40, 37, 0.18);
@@ -84,7 +88,7 @@
   --surface-overlay-subtle: rgba(0, 0, 0, 0.05);
   /* Heavier scrim for full-bleed media viewers (image/PDF preview) */
   --surface-overlay-heavy: rgba(0, 0, 0, 0.80);
-  /* Media viewer chrome — deliberately NOT theme-relative (unlike --neutral-*,
+  /* Media viewer chrome: deliberately NOT theme-relative (unlike --neutral-*,
      which inverts under dark theme). A lightbox-style toolbar stays dark
      regardless of app theme, the way it does in most media viewers. Not
      redeclared under [data-theme="dark"] below, so the value holds there too. */
@@ -92,10 +96,10 @@
   --media-viewer-chrome-hover: #2A2A2D;
   --media-viewer-chrome-fg:    #FFFFFF;
 
-  /* Sidebar — default chrome (dark purple). Per-theme variants below
+  /* Sidebar: default chrome (dark purple). Per-theme variants below
      retint via Blue/Plum blocks. The light-nav opt-in toggle (set via
      `data-nav-style="light"` at the document root) overrides this block
-     across all themes — see the bottom of this file. */
+     across all themes: see the bottom of this file. */
   /* 3-tone scale: chrome (primary-500) → active pill (primary-300) →
      active hover (primary-400). The hover state deepens the pill one
      step darker rather than blending a translucent overlay, so the
@@ -111,7 +115,7 @@
   --sidebar-logo:                  #FFFFFF;
   --sidebar-border:                transparent;
 
-  /* Chart Colors — ordered data-point palette for visualizations */
+  /* Chart Colors: ordered data-point palette for visualizations */
   --chart-1:  #80A4D5;
   --chart-2:  #BFD7F6;
   --chart-3:  #8DE3D4;
@@ -125,13 +129,13 @@
   --chart-11: #DCE3BF;
   --chart-12: #F7EBAC;
 
-  /* Accent Dark — versatile hues for tags, schedules, categorical UI */
+  /* Accent Dark: versatile hues for tags, schedules, categorical UI */
   --accent-blue-grey:    #607D8B;
   --accent-brown:        #795548;
   --accent-amber:        #EEB200;
   --accent-light-green:  #8BC34A;
   --accent-teal:         #009688;
-  /* AI gradient — the teal→violet ramp used by AIIcon and "Write with AI". */
+  /* AI gradient: the teal→violet ramp used by AIIcon and "Write with AI". */
   --ai-gradient-from:    #1E9DAE;
   --ai-gradient-to:      #D478FF;
   /* Fold Pixel "Accent Dark/AI Color" (8834:163): AI borders, text and icons.
@@ -140,7 +144,7 @@
   --ai-gradient-text:    linear-gradient(188deg, var(--ai-gradient-from) 0.27%, var(--ai-gradient-to) 102.44%);
   /* Fold Pixel "Accent Light/AI Color" (8834:164): AI surfaces. */
   --ai-gradient-light:   linear-gradient(238deg, #D2EBEF 0.27%, #F5E4FE 102.44%);
-  /* Unity gradient — the coral→pink→blue brand ramp on Unity surfaces
+  /* Unity gradient: the coral→pink→blue brand ramp on Unity surfaces
      (e.g. the Unity name in Patient Synopsis). */
   --unity-gradient-from: #FF907F;
   --unity-gradient-mid:  #FF57CD;
@@ -153,7 +157,7 @@
   --accent-magenta:      #ED36D5; /* Out of Office (Figma Eventus 17581:115194) */
   --accent-green:        #0E8F5B; /* Holidays on the calendar (emerald; white text stays readable) */
 
-  /* Accent Light — soft background shades for tags, chips, tinted surfaces */
+  /* Accent Light: soft background shades for tags, chips, tinted surfaces */
   --accent-light-blue-grey:    #EFF2F3;
   --accent-light-brown:        #F2EEED;
   --accent-light-amber:        #FDF7E5;
@@ -180,16 +184,16 @@
    Naming mirrors common DS conventions (2xs → 4xl). The scale
    is informed by Apple HIG Dynamic Type + Material Design 3,
    tuned for data-dense healthcare tables:
-     2xs  = 10px — micro labels (sparingly)
-     xs   = 11px — captions, timestamps
-     sm   = 12px — secondary text, table metadata
-     md   = 13px — compact body (table cells)
-     base = 14px — default body for dense UI
-     lg   = 16px — prominent body, form labels
-     xl   = 18px — section subheadings
-     2xl  = 20px — page subheadings
-     3xl  = 24px — page headings
-     4xl  = 32px — display / hero text
+     2xs  = 10px: micro labels (sparingly)
+     xs   = 11px: captions, timestamps
+     sm   = 12px: secondary text, table metadata
+     md   = 13px: compact body (table cells)
+     base = 14px: default body for dense UI
+     lg   = 16px: prominent body, form labels
+     xl   = 18px: section subheadings
+     2xl  = 20px: page subheadings
+     3xl  = 24px: page headings
+     4xl  = 32px: display / hero text
    ═══════════════════════════════════════════════════════════ */
 :root {
   --font-2xs:  0.625rem;   /* 10px */
@@ -212,7 +216,7 @@
    Spacing tokens (4px grid)
    Every spacing value must be a multiple of 4. Use these for
    padding, margin, and gap. Never hand-pick a px value for
-   spacing — reach for a token.
+   spacing: reach for a token.
    ═══════════════════════════════════════════════════════════ */
 :root {
   --space-1:  0.25rem;   /*  4px */
@@ -240,14 +244,14 @@
 
      viewport   root     --font-base
      ─────────  ───────  ───────────
-     ≤1600px    16px     14px      (unchanged — no regression)
+     ≤1600px    16px     14px      (unchanged: no regression)
       1920px    16.4px   14.4px
       2560px    17.3px   15.1px
      ≥3840px    19px     16.6px    (capped)
 
    Why viewport width, and not devicePixelRatio: a CSS px is
    already density-independent, so DPR says nothing about how
-   big text *looks* — 14px is the same physical size on a 2x
+   big text *looks*: 14px is the same physical size on a 2x
    Retina panel as on a 1x panel of equal CSS width. Two things
    do vary, and width tracks both:
 
@@ -259,7 +263,7 @@
         eye than laptops, so equal angular size needs more
         physical size.
 
-   The curve is deliberately gentle — external monitors at
+   The curve is deliberately gentle: external monitors at
    native scaling (92–109 CSS px/in) already render text
    physically *larger* than a laptop (~126 CSS px/in), so the
    bump only has to cover viewing distance. The steep case,
@@ -269,8 +273,8 @@
    built only from viewport units cannot be overridden by the
    browser's own font-size preference, failing WCAG 1.4.4
    (Resize Text). Inside this declaration `rem` resolves against
-   the browser default — not our own computed value, so there is
-   no circularity — which keeps a user who sets 20px at 20px+.
+   the browser default: not our own computed value, so there is
+   no circularity: which keeps a user who sets 20px at 20px+.
 
    ── The accessibility multiplier ──
    The 5 `data-font-scale` levels mirror Apple's Dynamic Type
@@ -302,36 +306,36 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
 /* ═══════════════════════════════════════════════════════════
    Motion tokens
    Curves and durations for every UI transition. Never hand-type
-   a cubic-bezier() or a duration in module CSS — reach for one
+   a cubic-bezier() or a duration in module CSS, reach for one
    of these tokens. Decision rules distilled from the animation
    audit (see plans/README.md).
    ═══════════════════════════════════════════════════════════ */
 :root {
   /* Easing */
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);         /* strong ease-out — default UI entrances/exits */
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);     /* strong ease-in-out — on-screen morphs */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);         /* strong ease-out, default UI entrances/exits */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);     /* strong ease-in-out, on-screen morphs */
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);      /* iOS-like drawer curve */
-  --ease-hover: ease;                                  /* built-in ease — hover/color changes only */
+  --ease-hover: ease;                                  /* built-in ease, hover/color changes only */
 
   /* Durations */
   --duration-instant: 100ms;   /* button press feedback, near-instant response */
   --duration-fast: 160ms;      /* tooltips, small popovers, hover */
   --duration-base: 200ms;      /* default UI transitions */
   --duration-medium: 250ms;    /* dropdowns, selects, small drawers */
-  --duration-slow: 300ms;      /* modals, drawers, large panels — hard ceiling for UI */
+  --duration-slow: 300ms;      /* modals, drawers, large panels, hard ceiling for UI */
 }
 
 /* ═══════════════════════════════════════════════════════════
    DARK THEME
-   Overrides only — anything not redeclared inherits from :root.
+   Overrides only: anything not redeclared inherits from :root.
    Sidebar tokens intentionally NOT overridden (always-dark chrome).
    ═══════════════════════════════════════════════════════════ */
 
 [data-theme="dark"] {
-  /* Primary — brand purple stays close, slightly brightened for dark contrast */
-  --primary-500: #1A0647;   /* unchanged — sidebar bg */
+  /* Primary: brand purple stays close, slightly brightened for dark contrast */
+  --primary-500: #1A0647;   /* unchanged, sidebar bg */
   --primary-400: #7B5AC4;
-  --primary-300: #A57BEC;   /* main brand purple — brightened ~15% for AAA on dark */
+  --primary-300: #A57BEC;   /* main brand purple, brightened ~15% for AAA on dark */
   --primary-200: #9B7BD9;
   --primary-100: #241B36;   /* soft purple-tinted dark surface */
   --primary-50:  #1A1428;
@@ -344,20 +348,20 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
   --secondary-100: #3A1E10;
   --secondary-50:  #2A150C;
 
-  /* Neutral — Claude-style warm sepia palette (balanced contrast, softer text) */
-  --neutral-500: #EDEAE3;   /* highest-contrast text — warm, never pure white */
-  --neutral-400: #D4D1CB;   /* primary body text — soft warm off-white */
-  --neutral-300: #ADA9A2;   /* muted body text — warm grey-tan */
-  --neutral-200: #7E7B74;   /* hint / disabled — warm muted (~4.7:1 on page) */
-  --placeholder-text: #9A9791;  /* placeholder hint — matches neutral-200 warmth, softer */
-  --neutral-150: #3D3A35;   /* default borders — visible warm */
+  /* Neutral: Claude-style warm sepia palette (balanced contrast, softer text) */
+  --neutral-500: #EDEAE3;   /* highest-contrast text, warm, never pure white */
+  --neutral-400: #D4D1CB;   /* primary body text, soft warm off-white */
+  --neutral-300: #ADA9A2;   /* muted body text, warm grey-tan */
+  --neutral-200: #7E7B74;   /* hint / disabled, warm muted (~4.7:1 on page) */
+  --placeholder-text: #9A9791;  /* placeholder hint, matches neutral-200 warmth, softer */
+  --neutral-150: #3D3A35;   /* default borders, visible warm */
   --neutral-100: #322F2B;   /* soft borders / dividers */
   --neutral-75:  #2A2724;   /* elevated surface 2 (hovers) */
-  --neutral-50:  #252320;   /* elevated surface 1 (cards) — clear elevation */
+  --neutral-50:  #252320;   /* elevated surface 1 (cards): clear elevation */
   --neutral-25:  #1F1D1A;   /* very subtle surface between page and cards */
-  --neutral-0:   #1A1815;   /* page surface — warm near-black, slightly warmer */
+  --neutral-0:   #1A1815;   /* page surface, warm near-black, slightly warmer */
 
-  /* Status — adjusted for readability on dark surfaces */
+  /* Status: adjusted for readability on dark surfaces */
   --status-error:         #F15B58;
   --status-error-light:   #2D1414;
   --status-error-dark:    #D92D20;
@@ -370,13 +374,13 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
   --status-info:          #5B8DEF;
   --status-info-light:    #0E1A2D;
 
-  /* Status — bright variant (slightly brighter on dark) */
+  /* Status: bright variant (slightly brighter on dark) */
   --status-success-bright: #1FE08A;
 
   /* Agent column */
   --agent-col-bg: #1F1830;
 
-  /* Chart Colors — brighter/saturated variants for dark backgrounds */
+  /* Chart Colors: brighter/saturated variants for dark backgrounds */
   --chart-1:  #5495EE;
   --chart-2:  #4870EA;
   --chart-3:  #008E76;
@@ -390,7 +394,7 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
   --chart-11: #757D02;
   --chart-12: #BB8D01;
 
-  /* Accent Dark — inverted: light tints become the "dark" accent on dark bg */
+  /* Accent Dark: inverted: light tints become the "dark" accent on dark bg */
   --accent-blue-grey:    #EFF2F3;
   --accent-brown:        #F2EEED;
   --accent-amber:        #FDF7E5;
@@ -404,7 +408,7 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
   --accent-magenta:      #F7B6EE;
   --accent-green:        #7FD9AE;
 
-  /* Accent Light — inverted: dark hues become the "light" surface on dark bg */
+  /* Accent Light: inverted: dark hues become the "light" surface on dark bg */
   --accent-light-blue-grey:    #607D8B;
   --accent-light-brown:        #795548;
   --accent-light-amber:        #6E632A;
@@ -418,13 +422,14 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
   --accent-light-magenta:      #3A1334;
   --accent-light-green-tint:   #0F2A1E;
 
-  /* Elevation shadows — deeper on dark for visual separation */
+  /* Elevation shadows: deeper on dark for visual separation */
   --shadow-popover: 0 12px 60px rgba(0, 0, 0, 0.50);
   --shadow-chart:   0 12px 60px -15px rgba(0, 0, 0, 0.50);
   --shadow-drawer:  -2px 0 24px rgba(0, 0, 0, 0.40);
   --shadow-card:    0 1px 3px rgba(0, 0, 0, 0.30);
   --shadow-bulk-bar: 4px 15px 60px 24px rgba(0, 0, 0, 0.45);
   --shadow-tooltip: 0 0 6px rgba(0, 0, 0, 0.4), 0 12px 12px rgba(0, 0, 0, 0.4);
+  --shadow-tooltip-raised: 0 0 8px rgba(0, 0, 0, 0.45), 0 16px 32px rgba(0, 0, 0, 0.55);
   --shadow-alert:   0 24px 56px -12px rgba(215, 40, 37, 0.45), 0 8px 20px -6px rgba(215, 40, 37, 0.30);
   --shadow-progress-ring-inset: 1px 1px 1px rgba(0, 0, 0, 0.35);
 
@@ -443,15 +448,15 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
 /* ═══════════════════════════════════════════════════════════
    BLUE THEME
    Light-surface theme with a blue primary palette anchored at
-   #007BFF (primary-300). Overrides the primary scale only —
+   #007BFF (primary-300). Overrides the primary scale only,
    neutral, secondary (orange), and status inherit from :root.
    Sidebar chrome is retinted to dark navy so the brand feels
    cohesive with blue-primary UI.
    ═══════════════════════════════════════════════════════════ */
 
 [data-theme="blue"] {
-  /* Primary — parallel palette anchored at #007BFF */
-  --primary-500: #002D6F;   /* deep navy — darkest for chrome */
+  /* Primary: parallel palette anchored at #007BFF */
+  --primary-500: #002D6F;   /* deep navy, darkest for chrome */
   --primary-400: #0057B3;   /* hover/active for primary buttons */
   --primary-300: #007BFF;   /* MAIN brand blue */
   --primary-200: #99CAFF;   /* soft accent */
@@ -459,7 +464,7 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
   --primary-50:  #F5FAFF;   /* barely-tinted surface */
   --primary-25:  #FAFCFF;   /* almost white, subtle hover tint */
 
-  /* Sidebar chrome — same 3-tone scale as :root, on the blue palette. */
+  /* Sidebar chrome: same 3-tone scale as :root, on the blue palette. */
   --sidebar-fg:                    rgba(255, 255, 255, 0.85);
   --sidebar-fg-muted:              rgba(255, 255, 255, 0.60);
   --sidebar-active-fg:             rgba(255, 255, 255, 0.95);
@@ -472,7 +477,7 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
   --sidebar-active-overlay-border: var(--primary-400);
 
   /* Secondary (orange), Neutral, and Status tokens intentionally NOT
-     overridden — they inherit the :root (light) values. */
+     overridden: they inherit the :root (light) values. */
 
   color-scheme: light;
 }
@@ -487,8 +492,8 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
    ═══════════════════════════════════════════════════════════ */
 
 [data-theme="plum"] {
-  /* Primary — parallel palette anchored at #6C0C46 */
-  --primary-500: #2A0519;   /* deepest plum — chrome */
+  /* Primary: parallel palette anchored at #6C0C46 */
+  --primary-500: #2A0519;   /* deepest plum, chrome */
   --primary-400: #4A0A30;   /* hover/active for primary buttons */
   --primary-300: #6C0C46;   /* MAIN Astrana plum */
   --primary-200: #C48FA9;   /* soft pink-plum accent */
@@ -496,7 +501,7 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
   --primary-50:  #FBF5F8;   /* barely-tinted surface */
   --primary-25:  #FDFAFB;   /* almost white, subtle hover tint */
 
-  /* Sidebar chrome — same 3-tone scale as :root, on the plum palette. */
+  /* Sidebar chrome: same 3-tone scale as :root, on the plum palette. */
   --sidebar-fg:                    rgba(255, 255, 255, 0.85);
   --sidebar-fg-muted:              rgba(255, 255, 255, 0.60);
   --sidebar-active-fg:             rgba(255, 255, 255, 0.95);
@@ -509,7 +514,7 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
   --sidebar-active-overlay-border: var(--primary-400);
 
   /* Secondary (orange), Neutral, and Status tokens intentionally NOT
-     overridden — they inherit the :root (light) values. */
+     overridden: they inherit the :root (light) values. */
 
   color-scheme: light;
 }
@@ -527,7 +532,7 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
    ═══════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════════════
-   HIGH-CONTRAST MODE — [data-contrast="high"]
+   HIGH-CONTRAST MODE: [data-contrast="high"]
    Independent of color theme. Boosts the low-contrast rungs of the
    neutral scale (secondary/hint text, borders) toward the highest
    rung so labels and dividers read at a glance for older users and
@@ -537,52 +542,52 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
    ═══════════════════════════════════════════════════════════ */
 
 :root[data-contrast="high"] {
-  /* Light theme — collapse the muted text scale onto black; boost every
+  /* Light theme: collapse the muted text scale onto black; boost every
      border/divider rung a large step darker so the whole surface reads
      high-contrast, not just headings. */
   --neutral-500: #000000;  /* was #16181D → true black for max text weight */
   --neutral-400: #000000;  /* was #3A485F → body text goes fully black */
   --neutral-300: #000000;  /* was #4F5A70 → muted labels match body */
   --neutral-200: #111827;  /* was #5F6A7E → hint text near-black; one micro-step for hierarchy */
-  --placeholder-text: #374151;  /* placeholder — sits between neutral-200 body and borders */
+  --placeholder-text: #374151;  /* placeholder, sits between neutral-200 body and borders */
   /* Borders and dividers are the one part of high-contrast mode that is NOT
      text, and they were tuned as if they were. #374151 measured 9.37:1 against
-     the worst-case surface (neutral-75 hover) — over 3x what WCAG 1.4.11 asks
+     the worst-case surface (neutral-75 hover): over 3x what WCAG 1.4.11 asks
      of a UI boundary, and the reason the mode read as harsh rather than clear.
      Roughly halved, with the border/divider step preserved so the two still
      look like different things:
        --neutral-150  9.37:1 -> 4.97:1   (1.7x the 3:1 floor)
        --neutral-100  4.40:1 -> 3.72:1   (1.2x the 3:1 floor)
      Ratios are worst-case, measured against every surface token a border can
-     land on (neutral-0/25/50/75), not just white — a border on a hover
+     land on (neutral-0/25/50/75), not just white, a border on a hover
      surface has less contrast than the same border on the page background. */
   --neutral-150: #616A78;  /* was #D0D6E1 base → borders obvious without going near-black */
   --neutral-100: #767E8C;  /* was #E9ECF1 base → dividers read as real lines, one step lighter */
-  /* neutral-75 / -50 / -25 / -0 intentionally NOT overridden — those are
+  /* neutral-75 / -50 / -25 / -0 intentionally NOT overridden, those are
      surface tokens (page bg, cards, hover backgrounds). Darkening them
      turns hovers and letter previews into solid grey. */
 }
 
 :root[data-contrast="high"][data-theme="dark"],
 :root[data-contrast="high"].dark {
-  /* Dark theme — mirror image: collapse the muted warm scale onto the
+  /* Dark theme: mirror image: collapse the muted warm scale onto the
      brightest text token, and lift borders far off the surface. */
   --neutral-500: #FFFFFF;  /* was #EDEAE3 → pure white text on dark */
   --neutral-400: #FFFFFF;  /* was #D4D1CB → body goes full white */
   --neutral-300: #FFFFFF;  /* was #ADA9A2 → muted matches body */
   --neutral-200: #E5E1D8;  /* was #7E7B74 → hint one step down but still bright */
-  --placeholder-text: #CFCABF;  /* placeholder — a touch dimmer than neutral-200 hint */
+  --placeholder-text: #CFCABF;  /* placeholder, a touch dimmer than neutral-200 hint */
   /* Same over-shoot mirrored: #B8B2A7 measured 7.05:1 worst-case, so borders
      glared off the dark surface as much as the light-theme ones bore down on
      it. Softened by the same proportion, hierarchy intact:
        --neutral-150  7.05:1 -> 4.57:1
        --neutral-100  4.05:1 -> 3.25:1
-     Do not push these further — the next step down (#6E6961) measures 2.73:1
+     Do not push these further: the next step down (#6E6961) measures 2.73:1
      against the neutral-75 hover surface and fails 1.4.11 outright, even
      though it still clears 3:1 against the page background. */
   --neutral-150: #948E84;  /* was #3D3A35 base → borders lift off surface without glaring */
   --neutral-100: #7A756D;  /* was #322F2B base */
-  /* neutral-75 / -50 / -25 / -0 intentionally NOT overridden — surface tokens. */
+  /* neutral-75 / -50 / -25 / -0 intentionally NOT overridden, surface tokens. */
 }
 
 [data-nav-style="light"] {
@@ -590,7 +595,7 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
   --sidebar-fg-muted:              var(--neutral-300);
   /* Two hover treatments on the light chrome:
      - INACTIVE items lift into a neutral-50 surface with the label/icon in
-       neutral-400 — subtle warm-up that keeps the row readable without
+       neutral-400: subtle warm-up that keeps the row readable without
        committing to brand color.
      - ACTIVE pill deepens one step darker to primary-400 (from the
        primary-300 base) so the click target reads as still-selected but

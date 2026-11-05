@@ -5,7 +5,7 @@ import { reportPersistFailure } from './reportPersistFailure';
 // Persist a per-(ICD × DOS) coder action to hcc_gap_dos_actions. The
 // row key is deterministic (`${member}|${code}|${dos}`) so the same
 // helper handles both first-write inserts and subsequent updates via
-// upsert. Fire-and-forget — the store already updated optimistically.
+// upsert. Fire-and-forget, the store already updated optimistically.
 function dosActionRowKey(memberName, code, dos) {
   return `${memberName}|${code}|${dos}`;
 }
@@ -27,7 +27,7 @@ function persistHccGapDosAction(memberName, code, dos, patch) {
       if (!data || data.length === 0) reportPersistFailure(`persistHccGapDosAction(${code}|${dos})`, { message: 'affected 0 rows' });
     });
 }
-// Clear a DOS-action row entirely — used when the user toggles the same
+// Clear a DOS-action row entirely: used when the user toggles the same
 // action off (undo) or after a manual ICD is deleted (its DOS rows go
 // with it).
 function persistHccGapDosActionDelete(memberName, code, dos) {
@@ -37,12 +37,12 @@ function persistHccGapDosActionDelete(memberName, code, dos) {
     .delete()
     .eq('id', dosActionRowKey(memberName, code, dos))
     .then(({ error }) => {
-      // No .select() here — deleting a row that doesn't exist is a no-op,
+      // No .select() here: deleting a row that doesn't exist is a no-op,
       // not a failure (undo of an action never persisted).
       if (error) reportPersistFailure(`persistHccGapDosActionDelete(${code}|${dos})`, error);
     });
 }
-// Wipe every DOS-action row scoped to a deleted manual ICD — mirrors the
+// Wipe every DOS-action row scoped to a deleted manual ICD, mirrors the
 // in-memory cleanup in deleteHccGap.
 function persistHccGapDosActionDeleteAll(memberName, code) {
   if (!memberName || !code) return;
@@ -103,7 +103,7 @@ function caregapRowToEntry(row) {
     ...(row.payload || {}),
   };
 }
-// Fire-and-forget insert — the local state is already updated optimistically;
+// Fire-and-forget insert: the local state is already updated optimistically;
 // a failed write is surfaced through the shared persist-failure toast.
 function persistCaregapActivityInsert(memberId, entry) {
   if (!memberId || !entry?.id) return;
@@ -113,7 +113,7 @@ function persistCaregapActivityInsert(memberId, entry) {
 }
 // Write the member's whole gaps array back to hedis_members.gaps after a
 // local gap mutation (status / assignee). Replace-whole mirrors the local
-// shape — gap objects carry {code,status,assignee,…}. Fire-and-forget; the
+// shape: gap objects carry {code,status,assignee,…}. Fire-and-forget; the
 // affected-rows check catches mock-fallback members that were never in the DB.
 function persistHedisGaps(memberId, gaps) {
   if (!memberId) return;
@@ -124,10 +124,10 @@ function persistHedisGaps(memberId, gaps) {
     .select('id')
     .then(({ data, error }) => {
       if (error) return reportPersistFailure(`persistHedisGaps(${memberId})`, error);
-      if (!data || data.length === 0) reportPersistFailure(`persistHedisGaps(${memberId})`, { message: 'affected 0 rows (member not in Supabase — mock fallback?)' });
+      if (!data || data.length === 0) reportPersistFailure(`persistHedisGaps(${memberId})`, { message: 'affected 0 rows (member not in Supabase: mock fallback?)' });
     });
 }
-// SNP worklist row updates — one helper for both mutation paths (status +
+// SNP worklist row updates: one helper for both mutation paths (status +
 // assignee). Fire-and-forget; the local state is updated optimistically
 // before we call this, and a failed write reports through the shared toast.
 // The affected-rows sanity check catches an id that isn't in Supabase yet
@@ -152,11 +152,24 @@ function persistSnpMemberUpdate(id, patch) {
 // derive the worklist labels from that source so the two never drift.
 //
 // Care Plan Status is derived from the plan row alone (cheap enough for the
-// bulk worklist projection). "In Review", which needs the plan's audit log,
-// stays a program-view-only distinction.
+// bulk worklist projection). A paused plan reads On Hold whether or not it was
+// signed. "In Review", which needs the plan's audit log, stays a
+// program-view-only distinction.
 function snpCarePlanStatusLabel(plan) {
   if (!plan) return 'No Care Plan';
+  if (plan.status === 'paused') return 'On Hold';
   return plan.signed_at ? 'Signed' : 'Draft';
+}
+// The pause behind an On Hold plan, in the carePlanPause shape (pauseSummary).
+function snpCarePlanPause(plan) {
+  if (plan?.status !== 'paused') return null;
+  return {
+    reason: plan.pause_reason || 'other',
+    note: plan.pause_note || '',
+    pausedOn: plan.paused_on || null,
+    resumeOn: plan.resume_on || null,
+    autoResume: !!plan.auto_resume,
+  };
 }
 const snpInitialsFromName = (name) =>
   (name || '').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -193,14 +206,14 @@ async function projectSnpProgramState(rows) {
   if (progIds.length) {
     const { data: plans } = await supabase
       .from('patient_care_plans')
-      .select('program_id, signed_at')
+      .select('program_id, signed_at, status, pause_reason, pause_note, paused_on, resume_on, auto_resume')
       .in('program_id', progIds);
     (plans || []).forEach(pl => planByProgram.set(pl.program_id, pl));
   }
 
   // Tasks created inside the SNP program, tallied per patient. `tasks` are
   // tagged by program_code (not a specific enrollment), so this is the count
-  // for the patient's SNP program as a whole — what the Tasks column shows.
+  // for the patient's SNP program as a whole, what the Tasks column shows.
   const taskCountByPatient = new Map();
   const { data: taskRows } = await supabase
     .from('tasks')
@@ -219,6 +232,7 @@ async function projectSnpProgramState(rows) {
       programId:        prog.id,
       programSubStatus: prog.status || row.programSubStatus,
       carePlanStatus:   snpCarePlanStatusLabel(planByProgram.get(prog.id)),
+      carePlanPause:    snpCarePlanPause(planByProgram.get(prog.id)),
       taskCount:        taskCountByPatient.get(row.patientId) || 0,
       assigneeId:       null,
       assigneeRole:     null,
@@ -256,13 +270,13 @@ function persistHccGapDelete(code, memberName) {
   let q = supabase.from('hcc_diagnosis_gaps').delete().eq('code', code);
   if (memberName) q = q.eq('member_name', memberName);
   q.then(({ error }) => {
-    // 0-row delete is fine (already gone / never persisted) — don't flag it.
+    // 0-row delete is fine (already gone / never persisted): don't flag it.
     if (error) reportPersistFailure(`persistHccGapDelete(${code})`, error);
   });
 }
 
 // Insert a spawned hcc_members row. Called from addHccGapNewRow when a
-// New Diagnosis Gap picks a DOS that doesn't exist for the patient — the
+// New Diagnosis Gap picks a DOS that doesn't exist for the patient: the
 // app materializes the encounter as its own worklist row so the DOS can
 // carry its own workflow state, and this makes the row survive reload.
 // Fire-and-forget; failures log a warning without rolling back the state
@@ -271,14 +285,14 @@ function persistHccGapDelete(code, memberName) {
 // The app reads hcc_members plus its normalized child tables
 // (hcc_member_visits / hcc_member_documents) and rebuilds the legacy
 // fat-row shape in fetchHccMembers. The base table has no age,
-// dos_list, or doc_status columns — writing those here failed outright
+// dos_list, or doc_status columns, writing those here failed outright
 // (PGRST204), so spawned rows never persisted. Scalar fields go to
 // hcc_members; DOS entries are seeded into hcc_member_visits.
 function persistHccMemberInsert(m) {
   if (!m?.id) return;
   const dbRow = {
     id: m.id,
-    // id and member_id are the same Fold ID now (unified identity scheme —
+    // id and member_id are the same Fold ID now (unified identity scheme,
     // see supabase/patient_id_unification_migration.sql), not the source
     // patient's old payer id.
     member_id: m.id,
@@ -347,7 +361,7 @@ function toPgDate(d) {
 // on reload. Fire-and-forget.
 //
 // Reads assemble dos_list from hcc_member_visits and doc_status from
-// hcc_member_documents (see fetchHccMembers) — the base table has no such
+// hcc_member_documents (see fetchHccMembers): the base table has no such
 // columns, so each shape is synced into its child table
 // (replace-all per member; entries carry no identity beyond position).
 //
@@ -416,7 +430,7 @@ function persistHccMemberDetails(memberId, member) {
 }
 
 // Persist a single HCC role's status (and optionally name) to Supabase.
-// Fire-and-forget — failures log a warning without rolling back the
+// Fire-and-forget: failures log a warning without rolling back the
 // optimistic in-memory update. Used by every HCC status mutation in this
 // slice (transitionHccDos, hccSetRoleStatus, hccReassignRole) so the
 // worklist row survives reload.
@@ -459,7 +473,7 @@ function persistHccMemberRoleStatus(memberId, role, status, name) {
 // Append-only HCC activity log writer. Fire-and-forget: the optimistic
 // in-memory append (handled by the caller via set()) is what the timeline
 // renders; the Supabase insert is for durability. Caller passes the same
-// shape as makeActivityRow() — see src/features/hcc/activityLog.js.
+// shape as makeActivityRow(): see src/features/hcc/activityLog.js.
 function persistHccActivityRow(row) {
   if (!row || !row.event_name) return;
   supabase
@@ -472,8 +486,8 @@ function persistHccActivityRow(row) {
 
 // ── DiagPanel ancillary tab writes ────────────────────────────────────
 // Comments / Notes / Documents composers post to Supabase org-wide tables
-// so a refresh (or another reviewer) sees the same content. Fire-and-forget
-// — the composer already updated local state optimistically.
+// so a refresh (or another reviewer) sees the same content. Fire-and-forget,
+// the composer already updated local state optimistically.
 function persistHccDiagComment(row) {
   if (!row?.id) return;
   const base = {
@@ -487,14 +501,14 @@ function persistHccDiagComment(row) {
     // Scope columns added in supabase/hcc_diag_comment_scope_migration.sql.
     icd: row.icd ?? null,
     dos: row.dos ?? null,
-    // Status-transition context — added in
+    // Status-transition context: added in
     // supabase/hcc_diag_comment_status_migration.sql. Set when a coder
     // flips a DOS to a status that requires a mandatory comment
     // (currently "Record Requested").
     status_from: row.statusFrom ?? null,
     status_to:   row.statusTo   ?? null,
   };
-  // Authorship + mentions — hcc_diag_comment_author_migration.sql. The DB
+  // Authorship + mentions: hcc_diag_comment_author_migration.sql. The DB
   // trigger re-stamps author/author_id from the session; mention_ids drives
   // the recipient notifications. Only real profile ids reach the uuid[].
   const attribution = {
@@ -603,6 +617,7 @@ export {
   persistSnpMemberUpdate,
   projectSnpProgramState,
   writeSnpProgramField,
+  snpCarePlanStatusLabel,
   persistHccGapDelete,
   persistHccMemberInsert,
   toPgDate,

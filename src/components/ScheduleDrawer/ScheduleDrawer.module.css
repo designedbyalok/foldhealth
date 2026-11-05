@@ -3,7 +3,7 @@
 .drawerBody { padding: 0 !important; }
 
 /* Vertical divider between the "Schedule" action button and the close
-   button — pairs with <Drawer noCloseDivider> so the close button doesn't
+   button: pairs with <Drawer noCloseDivider> so the close button doesn't
    draw its own border. Standard 1px × 16px neutral-150. */
 .headerDivider {
   width: 1px;
@@ -13,7 +13,7 @@
 }
 
 .content {
-  /* Uniform 16px inset on all sides — the 16/24 split read as too
+  /* Uniform 16px inset on all sides, the 16/24 split read as too
      much horizontal breathing room compared to vertical, especially
      when the drawer sits inside a 640px pane. */
   padding: var(--space-4);

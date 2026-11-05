@@ -36,7 +36,7 @@
   color: var(--neutral-300);
 }
 
-/* Rendered DOCX body — white "page" floating on the neutral canvas. */
+/* Rendered DOCX body: white "page" floating on the neutral canvas. */
 .docxPage {
   max-width: 720px;
   margin: 16px auto;

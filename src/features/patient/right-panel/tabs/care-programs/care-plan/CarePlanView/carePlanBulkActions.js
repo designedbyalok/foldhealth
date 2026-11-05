@@ -1,4 +1,5 @@
 import { saveGbiPatch } from './carePlanGbiActions';
+import { confirmStatusChange, statusReasonPatch } from '../lib/confirmStatusChange';
 
 function selectedRows(filteredGoals, filteredInterventions, filteredBarriers, selected) {
   return {
@@ -10,9 +11,15 @@ function selectedRows(filteredGoals, filteredInterventions, filteredBarriers, se
 
 export async function bulkSetStatus(status, { selected, filteredGoals, filteredInterventions, filteredBarriers, ctx, clearSelection }) {
   const { g, iv, br } = selectedRows(filteredGoals, filteredInterventions, filteredBarriers, selected);
-  for (const x of g) await saveGbiPatch('goal', x, { status }, ctx);
-  for (const x of iv) await saveGbiPatch('intervention', x, { status }, ctx);
-  for (const x of br) await saveGbiPatch('barrier', x, { status }, ctx);
+  const why = await confirmStatusChange([
+    ...g.map(item => ({ type: 'goal', item })),
+    ...iv.map(item => ({ type: 'intervention', item })),
+    ...br.map(item => ({ type: 'barrier', item })),
+  ], status, { source: 'bulk' });
+  if (!why) return;
+  for (const x of g) await saveGbiPatch('goal', x, { status, ...statusReasonPatch(x, why) }, ctx);
+  for (const x of iv) await saveGbiPatch('intervention', x, { status, ...statusReasonPatch(x, why) }, ctx);
+  for (const x of br) await saveGbiPatch('barrier', x, { status, ...statusReasonPatch(x, why) }, ctx);
   const n = g.length + iv.length + br.length;
   clearSelection();
   if (n) ctx.showToast(`Updated ${n} item${n === 1 ? '' : 's'} to "${status}"`);

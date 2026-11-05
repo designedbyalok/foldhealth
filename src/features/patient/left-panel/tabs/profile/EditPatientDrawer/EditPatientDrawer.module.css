@@ -1,4 +1,4 @@
-/* EditPatientDrawer — Update Member drawer opened from every "Edit …"
+/* EditPatientDrawer: Update Member drawer opened from every "Edit …"
  * entry-point on the Profile tab and the P360 banner overflow menu.
  * Figma: Fold-Pixel P360 Revamp node 6821:297875. */
 
@@ -28,7 +28,7 @@
   line-height: 1.2;
 }
 
-/* Two-column responsive grid — collapses to a single column when the
+/* Two-column responsive grid: collapses to a single column when the
  * drawer viewport gets narrow (mobile Quick View). */
 .grid {
   display: grid;
@@ -67,7 +67,7 @@
   gap: 4px;
 }
 
-/* 4×4 red dot after the label — matches Input's Figma-spec required
+/* 4×4 red dot after the label, matches Input's Figma-spec required
    indicator (node 25:21239) instead of an asterisk glyph. */
 .required {
   width: 4px;
@@ -106,7 +106,7 @@
   align-items: end;
 }
 
-/* Removable inline row — an extra language / phone-number field
+/* Removable inline row: an extra language / phone-number field
  * appended by the "+ Add …" links, with a trailing close button. */
 .removableRow {
   display: grid;

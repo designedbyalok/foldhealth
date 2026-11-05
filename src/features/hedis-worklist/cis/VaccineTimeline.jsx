@@ -1,9 +1,10 @@
 import { Fragment } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
-import { Tooltip } from '../../../components/Tooltip/Tooltip';
+import { HoverCard } from '../../../components/HoverCard/HoverCard';
 import { CIS_ANTIGENS, CIS_DOSE_STATUS, scheduleEndMonth } from './cisRules';
 import { DOSE_BADGE, fmtDate } from './cisStatusConfig';
 import { appointmentForDose, apptDate } from './cisAppointments';
+import { DoseQuickCard } from './DoseQuickCard';
 import styles from './VaccineTimeline.module.css';
 
 // One column per age a routine range starts or ends at, birth to 23 months.
@@ -50,8 +51,14 @@ const windowText = (r) => (r.recommendedEnd ? `${fmtDate(r.start)} – ${fmtDate
  * @param {object}   props.result         – evaluateCis() output
  * @param {string[]} props.antigenOrder   – vaccine keys, top to bottom
  * @param {string[]} [props.statusFilter] – statuses to keep at full strength
+ * @param {object}   [props.notes]        – cis_dose_notes, keyed 'dtap:1'
+ * @param {function} [props.onDateChange] – (antigen, row, iso) => void
+ * @param {function} [props.onNoteSave]   – (antigen, row, text) => void
+ *
+ * Hovering a dose previews its card; a click pins it so the date and note
+ * can be edited from the calendar.
  */
-export function VaccineTimeline({ result, antigenOrder, statusFilter = [], appointments = [] }) {
+export function VaccineTimeline({ result, antigenOrder, statusFilter = [], appointments = [], notes, onDateChange, onNoteSave }) {
   const dob = result.dob;
   const today = new Date();
   const colDates = MONTHS.map(m => addMonths(dob, m));
@@ -104,18 +111,19 @@ export function VaccineTimeline({ result, antigenOrder, statusFilter = [], appoi
                       const booked = appointmentForDose(appointments, a.key, r);
                       return (
                         <div key={r.number} className={styles.doseSlot} style={{ gridRow: top + li, gridColumn: `${from + 2} / ${to + 3}` }}>
-                        <Tooltip
-                          variant="light"
-                          placement="top"
-                          maxWidth={280}
-                          align={from > MONTHS.length / 2 ? 'right' : 'left'}
+                        <HoverCard
+                          width={340}
+                          flush
+                          pinOnClick
+                          openDelay={300}
                           className={styles.doseTip}
-                          label={<DoseDetail a={a} r={r} booked={booked} />}
-                        >
+                          ariaLabel={`${a.label} dose ${r.number}`}
+                          trigger={(
                           <div
                             className={`${styles.dose} ${TONE[badge.tone] || ''} ${dimmed ? styles.dimmed : ''}`}
                             role="cell"
                             tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
                             aria-label={`${a.label} dose ${r.number}, ${r.status}, ${r.record ? `given ${fmtDate(r.record.date)}` : `due ${windowText(r)}`}${booked ? `, reminder for ${fmtDate(apptDate(booked.appt))}` : ''}`}
                           >
                             {booked && (
@@ -129,7 +137,18 @@ export function VaccineTimeline({ result, antigenOrder, statusFilter = [], appoi
                             </span>
                             <span className={styles.doseDate}>{r.record ? fmtDate(r.record.date) : windowText(r)}</span>
                           </div>
-                        </Tooltip>
+                          )}
+                        >
+                          <DoseQuickCard
+                            antigen={a}
+                            row={r}
+                            dob={dob}
+                            note={notes?.[`${a.key}:${r.number}`]?.note || ''}
+                            booked={booked}
+                            onDateChange={onDateChange}
+                            onNoteSave={onNoteSave}
+                          />
+                        </HoverCard>
                         </div>
                       );
                     })}
@@ -156,28 +175,5 @@ export function VaccineTimeline({ result, antigenOrder, statusFilter = [], appoi
         </span>
       </div>
     </div>
-  );
-}
-
-function DoseDetail({ a, r, booked }) {
-  return (
-    <span className={styles.detail}>
-      <span className={styles.detailTitle}>{a.label} · Dose {r.number}</span>
-      <span>Status: <b>{r.status}</b></span>
-      <span>Recommended: <b>{r.recommended}</b> ({windowText(r)})</span>
-      <span>Earliest allowed: <b>{fmtDate(r.earliest)}</b></span>
-      {r.record
-        ? <span>Date administered: <b>{fmtDate(r.record.date)}</b></span>
-        : <span>Due by: <b>{fmtDate(r.due)}</b></span>}
-      {r.reason && <span className={styles.detailReason}>{r.reason}</span>}
-      {booked && (
-        <span className={booked.passed ? styles.detailReminderLate : styles.detailReminder}>
-          {booked.passed ? 'Reminder: visit was on ' : 'Reminder: visit on '}
-          <b>{fmtDate(apptDate(booked.appt))}{booked.appt.time ? ` at ${booked.appt.time}` : ''}</b>
-          {booked.appt.provider ? ` with ${booked.appt.provider}` : ''}
-          {booked.passed ? '. Confirm it was given.' : ''}
-        </span>
-      )}
-    </span>
   );
 }

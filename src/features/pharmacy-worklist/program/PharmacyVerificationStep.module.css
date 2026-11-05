@@ -5,20 +5,14 @@
   min-width: 0;
 }
 
-.banner {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--space-2);
-  background: var(--status-info-light);
-  font-size: var(--font-md);
-  color: var(--neutral-400);
-}
-
-/* The assessment is a DashboardCard: title in the header, the question
-   table edge to edge, note and lock action in a padded body. */
-.callMeta { padding: 0 var(--space-4) var(--space-3); font-size: var(--font-md); color: var(--neutral-300); }
+/* "Same answer for all gaps" above the form, outside its card. */
+.syncRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+/* Who the call is with: Pharmacy / Physician / Member, then which one. */
+.partyPick { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; flex-wrap: wrap; }
+.partyPick > :first-child { flex: none; }
+.partyText { font-size: var(--font-md); color: var(--neutral-400); }
+/* The form is a frame-only card: the question table edge to edge, note and
+   lock action in a padded body. */
 .callBody { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3) var(--space-4) var(--space-4); }
 .callFoot {
   display: flex;
@@ -33,32 +27,23 @@
 
 .q { display: flex; flex-direction: column; gap: var(--space-1); }
 .qLabel { font-size: var(--font-md); color: var(--neutral-400); }
-.radios { display: flex; gap: var(--space-4); flex-wrap: wrap; }
-.dateInput { width: 140px; }
-.numInput { width: 96px; }
-
-.action_success { background: var(--status-success-light); color: var(--status-success); }
-/* Amber text fails contrast on its tint; the tint carries the cue. */
-.action_warning { background: var(--status-warning-light); color: var(--neutral-500); }
-.action_error { background: var(--status-error-light); color: var(--status-error); }
-.actionLabel { font-size: var(--font-md); font-weight: 500; }
-.actionDetail { font-size: var(--font-md); color: var(--neutral-400); }
-
-.locked {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-4);
-  border-top: 0.5px solid var(--neutral-150);
+/* Mandatory question: the 4px red dot after the label (as on Input). */
+.requiredDot {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-left: var(--space-1);
+  border-radius: 50%;
+  background: var(--status-error);
+  vertical-align: super;
 }
-.lockedHead { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
-.lockedTitle { font-size: var(--font-md); font-weight: 500; color: var(--neutral-400); }
-.lockedItem { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; font-size: var(--font-md); }
-.lockedDrug { color: var(--neutral-400); }
-.lockedNote { font-size: var(--font-md); color: var(--neutral-400); }
+.radios { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.dateInput, .numInput { width: 100%; max-width: 140px; }
+
+.history { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2); }
+.historyTitle { margin: 0; font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
 
 .muted { font-size: var(--font-md); color: var(--neutral-300); }
-.toneError, .gapFacts b.toneError { color: var(--status-error); }
 
 .empty {
   display: flex;
@@ -80,19 +65,13 @@
   padding: var(--space-2);
   border-bottom: 0.5px solid var(--neutral-150);
   text-align: left;
-  vertical-align: top;
-  min-width: 170px;
+  vertical-align: middle;
+  min-width: 150px;
 }
-.qTable th { font-weight: 400; color: var(--neutral-300); background: var(--neutral-25); border-top: 0.5px solid var(--neutral-150); }
+.qTable th { font-weight: 400; color: var(--neutral-300); background: var(--neutral-25); }
 .qTable th:first-child, .qTable td:first-child { padding-left: var(--space-4); }
 .qTable th:last-child, .qTable td:last-child { padding-right: var(--space-4); }
-.qCol { width: 220px; }
-.qCategory { display: block; font-size: var(--font-xs); color: var(--neutral-300); }
-.gapHead { display: flex; flex-direction: column; align-items: flex-start; gap: 0.125rem; }
-.gapMed { font-size: var(--font-md); font-weight: 500; color: var(--neutral-400); }
-.gapFacts { font-size: var(--font-sm); color: var(--neutral-300); }
-.gapFacts b { font-weight: 400; color: var(--neutral-400); }
+.qCol { width: 180px; }
 .cellStack { display: flex; flex-direction: column; gap: var(--space-1); }
+.cellHint { font-size: var(--font-sm); color: var(--neutral-300); }
 .na { color: var(--neutral-200); }
-.actionRow td { background: var(--neutral-25); }
-.actionChip { display: flex; flex-direction: column; gap: 0.125rem; padding: var(--space-1) var(--space-2); border-radius: 6px; }

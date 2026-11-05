@@ -9,7 +9,7 @@ export default {
     docs: {
       description: {
         component:
-          'A round or square identity chip — shows a person\'s initials in a tinted background whose color scheme is picked by `variant` (patient / agent / provider / assignee). Used for patient avatars, assignee cells, comment authors, and any place a person needs to be identified at a glance.',
+          'A round or square identity chip, shows a person\'s initials in a tinted background whose color scheme is picked by `variant` (patient / agent / provider / assignee). Used for patient avatars, assignee cells, comment authors, and any place a person needs to be identified at a glance.',
       },
     },
   },

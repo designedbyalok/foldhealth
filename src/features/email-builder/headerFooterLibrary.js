@@ -1,12 +1,12 @@
 // Preset Header / Footer designs. Each preset returns { rootId, blocks }
-// when invoked with an id generator — same shape as createBlockTree() so the
+// when invoked with an id generator, same shape as createBlockTree() so the
 // store's addBlock can drop them in without special-casing.
 
-// Built-in HEADER_PRESETS — designed to look like real email headers, not
+// Built-in HEADER_PRESETS: designed to look like real email headers, not
 // abstract bars. The preset picker renders each tree LIVE via Reader so
 // users can preview the actual visual before applying.
 export const HEADER_PRESETS = [
-  // 1. Gradient hero — bold purple gradient banner with eyebrow + headline +
+  // 1. Gradient hero: bold purple gradient banner with eyebrow + headline +
   //    one-line tagline. Good for product announcements / release notes.
   {
     id: 'gradientHero',
@@ -59,7 +59,7 @@ export const HEADER_PRESETS = [
     },
   },
 
-  // 2. Logo + Nav — clean white header with a logo image on top and a
+  // 2. Logo + Nav: clean white header with a logo image on top and a
   //    NavBar underneath. Works well for transactional or branded sends.
   {
     id: 'logoNav',
@@ -120,7 +120,7 @@ export const HEADER_PRESETS = [
     },
   },
 
-  // 3. Promo banner — eyebrow tag + big headline + CTA button on a colored
+  // 3. Promo banner: eyebrow tag + big headline + CTA button on a colored
   //    background. For promotional / campaign-style emails.
   {
     id: 'promoBanner',
@@ -176,7 +176,7 @@ export const HEADER_PRESETS = [
     },
   },
 
-  // 4. Minimal text — quiet, text-only header. Brand name + thin divider.
+  // 4. Minimal text: quiet, text-only header. Brand name + thin divider.
   //    For when the body content is the focus and you want a low-key top.
   {
     id: 'minimalText',

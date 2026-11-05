@@ -69,7 +69,7 @@ function Demo(props) {
           background: 'var(--neutral-0)', cursor: 'pointer', fontSize: 'var(--font-md)', color: 'var(--neutral-400)',
         }}
       >
-        Sort {sort.key ? `— ${sort.key} ${sort.dir}` : ''}
+        Sort {sort.key ? `- ${sort.key} ${sort.dir}` : ''}
       </button>
       {rect && (
         <SortPopover

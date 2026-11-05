@@ -1,3 +1,5 @@
+import { useAppStore } from '../../../../../../../store/useAppStore';
+import { runtimeSteps } from '../../../../../../settings/care-program-config/careProgramConfigModel';
 import { PROGRAM_STEPS } from '../../../../../data/programActivityMock';
 
 export const TASK_STATUS_LABEL = { pending: 'Pending', missed: 'Missed', completed: 'Completed' };
@@ -17,7 +19,16 @@ export const fmtCompletedDate = (iso) => {
 export const initialsOf = (name = '') =>
   name.split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase() || '?';
 
-export const stepsFor = (code) => PROGRAM_STEPS[code] || PROGRAM_STEPS.SNP;
+/**
+ * A program's steps: as configured in Settings > Care Program Configuration
+ * (switched-off steps left out), else the built-in list. Callers that render
+ * should subscribe to `careProgramTypes` so a configuration change redraws them.
+ */
+export const stepsFor = (code) => {
+  const type = useAppStore.getState().careProgramTypes.find(t => t.code === code);
+  if (type) return runtimeSteps(type.steps);
+  return PROGRAM_STEPS[code] || PROGRAM_STEPS.SNP;
+};
 
 /**
  * The program's steps without its Care Plan step, for orgs that keep one
@@ -74,7 +85,7 @@ export const ASSESSMENT_STEPS = {
 
 export const DEFAULT_LETTER_NAMES = ['Intro or Welcome Letter - Patient', 'UTR Letter', 'Member Flyers'];
 
-// MM/DD/YY — the stamp format the step headers use for sign-off attribution.
+// MM/DD/YY: the stamp format the step headers use for sign-off attribution.
 export function mmddyy(d = new Date()) {
   return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
 }

@@ -7,9 +7,9 @@
 // `type` legend (matches Phase 1b/c popover dispatcher in FilterChipBar):
 //   - multi      → CheckboxListPopover (built in Phase 1b)
 //   - radio      → RadioListPopover    (Phase 1c)
-//   - range      → RangeSliderPopover  (Phase 1c — decile slider)
+//   - range      → RangeSliderPopover  (Phase 1c: decile slider)
 //   - team       → TeamMemberPopover   (Phase 1c)
-//   - date       → DateRangePopover    (Phase 3 — deferred; preset chips for now)
+//   - date       → DateRangePopover    (Phase 3: deferred; preset chips for now)
 //
 // Adding a new filter: append it to MORE_FILTER_ITEMS (with `primary: true` to
 // show by default), and add a matching FILTER_DEFS entry only if the filter
@@ -20,6 +20,7 @@ import { dosSourceLetter, DOS_SOURCE_LABELS, DOS_SOURCE_LABEL_TO_LETTER } from '
 import { canonicalStatus } from './statusSpec';
 import { POS_CODES } from './data/posCodes';
 import { parseLocalDate } from '../../lib/localDate';
+import { GENDER_FILTER_OPTIONS, LANGUAGE_FILTER_OPTIONS, memberGenderLabel, memberLanguageLabel } from '../../lib/memberFilters';
 
 export const MORE_FILTER_ITEMS = [
   // Spec 2.1: always-primary (DOB, Gender, Language, Assignee; HCC has no
@@ -80,7 +81,7 @@ for (const x of MORE_FILTER_ITEMS) {
 }
 
 export const FILTER_DEFS = [
-  // Visit Type — canonical option set used across the worklist. Records get a
+  // Visit Type: canonical option set used across the worklist. Records get a
   // deterministic visit type from this same list in the store (see
   // normalizeWorklistRow → VT_POOL), so the filter and the data agree.
   { k: 'vt',     label: 'Visit Type',          type: 'multi', dynamic: 'vt', opts: [
@@ -101,7 +102,7 @@ export const FILTER_DEFS = [
     'Transitional Care Management (TCM) Visit',
     'Chronic Care Management (CCM)',
   ] },
-  // Measurement Year — most recent 3 years, current year first.
+  // Measurement Year: most recent 3 years, current year first.
   { k: 'my',     label: 'Measurement Year',    type: 'multi', opts: measurementYearOpts() },
   // Assignee options come from the platformUsers store slice (profiles
   // table, populated by Settings → Users). SYSTEM_USER_NAMES is the
@@ -110,16 +111,16 @@ export const FILTER_DEFS = [
   { k: 'dosSrc', label: 'DOS Source',          type: 'multi', opts: DOS_SOURCE_LABELS },
   { k: 'rl',     label: 'Risk Level',          type: 'multi', opts: ['Low', 'Medium', 'High'] },
   { k: 'coh',    label: 'Cohort',              type: 'multi', opts: ['PCP', 'HCC'] },
-  // Advanced Illness — CMS frailty adjunct score, integer 1..10. Range
+  // Advanced Illness: CMS frailty adjunct score, integer 1..10. Range
   // slider matches Decile so the picker is instantly familiar.
   { k: 'ad',     label: 'Adv. Illness',        type: 'range', opts: ['1','2','3','4','5','6','7','8','9','10'] },
-  { k: 'g',      label: 'Gender',              type: 'multi', opts: ['Male', 'Female'] },
+  { k: 'g',      label: 'Gender',              type: 'multi', opts: GENDER_FILTER_OPTIONS },
   { k: 'open',   label: 'Open ICDs',           type: 'radio', opts: ['< 5 Gaps', '5 - 10 Gaps', '10 - 15 Gaps', '> 15 Gaps'] },
-  // Documents Available — filter by the NUMBER of documents attached to the
+  // Documents Available: filter by the NUMBER of documents attached to the
   // record instead of a binary Available/Not-Available flag (Figma 4240:110644).
   // Buckets: No Documents / 1 - 5 / 6 - 10 / >= 10.
   { k: 'chart',  label: 'Documents Available', popoverLabel: 'Select No. of Documents', type: 'multi', opts: ['No Documents', '1 - 5', '6 - 10', '>= 10'] },
-  // Support / Coder / QA / Compliance statuses — role-specific vocabularies
+  // Support / Coder / QA / Compliance statuses, role-specific vocabularies
   // (aligned with ROLE_STATUS_OPTIONS in statusSpec.js). Support has no "New"
   // (work arrives already actionable); Coder has record-request states; QA
   // and Compliance share the reviewer flow.
@@ -128,44 +129,44 @@ export const FILTER_DEFS = [
   { k: 'r1s',    label: 'QA Status',           type: 'multi', opts: ['New', 'In Progress', 'Record Requested', 'Returned', 'Rebuttal', 'Skipped', 'Completed', 'Rejected'] },
   { k: 'r2s',    label: 'Compliance Status',   type: 'multi', opts: ['New', 'In Progress', 'Record Requested', 'Rebuttal', 'Skipped', 'Completed', 'Rejected'] },
   // Per-role assignee pickers. Each filter reads from its OWN role-scoped
-  // dynamic pool in FilterChipBar — only users whose profile carries the
+  // dynamic pool in FilterChipBar: only users whose profile carries the
   // matching clinical_roles entry are eligible. Same rule the
   // RoleAssigneePicker enforces on assignment, so filter options and pickable
   // assignees agree. `opts: []` intentionally: an empty pool means "no user
-  // has that role" (fix in Settings → Users), not "still loading" — so no
+  // has that role" (fix in Settings → Users), not "still loading", so no
   // SYSTEM_USER_NAMES fallback here.
   { k: 'supU',   label: 'Support Team Assignee', type: 'multi', dynamic: 'supU', opts: [], searchable: true },
   { k: 'cdrU',   label: 'Coder Assignee',        type: 'multi', dynamic: 'cdrU', opts: [], searchable: true },
   { k: 'r1u',    label: 'QA Assignee',           type: 'multi', dynamic: 'r1u',  opts: [], searchable: true },
   { k: 'r2u',    label: 'Compliance Assignee',   type: 'multi', dynamic: 'r2u',  opts: [], searchable: true },
-  // Multi-selects backed by row-derived option pools — the list mirrors
+  // Multi-selects backed by row-derived option pools, the list mirrors
   // exactly what values the currently-loaded worklist actually carries.
   { k: 'rp',     label: 'Rendering Provider', type: 'multi', dynamic: 'rp',  opts: [], searchable: true },
   { k: 'pcp',    label: 'PCP',                type: 'multi', dynamic: 'pcp', opts: [], searchable: true },
   { k: 'ipa',    label: 'IPA',                type: 'multi', dynamic: 'ipa', opts: [] },
   { k: 'hp',     label: 'HP Code',            type: 'multi', dynamic: 'hp',  opts: [] },
-  // Language — the DB stores 2-letter codes, but the picker shows display
-  // names. matchOne('lang') translates m.language back to the display label
-  // via LANGUAGE_LABEL below before comparing.
-  { k: 'lang',   label: 'Language',           type: 'multi', opts: ['English', 'Spanish', 'Italian', 'Japanese', 'Punjabi'] },
-  // RAF — same integer-bucket range slider Decile / Adv. Illness use.
+  // Language: the DB stores 2-letter codes, but the picker shows display
+  // names (the list every worklist shares). matchOne('lang') translates
+  // m.language to its label before comparing.
+  { k: 'lang',   label: 'Language',           type: 'multi', opts: LANGUAGE_FILTER_OPTIONS, searchable: true },
+  // RAF: same integer-bucket range slider Decile / Adv. Illness use.
   // Real RAF is a decimal in ~[1.0, 6.5]; matchOne compares numerically
   // against the (mn, mx) integer bounds.
   { k: 'raf',    label: 'RAF',                type: 'range', opts: ['0','1','2','3','4','5','6','7'] },
-  // Contact / demographics — v3 columns on hcc_members. City / State pools
+  // Contact / demographics: v3 columns on hcc_members. City / State pools
   // come from the loaded rows; TIN is a searchable multi (there's one per
   // record).
   { k: 'city',   label: 'City',               type: 'multi', dynamic: 'city',  opts: [], searchable: true },
   { k: 'state',  label: 'State of Residence', type: 'multi', dynamic: 'state', opts: [] },
   { k: 'tin',    label: 'TIN',                type: 'multi', dynamic: 'tin',   opts: [], searchable: true },
   // Derived from hcc_diagnosis_gaps via the view:
-  //   hccG = COUNT(*)  — total HCC gaps recorded for the member
+  //   hccG = COUNT(*): total HCC gaps recorded for the member
   //   gaps = same count, exposed for the "No. Of Gaps" filter label
-  //   lgaD = MAX(last_activity) — most recent gap-log write
+  //   lgaD = MAX(last_activity): most recent gap-log write
   { k: 'hccG',   label: 'HCC Gaps',           type: 'radio', opts: ['0','1 - 5','6 - 10','11 - 20','> 20'] },
   { k: 'gaps',   label: 'No. Of Gaps',        type: 'radio', opts: ['0','1 - 5','6 - 10','11 - 20','> 20'] },
   { k: 'lgaD',   label: 'Last Gap Assessment Date', type: 'date', field: 'lgaD', kind: 'iso' },
-  // Per-role assigned/completion date filters — ISO timestamps on the row,
+  // Per-role assigned/completion date filters: ISO timestamps on the row,
   // stored as YYYY-MM-DD by matchDateRange after parsing. Same shape as
   // Creation Date but pointed at the role-scoped fields.
   { k: 'supAD',  label: 'Support Assigned Date',     type: 'date', field: 'supAD', kind: 'iso' },
@@ -177,18 +178,18 @@ export const FILTER_DEFS = [
   { k: 'r2AD',   label: 'Compliance Assigned Date',  type: 'date', field: 'r2AD',  kind: 'iso' },
   { k: 'r2CD',   label: 'Compliance Completion Date',type: 'date', field: 'r2CD',  kind: 'iso' },
   { k: 'dec',    label: 'Decile',              type: 'range', opts: ['1','2','3','4','5','6','7','8','9','10'] },
-  // POS Code — options rendered as "23 - ER — Hospital"; filter value stores
-  // the "23 - ER — Hospital" label so the popover checkbox state and the chip
+  // POS Code, options rendered as "23 - ER, Hospital"; filter value stores
+  // the "23 - ER: Hospital" label so the popover checkbox state and the chip
   // summary use the same string. matchOne('pos') maps the label back to the
   // raw 2-digit code before comparing against `m.pos`.
   { k: 'pos',    label: 'POS Code',            type: 'multi', searchable: true,
     opts: POS_CODES.map(p => `${p.code} - ${p.name}`) },
-  // Claims — single-select Available / Not Available. A member has claims
+  // Claims: single-select Available / Not Available. A member has claims
   // "Available" when any of their DOS entries classifies as source "C"
   // (same classifier the DOS-source badge uses), so this filter agrees with
   // what the row's source badges show.
   { k: 'claims', label: 'Claims',              type: 'radio', opts: ['Available', 'Not Available'] },
-  // Phase 3d — date-range filters use the shared DateRangePopover.
+  // Phase 3d: date-range filters use the shared DateRangePopover.
   // Values are stored as [startISO, endISO]; the predicate parses them
   // against the row's `date` or other date field.
   { k: 'cd',    label: 'Creation Date',       type: 'date',  field: 'date' },
@@ -205,9 +206,9 @@ export const FILTER_DEF_MAP = Object.fromEntries(FILTER_DEFS.map(d => [d.k, d]))
 //
 // Support's canonical "New" label is "Action Needed" (per SUPPORT_STATUS_MATCH
 // below), so we use that + In Progress instead of the raw string "New".
-// Support also defaults Documents Available to "≥ 1 document" — chart-chasing
+// Support also defaults Documents Available to "≥ 1 document", chart-chasing
 // starts only after at least one doc has been attached to the record.
-// Assignee is only added when a user name is known — dev sessions without a
+// Assignee is only added when a user name is known, dev sessions without a
 // profile skip it so the list still renders something.
 const CHART_HAS_DOCS = ['1 - 5', '6 - 10', '>= 10'];
 const ROLE_DEFAULT_FILTERS = {
@@ -227,25 +228,13 @@ export function hccRoleDefaultFilters(role, userName) {
   return out;
 }
 
-// Measurement Year options — most-recent 3 years (current + prior two),
+// Measurement Year options: most-recent 3 years (current + prior two),
 // descending. Kept as strings so the multi-select value compares straight
 // against the DOS year in matchOne('my').
 function measurementYearOpts() {
   const y = new Date().getFullYear();
   return [String(y), String(y - 1), String(y - 2)];
 }
-
-// Language code → display label. The DB stores ISO 639-1 codes on
-// hcc_members.language; the Language filter shows the human-readable names.
-// Only the codes we currently seed are listed; unknown codes pass through
-// as-is so the filter still matches something you can see in the data.
-const LANGUAGE_LABEL = {
-  en: 'English',
-  es: 'Spanish',
-  it: 'Italian',
-  ja: 'Japanese',
-  pa: 'Punjabi',
-};
 
 // Role-status filter → engine value normalization. Rebuttal and Returned are
 // now distinct stored values, so no aliasing is needed; kept as the single
@@ -256,7 +245,7 @@ const roleStatusVals = (vals) => new Set(vals.map(v => ROLE_STATUS_ALIAS[v] || v
 // Support Team Status filter buckets → the underlying member `supS` values they
 // cover. The filter uses the canonical Figma vocabulary (Action Needed /
 // Rebuttal / Rejected), while the mock + assignment engine still carry
-// finer-grained pipeline values — so a bucket maps to one-or-more data values.
+// finer-grained pipeline values: so a bucket maps to one-or-more data values.
 const SUPPORT_STATUS_MATCH = {
   'Action Needed': ['Action Needed', 'Assign', 'Awaiting', 'New', 'Record Requested', 'Records Requested'],
   'In Progress':   ['In Progress'],
@@ -275,7 +264,7 @@ function memberDosDates(m) {
   return m.dos ? [m.dos] : [];
 }
 
-// Same as memberDosDates but returns the entry objects — used by the DOS
+// Same as memberDosDates but returns the entry objects, used by the DOS
 // Source filter so it honors each entry's persisted `source` field (Manual
 // entries must be classified from the tag, not a hash of the date).
 function memberDosEntries(m) {
@@ -283,7 +272,7 @@ function memberDosEntries(m) {
   return m.dos ? [{ date: m.dos }] : [];
 }
 
-// ── Predicate helpers — given a member and the active filter state, decide
+// ── Predicate helpers: given a member and the active filter state, decide
 // whether the member passes. Used by the worklist `filtered` memo.
 
 export function memberMatchesFilters(member, filters) {
@@ -300,8 +289,7 @@ function matchOne(m, k, vals) {
     case 'rl':    return vals.includes(m.rl);
     case 'coh':   return vals.includes(m.coh);
     case 'g':     {
-      const long = m.g === 'M' ? 'Male' : m.g === 'F' ? 'Female' : m.g;
-      return vals.includes(m.g) || vals.includes(long);
+      return vals.includes(m.g) || vals.includes(memberGenderLabel(m.g));
     }
     case 'open': {
       const cnt = m.open || 0;
@@ -316,7 +304,7 @@ function matchOne(m, k, vals) {
     case 'chart': {
       // Match on the ACTUAL current document count, not the static seeded
       // `ch`. `m.ch` is the original chart_count from hcc_members and does
-      // NOT reflect documents attached later via upload / added-charts — so a
+      // NOT reflect documents attached later via upload / added-charts, so a
       // record the user has uploaded a doc to (visible in the Documents
       // column, which renders from getChartDocs) still read ch=null and got
       // wrongly excluded from doc-count filters (e.g. the Support default's
@@ -336,26 +324,26 @@ function matchOne(m, k, vals) {
       return set.has(m.supS);
     }
     case 'asgn': {
-      // Match against the current assignee shown in the Assignee column only —
+      // Match against the current assignee shown in the Assignee column only,
       // HccWorklistTable enriches each row with `assigneeName` from the same
       // sequential resolver the cell renders (resolveCurrentAssignee). Matching
       // every role's historical owner would surface rows whose visible assignee
       // is someone else.
       return vals.includes(m.assigneeName);
     }
-    // Per-role assignee filters — same name fields the Support / Coder / QA /
+    // Per-role assignee filters: same name fields the Support / Coder / QA /
     // Compliance columns render on the row, so filter matches ↔ what the user
     // sees in that column.
     case 'supU': return vals.includes(m.sup);
     case 'cdrU': return vals.includes(m.cdr);
     case 'r1u':  return vals.includes(m.r1);
     case 'r2u':  return vals.includes(m.r2);
-    // Simple field-equality filters — row-value must be in the selected set.
+    // Simple field-equality filters: row-value must be in the selected set.
     case 'rp':   return vals.includes(m.rp);
     case 'pcp':  return vals.includes(m.pcp);
     case 'ipa':  return vals.includes(m.ipa);
     case 'hp':   return vals.includes(m.hp);
-    case 'lang': return vals.includes(LANGUAGE_LABEL[m.language] || m.language);
+    case 'lang': return vals.includes(memberLanguageLabel(m.language));
     case 'raf': {
       // Range slider values are [mn, mx] as string ints; row's raf is numeric.
       if (vals.length >= 2) {
@@ -382,7 +370,7 @@ function matchOne(m, k, vals) {
         return false;
       });
     }
-    // Per-role date filters + Last Gap Assessment Date — all use ISO
+    // Per-role date filters + Last Gap Assessment Date, all use ISO
     // timestamps as their source (unlike Creation Date / DOS / LVD which
     // carry MM/DD/YYYY strings) and reuse matchDateRange with 'iso' format.
     case 'lgaD':  return matchDateRange(m.lgaD, vals, 'iso');
@@ -417,7 +405,7 @@ function matchOne(m, k, vals) {
       );
       return vals.some(v => years.has(v));
     }
-    // Coder Status — normalize both sides (data carries plural "Records …"
+    // Coder Status: normalize both sides (data carries plural "Records …"
     // forms; the canonical option labels are singular). "Rebuttal" is the
     // user-facing label for the engine's "Returned" state.
     case 'cdrS': {
@@ -431,7 +419,7 @@ function matchOne(m, k, vals) {
       // leading 2-digit code and match against the row's `pos`. Match if
       // ANY of the member's dos_list entries carries a selected POS, so a
       // record that visited both an ER and an Office still surfaces when
-      // "23 - ER — Hospital" is checked.
+      // "23 - ER: Hospital" is checked.
       const codes = new Set(vals.map(v => (String(v).match(/^(\d{2})/)?.[1] || v)));
       const rowPositions = new Set([
         m.pos,
@@ -450,7 +438,7 @@ function matchOne(m, k, vals) {
       return vals.includes(String(m.dec));
     }
     case 'ad': {
-      // Adv. Illness score — same [min, max] range shape as Decile.
+      // Adv. Illness score, same [min, max] range shape as Decile.
       if (vals.length >= 2) {
         const mn = parseInt(vals[0], 10);
         const mx = parseInt(vals[1], 10);
@@ -469,7 +457,7 @@ function matchOne(m, k, vals) {
     case 'lvd':
       return matchDateRange(m.dos, vals, 'mdY');
     case 'dob': {
-      // No DOB on the row — fall back to age-bucket containment (rough).
+      // No DOB on the row: fall back to age-bucket containment (rough).
       if (vals.length < 2) return true;
       const ageNum = parseInt(String(m.age || '').match(/(\d+)/)?.[1] || '0', 10);
       const start = parseLocalDate(vals[0]);

@@ -94,7 +94,7 @@
   line-height: 1.45;
 }
 
-/* Legacy two-line sub-description on collapsed headers — kept for any
+/* Legacy two-line sub-description on collapsed headers, kept for any
    future caller, but the standard pattern is now single-line header +
    in-body .sectionDescription. */
 .sectionDesc {
@@ -200,7 +200,7 @@
 .numberInput:focus {
   border-color: var(--primary-200);
 }
-/* hide native spinners — keeps the input flush with the unit label */
+/* hide native spinners: keeps the input flush with the unit label */
 .numberInput::-webkit-outer-spin-button,
 .numberInput::-webkit-inner-spin-button {
   -webkit-appearance: none;

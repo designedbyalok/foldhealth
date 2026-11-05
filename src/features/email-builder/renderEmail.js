@@ -1,7 +1,7 @@
 // ── Preview / send render helper ──────────────────────────────────────────
 // renderEmailHtml() produces the raw template HTML (tokens still literal).
-// Everywhere we show the email as a recipient would see it — the device
-// preview, the test send, the campaign preview — we go through this helper so
+// Everywhere we show the email as a recipient would see it, the device
+// preview, the test send, the campaign preview, we go through this helper so
 // three things always happen together and identically:
 //   1. the compliance footer (unsubscribe + physical address) is appended,
 //   2. the preheader is injected (handled inside renderEmailHtml),

@@ -1,0 +1,469 @@
+/* Recap: the pill above the Overview lanes, and the parts every slide is
+   built from (KPI strip, captioned cards, compact rows). Cards are white on
+   the dialog's tinted right pane. */
+/* The Recap pill. Two classes so it outranks the Button's own variant styles. */
+.pill.pill {
+  border-radius: var(--space-16);
+}
+
+.pillCount {
+  min-width: var(--space-4);
+  padding: 0 var(--space-1);
+  border-radius: var(--space-2);
+  font-size: var(--font-xs);
+  line-height: var(--leading-normal);
+  text-align: center;
+}
+
+/* Not opened yet: filled with the Unity gradient. */
+.pill.pillUnseen,
+.pill.pillUnseen:hover:not(:disabled) {
+  border: 0.5px solid transparent;
+  background: var(--ai-gradient);
+  color: var(--neutral-0);
+}
+
+.pill.pillUnseen:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.pillUnseen .pillCount {
+  background: color-mix(in srgb, var(--neutral-0) 24%, transparent);
+  color: var(--neutral-0);
+}
+
+/* Opened: a Unity gradient outline, with the label in the gradient too. */
+.pill.pillSeen,
+.pill.pillSeen:hover:not(:disabled) {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--neutral-0), var(--neutral-0)) padding-box,
+    var(--ai-gradient) border-box;
+}
+
+.pill.pillSeen:hover:not(:disabled) {
+  background:
+    linear-gradient(var(--primary-50), var(--primary-50)) padding-box,
+    var(--ai-gradient) border-box;
+}
+
+.pillSeen .pillLabel {
+  background: var(--ai-gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.pillSeen .pillCount {
+  background: var(--primary-100);
+  color: var(--primary-300);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: var(--leading-normal);
+  color: var(--primary-300);
+}
+
+/* ── Unity summary: tinted so it reads as the AI's voice ── */
+.ai {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 0.5px solid var(--primary-200);
+  border-radius: var(--space-2);
+  background: var(--primary-50);
+}
+
+.aiHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: var(--leading-normal);
+  color: var(--primary-300);
+}
+
+.aiMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+  font-weight: 400;
+  color: var(--neutral-300);
+}
+
+.aiText {
+  margin: 0;
+  font-size: var(--font-base);
+  line-height: var(--leading-loose);
+  color: var(--neutral-400);
+}
+
+/* Two shimmering lines while Unity writes. */
+.aiSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+}
+
+.aiSkeleton > span {
+  height: var(--space-3);
+  border-radius: var(--space-1);
+  background: linear-gradient(90deg, var(--primary-100) 25%, var(--neutral-0) 50%, var(--primary-100) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.aiSkeleton > span:last-child {
+  width: 60%;
+}
+
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aiSkeleton > span { animation: none; }
+}
+
+/* ── KPI strip: one bordered bar, cells split by hairlines ── */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-16) * 1.75), 1fr));
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  overflow: hidden;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  box-shadow: -0.5px 0 0 var(--neutral-150);
+}
+
+.kpiLabel {
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpiValueRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.kpiValue {
+  font-size: var(--font-2xl);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  color: var(--neutral-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiWorse {
+  color: var(--status-error);
+}
+
+.kpiSub {
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-200);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Last visit / coming up ── */
+.moments {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.moment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+}
+
+.momentBody {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.momentEmpty {
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-200);
+}
+
+/* ── Captioned card ── */
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.blockTitle {
+  margin: 0;
+  padding: 0 var(--space-1);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}
+
+.card {
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  overflow: hidden;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rows > li + li {
+  border-top: 0.5px solid var(--neutral-100);
+}
+
+/* ── At a glance: one row per section, opens that slide ── */
+.sectionRow {
+  display: grid;
+  grid-template-columns: auto calc(var(--space-16) * 1.75) minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--space-3);
+  width: 100%;
+  min-height: var(--space-10);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sectionRow {
+  transition: background-color 120ms ease-out;
+}
+
+.sectionRow:hover {
+  background: var(--neutral-25);
+}
+
+.sectionRow:active {
+  background: var(--neutral-50);
+  transition: none;
+}
+
+.sectionRow:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: -2px;
+}
+
+.sectionLabel {
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+}
+
+.sectionText {
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}
+
+/* ── Before → after ── */
+.change {
+  display: grid;
+  grid-template-columns: calc(var(--space-16) * 2) minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--space-3);
+  min-height: var(--space-10);
+  padding: var(--space-2) var(--space-4);
+}
+
+.changeLabel {
+  min-width: 0;
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.changeValues {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.changeFrom {
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-200);
+  font-variant-numeric: tabular-nums;
+}
+
+.changeTo {
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.changeNote {
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.noteWorse { color: var(--status-error); }
+.noteBetter { color: var(--status-success); }
+
+/* ── Events ── */
+.event {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--space-12);
+  padding: var(--space-2) var(--space-4);
+}
+
+.eventWhen {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: calc(var(--space-12) + var(--space-1));
+}
+
+.eventDate {
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.eventTime {
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-200);
+}
+
+.kindTile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: calc(var(--space-1) * 1.5);
+}
+
+.eventText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.eventTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.eventTitle {
+  min-width: 0;
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eventMeta {
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Open items ── */
+.signal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--space-12);
+  padding: var(--space-2) var(--space-4);
+}
+
+.signalReviewed {
+  background: var(--neutral-25);
+}
+
+.signalReviewed .eventTitle {
+  color: var(--neutral-300);
+}
+
+.signalDot {
+  flex-shrink: 0;
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: 50%;
+}
+
+.signalActions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+/* ── Vitals: the Overview's tiles, four across ── */
+.vitals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}

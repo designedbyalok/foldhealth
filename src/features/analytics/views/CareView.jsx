@@ -220,10 +220,10 @@ const FUNNEL_STAGES = [
 ];
 
 const LEAKAGE_POINTS = [
-  { step: 'Outreach → Contact', reason: 'Unable to reach member', n: '1,072', drop: '33%', rec: 'Optimize outreach timing — best contact window 10am–12pm Tue/Wed', cls: 'r' },
-  { step: 'Contact → Consent', reason: 'Declined enrollment', n: '643', drop: '30%', rec: 'Review value proposition script — peer success stories', cls: 'a' },
-  { step: 'Consent → Enrolled', reason: 'Documentation incomplete', n: '428', drop: '29%', rec: 'Streamline e-consent paperwork — digital signature integration', cls: 'a' },
-  { step: 'Enrolled → Active', reason: 'Lost to follow-up', n: '429', drop: '40%', rec: 'Early engagement protocol — Week 1 check-in within 48 hours', cls: 'r' },
+  { step: 'Outreach → Contact', reason: 'Unable to reach member', n: '1,072', drop: '33%', rec: 'Optimize outreach timing: best contact window 10am–12pm Tue/Wed', cls: 'r' },
+  { step: 'Contact → Consent', reason: 'Declined enrollment', n: '643', drop: '30%', rec: 'Review value proposition script: peer success stories', cls: 'a' },
+  { step: 'Consent → Enrolled', reason: 'Documentation incomplete', n: '428', drop: '29%', rec: 'Streamline e-consent paperwork: digital signature integration', cls: 'a' },
+  { step: 'Enrolled → Active', reason: 'Lost to follow-up', n: '429', drop: '40%', rec: 'Early engagement protocol: Week 1 check-in within 48 hours', cls: 'r' },
 ];
 
 const BOTTLENECK_ALERTS = [
@@ -377,7 +377,7 @@ function TeamTab({ showToast, editing = false, resetTick = 0 }) {
   const renderNeedsSupport = () => (
     <Card title={<span>&#x26A0; Needs Support</span>} style={{ border: '1px solid var(--status-warning-light)' }}>
       {needsSupport.map(st => <StaffCard key={st.name} staff={st} isBottom={true} showToast={showToast} />)}
-      <Button variant="primary" size="S" style={{ marginTop: 10, width: '100%', justifyContent: 'center' }} onClick={() => showToast?.('Scheduling coaching sessions for 3 staff')}>
+      <Button size="sm" style={{ marginTop: 10, width: '100%', justifyContent: 'center' }} onClick={() => showToast?.('Scheduling coaching sessions for 3 staff')}>
         Schedule Support Sessions (3)
       </Button>
     </Card>
@@ -455,7 +455,7 @@ function QualityTab({ bars, showToast, editing = false, resetTick = 0 }) {
 
   const renderComplianceIssues = () => (
     <Card title={<span>&#x26A0; Compliance Issues</span>} style={{ border: '1px solid var(--status-warning-light)' }}
-      actions={<Button variant="primary" size="S" style={{ fontSize: 'var(--font-sm)' }} onClick={() => showToast?.('Compliance alerts sent to managers')}>Alert All</Button>}
+      actions={<Button size="sm" style={{ fontSize: 'var(--font-sm)' }} onClick={() => showToast?.('Compliance alerts sent to managers')}>Alert All</Button>}
     >
       {complianceIssues.map((c, i) => {
         const sc = c.severity === 'high' ? 'var(--status-error)' : c.severity === 'medium' ? 'var(--status-warning)' : 'var(--status-success)';
@@ -491,7 +491,7 @@ function QualityTab({ bars, showToast, editing = false, resetTick = 0 }) {
         })}
       </div>
       <div style={{ marginTop: 12 }}>
-        <ProgressBar label="Coleman Model Compliance" value="78% of TCM episodes" pct={78} color="teal" sub="Target 85% — 7pp gap" />
+        <ProgressBar label="Coleman Model Compliance" value="78% of TCM episodes" pct={78} color="teal" sub="Target 85%: 7pp gap" />
         <ProgressBar label="Care Plan Update Timeliness" value="72% updated within 30 days" pct={72} color="amber" sub="Target 90%" />
         <ProgressBar label="Medication Reconciliation" value="68% at enrollment" pct={68} color="amber" sub="Target 75%" />
       </div>
@@ -537,27 +537,27 @@ const PROGRAMS_DEFAULT_LAYOUT = [
 const PROGRAMS_DATA = [
   { name: 'Chronic Care Management', abbr: 'CCM', color: 'var(--status-info)', members: 4823, eligible: 6100, enrolled: 79, saved: '$1,620K', spent: '$450K', roi: '3.6x',
     kpis: [['Monthly Minutes Avg','38 min','≥20 min','g'],['Monthly Review Plan %','71%','85%','a'],['1st Month Contact Rate','84%','80%','g'],['Care Plan Update Rate','58%','75%','r']],
-    alert: '312 eligible members not yet enrolled — $390K revenue opportunity' },
+    alert: '312 eligible members not yet enrolled, $390K revenue opportunity' },
   { name: 'Transitional Care', abbr: 'TCM', color: 'var(--status-success)', members: 2156, eligible: 2480, enrolled: 87, saved: '$980K', spent: '$280K', roi: '3.5x',
     kpis: [['48h Contact Rate','82%','85%','t'],['7-Day F/U Completion','88%','85%','g'],['Med Reconciliation','68%','75%','a'],['30-Day Readmit','14.2%','15%','g']],
-    alert: '47 overdue TCM contacts — readmission risk elevated' },
-  { name: 'TOC — Inpatient', abbr: 'TOC-IP', color: 'var(--primary-300)', members: 1284, eligible: 1410, enrolled: 91, saved: '$740K', spent: '$190K', roi: '3.9x',
+    alert: '47 overdue TCM contacts: readmission risk elevated' },
+  { name: 'TOC: Inpatient', abbr: 'TOC-IP', color: 'var(--primary-300)', members: 1284, eligible: 1410, enrolled: 91, saved: '$740K', spent: '$190K', roi: '3.9x',
     kpis: [['PCP F/U Within 7d','72%','80%','a'],['Discharge Summary','89%','95%','a'],['30-Day Readmit','16.8%','15%','r'],['SNF Placement','18%','<20%','g']],
-    alert: '24 readmissions this month — 3 facilities driving 71%' },
-  { name: 'TOC — ED', abbr: 'TOC-ED', color: 'var(--status-error)', members: 1842, eligible: 2100, enrolled: 88, saved: '$540K', spent: '$180K', roi: '3.0x',
+    alert: '24 readmissions this month: 3 facilities driving 71%' },
+  { name: 'TOC: ED', abbr: 'TOC-ED', color: 'var(--status-error)', members: 1842, eligible: 2100, enrolled: 88, saved: '$540K', spent: '$180K', roi: '3.0x',
     kpis: [['Avoidable ED Rate','34%','<30%','r'],['Post-ED Contact <48h','78%','85%','a'],['ED → PCP Redirect','61%','70%','a'],['Repeat ED (≥3/yr)','12%','<10%','r']],
-    alert: '221 high-ED utilizers (3+ visits/yr) — top cost driver' },
+    alert: '221 high-ED utilizers (3+ visits/yr): top cost driver' },
   { name: 'Quality Program', abbr: 'Quality', color: 'var(--status-warning)', members: 8420, eligible: 8420, enrolled: 100, saved: '$840K', spent: '$220K', roi: '3.8x',
     kpis: [['Quality Composite','4.1/5.0','4.0','g'],['AWV Completion','61%','80%','r'],['HbA1c Control','72%','70%','g'],['Colorectal Screening','58%','65%','r']],
-    alert: '847 members unscheduled for AWV — biggest drag on composite' },
+    alert: '847 members unscheduled for AWV: biggest drag on composite' },
   { name: 'Annual Wellness Visit', abbr: 'AWV', color: 'var(--status-info)', members: 5120, eligible: 8420, enrolled: 61, saved: '$620K', spent: '$160K', roi: '3.9x',
     kpis: [['Completion Rate','61%','80%','r'],['Codes/AWV','2.4','3.2','a'],['HCC Suspects Closed','42%','60%','r'],['Quality Gaps Closed','2.8','3.2','a']],
-    alert: '847 members overdue for AWV — $127K revenue + quality impact' },
+    alert: '847 members overdue for AWV: $127K revenue + quality impact' },
   { name: 'Risk Coding / HCC', abbr: 'Risk Coding', color: 'var(--status-warning)', members: 5280, eligible: 8420, enrolled: 63, saved: '$2,100K', spent: '$380K', roi: '5.5x',
     kpis: [['RAF Capture Rate','73%','85%','r'],['Avg RAF Score','1.042','1.120','a'],['Suspects Closed/AWV','2.4','3.2','a'],['Recapture Rate','71%','80%','a']],
-    alert: '962 open HCC suspects — $2.1M uncaptured revenue' },
+    alert: '962 open HCC suspects: $2.1M uncaptured revenue' },
   { name: 'Health Risk Assessment', abbr: 'HRA', color: 'var(--status-success)', members: 3840, eligible: 8420, enrolled: 46, saved: '$410K', spent: '$90K', roi: '4.6x',
-    kpis: [['Completion Rate','46%','70%','r'],['High-Risk Identified','22%','—','t'],['SDOH Positive Screen','31%','—','t'],['HRA → AWV Conversion','54%','65%','a']],
+    kpis: [['Completion Rate','46%','70%','r'],['High-Risk Identified','22%','-','t'],['SDOH Positive Screen','31%','-','t'],['HRA → AWV Conversion','54%','65%','a']],
     alert: '4,580 eligible members without completed HRA this year' },
 ];
 
@@ -586,7 +586,7 @@ function ProgramsTab({ showToast, programsDetail, programsLoading, editing = fal
   const programs = PROGRAMS_DATA;
 
   const renderProgramsTable = () => (
-    <Card title="Programs Detail" flush actions={<Button variant="ghost" size="S" onClick={() => showToast?.('Exporting programs detail...')}>Export</Button>}>
+    <Card title="Programs Detail" flush actions={<Button variant="ghost" size="sm" onClick={() => showToast?.('Exporting programs detail...')}>Export</Button>}>
       <div className={s.tblWrap}>
         <table className={s.tbl}>
           <thead>
@@ -612,7 +612,7 @@ function ProgramsTab({ showToast, programsDetail, programsLoading, editing = fal
                   <td>{row.pref_day}</td>
                   <td className={`${s.r} ${s.mono}`}>{row.outreach_pct}</td>
                   <td className={`${s.r}`}><span className={`${s.stPill} ${engColor === 'green' ? s.stGreen : engColor === 'amber' ? s.stAmber : s.stRed}`}>{row.engage_pct}</span></td>
-                  <td><Button variant="ghost" size="S" onClick={() => showToast?.(`${row.action} ${row.program}`)}>{row.action}</Button></td>
+                  <td><Button variant="ghost" size="sm" onClick={() => showToast?.(`${row.action} ${row.program}`)}>{row.action}</Button></td>
                 </tr>
               );
             })}

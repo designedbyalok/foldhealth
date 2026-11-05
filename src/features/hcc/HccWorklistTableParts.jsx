@@ -11,7 +11,6 @@ export function UploadMenuButton({ onUploadDocument, onAddManually }) {
     <span ref={wrapRef} style={{ display: 'inline-flex', position: 'relative' }}>
       <ActionButton
         icon="custom:upload"
-        size="L"
         tooltip="Upload"
         tooltipBelow
         onClick={() => setOpen(v => !v)}

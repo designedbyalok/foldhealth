@@ -1,31 +1,31 @@
--- Care Plan Library — templates, goals, barriers and a goal's interventions.
+-- Care Plan Library: templates, goals, barriers and a goal's interventions.
 --
 -- THE HOLE THIS CLOSES
 -- Settings → Care Plan Library built its three tabs entirely out of component
--- state (`useState([])` in CarePlanLibraryPanel). Everything a user created —
+-- state (`useState([])` in CarePlanLibraryPanel). Everything a user created,
 -- a goal with its measure, target and chronic conditions, a barrier, a plan
--- template — lived for exactly as long as the tab stayed mounted. Switching
+-- template: lived for exactly as long as the tab stayed mounted. Switching
 -- to another settings section unmounted the panel and silently threw the work
 -- away; a reload did the same. Interventions were worse: the Send Form / Send
 -- Patient Education / Measure Vital drawers collected a full configuration and
 -- then dropped it on Save, because there was nowhere to put it.
 --
 -- WHAT THIS DOES
---   1. `care_plan_goals` — one row per library goal. The goal-creation drawer
+--   1. `care_plan_goals`, one row per library goal. The goal-creation drawer
 --      is a wizard over a single measurement, so its fields map 1:1 rather
 --      than into a blob: category + measure pick the shape, comparator and
 --      target_value / target_value_2 carry the target, and duration_unit is
 --      kept beside duration because "3" and "Month" are edited separately.
---      `set_target` is stored because "no target" is a real, chosen state —
+--      `set_target` is stored because "no target" is a real, chosen state,
 --      distinct from a target the user has not filled in yet.
---   2. `care_plan_barriers` — title + description today. It gets its own table
+--   2. `care_plan_barriers`, title + description today. It gets its own table
 --      rather than a `kind` column on goals because the two diverge fast:
 --      barriers have no measure, no target and no schedule.
---   3. `care_plan_templates` — a named plan. Its goal / intervention rows are
+--   3. `care_plan_templates`, a named plan. Its goal / intervention rows are
 --      jsonb: inside a template they are ordered, free-text line items the
 --      author types, not references to library rows, so a join table would
 --      model a relationship that does not exist.
---   4. `care_plan_interventions` — the rows behind a goal's Linked Items. One
+--   4. `care_plan_interventions`, the rows behind a goal's Linked Items. One
 --      table with `kind` + `config` jsonb instead of four near-identical
 --      tables: every intervention kind shares title / creation-trigger / due
 --      offset / duration type, and differs only in which entity it points at
@@ -34,7 +34,7 @@
 --
 -- RLS
 -- Per RLS_POSTURE.md: on, wide open to `authenticated`, closed to `anon`.
--- This is staff-only configuration data behind the Settings area — there is no
+-- This is staff-only configuration data behind the Settings area, there is no
 -- ownership column to scope it by, and every signed-in staff member edits the
 -- same library.
 
@@ -125,7 +125,7 @@ ALTER TABLE public.care_plan_barriers  ADD COLUMN IF NOT EXISTS updated_by text;
 ALTER TABLE public.care_plan_templates ADD COLUMN IF NOT EXISTS updated_by text;
 
 -- A template carries barriers as well as goals and interventions: the three
--- GBI sections a care plan is made of. Same jsonb treatment as `goals` — the
+-- GBI sections a care plan is made of. Same jsonb treatment as `goals`, the
 -- entries reference library rows by id but are ordered, plan-local copies.
 ALTER TABLE public.care_plan_templates
   ADD COLUMN IF NOT EXISTS barriers jsonb NOT NULL DEFAULT '[]'::jsonb;

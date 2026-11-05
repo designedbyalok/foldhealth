@@ -1,11 +1,10 @@
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useContext, useMemo, useState } from 'react';
 import { Icon } from '../Icon/Icon';
 import { DownChevronIcon } from '../Icon/DownChevronIcon';
 import { Badge } from '../Badge/Badge';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Avatar } from '../Avatar/Avatar';
 import { PriorityIcon } from '../PriorityIcon/PriorityIcon';
-import { useAppStore } from '../../store/useAppStore';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { MenuPopover } from '../MenuPopover/MenuPopover';
 import { CommentComposer } from '../CommentComposer/CommentComposer';
@@ -15,17 +14,19 @@ import {
   TRANS_BADGE,
   historyTimelineStyles as htStyles,
 } from '../HistoryTimeline/HistoryTimeline';
+import { ActivityLogRenderers } from './ActivityLogRenderers';
+import { statusTone } from './activityTones';
 import styles from './ActivityLog.module.css';
 
 // Render a comment body with the signed-in user's @-mentions painted in the
 // mention style (secondary-300, weight 500). Other users' mentions stay
-// plain text — highlighting them here would compete visually with the row's
+// plain text: highlighting them here would compete visually with the row's
 // primary meaning. Match is case-insensitive so `@fold demo` still fires
 // when the account name is `Fold Demo`.
 function renderCommentBodyWithMentions(text, meName) {
   if (!text) return null;
   if (!meName) return text;
-  // Same shape as the extraction regex in TaskDetailDrawer.handleAddComment —
+  // Same shape as the extraction regex in TaskDetailDrawer.handleAddComment,
   // `@` followed by one or two whitespace-separated word groups.
   const re = /@(\w+(?:\s+\w+)?)/g;
   const meLower = meName.toLowerCase();
@@ -49,7 +50,7 @@ function renderCommentBodyWithMentions(text, meName) {
   return parts;
 }
 
-// Icon config per entry type — reuses HCC's ACT_ICON (colored rail bubble)
+// Icon config per entry type: reuses HCC's ACT_ICON (colored rail bubble)
 // so ActivityLog matches the DiagPanel timeline visually. Types unique to
 // this surface (call/sms, note/clinical_note, task, appointment, …) get
 // their own routing here.
@@ -82,54 +83,12 @@ const TYPE_ICON = {
 };
 const DEFAULT_ICON = { icon: 'solar:document-text-linear', color: 'var(--neutral-300)', bg: 'var(--neutral-0)', border: 'var(--neutral-150)' };
 
-// Status label → Badge tone. HEDIS canonical status grouping drives the
-// color band: Open → primary (Not Started); Engaged / Submitted → warning
-// (In Progress); Completed → success (Done); Closed - * → grey. HCC-only
-// labels (Accepted / Dismissed / Audited / Returned / …) share the same
-// map so both worklists render identical status pills. Unknown falls to
-// 'grey'.
-const STATUS_TONE = {
-  Open:                          'primary',
-  Audited:                       'primary',
-  Engaged:                       'warning',
-  'Engaged Requires Follow-Up':  'warning',
-  Submitted:                     'warning',
-  'In Progress':                 'warning',
-  New:                           'warning',
-  Pending:                       'warning',
-  'Pending Review':              'warning',
-  'Record Requested':            'warning',
-  'Record Received':             'warning',
-  Completed:                     'success',
-  Signed:                        'success',
-  Accepted:                      'success',
-  Met:                           'success',
-  Resolved:                      'success',
-  // Care plan GBI statuses (see care-plan/lib/gbiStatus): a pause, a
-  // discontinued item and a not-applicable one are none of them failures.
-  'On Hold':                     'info',
-  'Not Met':                     'error',
-  Discontinued:                  'secondary',
-  'Not Applicable':              'disabled',
-  Draft:                         'grey',
-  Dismissed:                     'error',
-  Returned:                      'warning',
-  Rebuttal:                      'secondary',
-  Rejected:                      'error',
-  'Closed - Data':               'grey',
-  'Closed - Do not call':        'grey',
-  'Closed - UTR':                'grey',
-  'Closed - Other':              'grey',
-  Deleted:                       'grey',
-  None:                          'grey',
-};
-const statusTone = (label) => STATUS_TONE[label] || 'grey';
 
 /**
  * Shared per-record activity feed.
  *
  * Entries are either group headers (`{ t: 'group', label }`) or log entries.
- * `t` selects which variant renders — outreach entries get the full
+ * `t` selects which variant renders: outreach entries get the full
  * OutreachTab card treatment (with call details + transcript); status
  * changes render just the transition pills; clinical notes and tasks render
  * a nested "View Details" card; comments render as an inline paragraph;
@@ -206,7 +165,7 @@ export function ActivityLog({ entries, emptyLabel = 'No activity recorded yet.',
     );
   }
 
-  // Flatten to render list — mark the first/last item in each visible
+  // Flatten to render list: mark the first/last item in each visible
   // group so the icon rail can drop its top/bottom connectors, matching
   // the HCC timeline's continuous-line look.
   const items = (() => {
@@ -351,7 +310,7 @@ export function MetaLine({ entry }) {
 }
 
 /**
- * ViewMoreButton — the shared expand trigger. Hidden until the row is
+ * ViewMoreButton: the shared expand trigger. Hidden until the row is
  * hovered or focused, pinned once open. Exported so a `render` body uses the
  * same affordance as the built-in variants.
  */
@@ -387,6 +346,7 @@ function withTrailing(entry, node) {
 
 /* ── Type-branched entry ─────────────────────────────────────────────── */
 function ActivityLogEntry({ entry, isFirst, isLast, afterGroup = false, hideCommentTitle = false, onOpenTask, onOpenNote }) {
+  const { detailCard: DetailCard, referral: Referral } = useContext(ActivityLogRenderers);
   const content = (() => {
       // Escape hatch for surfaces whose entry shape none of the built-in
       // variants covers (e.g. Care Plan History's version cards).
@@ -401,13 +361,13 @@ function ActivityLogEntry({ entry, isFirst, isLast, afterGroup = false, hideComm
           return <StatusChangeEntryBody entry={entry} />;
         case 'clinical_note':
         case 'note':
-          return <DetailCardEntryBody entry={entry} variant="note" onOpenTask={onOpenTask} onOpenNote={onOpenNote} />;
+          return DetailCard ? <DetailCard entry={entry} variant="note" onOpenTask={onOpenTask} onOpenNote={onOpenNote} /> : <GenericEntryBody entry={entry} />;
         case 'task':
-          return <DetailCardEntryBody entry={entry} variant="task" onOpenTask={onOpenTask} />;
+          return DetailCard ? <DetailCard entry={entry} variant="task" onOpenTask={onOpenTask} /> : <GenericEntryBody entry={entry} />;
         case 'appointment':
-          return <DetailCardEntryBody entry={entry} variant="appointment" />;
+          return DetailCard ? <DetailCard entry={entry} variant="appointment" /> : <GenericEntryBody entry={entry} />;
         case 'referral':
-          return <ReferralEntryBody entry={entry} />;
+          return Referral ? <Referral entry={entry} /> : <GenericEntryBody entry={entry} />;
         case 'assign_coder':
         case 'assignee_change':
           return <AssigneeChangeEntryBody entry={entry} />;
@@ -433,7 +393,7 @@ function ActivityLogEntry({ entry, isFirst, isLast, afterGroup = false, hideComm
             <span className={styles.openButton}>
               <ActionButton
                 icon="solar:arrow-right-up-linear"
-                size="S"
+                size="sm"
                 tooltip={entry.openTooltip || 'Open'}
                 onClick={entry.onOpen}
               />
@@ -450,14 +410,31 @@ function OutreachEntryBody({ entry }) {
   const [expanded, setExpanded] = useState(false);
   const hasNote = Boolean(entry.note && entry.note.trim());
   const hasCall = !!entry.callDetails;
-  const expandable = hasNote || hasCall;
+  // `details`: [{ label, value }] shown as a field list behind "View details"
+  // (empty values are skipped).
+  const details = (entry.details || []).filter(d => d && d.value != null && d.value !== '');
+  // `onViewDetails`: the owner shows the details itself (e.g. a side
+  // panel), so View details calls it instead of expanding here.
+  // `viewDetailsLabel` renames that link (e.g. "View Chat"), with a right
+  // chevron since it opens something rather than expanding.
+  const hasDetails = details.length > 0 || !!entry.onViewDetails;
+  const expandable = hasNote || hasCall || hasDetails;
 
   return (
     <>
       <MetaLine entry={entry} />
       <div className={htStyles.headlineRow}>
         <span className={htStyles.headline}>{entry.title}</span>
-        {(entry.badges || []).map(b => <Badge key={b} tone="primary" size="M" label={b} />)}
+        {/* A badge is a label, or `{ label, tone, title }` for a quieter one
+            (an outreach not tied to any program, say). */}
+        {(entry.badges || []).map((b) => {
+          const badge = typeof b === 'string' ? { label: b } : b;
+          return (
+            <span key={badge.label} title={badge.title} className={styles.badgeWrap}>
+              <Badge tone={badge.tone || 'primary'} size="sm" label={badge.label} />
+            </span>
+          );
+        })}
       </div>
       <div className={styles.outcomeRow}>
         {entry.outcome && (
@@ -465,21 +442,26 @@ function OutreachEntryBody({ entry }) {
             {entry.outcome}
           </span>
         )}
+        {/* `outcomeAside`: a quiet note beside the outcome (e.g. a call whose
+            details never reached Fold). */}
+        {entry.outcomeAside && <span className={styles.outcomeAside}>{entry.outcomeAside}</span>}
         {expandable && (
           <button
             type="button"
             className={`${styles.viewMoreBtn} ${expanded ? styles.viewMoreBtnOpen : ''}`}
-            onClick={() => setExpanded(v => !v)}
+            onClick={entry.onViewDetails || (() => setExpanded(v => !v))}
           >
             {entry.outcome && <span className={styles.viewNoteDot} aria-hidden="true">•</span>}
-            View more
-            <DownChevronIcon size={11} color="currentColor" className={expanded ? styles.viewMoreChevronOpen : undefined} />
+            {entry.viewDetailsLabel || entry.expandLabel || (hasDetails ? 'View details' : 'View more')}
+            {entry.viewDetailsLabel
+              ? <Icon name="solar:alt-arrow-right-linear" size={12} color="currentColor" />
+              : <DownChevronIcon size={11} color="currentColor" className={expanded ? styles.viewMoreChevronOpen : undefined} />}
           </button>
         )}
       </div>
 
-      {expanded && (hasCall || hasNote) && (
-        <div className={styles.expandedCard}>
+      {expanded && (hasCall || hasNote || hasDetails) && (
+        <div className={`${styles.expandedCard} ${!hasCall && !hasDetails ? styles.expandedCardCompact : ''}`}>
           {hasCall && (
             <>
               <div className={styles.expandedLabel}>Call Details:</div>
@@ -527,12 +509,23 @@ function OutreachEntryBody({ entry }) {
               </div>
             </>
           )}
-          {!hasCall && hasNote && (
+          {!hasCall && hasDetails && (
+            <dl className={styles.detailsGrid}>
+              {details.map(d => (
+                <Fragment key={d.label}>
+                  <dt className={styles.detailsLabel}>{d.label}</dt>
+                  <dd className={styles.detailsValue}>{d.value}</dd>
+                </Fragment>
+              ))}
+            </dl>
+          )}
+          {/* On its own the note needs no heading: "View Note" opened it. */}
+          {!hasCall && hasNote && (hasDetails ? (
             <>
               <div className={styles.expandedNoteLabel}>Note :</div>
               <p className={styles.expandedNote}>{entry.note}</p>
             </>
-          )}
+          ) : <p className={styles.expandedNoteOnly}>{entry.note}</p>)}
         </div>
       )}
     </>
@@ -549,260 +542,15 @@ function StatusChangeEntryBody({ entry }) {
       </div>
       {entry.from && entry.to && (
         <div className={htStyles.transition}>
-          <Badge size="S" tone={statusTone(entry.from)} label={entry.from} />
+          <Badge size="sm" tone={statusTone(entry.from)} label={entry.from} />
           <Icon name="solar:arrow-right-linear" size={12} color="var(--neutral-300)" />
-          <Badge size="S" tone={statusTone(entry.to)} label={entry.to} />
+          <Badge size="sm" tone={statusTone(entry.to)} label={entry.to} />
         </div>
       )}
     </>
   );
 }
 
-/* ── Variant: Clinical note / Task / Appointment (nested detail card) ─ */
-function DetailCardEntryBody({ entry, variant, onOpenTask, onOpenNote }) {
-  const [expanded, setExpanded] = useState(true);
-  const dc = entry.detailCard;
-  const expandable = !!dc;
-  const allTasks = useAppStore(s => s.tasks);
-  const taskPriority = dc?.priority
-    || (dc?.taskId && allTasks?.find(t => t.id === dc.taskId)?.priority)
-    || (variant === 'task' ? 'medium' : 'none');
-
-  return (
-    <>
-      <MetaLine entry={entry} />
-      <div className={htStyles.headlineRow}>
-        <span className={htStyles.headline}>{entry.title}</span>
-        {expandable && (
-          <button
-            type="button"
-            className={`${styles.viewMoreBtn} ${expanded ? styles.viewMoreBtnOpen : ''}`}
-            onClick={() => setExpanded(v => !v)}
-          >
-            <span className={styles.viewNoteDot} aria-hidden="true">•</span>
-            View more
-            <DownChevronIcon size={11} color="currentColor" className={expanded ? styles.viewMoreChevronOpen : undefined} />
-          </button>
-        )}
-      </div>
-      {expanded && dc && (
-        <div className={styles.detailCard}>
-          {variant === 'task' ? (
-            <div className={styles.detailCardRow}>
-              <PriorityIcon priority={taskPriority} size={16} />
-              <div className={styles.detailCardText}>
-                <span className={styles.detailCardTitle}>{dc.title}</span>
-                {dc.assignee && (
-                  <div className={styles.detailCardSubtitle}>Assignee: {dc.assignee}</div>
-                )}
-              </div>
-              <div className={styles.detailCardTrailing}>
-                {dc.status && <Badge tone={statusTone(dc.status)} size="M" label={dc.status} />}
-                <span className={styles.detailCardActionsDivider} aria-hidden="true" />
-                <button
-                  type="button"
-                  className={styles.detailCardIconBtn}
-                  aria-label="Preview task"
-                  onClick={dc.taskId && onOpenTask ? () => onOpenTask(dc.taskId) : undefined}
-                  style={dc.taskId && onOpenTask ? undefined : { cursor: 'default' }}
-                >
-                  <Icon name="solar:eye-linear" size={14} color="var(--neutral-400)" />
-                </button>
-              </div>
-            </div>
-          ) : variant === 'appointment' ? (
-            // Figma 1230:74055 — leading calendar icon + title over a
-            // "date, time · provider" subtitle, trailing status badge and
-            // an arrow-out icon that later opens the appointment drawer.
-            <div className={styles.detailCardRow}>
-              <span className={styles.detailCardHandle}>
-                <Icon name="solar:calendar-linear" size={16} color="var(--neutral-300)" />
-              </span>
-              <div className={styles.detailCardText}>
-                <div className={styles.detailCardTitleRow}>
-                  <span className={styles.detailCardTitle}>{dc.title}</span>
-                </div>
-                {dc.subtitle && (
-                  <div className={styles.detailCardSubtitle}>{dc.subtitle}</div>
-                )}
-              </div>
-              <div className={styles.detailCardTrailing}>
-                {dc.status && <Badge tone={statusTone(dc.status)} size="M" label={dc.status} />}
-                <button type="button" className={styles.detailCardIconBtn} aria-label="Open">
-                  <Icon name="solar:arrow-right-up-linear" size={14} color="var(--neutral-400)" />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <ClinicalNoteCardActions dc={dc} draftLock={entry._draftLock} onOpenTask={onOpenTask} onOpenNote={onOpenNote} />
-          )}
-        </div>
-      )}
-    </>
-  );
-}
-
-/* Note-variant card body — the shared Clinical Note affordance. Extracted
-   so the eye / edit / task-arrow buttons can hook into the store's task
-   opener and PDF viewer instead of being visual-only. Exported so the
-   HEDIS Clinical Notes tab can render the same card without the
-   ActivityLog's timeline rail. */
-// Derive the nested review-task's title from the parent note's title so
-// old activity entries (persisted before we started stamping the correct
-// per-gap name) render consistently with new ones. Falls back to whatever
-// the store stamped originally, then to a safe default.
-function deriveReviewTaskTitle(dc) {
-  if (dc?.title) return `Request for Sign-off - ${dc.title}`;
-  return dc?.reviewTask?.title || 'Request for Sign-off - Clinical Note';
-}
-
-export function ClinicalNoteCardActions({ dc, draftLock = null, onOpenTask, onOpenNote }) {
-  // Prefer the caller-provided `onOpenTask` (drawer wires the upstream
-  // openTaskFromActivity signal — that's the fix from 3e0aa74 that stamps
-  // pendingOpenTaskId for TasksView). Fall back to openTaskFromNotification
-  // for surfaces without a specific handler.
-  const openTaskFromNotification = useAppStore(s => s.openTaskFromNotification);
-  const allTasks = useAppStore(s => s.tasks);
-  // Each activity entry represents an event at a point in time, so the
-  // status badge here mirrors the state the event captured (submit →
-  // Pending Review, sign → Signed). A separate "Clinical Note Signed"
-  // entry logs at sign-time, so both events remain visible in order.
-  const noteStatus = dc?.status;
-  // The note as it is NOW (clinical_notes), found by the id the entry saved.
-  // A Draft entry stays a historical record, but once that note has been
-  // submitted or signed its pencil is locked: the draft is no longer the
-  // editable version. Entries logged before noteId was stored fall back to
-  // the member's note for the same gap.
-  const memberNotes = useAppStore(s => (dc?.memberId ? s.clinicalNotesByMember?.[dc.memberId] : undefined));
-  const entryCodes = dc?.gapCodes?.length ? dc.gapCodes : (dc?.gapCode ? [dc.gapCode] : []);
-  const liveNote = dc?.noteId
-    ? memberNotes?.find(n => n.id === dc.noteId)
-    : memberNotes?.find(n => (n.gapCodes || []).some(c => entryCodes.includes(c)));
-  const liveStatus = liveNote?.status;
-  const draftLocked = noteStatus === 'Draft' && (!!draftLock || (!!liveStatus && liveStatus !== 'draft'));
-  const lockReason = (draftLock === 'signed' || liveStatus === 'signed')
-    ? 'This note has been signed, so this draft can no longer be edited.'
-    : 'This note was submitted for review, so this draft can no longer be edited.';
-  const reviewTaskStatus = dc?.reviewTask?.status;
-  const reviewTaskPriority = dc?.reviewTask?.priority
-    || (dc?.reviewTask?.taskId && allTasks?.find(t => t.id === dc.reviewTask.taskId)?.priority)
-    || 'medium';
-  const openTask = (taskId) => (onOpenTask ? onOpenTask(taskId) : openTaskFromNotification?.(taskId));
-  // `onOpenNote` gets the whole detailCard so the drawer can reopen the
-  // note in its left workspace (matches "Add Note") — used by the eye
-  // affordance so authors can edit their submission before it's signed.
-  const openNote = (dcArg) => onOpenNote?.(dcArg);
-  const openClinicalNoteDrawer = useAppStore(s => s.openClinicalNoteDrawer);
-  const showToast = useAppStore(s => s.showToast);
-  // Draft rows key on the pencil, which reopens the note (edit path).
-  // Submitted / Signed rows key on the eye — for a Pending Review note we
-  // reopen the linked sign-off task so the reviewer lands back in the
-  // ClinicalNotePanel with the exact same fields they filled out,
-  // matching Figma 511:105429. Signed notes without a review task fall
-  // back to the stored PDF dataUrl.
-  const handlePrimary = () => {
-    // Eye (Preview / edit re-submission) and pencil (Draft edit) both open
-    // the note back in its own workspace via onOpenNote. That gives the
-    // submitter a chance to amend before the reviewer signs; the reviewer
-    // still uses the task-arrow ↗ button to reach the sign-off task.
-    if (onOpenNote) {
-      onOpenNote(dc);
-      return;
-    }
-    if (dc.status === 'Draft' && openClinicalNoteDrawer && dc.memberId && dc.gapCode) {
-      openClinicalNoteDrawer({ memberId: dc.memberId, gapCode: dc.gapCode });
-      return;
-    }
-    if (dc.pdfDataUrl) {
-      try {
-        const w = window.open(dc.pdfDataUrl, '_blank');
-        w?.focus?.();
-      } catch (_) { /* popup blocker */ }
-    } else {
-      showToast?.('Reopen note — coming soon');
-    }
-  };
-  const handleOpenTask = () => {
-    if (dc.reviewTask?.taskId) openTask(dc.reviewTask.taskId);
-    else showToast?.('No linked review task.');
-  };
-  return (
-    <>
-      {/* subMeta (pre-title form-type label) and the "Linked Score Groups"
-           link are no longer part of the note-card design — dropped at the
-           render layer so historical entries with those fields still
-           persisted don't show them. */}
-      <div className={styles.detailCardRow}>
-        <div className={styles.detailCardText}>
-          <div className={styles.detailCardTitleRow}>
-            <span className={styles.detailCardTitle}>{dc.title}</span>
-            {dc.chip && (
-              // Wrap in a Tooltip so hover reveals the exact set of gaps
-              // the note bundles — prefer human-readable HEDIS measure
-              // names (dc.gapNames) e.g. "Colorectal Cancer Screening,
-              // Breast Cancer Screening"; fall back to raw codes for
-              // older activity entries.
-              (dc.gapNames?.length || dc.gapCodes?.length) ? (
-                <Tooltip label={(dc.gapNames || dc.gapCodes).join(', ')}>
-                  <Badge tone="grey" size="S" label={dc.chip} />
-                </Tooltip>
-              ) : (
-                <Badge tone="grey" size="S" label={dc.chip} />
-              )
-            )}
-          </div>
-          {dc.subtitle && <div className={styles.detailCardSubtitle}>{dc.subtitle}</div>}
-        </div>
-        <div className={styles.detailCardTrailing}>
-          <span className={styles.detailCardStatusSlot}>
-            {noteStatus && <Badge tone={statusTone(noteStatus)} size="M" label={noteStatus} />}
-          </span>
-          <span className={styles.detailCardActionsSlot}>
-            <Tooltip label={draftLocked ? lockReason : null} maxWidth={240}>
-              <button
-                type="button"
-                className={styles.detailCardIconBtn}
-                aria-label={noteStatus === 'Draft' ? 'Edit' : 'Preview'}
-                onClick={draftLocked ? undefined : handlePrimary}
-                disabled={draftLocked}
-              >
-                <Icon
-                  name={noteStatus === 'Draft' ? 'solar:pen-linear' : 'solar:eye-linear'}
-                  size={14}
-                  color="var(--neutral-300)"
-                />
-              </button>
-            </Tooltip>
-            <span className={styles.detailCardActionsDivider} aria-hidden="true" />
-            <button type="button" className={styles.detailCardIconBtn} aria-label="More">
-              <Icon name="solar:menu-dots-linear" size={14} color="var(--neutral-300)" />
-            </button>
-          </span>
-        </div>
-      </div>
-      {dc.reviewTask && (
-        <div className={styles.detailCardNested}>
-          <PriorityIcon priority={reviewTaskPriority} size={16} />
-          <div className={styles.detailCardText}>
-            <span className={styles.detailCardTitle}>{deriveReviewTaskTitle(dc)}</span>
-            {dc.reviewTask.assignee && (
-              <div className={styles.detailCardSubtitle}>Assignee: {dc.reviewTask.assignee}</div>
-            )}
-          </div>
-          <div className={styles.detailCardTrailing}>
-            {reviewTaskStatus && <Badge tone={statusTone(reviewTaskStatus)} size="M" label={reviewTaskStatus} />}
-            <span className={styles.detailCardActionsDivider} aria-hidden="true" />
-            <button type="button" className={styles.detailCardIconBtn} aria-label="Preview task" onClick={handleOpenTask}>
-              <Icon name="solar:eye-linear" size={14} color="var(--neutral-400)" />
-            </button>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-/* ── Variant: Assignee change (avatar-transition pills) ──────────────── */
 function assigneeInitials(a) {
   if (!a) return '';
   return a.initials || '';
@@ -878,7 +626,7 @@ function UploadEntryBody({ entry }) {
 // / `onDeleteComment()` on the entry (only for the author's own comments)
 // and an optional `mentionUsers` roster for the edit composer.
 function CommentEntryBody({ entry, hideTitle = false }) {
-  const meName = useAppStore(s => s.currentUserProfile?.name);
+  const meName = useContext(ActivityLogRenderers).viewerName;
   const [editing, setEditing] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
   const canManage = !!(entry.onEditComment || entry.onDeleteComment);
@@ -893,7 +641,7 @@ function CommentEntryBody({ entry, hideTitle = false }) {
           <span className={[styles.commentMenu, menuAnchor ? styles.commentMenuOpen : ''].filter(Boolean).join(' ')}>
             <ActionButton
               icon="solar:menu-dots-linear"
-              size="S"
+              size="sm"
               tooltip="Comment actions"
               onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget.getBoundingClientRect()); }}
             />
@@ -940,117 +688,6 @@ function CommentEntryBody({ entry, hideTitle = false }) {
         />
       )}
     </div>
-  );
-}
-
-/* ── Variant: Referral (Figma New Care Gap Workflow 1327:419983) ─────── */
-// Sender (name + role) → recipient (name, Fold Provider badge, specialty •
-// channel contact), then "Created on : date • status". The menu reopens a
-// still-draft referral, or opens a sent Email referral in Messages > Email.
-function ReferralEntryBody({ entry }) {
-  const [expanded, setExpanded] = useState(true);
-  const [menuAnchor, setMenuAnchor] = useState(null);
-  const setActivePage = useAppStore(s => s.setActivePage);
-  const setPendingEmailReferralId = useAppStore(s => s.setPendingEmailReferralId);
-  const providers = useAppStore(s => s.referralProviders);
-  const dc = entry.detailCard || {};
-  // Specialty is read from the directory at render time, so a card logged
-  // before a doctor's specialty was set still shows it. Id first; older
-  // entries only carry names, and one person can have duplicate profile rows,
-  // so prefer the same-name row that has a specialty.
-  const lookup = (id, name) => {
-    if (id) {
-      const byId = providers?.find(p => p.id === id);
-      if (byId) return byId;
-    }
-    if (!name) return null;
-    const same = (providers || []).filter(p => (p.name || '').toLowerCase() === name.toLowerCase());
-    return same.find(p => p.specialty) || same[0] || null;
-  };
-  const fromSpecialty = lookup(dc.fromId, dc.fromName)?.specialty || dc.fromRole || '';
-  const toSpecialty = lookup(dc.toId, dc.toName)?.specialty || dc.toSpecialty || '';
-  const toContact = dc.toContact ?? dc.toSubtitle ?? '';
-  const toSubtitle = [toSpecialty && !toContact.includes(toSpecialty) ? toSpecialty : '', toContact].filter(Boolean).join(' • ');
-  const created = dc.createdAt ? new Date(dc.createdAt) : null;
-  const createdLabel = created && !Number.isNaN(created.getTime())
-    ? `${String(created.getMonth() + 1).padStart(2, '0')}/${String(created.getDate()).padStart(2, '0')}/${created.getFullYear()}, ${created.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
-    : '';
-  const isDraft = dc.status === 'Draft';
-  const menuItems = [
-    ...(entry.onOpenReferralDraft ? [{ key: 'continue-draft', icon: 'solar:pen-linear', label: 'Continue Draft' }] : []),
-    ...(!isDraft && dc.channel === 'email' && dc.referralId ? [{ key: 'view-email', icon: 'solar:letter-linear', label: 'View Email' }] : []),
-    ...(entry.onCompleteReferral ? [{ key: 'complete', icon: 'solar:check-circle-linear', label: 'Mark as Completed' }] : []),
-  ];
-
-  return (
-    <>
-      <MetaLine entry={entry} />
-      <div className={htStyles.headlineRow}>
-        <span className={htStyles.headline}>{entry.title}</span>
-        <ViewMoreButton expanded={expanded} onToggle={() => setExpanded(v => !v)} leadingDot />
-      </div>
-      {expanded && (
-        <div
-          className={[styles.detailCard, styles.referralCard, entry.onOpenReferral ? styles.referralCardClickable : ''].filter(Boolean).join(' ')}
-          role={entry.onOpenReferral ? 'button' : undefined}
-          tabIndex={entry.onOpenReferral ? 0 : undefined}
-          onClick={entry.onOpenReferral}
-          onKeyDown={entry.onOpenReferral ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); entry.onOpenReferral(); } } : undefined}
-        >
-          <div className={styles.referralMain}>
-            <div className={styles.referralParties}>
-              <div className={styles.referralParty}>
-                <span className={styles.referralName}>{dc.fromName}</span>
-                {fromSpecialty && <span className={styles.referralSub}>{fromSpecialty}</span>}
-              </div>
-              <Icon name="solar:arrow-right-linear" size={16} color="var(--neutral-300)" />
-              <div className={styles.referralParty}>
-                <span className={styles.referralNameRow}>
-                  <span className={styles.referralName}>{dc.toName}</span>
-                  {dc.toBadge && <Badge tone="primary" size="S" label={dc.toBadge} className={styles.referralBadge} />}
-                </span>
-                {toSubtitle && <span className={styles.referralSub}>{toSubtitle}</span>}
-              </div>
-            </div>
-            <div className={styles.referralSub}>
-              {createdLabel && `Created on : ${createdLabel}`}
-              {createdLabel && dc.status && ' • '}
-              {dc.status && <span className={isDraft ? styles.referralStatusDraft : styles.referralStatus}>{dc.status}</span>}
-            </div>
-          </div>
-          {menuItems.length > 0 && (
-            <ActionButton
-              icon="solar:menu-dots-linear"
-              size="S"
-              tooltip="More actions"
-              tooltipLeft
-              onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget.getBoundingClientRect()); }}
-            />
-          )}
-          {menuAnchor && (
-            // Portal clicks still bubble through React; keep them off the card.
-            <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="presentation">
-            <MenuPopover
-              anchorRect={menuAnchor}
-              width={168}
-              align="right"
-              items={menuItems}
-              onClose={() => setMenuAnchor(null)}
-              onSelect={(key) => {
-                setMenuAnchor(null);
-                if (key === 'continue-draft') entry.onOpenReferralDraft?.();
-                else if (key === 'complete') entry.onCompleteReferral?.();
-                else if (key === 'view-email') {
-                  setActivePage?.('messages');
-                  setPendingEmailReferralId?.(dc.referralId);
-                }
-              }}
-            />
-            </span>
-          )}
-        </div>
-      )}
-    </>
   );
 }
 

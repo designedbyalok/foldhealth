@@ -4,8 +4,8 @@
 --   • RLS is already enabled on the table.
 --   • Four correct owner-scoped policies already exist for PUBLIC, all keyed
 --     on `auth.uid() = user_id`.
---   • Four permissive `anon` policies also exist — SELECT/INSERT/UPDATE/DELETE
---     with `true` — which let anyone holding the public anon key read, alter
+--   • Four permissive `anon` policies also exist: SELECT/INSERT/UPDATE/DELETE
+--     with `true`, which let anyone holding the public anon key read, alter
 --     or delete every user's tour state. Policies are OR'd, so these four are
 --     the entire hole.
 --

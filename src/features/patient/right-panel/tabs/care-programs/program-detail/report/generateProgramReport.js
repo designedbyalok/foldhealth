@@ -103,14 +103,14 @@ export function generateProgramReport(report) {
     for (let i = 0; i < rows.length; i += 2) {
       const pair = rows.slice(i, i + 2);
       const heights = pair.map((r) => {
-        const lines = wrap(`: ${r.value ?? '—'}`, colW - LABEL_W, 10);
+        const lines = wrap(`: ${r.value ?? '-'}`, colW - LABEL_W, 10);
         return lines.length * 12;
       });
       const h = Math.max(...heights, 12);
       pair.forEach((r, j) => {
         const x = M + j * (colW + COL_GAP);
         text(r.label, x, rowY + 9, { size: 10, color: C.black });
-        const lines = wrap(`: ${r.value ?? '—'}`, colW - LABEL_W, 10);
+        const lines = wrap(`: ${r.value ?? '-'}`, colW - LABEL_W, 10);
         font('regular');
         doc.setFontSize(10);
         ink(TONE[r.tone] || C.body);
@@ -161,7 +161,7 @@ export function generateProgramReport(report) {
     });
     lines.forEach(({ full, rows }) => {
       const valueW = full ? CONTENT_W - LABEL_W : colW - LABEL_W;
-      const wrapped = rows.map(r => wrap(`: ${r.value ?? '—'}`, valueW, 10));
+      const wrapped = rows.map(r => wrap(`: ${r.value ?? '-'}`, valueW, 10));
       const h = Math.max(...wrapped.map(w => w.length * 12), 12) + 4;
       ensure(h);
       rows.forEach((r, j) => {
@@ -210,8 +210,8 @@ export function generateProgramReport(report) {
     const PAD = 8;
     const HEAD_H = 22;
     const cellLines = (cell, w) => {
-      const c = typeof cell === 'string' || cell == null ? { text: cell ?? '—' } : cell;
-      const main = wrap(c.text ?? '—', w - PAD * 2, 9.5);
+      const c = typeof cell === 'string' || cell == null ? { text: cell ?? '-' } : cell;
+      const main = wrap(c.text ?? '-', w - PAD * 2, 9.5);
       const sub = c.sub ? wrap(c.sub, w - PAD * 2, 9) : [];
       return { c, main, sub, h: (main.length + sub.length) * 12 };
     };

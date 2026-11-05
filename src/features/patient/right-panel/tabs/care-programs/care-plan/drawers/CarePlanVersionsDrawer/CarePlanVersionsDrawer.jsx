@@ -4,7 +4,7 @@ import { ActionButton } from '../../../../../../../../components/ActionButton/Ac
 import { ConfirmDialog } from '../../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
 import { Input } from '../../../../../../../../components/Input/Input';
-import { RingEmptyState } from '../../../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { CarePlanVersionChangesDrawer } from '../CarePlanVersionChangesDrawer/CarePlanVersionChangesDrawer';
 import { groupByVersion, versionNumberOf } from '../../lib/carePlanVersions';
@@ -86,9 +86,9 @@ export function CarePlanVersionsDrawer({ patientId, program, onClose }) {
           onChange={e => setQuery(e.target.value)}
         />
         {list.length === 0 ? (
-          <RingEmptyState icon="solar:layers-minimalistic-linear" label={loading ? 'Loading versions…' : 'No saved versions yet'} />
+          <EmptyState icon="solar:layers-minimalistic-linear" title={loading ? 'Loading versions…' : 'No saved versions yet'} />
         ) : shown.length === 0 ? (
-          <RingEmptyState icon="solar:magnifer-linear" label="No versions match your search" />
+          <EmptyState icon="solar:magnifer-linear" title="No versions match your search" />
         ) : shown.map((v) => {
           // Versions come back newest first, so the head of the full list is
           // the one the plan is on now.
@@ -117,14 +117,13 @@ export function CarePlanVersionsDrawer({ patientId, program, onClose }) {
                 </div>
                 <div className={styles.cardHead}>
                   <span className={styles.version}>Version {v.versionNumber}</span>
-                  {isCurrent && <Badge tone="unity" size="S" label="Current" />}
+                  {isCurrent && <Badge tone="unity" size="sm" label="Current" />}
                 </div>
                 <div className={styles.counts}>{counts}</div>
               </div>
               <div className={styles.actionCell} onClick={e => e.stopPropagation()}>
                 <ActionButton
                   icon="solar:eye-linear"
-                  size="L"
                   tooltip="View changes"
                   onClick={() => openChanges(v)}
                 />
@@ -135,7 +134,6 @@ export function CarePlanVersionsDrawer({ patientId, program, onClose }) {
                     <span className={styles.vDivider} />
                     <ActionButton
                       icon="solar:restart-linear"
-                      size="L"
                       tooltip="Load into draft"
                       onClick={() => setRestoreTarget(v)}
                     />

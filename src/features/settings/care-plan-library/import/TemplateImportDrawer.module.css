@@ -1,0 +1,181 @@
+/* Care plan template import drawer: upload, preview, done. */
+
+.upload,
+.preview,
+.done {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-2);
+}
+
+.lead,
+.formatText,
+.planWhy,
+.doneText {
+  margin: 0;
+  font-size: var(--font-md);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}
+
+.fileName {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+}
+
+/* ── Format help ── */
+.format {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-25);
+}
+
+.formatTitle {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.columns {
+  color: var(--neutral-400);
+  overflow-wrap: anywhere;
+}
+
+.formatList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: var(--font-md);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}
+
+.formatList b {
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+
+.samples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ── Preview ── */
+.totals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+}
+
+.total {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  padding: var(--space-3) var(--space-4);
+}
+
+.total + .total {
+  border-left: 0.5px solid var(--neutral-150);
+}
+
+.totalNumber {
+  font-size: var(--font-xl);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--neutral-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.totalError { color: var(--status-error); }
+
+.totalLabel {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+
+.planList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 0.5px solid var(--neutral-100);
+}
+
+.planRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) 0;
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+
+.planHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.planName {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planMeta {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+
+.issues {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-md);
+  line-height: var(--leading-normal);
+}
+
+.issues li {
+  display: grid;
+  grid-template-columns: var(--space-4) minmax(0, 1fr);
+  gap: var(--space-1);
+  align-items: start;
+}
+
+.issues li > :first-child { margin-top: calc(var(--space-1) / 2); }
+
+.issueError { color: var(--status-error); }
+.issueWarning { color: var(--status-warning); }
+
+.more { align-self: flex-start; }
+
+/* ── Done ── */
+.done {
+  align-items: center;
+  padding-top: var(--space-8);
+  text-align: center;
+}
+
+.doneText { max-width: 48ch; }

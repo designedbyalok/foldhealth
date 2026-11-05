@@ -36,7 +36,7 @@
   text-overflow: ellipsis;
 }
 
-/* Toolbar tabs (pill style) — absolutely centered */
+/* Toolbar tabs (pill style): absolutely centered */
 .toolbarCenter {
   position: absolute;
   left: 50%;
@@ -74,7 +74,7 @@
 .toolbarTabActive {
   color: var(--neutral-400);
 }
-/* Sliding pill indicator — applied via JS inline style on a ::before or a span */
+/* Sliding pill indicator: applied via JS inline style on a ::before or a span */
 .toolbarSlider {
   position: absolute;
   top: 2px;
@@ -118,7 +118,7 @@
   background: var(--neutral-100);
 }
 
-/* Toolbar icon button — used for Undo / Redo. */
+/* Toolbar icon button: used for Undo / Redo. */
 .iconBtn {
   display: inline-flex;
   align-items: center;
@@ -140,7 +140,7 @@
   opacity: 0.5;
 }
 
-/* Subtle text indicator next to the Save button — shows during auto-save. */
+/* Subtle text indicator next to the Save button, shows during auto-save. */
 .autoSaveStatus {
   font-size: var(--font-sm);
   font-weight: 400;
@@ -258,7 +258,7 @@
 }
 
 /* ── Zoom panel (bottom-left, below minimap) ── */
-/* Wrapping container at bottom-left — holds the Select/Pan tool pill
+/* Wrapping container at bottom-left: holds the Select/Pan tool pill
    and the zoom-controls pill side by side with a small gap between
    them. The Panel itself has no chrome; each child renders its own
    pill background. */

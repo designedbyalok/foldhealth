@@ -1,4 +1,4 @@
--- TOC AI Outcome workflow — track whether bulk TOC agent invoke has started
+-- TOC AI Outcome workflow: track whether bulk TOC agent invoke has started
 -- the AI outcome column for a patient. NULL/true = show computed outcome;
 -- false = blank until the user invokes the TOC agent from the bulk bar.
 

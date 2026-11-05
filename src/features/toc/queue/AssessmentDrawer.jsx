@@ -62,16 +62,14 @@ export function AssessmentDrawer() {
         <div className={styles.formActions}>
           <ActionButton
             icon="solar:printer-linear"
-            size="L"
             tooltip="Print"
             tooltipBelow
             onClick={() => window.print()}
           />
           <span className={styles.actionDivider} />
           <Button
-            variant="alt"
-            size="L"
-            onClick={() => showToast('Resend — coming soon')}
+            variant="outline" tone="primary"
+            onClick={() => showToast('Resend: coming soon')}
           >
             Resend
           </Button>

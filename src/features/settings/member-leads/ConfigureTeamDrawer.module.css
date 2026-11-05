@@ -1,4 +1,4 @@
-/* ── ConfigureTeamDrawer — Figma 2609:12334 ──
+/* ── ConfigureTeamDrawer: Figma 2609:12334 ──
    Body sections + the nested user-card + Assign-To rows. Shell (header,
    footer, slide-in) comes from the shared Drawer component. */
 
@@ -86,7 +86,7 @@
   white-space: nowrap;
 }
 
-/* TIN multi-select trigger — looks like an input field but shows pills. */
+/* TIN multi-select trigger: looks like an input field but shows pills. */
 .tinPickerTrigger {
   width: 100%;
   box-sizing: border-box;
@@ -144,7 +144,7 @@
   flex-shrink: 0;
 }
 
-/* TIN dropdown rows — Figma 2609:12533. Provider-group rows with an icon
+/* TIN dropdown rows: Figma 2609:12533. Provider-group rows with an icon
    bubble, number + provider count, and an "Assigned: %" badge. */
 .tinMenuTitle {
   font-size: var(--font-md);
@@ -206,7 +206,7 @@
   white-space: nowrap;
 }
 
-/* Hover-trigger variants of meta lines — show a dashed underline so users
+/* Hover-trigger variants of meta lines: show a dashed underline so users
    discover the hover popup. */
 .userCardMetaHover {
   font-size: var(--font-sm);
@@ -362,7 +362,7 @@
   padding-right: 24px;
 }
 
-/* Custom Assign-To value dropdown — replaces the native <select> so each
+/* Custom Assign-To value dropdown: replaces the native <select> so each
    dimension can render a rich row (TIN: icon + providers + Assigned %,
    Staff: avatar + role, Vendor: plain text). */
 .assignValueWrap {
@@ -487,7 +487,7 @@
 }
 
 /* Tone helpers for percent numbers. Red when over-allocated; muted green
-   when within capacity — keeps the math visible to admins. */
+   when within capacity: keeps the math visible to admins. */
 .assignNumOver {
   color: var(--status-error, #D34A3D);
   font-weight: 600;

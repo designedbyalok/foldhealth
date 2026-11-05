@@ -1,0 +1,99 @@
+.row {
+  composes: row rowClickable from '../../../components/WorklistShell/WorklistRow.module.css';
+}
+
+.rowSelected {
+  composes: rowSelected from '../../../components/WorklistShell/WorklistRow.module.css';
+}
+
+.td {
+  composes: td from '../../../components/WorklistShell/WorklistRow.module.css';
+}
+
+.checkTd {
+  composes: checkTd from '../../../components/WorklistShell/WorklistRow.module.css';
+}
+
+.stickyLeft {
+  composes: stickyLeft from '../../../components/WorklistShell/WorklistRow.module.css';
+  left: 0;
+}
+
+.stickyRight {
+  composes: stickyRight from '../../../components/WorklistShell/WorklistRow.module.css';
+}
+
+.firstTd {
+  padding-left: var(--space-4);
+}
+
+.muted {
+  color: var(--neutral-300);
+}
+
+.num {
+  text-align: right;
+  color: var(--neutral-300);
+  font-variant-numeric: tabular-nums;
+}
+
+.clip {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nameCell {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+
+.name {
+  display: block;
+  overflow: hidden;
+  font-weight: 500;
+  color: var(--neutral-400);
+  text-overflow: ellipsis;
+}
+
+.sub {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+
+.lastCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.errorLink {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--font-sm);
+  color: var(--status-error);
+  cursor: pointer;
+}
+
+.errorLink:hover {
+  text-decoration: underline;
+}
+
+.actionCell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.vDivider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+}

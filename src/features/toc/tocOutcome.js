@@ -1,4 +1,4 @@
-/** AI Outcome label for a TOC worklist row — agent connection result. */
+/** AI Outcome label for a TOC worklist row, agent connection result. */
 export function outreachStatusLabel(p) {
   if (p.aiOutcomeInitiated === false) return null;
   if (p.aiOutcomeStatus) return p.aiOutcomeStatus;
@@ -23,13 +23,13 @@ function hasAgentConnectedFromLegacyFields(p) {
   return false;
 }
 
-/** Task badge count — zero until the agent has talked to the member. */
+/** Task badge count: zero until the agent has talked to the member. */
 export function resolveAiTaskCount(p) {
   if (!hasAgentConnected(p)) return 0;
   return Math.max(0, Number(p?.tasks) || 0);
 }
 
-/** True when the TOC worklist Outreach column would show Attended/Failed (not —). */
+/** True when the TOC worklist Outreach column would show Attended/Failed (not -). */
 export function hasTocOutreachActivity(p) {
   if (!hasAgentConnected(p)) return false;
   const raw = Array.isArray(p.outreachDots) ? p.outreachDots : [];
@@ -39,7 +39,7 @@ export function hasTocOutreachActivity(p) {
   return !!(hasSuccess || hasFailed || date);
 }
 
-/** "On: 08/18/2026, 07:36pm" — shown below the AI Outcome badge after invoke. */
+/** "On: 08/18/2026, 07:36pm", shown below the AI Outcome badge after invoke. */
 export function formatAiOutcomeInvokedAt(iso) {
   if (!iso) return null;
   const d = new Date(iso);

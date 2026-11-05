@@ -30,7 +30,7 @@ create index if not exists patient_care_plan_barrier_goals_goal_idx
 create index if not exists patient_care_plan_barrier_goals_barrier_idx
   on public.patient_care_plan_barrier_goals (barrier_id);
 
--- 2. RLS — the join follows the parent barriers table's posture: any
+-- 2. RLS: the join follows the parent barriers table's posture: any
 -- authenticated user can select, insert, update, delete. No anon policies.
 alter table public.patient_care_plan_barrier_goals enable row level security;
 

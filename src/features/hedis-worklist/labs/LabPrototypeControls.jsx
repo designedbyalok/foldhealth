@@ -36,18 +36,18 @@ export function LabPrototypeControls({ labs }) {
         <div className={styles.protoBody}>
           <div className={styles.protoRow}>
             <span className={styles.protoLabel}>Lab progress</span>
-            <Button variant="secondary" size="S" disabled={!canCollect} onClick={() => labs.simulateCollection(order)}>Simulate Collection</Button>
-            <Button variant="secondary" size="S" disabled={!canProcess} onClick={() => labs.simulateProcessing(order)}>Start Processing</Button>
+            <Button variant="outline" size="sm" disabled={!canCollect} onClick={() => labs.simulateCollection(order)}>Simulate Collection</Button>
+            <Button variant="outline" size="sm" disabled={!canProcess} onClick={() => labs.simulateProcessing(order)}>Start Processing</Button>
           </div>
           <div className={styles.protoRow}>
             <span className={styles.protoLabel}>Simulate Result</span>
             {presets.map(p => (
-              <Button key={p.key} variant="secondary" size="S" disabled={!canResult} onClick={() => labs.simulateResult(order, p)}>{p.label}</Button>
+              <Button key={p.key} variant="outline" size="sm" disabled={!canResult} onClick={() => labs.simulateResult(order, p)}>{p.label}</Button>
             ))}
           </div>
           <div className={styles.protoRow}>
             <span className={styles.protoLabel}>External feed</span>
-            <Button variant="secondary" size="S" disabled={!labs.rule} onClick={() => labs.importExternalResult()}>
+            <Button variant="outline" size="sm" disabled={!labs.rule} onClick={() => labs.importExternalResult()}>
               Import External Result{labs.rule ? ` (${labs.rule.external.source})` : ''}
             </Button>
           </div>

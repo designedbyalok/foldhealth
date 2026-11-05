@@ -42,7 +42,7 @@ export function BillingPanel() {
         filterActive={filtersOpen}
         onFilter={() => setFiltersOpen(o => !o)}
         rightExtras={isApcm ? (
-          <ActionButton icon="solar:upload-minimalistic-linear" size="L" tooltip="Export" onClick={() => {}} />
+          <ActionButton icon="solar:upload-minimalistic-linear" tooltip="Export" onClick={() => {}} />
         ) : null}
       />
 

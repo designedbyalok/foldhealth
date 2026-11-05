@@ -29,7 +29,7 @@ export function usePopulationGroupsView({
   useEffect(() => { fetchPopGroups(); }, [fetchPopGroups]);
 
   /* Deep link: #/population/pop-groups/rule/<id> lands here with only the id
-     recorded — open the detail screen once the group rows exist. Clearing the
+     recorded: open the detail screen once the group rows exist. Clearing the
      id even when the group is missing keeps a stale URL from looping. */
   useEffect(() => {
     if (!pgRuleRestoreId || popGroups.length === 0) return;
@@ -121,11 +121,11 @@ export function usePopulationGroupsView({
   const [newMode,      setNewMode]      = useState(false);
   /* ── edit flow (editing a saved static-CSV group) ── */
   const [editGroupId,  setEditGroupId]  = useState(null);
-  const [editBaseline, setEditBaseline] = useState(null); // signature of the loaded group — drives dirty state
+  const [editBaseline, setEditBaseline] = useState(null); // signature of the loaded group, drives dirty state
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
-  /* edit phase 2 — new "Update Population Group" drawer (replaces the in-create edit reuse) */
+  /* edit phase 2: new "Update Population Group" drawer (replaces the in-create edit reuse) */
   const [editingGroup, setEditingGroup] = useState(null);
-  /* Groups staged for deletion — non-empty opens the confirm dialog. Holds an
+  /* Groups staged for deletion: non-empty opens the confirm dialog. Holds an
      array so the row action and the BulkBar action share one path. */
   const [deleteTargets, setDeleteTargets] = useState([]);
   const [deleting, setDeleting] = useState(false);
@@ -136,7 +136,7 @@ export function usePopulationGroupsView({
   const uploadTickRef    = useRef(null); // progress-animation interval, cleared on unmount
 
   /* The upload progress interval is started from an event handler, so nothing
-     stops it if the view unmounts mid-upload — it would keep calling
+     stops it if the view unmounts mid-upload, it would keep calling
      setUploadPct on a dead component. Own it here. */
   useEffect(() => () => clearInterval(uploadTickRef.current), []);
 
@@ -190,7 +190,7 @@ export function usePopulationGroupsView({
 
   /* ── helpers ── */
   const resetModalState = () => {
-    /* tableMode / smartMode / enhancedMode / tableRows cleared here — state removed */
+    /* tableMode / smartMode / enhancedMode / tableRows cleared here, state removed */
     setNewMode(false); setEditGroupId(null);
     setSegmentName(''); setDescription(''); setChosenFilter('');
     setMemberStatus('All Status'); setUploadFile(null);
@@ -208,7 +208,7 @@ export function usePopulationGroupsView({
   /* ── edit phase 2 ──────────────────────────────────────────────────────────
      The edit flow is being rebuilt as a dedicated "Update Population Group"
      drawer (<UpdatePopGroupDrawer>). The old approach reused the create
-     drawer's CSV review state — kept here, commented out, for reference. */
+     drawer's CSV review state: kept here, commented out, for reference. */
   const openEditModal = (group, { startInEdit = false } = {}) => {
     // Dynamic groups are defined by a rule, so editing one opens the rule
     // builder with its saved rule; the drawer only fits CSV/static groups.
@@ -286,7 +286,7 @@ export function usePopulationGroupsView({
 
   /* Persist the current group (insert on create, update on edit). Returns true on success. */
   const saveGroup = async () => {
-    // Dynamic groups aren't created from the drawer — the drawer collects the
+    // Dynamic groups aren't created from the drawer: the drawer collects the
     // metadata, then hands off to the full-page rule builder which owns the
     // actual insert once the rule is defined.
     if (chosenFilter === 'dynamic' && !editGroupId) {
@@ -309,7 +309,7 @@ export function usePopulationGroupsView({
       count: previewPatients.length || matchSummary.matched.length, inactive: 0,
     };
     const saved = editGroupId ? await updatePopGroup(editGroupId, payload) : await createPopGroup(payload);
-    if (!saved) return false;   // DB error — keep drawer open, toast already shown
+    if (!saved) return false;   // DB error, keep drawer open, toast already shown
     onGroupCreated?.(newName);
     showToast(editGroupId ? 'Population Group Updated Successfully' : 'Population Group Added Successfully');
     closeModal();
@@ -451,8 +451,8 @@ export function usePopulationGroupsView({
      The bundled POP_GROUPS are a FALLBACK, not extra rows: they render only
      when Supabase returns nothing (offline / un-seeded / fetch error). They
      were previously concatenated onto the DB rows, which put ~29 phantom
-     groups in the table that no Edit or Delete could ever persist — they
-     have no row to write to — and whose dates were fabricated. Every row
+     groups in the table that no Edit or Delete could ever persist, they
+     have no row to write to, and whose dates were fabricated. Every row
      the table shows must be a real record, so the two never mix. */
   const sourceGroups = popGroups.length > 0 ? popGroups : (popGroupsLoading ? [] : POP_GROUPS);
   const activeType = activeFilter === 'Static' || activeFilter === 'Dynamic' ? activeFilter : null;
@@ -467,7 +467,7 @@ export function usePopulationGroupsView({
     }];
   });
 
-  /* Client-side sorting for member counts + dates — same hook TOC/HCC use */
+  /* Client-side sorting for member counts + dates, same hook TOC/HCC use */
   const { sorted: sortedGroups, sortKey: pgSortKey, sortDir: pgSortDir, requestSort: pgRequestSort } = useTableSort(displayedGroups);
 
   /* ── pagination ── */
@@ -488,7 +488,7 @@ export function usePopulationGroupsView({
   /* Save is enabled only when valid AND (create mode OR an edit actually changed something). */
   const canSave      = canCreate && isDirty;
 
-  /* Header / cell styling — matches the Settings → Account → Users table (AccountPanel.module.css) */
+  /* Header / cell styling: matches the Settings → Account → Users table (AccountPanel.module.css) */
   const unmatchedAll     = [...matchSummary.notFound]; /* duplicates don't block preview */
   const allResolved      = unmatchedAll.length > 0 && unmatchedAll.every(e => manualSelRef.current[e.entryId]);
   /* For the grey default CSV flow: Create is only enabled once all incorrect + duplicate entries are dealt with */
@@ -501,7 +501,7 @@ export function usePopulationGroupsView({
   );
   const previewPatients = [
     ...matchSummary.matched.map(p  => ({ ...p, source:'Matched' })),
-    ...Object.values(manualSelRef.current).map(p => ({ ...p, mrn: p.id || '—', source:'Manual' })),
+    ...Object.values(manualSelRef.current).map(p => ({ ...p, mrn: p.id || '-', source:'Manual' })),
   ];
 
   /* ══════════════════════════════════════════════════════════════════════════ */

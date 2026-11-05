@@ -243,7 +243,7 @@
   color: var(--neutral-500);
 }
 
-/* Strip the DS Input's own chrome — the row provides it. */
+/* Strip the DS Input's own chrome: the row provides it. */
 .socialRow .socialInput {
   flex: 1;
   min-width: 0;

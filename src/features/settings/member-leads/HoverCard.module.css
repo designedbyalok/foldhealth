@@ -19,7 +19,7 @@
 .cardBottom { transform: translate(-50%, 0); }
 .cardTop    { transform: translate(-50%, -100%); }
 
-/* ── Capacity colored badge — same palette as the user-picker rows ── */
+/* ── Capacity colored badge: same palette as the user-picker rows ── */
 .capChip {
   display: inline-flex;
   align-items: center;
@@ -70,7 +70,7 @@
   color: var(--neutral-300);
 }
 
-/* Capacity Breakdown — each team row as label + percent value. */
+/* Capacity Breakdown: each team row as label + percent value. */
 .breakdownRow {
   display: flex;
   align-items: center;

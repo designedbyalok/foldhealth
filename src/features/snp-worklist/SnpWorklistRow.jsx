@@ -5,7 +5,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../components/Badge/Badge';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { buildPatientRowMenuItems } from '../../components/MenuPopover/patientRowMenuItems';
 import { useAppStore } from '../../store/useAppStore';
@@ -14,20 +14,23 @@ import { clinicalRolesPickerLabel } from '../../lib/worklistAssignee';
 import { FoldIdTag } from '../../components/FoldIdTag/FoldIdTag';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { formatDobDisplay, deriveDob } from '../../lib/patientDob';
+import { pauseSummary } from '../patient/right-panel/tabs/care-programs/care-plan/lib/carePlanPause';
 import styles from './SnpWorklistRow.module.css';
+import { OutreachStatus } from '../../components/OutreachStatus/OutreachStatus';
+import { outreachFromSummary } from '../../components/OutreachStatus/outreachStatusModel';
 
 const PROGRAM_SUB_STATUS_VARIANT = {
-  'New':                  'toc-new',
-  'Engaged':              'toc-engaged',
-  'Declined':             'lace-high',
-  'Unable to Reach':      'priority-high',
-  'Attempted':            'toc-attempted',
-  '2nd Cont. – Fail':     'toc-attempted',
-  'Enrolled':             'toc-enrolled',
-  'Completed':            'toc-enrolled',
-  'Closed - Other':       'toc-new',
-  'Closed - Excluded':    'toc-new',
-  'Closed - Do not call': 'lace-high',
+  'New':                  'neutral',
+  'Engaged':              'info',
+  'Declined':             'danger',
+  'Unable to Reach':      'secondary',
+  'Attempted':            'warning',
+  '2nd Cont. – Fail':     'warning',
+  'Enrolled':             'success',
+  'Completed':            'success',
+  'Closed - Other':       'neutral',
+  'Closed - Excluded':    'neutral',
+  'Closed - Do not call': 'danger',
 };
 
 const PROGRAM_SUB_STATUS_ITEMS = [
@@ -52,52 +55,27 @@ const PROGRAM_SUB_STATUS_ITEMS = [
 
 const LANG_MAP = { en: 'English', es: 'Spanish', zh: 'Chinese', yue: 'Cantonese', ko: 'Korean', vi: 'Vietnamese', hi: 'Hindi', pa: 'Punjabi' };
 
-const DOT_COLOR = { red: 'var(--status-error)', blue: 'var(--status-info)', grey: 'var(--neutral-200)' };
-
+// Outreach: the shared worklist outreach status (icon, result, date, attempt dots).
 function OutreachCell({ outreach }) {
-  if (!outreach) {
-    return (
-      <span className={styles.outreachNone}>
-        <Icon name="solar:phone-calling-linear" size={16} color="var(--neutral-200)" />
-        <span className={styles.mutedDash}>—</span>
-      </span>
-    );
-  }
-  const icon = outreach.kind === 'letter' ? 'solar:document-text-linear' : 'solar:phone-calling-linear';
-  return (
-    <span className={styles.outreachCell}>
-      <Icon name={icon} size={16} color="var(--status-error)" />
-      <span className={styles.outreachBody}>
-        <span className={styles.outreachStatus}>{outreach.status}</span>
-        <span className={styles.outreachDate}>{outreach.date}</span>
-        {outreach.dots?.length ? (
-          <span className={styles.dots}>
-            {outreach.dots.map((c, i) => (
-              <span key={i} className={styles.dot} style={{ background: DOT_COLOR[c] || DOT_COLOR.grey }} />
-            ))}
-          </span>
-        ) : null}
-      </span>
-    </span>
-  );
+  return <OutreachStatus {...outreachFromSummary(outreach)} />;
 }
 
 const TAG_VARIANT_BY_TONE = {
-  grey:  'ai-neutral',
-  blue:  'outreach-appointment',
-  green: 'ai-med',
-  amber: 'outreach-care-gap',
-  red:   'ai-risk',
+  grey:  'neutral',
+  blue:  'info',
+  green: 'success',
+  amber: 'warning',
+  red:   'danger',
 };
 
 function TagCell({ tags, tagsMore }) {
-  if (!tags?.length) return <span className={styles.mutedDash}>—</span>;
+  if (!tags?.length) return <span className={styles.mutedDash}>-</span>;
   return (
     <span className={styles.tagCell}>
       {tags.map(t => (
-        <Badge size="M"
+        <Badge size="md"
           key={t.label}
-          variant={TAG_VARIANT_BY_TONE[t.tone] || 'ai-neutral'}
+          tone={TAG_VARIANT_BY_TONE[t.tone] || 'neutral'}
           label={t.label}
         />
       ))}
@@ -122,20 +100,24 @@ const HCC_ONLY_ROLES = new Set(['Coder', 'Support', 'QA', 'Compliance']);
  */
 // Care Plan Status as coloured text with an icon (the column beside it
 // already uses badges): Signed green with a check, Draft in warning colours,
-// anything else (No Care Plan) grey.
+// On Hold (a paused plan) in info blue, anything else (No Care Plan) grey.
 const CARE_PLAN_STATUS_LOOK = {
   Signed: { className: styles.carePlanSigned, icon: 'solar:check-circle-linear' },
   Draft: { className: styles.carePlanDraft, icon: 'solar:pen-2-linear' },
+  'On Hold': { className: styles.carePlanOnHold, icon: 'solar:pause-circle-linear' },
 };
-function CarePlanStatusBadge({ status }) {
-  if (!status) return <span className={styles.statusText}>—</span>;
+// Statuses with a plan behind them, which open it in the Review drawer.
+const REVIEWABLE_CARE_PLAN = new Set(['Signed', 'Draft', 'On Hold']);
+function CarePlanStatusBadge({ status, pause }) {
+  if (!status) return <span className={styles.statusText}>-</span>;
   const look = CARE_PLAN_STATUS_LOOK[status];
-  return (
+  const badge = (
     <span className={`${styles.carePlanStatus} ${look?.className || styles.carePlanNone}`}>
       {look && <Icon name={look.icon} size={14} color="currentColor" />}
       <span className={styles.carePlanStatusLabel}>{status}</span>
     </span>
   );
+  return pause ? <Tooltip label={pauseSummary(pause)}>{badge}</Tooltip> : badge;
 }
 
 export const SNP_MIDDLE_COLUMNS = [
@@ -155,8 +137,8 @@ export const SNP_MIDDLE_COLUMNS = [
           aria-expanded={ctx.showStatusMenu}
         >
           <Badge
-            size="M"
-            variant={PROGRAM_SUB_STATUS_VARIANT[m.programSubStatus] || 'snp-new'}
+            size="md"
+            tone={PROGRAM_SUB_STATUS_VARIANT[m.programSubStatus] || 'neutral'}
             label={m.programSubStatus}
             trailingIconElement={<DownChevronIcon size={13} color="currentColor" />}
           />
@@ -181,12 +163,12 @@ export const SNP_MIDDLE_COLUMNS = [
     key: 'carePlanStatus',
     label: 'Care Plan Status',
     sortKey: 'carePlanStatus',
-    // Signed or Draft opens the plan in the Review care plan drawer; any other
-    // status (No Care Plan) is plain text.
+    // Signed, Draft or On Hold opens the plan in the Review care plan drawer;
+    // any other status (No Care Plan) is plain text.
     stopRowClickPropagation: true,
     renderCell: (m, ctx) => {
-      const badge = <CarePlanStatusBadge status={m.carePlanStatus} />;
-      if (!(m.patientId && m.programId && (m.carePlanStatus === 'Signed' || m.carePlanStatus === 'Draft'))) return badge;
+      const badge = <CarePlanStatusBadge status={m.carePlanStatus} pause={m.carePlanPause} />;
+      if (!(m.patientId && m.programId && REVIEWABLE_CARE_PLAN.has(m.carePlanStatus))) return badge;
       return (
         <button
           type="button"
@@ -196,7 +178,7 @@ export const SNP_MIDDLE_COLUMNS = [
             patientName: m.name,
             // Patient context for the drawer's banner.
             patient: { initials: m.initials, name: m.name, gender: m.gender, age: m.age, memberId: m.memberId },
-            program: { id: m.programId, code: 'SNP', name: 'SNP Care Program' },
+            program: { id: m.programId, code: 'SNP', name: 'Special Needs Plan' },
           })}
           aria-label={`Review ${m.name}'s ${m.carePlanStatus.toLowerCase()} care plan`}
         >
@@ -210,7 +192,7 @@ export const SNP_MIDDLE_COLUMNS = [
     label: 'Next Action Due',
     sortKey: 'nextActionDueSort',
     sortType: 'date',
-    renderCell: (m) => <span className={styles.dateText}>{m.nextActionDue || '—'}</span>,
+    renderCell: (m) => <span className={styles.dateText}>{m.nextActionDue || '-'}</span>,
   },
   {
     key: 'outreach',
@@ -248,20 +230,20 @@ export const SNP_MIDDLE_COLUMNS = [
     label: 'Trigger Date',
     sortKey: 'triggerDateSort',
     sortType: 'date',
-    renderCell: (m) => <span className={styles.dateText}>{m.triggerDate || '—'}</span>,
+    renderCell: (m) => <span className={styles.dateText}>{m.triggerDate || '-'}</span>,
   },
   {
     key: 'lastAdmission',
     label: 'Last Admission',
     sortKey: 'lastAdmissionSort',
     sortType: 'date',
-    renderCell: (m) => <span className={styles.mutedDash}>{m.lastAdmission || '—'}</span>,
+    renderCell: (m) => <span className={styles.mutedDash}>{m.lastAdmission || '-'}</span>,
   },
   {
     key: 'trigger',
     label: 'Trigger',
     sortKey: 'trigger',
-    renderCell: (m) => <span className={styles.triggerText}>{m.trigger || '—'}</span>,
+    renderCell: (m) => <span className={styles.triggerText}>{m.trigger || '-'}</span>,
   },
   {
     key: 'riskIq',
@@ -282,7 +264,7 @@ export const SNP_MIDDLE_COLUMNS = [
     renderCell: (m) => (
       m.taskCount
         ? <button type="button" className={styles.taskLink} onClick={e => e.stopPropagation()}>{m.taskCount}</button>
-        : <span className={styles.mutedDash}>—</span>
+        : <span className={styles.mutedDash}>-</span>
     ),
   },
 ];
@@ -334,7 +316,7 @@ export function SnpWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
 
   const handleRowClick = () => {
     if (m.patientId) navigateToPatient(m.patientId);
-    else showToast(`${m.name} — no linked patient record yet`);
+    else showToast(`${m.name}, no linked patient record yet`);
   };
 
   const openInCareProgram = (e) => {
@@ -430,7 +412,6 @@ export function SnpWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
         <div className={styles.actionsCell}>
           <ActionButton
             icon="solar:eye-linear"
-            size="L"
             tooltip="View Program"
             onClick={openInCareProgram}
           />
@@ -438,7 +419,6 @@ export function SnpWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
           <ActionButton
             ref={callBtnRef}
             icon="solar:phone-linear"
-            size="L"
             tooltip="Call patient"
             onClick={handleCallClick}
           />
@@ -447,7 +427,6 @@ export function SnpWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
             <ActionButton
               ref={dropBtnRef}
               icon="solar:menu-dots-linear"
-              size="L"
               tooltip="More options"
               onClick={(e) => { e.stopPropagation(); setShowDropdown(v => !v); }}
             />

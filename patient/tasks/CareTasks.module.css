@@ -1,0 +1,177 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dayBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.dayArrow {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: none;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+
+.dayArrow:hover {
+  background: var(--neutral-50);
+}
+
+.dayName {
+  min-width: 48px;
+  text-align: center;
+  font-size: var(--font-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--neutral-300);
+}
+
+.dayBar .link {
+  margin-left: auto;
+}
+
+.section {
+  border: 1px solid var(--neutral-100);
+  border-radius: 8px;
+  background: var(--neutral-0);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--neutral-100);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--neutral-300);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.row + .row {
+  border-top: 1px solid var(--neutral-75);
+}
+
+.rowIcon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--primary-50);
+  color: var(--primary-300);
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  font-size: var(--font-sm);
+  color: var(--neutral-500);
+}
+
+.sub {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+.url {
+  font-size: var(--font-xs);
+  color: var(--primary-300);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link {
+  flex-shrink: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+  cursor: pointer;
+}
+
+.link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.link:disabled {
+  color: var(--neutral-200);
+  cursor: not-allowed;
+}
+
+.tick {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--neutral-200);
+  border-radius: 50%;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: var(--neutral-0);
+  color: var(--primary-300);
+  cursor: pointer;
+  transition: border-color var(--duration-base) var(--ease-hover);
+}
+
+.tick:hover:not(:disabled) {
+  border-color: var(--primary-300);
+}
+
+.ticked {
+  border-color: transparent;
+}
+
+.tick:disabled {
+  cursor: default;
+}
+
+.tick:focus-visible,
+.link:focus-visible,
+.dayArrow:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+}
+
+.error {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--status-error);
+}

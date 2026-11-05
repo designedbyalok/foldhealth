@@ -2,7 +2,6 @@ import { Fragment } from 'react';
 import { Input } from '../Input/Input';
 import { Icon } from '../Icon/Icon';
 import { ActionButton } from '../ActionButton/ActionButton';
-import { UnityAIBar } from '../UnityAIBar/UnityAIBar';
 import { Avatar } from '../Avatar/Avatar';
 import { AttachmentCard } from '../AttachmentCard/AttachmentCard';
 import styles from './EmailComposer.module.css';
@@ -10,7 +9,7 @@ import styles from './EmailComposer.module.css';
 const DEFAULT_NOTICE = 'Do not send PHI via email or text without verifying and obtaining consent.';
 
 /**
- * EmailComposer — Subject line, "Compose email with UnityAI" bar, and the
+ * EmailComposer: Subject line, "Compose email with UnityAI" bar, and the
  * message box (PHI notice, body, signature, toolbar) from the Communications
  * email compose design (Figma Communications 1:24499). Controlled: the host
  * owns subject / body and decides what Generate does.
@@ -22,8 +21,7 @@ const DEFAULT_NOTICE = 'Do not send PHI via email or text without verifying and 
  * @param {function} props.onBodyChange      – (value) => void
  * @param {boolean}  [props.subjectRequired=true]
  * @param {boolean}  [props.bodyRequired=false] – shows a required dot on the message label
- * @param {function} [props.onGenerate]      – shows the UnityAI bar when set
- * @param {boolean}  [props.generating]      – disables Generate while a draft is on its way
+ * @param {React.ReactNode} [props.assistant] – drafting help above the fields (e.g. a UnityAIBar)
  * @param {{ name: string, lines?: string[], details?: Array<{ label: string, value: string }> }} [props.signature]
  * @param {Array<{ key: string, icon: string, tooltip: string, onClick: function }>} [props.toolbarActions]
  * @param {Array<{ key: string, name: string, size?: number, meta?: string, onRemove?: function, onPreview?: function, onDownload?: function }>} [props.attachments]
@@ -44,8 +42,7 @@ export function EmailComposer({
   onBodyChange,
   subjectRequired = true,
   bodyRequired = false,
-  onGenerate,
-  generating = false,
+  assistant,
   signature,
   toolbarActions = [],
   attachments = [],
@@ -80,7 +77,7 @@ export function EmailComposer({
         placeholder="Enter subject"
       />
 
-      {onGenerate && <UnityAIBar onGenerate={onGenerate} generating={generating} />}
+      {assistant}
 
       <div className={styles.field}>
         <span className={styles.label}>
@@ -148,7 +145,7 @@ export function EmailComposer({
                 {toolbarActions.map((a, i) => (
                   <Fragment key={a.key}>
                     {i > 0 && <span className={styles.toolbarDivider} />}
-                    <ActionButton size="S" icon={a.icon} tooltip={a.tooltip} onClick={a.onClick} />
+                    <ActionButton size="sm" icon={a.icon} tooltip={a.tooltip} onClick={a.onClick} />
                   </Fragment>
                 ))}
               </div>

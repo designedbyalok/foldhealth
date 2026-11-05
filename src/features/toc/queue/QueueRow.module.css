@@ -329,7 +329,7 @@
   color: var(--neutral-400);
 }
 
-/* Status pill button — Assessment + Outreach Status cells. Wraps the DS
+/* Status pill button: Assessment + Outreach Status cells. Wraps the DS
    Badge in a keyboard-accessible <button> with a trailing chevron so the
    affordance to open the drawer is obvious. Padding/border are zero because
    the Badge already provides the visual chip; the button contributes hover

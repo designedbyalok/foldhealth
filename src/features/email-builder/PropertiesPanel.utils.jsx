@@ -339,7 +339,7 @@ export function convertMjmlToFold(mjml) {
 
 // ── Code tab ────────────────────────────────────────────────────────────────
 // Drop any stale `customHtml` from a doc so it routes through the
-// SortableBlock pipeline (full toolbar/DnD). Idempotent — safe to call on
+// SortableBlock pipeline (full toolbar/DnD). Idempotent, safe to call on
 // docs that don't have it.
 export function stripCustomHtml(d) {
   if (!d?.root?.data) return d;

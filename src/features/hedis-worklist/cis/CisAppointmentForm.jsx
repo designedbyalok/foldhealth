@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { Input } from '../../../components/Input/Input';
 import { Select } from '../../../components/Select/Select';
 import { Textarea } from '../../../components/Textarea/Textarea';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { TIME_SLOTS } from '../../../components/ScheduleDrawer/scheduleDrawerConstants';
 import { todayIso } from '../useCareGapReminderForm';
 import { CisStatusBadge } from './CisStatus';
@@ -11,7 +11,7 @@ import { appointmentForDose, apptDate, doseKey } from './cisAppointments';
 import styles from './CisAppointmentForm.module.css';
 
 /**
- * Care Gap drawer — "Schedule Vaccine Reminder" pane body (CIS-CMB10):
+ * Care Gap drawer: "Schedule Vaccine Reminder" pane body (CIS-CMB10):
  * a visit booked with the child's own provider. Pass the object returned by
  * `useCisAppointmentForm()` as `form`, evaluateCis() output as `result`,
  * and the member's appointments so doses already booked can't be picked
@@ -48,7 +48,7 @@ export function CisAppointmentForm({ form, result, appointments = [] }) {
           label="Time"
           options={TIME_SLOTS.map(t => ({ value: t, label: t }))}
           value={values.time}
-          onChange={set('time')}
+          onValueChange={set('time')}
           placeholder="Select Time"
         />
       </div>
@@ -98,7 +98,7 @@ export function CisAppointmentForm({ form, result, appointments = [] }) {
         title="Note"
         rows={3}
         value={values.note}
-        onChange={set('note')}
+        onValueChange={set('note')}
         placeholder="Add details for this appointment"
       />
     </div>

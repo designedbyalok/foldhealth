@@ -6,36 +6,37 @@ import { Avatar } from '../../../components/Avatar/Avatar';
 import { PatientAvatarHover } from '../../../components/PatientHoverCard/PatientAvatarHover';
 import { AssigneeChange } from '../../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../../components/Badge/Badge';
+import { laceTone } from '../../../lib/riskTone';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { formatDobDisplay, deriveDob } from '../../../lib/patientDob';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { OutreachPopover } from '../../../components/OutreachPopover/OutreachPopover';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { buildPatientRowMenuItems } from '../../../components/MenuPopover/patientRowMenuItems';
 import { useAppStore } from '../../../store/useAppStore';
+import { LiveCallDuration } from './LiveCallDuration';
 import { FoldIdTag } from '../../../components/FoldIdTag/FoldIdTag';
 import { platformUsersForAssigneePicker } from '../../../lib/worklistAssignee';
 import styles from './WorklistRow.module.css';
+import { OutreachStatus } from '../../../components/OutreachStatus/OutreachStatus';
+import { outreachFromDots } from '../../../components/OutreachStatus/outreachStatusModel';
 
 const LANG_MAP = { en: 'English', es: 'Spanish', zh: 'Chinese', yue: 'Cantonese', ko: 'Korean', vi: 'Vietnamese', hi: 'Hindi', pa: 'Punjabi' };
 
 const TOC_STATUS_MAP = {
-  enrolled: { variant: 'toc-enrolled', label: 'Enrolled', icon: 'solar:check-circle-bold' },
-  engaged: { variant: 'toc-engaged', label: 'Engaged', icon: 'solar:link-round-bold' },
-  attempted: { variant: 'toc-attempted', label: 'Attempted', icon: 'solar:history-bold' },
-  new: { variant: 'toc-new', label: 'New', icon: 'solar:star-bold' },
-  oncall: { variant: 'toc-oncall', label: 'On Call', icon: 'solar:phone-calling-bold' },
+  enrolled: { variant: 'success', label: 'Enrolled', icon: 'solar:check-circle-bold' },
+  engaged: { variant: 'info', label: 'Engaged', icon: 'solar:link-round-bold' },
+  attempted: { variant: 'warning', label: 'Attempted', icon: 'solar:history-bold' },
+  new: { variant: 'neutral', label: 'New', icon: 'solar:star-bold' },
+  oncall: { variant: 'primary', label: 'On Call', icon: 'solar:phone-calling-bold' },
 };
 
 function TocStatusBadge({ status }) {
   const cfg = TOC_STATUS_MAP[status] || TOC_STATUS_MAP.new;
-  return <Badge size="M" variant={cfg.variant} label={cfg.label} icon={cfg.icon} />;
+  return <Badge size="md" tone={cfg.variant} label={cfg.label} icon={cfg.icon} />;
 }
 
 function OutreachCell({ patient }) {
-  const dots = patient.outreachDots || ['pending','pending','pending'];
-  const hasSuccess = dots.includes('success');
-  const hasFailed = dots.includes('failed') && !hasSuccess;
   const [showPop, setShowPop] = useState(false);
   const [popPos, setPopPos] = useState({ top: 0, left: 0 });
   const cellRef = useRef(null);
@@ -72,33 +73,7 @@ function OutreachCell({ patient }) {
 
   return (
     <div className={styles.outreachWl} ref={cellRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      <div className={styles.outreachWlMain}>
-        {hasSuccess ? (
-          <>
-            <Icon name="solar:phone-calling-bold" size={15} color="var(--status-success)" />
-            <div>
-              <div className={styles.outreachWlText}>Attended</div>
-              {patient.outreachDate && <div className={styles.outreachWlDate}>{patient.outreachDate}</div>}
-            </div>
-          </>
-        ) : hasFailed ? (
-          <>
-            <Icon name="solar:phone-bold" size={15} color="var(--status-error)" />
-            <div>
-              <div className={styles.outreachWlFailed}>Failed</div>
-              {patient.outreachDate && <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)' }}>{patient.outreachDate}</div>}
-            </div>
-          </>
-        ) : (
-          <>
-            <Icon name="solar:phone-linear" size={15} color="var(--neutral-200)" />
-            <div className={styles.outreachWlNone}>—</div>
-          </>
-        )}
-      </div>
-      <div className={styles.dotsRow}>
-        {dots.map((d, i) => <div key={i} className={`${styles.dot} ${styles[d]}`} />)}
-      </div>
+      <OutreachStatus {...outreachFromDots(patient.outreachDots, { date: patient.outreachDate, attended: patient.outreachAttended })} />
       {showPop && createPortal(
         <OutreachPopover patient={patient} pos={popPos} onMouseEnter={handlePopEnter} onMouseLeave={handlePopLeave} />,
         document.body
@@ -139,7 +114,7 @@ function AssigneeCell({ patient, platformUsers, updatePatient }) {
 
 function AgentAssignedCell({ patient }) {
   if (!patient.agentAssigned) {
-    return <span style={{ fontSize: 'var(--font-md)', color: 'var(--neutral-200)' }}>—</span>;
+    return <span style={{ fontSize: 'var(--font-md)', color: 'var(--neutral-200)' }}>-</span>;
   }
   return (
     <div className={styles.agentCell}>
@@ -167,22 +142,22 @@ export const WORKLIST_MIDDLE_COLUMNS = [
     label: 'LACE Acuity',
     renderCell: (p) => (
       p.lace
-        ? <Badge size="M" variant={`lace-${p.lace.toLowerCase()}`} label={p.lace} />
-        : <span>—</span>
+        ? <Badge size="md" tone={laceTone(p.lace)} label={p.lace} />
+        : <span>-</span>
     ),
   },
   {
     key: 'outreachWindow',
     label: 'Outreach Window',
     renderCell: (p) => {
-      const outreachBadgeVariant = p.outreachType === '48h' ? 'outreach-48h' : 'outreach-7d';
+      const outreachBadgeVariant = p.outreachType === '48h' ? 'danger' : 'info';
       return (
         <div className={styles.outreachCell}>
-          <Badge size="M" variant={outreachBadgeVariant} label={`TCM ${p.outreachType}`} />
+          <Badge size="md" tone={outreachBadgeVariant} label={`TCM ${p.outreachType}`} />
           {p.onCall ? (
             <span className={styles.outreachOncall}>
               <Icon name="solar:phone-calling-bold" size={14} />
-              On Call: {p.callDuration}
+              On Call: <LiveCallDuration patient={p} />
             </span>
           ) : (
             <span className={styles.outreachTime}>
@@ -207,17 +182,17 @@ export const WORKLIST_MIDDLE_COLUMNS = [
   {
     key: 'nextOutreach',
     label: 'Next Outreach',
-    renderCell: (p) => <span className={styles.dateText}>{p.nextOutreach || '—'}</span>,
+    renderCell: (p) => <span className={styles.dateText}>{p.nextOutreach || '-'}</span>,
   },
   {
     key: 'startDate',
     label: 'Start Date',
-    renderCell: (p) => <span className={styles.dateText}>{p.startDate || '—'}</span>,
+    renderCell: (p) => <span className={styles.dateText}>{p.startDate || '-'}</span>,
   },
   {
     key: 'lastAdmission',
     label: 'Last Admission',
-    renderCell: (p) => <span className={styles.dateText}>{p.lastAdmission || '—'}</span>,
+    renderCell: (p) => <span className={styles.dateText}>{p.lastAdmission || '-'}</span>,
   },
   {
     key: 'assignee',
@@ -356,7 +331,6 @@ export function WorklistRow({ patient, columns, hiddenSet, isSelected, onSelect 
           <div className={styles.actionsCell}>
             <ActionButton
               icon="solar:document-text-linear"
-              size="L"
               tooltip="View details"
               onClick={() => {
                 if (p.status === 'oncall') openLiveDrawer(p.id);
@@ -368,7 +342,6 @@ export function WorklistRow({ patient, columns, hiddenSet, isSelected, onSelect 
               <ActionButton
                 ref={callBtnRef}
                 icon="solar:phone-linear"
-                size="L"
                 tooltip={p.status === 'oncall' ? 'View live call' : 'Call patient'}
                 iconColor={p.status === 'oncall' ? '#059669' : undefined}
                 className={p.status === 'oncall' ? styles.oncall : p.status === 'queued' ? styles.queuedCall : ''}
@@ -381,7 +354,6 @@ export function WorklistRow({ patient, columns, hiddenSet, isSelected, onSelect 
               <ActionButton
                 ref={dropBtnRef}
                 icon="solar:menu-dots-linear"
-                size="L"
                 tooltip="More options"
                 onClick={handleDropdownToggle}
               />

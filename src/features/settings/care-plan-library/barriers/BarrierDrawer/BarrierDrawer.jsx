@@ -7,7 +7,7 @@ import { CARE_PLAN_TITLE_MAX } from '../../lib/carePlanLimits';
 import styles from './BarrierDrawer.module.css';
 
 /**
- * BarrierDrawer — authoring form for a single barrier, shared by the Care Plan
+ * BarrierDrawer: authoring form for a single barrier, shared by the Care Plan
  * Library's "New Barrier" and the care plan's own add / edit barrier action so
  * both surfaces capture the same fields.
  *
@@ -25,11 +25,9 @@ export function BarrierDrawer({ barrier, initialTitle = '', onClose, onSave }) {
     <Drawer
       title={barrier ? 'Edit Barrier' : 'Add Barrier'}
       onClose={onClose}
-      secondaryAction={<Button variant="secondary" size="L" onClick={onClose}>Cancel</Button>}
+      secondaryAction={<Button variant="outline" onClick={onClose}>Cancel</Button>}
       primaryAction={(
         <Button
-          variant="primary"
-          size="L"
           disabled={!canSave}
           onClick={() => onSave({ title: title.trim(), description: description.trim() })}
         >

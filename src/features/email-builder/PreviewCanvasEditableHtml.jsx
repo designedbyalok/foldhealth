@@ -12,7 +12,7 @@ export function EditableHtmlIframe({ html, doc }) {
   const lastLoadedRef = useRef(null);
   const editingRef = useRef(false);
 
-  // (Re)load the iframe only when the html prop changes from the outside —
+  // (Re)load the iframe only when the html prop changes from the outside,
   // not in response to our own writes. editingRef gates against echoing
   // user typing back into srcDoc, which would blow away the selection.
   // We skip the initial mount since the load-listener effect below owns
@@ -69,7 +69,7 @@ export function EditableHtmlIframe({ html, doc }) {
     if (!iframe) return;
 
     // Every `load` swaps in a fresh document, so the previous document's
-    // listeners have to come off before the new ones go on — and the last set
+    // listeners have to come off before the new ones go on, and the last set
     // has to come off at unmount. Track whatever is currently subscribed.
     let subscribed = null;
     // Scoped to the effect rather than a ref so the timer is created and
@@ -143,7 +143,7 @@ export function EditableHtmlIframe({ html, doc }) {
     };
 
     iframe.addEventListener('load', handleLoad);
-    // Initial srcdoc — assigning srcdoc fires `load` once it parses.
+    // Initial srcdoc: assigning srcdoc fires `load` once it parses.
     iframe.srcdoc = html;
     lastLoadedRef.current = html;
     return () => {

@@ -1,7 +1,7 @@
-/* Fold Repeat editor — Figma Care Plan Creation 14599:200235.
+/* Fold Repeat editor: Figma Care Plan Creation 14599:200235.
    Stacked layout on a grey-50 panel so the schedule reads top-to-
    bottom: Switch → count → "time after" → every+unit → Ends+ends+unit.
-   The panel docks to the bottom of its host (calendar popover) —
+   The panel docks to the bottom of its host (calendar popover),
    only the bottom corners are rounded so the top edge butts flush
    against whatever ends above it, and the color break alone signals
    the section change (no hairline divider). */
@@ -27,7 +27,7 @@
 /* Count sits compact (just a number + "times"), the every+unit and
    ends+unit pairs get more room so the picker chevron isn't cramped.
    InterventionDrawer.module.css sets `.offsetInput` to a hardcoded
-   160px — that class is composed onto the inner Input.field, so
+   160px: that class is composed onto the inner Input.field, so
    sizing only the outer .repeatField wrapper leaves the field itself
    at 160 and it blows past the wrapper. Match by [class*=] so the
    CSS-Module hash doesn't hide the class, and size the inner input
@@ -45,7 +45,7 @@
   width: 140px;
 }
 
-/* "after" — the connector label glued to the right of the count row
+/* "after", the connector label glued to the right of the count row
    so the sentence reads "3 times after ..." inline. */
 .afterLabel {
   color: var(--neutral-400);
@@ -53,7 +53,7 @@
   white-space: nowrap;
 }
 
-/* Ends in row — inline label + 110px field pair on a single line.
+/* Ends in row: inline label + 110px field pair on a single line.
    Wraps only if the panel is squeezed narrower than the intervention
    cell ever renders. */
 .endsRow {

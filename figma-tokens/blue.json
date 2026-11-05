@@ -1,6 +1,6 @@
 {
   "primary": {
-    "500": { "$value": "#002D6F", "$type": "color", "$description": "Deep navy — sidebar chrome." },
+    "500": { "$value": "#002D6F", "$type": "color", "$description": "Deep navy: sidebar chrome." },
     "400": { "$value": "#0057B3", "$type": "color" },
     "300": { "$value": "#007BFF", "$type": "color", "$description": "Main brand blue." },
     "200": { "$value": "#99CAFF", "$type": "color" },

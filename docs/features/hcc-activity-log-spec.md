@@ -1,6 +1,6 @@
-# HCC Activity Log — Design Spec
+# HCC Activity Log: Design Spec
 
-Spec for the worklist-level **History** drawer (opened from the HCC worklist toolbar) and how it relates to the existing per-encounter ActivityTab inside DiagPanel. Reuses the timeline primitives from [`ActivityTimeline`](../../src/features/hcc/DiagPanel/ActivityTimeline.jsx) and the entry layout from [`LeftWorkspace.ActivityTab`](../../src/features/hcc/DiagPanel/LeftWorkspace.jsx) — same rail / meta / headline / pill structure, scaled to a system-wide stream.
+Spec for the worklist-level **History** drawer (opened from the HCC worklist toolbar) and how it relates to the existing per-encounter ActivityTab inside DiagPanel. Reuses the timeline primitives from [`ActivityTimeline`](../../src/features/hcc/DiagPanel/ActivityTimeline.jsx) and the entry layout from [`LeftWorkspace.ActivityTab`](../../src/features/hcc/DiagPanel/LeftWorkspace.jsx), same rail / meta / headline / pill structure, scaled to a system-wide stream.
 
 ---
 
@@ -81,7 +81,7 @@ Mirrors today's DiagPanel ActivityTab events; add `source` so they appear in His
 | `dedup.dos_match_found` | Incoming encounter matches existing DOS | system |
 | `dedup.icd_net_new_merged` | New ICD merged into existing DOS | system |
 | `dedup.related_dos_created` | Encounter creates sibling DOS row | system |
-| `dedup.duplicate_detected` | Full duplicate — rejected | system |
+| `dedup.duplicate_detected` | Full duplicate: rejected | system |
 
 ### Claim Reconciliation
 | Event | Trigger | Actor |
@@ -117,22 +117,22 @@ Mirrors today's DiagPanel ActivityTab events; add `source` so they appear in His
 ### Hierarchy
 
 - **Worklist History** = system stream. Grouped: Month → Day. Each entry shows actor + scope chips so the reader can trace which patient/DOS/batch it touched without leaving the drawer.
-- **Per-encounter / per-patient** views filter the same stream down — they aren't separate tables.
+- **Per-encounter / per-patient** views filter the same stream down, they aren't separate tables.
 
 ### Grouping & collapse
 
-Same as the existing ActivityTab — collapsible month headers (`JAN 2026 ▾`). Default: current month expanded, older months collapsed. State persists per user via localStorage.
+Same as the existing ActivityTab: collapsible month headers (`JAN 2026 ▾`). Default: current month expanded, older months collapsed. State persists per user via localStorage.
 
 ### Filtering
 
 Chip row at the top (matches DiagPanel filter row pattern):
-- **Date range** — preset (Today / 7d / 30d / Custom)
-- **Category** — multi: Intake · OCR · Review · Worklist · ICD · Dedup · Claim · Audit
-- **Source** — Manual / SFTP / System / Astrana
-- **Actor type** — User / System / Automation
-- **Patient** — typeahead (chip)
-- **DOS** — date or range
-- **Severity** — Info / Warning / Error (for failures)
+- **Date range**: preset (Today / 7d / 30d / Custom)
+- **Category**: multi: Intake · OCR · Review · Worklist · ICD · Dedup · Claim · Audit
+- **Source**: Manual / SFTP / System / Astrana
+- **Actor type**: User / System / Automation
+- **Patient**: typeahead (chip)
+- **DOS**: date or range
+- **Severity**: Info / Warning / Error (for failures)
 
 Filters AND together; chips show active state with a count badge.
 
@@ -142,7 +142,7 @@ Top-bar free-text search over `headline + actorName + payload values`. Debounced
 
 ### Rationale
 
-The worklist History is **batch + file + worklist-row** level by default — operators care about "what came in, what got approved, what's now on the worklist." Encounter-level detail lives one layer deeper (clicking an entry expands to show the encounter and links into DiagPanel). Patient-level rollup lives on the patient page. One canonical event store, four filtered views.
+The worklist History is **batch + file + worklist-row** level by default, operators care about "what came in, what got approved, what's now on the worklist." Encounter-level detail lives one layer deeper (clicking an entry expands to show the encounter and links into DiagPanel). Patient-level rollup lives on the patient page. One canonical event store, four filtered views.
 
 ---
 
@@ -157,12 +157,12 @@ Layout (matches `_tlRow` from `ActivityTimeline.module.css`):
 ```
 
 Standard fields per entry:
-- **Icon** — semantic color (success / warning / error / info / neutral)
-- **Meta line** — `date • time • actor (role) • scope`
-- **Headline** — short imperative sentence
-- **Body** (optional) — pills for transitions (`Open → Audited`), attached file chips, link to source
-- **Details** (collapsible) — full metadata dump (key/value list)
-- **Actions** (optional) — `Undo`, `Open in Review Queue`, `Open Encounter`
+- **Icon**: semantic color (success / warning / error / info / neutral)
+- **Meta line**: `date • time • actor (role) • scope`
+- **Headline**: short imperative sentence
+- **Body** (optional): pills for transitions (`Open → Audited`), attached file chips, link to source
+- **Details** (collapsible): full metadata dump (key/value list)
+- **Actions** (optional): `Undo`, `Open in Review Queue`, `Open Encounter`
 
 ### Per-event spec (key examples)
 
@@ -200,62 +200,62 @@ Standard fields per entry:
 
 ---
 
-## 4. Activity Log Screens — placement matrix
+## 4. Activity Log Screens, placement matrix
 
 | Event family | Review Queue | Batch Dashboard | Worklist Row (DiagPanel) | Patient View | Worklist History |
 |---|:-:|:-:|:-:|:-:|:-:|
-| Intake (upload, SFTP) | — | ✓ | — | (if patient-linked) | ✓ |
-| OCR | ✓ (per file) | ✓ | — | — | ✓ |
-| Patient Matching | ✓ | — | — | ✓ | ✓ |
-| Review (approve/reject) | ✓ | ✓ | — | ✓ | ✓ |
-| Worklist (row created, assignee) | — | — | ✓ | ✓ | ✓ |
-| ICD ops | — | — | ✓ (DiagPanel ActivityTab) | ✓ | ✓ |
+| Intake (upload, SFTP) | - | ✓ | - | (if patient-linked) | ✓ |
+| OCR | ✓ (per file) | ✓ | - | - | ✓ |
+| Patient Matching | ✓ | - | - | ✓ | ✓ |
+| Review (approve/reject) | ✓ | ✓ | - | ✓ | ✓ |
+| Worklist (row created, assignee) | - | - | ✓ | ✓ | ✓ |
+| ICD ops | - | - | ✓ (DiagPanel ActivityTab) | ✓ | ✓ |
 | Dedup | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Claim / ASM | — | — | ✓ | ✓ | ✓ |
-| Audit / Field edits | ✓ | — | ✓ | ✓ | ✓ |
+| Claim / ASM | - | - | ✓ | ✓ | ✓ |
+| Audit / Field edits | ✓ | - | ✓ | ✓ | ✓ |
 
-**Rule:** every event lands in **Worklist History** (the unfiltered firehose). Other surfaces are filtered views — never duplicate writes, just queries.
+**Rule:** every event lands in **Worklist History** (the unfiltered firehose). Other surfaces are filtered views, never duplicate writes, just queries.
 
 ---
 
-## 5. Bulk Upload Events — exact copy
+## 5. Bulk Upload Events, exact copy
 
 | Event | Title | Description (template) |
 |---|---|---|
-| `batch.created` | Batch Created | `Batch {batchId} created — {fileCount} files queued.` |
+| `batch.created` | Batch Created | `Batch {batchId} created: {fileCount} files queued.` |
 | `batch.processing_started` | Batch Processing Started | `Started processing batch {batchId} ({fileCount} files).` |
-| `batch.processing_completed` | Batch Processing Completed | `Batch {batchId} complete — {approvedCount} approved, {rejectedCount} rejected, {pendingCount} in review.` |
-| `batch.processing_partial_failure` | Batch Partially Failed | `Batch {batchId} finished with errors — {failedCount} of {fileCount} files failed.` |
-| `file.rejected.non_pdf` | File Rejected — Not a PDF | `{fileName} skipped — only PDF files are accepted.` |
-| `file.rejected.invalid_filename` | File Rejected — Invalid Filename | `{fileName} skipped — filename does not match expected pattern.` |
-| `ocr.failed` | OCR Failed | `OCR failed for {fileName} — {errorReason}. File moved to retry queue.` |
-| `ocr.completed` | OCR Completed | `{fileName} processed — {encounterCount} encounters detected across {pageCount} pages.` |
+| `batch.processing_completed` | Batch Processing Completed | `Batch {batchId} complete: {approvedCount} approved, {rejectedCount} rejected, {pendingCount} in review.` |
+| `batch.processing_partial_failure` | Batch Partially Failed | `Batch {batchId} finished with errors: {failedCount} of {fileCount} files failed.` |
+| `file.rejected.non_pdf` | File Rejected, Not a PDF | `{fileName} skipped, only PDF files are accepted.` |
+| `file.rejected.invalid_filename` | File Rejected, Invalid Filename | `{fileName} skipped, filename does not match expected pattern.` |
+| `ocr.failed` | OCR Failed | `OCR failed for {fileName}: {errorReason}. File moved to retry queue.` |
+| `ocr.completed` | OCR Completed | `{fileName} processed: {encounterCount} encounters detected across {pageCount} pages.` |
 | `encounter.field_corrected` | Field Corrected | `{actor} corrected {fieldName} from "{oldValue}" to "{newValue}" on encounter for {patientName}.` |
 | `encounter.approved` | Encounter Approved | `{actor} approved encounter for {patientName} (DOS {dos}).` |
-| `encounter.rejected` | Encounter Rejected | `{actor} rejected encounter for {patientName} (DOS {dos}) — reason: {reason}.` |
+| `encounter.rejected` | Encounter Rejected | `{actor} rejected encounter for {patientName} (DOS {dos}): reason: {reason}.` |
 
 ---
 
-## 6. Deduplication Events — exact copy
+## 6. Deduplication Events, exact copy
 
 | Event | Title | Description |
 |---|---|---|
-| `dedup.dos_match_found` | Existing DOS Found | `DOS {dos} already exists for {patientName} — encounter routed to merge path.` |
-| `dedup.icd_net_new_merged` | Net-New ICD Merged | `{icd} added to existing DOS {dos} — other ICDs on this DOS unchanged.` |
+| `dedup.dos_match_found` | Existing DOS Found | `DOS {dos} already exists for {patientName}: encounter routed to merge path.` |
+| `dedup.icd_net_new_merged` | Net-New ICD Merged | `{icd} added to existing DOS {dos}: other ICDs on this DOS unchanged.` |
 | `dedup.related_dos_created` | Related DOS Created | `New DOS {dos} created for {patientName} ({reason}: existing DOS within encounter window).` |
-| `dedup.duplicate_detected` | Duplicate Encounter Detected | `Encounter from {fileName} is an exact duplicate of {existingEncounterId} — rejected automatically.` |
+| `dedup.duplicate_detected` | Duplicate Encounter Detected | `Encounter from {fileName} is an exact duplicate of {existingEncounterId}: rejected automatically.` |
 
 ---
 
-## 7. Claim Reconciliation Events — exact copy
+## 7. Claim Reconciliation Events, exact copy
 
 | Event | Title | Description |
 |---|---|---|
 | `claim.attached` | Claim Attached | `Claim {claimId} attached to {patientName} DOS {dos}.` |
-| `claim.matched` | Claim Matched | `Claim {claimId} auto-matched to encounter — {matchedFieldCount} fields aligned ({matchScorePct}%).` |
+| `claim.matched` | Claim Matched | `Claim {claimId} auto-matched to encounter: {matchedFieldCount} fields aligned ({matchScorePct}%).` |
 | `claim.not_found` | Claim Not Found | `No claim found for {patientName} DOS {dos} after {searchWindowDays}-day search. Will retry.` |
-| `asm.reevaluated` | ASM Reevaluation Triggered | `ASM reevaluation queued for {patientName} DOS {dos} — trigger: {reason}.` |
-| `asm.file_generated` | ASM File Generated | `ASM output {asmFileId} generated — {addCount} adds, {deleteCount} deletes.` |
+| `asm.reevaluated` | ASM Reevaluation Triggered | `ASM reevaluation queued for {patientName} DOS {dos}: trigger: {reason}.` |
+| `asm.file_generated` | ASM File Generated | `ASM output {asmFileId} generated: {addCount} adds, {deleteCount} deletes.` |
 | `asm.delete_entry_created` | ASM Delete Entry Created | `ASM delete entry created for ICD {icd} on DOS {dos} (reason: {reason}).` |
 
 ---
@@ -264,21 +264,21 @@ Standard fields per entry:
 
 Activity log entries are **append-only**. Once written, no field is editable from the UI. Compliance fields that must be captured on every entry and never mutated:
 
-- `id` — uuid, immutable
-- `ts` — server-side timestamp, never client-supplied
-- `actorId` — links to `auth.users.id` (or `'system'`)
-- `actorName` — snapshot of display name at time of action
-- `actorRole` — snapshot of role at time of action
-- `source` — `manual` | `sftp` | `system` | `astrana`
-- `sourceFileId` + `sourceFileName` — when applicable
-- `originalValues` — for any edit event, the pre-edit values
-- `modifiedValues` — post-edit values
-- `ipAddress` — captured server-side from auth context
-- `userAgent` — captured server-side
+- `id`, uuid, immutable
+- `ts`, server-side timestamp, never client-supplied
+- `actorId`, links to `auth.users.id` (or `'system'`)
+- `actorName`, snapshot of display name at time of action
+- `actorRole`, snapshot of role at time of action
+- `source`: `manual` | `sftp` | `system` | `astrana`
+- `sourceFileId` + `sourceFileName`, when applicable
+- `originalValues`, for any edit event, the pre-edit values
+- `modifiedValues`, post-edit values
+- `ipAddress`, captured server-side from auth context
+- `userAgent`, captured server-side
 
 DB-level: `hcc_activity_log` table with `REVOKE UPDATE, DELETE` from app roles; only the service-role write path can insert. Export bundle for HIPAA disclosure requests = `SELECT * WHERE patientId = ? ORDER BY ts`.
 
-### Edit events — required diff shape
+### Edit events: required diff shape
 
 ```json
 {
@@ -296,23 +296,23 @@ OCR confidence is always logged on field corrections so QA can spot the OCR thre
 
 ---
 
-## 9. Edge Cases — log copy
+## 9. Edge Cases, log copy
 
 | Scenario | Event(s) emitted |
 |---|---|
-| Reviewer changes patient identity | `patient.identity_changed` — `{actor} reassigned encounter from {fromPatientName} (ID {fromId}) to {toPatientName} (ID {toId}). Reason: {reason}.` Triggers `worklist.row_created` on new patient and `worklist.row_removed` on old patient. |
+| Reviewer changes patient identity | `patient.identity_changed`: `{actor} reassigned encounter from {fromPatientName} (ID {fromId}) to {toPatientName} (ID {toId}). Reason: {reason}.` Triggers `worklist.row_created` on new patient and `worklist.row_removed` on old patient. |
 | Reviewer changes ICDs | `icd.created_manual` / `icd.deleted` per ICD, plus a wrapper `encounter.field_corrected` for the diff. Each ICD event carries `ocrConfidence` if it was originally OCR'd. |
-| Reviewer changes DOS | `patient.dos_changed` — `{actor} corrected DOS from {oldDos} to {newDos} on encounter for {patientName}.` If the new DOS matches an existing one, also emit `dedup.dos_match_found`. |
-| Reviewer removes encounter | `encounter.removed` — `{actor} removed encounter for {patientName} (DOS {dos}). Source file remains: {fileName}.` Does NOT delete the encounter — soft-delete with `removed_at` so the entry can be restored. |
-| OCR confidence below threshold | `ocr.low_confidence` — `Encounter for {patientName} (DOS {dos}) flagged — confidence {confidencePct}% below {thresholdPct}% threshold. Routed to manual review.` |
-| Patient mismatch unresolved | `patient.match_failed` — `No matching patient for encounter on {dos} (provider {provider}). Awaiting reviewer.` Stays in Review Queue indefinitely until acted on. |
-| Rejected encounter later restored | `encounter.restored` — `{actor} restored encounter for {patientName} (DOS {dos}), previously rejected by {originalActor} on {originalTs}. Reason for restore: {reason}.` |
+| Reviewer changes DOS | `patient.dos_changed`: `{actor} corrected DOS from {oldDos} to {newDos} on encounter for {patientName}.` If the new DOS matches an existing one, also emit `dedup.dos_match_found`. |
+| Reviewer removes encounter | `encounter.removed`: `{actor} removed encounter for {patientName} (DOS {dos}). Source file remains: {fileName}.` Does NOT delete the encounter: soft-delete with `removed_at` so the entry can be restored. |
+| OCR confidence below threshold | `ocr.low_confidence`: `Encounter for {patientName} (DOS {dos}) flagged: confidence {confidencePct}% below {thresholdPct}% threshold. Routed to manual review.` |
+| Patient mismatch unresolved | `patient.match_failed`: `No matching patient for encounter on {dos} (provider {provider}). Awaiting reviewer.` Stays in Review Queue indefinitely until acted on. |
+| Rejected encounter later restored | `encounter.restored`: `{actor} restored encounter for {patientName} (DOS {dos}), previously rejected by {originalActor} on {originalTs}. Reason for restore: {reason}.` |
 
 ---
 
 ## Implementation notes (out of scope for this spec, but worth flagging)
 
 - **Schema**: new `hcc_activity_log` Supabase table, indexed on `(patient_id, ts DESC)`, `(batch_id, ts DESC)`, `(event_name, ts DESC)`.
-- **Backend writer**: every store action that mutates HCC state calls a single `logActivity(event)` helper. Same fire-and-forget pattern used by [`persistHccMemberRoleStatus`](../../src/store/useAppStore.js) — never block the optimistic UI on the log write.
-- **UI**: extend the existing [`ActivityTimeline`](../../src/features/hcc/DiagPanel/ActivityTimeline.jsx) component with a `mode` prop (`encounter` | `patient` | `worklist`) that swaps the data source and the default filter chip set — keeps one timeline component in the codebase.
-- **History drawer**: opened by the History button at [`HccWorklistTable.jsx:272`](../../src/features/hcc/HccWorklistTable.jsx#L272) (currently `'History — coming soon'`). Same shared `Drawer` (700 wide, 8px inset, 16px radius) per CLAUDE.md guidance.
+- **Backend writer**: every store action that mutates HCC state calls a single `logActivity(event)` helper. Same fire-and-forget pattern used by [`persistHccMemberRoleStatus`](../../src/store/useAppStore.js), never block the optimistic UI on the log write.
+- **UI**: extend the existing [`ActivityTimeline`](../../src/features/hcc/DiagPanel/ActivityTimeline.jsx) component with a `mode` prop (`encounter` | `patient` | `worklist`) that swaps the data source and the default filter chip set, keeps one timeline component in the codebase.
+- **History drawer**: opened by the History button at [`HccWorklistTable.jsx:272`](../../src/features/hcc/HccWorklistTable.jsx#L272) (currently `'History: coming soon'`). Same shared `Drawer` (700 wide, 8px inset, 16px radius) per CLAUDE.md guidance.

@@ -78,7 +78,7 @@ export function CareGapLabsTab({ labs, measureName, onOrderLab, onViewOrder, onR
             <span className={styles.actionLabel}>Recommended Action</span>
             <span>{action.text}</span>
           </div>
-          <Button variant="primary" size="M" onClick={runAction}>{action.label}</Button>
+          <Button onClick={runAction}>{action.label}</Button>
         </div>
         {rule && <p className={styles.requirement}>{rule.requirement}</p>}
       </section>
@@ -121,7 +121,7 @@ export function CareGapLabsTab({ labs, measureName, onOrderLab, onViewOrder, onR
               <span className={styles.fieldHint}>Tests</span>
               <div className={styles.tagList}>
                 {testsOf(latestOrder).map(t => (
-                  <Badge key={t} tone={rule && t === rule.test ? 'primary' : 'grey'} size="S" label={t} />
+                  <Badge key={t} tone={rule && t === rule.test ? 'primary' : 'neutral'} size="sm" label={t} />
                 ))}
               </div>
             </div>
@@ -143,9 +143,9 @@ export function CareGapLabsTab({ labs, measureName, onOrderLab, onViewOrder, onR
               </div>
             </dl>
             <div className={styles.cardActions}>
-              <Button variant="secondary" size="S" onClick={() => onViewOrder(latestOrder)}>View Order</Button>
+              <Button variant="outline" size="sm" onClick={() => onViewOrder(latestOrder)}>View Order</Button>
               {CANCELLABLE_STATUSES.includes(latestOrder.status) && (
-                <Button variant="secondary" size="S" onClick={() => onCancelOrder(latestOrder)}>Cancel Order</Button>
+                <Button variant="outline" size="sm" onClick={() => onCancelOrder(latestOrder)}>Cancel Order</Button>
               )}
             </div>
             {latestOrder.status === LAB_ORDER_STATUS.completed && gap !== GAP_EVALUATION.satisfied && (
@@ -158,7 +158,7 @@ export function CareGapLabsTab({ labs, measureName, onOrderLab, onViewOrder, onR
         ) : (
           <div className={styles.emptyRow}>
             <p className={styles.empty}>No lab has been ordered for this gap.</p>
-            <Button variant="secondary" size="S" leadingIcon="solar:test-tube-linear" onClick={onOrderLab}>Order Lab</Button>
+            <Button variant="outline" size="sm" leadingIcon="solar:test-tube-linear" onClick={onOrderLab}>Order Lab</Button>
           </div>
         )}
         {olderOrders.length > 0 && (
@@ -189,7 +189,7 @@ export function CareGapLabsTab({ labs, measureName, onOrderLab, onViewOrder, onR
             <span className={styles.cardTitle}>{shownResult.labOrderId ? 'Lab Result' : 'External Lab Result'}</span>
             {shownResult.reviewedAt
               ? <span className={styles.reviewed}>Reviewed {fmt(shownResult.reviewedAt)}</span>
-              : <Button variant="secondary" size="S" onClick={() => onReviewResult(shownResult)}>Review Result</Button>}
+              : <Button variant="outline" size="sm" onClick={() => onReviewResult(shownResult)}>Review Result</Button>}
           </header>
           {shownResult.labOrderId && orderResults.length > 1 ? (
             <ResultTable results={orderResults} gapTest={rule?.test} />

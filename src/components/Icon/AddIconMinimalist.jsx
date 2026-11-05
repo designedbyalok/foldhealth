@@ -1,5 +1,5 @@
 /**
- * Add Icon (Minimalist) — a simple plus (+) in a 16×16 viewBox.
+ * Add Icon (Minimalist): a simple plus (+) in a 16×16 viewBox.
  * Designed for use on colored backgrounds (default fill: white).
  */
 export function AddIconMinimalist({ size = 16, color = 'white', className, style }) {

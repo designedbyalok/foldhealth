@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import styles from './AvatarGroup.module.css';
 
 /**
- * Fold Health AvatarGroup — overlapping stack of Avatar tiles with an
+ * Fold Health AvatarGroup: overlapping stack of Avatar tiles with an
  * overflow "+N" chip. When `people.length > max` the last visible slot
  * turns into a neutral chip counting the hidden members; hovering (or
  * focusing) the chip pops a floating list of every member.

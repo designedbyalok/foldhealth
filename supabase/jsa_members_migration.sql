@@ -1,7 +1,7 @@
 -- JSA (Joint Screening Assessment) worklist backing table.
 -- Mirrors the awv_members schema exactly so the store's fetch mapper (which
 -- also reads support_name/support_status/cohort/…) can point at either
--- table without branching. RLS follows the recently-narrowed pattern —
+-- table without branching. RLS follows the recently-narrowed pattern,
 -- authenticated-only reads and writes.
 
 CREATE TABLE IF NOT EXISTS public.jsa_members (
@@ -30,7 +30,7 @@ ALTER TABLE public.jsa_members ENABLE ROW LEVEL SECURITY;
 
 -- Reads are open to any signed-in staff member (a worklist is a shared roster),
 -- but writes require an active staff profile. `FOR ALL USING (true)` let any
--- authenticated session insert, rewrite or delete the whole roster — including
+-- authenticated session insert, rewrite or delete the whole roster, including
 -- an `Invited` account that had never been activated. Same shape as
 -- program_documents_migration.sql.
 DROP POLICY IF EXISTS "Allow all for jsa_members" ON public.jsa_members;

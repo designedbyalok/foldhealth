@@ -2,7 +2,7 @@ name: Design System Guardrails
 
 # Blocks PRs that introduce design-system violations (hardcoded colors,
 # font-family, non-Solar icons, raw HTML primitives) on the lines they
-# change. Pre-existing debt is never evaluated — see scripts/ds-guardrails.mjs.
+# change. Pre-existing debt is never evaluated, see scripts/ds-guardrails.mjs.
 
 on:
   pull_request:
@@ -22,7 +22,7 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           # Keep in step with `packageManager` in package.json and with
-          # no-undef.yml — these two gates protect main, so they must run the
+          # no-undef.yml, these two gates protect main, so they must run the
           # same Bun the pre-commit hook does.
           bun-version: 1.4.2
 

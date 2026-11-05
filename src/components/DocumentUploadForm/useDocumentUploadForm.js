@@ -6,16 +6,19 @@ import { useState } from 'react';
  *
  * Caption auto-fills from the picked file's name (extension stripped) until
  * the user types their own, matching the HCC Upload Document drawer.
+ *
+ * `initial` ({ id, caption, docType }) starts it editing that document, the
+ * same state startEdit() sets, for a host that opens straight into editing.
  */
-export function useDocumentUploadForm() {
+export function useDocumentUploadForm(initial = null) {
   const [file, setFileState] = useState(null);
-  const [caption, setCaptionState] = useState('');
-  const [captionTouched, setCaptionTouched] = useState(false);
-  const [docType, setDocType] = useState('');
+  const [caption, setCaptionState] = useState(initial?.caption || '');
+  const [captionTouched, setCaptionTouched] = useState(!!initial);
+  const [docType, setDocType] = useState(initial?.docType || '');
   // Bumped on reset to remount UploadDropField, which owns its own state.
   const [uploadKey, setUploadKey] = useState(0);
   // Set while editing an existing document's metadata; no file is needed then.
-  const [editingId, setEditingId] = useState(null);
+  const [editingId, setEditingId] = useState(initial?.id || null);
 
   const setFile = (next) => {
     setFileState(next);

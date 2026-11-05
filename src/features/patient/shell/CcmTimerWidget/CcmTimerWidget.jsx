@@ -13,12 +13,14 @@ import { formatFoldId } from '../../../../lib/foldId';
 import { CCM_ACTIVITY_TYPES, secondsToTime } from '../../data/ccmBillingMock';
 import { useCcmTimerDock } from './CcmTimerDockContext';
 import { armAlertAudio, formatIdleDuration, inactivitySecondsFor, isInactivityDemoPatient, playAlertChime, useInactivity } from './inactivity';
+import { usePatientConsent } from '../../hooks/usePatientConsent';
+import { canBill } from '../../data/consentRules';
 import styles from './CcmTimerWidget.module.css';
 
 // CCM activity timer (Figma CCM Timer 324:84077), drawn in our timer's own
 // style. Two sizes:
-//   mini     — the control bar; docked in the banner's tag row by default
-//   expanded — a card with the patient, the time large, and the actions
+//   mini: the control bar; docked in the banner's tag row by default
+//   expanded: a card with the patient, the time large, and the actions
 // and these states (Figma variant in brackets):
 //   idle        → 00:00, Start Timer                         (Start / Mini Start)
 //   running     → green time, Pause · Stop                   (Mini / Expanded)
@@ -114,6 +116,7 @@ function TimerNotice({ notice, onClose }) {
         color={notice.tone === 'error' ? 'var(--status-error)' : 'var(--status-info)'}
       />
       <span className={styles.noticeText}>{notice.text}</span>
+      {notice.action && <Link onClick={notice.action.onClick}>{notice.action.label}</Link>}
       {onClose && (
         <button type="button" className={styles.noticeClose} onClick={onClose} aria-label="Dismiss">
           <Icon name="solar:close-linear" size={12} color="currentColor" />
@@ -124,7 +127,7 @@ function TimerNotice({ notice, onClose }) {
 }
 
 /**
- * "Are you still working on this patient?" — our ConfirmDialog, inline so it
+ * "Are you still working on this patient?", our ConfirmDialog, inline so it
  * sits above the timer (where the banners go) without blocking the page.
  * Keep Timer Running continues; Pause Timer pauses. "Don't remind me
  * again" is a checkbox that rides along with either answer and quiets
@@ -196,10 +199,22 @@ export function CcmTimerWidget({ patient }) {
   // confirmation, which don't fit in the bar.
   const showCard = expanded || isClassifying || confirmReset;
 
+  // No CCM consent: time keeps running but can't be logged until it's
+  // captured. Off while the consent table doesn't exist yet (pre-migration).
+  const { consents, loaded: consentLoaded } = usePatientConsent(patientId);
+  const consentTableMissing = useAppStore(s => s.patientConsentTableMissing);
+  const openConsentCapture = useAppStore(s => s.openConsentCapture);
+  const consentGate = consentLoaded && !consentTableMissing ? canBill(consents, 'CCM') : { allowed: true };
   // This month is already billed, so time added now can't be.
-  const notice = currentPeriod?.billStatus === 'sent' && !noticeDismissed
-    ? { tone: 'error', text: 'Accrued time not billable.' }
-    : null;
+  const notice = !consentGate.allowed
+    ? {
+      tone: 'error',
+      text: `${consentGate.reason}. Time can't be logged.`,
+      action: { label: 'Capture', onClick: () => openConsentCapture(patientId, { scopeType: 'program', scope: 'CCM' }) },
+    }
+    : currentPeriod?.billStatus === 'sent' && !noticeDismissed
+      ? { tone: 'error', text: 'Accrued time not billable.' }
+      : null;
 
   useEffect(() => {
     if (!patientId) return;
@@ -411,8 +426,9 @@ export function CcmTimerWidget({ patient }) {
       return;
     }
     setSaving(true);
+    let result;
     try {
-      await addCcmBillableActivity({
+      result = await addCcmBillableActivity({
         id: activityId(),
         periodId: currentPeriod.id,
         patientId,
@@ -427,6 +443,8 @@ export function CcmTimerWidget({ patient }) {
     } finally {
       setSaving(false);
     }
+    // Blocked by the consent gate: keep the form and the time.
+    if (result?.blocked) return;
     stopTick();
     setMode('logged');
     clearTimeout(loggedTimeoutRef.current);
@@ -626,8 +644,8 @@ export function CcmTimerWidget({ patient }) {
             This permanently removes <strong>{secondsToTime(elapsed)}</strong> of unlogged time. This can&apos;t be undone.
           </p>
           <div className={styles.confirmActions}>
-            <Button variant="secondary" size="L" onClick={() => setConfirmReset(false)}>Cancel</Button>
-            <Button variant="danger" size="L" onClick={discard}>Discard</Button>
+            <Button variant="outline" onClick={() => setConfirmReset(false)}>Cancel</Button>
+            <Button variant="soft" tone="danger" onClick={discard}>Discard</Button>
           </div>
         </div>
       );
@@ -640,7 +658,7 @@ export function CcmTimerWidget({ patient }) {
             label="Activity"
             options={CCM_ACTIVITY_TYPES.map(t => ({ value: t, label: t }))}
             value={activityType}
-            onChange={setActivityType}
+            onValueChange={setActivityType}
           />
           <Textarea
             placeholder="What did you work on?"
@@ -649,9 +667,9 @@ export function CcmTimerWidget({ patient }) {
             rows={3}
           />
           <div className={styles.formActions}>
-            <Button variant="secondary" size="S" onClick={cancelLog} disabled={saving}>Cancel</Button>
-            <Button variant="primary" size="S" onClick={persist} disabled={saving || elapsed === 0}>
-              {saving ? 'Saving…' : 'Save'}
+            <Button variant="outline" size="sm" onClick={cancelLog} disabled={saving}>Cancel</Button>
+            <Button size="sm" onClick={persist} disabled={elapsed === 0 || !consentGate.allowed} loading={saving}>
+              Save
             </Button>
           </div>
         </div>
@@ -675,23 +693,23 @@ export function CcmTimerWidget({ patient }) {
           )}
         </div>
         <div className={styles.cardActions}>
-          {isIdle && <Button variant="alt" size="L" onClick={start}>Start Timer</Button>}
+          {isIdle && <Button variant="outline" tone="primary" onClick={start}>Start Timer</Button>}
           {isRunning && (
             <>
-              <Button variant="secondary" size="L" onClick={pause}>Pause</Button>
-              <Button variant="danger" size="L" onClick={openLog}>Stop &amp; Log</Button>
+              <Button variant="outline" onClick={pause}>Pause</Button>
+              <Button variant="soft" tone="danger" onClick={openLog}>Stop &amp; Log</Button>
             </>
           )}
           {isPaused && (
             <>
-              <Button variant="success" size="L" onClick={resume}>Resume</Button>
-              <Button variant="danger" size="L" onClick={openLog}>Stop &amp; Log</Button>
+              <Button variant="soft" tone="success" onClick={resume}>Resume</Button>
+              <Button variant="soft" tone="danger" onClick={openLog}>Stop &amp; Log</Button>
             </>
           )}
           {isStopped && (
             <>
-              <Button variant="success" size="L" onClick={resume}>Resume</Button>
-              <Button variant="primary" size="L" onClick={openLog}>Log Time</Button>
+              <Button variant="soft" tone="success" onClick={resume}>Resume</Button>
+              <Button onClick={openLog}>Log Time</Button>
             </>
           )}
         </div>
@@ -710,11 +728,11 @@ export function CcmTimerWidget({ patient }) {
           <span className={styles.cardName}>{name}</span>
           {patient?.memberId != null && <span className={styles.cardId}>{formatFoldId(patient.memberId)}</span>}
         </span>
-        <ActionButton icon="solar:history-linear" size="S" tooltip="Time Log" />
+        <ActionButton icon="solar:history-linear" size="sm" tooltip="Time Log" />
         <span className={styles.headDivider} aria-hidden="true" />
         <ActionButton
           icon="solar:minimize-square-linear"
-          size="S"
+          size="sm"
           tooltip="Collapse"
           tooltipLeft
           onClick={() => { setExpanded(false); setConfirmReset(false); if (isClassifying) cancelLog(); }}
@@ -753,7 +771,7 @@ export function CcmTimerWidget({ patient }) {
             its spot in the tag row, hidden). */}
         {showCard && anchor && createPortal(
           <div className={`${styles.dockedCard} ${styles.dockedCardExpanded}`} style={{ top: anchor.top, right: anchor.right }}>
-            <TimerNotice notice={notice} onClose={() => setNoticeDismissed(true)} />
+            <TimerNotice notice={notice} onClose={consentGate.allowed ? () => setNoticeDismissed(true) : undefined} />
             {card}
           </div>,
           document.body,
@@ -766,7 +784,7 @@ export function CcmTimerWidget({ patient }) {
   return (
     <div className={wrapClass} style={floatingStyle}>
       {promptLayer}
-      <TimerNotice notice={notice} onClose={() => setNoticeDismissed(true)} />
+      <TimerNotice notice={notice} onClose={consentGate.allowed ? () => setNoticeDismissed(true) : undefined} />
       {showCard ? card : bar}
     </div>
   );

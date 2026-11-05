@@ -8,13 +8,13 @@
 -- referencing a missing relation.
 --
 -- Named aaa_ so it sorts FIRST and runs before everything else. Every
--- statement is idempotent, generated from the live production schema —
+-- statement is idempotent, generated from the live production schema,
 -- running it where tables/constraints already exist is a no-op.
 --
 -- Scope: columns, types, nullability, defaults, identities, generated
 -- columns, PK/UNIQUE/FK constraints (FKs only when the target table is also
 -- built here; cross-file FKs belong to their owning migration). RLS is
--- ENABLED on every table — deny-until-a-policy-exists is the safe fresh-env
+-- ENABLED on every table: deny-until-a-policy-exists is the safe fresh-env
 -- default; policy-bearing repo files then apply grants on top. Indexes beyond
 -- keys, triggers, functions and views are intentionally omitted.
 

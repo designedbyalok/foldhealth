@@ -5,7 +5,13 @@
   padding: var(--space-2);
   border: 0.5px solid var(--primary-200);
   border-radius: var(--space-1);
-  background: var(--primary-50);
+  /* The UnityAI gradient at 10% over the surface. */
+  background: linear-gradient(
+    175deg,
+    color-mix(in srgb, var(--unity-gradient-from) 10%, var(--neutral-0)) 2%,
+    color-mix(in srgb, var(--unity-gradient-mid) 10%, var(--neutral-0)) 52%,
+    color-mix(in srgb, var(--unity-gradient-to) 10%, var(--neutral-0)) 94%
+  );
 }
 .label {
   flex: 1;

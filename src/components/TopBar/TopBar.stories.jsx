@@ -8,14 +8,14 @@ export default {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: 'App-wide top bar — breadcrumbs, patient search, Ask Unity, Notifications, Create New popover, Schedule drawer trigger, profile popover. Store-driven — no props.',
+        component: 'App-wide top bar, breadcrumbs, patient search, Ask Unity, Notifications, Create New popover, Schedule drawer trigger, profile popover. Store-driven, no props.',
       },
     },
   },
 };
 
 /**
- * TopBar is store-driven — breadcrumbs, patient search, notifications,
+ * TopBar is store-driven: breadcrumbs, patient search, notifications,
  * Create New, Schedule, and the profile popover all wire directly to
  * `useAppStore` and Supabase auth. There are no props to configure.
  */

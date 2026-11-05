@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
 import { Button } from '../../../components/Button/Button';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { SearchBar } from '../../../components/SearchBar/SearchBar';
-import boneStyles from '../../../components/TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../../../components/Skeleton/Skeleton';
 import { useAppStore } from '../../../store/useAppStore';
 import listStyles from '../MessagesView.module.css';
 import commsStyles from '../comms/Comms.module.css';
@@ -80,7 +80,7 @@ export function EfaxWorkspace({ navCollapsed, onToggleNav }) {
           onSearch={() => { setSearchOpen(v => !v); setQuery(''); }}
         />
         <div className={listStyles.convTabs}>
-          <Toggle items={TABS} active={tab} onChange={setTab} size="S" />
+          <SegmentedControl items={TABS} value={tab} onValueChange={setTab} size="sm" />
         </div>
         {searchOpen && (
           <div className={styles.listSearch}>
@@ -97,10 +97,10 @@ export function EfaxWorkspace({ navCollapsed, onToggleNav }) {
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className={listStyles.convItem} aria-hidden>
-                <span className={`${boneStyles.bone} ${commsStyles.boneAvatar}`} />
+                <Skeleton className={commsStyles.boneAvatar} />
                 <div className={listStyles.convInfo}>
-                  <span className={`${boneStyles.bone} ${commsStyles.boneLine}`} />
-                  <span className={`${boneStyles.bone} ${commsStyles.boneLineShort}`} />
+                  <Skeleton className={commsStyles.boneLine} />
+                  <Skeleton className={commsStyles.boneLineShort} />
                 </div>
               </div>
             ))
@@ -135,7 +135,7 @@ export function EfaxWorkspace({ navCollapsed, onToggleNav }) {
         </div>
 
         <div className={styles.listFooter}>
-          <Button variant="secondary" size="L" fullWidth leadingIcon="solar:add-circle-linear" onClick={() => setCreating(true)}>
+          <Button variant="outline" fullWidth leadingIcon="solar:add-circle-linear" onClick={() => setCreating(true)}>
             Create Test eFax
           </Button>
         </div>

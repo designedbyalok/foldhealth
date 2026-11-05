@@ -3,7 +3,7 @@
 // The auth layer calls maybeApplyOrgDefaults() every time a session is
 // established (SIGNED_IN + initial getSession on reload). The helper is a
 // no-op unless the user's email matches a rule below, AND the marker for
-// that user hasn't been written yet — so a user can still switch theme or
+// that user hasn't been written yet: so a user can still switch theme or
 // nav style after and we won't clobber it on next login.
 
 const ORG_RULES = [
@@ -33,6 +33,6 @@ export function maybeApplyOrgDefaults(user, { setTheme, setNavStyle }) {
     if (rule.navStyle) setNavStyle(rule.navStyle);
     localStorage.setItem(markerKey, '1');
   } catch {
-    /* localStorage unavailable — skip silently, we'll try again next login */
+    /* localStorage unavailable: skip silently, we'll try again next login */
   }
 }

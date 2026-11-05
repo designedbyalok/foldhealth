@@ -70,14 +70,14 @@ function LinkedItemsPopover({ anchorRect, data, onMouseEnter, onMouseLeave, onNa
       onMouseLeave={onMouseLeave}
     >
       <div className={styles.head}>
-        <Badge tone="grey" size="S" label={String(total)} />
+        <Badge size="sm" label={String(total)} />
         <span className={styles.headText}>Linked Items</span>
       </div>
       {programs.length > 0 && (
         <div className={styles.section}>
           <span className={styles.sectionLabel}>Care Program</span>
           <div className={styles.badges}>
-            {programs.map(p => <Badge key={p} tone="grey" size="S" label={p} />)}
+            {programs.map(p => <Badge key={p} size="sm" label={p} />)}
           </div>
         </div>
       )}
@@ -121,10 +121,10 @@ function LinkedItemsPopover({ anchorRect, data, onMouseEnter, onMouseLeave, onNa
 
 /**
  * Link affordance for a GBI row: an ActionButton badged with the number of
- * linked interventions/barriers/automations. Hovering previews them — the
+ * linked interventions/barriers/automations. Hovering previews them, the
  * preview is the whole affordance, so the button doesn't open anything.
  */
-export function GbiLinkButton({ data, size = 'S', keepSlot = false }) {
+export function GbiLinkButton({ data, size = 'sm', keepSlot = false }) {
   const total = linkedTotal(data);
   const [rect, setRect] = useState(null);
   const wrapRef = useRef(null);
@@ -154,7 +154,7 @@ export function GbiLinkButton({ data, size = 'S', keepSlot = false }) {
   };
   const cancelClose = () => clearTimeout(closeTimerRef.current);
 
-  // Nothing to link, nothing to render — collapses the slot instead
+  // Nothing to link, nothing to render, collapses the slot instead
   // of showing a disabled link icon with a "No linked items" tooltip.
   // `keepSlot` callers (the fixed Actions column) need the slot held so
   // icons stay aligned row to row, so they get the dimmed state instead.
@@ -164,7 +164,7 @@ export function GbiLinkButton({ data, size = 'S', keepSlot = false }) {
       <ActionButton
         icon="custom:link"
         size={size}
-        state="disabled"
+        disabled
         tooltip="No linked items"
         tooltipBelow
         tooltipLeft

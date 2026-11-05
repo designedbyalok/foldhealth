@@ -26,3 +26,17 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+/* SMS logged for the patient: "on +number" in the lighter grey, then View SMS. */
+.smsOn {
+  font-weight: 400;
+  color: var(--neutral-300);
+}
+
+.viewSms {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+  font-size: var(--font-base);
+}

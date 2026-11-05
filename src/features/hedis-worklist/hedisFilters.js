@@ -1,5 +1,6 @@
 import { parseLocalDate } from '../../lib/localDate';
-// HEDIS worklist filter definitions — parallel to `src/features/hcc/filters.js`
+import { GENDER_FILTER_OPTIONS, LANGUAGE_FILTER_OPTIONS, MEMBER_STATUS_FILTER_OPTIONS, memberGenderLabel, memberLanguageLabel } from '../../lib/memberFilters';
+// HEDIS worklist filter definitions: parallel to `src/features/hcc/filters.js`
 // so the shared FilterChipBar / MoreFiltersPopover can drive both worklists
 // with the same UX (chip → popover, Label|Value active state, More Filters,
 // Clear All, Save Filter). Kept intentionally simpler than HCC's defs: no
@@ -27,6 +28,8 @@ export const MORE_FILTER_ITEMS = [
   { k: 'assignee', label: 'Assignee', primary: true },
   { k: 'careGaps', label: 'Gaps', primary: true },
   { k: 'gapStatus', label: 'Gap Status', primary: true },
+  { k: 'gapSource', label: 'Source', primary: true },
+  { k: 'gapInstance', label: 'Instance', primary: true },
   { k: 'careGapAddedDate', label: 'Gap Added Date', primary: true },
   { k: 'lastCareGapAssessmentDate', label: 'Last Gap Assessment Date', primary: true },
   { k: 'lastVisitDate', label: 'Last Visit Date', primary: true },
@@ -62,13 +65,6 @@ export const PRIMARY_FILTER_KEYS = MORE_FILTER_ITEMS.reduce((keys, x) => {
   return keys;
 }, []);
 
-// Language display labels; the DB stores ISO 639-1 codes (en, es, …) so the
-// predicate translates each member's code before comparing.
-const LANGUAGE_LABEL = {
-  en: 'English', es: 'Spanish', zh: 'Chinese', yue: 'Cantonese',
-  ko: 'Korean',  vi: 'Vietnamese', hi: 'Hindi', bn: 'Bengali', ar: 'Arabic',
-};
-
 // Age Range filter bands, in whole months: [min, max) so they don't
 // overlap within a set. The month bands follow the CIS childhood schedule
 // (birth, 2, 6 and 18 months); the year bands the HEDIS measure
@@ -87,18 +83,28 @@ const AGE_GROUPS = [
   { label: '75+', min: 75 * 12, max: Infinity },
 ];
 
+// Per-gap Source / Instance, shared with the worklist columns so the filter
+// and the cell always agree. Gaps added in Fold are stamped `fold-native`;
+// a gap closed then re-added stays in the row stamped `supersededAt`.
+export const gapSourceLabel = (g) => (g.source === 'fold-native' ? 'Manual' : 'Claim');
+export const gapInstanceLabel = (g) => (g.supersededAt ? 'Previous' : 'Active');
+
 export const FILTER_DEFS = [
   { k: 'memberStatus',        label: 'Member Status', type: 'multi',
-    opts: ['Active', 'Inactive', 'Suspended'] },
+    opts: MEMBER_STATUS_FILTER_OPTIONS },
   { k: 'gapStatus',           label: 'Gap Status', type: 'multi',
     opts: ['Open', 'Engaged', 'Engaged Requires Follow-Up', 'Submitted', 'Completed',
            'Closed - Data', 'Closed - Do not call', 'Closed - UTR', 'Closed - Other'] },
+  { k: 'gapSource',           label: 'Source', type: 'multi',
+    opts: ['Claim', 'Manual'] },
+  { k: 'gapInstance',         label: 'Instance', type: 'multi',
+    opts: ['Active', 'Previous'] },
   { k: 'assignee',            label: 'Assignee', type: 'multi',
     dynamic: 'assignee', opts: [], searchable: true },
   { k: 'gender',              label: 'Gender', type: 'multi',
-    opts: ['Male', 'Female'] },
+    opts: GENDER_FILTER_OPTIONS },
   { k: 'language',            label: 'Language', type: 'multi',
-    opts: ['English', 'Spanish', 'Chinese', 'Cantonese', 'Korean', 'Vietnamese', 'Hindi', 'Bengali', 'Arabic'] },
+    opts: LANGUAGE_FILTER_OPTIONS, searchable: true },
   { k: 'lastOutreachOutcome', label: 'Last Outreach Outcome', type: 'multi',
     opts: ['Attended', 'Failed', 'Pending', 'No Answer', 'Voicemail'] },
   { k: 'preferredCallTime',   label: 'Preferred Call Time', type: 'multi',
@@ -140,10 +146,10 @@ export const FILTER_DEFS = [
   { k: 'pcpState',            label: 'PCP State', type: 'multi',
     dynamic: 'pcpState', opts: [] },
   // ── Care-gap volume + timing ───────────────────────────────────────
-  // Care Gaps is the measure filter — pick specific gap codes (CBP,
+  // Care Gaps is the measure filter, pick specific gap codes (CBP,
   // COL, DSF-A, …) to keep the worklist to members carrying any of
   // those gaps. Options are computed from the loaded members at
-  // render time (dynamic: 'careGaps'); labels render as "CODE —
+  // render time (dynamic: 'careGaps'); labels render as "CODE,
   // Measure Name" so the popover reads without needing the codebook.
   { k: 'careGaps',            label: 'Gaps', type: 'multi',
     dynamic: 'careGaps', opts: [], searchable: true },
@@ -164,7 +170,7 @@ export const FILTER_DEFS = [
 
 export const FILTER_DEF_MAP = Object.fromEntries(FILTER_DEFS.map(d => [d.k, d]));
 
-// Predicate — returns true when a HEDIS member row passes every active filter.
+// Predicate: returns true when a HEDIS member row passes every active filter.
 // Used by HedisWorklistTable's `filtered` memo. Mirrors the HCC pattern in
 // `filters.js` (memberMatchesFilters + matchOne).
 export function memberMatchesFilters(member, filters) {
@@ -179,10 +185,9 @@ function matchOne(m, k, vals) {
   switch (k) {
     case 'memberStatus':        return vals.includes(m.memberStatus);
     case 'gender': {
-      const long = m.gender === 'M' ? 'Male' : m.gender === 'F' ? 'Female' : m.gender;
-      return vals.includes(m.gender) || vals.includes(long);
+      return vals.includes(m.gender) || vals.includes(memberGenderLabel(m.gender));
     }
-    case 'language':            return vals.includes(LANGUAGE_LABEL[m.language] || m.language);
+    case 'language':            return vals.includes(memberLanguageLabel(m.language));
     case 'gapStatus': {
       const valSet = new Set(vals);
       for (const g of (m.gaps || [])) {
@@ -190,9 +195,11 @@ function matchOne(m, k, vals) {
       }
       return false;
     }
+    case 'gapSource':           return (m.gaps || []).some(g => vals.includes(gapSourceLabel(g)));
+    case 'gapInstance':         return (m.gaps || []).some(g => vals.includes(gapInstanceLabel(g)));
     case 'assignee': {
       // Match a member if the row-level assignee OR any per-gap assignee
-      // is in the selected set — same fields the row's Assignee column
+      // is in the selected set: same fields the row's Assignee column
       // renders, so filter and cell agree on who "owns" the row.
       const valSet = new Set(vals);
       if (valSet.has(m.assignee)) return true;
@@ -231,7 +238,7 @@ function matchOne(m, k, vals) {
     case 'pcpState':            return vals.includes(m.pcpState);
     // Care-gap volume + timing
     case 'careGaps': {
-      // Match on the gap CODE — vals are things like 'CBP', 'DSF-A'
+      // Match on the gap CODE: vals are things like 'CBP', 'DSF-A'
       // (pulled from the loaded members via the `careGaps` dynamic
       // options resolver). A member passes when any of their open
       // gaps is in the selected set.

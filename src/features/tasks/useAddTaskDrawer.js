@@ -21,7 +21,7 @@ export function useAddTaskDrawer({ defaultStatus, initialMember, initialAssigned
   const [stagedSubtasks, setStagedSubtasks] = useState([]);
   const editorRef = useRef(null);
 
-  // Schedule fields — mirrored from the intervention drawer so tasks
+  // Schedule fields: mirrored from the intervention drawer so tasks
   // authored from a care plan carry the same creation cadence, offset,
   // duration semantics and optional repeat schedule.
   const [creationTiming, setCreationTiming] = useState('immediate');
@@ -37,7 +37,7 @@ export function useAddTaskDrawer({ defaultStatus, initialMember, initialAssigned
   const [repeatEnds, setRepeatEnds] = useState('8');
   const [repeatEndsUnit, setRepeatEndsUnit] = useState('Days');
 
-  // Linked Goals — plan-goal ids the task is linked to. Same M:N shape
+  // Linked Goals: plan-goal ids the task is linked to. Same M:N shape
   // the intervention drawer uses.
   const [linkedGoalIds, setLinkedGoalIds] = useState(() => (
     Array.isArray(initialLinkedGoalIds) ? [...initialLinkedGoalIds] : []
@@ -94,7 +94,7 @@ export function useAddTaskDrawer({ defaultStatus, initialMember, initialAssigned
       linkedGoalIds.length > 0
     ));
 
-  // Creator attribution is mandatory — without a signed-in profile we can't
+  // Creator attribution is mandatory: without a signed-in profile we can't
   // stamp `created_by` truthfully, so block Save.
   const canSave = name.trim() !== '' && isDirty && name.length <= TITLE_MAX && !!currentUserProfile?.name;
 
@@ -157,7 +157,7 @@ export function useAddTaskDrawer({ defaultStatus, initialMember, initialAssigned
       parent_task_id: null,
       created_by: me,
       created_by_id: meId,
-      // Care-plan-scoped schedule fields — only sent when the drawer was
+      // Care-plan-scoped schedule fields: only sent when the drawer was
       // mounted with `showScheduleFields`, so tasks authored from Tasks
       // list keep the pre-existing payload shape.
       ...(includeScheduleFields ? {
@@ -206,7 +206,7 @@ export function useAddTaskDrawer({ defaultStatus, initialMember, initialAssigned
     }
   };
 
-  // Veto the drawer close when there are unsaved changes — the confirm opens
+  // Veto the drawer close when there are unsaved changes, the confirm opens
   // over the still-open drawer; "Keep editing" just dismisses the confirm.
   const guardClose = () => {
     if (isDirty) { setShowCloseConfirm(true); return false; }

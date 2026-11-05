@@ -5,7 +5,7 @@ import { ReturnedIcon } from '../../components/Icon/ReturnedIcon';
 import { getStatusSpec, hasStatusSpec } from './statusSpec';
 
 /**
- * StatusIcon — single dispatch point for HCC status icons.
+ * StatusIcon: single dispatch point for HCC status icons.
  *
  * Some statuses use a custom Figma SVG (`spec.custom`) instead of a Solar
  * glyph; this helper picks the right renderer so consumers don't repeat

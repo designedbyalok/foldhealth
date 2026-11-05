@@ -6,7 +6,7 @@ import { todayIso } from './useCareGapReminderForm';
 import styles from './CareGapReminderForm.module.css';
 
 /**
- * Care Gap drawer — "Set Reminder" pane body. Pass the object returned by
+ * Care Gap drawer: "Set Reminder" pane body. Pass the object returned by
  * `useCareGapReminderForm()` as `form`; `users` feeds the Assignee picker.
  */
 export function CareGapReminderForm({ form, users = [] }) {
@@ -37,7 +37,7 @@ export function CareGapReminderForm({ form, users = [] }) {
           label="Time"
           options={TIME_SLOTS.map(t => ({ value: t, label: t }))}
           value={values.time}
-          onChange={set('time')}
+          onValueChange={set('time')}
           placeholder="Select Time"
         />
       </div>
@@ -46,14 +46,14 @@ export function CareGapReminderForm({ form, users = [] }) {
         searchable
         options={assigneeOptions}
         value={values.assignee}
-        onChange={set('assignee')}
+        onValueChange={set('assignee')}
         placeholder="Select Assignee"
       />
       <Textarea
         title="Note"
         rows={4}
         value={values.note}
-        onChange={set('note')}
+        onValueChange={set('note')}
         placeholder="Add details for this reminder"
       />
     </div>

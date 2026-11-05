@@ -1,5 +1,6 @@
 import { formatGoalTarget } from '../../../../../../settings/care-plan-library/lib/goalFormat';
 import { gbiStatusMeta } from '../../care-plan/lib/gbiStatus';
+import { isEmptyDash } from '../../../../../../../lib/emptyDash';
 
 /**
  * The care program report (Figma CCM-Story 11211:479858 – 14254:106259) as
@@ -51,7 +52,7 @@ export const fmtDateTime = d => (d ? `${fmtDate(d)}, ${fmtTime(d)}` : '');
  * YYYY-MM-DD, MM/DD/YYYY, MM-DD-YYYY, or "MM/DD/YYYY, 11:45 AM".
  */
 export function toDate(value) {
-  if (value == null || value === '' || value === '—') return null;
+  if (value == null || value === '' || isEmptyDash(value)) return null;
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
   const s = String(value).trim();
   let m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
@@ -113,14 +114,14 @@ const STATUS_TONE = [
   [/progress|pending|partial|average|moderate|scheduled|attempted|engaged|draft|open/i, 'warning'],
 ];
 export const toneOf = v => STATUS_TONE.find(([re]) => re.test(v || ''))?.[1];
-const status = v => ({ text: v || '—', tone: toneOf(v) });
+const status = v => ({ text: v || '-', tone: toneOf(v) });
 // Care plan GBI statuses read from the shared vocabulary rather than the
 // regex above, so Discontinued / Not Applicable stay neutral (they aren't
 // failures) and On Hold isn't confused with a stopped item.
 const GBI_REPORT_TONE = { success: 'success', warning: 'warning', error: 'error', secondary: 'muted', disabled: 'muted' };
 const gbiTone = v => GBI_REPORT_TONE[gbiStatusMeta(v).tone];
-const gbiStatus = v => ({ text: v || '—', tone: gbiTone(v) });
-const orDash = v => (v == null || v === '' || v === '—' ? '—' : String(v));
+const gbiStatus = v => ({ text: v || '-', tone: gbiTone(v) });
+const orDash = v => (v == null || v === '' || isEmptyDash(v) ? '-' : String(v));
 const titleCase = s => String(s || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
 const STEP_STATUS_LABEL = { completed: 'Completed', in_progress: 'In Progress', skipped: 'Skipped', pending: 'Not Started' };
@@ -196,7 +197,7 @@ const SECTION_BUILDERS = {
       rows.map((a, i) => [
         { text: `Outreach ${rows.length - i}`, sub: [fmtDateTime(toDate(a.occurredAt)), titleCase(a.activityKind), a.actorName].filter(Boolean).join('\n') },
         (a.title || '').replace(/^Outreach - /, ''),
-        status(a.statusLabel || '—'),
+        status(a.statusLabel || '-'),
       ]),
       'No outreach in this date range.',
     )];
@@ -207,7 +208,7 @@ const SECTION_BUILDERS = {
       .map(l => [l.fileName, (l.sentVia || []).join(', '), orDash(l.lastSent), orDash(l.sentBy)]);
     const logged = ctx.activity
       .filter(a => a.activityKind === 'letter' && inRange(a.occurredAt, ctx.range))
-      .map(a => [a.title.replace(/^Letter (Sent|Added): /, ''), a.statusLabel || '—', fmtDate(toDate(a.occurredAt)), orDash(a.actorName)]);
+      .map(a => [a.title.replace(/^Letter (Sent|Added): /, ''), a.statusLabel || '-', fmtDate(toDate(a.occurredAt)), orDash(a.actorName)]);
     return [table(
       [{ title: 'Letter', width: 0.4 }, { title: 'Sent Via / Status', width: 0.22 }, { title: 'Date', width: 0.18 }, { title: 'By', width: 0.2 }],
       [...logged, ...sent],
@@ -228,9 +229,9 @@ const SECTION_BUILDERS = {
         type: 'fields',
         rows: [
           { label: 'Created by', value: orDash(plan.createdBy) },
-          { label: 'Created on', value: fmtDate(toDate(plan.createdDate)) || '—' },
+          { label: 'Created on', value: fmtDate(toDate(plan.createdDate)) || '-' },
           { label: 'Signed by', value: plan.signedBy ? `${plan.signedBy} on ${fmtDate(toDate(plan.signedAt))}` : 'Not signed', tone: plan.signedAt ? 'success' : 'warning' },
-          { label: 'Conditions', value: (plan.conditions || []).map(c => c.label).join(' | ') || '—', full: true },
+          { label: 'Conditions', value: (plan.conditions || []).map(c => c.label).join(' | ') || '-', full: true },
         ],
       },
       { type: 'subtitle', text: 'Goals' },
@@ -238,8 +239,8 @@ const SECTION_BUILDERS = {
         [{ title: 'Goal', width: 0.36 }, { title: 'Target', width: 0.22 }, { title: 'Current Value', width: 0.18 }, { title: 'Status', width: 0.24 }],
         goals.map(g => [
           { text: g.title, sub: g.category || '' },
-          formatGoalTarget(g) || '—',
-          g.currentValue ? { text: g.currentValue, sub: g.trend && g.trend !== '-' ? titleCase(g.trend) : '' } : '—',
+          formatGoalTarget(g) || '-',
+          g.currentValue ? { text: g.currentValue, sub: g.trend && g.trend !== '-' ? titleCase(g.trend) : '' } : '-',
           { text: `${Math.round(Number(g.progress) || 0)}% | ${g.status}`, tone: gbiTone(g.status) },
         ]),
         'No goals on the care plan.',
@@ -249,7 +250,7 @@ const SECTION_BUILDERS = {
         [{ title: 'Intervention', width: 0.44 }, { title: 'Goal', width: 0.24 }, { title: 'Adherence', width: 0.14 }, { title: 'Status', width: 0.18 }],
         interventions.map(i => [
           { text: i.title, sub: titleCase(i.kind) },
-          goalById.get(i.goalId)?.title || '—',
+          goalById.get(i.goalId)?.title || '-',
           orDash(i.adherence),
           gbiStatus(i.status),
         ]),
@@ -324,7 +325,7 @@ const SECTION_BUILDERS = {
     return [table([{ title: 'Refer By', width: 0.28 }, { title: 'Refer To', width: 0.28 }, { title: 'Created On', width: 0.22 }, { title: 'Status', width: 0.22 }], rows, 'No referrals in this date range.')];
   },
   diagnosisGaps(step, ctx) {
-    const rows = (ctx.data.diagnosisGaps || []).map(i => [i.code, i.desc || '—', i.hcc ? `HCC ${i.hcc}` : '—']);
+    const rows = (ctx.data.diagnosisGaps || []).map(i => [i.code, i.desc || '-', i.hcc ? `HCC ${i.hcc}` : '-']);
     return [table([{ title: 'ICD Code', width: 0.16 }, { title: 'Description', width: 0.66 }, { title: 'HCC', width: 0.18 }], rows, 'No open diagnosis gaps.')];
   },
   billing(step, ctx) {
@@ -372,9 +373,9 @@ export function buildProgramReport({ program, patient, steps, manual, range, ena
   });
   const patientRows = [
     { label: 'Patient Name', value: orDash(patient?.name) },
-    { label: 'Date Of Birth', value: [patient?.dob, patient?.age ? `(${/^\d+$/.test(String(patient.age)) ? `${patient.age}Y` : patient.age})` : ''].filter(Boolean).join(' ') || '—' },
+    { label: 'Date Of Birth', value: [patient?.dob, patient?.age ? `(${/^\d+$/.test(String(patient.age)) ? `${patient.age}Y` : patient.age})` : ''].filter(Boolean).join(' ') || '-' },
     { label: 'Gender', value: orDash(patient?.gender) },
-    { label: 'Fold ID', value: patient?.memberId ? `#${patient.memberId}` : '—' },
+    { label: 'Fold ID', value: patient?.memberId ? `#${patient.memberId}` : '-' },
     { label: 'Primary Care Provider', value: orDash(patient?.pcp) },
     { label: 'Insurance', value: orDash(patient?.insurance) },
   ];

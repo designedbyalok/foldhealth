@@ -75,7 +75,7 @@ export function GoalReadingEntry({ goal, onSave }) {
       <Select
         options={spec.options.map(o => ({ value: o, label: o }))}
         value={single}
-        onChange={setSingle}
+        onValueChange={setSingle}
         placeholder="Select value"
         portal
       />
@@ -117,7 +117,7 @@ export function GoalReadingEntry({ goal, onSave }) {
             </button>
           ))}
         </span>
-        <Button variant="primary" size="S" onClick={save} disabled={!canSave}>Save</Button>
+        <Button size="sm" onClick={save} disabled={!canSave}>Save</Button>
       </div>
       {caption && <span className={styles.readingCaption}>{caption}</span>}
     </div>
@@ -155,8 +155,8 @@ export function GoalCompletion({ goal, readings, canEdit, onComplete }) {
       {canEdit && (
         <span className={styles.completionAction}>
           <Button
-            variant="secondary"
-            size="S"
+            variant="outline"
+            size="sm"
             leadingIcon="solar:check-circle-linear"
             onClick={(e) => setPickerRect(e.currentTarget.getBoundingClientRect())}
           >

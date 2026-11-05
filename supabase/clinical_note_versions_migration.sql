@@ -1,6 +1,6 @@
 -- Versioned audit for HEDIS Clinical Notes.
 --
--- WHY: A signed note can be Amended — the author reopens the note, edits
+-- WHY: A signed note can be Amended, the author reopens the note, edits
 -- fields, and re-saves. Up to now `upsertClinicalNote` overwrote the same
 -- `clinical_notes` row, so the prior signed payload was lost and there was
 -- no history to show "what was the state in each version" (requested for

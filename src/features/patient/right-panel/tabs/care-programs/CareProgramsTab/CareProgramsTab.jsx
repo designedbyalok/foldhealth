@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
-import { statusColorFor } from '../../../../data/programStatus';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
+import { statusColorFor, isProgramClosed } from '../../../../data/programStatus';
 import { CARE_PROGRAM_CATALOG } from '../../../../data/careProgramCatalog';
+import { CMP_SUB_PROGRAMS } from '../../../../data/cmpSubPrograms';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { ProgramDetailView } from '../program-detail/ProgramDetailView/ProgramDetailView.jsx';
 import { ProgramDetailSkeleton } from '../program-detail/shared/ProgramDetailSkeleton/ProgramDetailSkeleton.jsx';
+import { CloseProgramDialog } from '../program-detail/shared/CloseProgramDialog/CloseProgramDialog.jsx';
+import { PauseCarePlanDialog } from '../care-plan/drawers/PauseCarePlanDialog/PauseCarePlanDialog';
 import { CarePlanSummaryView } from '../care-plan/summary/CarePlanSummaryView/CarePlanSummaryView.jsx';
 import { CarePlanReportView } from '../care-plan/report/CarePlanReportView/CarePlanReportView.jsx';
 import { stepsFor, flatSteps } from '../program-detail/ProgramDetailView/ProgramDetailView.utils';
@@ -13,6 +16,7 @@ import { CareProgramsTabMenus } from './CareProgramsTabToolbar';
 import { CareManagementToolbar } from '../../care-management/CareManagementToolbar/CareManagementToolbar';
 import {
   programUrlKey,
+  programForLastKey,
   EMPTY_FILTERS,
   SUB_STATUS_OPTIONS,
   DATE_RANGE_OPTIONS,
@@ -23,12 +27,17 @@ import { Button } from '../../../../../../components/Button/Button';
 import { FilterChip } from '../../../../../../components/FilterChip/FilterChip';
 import { AddIconMinimalist } from '../../../../../../components/Icon/AddIconMinimalist';
 import { SearchListPopover } from '../../../../../../components/SearchListPopover/SearchListPopover';
+import { RadioListPopover } from '../../../../../../components/RadioListPopover/RadioListPopover';
+import { CreateSnpProgramDrawer } from './CreateSnpProgramDrawer';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import { CP_FILTERS } from '../../../../data/programActivityMock';
 import styles from './CareProgramsTab.module.css';
+import { nextEnrollment } from '../../../../data/programLifecycle';
+import { useConsentedEnrollment } from './useConsentedEnrollment';
+import { isEmptyDash } from '../../../../../../lib/emptyDash';
 
 // Programs move to the "Past" section once completed or closed.
-const PAST_STATUSES = new Set(['Completed', 'Closed']);
 
 /** Collapsible "Active" / "Past" grouping header for the programs list. */
 function ProgramSection({ title, open, onToggle, children }) {
@@ -41,13 +50,13 @@ function ProgramSection({ title, open, onToggle, children }) {
           className={`${styles.programSectionChevron} ${open ? '' : styles.programSectionChevronClosed}`}
         />
       </button>
-      {open && children}
+      <CollapsibleContent open={open}>{children}</CollapsibleContent>
     </div>
   );
 }
 
-function EmptyState() {
-  return <RingEmptyState icon="solar:hand-heart-linear" label="No Active Programs" />;
+function NoProgramsEmptyState() {
+  return <EmptyState icon="solar:hand-heart-linear" title="No Active Programs" />;
 }
 
 export function CareProgramsTab({ header }) {
@@ -61,6 +70,11 @@ export function CareProgramsTab({ header }) {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [selectedIds, setSelectedIds] = useState([]);
   const [npOpen, setNpOpen] = useState(false);
+  // CMP is added per sub-program: picking CMP opens this list next, anchored
+  // where New Program is (its rect, or null when closed).
+  const [cmpPickerRect, setCmpPickerRect] = useState(null);
+  // SNP is created from a drawer: Member Info, Trigger Type, Trigger Date.
+  const [snpDrawerOpen, setSnpDrawerOpen] = useState(false);
   const [statusMenu, setStatusMenu] = useState(null);
   const [rowMenu, setRowMenu] = useState(null);
   const carePlanSummaryOpen = useAppStore(s => s.carePlanSummaryOpen);
@@ -81,6 +95,13 @@ export function CareProgramsTab({ header }) {
   const openCareProgram = useAppStore(s => s.openCareProgram);
   const closeCareProgram = useAppStore(s => s.closeCareProgram);
   const setCareProgramStep = useAppStore(s => s.setCareProgramStep);
+  const closeCareProgramInstance = useAppStore(s => s.closeCareProgramInstance);
+  // { program, status } while the Close Program dialog is open.
+  const [closing, setClosing] = useState(null);
+  const pauseCareProgramInstance = useAppStore(s => s.pauseCareProgramInstance);
+  const resumeCareProgramInstance = useAppStore(s => s.resumeCareProgramInstance);
+  // The program while the Pause dialog is open.
+  const [pausing, setPausing] = useState(null);
 
   useEffect(() => {
     if (patientId) fetchCareProgramsForPatient(patientId);
@@ -100,34 +121,76 @@ export function CareProgramsTab({ header }) {
 
   // Waits for the patient's programs to load: deciding before then took every
   // visit for a new enrollment.
+  // Programs a patient can be enrolled in: the active types in Care Program
+  // Configuration, else the built-in catalog until it loads.
+  const programTypes = useAppStore(s => s.careProgramTypes);
+  const fetchCareProgramTypes = useAppStore(s => s.fetchCareProgramTypes);
+  useEffect(() => { fetchCareProgramTypes?.(); }, [fetchCareProgramTypes]);
+  const catalog = useMemo(() => (programTypes.length
+    ? programTypes.filter(t => t.status === 'active').map(t => ({ code: t.code, name: t.name }))
+    : CARE_PROGRAM_CATALOG), [programTypes]);
+
   const programsLoaded = Boolean(patientId && careProgramsLoadedFor[patientId]);
+  const requestEnrollment = useConsentedEnrollment(patientId, programs);
   useEffect(() => {
     if (!pendingCareProgramCode || !patientId || !programsLoaded) return;
-    const carePlan = useAppStore.getState().pendingCareProgramCarePlan;
-    const existing = programs.find(p => p.code === pendingCareProgramCode);
+    const { pendingCareProgramCarePlan: carePlan, pendingCareProgramSubProgram: subProgram } = useAppStore.getState();
+    // CMP is enrolled per sub-program: match on it when one was given.
+    const existing = programs.find(p => p.code === pendingCareProgramCode && (!subProgram || p.subProgram === subProgram));
     if (existing) {
       setPendingProgram({ program: existing, firstStep: false, carePlan });
+    } else if (pendingCareProgramCode === 'CMP' && !subProgram) {
+      // No sub-program to enroll in: let the user pick one.
+      setCmpPickerRect(npBtnRef.current?.getBoundingClientRect() ?? null);
     } else {
-      const entry = CARE_PROGRAM_CATALOG.find(e => e.code === pendingCareProgramCode);
+      const entry = catalog.find(e => e.code === pendingCareProgramCode);
       if (entry) {
-        addCareProgram(patientId, entry);
-        const created = useAppStore.getState().careProgramsByPatient[patientId]?.find(p => p.code === entry.code);
-        if (created) setPendingProgram({ program: created, firstStep: false });
+        requestEnrollment(entry.code, () => {
+          addCareProgram(patientId, subProgram ? { ...entry, subProgram } : entry);
+          const created = useAppStore.getState().careProgramsByPatient[patientId]
+            ?.find(p => p.code === entry.code && (!subProgram || p.subProgram === subProgram));
+          if (created) setPendingProgram({ program: created, firstStep: false });
+        }, { subProgram });
       }
     }
     clearPendingCareProgramCode();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingCareProgramCode, patientId, programsLoaded]);
 
+  // Reopen the program this user last worked in, once per patient visit, when
+  // nothing else picked one (a worklist hand-off, the URL, the plan summary).
+  const lastProgramKey = useAppStore(s => s.panelLayouts['care-program-context']?.key || null);
+  const restoredFor = useRef(null);
+  useEffect(() => {
+    if (!programsLoaded || restoredFor.current === patientId) return;
+    restoredFor.current = patientId;
+    const st = useAppStore.getState();
+    if (st.selectedCareProgramKey || st.pendingCareProgramCode || st.carePlanSummaryOpen) return;
+    const match = programForLastKey(programs, lastProgramKey);
+    if (match) openCareProgram(programUrlKey(match));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [programsLoaded, patientId]);
+
+  // CMP sub-programs this member already has (greyed out in the picker).
+  const cmpTaken = useMemo(
+    () => programs.flatMap(p => (p.code === 'CMP' && p.subProgram ? [p.subProgram] : [])),
+    [programs],
+  );
+
   const programOptions = useMemo(() => {
-    const added = new Set(programs.map(p => p.code));
-    return CARE_PROGRAM_CATALOG.map(entry => ({
+    // A program whose enrollments have all ended can be enrolled again.
+    const disabledFor = (code) => {
+      if (code === 'SNP') return false;
+      if (code === 'CMP') return CMP_SUB_PROGRAMS.every(sp => cmpTaken.includes(sp));
+      return !nextEnrollment(programs, code).allowed;
+    };
+    return catalog.map(entry => ({
       value: entry.code,
       label: entry.code,
-      disabled: entry.code === 'SNP' ? false : added.has(entry.code),
+      disabled: disabledFor(entry.code),
       searchText: `${entry.code} ${entry.name}`,
     }));
-  }, [programs]);
+  }, [programs, catalog, cmpTaken]);
 
   const assigneeOptions = useMemo(
     () => [...new Set(programs.flatMap(p => p.assignee ? [p.assignee] : []))],
@@ -147,13 +210,26 @@ export function CareProgramsTab({ header }) {
   const setFilter = (key, vals) => setFilters(f => ({ ...f, [key]: vals }));
   const clearFilters = () => setFilters(EMPTY_FILTERS);
 
-  const handleAddProgram = (code) => {
-    const entry = CARE_PROGRAM_CATALOG.find(e => e.code === code);
+  // `details`: CMP's { subProgram }, SNP's { memberInfo, triggerType, triggerDate }.
+  const handleAddProgram = (code, details = null) => {
+    const entry = catalog.find(e => e.code === code);
     if (!entry) return;
-    addCareProgram(patientId, entry);
-    const list = useAppStore.getState().careProgramsByPatient[patientId] || [];
-    const created = [...list].reverse().find(p => p.code === code);
-    if (created) setPendingProgram({ program: created, firstStep: true });
+    if (code === 'CMP' && !details) {
+      setNpOpen(false);
+      setCmpPickerRect(npBtnRef.current?.getBoundingClientRect() ?? null);
+      return;
+    }
+    if (code === 'SNP' && !details) {
+      setNpOpen(false);
+      setSnpDrawerOpen(true);
+      return;
+    }
+    requestEnrollment(code, () => {
+      addCareProgram(patientId, details ? { ...entry, ...details } : entry);
+      const list = useAppStore.getState().careProgramsByPatient[patientId] || [];
+      const created = [...list].reverse().find(p => p.code === code && (!details?.subProgram || p.subProgram === details.subProgram));
+      if (created) setPendingProgram({ program: created, firstStep: true });
+    }, { subProgram: details?.subProgram || null });
   };
 
   const openProgram = (program) => setPendingProgram({ program, firstStep: false });
@@ -169,8 +245,13 @@ export function CareProgramsTab({ header }) {
   };
 
   const changeStatus = (program, status) => {
+    // Completed / Discontinued end the enrollment, so they ask for a reason.
+    if (status === 'Completed' || status === 'Discontinued') { setClosing({ program: program, status: status }); return; }
+    // Paused asks why and until when; leaving Paused resumes the program and its plan.
+    if (status === 'Paused') { if (program.status !== 'Paused') setPausing(program); return; }
+    if (program.status === 'Paused') { resumeCareProgramInstance(patientId, program, { status }); return; }
     const patch = { status, statusColor: statusColorFor(status) };
-    if (status === 'Enrolled' && (!program.startDate || program.startDate === '—')) {
+    if (status === 'Enrolled' && (!program.startDate || isEmptyDash(program.startDate))) {
       patch.startDate = todayStr();
     }
     updateCareProgram(patientId, program.id, patch);
@@ -185,7 +266,7 @@ export function CareProgramsTab({ header }) {
     } else if (key === 'print') {
       showToast?.(`Preparing ${program.name} summary…`);
     } else if (key === 'close') {
-      updateCareProgram(patientId, program.id, { status: 'Closed', statusColor: statusColorFor('Closed') });
+      setClosing({ program, status: null });
     }
   };
 
@@ -219,8 +300,8 @@ export function CareProgramsTab({ header }) {
   }, [programs, filters, searchText]);
 
   // A program is "Past" once it's completed or closed; everything else is Active.
-  const activePrograms = useMemo(() => visible.filter(p => !PAST_STATUSES.has(p.status)), [visible]);
-  const pastPrograms = useMemo(() => visible.filter(p => PAST_STATUSES.has(p.status)), [visible]);
+  const activePrograms = useMemo(() => visible.filter(p => !isProgramClosed(p.status)), [visible]);
+  const pastPrograms = useMemo(() => visible.filter(p => isProgramClosed(p.status)), [visible]);
 
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const visibleIds = visible.map(p => p.id);
@@ -282,8 +363,7 @@ export function CareProgramsTab({ header }) {
           <div className={styles.npWrap}>
             <Button
               ref={npBtnRef}
-              variant="tertiary"
-              size="L"
+              variant="soft"
               leadingIconElement={<AddIconMinimalist size={16} />}
               trailingIconElement={<DownChevronIcon size={16} />}
               onClick={() => setNpOpen(o => !o)}
@@ -299,6 +379,24 @@ export function CareProgramsTab({ header }) {
                 onClose={() => setNpOpen(false)}
                 searchPlaceholder="Search programs"
                 emptyText="No programs found"
+              />
+            )}
+            {cmpPickerRect && (
+              <RadioListPopover
+                anchorRect={cmpPickerRect}
+                options={CMP_SUB_PROGRAMS}
+                disabledOptions={cmpTaken}
+                showClear={false}
+                width={280}
+                onChange={([sp]) => { setCmpPickerRect(null); if (sp) handleAddProgram('CMP', { subProgram: sp }); }}
+                onClose={() => setCmpPickerRect(null)}
+              />
+            )}
+            {snpDrawerOpen && (
+              <CreateSnpProgramDrawer
+                patientId={patientId}
+                onClose={() => setSnpDrawerOpen(false)}
+                onCreate={(details) => { setSnpDrawerOpen(false); handleAddProgram('SNP', details); }}
               />
             )}
           </div>
@@ -318,7 +416,7 @@ export function CareProgramsTab({ header }) {
       />
 
       {visible.length === 0 ? (
-        <EmptyState />
+        <NoProgramsEmptyState />
       ) : (
         <div className={styles.programSections}>
           <ProgramSection
@@ -370,6 +468,29 @@ export function CareProgramsTab({ header }) {
         rowMenu={rowMenu} setRowMenu={setRowMenu}
         visible={visible} changeStatus={changeStatus} handleRowAction={handleRowAction}
       />
+      {closing && (
+        <CloseProgramDialog
+          program={closing.program}
+          status={closing.status}
+          onCancel={() => setClosing(null)}
+          onSubmit={({ reason, note, status }) => {
+            closeCareProgramInstance(patientId, closing.program.id, { reason, note, status });
+            showToast?.(`${closing.program.name} closed`);
+            setClosing(null);
+          }}
+        />
+      )}
+      {pausing && (
+        <PauseCarePlanDialog
+          subject="program"
+          onCancel={() => setPausing(null)}
+          onSubmit={async (form) => {
+            const program = pausing;
+            setPausing(null);
+            if (await pauseCareProgramInstance(patientId, program, form)) showToast?.(`${program.name} paused`);
+          }}
+        />
+      )}
     </div>
   );
 }

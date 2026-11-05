@@ -1,4 +1,4 @@
-/* Drawer body — zero padding so the PatientBanner spans edge-to-edge
+/* Drawer body: zero padding so the PatientBanner spans edge-to-edge
    underneath the header. DOS cards + Add More DOS button live inside
    .bodyContainer below, which supplies its own 12px inset. */
 .body { padding: 0; }
@@ -296,7 +296,7 @@
 }
 .addMore:hover { background: var(--primary-50); }
 
-/* ── Source document viewer — left-side panel (Figma 5IX) ───────── */
+/* ── Source document viewer: left-side panel (Figma 5IX) ───────── */
 .docPanel {
   position: fixed;
   top: 8px;

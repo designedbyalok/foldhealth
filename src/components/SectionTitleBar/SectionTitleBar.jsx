@@ -6,31 +6,32 @@ import { Button } from '../Button/Button';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { SearchBar } from '../SearchBar/SearchBar';
 import { SearchIconButton } from '../SearchIconButton/SearchIconButton';
-import { Toggle } from '../Toggle/Toggle';
+import { SegmentedControl } from '../SegmentedControl/SegmentedControl';
 import { FilterChip } from '../FilterChip/FilterChip';
-import { TabStrip } from '../TabStrip/TabStrip';
-import tabStripStyles from '../TabStrip/TabStrip.module.css';
+import { Tabs } from '../Tabs/Tabs';
+import tabStripStyles from '../Tabs/Tabs.module.css';
 import styles from './SectionTitleBar.module.css';
 
 /**
- * Fold Health SectionTitleBar — shared header bar sitting between SubNav and
+ * Fold Health SectionTitleBar: shared header bar sitting between SubNav and
  * page content across the demo platform.
  *
  * Four left-side variants:
- *   • variant="tabs"              — Tab strip; auto-collapses to a "More ▾"
+ *   • variant="tabs", Tab strip; auto-collapses to a "More ▾"
  *                                    dropdown when the tabs don't fit next to
  *                                    the right-side actions.
- *   • variant="titleOnly"         — Just a title. No tabs, no dropdown, no
+ *   • variant="titleOnly", Just a title. No tabs, no dropdown, no
  *                                    toggle.
- *   • variant="titleWithDropdown" — Static title + attached dropdown chip
+ *   • variant="titleWithDropdown", Static title + attached dropdown chip
  *                                    (e.g. `HCC List  Due Date ⌄`).
- *   • variant="titleWithToggle"   — Static title + segmented toggle
+ *   • variant="titleWithToggle", Static title + segmented toggle
  *                                    (e.g. `SNP List  Enrolled | Eligible`).
  *
  * Right-side actions are opt-in via the `actions` array so each page picks
  * the exact icon set it needs (`'search'`, `'filter'`, `'history'`,
  * `'upload'`, `'download'`, `'savedFilters'`). `rightExtras` renders
- * custom content before the icon cluster for page-specific controls.
+ * custom content before the icon cluster for page-specific controls;
+ * `trailingExtras` renders after the primary action (e.g. a help button).
  */
 export function SectionTitleBar({
   variant = 'tabs',
@@ -43,7 +44,7 @@ export function SectionTitleBar({
   // Title (used by titleOnly, titleWithDropdown, titleWithToggle)
   title,
 
-  // TitleWithDropdown variant — uses shared FilterChip (see CLAUDE.md).
+  // TitleWithDropdown variant: uses shared FilterChip (see CLAUDE.md).
   // `dropdownValue` accepts either a single string or a string[] to stay
   // aligned with FilterChip's array-shaped onChange contract. When the
   // picker is never-empty (Measurement Year, etc.) pass `dropdownNoClear`
@@ -65,7 +66,7 @@ export function SectionTitleBar({
   toggleActive,
   onToggleChange,
 
-  // Right side actions — e.g. ['search', 'filter', 'history']
+  // Right side actions: e.g. ['search', 'filter', 'history']
   actions = [],
 
   // Right side handlers
@@ -87,18 +88,20 @@ export function SectionTitleBar({
   uploadLabel = 'Upload Record',
   uploadHasDropdown = false,
 
-  // Primary action button — renders after the icon cluster. Used across
+  // Primary action button: renders after the icon cluster. Used across
   // tasks / campaigns / settings for the "New X / Invite / Add" secondary
   // button. Pass `rightExtras` for anything more complex (Toggle, menus).
   primaryActionLabel,
   primaryActionIcon = 'solar:add-circle-linear',
-  primaryActionVariant = 'secondary',
+  primaryActionVariant = 'outline',
   primaryActionDisabled = false,
   onPrimaryAction,
 
   rightExtras,
+  // Rendered after the primary action, e.g. a help button.
+  trailingExtras,
   leftExtras,
-  // Rendered at the very start of the left cluster — used by every worklist
+  // Rendered at the very start of the left cluster, used by every worklist
   // to inject the shared SubnavToggle so a "collapse sidebar" handle appears
   // consistently before the title.
   leadingElement,
@@ -162,8 +165,7 @@ export function SectionTitleBar({
         {hasAction('savedFilters') && (
           <>
             <Button
-              variant="secondary"
-              size="L"
+              variant="outline"
               trailingIconElement={<DownChevronIcon />}
               onClick={onSavedFilters}
               className={savedFiltersActive ? styles.savedFiltersActive : ''}
@@ -206,7 +208,6 @@ export function SectionTitleBar({
           <>
             <ActionButton
               icon="custom:filter"
-              size="L"
               tooltip="Filter"
               tooltipBelow
               notification={typeof filterBadgeCount === 'number' && filterBadgeCount > 0}
@@ -222,7 +223,6 @@ export function SectionTitleBar({
           <>
             <ActionButton
               icon="solar:download-minimalistic-linear"
-              size="L"
               tooltip="Download"
               tooltipBelow
               onClick={onDownload}
@@ -234,8 +234,6 @@ export function SectionTitleBar({
         {hasAction('upload') && (
           <>
             <Button
-              variant="primary"
-              size="L"
               leadingIcon="solar:upload-minimalistic-linear"
               trailingIcon={uploadHasDropdown ? 'solar:alt-arrow-down-linear' : undefined}
               onClick={onUpload}
@@ -249,7 +247,6 @@ export function SectionTitleBar({
         {hasAction('history') && (
           <ActionButton
             icon="solar:history-linear"
-            size="L"
             tooltip="History"
             tooltipBelow
             onClick={onHistory}
@@ -259,7 +256,6 @@ export function SectionTitleBar({
         {primaryActionLabel && (
           <Button
             variant={primaryActionVariant}
-            size="L"
             leadingIcon={primaryActionIcon || undefined}
             disabled={primaryActionDisabled}
             onClick={onPrimaryAction}
@@ -267,6 +263,7 @@ export function SectionTitleBar({
             {primaryActionLabel}
           </Button>
         )}
+        {trailingExtras}
       </div>
     </div>
   );
@@ -358,7 +355,7 @@ function TabsSection({ tabs, activeTab, onTabChange, barRef, rightRef }) {
 
   return (
     <div className={styles.tabsRow}>
-      {/* Hidden measurer — renders every tab at its natural width using
+      {/* Hidden measurer: renders every tab at its natural width using
           TabStrip's own tab-item class so widths match what TabStrip will
           actually paint. Drives the overflow calc without a second mount. */}
       <div
@@ -371,10 +368,10 @@ function TabsSection({ tabs, activeTab, onTabChange, barRef, rightRef }) {
         ))}
       </div>
 
-      <TabStrip
+      <Tabs
         items={visible}
-        activeKey={activeTab}
-        onChange={onTabChange}
+        value={activeTab}
+        onValueChange={onTabChange}
         embedded
       />
 
@@ -448,7 +445,7 @@ function TitleToggleSection({ title, items, active, onChange }) {
     <div className={styles.titleRow}>
       <span className={styles.title}>{title}</span>
       {hasToggle && (
-        <Toggle items={items} active={active} onChange={onChange} size="S" />
+        <SegmentedControl items={items} value={active} onValueChange={onChange} size="sm" />
       )}
     </div>
   );

@@ -11,11 +11,11 @@ import { MEASURE_NAMES } from '../../hedis-worklist/ClinicalNotePanel.utils';
 import styles from './AddNoteTemplateDrawer.module.css';
 
 /**
- * AddNoteTemplateDrawer — first step of the Note Template authoring
+ * AddNoteTemplateDrawer: first step of the Note Template authoring
  * flow (Settings → Content → Notes → + New Note).
  *
- * Collects the template's metadata (title, type, and — for Care Gap
- * notes — the gap + Visit/Non-Visit context and default flag) then
+ * Collects the template's metadata (title, type, and, for Care Gap
+ * notes: the gap + Visit/Non-Visit context and default flag) then
  * hands off to the shared FormBuilder for schema authoring. That way we
  * don't duplicate the field editor.
  *
@@ -64,10 +64,10 @@ export function AddNoteTemplateDrawer({ onClose }) {
         isDefault: isCareGap ? setAsDefault : false,
         status: 'draft',
       });
-      showToast?.('Note template created — configure its fields next');
+      showToast?.('Note template created: configure its fields next');
       // Open the FormBuilder first, THEN close the drawer. openFormBuilder
       // sets `editingFormId`, which triggers the AppLayout's full-screen
-      // takeover — closing the drawer before that fires can leave the
+      // takeover: closing the drawer before that fires can leave the
       // caller stuck in the Notes list with no way to author fields.
       if (row?.id) {
         await openFormBuilder?.(row.id);
@@ -88,16 +88,14 @@ export function AddNoteTemplateDrawer({ onClose }) {
       width={520}
       primaryAction={
         <Button
-          variant="primary"
-          size="L"
           onClick={handleSave}
-          disabled={!canSave || saving}
+          disabled={!canSave} loading={saving}
         >
-          {saving ? 'Creating…' : 'Continue'}
+          Continue
         </Button>
       }
       secondaryAction={
-        <Button variant="secondary" size="L" onClick={onClose} disabled={saving}>
+        <Button variant="outline" onClick={onClose} disabled={saving}>
           Cancel
         </Button>
       }
@@ -161,7 +159,7 @@ export function AddNoteTemplateDrawer({ onClose }) {
                 id="note-tpl-gap"
                 options={gapOptions}
                 value={gapCode}
-                onChange={setGapCode}
+                onValueChange={setGapCode}
                 placeholder="Choose a care gap"
                 searchable
               />

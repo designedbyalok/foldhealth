@@ -8,10 +8,10 @@ import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { MenuPopover } from '../../../../components/MenuPopover/MenuPopover';
 import { SearchBar } from '../../../../components/SearchBar/SearchBar';
 import { SearchIconButton } from '../../../../components/SearchIconButton/SearchIconButton';
-import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { Link } from '../../../../components/Link/Link';
 import { Icon } from '../../../../components/Icon/Icon';
-import { InfoBar } from '../../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../../components/Banner/Banner';
 // Used by the old view's action cell (commented out below).
 // import { Tooltip } from '../../../../components/Tooltip/Tooltip';
 import { AddIconMinimalist } from '../../../../components/Icon/AddIconMinimalist';
@@ -26,7 +26,7 @@ import { UserAvailabilityNewView } from './UserAvailabilityNewView';
 import { UserPickerPopover } from '../../../../components/UserPickerPopover/UserPickerPopover';
 import { DateRangePopover } from '../../../../components/DateRangePopover/DateRangePopover';
 import { fmtDay } from '../../../../components/DateRangeFilter/dateRangePresets';
-import { Toggle } from '../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../components/SegmentedControl/SegmentedControl';
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
 import {
   blockStatus, STATUS_LOOK, cadenceText, formatDate, slotText, slotTextTz, ALL_TYPES,
@@ -59,13 +59,25 @@ const COLUMNS = [
   { key: 'status', label: 'Status', width: 120 },
   { key: 'location', label: 'Location', width: 170 },
   { key: 'dates', label: 'Start & End Date', width: 200, sortKey: 'startDate', sortType: 'date' },
-  // Repeats shares the leftover width with Details but tops out at 224px (what a
-  // long monthly rule needs); past that, Details takes the rest. 835px is the
-  // fixed columns (User, Status, Location, Dates, Actions).
-  { key: 'repeats', label: 'Repeats', width: 'min(224px, calc((100% - 835px) / 2))' },
+  // Repeats fits its longest text on the page, up to 224px (see repeatsWidth);
+  // Details takes the rest.
+  { key: 'repeats', label: 'Repeats', width: 224 },
   { key: 'details', label: 'Details' },
   { key: 'actions', label: 'Actions', sticky: 'right', width: 105 },
 ];
+const REPEATS_MAX = 224;
+const REPEATS_MIN = 96;
+const CELL_PADDING_X = 24;
+let measureCtx = null;
+// Width of the widest Repeats line (pattern or days) at the cell's type size.
+function repeatsWidth(lines) {
+  if (!lines.length) return REPEATS_MAX;
+  measureCtx ||= document.createElement('canvas').getContext('2d');
+  const body = getComputedStyle(document.body);
+  measureCtx.font = `400 ${body.getPropertyValue('--font-base').trim() || '14px'} ${body.fontFamily}`;
+  const widest = Math.max(...lines.map(t => measureCtx.measureText(t).width));
+  return Math.min(REPEATS_MAX, Math.max(REPEATS_MIN, Math.ceil(widest) + CELL_PADDING_X + 2));
+}
 const STATUS_FILTER = { Active: 'active', Upcoming: 'upcoming', Past: 'expired' };
 // The List opens on what's current: Active and Upcoming (Past is a pick away).
 const DEFAULT_STATUSES = ['Active', 'Upcoming'];
@@ -95,7 +107,7 @@ function RowMenu({ onSelect, hasBlocks, items }) {
   const [open, setOpen] = useState(false);
   return (
     <span ref={ref}>
-      <ActionButton icon="solar:menu-dots-linear" size="L" tooltip="More options" tooltipLeft onClick={() => setOpen(v => !v)} />
+      <ActionButton icon="solar:menu-dots-linear" tooltip="More options" tooltipLeft onClick={() => setOpen(v => !v)} />
       {open && (
         <MenuPopover
           anchorRef={ref}
@@ -116,8 +128,14 @@ function RowMenu({ onSelect, hasBlocks, items }) {
  * time ranges with their appointment types). Active blocks lead; the rest
  * fold under "Show N More". Filters open from the icon beside search. Users
  * without their own availability take their locations' practice hours.
+ *
+ * `embedded` shows just the Week view, without the settings title bar, for
+ * the Calendar's Available Slots layout, on the week of `weekOf` (ISO day),
+ * or just the day `onlyDay`. There the Calendar's own filter chips apply:
+ * `filterUsers` (names), `filterLocations` and `filterTypes`, and its search,
+ * `searchQuery`.
  */
-export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
+export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = false, weekOf, onlyDay, filterUsers, filterLocations, filterTypes, searchQuery }) {
   const platformUsers = useAppStore(s => s.platformUsers);
   const taskProfiles = useAppStore(s => s.taskProfiles);
   const usersFetched = useAppStore(s => s.platformUsersDidFetch);
@@ -129,7 +147,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
 
   const [query, setQuery] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [layout, setLayout] = useState('list');
+  const [layout, setLayout] = useState(embedded ? 'week' : 'list');
   const [fLocations, setFLocations] = useState([]);
   const [fStatuses, setFStatuses] = useState(DEFAULT_STATUSES);
   const [fTypes, setFTypes] = useState([]);
@@ -169,11 +187,11 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
     // The filters apply in both views. In Week, the default Status (Active,
     // Upcoming) isn't applied, so a past week still shows what ran then.
     const listView = layout === 'list';
-    const locs = fLocations;
+    const locs = embedded ? filterLocations || [] : fLocations;
     const stats = listView || !isDefaultStatus(fStatuses) ? fStatuses : [];
-    const types = fTypes;
+    const types = embedded ? filterTypes || [] : fTypes;
     const range = fRange;
-    const people = fUsers;
+    const people = embedded ? filterUsers || [] : fUsers;
     const spans = fSpans;
     const locSet = new Set(locs);
     const typeSet = new Set(types);
@@ -182,7 +200,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
     const emails = Object.fromEntries((taskProfiles || []).map(p => [p.name, p.email]));
     const byName = new Map();
     (blocks || []).forEach(b => { const k = b.userName?.toLowerCase(); if (k) byName.set(k, [...(byName.get(k) || []), b]); });
-    const q = query.trim().toLowerCase();
+    const q = (embedded ? searchQuery || '' : query).trim().toLowerCase();
     return (platformUsers || [])
       .map(u => ({
         ...u,
@@ -204,7 +222,8 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
           // No status picked shows every slot (This Week always does: a past
           // week shows what was available then).
           && (!stats.length || stats.some(k => STATUS_FILTER[k] === b.status))
-          && (!types.length || (b.slots || []).some(sl => typeSet.has(sl.appointmentType || ALL_TYPES)))
+          // In the Calendar a slot open to every type matches any type picked.
+          && (!types.length || (b.slots || []).some(sl => typeSet.has(sl.appointmentType || ALL_TYPES) || (embedded && !sl.appointmentType)))
           && (!spans.length || spanSet.has(b.endDate ? 'Fixed Slot' : 'Rolling Slot'))
           && (range.length !== 2 || (b.startDate <= range[1] && (b.endDate || '9999-12-31') >= range[0]))),
       }))
@@ -219,7 +238,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
         : (b.blocks.length > 0) - (a.blocks.length > 0)
           || (sortDir && a.blocks.length && (sortDir === 'asc' ? 1 : -1) * a.blocks[0].startDate.localeCompare(b.blocks[0].startDate))
           || a.name.localeCompare(b.name)));
-  }, [platformUsers, taskProfiles, blocks, query, layout, fLocations, fStatuses, fTypes, fRange, fUsers, fSpans, sort, sortDir]);
+  }, [platformUsers, taskProfiles, blocks, query, layout, fLocations, fStatuses, fTypes, fRange, fUsers, fSpans, sort, sortDir, embedded, filterUsers, filterLocations, filterTypes, searchQuery]);
   // For the User filter: keyed by name (what fUsers holds), with role for the second line.
   const pickerUsers = useMemo(() => (platformUsers || [])
     .filter(u => u.name)
@@ -232,6 +251,11 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
   const lastPage = Math.max(1, Math.ceil(users.length / perPage));
   const pageNow = Math.min(page, lastPage);
   const rows = users.slice((pageNow - 1) * perPage, pageNow * perPage);
+  const columns = useMemo(() => {
+    const lines = rows.flatMap(u => (u.blocks || []).flatMap(b => cadenceText(b).split(' • ')));
+    const w = repeatsWidth(lines);
+    return COLUMNS.map(c => (c.key === 'repeats' ? { ...c, width: w } : c));
+  }, [rows]);
 
   // Show more opens at once and eases the rows in; Show less eases them out
   // first, then removes them.
@@ -250,7 +274,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
 
   const tools = (
     <>
-      <Toggle size="S" items={[{ key: 'list', label: 'List' }, { key: 'week', label: 'Week' }]} active={layout} onChange={setLayout} />
+      <SegmentedControl size="sm" items={[{ key: 'list', label: 'List' }, { key: 'week', label: 'Week' }]} value={layout} onValueChange={setLayout} />
       <span className={styles.toolDivider} aria-hidden="true" />
       {searchOpen ? (
         <SearchBar
@@ -264,9 +288,9 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
       )}
       {/* Search | Filter */}
       <span className={styles.toolDivider} aria-hidden="true" />
-      <ActionButton icon="custom:filter" size="L" tooltip={filtersOpen ? 'Hide filters' : 'Filters'} tooltipBelow active={filtersOpen || !!filtersOn} onClick={() => setFiltersOpen(o => !o)} />
+      <ActionButton icon="custom:filter" tooltip={filtersOpen ? 'Hide filters' : 'Filters'} tooltipBelow active={filtersOpen || !!filtersOn} onClick={() => setFiltersOpen(o => !o)} />
       <span className={styles.toolDivider} aria-hidden="true" />
-      <Button variant="secondary" size="L" leadingIconElement={<AddIconMinimalist size={16} color="currentColor" />} onClick={() => setEditing({})}>Add new</Button>
+      <Button variant="outline" leadingIconElement={<AddIconMinimalist size={16} color="currentColor" />} onClick={() => setEditing({})}>Add new</Button>
     </>
   );
 
@@ -293,11 +317,11 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
   const rowActions = (u) => (
     <>
         {u.blocks.length > 0 ? (
-          <ActionButton size="L" tooltip="Edit availability" tooltipLeft onClick={() => setEditing({ user: u })}>
+          <ActionButton tooltip="Edit availability" tooltipLeft onClick={() => setEditing({ user: u })}>
             <Icon name="solar:pen-linear" size={16} color="var(--neutral-300)" />
           </ActionButton>
         ) : (
-          <ActionButton icon="solar:add-linear" size="L" tooltip="Add availability" tooltipLeft onClick={() => setEditing({ user: u, addBlock: true })} />
+          <ActionButton icon="solar:add-linear" tooltip="Add availability" tooltipLeft onClick={() => setEditing({ user: u, addBlock: true })} />
         )}
         <span className={styles.actionDivider} aria-hidden="true" />
         <RowMenu
@@ -473,10 +497,10 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
               ].filter(Boolean).join(' ')}
             >
               {i === 0 && userCell(u, span)}
-              <td className={styles.td}><Badge tone={look.tone} size="S" label={look.label} /></td>
+              <td className={styles.td}><Badge tone={look.tone} size="sm" label={look.label} /></td>
               <td className={styles.td}><span className={styles.cellText}>{b.location}</span></td>
               <td className={`${styles.td} ${styles.datesTd}`}>
-                <span className={styles.cellText}>{formatDate(b.startDate)} – {b.endDate ? formatDate(b.endDate) : 'Present'}</span>
+                <span className={styles.cellText}>{formatDate(b.startDate)} – {b.endDate ? formatDate(b.endDate) : 'Ongoing'}</span>
               </td>
               <td className={styles.td}>
                 <span className={styles.repeats}>
@@ -520,12 +544,12 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
 
   return (
     <div className={styles.wrapper}>
-      <SectionTitleBar tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} actions={[]} rightExtras={tools} />
-      {showNotice && (
+      {!embedded && <SectionTitleBar tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} actions={[]} rightExtras={tools} />}
+      {showNotice && !embedded && (
         <div className={styles.notice}>
-          <InfoBar variant="inline" onClose={dismissNotice} className={styles.noticeBar}>
+          <Banner size="sm" onClose={dismissNotice} className={styles.noticeBar}>
             Availability updates may take a few minutes to process. You can continue using Fold while processing completes. We'll notify you once the provider's availability has been updated successfully.
-          </InfoBar>
+          </Banner>
         </div>
       )}
       {filtersOpen && (
@@ -581,6 +605,8 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
       {layout === 'week' ? (
         <UserAvailabilityNewView
           view="week"
+          weekOf={embedded ? weekOf : undefined}
+          onlyDay={embedded ? onlyDay : undefined}
           users={users}
           loading={!usersFetched || !blocksFetched}
           onEdit={(u, focusId) => setEditing({ user: u, focusId })}
@@ -595,7 +621,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
       <div className={styles.tableWrap}>
         <WorklistShell
           header={null}
-          columns={COLUMNS}
+          columns={columns}
           sortKey={sort?.key || null}
           sortDir={sort?.dir || null}
           // asc, then desc, then back to the default order.
@@ -608,7 +634,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
           loading={loading}
           emptyState={(
             <div className={styles.empty}>
-              <RingEmptyState icon="solar:calendar-linear" label={query ? 'No users match this search' : filtersOn ? 'No availability matches these filters' : 'No users yet'} />
+              <EmptyState icon="solar:clock-circle-linear" title={query ? 'No users match this search' : filtersOn ? 'No availability matches applied filters' : 'No users yet'} />
             </div>
           )}
           // Sized to fit a 1440px screen; narrower ones scroll sideways.

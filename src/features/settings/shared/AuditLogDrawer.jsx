@@ -127,7 +127,7 @@ const AUDIT_LOG_FILTERS_EXTENDED = [...AUDIT_LOG_FILTERS, 'previewed'];
 
 /* ── Main Drawer ── */
 /**
- * AuditLogContent — reusable audit log timeline with filters.
+ * AuditLogContent: reusable audit log timeline with filters.
  * Can be embedded inside any container (drawer tab, panel, etc.)
  */
 export function AuditLogContent({ entityType, entityId }) {
@@ -276,8 +276,8 @@ export function AuditLogDrawer({ entity, onClose }) {
   const monthGroups = useMemo(() => groupByMonth(filteredEntries), [filteredEntries]);
 
   const title = entity?.type === 'Domain'
-    ? `Audit Log — ${entity.domain || entity.name}`
-    : `Audit Log — ${entity?.name}`;
+    ? `Audit Log: ${entity.domain || entity.name}`
+    : `Audit Log: ${entity?.name}`;
 
   return (
     <Drawer title={title} onClose={onClose}>

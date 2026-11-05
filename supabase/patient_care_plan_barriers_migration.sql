@@ -1,4 +1,4 @@
--- Patient Care Plan Barriers — per-patient, per-program barrier instances.
+-- Patient Care Plan Barriers: per-patient, per-program barrier instances.
 --
 -- WHY: Settings → Care Plan Library already has staff-managed `care_plan_barriers`
 -- but the patient-facing Care Plan step (`CarePlanView`) only rendered Goals
@@ -7,7 +7,7 @@
 -- Literacy" blocks a goal for this patient, nor could those barriers persist.
 --
 -- WHAT:
---   patient_care_plan_barriers — one row per barrier on a plan. Mirrors the
+--   patient_care_plan_barriers: one row per barrier on a plan. Mirrors the
 --   library shape (title, description) plus the patient-view fields:
 --   status (Not Started / In Progress / Resolved …), priority, and sort_order.
 --   goal_id is optional: a barrier may block a specific goal or be plan-wide.

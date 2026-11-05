@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 const Analytics = lazy(() => import('@vercel/analytics/react').then(m => ({ default: m.Analytics })).catch(() => ({ default: () => null })));
 const SpeedInsights = lazy(() => import('@vercel/speed-insights/react').then(m => ({ default: m.SpeedInsights })).catch(() => ({ default: () => null })));
 import { AppLayout } from './layouts/AppLayout';
+import { AppProviders } from './features/AppProviders';
 import { Toaster } from './components/Toast/Toast';
 import { UpdateAvailableCard } from './components/UpdateCard/UpdateCard';
 import { LoginPage } from './features/auth/LoginPage';
@@ -12,10 +13,10 @@ import { reportSignInSuccess, takeOAuthSignIn } from './features/auth/accountSec
 import { useAppStore } from './store/useAppStore';
 import { supabase } from './lib/supabase';
 import { initRouter } from './lib/router';
-import { track, trackPageview } from './lib/tracking';
+import { track, trackPageview, scrubAnalyticsEvent } from './lib/tracking';
 import { maybeApplyOrgDefaults } from './lib/orgDefaults';
 
-// Public, shareable form fill-view (#/f/{id}) — rendered without auth so a
+// Public, shareable form fill-view (#/f/{id}): rendered without auth so a
 // link can be opened by anyone. RLS on forms/form_responses ('Allow all')
 // permits anonymous read + submit.
 const PublicFormView = lazy(() => import('./features/forms/view/FormView').then(m => ({ default: m.FormView })));
@@ -29,23 +30,25 @@ function App() {
   // Message handed from ResetPasswordPage to LoginPage (e.g. "awaiting approval").
   const [loginNotice, setLoginNotice] = useState('');
   const [signOutRequest, setSignOutRequest] = useState(0);
-  const [bypassed, setBypassed] = useState(() => sessionStorage.getItem('__auth_bypass') === 'true');
+  // Dev builds only: in a production bundle a hand-set sessionStorage flag
+  // must not open the app shell without a Supabase session.
+  const [bypassed, setBypassed] = useState(() => import.meta.env.DEV && sessionStorage.getItem('__auth_bypass') === 'true');
   // Set when Supabase fires PASSWORD_RECOVERY OR when the URL hash carries
   // the recovery tokens directly (e.g. before supabase-js has processed
   // them). Initial check handles the brief window between mount and the
   // PASSWORD_RECOVERY event firing. `type=signup` covers invited users
-  // arriving via the confirmation email — we route them to the same page
+  // arriving via the confirmation email: we route them to the same page
   // to set an initial password (see `invited` metadata check below).
   const [recoveryMode, setRecoveryMode] = useState(() => {
     const h = window.location.hash || '';
     // `token_hash=` covers the custom email-template links
-    // (#/reset-password?token_hash=…) — see ResetPasswordPage for the flow.
+    // (#/reset-password?token_hash=…), see ResetPasswordPage for the flow.
     return /type=recovery/.test(h) || /type=signup/.test(h)
       || /token_hash=/.test(h) || h.startsWith('#/reset-password');
   });
   const recoveryModeRef = useRef(recoveryMode);
   useEffect(() => { recoveryModeRef.current = recoveryMode; }, [recoveryMode]);
-  // Featurebase identity-verification JWT — minted server-side by the
+  // Featurebase identity-verification JWT: minted server-side by the
   // featurebase-jwt Edge Function (the signing secret never reaches the
   // client). The Help popover's "Give Feedback" builds the portal SSO link
   // from it so users land on the feedback portal already signed in.
@@ -53,8 +56,8 @@ function App() {
   //
   // This effect only *invalidates*. The mint moved to `ensureFeaturebaseJwt`,
   // called when the user reaches for Help (Sidebar), because minting it here
-  // meant one Edge Function invocation on every page load — 0.5–4.1 s
-  // measured — to prepare a link most sessions never click. Any session
+  // meant one Edge Function invocation on every page load, 0.5–4.1 s
+  // measured: to prepare a link most sessions never click. Any session
   // change (logout, token refresh, switching user) drops the old JWT so it
   // can never be sent for the wrong identity; the next Help open re-mints.
   useEffect(() => {
@@ -119,8 +122,12 @@ function App() {
         track('auth.logout');
         setRecoveryMode(false);
         useAppStore.getState().resetCarePlanFavorites();
+        useAppStore.getState().resetSignedInUser();
       } else if (event === 'SIGNED_IN') {
         track('auth.session_established');
+        // Refocus and token refresh also emit SIGNED_IN: reset only for a different user.
+        const known = useAppStore.getState().currentUserProfile?.id;
+        if (known && known !== s?.user?.id) useAppStore.getState().resetSignedInUser();
         // Back from Google: log it in Login Activity. Deferred, because
         // awaiting supabase inside this callback can deadlock supabase-js.
         const provider = takeOAuthSignIn();
@@ -166,7 +173,7 @@ function App() {
     if (!routerInit.current) {
       routerInit.current = true;
       initRouter(useAppStore);
-      // Smoke test — confirms the analytics + Sentry breadcrumb pipeline is
+      // Smoke test: confirms the analytics + Sentry breadcrumb pipeline is
       // live on app boot. Remove once full coverage is in place.
       track('app.booted');
     }
@@ -174,7 +181,7 @@ function App() {
 
   const isAuthenticated = session || bypassed;
 
-  // Password recovery — must short-circuit before the regular auth
+  // Password recovery: must short-circuit before the regular auth
   // branches. The recovery email gives the user a temporary session, so
   // we'd otherwise drop them straight into the app with no way to set
   // a new password. onDone signs them out and clears the flag.
@@ -185,7 +192,7 @@ function App() {
           setRecoveryMode(false);
           if (opts?.notice) setLoginNotice(opts.notice);
           if (opts?.enterApp) {
-            // Invited user just set their first password — session is
+            // Invited user just set their first password, session is
             // valid, drop them straight into the app.
             window.location.hash = '#/home';
           } else {
@@ -238,7 +245,7 @@ function App() {
     );
   }
 
-  // Public shareable form link — render the fill-view without auth so anyone
+  // Public shareable form link: render the fill-view without auth so anyone
   // with the link can fill + submit. Authenticated users fall through to the
   // in-app takeover (AppLayout) which adds the close-to-chat affordance.
   const publicFormMatch = hash.match(/^#\/f\/([^/?#]+)/);
@@ -251,9 +258,9 @@ function App() {
     );
   }
 
-  // Not authenticated — show login. The dev-mode "Continue without login"
+  // Not authenticated: show login. The dev-mode "Continue without login"
   // button performs a REAL sign-in with the demo account when the
-  // VITE_DEV_LOGIN_* vars are present (dev builds only — the branch is
+  // VITE_DEV_LOGIN_* vars are present (dev builds only: the branch is
   // dead-code-eliminated from production bundles via import.meta.env.DEV).
   // Every table is RLS'd to `authenticated`, so a bare bypass session sees
   // zero rows from Supabase; the demo sign-in gives dev sessions real data.
@@ -285,27 +292,30 @@ function App() {
         if (!error) {
           track('auth.dev_demo_login');
           window.location.hash = '#/home';
-          return; // onAuthStateChange sets the session — normal auth flow takes over
+          return; // onAuthStateChange sets the session, normal auth flow takes over
         }
-        console.warn('dev demo login failed — falling back to no-auth bypass:', error.message);
+        console.warn('dev demo login failed: falling back to no-auth bypass:', error.message);
       }
       legacyBypass();
     };
     return <LoginPage key={loginNotice} onBypass={handleBypass} notice={loginNotice} />;
   }
 
-  // Authenticated — clear login hash if present
+  // Authenticated: clear login hash if present
   if (window.location.hash === '#/login' || window.location.hash === '') {
     window.location.hash = '#/home';
   }
 
-  // Authenticated — show app
+  // Authenticated: show app
   return (
     <Suspense fallback={null}>
       <UpdateAvailableCard />
-      <AppLayout />
-      <Analytics />
-      <SpeedInsights />
+      <AppProviders>
+        <AppLayout />
+      </AppProviders>
+      {/* Their scripts report the full URL; keep tokens and prefill params out. */}
+      <Analytics beforeSend={scrubAnalyticsEvent} />
+      <SpeedInsights beforeSend={scrubAnalyticsEvent} />
     </Suspense>
   );
 }

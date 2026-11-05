@@ -5,7 +5,7 @@
   padding: 0;
 }
 
-/* Card frame — bordered rounded rectangle, neutral fill, tight interior. */
+/* Card frame: bordered rounded rectangle, neutral fill, tight interior. */
 .section {
   display: flex;
   flex-direction: column;
@@ -30,7 +30,7 @@
   line-height: var(--leading-normal, 1.5);
 }
 
-/* Nested Requirements bullets — single disc marker at every level. The
+/* Nested Requirements bullets: single disc marker at every level. The
    hierarchy reads purely by indent depth, not by marker shape, so a
    reader never has to decode disc vs circle vs square. */
 .listL0,

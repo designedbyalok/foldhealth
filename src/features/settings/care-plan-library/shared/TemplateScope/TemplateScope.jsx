@@ -6,11 +6,11 @@ import { RENEWAL_CHOICES, TEMPLATE_RENEWALS } from '../../../../patient/right-pa
 /** Org / Private / Patient indicator for a template row. */
 export function TemplateScopeBadge({ template, className }) {
   const s = TEMPLATE_SCOPES[templateScopeOf(template)];
-  return <Badge size="S" tone={s.tone} icon={s.icon} label={s.badge} className={className} />;
+  return <Badge size="sm" tone={s.tone} icon={s.icon} label={s.badge} className={className} />;
 }
 
 /**
- * "Who is this template for?" — asked whenever a template is created.
+ * "Who is this template for?", asked whenever a template is created.
  * `choices` lists the scopes this surface allows (the library offers
  * Organization / Only me; a patient's care plan adds This patient).
  */
@@ -26,7 +26,7 @@ export function TemplateScopeChoice({ value, onChange, choices, label = 'Who is 
   );
 }
 
-/** "When applied again" — what adding this template to a plan that has it does. */
+/** "When applied again", what adding this template to a plan that has it does. */
 export function TemplateRenewalChoice({ value, onChange, label = 'When applied again' }) {
   return (
     <RadioOptionGroup

@@ -1,22 +1,21 @@
 .tile {
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
+  justify-content: flex-start;
+  gap: var(--space-2);
   min-width: 0;
-  padding: var(--space-3) var(--space-2) var(--space-2);
-  background: var(--neutral-0);
-  border: 0.5px solid var(--neutral-150);
-  border-radius: calc(var(--space-1) * 1.5);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: none;
+  border-radius: var(--space-2);
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition: background-color 120ms ease;
 }
 
 .tile:hover {
-  background: var(--primary-50);
-  border-color: var(--primary-200);
+  background: var(--neutral-50);
 }
 
 .tile:focus-visible {
@@ -37,8 +36,8 @@
 
 .dot {
   position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
+  top: var(--space-1);
+  right: var(--space-1);
   width: 6px;
   height: 6px;
   border-radius: 50%;

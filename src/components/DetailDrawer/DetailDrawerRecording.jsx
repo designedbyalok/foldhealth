@@ -95,26 +95,26 @@ export function DetailDrawerRecording({
             </div>
             <div className={styles.audioButtons}>
               {playState === 'idle' && (
-                <Button variant="primary" size="S" leadingIcon="solar:play-bold" className={styles.playBtn} onClick={startPlayback}>
+                <Button size="sm" leadingIcon="solar:play-bold" className={styles.playBtn} onClick={startPlayback}>
                   Play Recording
                 </Button>
               )}
               {playState === 'playing' && (
                 <>
-                  <Button variant="secondary" size="S" leadingIcon="solar:pause-bold" className={styles.pauseBtn} onClick={pausePlayback}>
+                  <Button variant="outline" size="sm" leadingIcon="solar:pause-bold" className={styles.pauseBtn} onClick={pausePlayback}>
                     Pause
                   </Button>
-                  <Button variant="dangerFilled" size="S" leadingIcon="solar:stop-bold" className={styles.stopBtn} onClick={stopPlayback}>
+                  <Button tone="danger" size="sm" leadingIcon="solar:stop-bold" className={styles.stopBtn} onClick={stopPlayback}>
                     Stop
                   </Button>
                 </>
               )}
               {playState === 'paused' && (
                 <>
-                  <Button variant="primary" size="S" leadingIcon="solar:play-bold" className={styles.playBtn} onClick={startPlayback}>
+                  <Button size="sm" leadingIcon="solar:play-bold" className={styles.playBtn} onClick={startPlayback}>
                     Resume
                   </Button>
-                  <Button variant="dangerFilled" size="S" leadingIcon="solar:stop-bold" className={styles.stopBtn} onClick={stopPlayback}>
+                  <Button tone="danger" size="sm" leadingIcon="solar:stop-bold" className={styles.stopBtn} onClick={stopPlayback}>
                     Stop
                   </Button>
                 </>

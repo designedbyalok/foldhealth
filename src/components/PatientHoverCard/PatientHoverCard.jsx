@@ -3,14 +3,14 @@ import { createPortal } from 'react-dom';
 import { Avatar } from '../Avatar/Avatar';
 import { Badge } from '../Badge/Badge';
 import { Icon } from '../Icon/Icon';
-import bone from '../TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../Skeleton/Skeleton';
 import styles from './PatientHoverCard.module.css';
 
 const CARD_W = 350;
 const GAP = 8;
 
 // Good / Average / Poor band for a 0–100 value.
-const band = (v) => (v >= 80 ? { label: 'Good', tone: 'success' } : v >= 60 ? { label: 'Average', tone: 'warning' } : { label: 'Poor', tone: 'error' });
+const band = (v) => (v >= 80 ? { label: 'Good', tone: 'success' } : v >= 60 ? { label: 'Average', tone: 'warning' } : { label: 'Poor', tone: 'danger' });
 const engagedText = (d) => (d == null ? '-' : d === 0 ? 'Engaged today' : `Last engaged ${d} day${d === 1 ? '' : 's'} ago`);
 
 /**
@@ -76,7 +76,7 @@ export function PatientHoverCard({ anchorRect, stage, patient, snapshot, cardPro
         <div className={styles.detailsInner}>
         {!s ? (
           <div className={styles.loading}>
-            {[70, 90, 60, 80, 50].map((w, i) => <span key={i} className={bone.bone} style={{ width: `${w}%`, height: 12 }} />)}
+            {[70, 90, 60, 80, 50].map((w, i) => <Skeleton key={i} style={{ width: `${w}%`, height: 12 }} />)}
           </div>
         ) : (
           <>
@@ -132,14 +132,14 @@ export function PatientHoverCard({ anchorRect, stage, patient, snapshot, cardPro
             <Row label="Task Adherence:">
               <span className={styles.inline}>
                 {s.taskAdherence}%
-                <Badge tone={band(s.taskAdherence).tone} size="S" label={band(s.taskAdherence).label} />
+                <Badge tone={band(s.taskAdherence).tone} size="sm" label={band(s.taskAdherence).label} />
               </span>
             </Row>
             <Row label="Alerts (Last 7 Days):">
               <span className={styles.inline}>
                 {s.alertsHigh + s.alertsMedium === 0 && <span className={styles.faint}>None</span>}
-                {s.alertsHigh > 0 && <Badge tone="error" size="S" icon="solar:flag-linear" label={String(s.alertsHigh)} />}
-                {s.alertsMedium > 0 && <Badge tone="warning" size="S" icon="solar:flag-linear" label={String(s.alertsMedium)} />}
+                {s.alertsHigh > 0 && <Badge tone="danger" size="sm" icon="solar:flag-linear" label={String(s.alertsHigh)} />}
+                {s.alertsMedium > 0 && <Badge tone="warning" size="sm" icon="solar:flag-linear" label={String(s.alertsMedium)} />}
               </span>
             </Row>
             </>

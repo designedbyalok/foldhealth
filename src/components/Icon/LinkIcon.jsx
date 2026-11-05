@@ -1,4 +1,4 @@
-/** Care plan GBI link affordance — Figma SNP-Story link chip. */
+/** Care plan GBI link affordance: Figma SNP-Story link chip. */
 export function LinkIcon({ size = 24, color = '#6F7A90', className, style }) {
   return (
     <svg

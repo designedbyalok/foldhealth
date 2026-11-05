@@ -39,7 +39,7 @@ function mergeWorklistRows(existing, incoming) {
     dob: existing.dob || incoming.dob,
     age: existing.age || incoming.age,
     initials: existing.initials !== '??' ? existing.initials : incoming.initials,
-    // SNP/HCC assignee updates must survive dedupe — the old merge kept
+    // SNP/HCC assignee updates must survive dedupe, the old merge kept
     // only demographics, so a TOC row without an assignee clobbered the
     // SNP row the user just assigned to themselves.
     assigneeId: existing.assigneeId || incoming.assigneeId,
@@ -155,7 +155,7 @@ export function AlertsMonitoringCard({ dragHandleClassName }) {
     let rows = [...merged.values()].filter(r => isAssignedToMe(r, meId, meName));
 
     // If nothing is explicitly assigned, fall back to patients that carry
-    // open tasks for me — still real platform rows, just task-derived.
+    // open tasks for me: still real platform rows, just task-derived.
     if (rows.length === 0 && meName) {
       const taskNames = new Set();
       for (const t of tasks) {
@@ -216,9 +216,9 @@ export function AlertsMonitoringCard({ dragHandleClassName }) {
             My Worklist
           </div>
           <div className={styles.cardActions}>
-            <ActionButton icon="solar:user-linear" size="S" tooltip="Assigned to me" />
-            <ActionButton icon="solar:hamburger-menu-linear" size="S" tooltip="List view" />
-            <ActionButton icon="custom:filter" size="S" tooltip="Filter" />
+            <ActionButton icon="solar:user-linear" size="sm" tooltip="Assigned to me" />
+            <ActionButton icon="solar:hamburger-menu-linear" size="sm" tooltip="List view" />
+            <ActionButton icon="custom:filter" size="sm" tooltip="Filter" />
           </div>
         </div>
         <div className={styles.cardBody}>

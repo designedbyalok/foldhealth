@@ -25,7 +25,7 @@ const initialsOf = (name) => String(name || '').replace(/^Dr\.?\s+/i, '').trim()
   .slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
 /**
- * ProviderSelect — searchable provider picker (Figma New Care Gap Workflow
+ * ProviderSelect: searchable provider picker (Figma New Care Gap Workflow
  * 19:47455). Each row: radio, provider avatar, name + source badge
  * ("Fold Provider" / "EHR Provider"), a "specialty • address" line, and an
  * optional contact line (e.g. "eFax : (619) 555-4321").
@@ -139,7 +139,7 @@ export function ProviderSelect({
               <>
                 <span className={styles.searchDivider} />
                 <ActionButton
-                  size="S"
+                  size="sm"
                   icon="custom:filter"
                   tooltip={advancedOpen ? 'Hide advanced search' : 'Advanced search'}
                   iconColor={advancedOpen || anyAdvanced ? 'var(--primary-300)' : undefined}
@@ -179,8 +179,8 @@ export function ProviderSelect({
               <div className={styles.text}>
                 <div className={styles.nameRow}>
                   <span className={styles.name}>{p.name}</span>
-                  {p.source === 'fold' && <Badge size="S" tone="primary" label="Fold Provider" />}
-                  {p.source === 'ehr' && <Badge size="S" tone="grey" label="EHR Provider" />}
+                  {p.source === 'fold' && <Badge size="sm" tone="primary" label="Fold Provider" />}
+                  {p.source === 'ehr' && <Badge size="sm" label="EHR Provider" />}
                 </div>
                 {p.subtitle && <span className={styles.sub}>{p.subtitle}</span>}
                 {p.contactValue

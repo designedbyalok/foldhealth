@@ -1,4 +1,4 @@
--- Activity log for population groups — one row per change (created, rule
+-- Activity log for population groups: one row per change (created, rule
 -- updated, details edited, deleted). Read by the History drawer on the
 -- dynamic group detail screen; written fire-and-forget by the store's
 -- create/update/delete actions.
@@ -22,7 +22,7 @@ CREATE INDEX IF NOT EXISTS idx_pop_group_activity_group
 ALTER TABLE public.pop_group_activity ENABLE ROW LEVEL SECURITY;
 
 -- RLS: append-only. This is an audit trail, so the policy set is deliberately
--- stricter than the other tables' — there is NO update and NO delete policy, and
+-- stricter than the other tables', there is NO update and NO delete policy, and
 -- with RLS enabled that means both verbs are denied outright for `authenticated`.
 -- A history anyone can rewrite or erase is not a history. It also matches what
 -- the code actually does: the store only ever inserts (logPopGroupActivity) and

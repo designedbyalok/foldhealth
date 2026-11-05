@@ -11,6 +11,8 @@ import { normalizeCategory } from '../../../../settings/care-plan-library/lib';
 import { GoalPreviewDrawer } from '../care-programs/care-plan/drawers/GoalPreviewDrawer/GoalPreviewDrawer';
 import { useSignedCarePlans } from '../care-programs/care-plan/lib/useSignedCarePlans';
 import styles from './MonitoringRailGoals.module.css';
+import { isProgramClosed } from '../../../data/programStatus';
+import { confirmStatusChange, statusReasonPatch } from '../care-programs/care-plan/lib/confirmStatusChange';
 
 const PRIORITIES = ['high', 'medium', 'low'];
 
@@ -36,7 +38,7 @@ export function MonitoringRailGoals({ patient }) {
   const programs = useMemo(
     () => carePlanSources(
       carePlanMode,
-      patientId ? (careProgramsByPatient[patientId] || []).filter((p) => p.status !== 'Closed') : [],
+      patientId ? (careProgramsByPatient[patientId] || []).filter((p) => !isProgramClosed(p.status)) : [],
       patientId,
     ),
     [careProgramsByPatient, patientId, carePlanMode],
@@ -65,11 +67,14 @@ export function MonitoringRailGoals({ patient }) {
     if (item.program) saveCarePlanLiveField(patientId, item.program, 'goal', item.id, { priority });
   };
 
-  const changeStatus = (status) => {
+  const changeStatus = async (status) => {
     if (!statusMenu || !patientId) return;
     const { item } = statusMenu;
     setStatusMenu(null);
-    if (item.program) saveCarePlanLiveField(patientId, item.program, 'goal', item.id, { status });
+    if (!item.program) return;
+    const why = await confirmStatusChange([{ type: 'goal', item }], status);
+    if (!why) return;
+    saveCarePlanLiveField(patientId, item.program, 'goal', item.id, { status, ...statusReasonPatch(item, why) });
   };
 
   return (
@@ -115,7 +120,7 @@ export function MonitoringRailGoals({ patient }) {
               </button>
               <div className={styles.statusCell} onClick={(e) => e.stopPropagation()}>
                 <GbiStatusButton
-                  value={g.status}
+                  value={g.status} reason={g.statusReason}
                   badgeSize="S"
                   onOpen={(rect) => setStatusMenu({ item: g, rect })}
                 />

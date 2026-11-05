@@ -5,14 +5,14 @@ import { RadioListPopover } from '../RadioListPopover/RadioListPopover';
 import { SearchListPopover } from '../SearchListPopover/SearchListPopover';
 
 export default {
-  title: 'Overlays/Popover',
+  title: 'Overlays/Popover Family',
   tags: ['autodocs'],
   parameters: {
     layout: 'fullscreen',
     docs: {
       description: {
         component:
-          'Family of anchor-positioned popovers that FilterChip and toolbar buttons open. Every variant takes an `anchorRect` (the trigger\'s bounding rect) plus its own value/options shape:\n\n- **`MenuPopover`** — flat action list (used by `⋯` overflow menus)\n- **`CheckboxListPopover`** — multi-select with optional search + Clear\n- **`RadioListPopover`** — single-select with optional Clear\n- **`SortPopover`** — sortable-column picker with asc/desc directions\n- **`SearchListPopover`** — search-filtered single-pick list\n- **`DateRangePopover`** — two-calendar date range picker\n- **`RangeSliderPopover`** — numeric min/max slider with unit label\n\nUse the `kind` control to flip between the variants; `searchable` applies to the checkbox list.',
+          'Family of anchor-positioned popovers that FilterChip and toolbar buttons open. Every variant takes an `anchorRect` (the trigger\'s bounding rect) plus its own value/options shape:\n\n- **`MenuPopover`**, flat action list (used by `⋯` overflow menus)\n- **`CheckboxListPopover`**, multi-select with optional search + Clear\n- **`RadioListPopover`**, single-select with optional Clear\n- **`SortPopover`**, sortable-column picker with asc/desc directions\n- **`SearchListPopover`**, search-filtered single-pick list\n- **`DateRangePopover`**, two-calendar date range picker\n- **`RangeSliderPopover`**, numeric min/max slider with unit label\n\nUse the `kind` control to flip between the variants; `searchable` applies to the checkbox list.',
       },
     },
   },
@@ -141,7 +141,7 @@ function SearchListDemo() {
 
 export const Playground = {
   render: ({ kind, searchable }) => {
-    // Each kind is its own demo component — switching the control swaps the
+    // Each kind is its own demo component, switching the control swaps the
     // whole subtree, so hook order never changes within one component.
     if (kind === 'checkbox-list') {
       return searchable ? (

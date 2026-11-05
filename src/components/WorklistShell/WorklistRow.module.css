@@ -1,4 +1,4 @@
-/* WorklistRow — canonical base classes for every worklist row (TOC, AWV,
+/* WorklistRow: canonical base classes for every worklist row (TOC, AWV,
    HCC, CCM, HEDIS, SNP, All Patients, APCM Billing, Queue).
  *
  * Row modules `composes:` from this file so the whole app's worklists
@@ -7,9 +7,9 @@
  * the outreach status cell, and the actions divider.
  *
  * Feature-specific styles (status pills, program badges, task badges, etc.)
- * stay in each feature's own row module — this file only owns the shell.
+ * stay in each feature's own row module: this file only owns the shell.
  *
- * DO NOT change tokens without design review — TOC / AWV / HCC read
+ * DO NOT change tokens without design review, TOC / AWV / HCC read
  * identically today because they all inherit from these values. */
 
 /* ── Row + sticky wrappers ── */
@@ -20,7 +20,7 @@
   animation: worklistRowIn var(--duration-base) var(--ease-out) both;
 }
 /* First rows stagger so the initial load reads as a wave rather than a
-   wall of content. Covers the default page size (10) at 30ms per row —
+   wall of content. Covers the default page size (10) at 30ms per row,
    total stagger 270ms so the animation feels snappy, never blocking.
    Rows beyond n=10 play immediately at delay 0 (denser tables shouldn't
    force users to wait a full second for the table to fill). */
@@ -92,7 +92,7 @@
 
 .membersTd {
   /* Left padding trimmed to 4px so the patient avatar sits closer to
-     the selection checkbox in the sticky-left column — the previous
+     the selection checkbox in the sticky-left column, the previous
      12px + 10px combined gap read as too airy across every worklist
      that composes this cell (TOC / HEDIS / HCC / APCM). */
   padding: var(--space-2) var(--space-3) var(--space-2) var(--space-1);
@@ -125,7 +125,7 @@
 .patientDemo { font-size: var(--font-md); font-weight: 400; color: var(--neutral-300); }
 .patientMeta { font-size: var(--font-md); color: var(--neutral-200); margin-top: 3px; }
 
-/* FoldId (click to copy) — reused by every row. */
+/* FoldId (click to copy): reused by every row. */
 .foldId {
   cursor: pointer;
   transition: color .12s;
@@ -178,7 +178,7 @@
 .failed  { background: var(--secondary-300); }
 .pending { background: var(--neutral-150); }
 
-/* ── Actions cell — L-size buttons separated by 1px × 16px dividers ── */
+/* ── Actions cell: L-size buttons separated by 1px × 16px dividers ── */
 
 .actionsCell {
   display: inline-flex;

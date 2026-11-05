@@ -60,6 +60,9 @@ const BLOCK_LEGEND = [
 function BlockDetail({ a, r }) {
   let when;
   if (r.record) when = `Given ${fmtDate(r.record.date)}`;
+  // Behind schedule but still inside the minimum gap after the previous
+  // dose: say both, so red does not read as "give it today".
+  else if (r.status === CIS_DOSE_STATUS.overdue && isLocked(r)) when = `Was due ${fmtDate(r.due)} • can be given from ${fmtDate(r.earliest)}`;
   else if (r.status === CIS_DOSE_STATUS.overdue) when = `Was due ${fmtDate(r.due)}`;
   else if (isLocked(r)) when = `Opens on ${fmtDate(r.earliest)} • due by ${fmtDate(r.due)}`;
   else when = `Open now • due by ${fmtDate(r.due)}`;
@@ -101,7 +104,7 @@ function DoseBlocks({ result, onSelect }) {
             <span
               role="button"
               tabIndex={0}
-              aria-label={`${a.label} dose ${r.number}: ${isLocked(r) ? `opens ${fmtDate(r.earliest)}` : r.status}. Go to dose`}
+              aria-label={`${a.label} dose ${r.number}: ${[r.status, isLocked(r) && `opens ${fmtDate(r.earliest)}`].filter(Boolean).join(', ')}. Go to dose`}
               onClick={() => onSelect(a, r)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(a, r); } }}
               className={`${styles.block} ${styles[BLOCK_CLASS[r.status]] || ''}`}

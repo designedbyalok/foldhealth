@@ -4,16 +4,16 @@
  * Three-layer model:
  *
  *   1. OCR quality tier (document level)
- *        clean      — born-digital or OCR confidence ≥ ~95%
- *        degraded   — scanned but readable (≥ ~70%)
- *        unreadable — OCR failed; short-circuits to Support for re-scan
+ *        clean: born-digital or OCR confidence ≥ ~95%
+ *        degraded: scanned but readable (≥ ~70%)
+ *        unreadable: OCR failed; short-circuits to Support for re-scan
  *
  *   2. 5-point compliance checklist (document level)
  *        Per the Astrana spec. Each check carries an actor (ai | support),
  *        timestamp, and (for manual pass/fail) a reason.
  *
  *   3. Per-record extraction confidence (record level, lives in confidence.js)
- *        Prioritization only — never permission.
+ *        Prioritization only: never permission.
  *
  * Tier policy (from product decision, 2026-03):
  *   - Unreadable  → no compliance, no extraction. Routes to Support.
@@ -77,7 +77,7 @@ export const OCR_TIER_TONE = {
 };
 
 // ─── Standard rejection reasons ────────────────────────────────────────
-// Per check. "Other (free text)" is always implicit — the reason dialog
+// Per check. "Other (free text)" is always implicit: the reason dialog
 // presents the list as a Select plus a Textarea for free text. Both manual
 // pass and manual fail require a reason.
 export const STANDARD_REASONS = {
@@ -119,13 +119,13 @@ export const STANDARD_REASONS = {
 };
 
 // ─── OCR tier evaluation (mock) ────────────────────────────────────────
-// Deterministic — same filename always produces the same tier so demos
+// Deterministic: same filename always produces the same tier so demos
 // reload to a stable state. Real backend will compute this from raw OCR
 // confidence over the page set.
 export function evaluateOcrTier(fileName) {
   const name = (fileName || '').toLowerCase();
 
-  // Explicit demo overrides — let the QA team trigger each tier on demand.
+  // Explicit demo overrides: let the QA team trigger each tier on demand.
   if (name.includes('demo-unreadable') || name.includes('demo-fax')) {
     return 'unreadable';
   }
@@ -134,7 +134,7 @@ export function evaluateOcrTier(fileName) {
   }
   // Bundle demo docs (the "N Documents" chips) get the realistic hashed
   // distribution so a batch shows a natural mix of Added / Needs Review /
-  // Unreadable — deterministic per index, so reloads are stable.
+  // Unreadable: deterministic per index, so reloads are stable.
   if (name.includes('demo-patient-')) {
     const b = hash(name) % 100;
     if (b < 8) return 'unreadable';
@@ -162,8 +162,8 @@ export function evaluateOcrTier(fileName) {
 //     actor: string | null, at: ISO string | null, reason: { code, freeText } | null }
 //
 // Inputs:
-//   ocrTier — from evaluateOcrTier()
-//   sample  — a representative encounter from the OCR result, used to
+//   ocrTier: from evaluateOcrTier()
+//   sample: a representative encounter from the OCR result, used to
 //             check which fields populated (drives AI's pass/fail).
 //             Pass null if there are no extractable encounters (e.g.
 //             unreadable doc).
@@ -182,34 +182,34 @@ export function evaluateCompliance(ocrTier, sample) {
     return Object.fromEntries(CHECK_KEYS.map(k => [k, pending()]));
   }
 
-  // Clean: AI evaluates per check. Checks AI cannot be confident about —
+  // Clean: AI evaluates per check. Checks AI cannot be confident about,
   // completeness of every required field, and presence of a valid
-  // signature — stay pending so a human confirms them (matches Figma
+  // signature: stay pending so a human confirms them (matches Figma
   // 6:5838 where those two sit unchecked on an otherwise-clean doc).
   const s = sample || {};
   const result = {};
 
-  // correctPatient — pass if OCR matched a Fold member with no ID mismatch.
+  // correctPatient: pass if OCR matched a Fold member with no ID mismatch.
   result.correctPatient = (s.patient?.matchedMemberId && !s.patient?.idMismatch)
     ? aiPass(now)
     : aiFail(now);
 
-  // legible — on Clean docs AI auto-passes (the tier itself implies it).
+  // legible: on Clean docs AI auto-passes (the tier itself implies it).
   result.legible = aiPass(now);
 
-  // dosCharted — pass if DOS field populated; fail if missing.
+  // dosCharted: pass if DOS field populated; fail if missing.
   result.dosCharted = s.dos ? aiPass(now) : aiFail(now);
 
-  // posAvailable — pass if POS populated; fail otherwise.
+  // posAvailable: pass if POS populated; fail otherwise.
   result.posAvailable = s.pos ? aiPass(now) : aiFail(now);
 
-  // requiredFields — completeness is a human judgement; AI defers.
+  // requiredFields: completeness is a human judgement; AI defers.
   result.requiredFields = pending();
 
-  // signaturePresent — AI can't reliably confirm a wet/e-signature.
+  // signaturePresent: AI can't reliably confirm a wet/e-signature.
   result.signaturePresent = pending();
 
-  // providerName — pass if a printed provider name was extracted.
+  // providerName: pass if a printed provider name was extracted.
   result.providerName = s.provider ? aiPass(now) : aiFail(now);
 
   return result;
@@ -271,7 +271,7 @@ export function applyManualDecision(check, { decision, actor, reason }) {
 // what's still blocking.
 export function canCompleteDos(docs) {
   if (!docs || docs.length === 0) {
-    // No documents on the DOS — cannot release to coder yet.
+    // No documents on the DOS: cannot release to coder yet.
     return { ok: false, reason: 'No documents attached to this DOS yet.' };
   }
   const unreadable = docs.filter(d => d.ocrTier === 'unreadable');

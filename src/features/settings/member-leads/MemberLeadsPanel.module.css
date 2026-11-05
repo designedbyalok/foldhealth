@@ -1,4 +1,4 @@
-/* ── Settings → Member/Leads → Care Team — per-cell visuals ──
+/* ── Settings → Member/Leads → Care Team, per-cell visuals ──
    The shell (wrapper / tabBar / tabs / table / sticky cols / etc.) comes
    from AgentsTable.module.css. Only Care-Team-specific cell visuals live
    here so the structural rhythm matches the rest of Settings. */
@@ -15,8 +15,11 @@
 }
 .empty p { margin: 0; font-size: var(--font-md); }
 
+/* Tags tab: the WorklistShell table fills the rest of the panel. */
+.tagsWrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
 /* ── Create New popover ──
-   Small dropdown anchored to the Create New button — Care Program Team /
+   Small dropdown anchored to the Create New button, Care Program Team /
    HEDIS Team / HCC Team rows that each open ConfigureTeamDrawer with the
    matching `kind`. */
 .createWrap {
@@ -78,7 +81,7 @@
   color: var(--neutral-300);
 }
 
-/* Team Users — overlapping Avatar (variant="assignee") bubbles + "+N"
+/* Team Users: overlapping Avatar (variant="assignee") bubbles + "+N"
    suffix. Forced to 22x22 so the stack stays compact in the table cell
    (assignee default is 26x26); the secondary-100 tint and 6px radius
    come from the Avatar component's own styles. */
@@ -106,7 +109,7 @@
   margin-left: 4px;
 }
 
-/* Total Assigned — capped 100% bar + percentage to the right. */
+/* Total Assigned: capped 100% bar + percentage to the right. */
 .assignedCell {
   display: flex;
   align-items: center;
@@ -134,7 +137,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Per-row "More" menu portal — positioned absolutely from the trigger. */
+/* Per-row "More" menu portal: positioned absolutely from the trigger. */
 .rowMenu {
   position: fixed;
   z-index: 70;

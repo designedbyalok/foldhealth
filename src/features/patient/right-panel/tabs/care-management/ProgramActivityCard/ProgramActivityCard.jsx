@@ -6,6 +6,7 @@ import { Avatar } from '../../../../../../components/Avatar/Avatar';
 import { AvatarGroup } from '../../../../../../components/AvatarGroup/AvatarGroup';
 import { ActivityLog, MetaLine, ViewMoreButton } from '../../../../../../components/ActivityLog/ActivityLog';
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import { historyTimelineStyles as htStyles } from '../../../../../../components/HistoryTimeline/HistoryTimeline';
 import { carePlanLogItem } from '../../care-programs/care-plan/lib/carePlanLogItem';
 import { activityIcon, STATUS_COLOR } from '../programActivity';
@@ -32,8 +33,11 @@ export function ProgramActivityDay({ day, onOpenVersion, versionGlance, onOpenIt
   const [openStacks, setOpenStacks] = useState(() => new Set());
   const [openNotes, setOpenNotes] = useState(() => new Set());
   const [openVersions, setOpenVersions] = useState(() => new Set());
+  // The version card fetches the plan's history when it mounts, so it only
+  // mounts once its entry has been opened, then stays for the close animation.
+  const [seenVersions, setSeenVersions] = useState(() => new Set());
 
-  const programBadge = code => (code ? <Badge tone="primary" size="XS" label={code} /> : null);
+  const programBadge = code => (code ? <Badge tone="primary" size="xs" label={code} /> : null);
 
   // A signature is two entries, as in the Care Plan History: "Changes in Care
   // Plan", closed by the one-line signed marker. Hovering the first shows
@@ -56,10 +60,19 @@ export function ProgramActivityDay({ day, onOpenVersion, versionGlance, onOpenIt
             <div className={htStyles.headlineRow}>
               <span className={htStyles.headline}>Changes in Care Plan</span>
               <span className={styles.hoverReveal}>
-                <ViewMoreButton expanded={open} onToggle={() => setOpenVersions(s => toggleIn(s, item.id))} leadingDot />
+                <ViewMoreButton
+                  expanded={open}
+                  onToggle={() => {
+                    setOpenVersions(s => toggleIn(s, item.id));
+                    setSeenVersions(s => (s.has(item.id) ? s : new Set(s).add(item.id)));
+                  }}
+                  leadingDot
+                />
               </span>
             </div>
-            {open && versionGlance?.(item)}
+            <CollapsibleContent open={open}>
+              {seenVersions.has(item.id) && versionGlance?.(item)}
+            </CollapsibleContent>
           </div>
           <span className={styles.versionRight}>
             {programBadge(programCode)}
@@ -78,7 +91,7 @@ export function ProgramActivityDay({ day, onOpenVersion, versionGlance, onOpenIt
       meta.context = item.planVersion == null ? 'Draft' : item.planVersionCurrent ? (
         <span className={styles.versionTag}>
           v{item.planVersion}
-          <Badge size="S" tone="grey" label="Current" className={styles.currentBadge} />
+          <Badge size="sm" label="Current" className={styles.currentBadge} />
         </span>
       ) : `v${item.planVersion}`;
       return {
@@ -93,7 +106,7 @@ export function ProgramActivityDay({ day, onOpenVersion, versionGlance, onOpenIt
         trailingHover: OPENABLE_ITEMS.has(item.history.entityType) && item.history.entityId != null && onOpenItem ? (
           <ActionButton
             icon="solar:arrow-right-up-linear"
-            size="S"
+            size="sm"
             tooltip={`Open ${item.history.entityType}`}
             tooltipLeft
             onClick={() => onOpenItem(item)}
@@ -209,7 +222,7 @@ export function ProgramActivityDay({ day, onOpenVersion, versionGlance, onOpenIt
     <div className={styles.day}>
       <div className={styles.dateCol}>
         <span className={styles.date}>{day.date}</span>
-        <Badge tone="grey" size="XS" label={day.day} />
+        <Badge size="xs" label={day.day} />
       </div>
       <div className={styles.dayEntries}>
         <ActivityLog entries={entries} relaxed continuous />

@@ -6,7 +6,7 @@ import { Button } from '../../components/Button/Button';
 import { Badge } from '../../components/Badge/Badge';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { CommentComposer } from '../../components/CommentComposer/CommentComposer';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { useAppStore } from '../../store/useAppStore';
 import { Select } from '../../components/Select/Select';
 import { LABEL_OPTIONS, TITLE_MAX, getInitials, isOverdue, STATUS_LABELS, STATUS_BADGE_VARIANTS, PRIORITY_OPTIONS } from './TasksView.utils';
@@ -22,7 +22,7 @@ export function TaskDetailDrawerDetails({
   // The sign-off task is linked to a clinical_notes row via review_task_id.
   // Surface it right below the description so the reviewer can jump into
   // the note preview without needing to navigate back to the care gap.
-  // Ensure the slice is populated for this member on drawer open — the
+  // Ensure the slice is populated for this member on drawer open, the
   // tasks page path never touched CareGapDetailDrawer, so the slice
   // starts empty here even when the note exists on the server.
   const fetchClinicalNotesForMember = useAppStore(s => s.fetchClinicalNotesForMember);
@@ -44,7 +44,7 @@ export function TaskDetailDrawerDetails({
   const linkedNote = useAppStore(s => {
     const isSignOffTask = task?.pool === 'HEDIS Sign-Off';
     // Sign-off tasks are only ever created when a note is submitted
-    // for review — a draft cannot own a sign-off task. Filter drafts
+    // for review: a draft cannot own a sign-off task. Filter drafts
     // out of the pool so a stale single-gap draft can't shadow the
     // consolidated submitted note this task actually represents.
     const eligible = (list) => (isSignOffTask
@@ -111,7 +111,7 @@ export function TaskDetailDrawerDetails({
               options={assigneeNames}
               onSelect={v => {
                 const picked = (taskProfiles || []).find(p => p.name === v);
-                // Same claim semantics as the row cell — an owner and a pool
+                // Same claim semantics as the row cell, an owner and a pool
                 // are mutually exclusive.
                 updateTask(task.id, { assigned_to: v, assigned_to_id: picked?.id || null, pool: null });
                 showToast(`Assigned to ${v}`);
@@ -121,17 +121,17 @@ export function TaskDetailDrawerDetails({
               )}
             >
               <Avatar variant="assignee" initials={assigneeInitials} size="S" />
-              <span>{task.assigned_to || '—'}</span>
+              <span>{task.assigned_to || '-'}</span>
             </DetailDropdown>
           </div>
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>Task Pool</span>
             <DetailDropdown
-              value={task.pool || '— None —'}
-              options={['— None —', ...taskPools.map(p => p.name)]}
+              value={task.pool || 'None'}
+              options={['None', ...taskPools.map(p => p.name)]}
               onSelect={v => {
-                const next = v === '— None —' ? null : v;
-                // A pooled task is unclaimed by definition — both the "My Task
+                const next = v === 'None' ? null : v;
+                // A pooled task is unclaimed by definition, both the "My Task
                 // Pool" tab and the Claim button require no assignee. Pooling
                 // without dropping the assignee left the task invisible in
                 // both places. Mirrors the Add Task drawer, which already
@@ -181,7 +181,6 @@ export function TaskDetailDrawerDetails({
               {labels.map(l => (
                 <Badge
                   key={l}
-                  variant="overflow"
                   label={l}
                   trailingIcon="solar:close-circle-linear"
                   trailingIconLabel={`Remove ${l}`}
@@ -218,17 +217,17 @@ export function TaskDetailDrawerDetails({
                 onInput={e => setDescDraft(e.currentTarget.innerHTML)}
               />
               <div className={styles.descToolbar}>
-                <ActionButton icon="solar:paperclip-linear" size="S" tooltip="Attach" />
+                <ActionButton icon="solar:paperclip-linear" size="sm" tooltip="Attach" />
                 <span className={styles.toolbarDivider} />
-                <ActionButton icon="solar:text-bold-linear" size="S" tooltip="Bold" onClick={() => document.execCommand('bold')} />
-                <ActionButton icon="solar:text-italic-linear" size="S" tooltip="Italic" onClick={() => document.execCommand('italic')} />
-                <ActionButton icon="solar:text-underline-linear" size="S" tooltip="Underline" onClick={() => document.execCommand('underline')} />
-                <ActionButton icon="solar:text-cross-linear" size="S" tooltip="Strikethrough" onClick={() => document.execCommand('strikeThrough')} />
+                <ActionButton icon="solar:text-bold-linear" size="sm" tooltip="Bold" onClick={() => document.execCommand('bold')} />
+                <ActionButton icon="solar:text-italic-linear" size="sm" tooltip="Italic" onClick={() => document.execCommand('italic')} />
+                <ActionButton icon="solar:text-underline-linear" size="sm" tooltip="Underline" onClick={() => document.execCommand('underline')} />
+                <ActionButton icon="solar:text-cross-linear" size="sm" tooltip="Strikethrough" onClick={() => document.execCommand('strikeThrough')} />
                 <span className={styles.toolbarDivider} />
-                <ActionButton icon="solar:list-linear" size="S" tooltip="List" onClick={() => document.execCommand('insertUnorderedList')} />
+                <ActionButton icon="solar:list-linear" size="sm" tooltip="List" onClick={() => document.execCommand('insertUnorderedList')} />
                 <div style={{ flex: 1 }} />
-                <ActionButton icon="solar:close-circle-linear" size="S" tooltip="Discard" onClick={() => setEditingDesc(false)} />
-                <ActionButton icon="solar:check-read-linear" size="S" tooltip="Save" onClick={() => { updateTask(task.id, { description: descDraft }); setEditingDesc(false); showToast('Description saved'); }} />
+                <ActionButton icon="solar:close-circle-linear" size="sm" tooltip="Discard" onClick={() => setEditingDesc(false)} />
+                <ActionButton icon="solar:check-read-linear" size="sm" tooltip="Save" onClick={() => { updateTask(task.id, { description: descDraft }); setEditingDesc(false); showToast('Description saved'); }} />
               </div>
             </div>
           ) : (
@@ -267,10 +266,10 @@ export function TaskDetailDrawerDetails({
 
 function LinkedNoteCard({ note, task, setEditingNote, setPreviewNote }) {
   // A Pending-Review note has two audiences from this row:
-  //   • the assigned reviewer — should drop straight into the editable
+  //   • the assigned reviewer: should drop straight into the editable
   //     ClinicalNotePanel so they can revise + sign; matches the CareGap
   //     drawer's reviewer path.
-  //   • everyone else (the author, other viewers) — should see the
+  //   • everyone else (the author, other viewers), should see the
   //     read-only preview, since they cannot sign on the reviewer's behalf.
   // We compare the note's `reviewerName` against the signed-in user's
   // display name; the CareGap flow uses the same equality check.
@@ -281,11 +280,11 @@ function LinkedNoteCard({ note, task, setEditingNote, setPreviewNote }) {
   const status = note.status === 'signed' ? 'Signed'
     : note.status === 'submitted' ? 'Pending Review'
     : 'Draft';
-  const statusTone = status === 'Signed' ? 'success' : status === 'Draft' ? 'grey' : 'warning';
+  const statusTone = status === 'Signed' ? 'success' : status === 'Draft' ? 'neutral' : 'warning';
   const authorLine = note.status === 'signed'
     ? `Signed by ${note.signedByName || note.reviewerName || 'Provider'}${note.signedAt ? ` · ${fmtDate(note.signedAt)}` : ''}`
     : note.status === 'submitted'
-      ? `Submitted for Review to ${note.reviewerName || '—'}`
+      ? `Submitted for Review to ${note.reviewerName || '-'}`
       : `Save as Draft by ${note.authorName || 'You'}`;
   const metaWhen = note.updatedAt || note.createdAt;
   return (
@@ -298,12 +297,12 @@ function LinkedNoteCard({ note, task, setEditingNote, setPreviewNote }) {
         <div className={styles.linkedNoteText}>
           <div className={styles.linkedNoteTitleRow}>
             <span className={styles.linkedNoteTitle}>{title}</span>
-            {codes.length > 1 && <Badge tone="grey" size="S" label={`${codes.length} Gaps`} />}
+            {codes.length > 1 && <Badge size="sm" label={`${codes.length} Gaps`} />}
           </div>
           <div className={styles.linkedNoteSubtitle}>{authorLine}</div>
         </div>
         <div className={styles.linkedNoteTrailing}>
-          <Badge tone={statusTone} size="M" label={status} />
+          <Badge tone={statusTone} size="md" label={status} />
           <button
             type="button"
             className={styles.linkedNoteView}

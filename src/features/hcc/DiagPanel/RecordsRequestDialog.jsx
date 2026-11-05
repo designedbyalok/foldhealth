@@ -10,7 +10,7 @@ import styles from './RecordsRequestDialog.module.css';
 
 // UI role → the Astrana engine role a picker's roster should filter on.
 // ASTRANA_STAFF is the single source the assignment engine picks from,
-// and it's what the Review Progress popover surfaces — using it here
+// and it's what the Review Progress popover surfaces, using it here
 // keeps the "last assignee" the picker seeds identical to what the
 // reviewer saw in the popover.
 const ROLE_TO_ENGINE = {
@@ -49,14 +49,14 @@ export function RecordsRequestDialog({ onCancel, onConfirm, lastAssignees, suppo
   const [comment, setComment] = useState('');
   const mentionsRef = useRef([]);
   const attachmentsRef = useRef([]);
-  // Assigned-to picker — defaults to the first user we can pick per role
+  // Assigned-to picker: defaults to the first user we can pick per role
   // (the "last assigned" reviewer once the roster is loaded). The user
   // can swap this if the default reviewer is out; the selected assignee
   // rides along on the confirm payload for the request.
   const [assigneeId, setAssigneeId] = useState('');
   // Roster for @-mention autocomplete inside the Textarea's richText
-  // editor. Same source as CommentComposer — profiles rows + a fallback
-  // fixture — so mentioning the same colleague in this dialog resolves
+  // editor. Same source as CommentComposer, profiles rows + a fallback
+  // fixture: so mentioning the same colleague in this dialog resolves
   // to the same profile id downstream.
   const platformUsers = useAppStore(s => s.platformUsers);
   const currentUserProfile = useAppStore(s => s.currentUserProfile);
@@ -86,7 +86,7 @@ export function RecordsRequestDialog({ onCancel, onConfirm, lastAssignees, suppo
   ), [hccUserRole, currentUserProfile]);
   const roleOptions = isCompliance ? COMPLIANCE_ROLE_OPTIONS : BASE_ROLE_OPTIONS;
 
-  // Roster for the Assigned-to picker — read from the Astrana engine
+  // Roster for the Assigned-to picker: read from the Astrana engine
   // roster (staffForRole) so the names line up 1:1 with what the
   // Review Progress popover shows and what the assignment engine picks
   // from. Active-only, so nobody on leave surfaces as available.
@@ -100,7 +100,7 @@ export function RecordsRequestDialog({ onCancel, onConfirm, lastAssignees, suppo
         name: s.name,
         initials: s.initials || initialsOf(s.name),
         roleLabel: ROLE_LABEL[engineRole],
-        // No availability field on the profile yet — treat everyone
+        // No availability field on the profile yet, treat everyone
         // as Available so the dropdown reads truthfully rather than
         // blank.
         available: true,
@@ -127,7 +127,7 @@ export function RecordsRequestDialog({ onCancel, onConfirm, lastAssignees, suppo
   // Seed the default assignee whenever the role flips (or the roster
   // finishes loading) and the current pick isn't valid for the newly-
   // selected role. The seed prefers the record's LAST known assignee
-  // for that role (via `lastAssignees` — coder / support / qa map from
+  // for that role (via `lastAssignees`, coder / support / qa map from
   // member.cdr / member.sup / member.r1) so the picker opens on the
   // person who most recently touched this record; if that name doesn't
   // resolve to a platform user we fall back to the first eligible one.
@@ -139,7 +139,7 @@ export function RecordsRequestDialog({ onCancel, onConfirm, lastAssignees, suppo
     setAssigneeId(seed.id);
   }, [roleUsers, assigneeId, role, lastAssignees, fixedToSupport, supportUser]);
 
-  // Rich options for the shared Select — each row shows an M-size
+  // Rich options for the shared Select, each row shows an M-size
   // avatar, the name + role subtitle stacked, and an Available /
   // Unavailable trailing tag. `triggerLabel` renders the compact pill
   // (avatar + name + green tag) in the closed field.
@@ -171,7 +171,7 @@ export function RecordsRequestDialog({ onCancel, onConfirm, lastAssignees, suppo
     ),
   })), [roleUsers]);
 
-  // Comment is REQUIRED — the destination role needs context on what to
+  // Comment is REQUIRED: the destination role needs context on what to
   // retrieve / revisit, so an empty note used to leave them guessing. The
   // shared Textarea's richText mode owns the label + mandatory dot +
   // formatting toolbar + attachment + mention picker; we just read plain
@@ -191,7 +191,7 @@ export function RecordsRequestDialog({ onCancel, onConfirm, lastAssignees, suppo
           </AlertDialogDescription>
         </div>
 
-        {/* Inline radio row — Coder first per Figma; toggling flips the
+        {/* Inline radio row: Coder first per Figma; toggling flips the
             Assigned-to roster to that role's users. Compliance users
             also see QA in the row. */}
         {!fixedToSupport && (
@@ -218,7 +218,7 @@ export function RecordsRequestDialog({ onCancel, onConfirm, lastAssignees, suppo
         </div>
         )}
 
-        {/* Assigned to — shared Select with rich rows (M avatar + name
+        {/* Assigned to: shared Select with rich rows (M avatar + name
             + role subtitle + Available/Unavailable). Portals its menu
             (z-index 9800 > alert-dialog 9750) so it lifts above the
             modal instead of hiding behind it. */}
@@ -227,7 +227,7 @@ export function RecordsRequestDialog({ onCancel, onConfirm, lastAssignees, suppo
           placeholder={fixedToSupport ? 'Select Support user' : 'Select assignee'}
           options={assigneeOptions}
           value={assigneeId}
-          onChange={setAssigneeId}
+          onValueChange={setAssigneeId}
           searchable
           searchPlaceholder="Search users…"
           wrapperClassName={styles.assigneeSelectWrapper}
@@ -245,7 +245,7 @@ export function RecordsRequestDialog({ onCancel, onConfirm, lastAssignees, suppo
           mentions
           mentionUsers={mentionUsers}
           placeholder="Add a Comment"
-          onChange={(_html, plain) => setComment(plain ?? '')}
+          onValueChange={(_html, plain) => setComment(plain ?? '')}
           onMentionsChange={(m) => { mentionsRef.current = m; }}
           onAttachmentFiles={(files) => {
             attachmentsRef.current = [...attachmentsRef.current, ...Array.from(files)];
@@ -253,10 +253,8 @@ export function RecordsRequestDialog({ onCancel, onConfirm, lastAssignees, suppo
         />
 
         <div className={styles.actions}>
-          <Button variant="secondary" size="L" fullWidth onClick={onCancel}>Cancel</Button>
+          <Button variant="outline" fullWidth onClick={onCancel}>Cancel</Button>
           <Button
-            variant="primary"
-            size="L"
             fullWidth
             disabled={!canSubmit}
             onClick={() => onConfirm({

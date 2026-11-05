@@ -1,4 +1,4 @@
-/* ── Login Page — Figma: DO Care Programs, node 2245:910663 ── */
+/* ── Login Page: Figma: DO Care Programs, node 2245:910663 ── */
 
 .page {
   display: flex;
@@ -271,7 +271,7 @@
   border: 0.5px solid color-mix(in srgb, var(--status-success) 15%, transparent);
 }
 
-/* Unverified-email notice — shown inline when sign-in fails because the
+/* Unverified-email notice: shown inline when sign-in fails because the
    account exists but the email hasn't been confirmed. */
 .unverifiedNotice {
   display: flex;

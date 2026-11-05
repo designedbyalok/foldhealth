@@ -1,3 +1,4 @@
+import { OUTREACH_TONE_COLOR, outreachTone } from '../pharmacyWorklist.utils';
 // Pharmacy (Med Adherence) gap worklist. One row per member; each member
 // carries every open measure in `measures`. The row shows its focus measure
 // (see mostUrgentMeasure in pharmacyWorklist.utils.js); the Program view lists them all.
@@ -8,16 +9,16 @@
 //   (earliest next fill across its medications), daysLeft,
 //   priorYearNonCompliant, excluded, projectedStatus, drugInteraction,
 //   pickupConfirmed (date the pharmacy confirmed pickup, or null),
-//   claim: { status: 'Paid' | 'Reversed', date, rxNumber } — latest claim,
+//   claim: { status: 'Paid' | 'Reversed', date, rxNumber }, latest claim,
 //   medications: [med] }
 // med: { id, name, generic, strength, unit, doseForm, route, sig, condition,
 //   mpr, pdc, qty, daysSupply, lastFill, nextFill, status: 'Active' |
 //   'Discontinued', nonAdherenceReason, notesToMd, internalNotes,
 //   prescriber, pharmacy, refills: [{ date, qty, daysSupply, pharmacy,
 //   prescriber, prescriberAddress }] (newest first) }
-// interventionLog: newest first — one entry per call, recorded per measure:
+// interventionLog: newest first, one entry per call, recorded per measure:
 //   { date, by, note, measures: { MAD: { barriers: [], interventions: [], result } } }
-// callHistory: newest first — { date, contact (stakeholder), outcome,
+// callHistory: newest first, { date, contact (stakeholder), outcome,
 //   result: 'success' | 'failed', by, note, measures?: ['MAD', …] }
 
 import { applyPickup, recomputeMeasure, withManualRecentFill } from '../fillEvents';
@@ -63,12 +64,17 @@ function toUtc(mdy) {
   return Date.UTC(y, m - 1, d);
 }
 
+// The gap report date the sample data is as of.
+const AS_OF = '10/22/2026';
+
 function measure(o, meds, member) {
   const medications = meds.map(m => rx(m, member));
   const nextFillDue = medications
     .map(m => m.nextFill)
     .reduce((min, d) => (!min || toUtc(d) < toUtc(min) ? d : min), null);
-  return { ...o, nextFillDue, medications };
+  // The plan's PDC is as of the gap report it came in, so Fold can move it
+  // by the days covered or missed since (pdcToDate).
+  return { ...o, pdcAsOf: o.pdc != null ? AS_OF : undefined, nextFillDue, medications };
 }
 
 // Seed activity log: the member's past calls and barrier logs, newest first.
@@ -82,7 +88,7 @@ function seedActivity(base) {
     at: isoAt(c.date, 10 + i), actor: c.by, t: 'outreach',
     title: `Outreach · ${c.contact}${c.measures?.length ? ` (${c.measures.join(', ')})` : ''}`,
     outcome: c.outcome,
-    outcomeColor: c.result === 'failed' ? 'var(--status-error)' : 'var(--status-success)',
+    outcomeColor: OUTREACH_TONE_COLOR[outreachTone(c.result)],
     note: c.note || undefined,
   }));
   const logs = (base.interventionLog || []).map(e => ({
@@ -108,7 +114,8 @@ const SHAH = { npi: '1508762391', name: 'Dr. Vikram Shah', phone: '(818) 555-013
 
 const CVS_9921 = { ncpdp: '0598214', name: 'CVS Pharmacy #9921', phone: '(626) 555-0190', address1: '255 W Foothill Blvd', city: 'Claremont', state: 'CA', zip: '91711' };
 const WAG_4410 = { ncpdp: '1462037', name: 'Walgreens #4410', phone: '(213) 555-0120', address1: '1501 W Holt Ave', city: 'Pomona', state: 'CA', zip: '91768' };
-const RITE_5532 = { ncpdp: '0532186', name: 'Rite Aid #5532', phone: '(562) 555-0101', address1: '3901 Atlantic Ave', city: 'Long Beach', state: 'CA', zip: '90807' };
+// A pharmacy with a second number: the pharmacist's direct line.
+const RITE_5532 = { ncpdp: '0532186', name: 'Rite Aid #5532', phone: '(562) 555-0101', phones: [{ number: '(562) 555-0109', label: 'Pharmacist direct' }], address1: '3901 Atlantic Ave', city: 'Long Beach', state: 'CA', zip: '90807' };
 const CVS_3301 = { ncpdp: '0587731', name: 'CVS Pharmacy #3301', phone: '(714) 555-0102', address1: '1501 W Chapman Ave', city: 'Orange', state: 'CA', zip: '92868' };
 const COSTCO_112 = { ncpdp: '0391445', name: 'Costco Pharmacy #112', phone: '(818) 555-0108', address1: '8810 Tampa Ave', city: 'Northridge', state: 'CA', zip: '91324' };
 const WAG_2219 = { ncpdp: '1459912', name: 'Walgreens #2219', phone: '(626) 555-0175', address1: '1 W Duarte Rd', city: 'Arcadia', state: 'CA', zip: '91007' };
@@ -124,7 +131,7 @@ const BASE_MEMBERS = [
     phones: [{ number: '(626) 555-0111', label: 'Mobile', doNotUse: false }, { number: '(626) 555-0112', label: 'Home', doNotUse: true }],
     callHistory: [
       { date: '10/09/2026', contact: 'Pharmacy', outcome: 'Confirmed medication pickup date', result: 'success', by: 'Priya Natarajan', note: 'Metformin picked up today.', measures: ['MAD'] },
-      { date: '10/08/2026', contact: 'Pharmacy', outcome: 'Pending — Pick up', result: 'failed', by: 'Priya Natarajan', note: 'Ready since 10/01.', measures: ['MAD'] },
+      { date: '10/08/2026', contact: 'Pharmacy', outcome: 'Pending: Pick up', result: 'failed', by: 'Priya Natarajan', note: 'Ready since 10/01.', measures: ['MAD'] },
     ],
   }, (b) => [
     measure({
@@ -149,14 +156,14 @@ const BASE_MEMBERS = [
     id: '19402', initials: 'RT', name: 'Robert Tanaka', gender: 'M', age: '68y 9m', dob: '01/11/1958',
     memberId: '19402', language: 'en', healthPlan: 'SCAN Classic', ipa: 'Astrana IPA', bookOfBusiness: 'Astrana',
     status: 'In Progress', assigneeName: 'Priya Natarajan', assigneeInitials: 'PN',
-    leadNote: 'Pickup confirmed 3 weeks ago but plan still shows the gap — check with plan.',
+    leadNote: 'Pickup confirmed 3 weeks ago but plan still shows the gap, check with plan.',
     followUpDue: '10/14/2026', barrier: 'Forgetfulness', daysInQueue: 15,
     prescriber: PARK, pharmacy: WAG_4410,
     phones: [{ number: '(213) 555-0133', label: 'Mobile', doNotUse: false }],
     callHistory: [
       { date: '10/10/2026', contact: 'Member', outcome: 'Discussed daily medication routine and timing', result: 'success', by: 'Priya Natarajan', note: 'Set up pill organizer reminder.', measures: ['MAC'] },
       { date: '09/22/2026', contact: 'Pharmacy', outcome: 'Confirmed medication pickup date', result: 'success', by: 'Priya Natarajan', note: '', measures: ['MAC'] },
-      { date: '09/18/2026', contact: 'Pharmacy', outcome: 'Pending — Pick up', result: 'failed', by: 'Priya Natarajan', note: '', measures: ['MAC'] },
+      { date: '09/18/2026', contact: 'Pharmacy', outcome: 'Pending: Pick up', result: 'failed', by: 'Priya Natarajan', note: '', measures: ['MAC'] },
     ],
   }, (b) => [
     measure({
@@ -173,13 +180,13 @@ const BASE_MEMBERS = [
     id: '19403', initials: 'LW', name: 'Linda Washington', gender: 'F', age: '74y 2m', dob: '08/19/1952',
     memberId: '19403', language: 'en', healthPlan: 'Blue Shield Medicare', ipa: 'Prospect Medical Group', bookOfBusiness: 'Prospect',
     status: 'In Progress', assigneeName: 'Marcus Reyes', assigneeInitials: 'MR',
-    leadNote: 'Needs pharmacist review — plan PDC lower than our fills.',
+    leadNote: 'Needs pharmacist review: plan PDC lower than our fills.',
     followUpDue: '10/13/2026', barrier: 'Side Effects', daysInQueue: 22,
     prescriber: OKAFOR, pharmacy: RITE_5532,
     phones: [{ number: '(562) 555-0150', label: 'Home', doNotUse: false }],
     callHistory: [
       { date: '10/09/2026', contact: 'Provider Office', outcome: 'Refill approval sent to pharmacy', result: 'success', by: 'Marcus Reyes', note: 'Faxed refill request for glipizide.', measures: ['MAD'] },
-      { date: '10/02/2026', contact: 'Member', outcome: 'Side effects — Experienced', result: 'success', by: 'Marcus Reyes', note: 'Muscle aches on atorvastatin.', measures: ['MAC'] },
+      { date: '10/02/2026', contact: 'Member', outcome: 'Side effects: Experienced', result: 'success', by: 'Marcus Reyes', note: 'Muscle aches on atorvastatin.', measures: ['MAC'] },
       { date: '09/25/2026', contact: 'Member', outcome: 'UTC', result: 'failed', by: 'Marcus Reyes', note: 'Left voicemail.' },
     ],
     interventionLog: [
@@ -214,7 +221,7 @@ const BASE_MEMBERS = [
     }, [{
       id: '19403-mac-1', name: 'Atorvastatin', generic: 'atorvastatin', strength: '20', sig: 'Take 1 tablet by mouth at bedtime',
       condition: 'Hyperlipidemia', mpr: 90, pdc: 91, qty: 30, daysSupply: 30, lastFill: '09/28/2026', gaps: [1, 2],
-      nonAdherenceReason: 'Side Effects', notesToMd: 'Muscle aches — consider switching statin.',
+      nonAdherenceReason: 'Side Effects', notesToMd: 'Muscle aches: consider switching statin.',
     }], b),
   ]),
   member({
@@ -240,13 +247,13 @@ const BASE_MEMBERS = [
     id: '19405', initials: 'BK', name: 'Barbara Klein', gender: 'F', age: '79y 6m', dob: '04/14/1947',
     memberId: '19405', language: 'en', healthPlan: 'Aetna Medicare Advantage', ipa: 'Prospect Medical Group', bookOfBusiness: 'Prospect',
     status: 'In Progress', assigneeName: 'Marcus Reyes', assigneeInitials: 'MR',
-    leadNote: 'Daughter manages meds — call her line.',
+    leadNote: 'Daughter manages meds: call her line.',
     followUpDue: '10/12/2026', barrier: 'Transportation', daysInQueue: 31,
     prescriber: ORTIZ, pharmacy: CVS_3301,
     phones: [{ number: '(714) 555-0170', label: 'Caregiver', doNotUse: false }, { number: '(714) 555-0171', label: 'Home', doNotUse: false }],
     callHistory: [
       { date: '10/06/2026', contact: 'Caregiver', outcome: 'UTC', result: 'failed', by: 'Marcus Reyes', note: 'Left voicemail.' },
-      { date: '09/29/2026', contact: 'Pharmacy', outcome: 'Pending — Pick up', result: 'failed', by: 'Marcus Reyes', note: 'Fill never picked up; claim reversed.', measures: ['MAH'] },
+      { date: '09/29/2026', contact: 'Pharmacy', outcome: 'Pending: Pick up', result: 'failed', by: 'Marcus Reyes', note: 'Fill never picked up; claim reversed.', measures: ['MAH'] },
       { date: '09/15/2026', contact: 'Member', outcome: 'UTC', result: 'failed', by: 'Marcus Reyes', note: '' },
     ],
   }, (b) => [
@@ -278,7 +285,7 @@ const BASE_MEMBERS = [
     phones: [{ number: '(213) 555-0160', label: 'Mobile', doNotUse: false }],
     callHistory: [
       { date: '09/30/2026', contact: 'Pharmacy', outcome: 'Confirmed medication pickup date', result: 'success', by: 'Priya Natarajan', note: '90-day supply picked up.', measures: ['MAD'] },
-      { date: '09/24/2026', contact: 'Pharmacy', outcome: 'Pending — Pick up', result: 'failed', by: 'Priya Natarajan', note: '', measures: ['MAD'] },
+      { date: '09/24/2026', contact: 'Pharmacy', outcome: 'Pending: Pick up', result: 'failed', by: 'Priya Natarajan', note: '', measures: ['MAD'] },
     ],
   }, (b) => [
     measure({
@@ -318,7 +325,7 @@ const BASE_MEMBERS = [
     prescriber: ORTIZ, pharmacy: CVS_3301,
     phones: [{ number: '(714) 555-0181', label: 'Mobile', doNotUse: false }],
     callHistory: [
-      { date: '10/07/2026', contact: 'Member', outcome: 'Cost/financial barrier', result: 'success', by: 'Marcus Reyes', note: 'Copay $47 — asked prescriber about generic.', measures: ['MAD'] },
+      { date: '10/07/2026', contact: 'Member', outcome: 'Cost/financial barrier', result: 'success', by: 'Marcus Reyes', note: 'Copay $47: asked prescriber about generic.', measures: ['MAD'] },
       { date: '10/01/2026', contact: 'Pharmacy', outcome: 'Confirmed medication pickup date', result: 'success', by: 'Marcus Reyes', note: 'Januvia 30-day picked up.', measures: ['MAD'] },
     ],
     interventionLog: [
@@ -338,7 +345,7 @@ const BASE_MEMBERS = [
     }, [{
       id: '19408-mad-1', name: 'Januvia', generic: 'sitagliptin', strength: '100', sig: 'Take 1 tablet by mouth once daily',
       condition: 'Type 2 diabetes', mpr: 80, pdc: 81, qty: 30, daysSupply: 30, lastFill: '09/01/2026', gaps: [6, 4, 7],
-      nonAdherenceReason: 'Cost Issue', notesToMd: 'Brand copay too high — request generic or formulary alternative.',
+      nonAdherenceReason: 'Cost Issue', notesToMd: 'Brand copay too high: request generic or formulary alternative.',
     }], b),
     measure({
       code: 'MAH', pdc: 93, calcPdc: 93, failDate: '12/30/2026', daysLeft: 78,
@@ -386,7 +393,7 @@ const BASE_MEMBERS = [
     prescriber: OKAFOR, pharmacy: RITE_5532,
     phones: [{ number: '(562) 555-0158', label: 'Mobile', doNotUse: false }],
     callHistory: [
-      { date: '10/11/2026', contact: 'Pharmacy', outcome: 'Pending — Pick up', result: 'failed', by: 'Marcus Reyes', note: 'Recheck pickup 10/14.', measures: ['MAH'] },
+      { date: '10/11/2026', contact: 'Pharmacy', outcome: 'Pending: Pick up', result: 'failed', by: 'Marcus Reyes', note: 'Recheck pickup 10/14.', measures: ['MAH'] },
       { date: '10/04/2026', contact: 'Provider Office', outcome: 'Refill approval sent to pharmacy', result: 'success', by: 'Marcus Reyes', note: '', measures: ['MAH'] },
     ],
   }, (b) => [
@@ -444,7 +451,6 @@ const TEMPLATES = {
     { name: 'Pravastatin', generic: 'pravastatin', strength: '40', sig: 'Take 1 tablet by mouth at bedtime', condition: 'Hyperlipidemia' },
   ],
 };
-const AS_OF = '10/22/2026';
 const PDCS = [84, 76, 91, 79, 86, 73, 88, 81, 90, 77];
 
 // A template drug for member `i`, its `k`th added drug: fill dates and day
@@ -591,11 +597,32 @@ const CLAIM_SCENARIOS = {
   })),
 };
 
+// One measure per gap status the claim scenarios above don't reach.
+const STATUS_SCENARIOS = {
+  // Plan file: one more fill guarantees 80% PDC for the year (Met for Year).
+  '19408|MAH': (x) => ({ ...x, oneFillToInvincible: true }),
+  // Plan file: excluded from the measure.
+  '19408|MAC': (x) => ({ ...x, excluded: true, exclusionType: 'Hospice' }),
+  // One fill in the class: First Fill, held off the worklist until a second
+  // fill on a different date.
+  '19409|MAH': (x) => {
+    const [d] = x.medications.filter(y => y.status !== 'Discontinued');
+    const [first] = d.refills;
+    return recomputeMeasure({ ...x, firstFill: true, medications: [{ ...d, lastFill: first.date, refills: [first] }] });
+  },
+};
+
+// Eligibility file: a termed member's gaps are all Not Eligible.
+const ELIGIBILITY = {
+  19410: { eligibilityStatus: 'Termed', termDate: '10/15/2026' },
+};
+
 // Pickups confirmed by the pharmacy, kept as their own records (who logged
 // them, when, from where), apart from claims. Also mirrored as confirmed
 // fills on each active drug of the measure.
 const PICKUPS = [
   { memberRowId: '19401', measureCode: 'MAD', pickupDate: '10/09/2026', source: 'Pharmacy call', loggedBy: 'Priya Natarajan' },
+  { memberRowId: '19404', measureCode: 'MAD', pickupDate: '10/20/2026', source: 'Pharmacy call', loggedBy: 'Marcus Reyes', note: 'Picked up; waiting for the Part D claim.' },
   { memberRowId: '19402', measureCode: 'MAC', pickupDate: '09/22/2026', source: 'Pharmacy call', loggedBy: 'Priya Natarajan' },
   { memberRowId: '19406', measureCode: 'MAD', pickupDate: '09/30/2026', source: 'Pharmacy verification', loggedBy: 'Marcus Reyes' },
   { memberRowId: '19407', measureCode: 'MAD', pickupDate: '10/18/2026', source: 'Pharmacy call', loggedBy: 'Priya Natarajan', note: 'Picked up at the counter; claim not on the plan feed yet.' },
@@ -609,6 +636,7 @@ function withPickupsAndScenarios(m) {
     ({ measures } = applyPickup({ ...m, measures }, [p.measureCode], p.pickupDate, `Pickup confirmed by ${p.source === 'Pharmacy call' ? 'call' : 'pharmacy'}`));
   }
   measures = measures.map(x => (CLAIM_SCENARIOS[`${m.id}|${x.code}`] ? CLAIM_SCENARIOS[`${m.id}|${x.code}`](x, m) : x));
+  measures = measures.map(x => (STATUS_SCENARIOS[`${m.id}|${x.code}`] ? STATUS_SCENARIOS[`${m.id}|${x.code}`](x) : x));
   // The newest pickup is also the latest call on record.
   const callHistory = m.id === '19407'
     ? [{ date: '10/18/2026', contact: 'Pharmacy', outcome: 'Confirmed medication pickup date', result: 'success', by: 'Priya Natarajan', note: 'Picked up at the counter.', measures: ['MAD'] }, ...(m.callHistory || [])]
@@ -625,7 +653,7 @@ export const PHARMACY_PICKUP_CONFIRMATIONS = PICKUPS.map((p, i) => ({
 
 export const PHARMACY_WORKLIST_MEMBERS = BASE_MEMBERS
   .map((m, i) => completeMeasures(m, i))
-  .map(m => ({ sourcePriority: null, ...m, ...SOURCE_FIELDS[m.id] }))
+  .map(m => ({ sourcePriority: null, eligibilityStatus: 'Active', termDate: null, ...m, ...SOURCE_FIELDS[m.id], ...ELIGIBILITY[m.id] }))
   .map(withClaimFields)
   .map(withPriorYearPdc)
   .map(withPickupsAndScenarios);

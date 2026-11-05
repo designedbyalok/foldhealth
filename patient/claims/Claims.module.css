@@ -1,0 +1,454 @@
+.wrap,
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.card {
+  border: 1px solid var(--neutral-100);
+  border-radius: 8px;
+  background: var(--neutral-0);
+}
+
+.heading {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.plan,
+.note {
+  margin: calc(-1 * var(--space-2)) 0 0;
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+.note {
+  margin: 0;
+}
+
+.overviewHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.legend {
+  display: flex;
+  gap: var(--space-3);
+  font-size: var(--font-xs);
+  color: var(--neutral-400);
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: var(--space-1);
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.dotIn { background: var(--chart-1); }
+.dotOut { background: var(--chart-6); }
+
+.accList,
+.shares,
+.claimList,
+.eobList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.accList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.acc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.accHead {
+  border: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.accLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.accTotal {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.accTotal strong {
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.bar {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  display: flex;
+  overflow: visible;
+  background: var(--neutral-75);
+}
+
+.barIn,
+.barOut {
+  height: 100%;
+}
+
+.barIn {
+  background: var(--chart-1);
+  border-radius: 3px 0 0 3px;
+}
+
+.barOut {
+  background: var(--chart-6);
+  border-radius: 0 3px 3px 0;
+}
+
+.barMark {
+  position: absolute;
+  top: -3px;
+  width: 1px;
+  height: 12px;
+  background: var(--neutral-200);
+}
+
+.accLegend {
+  display: flex;
+  gap: var(--space-3);
+  font-size: var(--font-xs);
+  color: var(--neutral-400);
+}
+
+.accNote {
+  margin: var(--space-1) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  background: var(--neutral-50);
+  font-size: var(--font-sm);
+  line-height: 1.5;
+  color: var(--neutral-400);
+}
+
+.accMet {
+  background: var(--status-success-light);
+  color: var(--status-success);
+}
+
+.shares {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-2);
+}
+
+.share {
+  border: 1px solid var(--neutral-100);
+  border-radius: 8px;
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.shareTitle {
+  font-size: var(--font-sm);
+  color: var(--neutral-500);
+}
+
+.shareRow {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-xs);
+  color: var(--neutral-400);
+}
+
+.guide {
+  border: 1px solid var(--primary-100);
+  border-radius: 8px;
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  background: var(--primary-50);
+  text-align: left;
+  cursor: pointer;
+}
+
+.guideTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-sm);
+  color: var(--neutral-500);
+}
+
+.guideText {
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+}
+
+.guideLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+}
+
+.terms {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.termName {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.termText {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-sm);
+  line-height: 1.5;
+  color: var(--neutral-400);
+}
+
+.logTools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.claimList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.claim {
+  width: 100%;
+  border: 1px solid var(--neutral-100);
+  border-radius: 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--neutral-0);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--duration-base) var(--ease-hover);
+}
+
+.claim:hover {
+  border-color: var(--primary-200);
+}
+
+.claimHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+.claim .claimHead {
+  border-bottom: 1px solid var(--neutral-100);
+}
+
+.claimBody {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  color: var(--neutral-300);
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  font-size: var(--font-sm);
+  color: var(--neutral-500);
+}
+
+.sub {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+.owes {
+  padding: var(--space-2) var(--space-3);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  background: var(--neutral-50);
+}
+
+.owesValue {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.detailCard {
+  border: 1px solid var(--neutral-100);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.detailProvider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--neutral-100);
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+}
+
+.detailGrid {
+  margin: 0;
+  padding: var(--space-3);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--neutral-100);
+}
+
+.detailGrid dt {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+.detailGrid dd {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-500);
+}
+
+.amounts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.amountRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.amountRow dd {
+  margin: 0;
+}
+
+.amountStrong {
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+}
+
+.amountStrong dd {
+  font-weight: 500;
+}
+
+.eobToggle {
+  align-self: flex-start;
+  border: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: none;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-500);
+  cursor: pointer;
+}
+
+.eobList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.eob {
+  border: 1px solid var(--neutral-100);
+  border-radius: 12px;
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  background: var(--neutral-50);
+}
+
+.eob .amounts {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--neutral-100);
+}
+
+.eobHead {
+  display: flex;
+  justify-content: space-between;
+}
+
+.eobTitle {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.accHead:focus-visible,
+.claim:focus-visible,
+.guide:focus-visible,
+.eobToggle:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+}
+
+.error {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--status-error);
+}

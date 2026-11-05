@@ -60,12 +60,6 @@ async function post(path, body) {
   return { ok: true, ...(await res.json().catch(() => ({}))) };
 }
 
-/** Emails a 6-digit code. Answers the same whether or not the account exists. */
-export const requestResetCode = (email) => post('/api/password-reset', { action: 'request', email: String(email || '').trim() });
-
-export const verifyResetCode = ({ email, code, password }) =>
-  post('/api/password-reset', { action: 'verify', email: String(email || '').trim(), code, password });
-
 // Database bookkeeping for the sign-in page, sent through /api/auth-activity
 // so each row in the user's Login Activity records the method, device and
 // location (read on the server). If that endpoint can't log it (migration not

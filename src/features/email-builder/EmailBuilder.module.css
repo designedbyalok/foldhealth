@@ -500,7 +500,7 @@
 }
 
 /* Search bar wrapping the shared <Input> in the Template tab. Sits between
-   the save-as-preset bar and the listing — no extra chrome of its own; the
+   the save-as-preset bar and the listing, no extra chrome of its own; the
    Input component already brings the field styling. */
 .presetSearchBar {
   padding: 8px 12px 4px;
@@ -523,7 +523,7 @@
   text-transform: uppercase;
 }
 
-/* Preset card — live preview + meta block, action buttons hover-revealed. */
+/* Preset card: live preview + meta block, action buttons hover-revealed. */
 .presetCardWrap {
   position: relative;
   margin-bottom: 6px;
@@ -591,7 +591,7 @@
 .presetCardActionDanger { color: var(--status-error); }
 .presetCardActionDanger:hover { background: var(--status-error-light); }
 
-/* Inline rename form — replaces the meta strip when editing a user preset. */
+/* Inline rename form: replaces the meta strip when editing a user preset. */
 .presetCardEditForm {
   display: flex;
   flex-direction: column;
@@ -716,7 +716,7 @@
   text-overflow: ellipsis;
 }
 
-/* Layout grid (preconfigured columns) — one tile per row */
+/* Layout grid (preconfigured columns): one tile per row */
 .layoutGrid {
   display: flex;
   flex-direction: column;
@@ -1082,7 +1082,7 @@
 .layersScroll::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--neutral-300) 40%, transparent); }
 
 /* Section heading strip (grey #F6F7F8, 32px tall) */
-/* Section heading — light surface strip that titles each group. Slightly
+/* Section heading: light surface strip that titles each group. Slightly
    shorter and quieter than before for a more minimal feel; the muted color
    keeps section labels from competing with field labels. */
 .sectionHeadingStrip {
@@ -1206,7 +1206,7 @@
 }
 .unitToggleBtn:hover { background: var(--neutral-100); border-color: var(--neutral-200); }
 
-/* Per-side border toggle row — four equal-width pills (T/R/B/L). Active
+/* Per-side border toggle row: four equal-width pills (T/R/B/L). Active
    side glows with the primary tint to mirror Decoration & Padding modes. */
 .bsideRow {
   display: grid;
@@ -1268,7 +1268,7 @@
   display: flex;
 }
 
-/* Color input (color dot + hex) — border/radius/focus match the shared
+/* Color input (color dot + hex): border/radius/focus match the shared
    <Input>/<Select> so every form control in the panel reads as one system. */
 .colorInputWrap {
   position: relative;
@@ -1359,7 +1359,7 @@
   position: fixed;
   z-index: 1000;
   opacity: 0;
-  /* Grows out of the field's edge — origin follows the flip in ColorInput.
+  /* Grows out of the field's edge: origin follows the flip in ColorInput.
      Transition-driven rather than a keyframe so an early re-open interrupts
      the exit instead of queueing behind it. */
   transform: scale(0.96) translateY(-4px);
@@ -1656,7 +1656,7 @@
   border-style: solid;
 }
 
-/* Floating SelectionToolbar — pops up above the user's text selection on the
+/* Floating SelectionToolbar: pops up above the user's text selection on the
    canvas and exposes range-level formatting. Dark pill background; sized to
    feel like a tooltip, not a full panel. Sits on a portal at <body> so it
    isn't clipped by the canvas overflow. */
@@ -1765,7 +1765,7 @@
   border-color: var(--primary-300);
 }
 
-/* Padding section header — label on the left, uniform/per-side toggle on
+/* Padding section header: label on the left, uniform/per-side toggle on
    the right. The toggle is a 2-state icon switch (single square vs sliced
    square) so the user can flip between one combined input and four. */
 .paddingLabelRow {
@@ -1775,7 +1775,7 @@
   gap: 8px;
 }
 
-/* Collapsed "+ Add border" affordance — only the label shows until the
+/* Collapsed "+ Add border" affordance: only the label shows until the
    user expands the Border section. Same visual language as the Link
    section's collapsed state. */
 .borderAddBtn {
@@ -1845,7 +1845,7 @@
   line-height: var(--leading-normal);
 }
 
-/* Text style chips — Title / Subtitle / Heading / Body quick presets, shown
+/* Text style chips: Title / Subtitle / Heading / Body quick presets, shown
    at the top of the Design tab for any selected Heading or Text block. */
 .textChipsRow {
   display: flex;
@@ -1878,7 +1878,7 @@
   color: var(--primary-400, #5020A0);
 }
 
-/* Link section header — label on the left, + / - toggle on the right. */
+/* Link section header: label on the left, + / - toggle on the right. */
 .linkHeader {
   display: flex;
   align-items: center;
@@ -1917,7 +1917,7 @@
   cursor: pointer;
 }
 
-/* Decoration toggle group — independent multi-select. Stretches to its
+/* Decoration toggle group: independent multi-select. Stretches to its
    fieldCol and lets the four buttons share space so the last one (Strike)
    never clips in narrow right-panel widths. */
 .decoToggles {
@@ -1982,7 +1982,7 @@
 
 .designTextarea:focus { border-color: var(--primary-300); }
 
-/* Code tab — codeToolbar pins to the top of codeScroll (which is a flex
+/* Code tab: codeToolbar pins to the top of codeScroll (which is a flex
    column with overflow hidden) so it never scrolls horizontally or
    vertically with the editor content below it. */
 .codeToolbar {
@@ -2060,7 +2060,7 @@
 }
 
 /* Overlay-scroll wrapper used by OverlayVerticalScroll. The inner div is
-   the actual scroll viewport — its native vertical scrollbar is hidden
+   the actual scroll viewport: its native vertical scrollbar is hidden
    (width 0 on Chromium, scrollbar-width: none on Firefox); a custom
    translucent thumb is rendered absolutely on the right edge so it
    floats above content with zero width footprint. The horizontal
@@ -2078,7 +2078,7 @@
   min-width: 0;
   overflow-x: auto;
   overflow-y: scroll;
-  /* Hide native scrollbars on both axes — JS-driven thumbs below render
+  /* Hide native scrollbars on both axes, JS-driven thumbs below render
      the visible scrollbars as overlays so neither rail steals layout space.
      `scrollbar-width: none` here overrides the project-wide `* { scrollbar-
      width: thin }` rule in index.css which would otherwise force a 6-8px
@@ -2110,7 +2110,7 @@
 }
 .overlayScrollThumb:active { cursor: grabbing; }
 
-/* Horizontal overlay thumb — pinned to the bottom edge of the viewport so
+/* Horizontal overlay thumb: pinned to the bottom edge of the viewport so
    it's always reachable regardless of how tall the JSON content is. */
 .overlayScrollThumbH {
   position: absolute;
@@ -2197,7 +2197,7 @@
 .tokAttr     { color: #FFCB6B; }
 .tokPunct    { color: #89DDFF; }
 
-/* Section subheading inside scrollable panels — smaller than the gray strip,
+/* Section subheading inside scrollable panels: smaller than the gray strip,
    used to label "Your presets" / "Built-in" inside the Template tab. */
 .sectionSubHeading {
   display: flex;
@@ -2234,7 +2234,7 @@
   gap: 6px;
 }
 
-/* Vertical list inside the Template tab — refined modern card layout. */
+/* Vertical list inside the Template tab, refined modern card layout. */
 .presetCardList {
   display: flex;
   flex-direction: column;
@@ -2242,7 +2242,7 @@
   gap: 0;
 }
 
-/* Live preview thumbnail — scaled Reader output. The outer wrap clips to
+/* Live preview thumbnail: scaled Reader output. The outer wrap clips to
    the chosen `width` and the dynamically computed scaled height; the inner
    scale wrapper renders at the full email content width (600px) then is
    CSS-scaled down to fit. pointer-events disabled so the thumbnail behaves
@@ -2702,8 +2702,8 @@
 }
 
 /* ─────────────────────────── Skeleton loading ──────────────────────────
- * Mirrors the real builder chrome — top bar, left components panel,
- * canvas with stacked block placeholders, right design panel — so the
+ * Mirrors the real builder chrome: top bar, left components panel,
+ * canvas with stacked block placeholders, right design panel, so the
  * transition from skeleton to populated UI is smooth. Shimmer uses the
  * same animation curve as CallsView/TasksView for consistency. */
 @keyframes ebShimmer {

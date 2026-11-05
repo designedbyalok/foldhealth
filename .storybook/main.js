@@ -13,7 +13,7 @@ const config = {
   // Force Vite to pre-bundle @testing-library/dom's CJS transitive deps.
   // Their CJS output declares named exports via patterns Vite's runtime
   // cjs-module-lexer can't detect (chained `exports.X = exports.Y = void 0`,
-  // then `var X = exports.X = value`) — esbuild's dep-optimizer handles them
+  // then `var X = exports.X = value`): esbuild's dep-optimizer handles them
   // correctly, so pre-bundling routes past the runtime interop. Fixes
   // @storybook/addon-vitest failing to import
   // setup-file-with-project-annotations.js in browser mode.

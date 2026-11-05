@@ -1,4 +1,4 @@
--- Care Plan shares — an audit row per time a plan (or a selection of it) is
+-- Care Plan shares: an audit row per time a plan (or a selection of it) is
 -- previewed-and-shared to an external party.
 --
 -- THE HOLE THIS CLOSES
@@ -6,10 +6,10 @@
 -- in fact). There was no way to preview it, choose which goals/interventions to
 -- include, share it to the EHR / patient / POA, or keep a record that it went
 -- out (roadmap #8, #13, #40). This table records each share so the workflow is
--- real — and gives the E5 share-history view (#9) something to read.
+-- real: and gives the E5 share-history view (#9) something to read.
 --
 -- WHAT THIS DOES
---   care_plan_shares — one row per share. target is who it went to
+--   care_plan_shares: one row per share. target is who it went to
 --   (ehr / patient / poa); format names the download template used; the two
 --   id arrays capture exactly which goals & interventions were included, so a
 --   partial share is faithfully recorded, not just "the plan".

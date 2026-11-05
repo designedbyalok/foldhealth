@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
-import { Avatar } from '../Avatar/Avatar';
+import { AvatarBase } from '../Avatar/AvatarBase';
 import { Button } from '../Button/Button';
 import { Tooltip } from '../Tooltip/Tooltip';
 import {
@@ -10,9 +10,13 @@ import {
   collectMentions,
   detectMention,
   caretAfter,
+  createLinkChip,
+  collectLinks,
+  hydrateChips,
 } from './mentions';
 import styles from './Textarea.module.css';
 import { sanitizeRichText } from '../../lib/sanitizeHtml';
+import { resolveFieldLook, warnDeprecated } from '../../lib/legacyProps';
 import { exitEmptyListItem, applyListShortcut, numberListItems, nestListItem, outdentListItem, unlistItem, textToListHtml } from './richTextLists';
 
 /**
@@ -22,12 +26,12 @@ import { exitEmptyListItem, applyListShortcut, numberListItems, nestListItem, ou
  * multi-line input into the full labeled + toolbar treatment without
  * swapping components:
  *
- *   • Plain — no `title`, `richText`, `supportingText`, `bottomButton`,
+ *   • Plain: no `title`, `richText`, `supportingText`, `bottomButton`,
  *     `speechToText`, `maxLength`, `mandatory`, or `info` prop. Renders a
  *     bare <textarea> exactly like it always has. Existing consumers
  *     don't need to change.
  *
- *   • Enhanced — any of the props above are set. Renders the labeled
+ *   • Enhanced: any of the props above are set. Renders the labeled
  *     card: header (title + optional info + required "*"), body
  *     (contentEditable in `richText` mode, else <textarea>), footer
  *     (formatting toolbar, speech-to-text, character counter, and an
@@ -36,15 +40,20 @@ import { exitEmptyListItem, applyListShortcut, numberListItems, nestListItem, ou
  * States (Figma 25:78337):
  *   • default (placeholder) / hover / focus
  *   • filled
- *   • error   → red border + light-red fill (see `variant='error'`)
+ *   • invalid → red border + light-red fill (the `invalid` prop)
  *   • disabled
+ *
+ * Value: `onChange` is the native change event (plain and labelled
+ * textareas); `onValueChange(value)` gets the text. Rich text has no
+ * native event, so it reports through `onValueChange(html, plain)` only.
  */
 export const Textarea = forwardRef(function Textarea({
-  variant = 'default',
+  variant,
+  invalid,
   className,
   rows = 3,
   disabled,
-  // Enhanced-mode props — presence toggles the labeled/card layout.
+  // Enhanced-mode props: presence toggles the labeled/card layout.
   //
   // `title`, `supportingText` and `info` each accept BOTH a string and a
   // boolean so callers can flip them on/off from a design-system control
@@ -63,26 +72,44 @@ export const Textarea = forwardRef(function Textarea({
   supportingText,
   richText = false,
   maxLength,
-  bottomButton,          // { label, onClick, disabled, variant }
+  bottomButton,          // { label, onClick, disabled, variant, tone }
   speechToText = false,
   onSpeechClick,
   attachment = false,    // boolean toggle (attaches paperclip button) OR { onClick } / accept
   onAttachmentClick,
   onAttachmentFiles,     // (FileList) → parent handles the upload
-  moreActions,           // [{ icon, label, onClick, disabled }] — appended to the toolbar
-  // Mentions — richText-only. Pass an array of `{ id, name, initials, role?
+  moreActions,           // [{ icon, label, onClick, disabled }], appended to the toolbar
+  // richText only: keep the formatting footer out of sight until the box (or
+  // one of its buttons) has focus, for a box that should read as a plain field.
+  toolbarOnFocus = false,
+  // richText only: Enter (without Shift) and Escape, outside the @ and /
+  // pickers. Passing onEnter makes Enter submit; Shift+Enter still breaks a line.
+  onEnter,
+  onEscape,
+  // Mentions: richText-only. Pass an array of `{ id, name, initials, role?
   // realProfile? }` and the editor will pop a picker on "@". `onMentionSelect`
   // and `onMentionsChange` mirror CommentComposer's contract so consumers
   // moving off it don't have to relearn the callback shape.
   mentions = false,
   mentionUsers,
   onMentionsChange,
+  // Links: richText-only. "/" pops a picker of records to reference, each
+  // `{ id, kind, label, group?, icon?, meta? }`; picked ones sit in the text
+  // as chips and `onLinksChange` reports them as `{ id, kind, label }`.
+  links,
+  onLinksChange,
+  // Plain mode: web links in the text show as underlined info-colored links
+  // (a layer under the textarea draws them; editing and selection are
+  // unchanged). MessageComposer uses the same layer (LinkHighlightTextarea).
+  highlightLinks = false,
   onChange,
+  onValueChange,
   value,
   defaultValue,
   placeholder = 'Enter Task Title',
   ...rest
 }, ref) {
+  const look = resolveFieldLook('Textarea', { variant, invalid });
   // Resolve string-or-boolean toggles → the string that actually renders.
   const titleText = title === true ? 'Title' : (title || null);
   const supportingTextText = supportingText === true
@@ -96,19 +123,38 @@ export const Textarea = forwardRef(function Textarea({
 
   // Attachment / speech-to-text / bottomButton / moreActions are all
   // richText-only affordances so they don't contribute to the enhanced
-  // gate on their own — see `showFooter` below. Only real label + helper
+  // gate on their own: see `showFooter` below. Only real label + helper
   // props (title, info, mandatory, supportingText, maxLength) or richText
   // itself toggle the enhanced layout.
   const enhanced = !!(titleText || infoResolved || mandatory || supportingTextText || richText ||
                      maxLength);
 
   if (!enhanced) {
-    // Legacy plain textarea — untouched contract.
     const cls = [
       styles.textarea,
-      variant === 'error' ? styles.textareaError : '',
+      look.invalid ? styles.textareaError : '',
       className || '',
     ].filter(Boolean).join(' ');
+    const handlePlainChange = (onChange || onValueChange) ? (e) => {
+      onChange?.(e);
+      onValueChange?.(e.target.value);
+    } : undefined;
+    if (highlightLinks) {
+      return (
+        <LinkHighlightTextarea
+          ref={ref}
+          rows={rows}
+          className={cls}
+          disabled={disabled}
+          placeholder={placeholder}
+          value={value}
+          onChange={handlePlainChange}
+          maxLength={maxLength}
+          aria-invalid={look.invalid || undefined}
+          {...rest}
+        />
+      );
+    }
     return (
       <textarea
         ref={ref}
@@ -118,8 +164,9 @@ export const Textarea = forwardRef(function Textarea({
         placeholder={placeholder}
         value={value}
         defaultValue={defaultValue}
-        onChange={onChange}
+        onChange={handlePlainChange}
         maxLength={maxLength}
+        aria-invalid={look.invalid || undefined}
         {...rest}
       />
     );
@@ -128,7 +175,7 @@ export const Textarea = forwardRef(function Textarea({
   return (
     <EnhancedTextarea
       ref={ref}
-      variant={variant}
+      invalid={look.invalid}
       className={className}
       rows={rows}
       disabled={disabled}
@@ -145,10 +192,16 @@ export const Textarea = forwardRef(function Textarea({
       onAttachmentClick={onAttachmentClick}
       onAttachmentFiles={onAttachmentFiles}
       moreActions={moreActions}
+      toolbarOnFocus={toolbarOnFocus}
+      onEnter={onEnter}
+      onEscape={onEscape}
       mentions={mentions}
       mentionUsers={mentionUsers}
       onMentionsChange={onMentionsChange}
+      links={links}
+      onLinksChange={onLinksChange}
       onChange={onChange}
+      onValueChange={onValueChange}
       value={value}
       defaultValue={defaultValue}
       placeholder={placeholder}
@@ -157,12 +210,42 @@ export const Textarea = forwardRef(function Textarea({
   );
 });
 
+// A <textarea> can't style part of its text, so the text is drawn by a
+// layer underneath (links underlined and colored) and the textarea on top
+// keeps the caret, selection and editing with transparent text.
+const LINK_RE = /(https?:\/\/[^\s]+)/g;
+
+/** Also used directly by MessageComposer's type box. */
+export const LinkHighlightTextarea = forwardRef(function LinkHighlightTextarea({ className, value = '', onScroll, ...rest }, ref) {
+  const backdropRef = useRef(null);
+  const parts = String(value).split(LINK_RE);
+  return (
+    <div className={styles.linkWrap}>
+      <div ref={backdropRef} className={`${className} ${styles.linkBackdrop}`} aria-hidden="true">
+        {parts.map((part, i) => (i % 2 ? <span key={i} className={styles.link}>{part}</span> : part))}
+        {/* A trailing newline needs a character after it to take up a line. */}
+        {'\u200b'}
+      </div>
+      <textarea
+        ref={ref}
+        className={`${className} ${styles.linkInput}`}
+        value={value}
+        onScroll={(e) => {
+          if (backdropRef.current) backdropRef.current.scrollTop = e.currentTarget.scrollTop;
+          onScroll?.(e);
+        }}
+        {...rest}
+      />
+    </div>
+  );
+});
+
 // ────────────────────────────────────────────────────────────────────────
-// Enhanced layout — labeled card with optional rich-text toolbar. Kept as
+// Enhanced layout: labeled card with optional rich-text toolbar. Kept as
 // an inner component so the exported Textarea can still forward its ref
 // to the underlying editor node in either shape.
 
-// Custom bullet-list glyph — Solar's list icons don't include the leading
+// Custom bullet-list glyph: Solar's list icons don't include the leading
 // dot markers, so we ship a hand-drawn SVG at 1px stroke to match the
 // design-system icon weight. Kept inline so it lives with the toolbar
 // definition instead of a one-off shared file.
@@ -198,9 +281,9 @@ const RICH_TOOLBAR = [
   { cmd: 'insertOrderedList',   icon: <NumberedListIcon />,          label: 'Numbered list' },
 ];
 
-// eslint-disable-next-line no-unused-vars — split out purely for readability
+// eslint-disable-next-line no-unused-vars: split out purely for readability
 const EnhancedTextarea = forwardRef(function EnhancedTextarea({
-  variant,
+  invalid,
   className,
   rows,
   disabled,
@@ -217,10 +300,16 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
   onAttachmentClick,
   onAttachmentFiles,
   moreActions,
+  toolbarOnFocus,
+  onEnter,
+  onEscape,
   mentions,
   mentionUsers,
   onMentionsChange,
+  links,
+  onLinksChange,
   onChange,
+  onValueChange,
   value,
   defaultValue,
   placeholder,
@@ -240,7 +329,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
     else if (ref) ref.current = el;
   }, [ref]);
 
-  // Keep controlled contentEditable in sync — otherwise React's reconciler
+  // Keep controlled contentEditable in sync: otherwise React's reconciler
   // never touches innerHTML after mount and the field ignores prop updates.
   // The editor's own edits come back as `value`; rewriting innerHTML for
   // those would throw the caret to the start (e.g. after a paste, whose
@@ -252,6 +341,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
     const safe = sanitizeRichText(value ?? '');
     if (editorRef.current && editorRef.current.innerHTML !== safe) {
       editorRef.current.innerHTML = safe;
+      hydrateChips(editorRef.current);
       numberListItems(editorRef.current);
     }
   }, [richText, isControlled, value]);
@@ -268,22 +358,30 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
 
   const handleTextareaChange = (e) => {
     if (!isControlled) setText(e.target.value);
-    onChange?.(e.target.value, e);
+    onChange?.(e);
+    onValueChange?.(e.target.value);
   };
 
   // ── Mention state (richText only) ──────────────────────────────────
   const mentionsOn = !!(richText && mentions && Array.isArray(mentionUsers));
-  const [mentionCtx, setMentionCtx] = useState(null); // { range, query } | null
+  const linksOn = !!(richText && Array.isArray(links));
+  const triggersOn = mentionsOn || linksOn;
+  const [mentionCtx, setMentionCtx] = useState(null); // { trigger, range, query } | null
   const [mentionIdx, setMentionIdx] = useState(0);
+  const detectTrigger = (el) => (mentionsOn && detectMention(el, '@')) || (linksOn && detectMention(el, '/')) || null;
   const mentionMatches = useMemo(() => {
-    if (!mentionCtx || !mentionsOn) return [];
-    const q = (mentionCtx.query || '').toLowerCase();
+    if (!mentionCtx) return [];
+    const q = (mentionCtx.query || '').trim().toLowerCase();
+    if (mentionCtx.trigger === '/') {
+      const pool = links || [];
+      return (q ? pool.filter(l => (l.label || '').toLowerCase().includes(q)) : pool).slice(0, 12);
+    }
     const pool = mentionUsers || [];
     const filtered = q
       ? pool.filter(u => (u.name || '').toLowerCase().includes(q))
       : pool;
     return filtered.slice(0, 8);
-  }, [mentionCtx, mentionsOn, mentionUsers]);
+  }, [mentionCtx, mentionUsers, links]);
   useEffect(() => { setMentionIdx(0); }, [mentionCtx?.query]);
 
   const handleRichInput = () => {
@@ -298,7 +396,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
     const html = el.innerHTML;
     // Use the shared serializer so mention chips report as "@Name" and
     // don't inflate the plain-text length with their inner HTML.
-    const plain = mentionsOn ? serializePlain(el) : (el.innerText || '');
+    const plain = triggersOn ? serializePlain(el) : (el.innerText || '');
     // Enforce maxLength on the serialized plain-text length so the counter
     // and the cap agree (an <b>bold</b> tag doesn't cost characters).
     if (maxLength && plain.length > maxLength) {
@@ -307,18 +405,21 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
     }
     if (!isControlled) setText(html);
     emittedRef.current = html;
-    onChange?.(html, plain);
-    if (mentionsOn) {
-      setMentionCtx(detectMention(el));
-      onMentionsChange?.(collectMentions(el));
+    onValueChange?.(html, plain);
+    if (onChange) {
+      warnDeprecated('Textarea', 'onChange', true, 'onValueChange(html, plain) in richText mode');
+      onChange(html, plain);
     }
+    if (triggersOn) setMentionCtx(detectTrigger(el));
+    if (mentionsOn) onMentionsChange?.(collectMentions(el));
+    if (linksOn) onLinksChange?.(collectLinks(el));
   };
 
   const handleRichSelect = () => {
-    if (!mentionsOn) return;
+    if (!triggersOn) return;
     const el = editorRef.current;
     if (!el) return;
-    setMentionCtx(detectMention(el));
+    setMentionCtx(detectTrigger(el));
   };
 
   const insertMentionChip = (user) => {
@@ -326,7 +427,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
     if (!el || !mentionCtx) return;
     el.focus();
     mentionCtx.range.deleteContents();
-    const chip = createMentionChip(user);
+    const chip = mentionCtx.trigger === '/' ? createLinkChip(user) : createMentionChip(user);
     const space = document.createTextNode(' ');
     mentionCtx.range.insertNode(space);
     mentionCtx.range.insertNode(chip);
@@ -337,7 +438,17 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
   };
 
   const handleRichKeyDown = (e) => {
-    const mentionOpen = mentionsOn && mentionCtx && mentionMatches.length > 0;
+    const mentionOpen = triggersOn && mentionCtx && mentionMatches.length > 0;
+    if (!mentionOpen && onEnter && e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onEnter();
+      return;
+    }
+    if (!mentionOpen && onEscape && e.key === 'Escape') {
+      e.preventDefault();
+      onEscape();
+      return;
+    }
     // Enter on an empty list item steps out of the list (see richTextLists).
     if (!mentionOpen && e.key === 'Enter' && !e.shiftKey && exitEmptyListItem(editorRef.current)) {
       e.preventDefault();
@@ -452,7 +563,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
         return;
       }
     }
-    // execCommand is the pragmatic path here — a full ProseMirror stack
+    // execCommand is the pragmatic path here, a full ProseMirror stack
     // would dwarf everything else this component does, and every browser
     // still supports the four toggles the Figma toolbar shows.
     document.execCommand(cmd, false, null);
@@ -462,14 +573,14 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
 
   const wrapClass = [
     styles.enhWrap,
-    variant === 'error' ? styles.enhError : '',
+    invalid ? styles.enhError : '',
     disabled ? styles.enhDisabled : '',
     focused ? styles.enhFocused : '',
     className || '',
   ].filter(Boolean).join(' ');
 
   // Attachment, speech-to-text, moreActions, and the bottomButton are all
-  // rich-text-only affordances — they live inside the formatting footer,
+  // rich-text-only affordances: they live inside the formatting footer,
   // so none of them surface when richText is off. Toggling richText on
   // reveals the whole footer bar; the sub-flags then decide which slots
   // are populated.
@@ -488,7 +599,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
   };
 
   return (
-    <div className={styles.enhRoot}>
+    <div className={`${styles.enhRoot} ${toolbarOnFocus ? styles.enhToolbarOnFocus : ''}`}>
       {(title || mandatory || info) && (
         <div className={styles.enhLabelRow}>
           <label className={styles.enhLabel}>{title}</label>
@@ -513,6 +624,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
               role="textbox"
               aria-multiline="true"
               aria-label={title || placeholder}
+              aria-invalid={invalid || undefined}
               contentEditable={!disabled}
               suppressContentEditableWarning
               className={styles.enhEditor}
@@ -544,6 +656,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
               defaultValue={isControlled ? undefined : defaultValue}
               onChange={handleTextareaChange}
               maxLength={maxLength}
+              aria-invalid={invalid || undefined}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               {...rest}
@@ -623,8 +736,9 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
                 const cfg = typeof bottomButton === 'object' ? bottomButton : {};
                 return (
                   <Button
-                    variant={cfg.variant || 'primary'}
-                    size="S"
+                    variant={cfg.variant}
+                    tone={cfg.tone}
+                    size="sm"
                     disabled={disabled || cfg.disabled}
                     onClick={cfg.onClick}
                   >
@@ -641,15 +755,16 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
         <span
           className={[
             styles.enhSupporting,
-            variant === 'error' ? styles.enhSupportingError : '',
+            invalid ? styles.enhSupportingError : '',
           ].filter(Boolean).join(' ')}
         >
           {supportingText}
         </span>
       )}
 
-      {mentionsOn && mentionCtx && mentionMatches.length > 0 && editorRef.current && (
+      {triggersOn && mentionCtx && mentionMatches.length > 0 && editorRef.current && (
         <MentionMenu
+          linkMode={mentionCtx.trigger === '/'}
           anchor={editorRef.current}
           matches={mentionMatches}
           activeIdx={mentionIdx}
@@ -660,11 +775,16 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
   );
 });
 
-// Portaled @mention picker — anchored under (or above) the editor. Kept
-// inline so the enhanced textarea is a self-contained primitive with no
-// cross-package coupling.
-function MentionMenu({ anchor, matches, activeIdx, onPick }) {
+// Portaled @mention (or "/" link) picker: anchored under (or above) the
+// editor. Kept inline so the enhanced textarea is a self-contained primitive
+// with no cross-package coupling. Links show under their group's heading.
+function MentionMenu({ anchor, matches, activeIdx, onPick, linkMode = false }) {
   const [pos, setPos] = useState(null);
+  const menuRef = useRef(null);
+  // Arrow keys can walk past the visible rows of a long list.
+  useEffect(() => {
+    menuRef.current?.querySelectorAll('[role="menuitem"]')[activeIdx]?.scrollIntoView?.({ block: 'nearest' });
+  }, [activeIdx, pos]);
   useEffect(() => {
     const compute = () => {
       const r = anchor.getBoundingClientRect();
@@ -685,8 +805,24 @@ function MentionMenu({ anchor, matches, activeIdx, onPick }) {
   }, [anchor, matches.length]);
   if (!pos) return null;
   return createPortal(
-    <div className={styles.mentionMenu} style={{ top: pos.top, left: pos.left, width: pos.width }} role="menu">
-      {matches.map((u, i) => (
+    <div ref={menuRef} className={styles.mentionMenu} style={{ top: pos.top, left: pos.left, width: pos.width }} role="menu">
+      {matches.map((u, i) => (linkMode ? (
+        <div key={`${u.kind}:${u.id}`} className={styles.linkOption}>
+          {u.group && u.group !== matches[i - 1]?.group && (
+            <span className={styles.linkGroup}>{u.group}</span>
+          )}
+          <button
+            type="button"
+            role="menuitem"
+            className={[styles.mentionItem, i === activeIdx ? styles.mentionItemActive : ''].filter(Boolean).join(' ')}
+            onMouseDown={(e) => { e.preventDefault(); onPick(u); }}
+          >
+            {u.icon && <Icon name={u.icon} size={16} color="var(--neutral-300)" />}
+            <span className={styles.mentionName}>{u.label}</span>
+            {u.meta && <span className={styles.mentionRole}>{u.meta}</span>}
+          </button>
+        </div>
+      ) : (
         <button
           key={u.id || u.name}
           type="button"
@@ -696,11 +832,11 @@ function MentionMenu({ anchor, matches, activeIdx, onPick }) {
           // click actually reaches this handler.
           onMouseDown={(e) => { e.preventDefault(); onPick(u); }}
         >
-          <Avatar variant="staff" initials={u.initials} size="XS" />
+          <AvatarBase variant="staff" initials={u.initials} size="XS" />
           <span className={styles.mentionName}>{u.name}</span>
           {u.role && <span className={styles.mentionRole}>{u.role}</span>}
         </button>
-      ))}
+      )))}
     </div>,
     document.body,
   );
@@ -735,7 +871,6 @@ function ToolbarButton({ icon, label, onClick, disabled, showDivider, tone, acti
 function plainTextLen(html) {
   if (!html) return 0;
   if (typeof document === 'undefined') return html.replace(/<[^>]*>/g, '').length;
-  const el = document.createElement('div');
-  el.innerHTML = html;
-  return (el.innerText || el.textContent || '').length;
+  // DOMParser documents are inert: no scripts run and no <img onerror> fires.
+  return (new DOMParser().parseFromString(html, 'text/html').body.textContent || '').length;
 }

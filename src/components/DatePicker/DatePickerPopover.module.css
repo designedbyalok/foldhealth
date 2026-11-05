@@ -1,24 +1,13 @@
-/* Fold-brand calendar popover — Figma Fold-Pixel-1.0.
+/* Fold-brand calendar popover: Figma Fold-Pixel-1.0.
    Single = node 8646:12168 (282×288)
    Range  = node 8654:12785 (584.5×288)
 */
 
 .card {
-  position: fixed;
-  /* Portaled to body, so it must clear the modal layer (ShadcnDialog sits at
-     9999) or a date field inside a dialog opens its calendar underneath it.
-     Same layer the app's other portaled floating surfaces use. */
-  z-index: 10000;
-  /* A modal dialog sets pointer-events: none on body; the card is portaled
-     there, so take clicks back. */
-  pointer-events: auto;
   width: 282px;
   padding: var(--space-3) var(--space-4) var(--space-2);
-  background: var(--neutral-0);
-  border: 0.5px solid var(--neutral-100);
-  border-radius: 8px;
-  box-shadow: var(--shadow-popover);
-  box-sizing: border-box;
+  /* The month and year Selects open their menus inline; don't clip them. */
+  overflow: visible;
   user-select: none;
   display: flex;
   flex-direction: column;
@@ -27,14 +16,14 @@
 .cardRange {
   width: 584px;
 }
-/* Single mode + caller-supplied footer — widen enough for a two-
+/* Single mode + caller-supplied footer: widen enough for a two-
    picker Repeat editor row (count 96 + gap + "after" + gap + every
    130) without wrapping. */
 .cardWithFooter {
   width: 320px;
 }
 
-/* Single-mode header — title on the left, chevrons on the right. */
+/* Single-mode header: title on the left, chevrons on the right. */
 .header {
   display: flex;
   align-items: center;
@@ -42,7 +31,7 @@
   width: 100%;
 }
 
-/* Range-mode header — 4 buttons flanking two month labels. */
+/* Range-mode header: 4 buttons flanking two month labels. */
 .rangeHeader {
   display: flex;
   align-items: center;
@@ -78,7 +67,7 @@
   color: var(--neutral-400);
 }
 
-/* Compact year chip — mimics Figma's inline "2024 ⌄" pill.
+/* Compact year chip: mimics Figma's inline "2024 ⌄" pill.
    Sized to hug the label + chevron rather than a fixed width so the
    trigger doesn't leave trailing whitespace inside its border. */
 .yearSelect {
@@ -100,14 +89,14 @@
   justify-content: flex-start;
   width: auto;
 }
-/* The label's `flex: 1` also pushes the chevron to the far edge —
+/* The label's `flex: 1` also pushes the chevron to the far edge,
    reset so it hugs its own content. */
 .yearSelect :global(button > span) {
   flex: 0 0 auto;
 }
 
 /* The `Calendar*Icon` glyphs draw their own rounded-square outline, so
-   the surrounding <ActionButton> stays chrome-free — no extra CSS
+   the surrounding <ActionButton> stays chrome-free: no extra CSS
    border/background needed here. ActionButton's hover tint still applies
    for interactive feedback via its base `.active:hover` rule. */
 
@@ -130,25 +119,18 @@
   pointer-events: none;
 }
 
-.month {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding-bottom: var(--space-2);
-}
-
 /* Optional caller-supplied slot sitting between the month grid and
    the Clear/Save row (range) or beneath the grid (single). Used by
    the intervention Due Date popover to host the Repeat editor.
    The slot bleeds to the card's edges (negative margins cancel the
    card's own inner padding) so the caller's panel can dock flush
-   against the bottom of the card as a distinct visual layer — no
+   against the bottom of the card as a distinct visual layer, no
    divider, no gap, just a color break. */
 .slot {
   margin: 0 calc(-1 * var(--space-4)) calc(-1 * var(--space-2));
 }
 
-/* Range-mode footer — Clear (tertiary) on the left of the pair, Save
+/* Range-mode footer: Clear (tertiary) on the left of the pair, Save
    (primary) on the right. Right-aligned per the Figma spec so the
    primary action sits in the bottom-right corner of the card. */
 .footer {
@@ -160,101 +142,3 @@
   margin-top: var(--space-1);
   border-top: 0.5px solid var(--neutral-100);
 }
-
-.dow {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  width: 100%;
-}
-.dowCell {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 24px;
-  font-size: var(--font-base);
-  font-weight: 500;
-  line-height: var(--leading-tight);
-  color: var(--neutral-300);
-  text-transform: uppercase;
-  letter-spacing: 0.7px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  row-gap: var(--space-1);
-}
-
-.cell {
-  position: relative;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Range-highlight strip — painted under the day circle so the selected
-   endpoints (solid purple) sit on top of the pale band. Half-width
-   variants for start/end connect visually to the neighbouring cell's
-   full-width middle strip. */
-.rangeMiddle::before,
-.rangeStart::before,
-.rangeEnd::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  background: var(--primary-100);
-  z-index: 0;
-}
-.rangeMiddle::before { left: 0; right: 0; }
-.rangeStart::before  { left: 50%; right: 0; }
-.rangeEnd::before    { left: 0;    right: 50%; }
-
-.day {
-  position: relative;
-  z-index: 1;
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  background: transparent;
-  font-size: var(--font-base);
-  font-weight: 400;
-  line-height: var(--leading-tight);
-  color: var(--neutral-400);
-  cursor: pointer;
-  border-radius: 999px;
-  transition: background-color .12s, color .12s;
-}
-
-.day:hover:not(:disabled):not(.daySelected) {
-  background: var(--primary-100);
-  color: var(--neutral-400);
-}
-
-.dayMuted { color: var(--placeholder-text); }
-
-.dayToday { box-shadow: inset 0 0 0 1px var(--neutral-150); }
-
-/* Highlighted — a soft grey-50 fill for a set of dates the caller
-   wants to visualize on the grid (e.g. every future recurrence of a
-   scheduled task). The primary selected day still wins on top. */
-.dayHighlighted { background: var(--neutral-50); }
-.dayHighlighted:hover { background: var(--neutral-100); }
-
-.daySelected,
-.daySelected:hover {
-  background: var(--primary-300);
-  color: var(--neutral-0);
-  font-weight: 500;
-}
-
-.dayDisabled {
-  color: var(--neutral-150);
-  cursor: not-allowed;
-}
-.dayDisabled:hover { background: transparent; color: var(--neutral-150); }

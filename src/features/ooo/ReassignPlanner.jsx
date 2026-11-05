@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { FilterIcon } from '../../components/Icon/FilterIcon';
-import { Collapse } from '../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../components/Collapsible/Collapsible';
 import { CollapseAllIcon } from '../../components/Icon/CollapseAllIcon';
 import { ExpandAllIcon } from '../../components/Icon/ExpandAllIcon';
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
@@ -11,11 +11,11 @@ import { BulkBar } from '../../components/BulkBar/BulkBar';
 import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { Icon } from '../../components/Icon/Icon';
-import { InfoBar } from '../../components/InfoBar/InfoBar';
+import { Banner } from '../../components/Banner/Banner';
 import { Link } from '../../components/Link/Link';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
-import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { UserPickerPopover } from '../../components/UserPickerPopover/UserPickerPopover';
 import { useAppStore } from '../../store/useAppStore';
 import { initialsOf, samePerson } from './oooUtils';
@@ -151,8 +151,8 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
   };
   const cancelledTag = (ids) => (
     <span className={styles.cancelledTag}>
-      <Badge tone="error" size="S" label="Cancelled" />
-      <ActionButton icon="solar:undo-left-linear" size="S" tooltip="Undo Cancellation" tooltipLeft onClick={() => clear(ids)} />
+      <Badge tone="danger" size="sm" label="Cancelled" />
+      <ActionButton icon="solar:undo-left-linear" size="sm" tooltip="Undo Cancellation" tooltipLeft onClick={() => clear(ids)} />
     </span>
   );
   const markLink = (ids, label = 'Mark to Cancel') => (
@@ -178,7 +178,7 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
         ? (
           <span className={styles.controls}>
             {assigneeFor(ids, deptOf.get(a.id))}
-            <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More Options" tooltipLeft onClick={(e) => openMenu(e, ids, true)} />
+            <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More Options" tooltipLeft onClick={(e) => openMenu(e, ids, true)} />
           </span>
         )
         : markLink(ids);
@@ -193,7 +193,7 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
         ? (
           <span className={styles.controls}>
             {assigneeFor(ids, g.name)}
-            <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More Options" tooltipLeft onClick={(e) => openMenu(e, ids, true)} />
+            <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More Options" tooltipLeft onClick={(e) => openMenu(e, ids, true)} />
           </span>
         )
         : markLink(ids);
@@ -241,7 +241,7 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
       <div className={styles.planner}>
         <span className={styles.plannerTitle}>Select Reassignment Providers</span>
         <div className={ooo.providersEmpty}>
-          <RingEmptyState size="S" icon="solar:calendar-linear" label="No upcoming appointments to reassign for these dates" />
+          <EmptyState size="sm" icon="solar:calendar-linear" title="No upcoming appointments to reassign for these dates" />
         </div>
       </div>
     );
@@ -257,15 +257,15 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
       <div className={styles.plannerHead}>
         <span className={styles.plannerTitle}>Select Reassignment Providers</span>
         <span className={styles.plannerTools}>
-          <ActionButton size="L" tooltip="Filters" count={filterCount || undefined} active={filtersOpen} onClick={() => setFiltersOpen(o => !o)}>
+          <ActionButton tooltip="Filters" count={filterCount || undefined} active={filtersOpen} onClick={() => setFiltersOpen(o => !o)}>
             <FilterIcon size={20} color="var(--neutral-300)" />
           </ActionButton>
           <span className={ooo.actionDivider} aria-hidden="true" />
           <span className={ooo.viewToggle} role="group" aria-label="View">
-            <ActionButton size="L" tooltip="Collapse All" className={view === 'collapsed' ? ooo.viewToggleOn : undefined} aria-pressed={view === 'collapsed'} onClick={() => setView('collapsed')}>
+            <ActionButton tooltip="Collapse All" className={view === 'collapsed' ? ooo.viewToggleOn : undefined} aria-pressed={view === 'collapsed'} onClick={() => setView('collapsed')}>
               <CollapseAllIcon size={20} color="var(--neutral-300)" />
             </ActionButton>
-            <ActionButton size="L" tooltip="Expand All" tooltipLeft className={view === 'expanded' ? ooo.viewToggleOn : undefined} aria-pressed={view === 'expanded'} onClick={() => setView('expanded')}>
+            <ActionButton tooltip="Expand All" tooltipLeft className={view === 'expanded' ? ooo.viewToggleOn : undefined} aria-pressed={view === 'expanded'} onClick={() => setView('expanded')}>
               <ExpandAllIcon size={20} color="var(--neutral-300)" />
             </ActionButton>
           </span>
@@ -278,7 +278,7 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
           <FilterChip size="S" label="Appointment Type" options={[...new Set(appointments.map(a => a.appointment_type_name).filter(Boolean))].sort()} selected={typeF} onChange={setTypeF} searchable />
         </div>
       )}
-      <InfoBar tone="info" variant="inline">Appointments are cancelled with the original provider and rebooked on the covering provider&apos;s EHR calendar. Double-booking may occur if that slot is already taken.</InfoBar>
+      <Banner tone="info" size="sm">Appointments are cancelled with the original provider and rebooked on the covering provider&apos;s EHR calendar. Double-booking may occur if that slot is already taken.</Banner>
 
       {!shown.length ? (
         <span className={styles.empty}>No appointments match these filters.</span>
@@ -297,12 +297,12 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
                   </button>
                   {allCancelled(uncoveredIds) ? cancelledTag(uncoveredIds) : markLink(uncoveredIds, 'Mark to Cancel All')}
                 </div>
-                <Collapse open={noUsersOpen}>
+                <CollapsibleContent open={noUsersOpen}>
                   <div className={styles.noUsersBody}>
                     <label className={styles.selectAll}>{box(uncoveredIds, 'Select all without covering providers')}Select All</label>
                     {uncoveredGroups.map(g => deptCard(g, false))}
                   </div>
-                </Collapse>
+                </CollapsibleContent>
               </div>
             )}
           </div>

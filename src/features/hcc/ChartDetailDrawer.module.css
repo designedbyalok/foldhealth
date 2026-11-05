@@ -91,7 +91,7 @@
 
 /* ── Body / panes ── */
 /* padding: 0 overrides the shared Drawer body's default 16px padding so
-   the two panes hug the drawer edges — same pattern as the Split Panes
+   the two panes hug the drawer edges, same pattern as the Split Panes
    story. Content padding lives INSIDE each pane, not on the row. */
 .body { display: flex; flex: 1; min-height: 0; padding: 0; }
 .leftPane {
@@ -101,7 +101,7 @@
   flex-direction: column;
   border-right: 0.5px solid var(--neutral-150);
 }
-/* Expanded PDF preview — right pane hides, so the divider between the
+/* Expanded PDF preview: right pane hides, so the divider between the
    two columns has nothing to sit against; drop it. */
 .leftPaneExpanded { border-right: none; }
 .paneHeader {
@@ -115,7 +115,7 @@
   color: var(--neutral-400);
   flex-shrink: 0;
 }
-/* Tabbed pane header — hosts the Comments/Timeline TabStrip on the
+/* Tabbed pane header: hosts the Comments/Timeline TabStrip on the
    left and the close button on the right. Height + border match
    .paneHeader so the layout stays flush with the PDF preview header. */
 .paneTabsHeader {
@@ -130,7 +130,7 @@
 }
 .pdfWrap { flex: 1; min-height: 0; background: var(--neutral-75); }
 .pdfWrap iframe { width: 100%; height: 100%; border: none; display: block; }
-/* PDF pane header — file name on the left, status pill + Expand +
+/* PDF pane header: file name on the left, status pill + Expand +
    Open-in-new-tab actions on the right. Keeps the 40px height /
    1px bottom border rule from .paneHeader so the two panes stay flush. */
 .pdfPaneHeader {
@@ -169,7 +169,7 @@
 
 .rightPane { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
-/* Meta strip — sits full-width below the shared PatientBanner (Figma
+/* Meta strip: sits full-width below the shared PatientBanner (Figma
    ICD-Import 4481:112909). Carries the Created date + Support Team badge
    on the left and the assignee + status pills on the right. Sizing +
    typography mirror DiagPanel's `.dosRow` so the two drawers read as one
@@ -187,7 +187,7 @@
 }
 .metaStripEnd { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 
-/* Legacy right-pane header — kept for any residual references, no longer
+/* Legacy right-pane header: kept for any residual references, no longer
    rendered by ChartDetailDrawer (the strip moved up to .metaStrip above). */
 .rightHeader {
   display: flex;
@@ -205,7 +205,7 @@
 .createdLabel { font-size: var(--font-md); font-weight: 400; color: var(--neutral-300); flex-shrink: 0; }
 .createdDate  { font-size: var(--font-md); font-weight: 600; color: var(--neutral-500); flex-shrink: 0; }
 .overdue      { display: inline-flex; align-items: center; gap: 3px; font-size: var(--font-sm); font-weight: 500; color: var(--status-error); flex-shrink: 0; }
-/* Matches DiagPanel .withCoderPill — same ProgressRing + label + tint. */
+/* Matches DiagPanel .withCoderPill, same ProgressRing + label + tint. */
 .teamBadge {
   display: inline-flex;
   align-items: center;
@@ -240,7 +240,7 @@
   cursor: pointer;
   overflow: hidden;
 }
-/* Locked variant — rendered as a static <span> once Support has handed off
+/* Locked variant: rendered as a static <span> once Support has handed off
    to the Coder. No chevron, no click, no hover cue: it's an owner label,
    not a control. */
 .dmBadgeLocked {
@@ -261,7 +261,7 @@
   justify-content: center;
   flex-shrink: 0;
 }
-/* Unassigned Support pill — dashed muted affordance that opens the same
+/* Unassigned Support pill: dashed muted affordance that opens the same
    "Assign Support Team" popover. */
 .dmUnassigned {
   display: inline-flex;
@@ -297,7 +297,7 @@
 .actionNeeded:disabled { cursor: not-allowed; opacity: 0.7; }
 
 /* Right body */
-/* Pass banner — shown under the header bar once a document is passed */
+/* Pass banner: shown under the header bar once a document is passed */
 .passBanner {
   display: flex;
   align-items: center;
@@ -384,12 +384,12 @@
   text-align: left;
 }
 .docMoreItem:hover { background: var(--neutral-50); }
-/* Destructive menu items — Unlink / Delete render in error tone. Nested icon
+/* Destructive menu items: Unlink / Delete render in error tone. Nested icon
    colors are set inline where we render each item. */
 .docMoreItem:has(svg[color="var(--status-error)"]) { color: var(--status-error); }
 .docMoreItem:has(svg[color="var(--status-error)"]):hover { background: var(--status-error-light); }
 
-/* ── Fail-reason inline panel — renders INSIDE the doc card being failed,
+/* ── Fail-reason inline panel: renders INSIDE the doc card being failed,
        separated from the doc header by a hairline divider. No own border /
        background; visually reads as the second row of the same card. ── */
 .failInline {
@@ -423,7 +423,7 @@
 .reasonOption[aria-checked="true"] .reasonLabel { color: var(--neutral-400); }
 .failNoteLabel { font: 500 12px/1.3 'Inter', sans-serif; color: var(--neutral-400); }
 .failNoteRequired { color: var(--status-error); }
-/* Inline metadata edit — caption text field + type select share the same
+/* Inline metadata edit: caption text field + type select share the same
    compact height so the row lines up with the surrounding form. */
 .editInput {
   width: 100%;
@@ -458,9 +458,9 @@
   gap: 8px;
 }
 
-/* Body when the last doc has been unlinked — right pane only, no preview. */
+/* Body when the last doc has been unlinked, right pane only, no preview. */
 .bodyEmpty .rightPane { flex: 1; }
-/* Actions clustered at the right end of the "Document Associated with" row —
+/* Actions clustered at the right end of the "Document Associated with" row,
    Upload | Comment (icon-only, with a count badge). Divider matches the
    drawer's other action-group separators (16px × 0.5px, neutral-150). */
 .assocActions { display: inline-flex; align-items: center; gap: 8px; }
@@ -470,7 +470,7 @@
   background: var(--neutral-150);
   flex-shrink: 0;
 }
-/* Pressed state for the icon-only Comment ActionButton — tints the button
+/* Pressed state for the icon-only Comment ActionButton, tints the button
    without competing with the ActionButton primitive's own focus ring. */
 .commentBtnActive { background: var(--primary-50) !important; }
 .uploadLink {
@@ -631,7 +631,7 @@
 }
 .uploadInput:focus { border-color: var(--primary-300); }
 .uploadInput::placeholder { color: var(--neutral-200); }
-/* Sizing wrapper for the shared <Select> — chrome comes from the component. */
+/* Sizing wrapper for the shared <Select>, chrome comes from the component. */
 .uploadSelect { width: 100%; }
 .uploadActions { display: flex; align-items: center; gap: 8px; }
 
@@ -642,26 +642,26 @@
   border: 0.5px solid var(--neutral-150);
   border-radius: 8px;
   cursor: pointer;
-  /* No overflow clip — the inline Fail form (FailReasonInline) expands the
+  /* No overflow clip: the inline Fail form (FailReasonInline) expands the
      card beyond its header height and needs to be fully visible; the
      .rightBody parent's overflow-y:auto handles scrolling when the whole
      doc list runs longer than the drawer. */
 }
 .docCard:hover { background: var(--neutral-25); }
-/* Doc header — thumb + name/meta + actions, sits at the top of the card. */
+/* Doc header: thumb + name/meta + actions, sits at the top of the card. */
 .docCardHeader {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px;
 }
-/* Selected document — primary-300 1px border all around. */
+/* Selected document: primary-300 1px border all around. */
 .docCardSelected,
 .docCardSelected:hover {
   border: 1px solid var(--primary-300);
   background: var(--neutral-0);
 }
-/* Failing state — the fail-reason panel renders inside the card. Keep the
+/* Failing state: the fail-reason panel renders inside the card. Keep the
    outer container non-hovering so the mouse can move freely over the form. */
 .docCardFailing,
 .docCardFailing:hover { background: var(--neutral-0); cursor: default; }
@@ -698,7 +698,7 @@
   white-space: nowrap;
 }
 .passFailPill:hover { background: var(--neutral-50); }
-/* Disabled variant — kicks in when Support is locked out during Coder review
+/* Disabled variant: kicks in when Support is locked out during Coder review
    (matches DiagPanel's disabled-action treatment: muted colours, no hover
    affordance, not-allowed cursor). Same rule applies to Undo, More, and the
    record-level status pill below. */
@@ -737,7 +737,7 @@
   outline-offset: 2px;
 }
 
-/* Hover popover on the doc-row "Failed" badge — Figma spec: white card,
+/* Hover popover on the doc-row "Failed" badge: Figma spec: white card,
    "Failed Due to:" header, bulleted reasons, subtle grey Comment box.
    z-index sits above the drawer panel (9501) so it's not clipped. */
 .failTooltip {

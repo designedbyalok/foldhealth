@@ -168,7 +168,7 @@ export function FormView({ id: propId, isPublic = false }) {
               <Icon name="solar:check-circle-linear" size={40} color="var(--status-success)" />
               <h2 className={styles.title}>Thank you</h2>
               <p className={styles.desc}>Your response has been submitted.</p>
-              <Button variant="secondary" size="L" onClick={close}>Done</Button>
+              <Button variant="outline" onClick={close}>Done</Button>
             </div>
           </div>
         ) : (

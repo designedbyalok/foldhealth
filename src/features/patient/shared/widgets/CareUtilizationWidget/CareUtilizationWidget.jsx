@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Icon } from '../../../../../components/Icon/Icon';
 import { BadgeSelect } from '../../../../../components/BadgeSelect/BadgeSelect';
-import { PanelSection } from '../../../../../components/PanelSection/PanelSection';
+import { PanelSection, usePanelEmbedded } from '../../../../../components/PanelSection/PanelSection';
 import styles from './CareUtilizationWidget.module.css';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -19,13 +19,10 @@ const total = (data) => data.reduce((sum, n) => sum + n, 0);
 
 export function CareUtilizationWidget() {
   const [year, setYear] = useState(YEARS[0]);
+  const embedded = usePanelEmbedded();
 
-  return (
-    <PanelSection
-      title="Care Utilization Summary"
-      actions={<BadgeSelect value={year} options={YEARS} onChange={setYear} />}
-    >
-      <div className={styles.container}>
+  const chart = (
+    <>
         <div className={styles.legend}>
           {VISIT_TYPES.map(vt => (
             <span key={vt.key} className={styles.legendItem}>
@@ -65,7 +62,17 @@ export function CareUtilizationWidget() {
           </span>
           <span className={styles.footerItem}>Total Cost: $67,450</span>
         </div>
-      </div>
+    </>
+  );
+
+  return (
+    <PanelSection
+      plain={embedded}
+      icon="solar:hospital-linear"
+      title="Care Utilization Summary"
+      actions={<BadgeSelect value={year} options={YEARS} onChange={setYear} />}
+    >
+      {embedded ? chart : <div className={styles.container}>{chart}</div>}
     </PanelSection>
   );
 }

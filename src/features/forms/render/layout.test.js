@@ -61,7 +61,7 @@ describe('buildFlow', () => {
   it('by-section: questions carry sectionIndex; sections list for the stepper', () => {
     const flow = buildFlow(fields, 'by-section');
     expect(flow.sections.map((s) => s.title)).toEqual(['Group g1', 'Questions']);
-    expect(flow.sections.map((s) => s.count)).toEqual([2, 2]); // g1: q1,q2 — loose: t1,r1
+    expect(flow.sections.map((s) => s.count)).toEqual([2, 2]); // g1: q1,q2, loose: t1,r1
     expect(flow.questions.map((q) => [q.field.linkId, q.sectionIndex])).toEqual([['q1', 0], ['q2', 0], ['t1', 1], ['r1', 1]]);
   });
 

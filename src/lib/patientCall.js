@@ -3,6 +3,7 @@ import { resolvePatientStoreId } from './resolvePatientStoreId';
 const MEMBER_SLICES = [
   'hccMembers',
   'awvMembers',
+  'cmpMembers',
   'ccmWorklistMembers',
   'snpWorklistMembers',
   'pharmacyWorklistMembers',
@@ -10,10 +11,15 @@ const MEMBER_SLICES = [
   'allPatients',
 ];
 
+// CallPopover reads this inside a store selector, so the same row must give
+// back the same object or React re-renders forever.
+const callPatientCache = new WeakMap();
+
 function memberRowToCallPatient(row) {
   if (!row?.name) return null;
+  if (callPatientCache.has(row)) return callPatientCache.get(row);
   const id = row.patientId || row.id;
-  return {
+  const patient = {
     id,
     name: row.name,
     language: row.language || 'en',
@@ -22,6 +28,8 @@ function memberRowToCallPatient(row) {
     age: row.age,
     memberId: row.memberId,
   };
+  callPatientCache.set(row, patient);
+  return patient;
 }
 
 /**

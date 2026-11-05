@@ -4,7 +4,7 @@ import { Button } from '../Button/Button';
 import styles from './ProductTour.module.css';
 
 /**
- * Custom tooltip for React Joyride — uses Fold Health design system.
+ * Custom tooltip for React Joyride: uses Fold Health design system.
  *
  * Receives TooltipRenderProps from Joyride:
  * - continuous, index, step, size (total steps)
@@ -57,17 +57,17 @@ export function TourTooltip({
         </div>
         <div className={styles.tooltipActions}>
           {!isFirst && (
-            <Button variant="ghost" size="S" {...backProps}>
+            <Button variant="ghost" size="sm" {...backProps}>
               Back
             </Button>
           )}
           {isFirst && size > 1 && (
-            <Button variant="ghost" size="S" {...skipProps}>
+            <Button variant="ghost" size="sm" {...skipProps}>
               Skip Tour
             </Button>
           )}
           {continuous && (
-            <Button variant="primary" size="S" {...primaryProps}>
+            <Button size="sm" {...primaryProps}>
               {isLast ? 'Done' : 'Next'}
             </Button>
           )}

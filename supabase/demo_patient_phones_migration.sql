@@ -8,7 +8,11 @@
 -- patients don't all share one.
 --
 -- The one exception is Annette Brave, the team's test patient: her number is
--- a real one we own, +91 78389 97914, so texts and calls to her arrive.
+-- a real one we own, +91 91753 67487, so texts and calls to her arrive. Her
+-- demo family (ids 'sms-family-11089-*', FCS-5677) shares it. Alok Kumar
+-- (11052) and his family ('sms-family-11052-*') keep +91 78703 87321 the same
+-- way (alok_test_patient_migration.sql), and Amy Phillips (11103) keeps
+-- +91 97185 13584 (amy_test_number_migration.sql).
 --
 -- Covers every patient phone column: all_patients.phone, patients.phone,
 -- hedis_members.phone and p360_profiles.extra_phones (extra contact numbers).
@@ -24,18 +28,23 @@ $$;
 UPDATE public.all_patients
    SET phone = pg_temp.demo_phone(id)
  WHERE phone IS NOT NULL AND phone <> ''
-   AND lower(trim(name)) <> 'annette brave';
+   AND lower(trim(name)) <> 'annette brave'
+   AND id NOT LIKE 'sms-family-11089-%'
+   AND id NOT IN ('11052', '11103')
+   AND id NOT LIKE 'sms-family-11052-%';
 UPDATE public.all_patients
-   SET phone = '+917838997914'
- WHERE lower(trim(name)) = 'annette brave';
+   SET phone = '+919175367487'
+ WHERE lower(trim(name)) = 'annette brave'
+    OR id LIKE 'sms-family-11089-%';
 
 -- patients (TOC)
 UPDATE public.patients
    SET phone = pg_temp.demo_phone(id)
  WHERE phone IS NOT NULL AND phone <> ''
-   AND lower(trim(name)) <> 'annette brave';
+   AND lower(trim(name)) <> 'annette brave'
+   AND id NOT IN ('11052', '11103');
 UPDATE public.patients
-   SET phone = '+917838997914'
+   SET phone = '+919175367487'
  WHERE lower(trim(name)) = 'annette brave';
 
 -- hedis_members
@@ -44,7 +53,7 @@ UPDATE public.hedis_members
  WHERE phone IS NOT NULL AND phone <> ''
    AND lower(trim(name)) <> 'annette brave';
 UPDATE public.hedis_members
-   SET phone = '+917838997914'
+   SET phone = '+919175367487'
  WHERE lower(trim(name)) = 'annette brave';
 
 -- p360_profiles.extra_phones: [{ number, hours }]. Each number becomes a

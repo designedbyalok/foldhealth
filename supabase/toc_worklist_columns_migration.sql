@@ -1,4 +1,4 @@
--- TOC worklist — persist care-team assignees, tags, and radar / risk IQ
+-- TOC worklist: persist care-team assignees, tags, and radar / risk IQ
 -- on public.patients. These columns are edited from the TOC worklist
 -- (nurse / health coach, coordinator, social worker, community health
 -- worker, plus display-only radar / risk IQ / tags). Without them the

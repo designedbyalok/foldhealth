@@ -13,6 +13,8 @@ import { useAppStore } from '../../../store/useAppStore';
 import { ConfigureTeamDrawer } from './ConfigureTeamDrawer';
 import { KIND_LABEL, KIND_BADGE_VARIANT } from './teamTypeConfig';
 import { HoverCard } from './HoverCard';
+import { TagsTable } from './tags/TagsTable';
+import { TagDrawer } from './tags/TagDrawer';
 import hoverStyles from './HoverCard.module.css';
 // Reuse the AgentsTable shell (wrapper / table primitives) so the Member/Leads
 // Care Team view keeps the same Fold chrome the rest of Settings uses.
@@ -29,9 +31,9 @@ const TABS = [
 ];
 
 const CREATED_FOR_BADGE = {
-  HCC:            { variant: 'toc-oncall',       label: 'HCC' },
-  'Care Program': { variant: 'status-scheduled', label: 'Care Program' },
-  HEDIS:          { variant: 'status-review',    label: 'HEDIS' },
+  HCC:            { variant: 'primary',       label: 'HCC' },
+  'Care Program': { variant: 'info', label: 'Care Program' },
+  HEDIS:          { variant: 'warning',    label: 'HEDIS' },
 };
 
 const ASSIGNED_BAR_COLOR = {
@@ -40,7 +42,7 @@ const ASSIGNED_BAR_COLOR = {
   error:   'var(--status-error)',
 };
 
-// Create-New menu options — clicking any opens ConfigureTeamDrawer with the
+// Create-New menu options: clicking any opens ConfigureTeamDrawer with the
 // matching `kind` so the Team Type / Assign-To dimensions adapt.
 const CREATE_NEW_OPTIONS = [
   { kind: 'care-program', label: 'Care Program Team' },
@@ -60,6 +62,9 @@ export function MemberLeadsPanel() {
   const createBtnRef = useRef(null);
   // drawer state: null when closed; otherwise { kind, editTeam? }
   const [drawer, setDrawer] = useState(null);
+  // Tag drawer: null when closed; { tag } (null tag adds one).
+  const [tagDrawer, setTagDrawer] = useState(null);
+  const onTags = activeTab === 'tags';
 
   // Load saved teams from Supabase on first mount (falls back to seeds if
   // empty); repeat visits reuse the store copy instead of re-querying.
@@ -92,7 +97,7 @@ export function MemberLeadsPanel() {
                 would render after rightExtras, so we inline it here. */}
             {searchOpen ? (
               <SearchBar
-                placeholder="Search teams…"
+                placeholder={onTags ? 'Search tags…' : 'Search teams…'}
                 value={searchVal}
                 onChange={e => setSearchVal(e.target.value)}
                 onClose={() => { setSearchOpen(false); setSearchVal(''); }}
@@ -107,10 +112,9 @@ export function MemberLeadsPanel() {
             <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
             <div className={styles.createWrap} ref={createBtnRef}>
               <Button
-                variant="secondary"
-                size="L"
+                variant="outline"
                 leadingIcon="solar:add-circle-linear"
-                onClick={() => setCreateOpen(o => !o)}
+                onClick={() => (onTags ? setTagDrawer({ tag: null }) : setCreateOpen(o => !o))}
               >
                 Create New
               </Button>
@@ -135,7 +139,11 @@ export function MemberLeadsPanel() {
       />
 
       {/* Tab content */}
-      {activeTab === 'care-team' ? (
+      {onTags ? (
+        <div className={styles.tagsWrap}>
+          <TagsTable search={searchVal} onEdit={(tag) => setTagDrawer({ tag })} />
+        </div>
+      ) : activeTab === 'care-team' ? (
         <div className={agentStyles.tableWrap}>
           <CareTeamTable
             searchVal={searchVal}
@@ -145,10 +153,11 @@ export function MemberLeadsPanel() {
       ) : (
         <div className={styles.empty}>
           <Icon name="solar:gallery-edit-linear" size={32} color="var(--neutral-200)" />
-          <p>{TABS.find(t => t.key === activeTab)?.label} — coming soon</p>
+          <p>{TABS.find(t => t.key === activeTab)?.label}, coming soon</p>
         </div>
       )}
 
+      {tagDrawer && <TagDrawer tag={tagDrawer.tag} onClose={() => setTagDrawer(null)} />}
       {drawer && (
         <ConfigureTeamDrawer
           kind={drawer.kind}
@@ -221,7 +230,7 @@ function CareTeamTable({ searchVal = '', onEdit }) {
 
   // Deep-clone a team's members so the duplicate doesn't share Assign-To
   // row objects with the source. Returns a brand-new team ready for the
-  // store. Keeps members, allocatedTins, teamType, kind, createdFor — just
+  // store. Keeps members, allocatedTins, teamType, kind, createdFor, just
   // mints a new id/timestamp and appends "(Copy)" to the name.
   const duplicateTeam = (src) => {
     const now = (() => {
@@ -277,7 +286,7 @@ function CareTeamTable({ searchVal = '', onEdit }) {
         {rows.map(t => {
           const badge = CREATED_FOR_BADGE[t.createdFor]
             || (t.kind && { variant: KIND_BADGE_VARIANT[t.kind], label: KIND_LABEL[t.kind] })
-            || { variant: 'toc-new', label: t.createdFor };
+            || { variant: 'neutral', label: t.createdFor };
           return (
             <tr key={t.id}>
               <td className={[agentStyles.stickyLeft, agentStyles.colName].filter(Boolean).join(' ')}>
@@ -286,7 +295,7 @@ function CareTeamTable({ searchVal = '', onEdit }) {
                   <div className={styles.nameMeta}>Created on {t.createdAt} by {t.createdBy}</div>
                 </div>
               </td>
-              <td><Badge variant={badge.variant} label={badge.label} /></td>
+              <td><Badge tone={badge.variant} label={badge.label} /></td>
               <td>{t.teamType}</td>
               <td>
                 <HoverCard
@@ -299,7 +308,7 @@ function CareTeamTable({ searchVal = '', onEdit }) {
                       {t.users.length === 0 ? (
                         <div className={hoverStyles.userRowRole}>No members yet.</div>
                       ) : t.users.map((u, i) => (
-                        // Neutral grey chip — this badge shows capacity USED
+                        // Neutral grey chip: this badge shows capacity USED
                         // on this team, not remaining capacity, so the tone
                         // scale (red/yellow/green) was misleading. Keep it
                         // informational only.
@@ -359,21 +368,18 @@ function CareTeamTable({ searchVal = '', onEdit }) {
                 <div className={agentStyles.actions}>
                   <ActionButton
                     icon="solar:pen-linear"
-                    size="L"
                     tooltip="Edit"
                     onClick={() => onEdit?.(t._raw)}
                   />
                   <span className={agentStyles.actionDivider} />
                   <ActionButton
                     icon="solar:copy-linear"
-                    size="L"
                     tooltip="Duplicate"
                     onClick={() => duplicateTeam(t._raw)}
                   />
                   <span className={agentStyles.actionDivider} />
                   <ActionButton
                     icon="solar:menu-dots-bold"
-                    size="L"
                     tooltip="More"
                     onClick={(e) => {
                       const r = e.currentTarget.getBoundingClientRect();

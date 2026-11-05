@@ -29,7 +29,7 @@ export const Default = {
         <div style={{ width: 480 }}>
           <div ref={ref} style={{ overflowX: 'auto', border: '0.5px solid var(--neutral-150)', borderRadius: 4 }}>
             <div style={{ width: 1600, height: 80, padding: 12, background: 'repeating-linear-gradient(90deg, var(--neutral-50), var(--neutral-50) 40px, var(--neutral-100) 40px, var(--neutral-100) 80px)' }}>
-              Wide content — scroll me
+              Wide content: scroll me
             </div>
           </div>
           <HorizontalScrollbar targetRef={ref} />

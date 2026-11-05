@@ -16,7 +16,7 @@ export function preventDefaultDrag(e) {
  * Assign a user's authorization columns (admin_role / role / clinical_roles).
  *
  * These are the only columns that decide what someone can do, so the client is
- * not allowed to write them directly — a `profiles_guard_authz_fields` trigger
+ * not allowed to write them directly, a `profiles_guard_authz_fields` trigger
  * rejects that. This RPC is SECURITY DEFINER and re-derives the caller's admin
  * status from the database before applying anything.
  */
@@ -143,7 +143,7 @@ export async function importBulkUsers({ bulkRows, showToast, logAudit, onInvited
     (r.last_name && !isCapitalizedName(r.last_name)),
   );
   if (badRow) {
-    showToast(`Row for ${badRow.email || badRow.first_name || '—'}: first/last name must start with a capital letter`);
+    showToast(`Row for ${badRow.email || badRow.first_name || '-'}: first/last name must start with a capital letter`);
     return false;
   }
 

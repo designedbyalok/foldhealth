@@ -8,7 +8,7 @@ import styles from './IcdSearch.module.css';
 const EMPTY_EXCLUDE_CODES = [];
 
 /**
- * Fold Health ICD search — shared autocomplete for looking up ICD codes from
+ * Fold Health ICD search: shared autocomplete for looking up ICD codes from
  * the live WHO ICD-11 API (via the `/api/icd-search` proxy), with a Supabase
  * cache + bundled catalog fallback chain.
  *
@@ -23,7 +23,7 @@ const EMPTY_EXCLUDE_CODES = [];
  * @param {string}   [props.placeholder]
  * @param {string[]} [props.excludeCodes]       – codes to hide (already added)
  * @param {boolean}  [props.autoFocus]
- * @param {string}   [props.variant]            – 'default' | 'error'
+ * @param {boolean}  [props.invalid]            – red field chrome
  * @param {number}   [props.minChars]
  * @param {string}   [props.className]
  */
@@ -33,7 +33,7 @@ export function IcdSearch({
   placeholder = 'Search and Add ICD Code & Description, HCC Code & Description',
   excludeCodes = EMPTY_EXCLUDE_CODES,
   autoFocus = false,
-  variant = 'default',
+  invalid = false,
   minChars = 2,
   className,
 }) {
@@ -51,13 +51,13 @@ export function IcdSearch({
     () => new Set(excludeCodes.filter(Boolean)),
     [excludeCodes],
   );
-  // Code-less keyword entities can't become chips (no key, no dedupe) — skip.
+  // Code-less keyword entities can't become chips (no key, no dedupe), skip.
   const visible = useMemo(
     () => results.filter((r) => r.code && !excludeSet.has(r.code)),
     [results, excludeSet],
   );
 
-  // Reset the highlight only when the actual result set changes — `visible`
+  // Reset the highlight only when the actual result set changes, `visible`
   // is referentially fresh every parent render.
   const visibleKey = visible.map((r) => r.code).join('|');
   useEffect(() => setActive(0), [visibleKey]);
@@ -124,7 +124,7 @@ export function IcdSearch({
           id={id}
           ref={inputRef}
           className={styles.inputField}
-          variant={variant}
+          invalid={invalid}
           placeholder={placeholder}
           value={query}
           autoFocus={autoFocus}
@@ -192,5 +192,5 @@ export function IcdSearch({
   );
 }
 
-// useId output contains ':' — CSS.escape handles it for querySelector use.
+// useId output contains ':', CSS.escape handles it for querySelector use.
 const optionId = (listboxId, index) => `${listboxId}-opt-${index}`;

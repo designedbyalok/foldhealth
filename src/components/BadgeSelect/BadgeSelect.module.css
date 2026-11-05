@@ -11,3 +11,6 @@
   outline: 1px solid var(--primary-300);
   outline-offset: 1px;
 }
+
+/* Read-only for now (e.g. while a bulk selection is open). */
+.trigger:disabled { cursor: not-allowed; }

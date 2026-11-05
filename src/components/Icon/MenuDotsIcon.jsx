@@ -10,7 +10,7 @@ export function MenuDotsIcon({ size = 16, color = 'var(--neutral-300)' }) {
   // 24×24 viewBox with tiny radius-1.33 circles that disappeared at 16px,
   // so we render scaled-up circles (radius 2 in a 4-unit-tall band) and
   // crop the viewBox to (4, 4)–(20, 20) so the dots fill ≈92% of the box.
-  // Result: dots are ~4px each at 16px render — comparable density to
+  // Result: dots are ~4px each at 16px render, comparable density to
   // Solar's filled icons at the same `size` prop while keeping the
   // lighter outlined aesthetic spec'd by Figma.
   return (

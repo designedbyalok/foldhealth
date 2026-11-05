@@ -1,5 +1,5 @@
 /**
- * Pen (sign) glyph — the "Sign (Self)" / "Sign (NP)" rows of the Sign
+ * Pen (sign) glyph: the "Sign (Self)" / "Sign (NP)" rows of the Sign
  * dropdown (Figma SNP-Story 3039:621576). Fill-based, so it takes `color`
  * rather than a stroke width.
  *

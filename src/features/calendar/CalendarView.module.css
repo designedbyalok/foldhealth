@@ -7,67 +7,117 @@
   background: var(--neutral-0);
 }
 
-/* Toolbar */
+/* Toolbar: the period, view and navigation over the filters. */
 .toolbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  border-bottom: 0.5px solid var(--neutral-150);
+  flex-direction: column;
   flex-shrink: 0;
-  gap: 12px;
   overflow: visible;
   position: relative;
   z-index: 10;
 }
 
+.toolbarTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  /* 16px side gutters, like the worklists' filter bar; the list's
+     checkboxes line up with this edge. */
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
 .toolbarLeft {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.toolbarCenter {
-  display: flex;
-  align-items: center;
   gap: var(--space-2);
+  min-width: 0;
 }
 
 .toolbarRight {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
-.monthTitle {
-  font-size: var(--font-xl);
-  font-weight: 600;
-  color: var(--neutral-400);
-  margin: 0;
-  white-space: nowrap;
+.toolGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+/* A view's own tools (the List view's search and collapse), pushed right. */
+.filterRowEnd { margin-left: auto; }
+
+/* A view's tools at the end of the filter row (CalendarViewTools). */
+.listTools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.listToolsDivider {
+  width: 0.5px;
+  height: 16px;
+  background: var(--neutral-150);
+}
+
+/* The search grows out of the icon's spot and shrinks back into it on close. */
+.listSearch {
+  width: 240px;
+  overflow: hidden;
+  animation: listSearchIn var(--duration-base) var(--ease-out);
+}
+/* As tall as the filter chips (and the icon it replaces), so opening it
+   doesn't grow the filter row. */
+.listTools .listSearch { height: 32px; }
+.listSearchClosing { animation: listSearchOut var(--duration-base) var(--ease-out) forwards; }
+@keyframes listSearchIn {
+  from { width: 28px; opacity: 0; }
+  to { width: 240px; opacity: 1; }
+}
+@keyframes listSearchOut {
+  from { width: 240px; opacity: 1; }
+  to { width: 28px; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .listSearch, .listSearchClosing { animation: none; }
+}
+
+/* The arrows hug the date, so the three read as one control. */
+.dateNav {
+  display: flex;
+  align-items: center;
+  margin-right: var(--space-2);
+}
+
+.dateTitle {
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--space-1);
+  background: none;
+  font-size: var(--font-2xl);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--neutral-500);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dateTitle:hover { background: var(--neutral-50); }
+.dateTitle:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; }
 
 /* View picker (Week / Day / Month), sized to its longest label. */
-.viewSelect { width: calc(var(--space-16) + var(--space-10)); }
+.viewSelect { width: calc(var(--space-16) + var(--space-6)); }
 
-.todayBtn {
-  padding: 4px 12px;
-  border: 0.5px solid var(--neutral-150);
-  border-radius: 4px;
-  font-size: var(--font-md);
-  font-weight: 500;
-  color: var(--neutral-400);
-  background: var(--neutral-0);
-  cursor: pointer;
-  transition: background .1s;
-}
-
-.todayBtn:hover {
-  background: var(--neutral-50);
-}
-
-
-/* Calendar container — fill remaining height */
+/* Calendar container: fill remaining height */
 .calendarWrap {
   flex: 1;
   overflow: auto;
@@ -125,45 +175,36 @@
   box-shadow: none !important;
 }
 
-/* Week header, as the legacy week view: one line per day ("SUN•27") in
-   bordered cells; past days grey, today tinted with a primary top bar. */
+/* Week header, as in User Availability: "Friday" over "Nov 20", left-aligned
+   in bordered cells (WeekGridDate). Past days grey, as they can't be booked;
+   today tinted with a 3px primary bar along the top. */
 .calendarWrap :global(.sx__week-grid__date) {
-  flex-direction: row !important;
-  align-items: center;
+  flex-direction: column !important;
+  align-items: flex-start;
   justify-content: center;
   gap: 0;
-  padding: var(--space-3) 0 !important;
+  padding: var(--space-3) !important;
   border-left: 0.5px solid var(--neutral-150);
-  border-top: 4px solid transparent;
+  border-top: 3px solid transparent;
   background: var(--neutral-0);
 }
 .calendarWrap :global(.sx__week-grid__date[data-past]) { background: var(--neutral-50); }
-.calendarWrap :global(.sx__week-grid__day-name),
-.calendarWrap :global(.sx__week-grid__date-number) {
-  font-size: var(--font-base) !important;
-  font-weight: 500 !important;
+.weekHead {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  font-size: var(--font-sm);
+  font-weight: 500;
   line-height: 1.2;
-  text-transform: uppercase;
-  letter-spacing: 0;
-  color: var(--neutral-500) !important;
+  color: var(--neutral-300);
+  white-space: nowrap;
 }
-.calendarWrap :global(.sx__week-grid__day-name)::after { content: '•'; }
-
+.weekHeadDate { font-weight: 400; }
 .calendarWrap :global(.sx__week-grid__date--is-today) {
-  background: var(--primary-50);
+  background: var(--primary-25);
   border-top-color: var(--primary-300);
 }
-.calendarWrap :global(.sx__week-grid__date--is-today .sx__week-grid__day-name),
-.calendarWrap :global(.sx__week-grid__date--is-today .sx__week-grid__date-number) {
-  color: var(--primary-300) !important;
-  font-weight: 400 !important;
-  /* schedule-x draws a filled circle behind today's number; the top bar
-     and tint mark today instead. */
-  background: transparent !important;
-  width: auto !important;
-  height: auto !important;
-  border-radius: 0 !important;
-}
+.calendarWrap :global(.sx__week-grid__date--is-today) .weekHead { color: var(--primary-300); }
 
 /* The selected user's name, above the week's day cells. */
 .weekUserRow {
@@ -196,7 +237,7 @@
   flex: 1;
 }
 
-/* Month grid — fill available height and distribute rows evenly */
+/* Month grid: fill available height and distribute rows evenly */
 .calendarWrap :global(.sx__month-grid-wrapper) {
   height: 100% !important;
   display: flex !important;
@@ -208,7 +249,7 @@
   flex: 1 !important;
 }
 
-/* Events — let schedule-x handle the left border color per calendar type */
+/* Events: let schedule-x handle the left border color per calendar type */
 .calendarWrap :global(.sx__event) {
   border-radius: 4px !important;
   font-size: var(--font-sm) !important;
@@ -223,7 +264,7 @@
   z-index: 2;
 }
 
-/* Selection highlight — dashed 30-min block. The class comes from the event's
+/* Selection highlight: dashed 30-min block. The class comes from the event's
    _options.additionalClasses; schedule-x has no built-in selection modifier. */
 .calendarWrap :global(.sx__event.is-selection) {
   border: 1.5px dashed var(--primary-300) !important;
@@ -235,7 +276,7 @@
   box-shadow: none !important;
 }
 
-/* Timezone label — positioned absolutely in time axis column */
+/* Timezone label: positioned absolutely in time axis column */
 .timezoneLabel {
   position: absolute;
   top: 4px;
@@ -277,7 +318,7 @@
   border-radius: 50%;
 }
 
-/* Past day overlay — semi-transparent so grid lines stay visible, events clickable above */
+/* Past day overlay: semi-transparent so grid lines stay visible, events clickable above */
 .pastDayOverlay {
   position: absolute;
   top: 0;
@@ -293,7 +334,7 @@
   background: rgba(0, 0, 0, 0.35);
 }
 
-/* Cancelled events — disabled look with strikethrough */
+/* Cancelled events: disabled look with strikethrough */
 .calendarWrap :global(.sx__event.is-cancelled) {
   opacity: 0.5 !important;
   cursor: pointer;
@@ -321,8 +362,8 @@
 }
 
 /* Month grid cells clickable. schedule-x already gives them flex:1, so only
-   the affordance is ours. (These previously targeted .sx__date-grid-day —
-   the hidden all-day row — so month cells never got a pointer cursor.) */
+   the affordance is ours. (These previously targeted .sx__date-grid-day,
+   the hidden all-day row: so month cells never got a pointer cursor.) */
 .calendarWrap :global(.sx__month-grid-day) {
   cursor: pointer;
 }
@@ -408,7 +449,7 @@
   background: var(--primary-25, #F8F5FF);
 }
 
-/* Hover preview — 30-min slot ghost */
+/* Hover preview: 30-min slot ghost */
 .hoverPreview {
   position: absolute;
   left: 4px;

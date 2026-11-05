@@ -172,7 +172,7 @@ export function PreviewCanvas({ dropIndicator }) {
   // HTML override → bypass the doc and render the user's edited markup.
   // Live override (htmlPreviewOverride) takes precedence so the user sees
   // their pending edits. Persisted customHtml is only used as a fallback
-  // when there are no parsed blocks — that way imported HTML (which always
+  // when there are no parsed blocks, that way imported HTML (which always
   // produces childrenIds) flows through the normal SortableBlock pipeline
   // so the toolbar, drag handles, drop indicator, and reorder all work.
   const customHtml = doc.root?.data?.customHtml;

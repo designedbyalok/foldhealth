@@ -27,7 +27,7 @@ export function linkedForChild(item, live, programBadge) {
 }
 
 /**
- * `(kind, id) => boolean` — whether a goal / intervention / barrier has a
+ * `(kind, id) => boolean`, whether a goal / intervention / barrier has a
  * current note. Same rule the Goal, Intervention and Barrier drawers use to
  * show their Note card: the newest `note` entry for the item (logged under its
  * kind or the generic 'note' type) counts unless a `note_deleted` entry is at

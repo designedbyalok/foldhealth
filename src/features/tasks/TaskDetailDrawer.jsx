@@ -28,7 +28,7 @@ export function TaskDetailDrawer({ task, onClose, onSelectTask, inline = false }
   const [pdfPreview, setPdfPreview] = useState(null);
   const [editingNote, setEditingNote] = useState(false);
   // Linked-note "View" opens a read-only preview drawer for BOTH Signed
-  // and Pending-Review notes — Signed is locked from direct edits (Amend
+  // and Pending-Review notes: Signed is locked from direct edits (Amend
   // is the audit path) and Pending-Review is out for reviewer sign-off,
   // so neither is a fit for the editable ClinicalNotePanel. The preview
   // header branches its affordances by note.status.
@@ -53,8 +53,8 @@ export function TaskDetailDrawer({ task, onClose, onSelectTask, inline = false }
   }, [task?.pool, hedisMembers.length, fetchHedisMembers]);
   // Resolve first from the persisted `task.hedis_member_id`
   // (tasks_hedis_linkage_migration.sql), then fall back to a name
-  // match for legacy rows. When neither hits — DB empty, name
-  // mismatch — synthesize a minimal member from the task's own
+  // match for legacy rows. When neither hits, DB empty, name
+  // mismatch: synthesize a minimal member from the task's own
   // fields so ClinicalNotePanel still mounts. The panel only needs
   // id / name / initials / gaps to render.
   const resolvedHedisMemberId = task?.hedisMemberId
@@ -212,7 +212,7 @@ export function TaskDetailDrawer({ task, onClose, onSelectTask, inline = false }
     onClose();
   };
 
-  // `picked` comes from CommentComposer as [{ id, name }] — the chips the
+  // `picked` comes from CommentComposer as [{ id, name }], the chips the
   // user actually accepted from the picker. It replaces regexing the body for
   // `@(\w+(?:\s+\w+)?)`, which guessed at intent from the raw string and got
   // it wrong in ordinary cases: it matched a bare "@handle" nobody is named,
@@ -252,7 +252,7 @@ export function TaskDetailDrawer({ task, onClose, onSelectTask, inline = false }
 
   // When `inline` is set, the task-detail content is rendered directly
   // into whatever container the caller provides (e.g. CareGapDetailDrawer's
-  // left workspace pane) — no <Drawer> wrapper, no portal, no header.
+  // left workspace pane): no <Drawer> wrapper, no portal, no header.
   // The caller supplies the pane header (title, close) around us.
   const content = (
     <>

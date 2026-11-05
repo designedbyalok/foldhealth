@@ -13,7 +13,7 @@ export function TierForm({ tier, index, expanded, isActive, onToggle, onUpdate, 
   const setTierBool = (key) => (val) => onUpdate(tier.id, key, val);
   const setTierVal = (key) => (val) => onUpdate(tier.id, key, val);
 
-  /* Single field cell — $ prefix, numeric only */
+  /* Single field cell: $ prefix, numeric only */
   const cell = (key, label, { required = false } = {}) => (
     <div className={styles.field}>
       <FieldLabel required={required}>{label}</FieldLabel>
@@ -26,7 +26,7 @@ export function TierForm({ tier, index, expanded, isActive, onToggle, onUpdate, 
     </div>
   );
 
-  /* In / Out network coverage — identical structure (net = 'inNet' | 'outNet') */
+  /* In / Out network coverage: identical structure (net = 'inNet' | 'outNet') */
   const coverageSection = (net, title) => (
     <div className={styles.coverageSection}>
       <div className={styles.coverageSectionTitle}>{title}</div>
@@ -116,7 +116,7 @@ export function TierForm({ tier, index, expanded, isActive, onToggle, onUpdate, 
                 <Select
                   options={COVERAGE_TYPE_OPTIONS}
                   value={tier.coverageType || undefined}
-                  onChange={setTierVal('coverageType')}
+                  onValueChange={setTierVal('coverageType')}
                   placeholder="Select Coverage Type"
                 />
               </div>

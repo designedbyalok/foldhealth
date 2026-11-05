@@ -41,9 +41,9 @@ function flushHccExtractToast(getToast) {
   const toast = getToast?.();
   if (!toast) return;
   if (names.length === 1) {
-    toast(`${names[0]} — extracting in the background`);
+    toast(`${names[0]}: extracting in the background`);
   } else {
-    toast(`${names.length} files — extracting in the background`);
+    toast(`${names.length} files, extracting in the background`);
   }
 }
 

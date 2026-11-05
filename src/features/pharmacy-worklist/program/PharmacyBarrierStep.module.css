@@ -1,45 +1,43 @@
-.wrap { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.wrap { display: flex; flex-direction: column; min-width: 0; }
 
-.measureTitle { display: inline-flex; align-items: center; gap: var(--space-2); }
-/* Header-right status line of a measure card. */
-.asOf { font-size: var(--font-sm); color: var(--neutral-300); white-space: nowrap; }
-.asOfDirty { font-size: var(--font-sm); color: var(--primary-300); white-space: nowrap; }
-.dirty { border-color: var(--primary-200); }
+/* One flat section per gap (and the note), split by hairlines. */
+.gap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border-top: 0.5px solid var(--neutral-150);
+}
+.gap:first-child { padding-top: var(--space-1); border-top: none; }
+.gapHead { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.gapTitleWrap { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.gapTitle { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+.asOf { font-size: var(--font-sm); color: var(--neutral-300); }
+.asOfDirty { font-size: var(--font-sm); color: var(--primary-300); }
 
-/* Barriers / Interventions / Result side by side, wrapping on narrow panels. */
+/* Barriers and Interventions side by side, wrapping on narrow panels. */
 .fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--space-3);
   align-items: start;
-  padding: var(--space-1) var(--space-4) var(--space-4);
 }
-.flagged {
-  grid-column: 1 / -1;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: var(--font-sm);
-  color: var(--neutral-300);
-}
+.appliesTo { grid-column: 1 / -1; font-size: var(--font-sm); color: var(--neutral-300); }
 
-.noteBody { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-1) var(--space-4) var(--space-4); }
+/* Set per medication: drug, Barriers, Interventions, one row per drug. */
+.medGrid {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.8fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+}
+.colHead { font-size: var(--font-sm); color: var(--neutral-300); }
+.medName { font-size: var(--font-md); color: var(--neutral-400); min-width: 0; overflow-wrap: anywhere; }
+
+.noteBody { display: flex; flex-direction: column; gap: var(--space-2); }
+.noteLabel { font-size: var(--font-base); color: var(--neutral-200); }
 .foot { display: flex; justify-content: flex-end; gap: var(--space-2); }
 
-.logEntry {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border-top: 0.5px solid var(--neutral-150);
-}
-.logHead { display: flex; align-items: baseline; gap: var(--space-2); }
-.logDate { font-size: var(--font-md); font-weight: 500; color: var(--neutral-400); }
-.logRow { display: flex; align-items: flex-start; gap: var(--space-2); }
-.logChips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-.logNote { font-size: var(--font-md); color: var(--neutral-400); }
-
-.muted { font-size: var(--font-md); color: var(--neutral-300); }
 .empty {
   display: flex;
   flex-direction: column;

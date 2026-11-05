@@ -37,7 +37,7 @@ export function InterventionLibrarySelect({ kind, onPick }) {
       placeholder="Pick from the library to fill in the fields"
       options={options}
       value={pickedId}
-      onChange={(id) => {
+      onValueChange={(id) => {
         setPickedId(id);
         const item = items.find(t => t.id === id);
         if (item) onPick(item);

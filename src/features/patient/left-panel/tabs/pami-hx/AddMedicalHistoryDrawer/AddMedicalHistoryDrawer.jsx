@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Drawer } from '../../../../../../components/Drawer/Drawer';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { ChronicConditionSelect } from '../../../../../settings/care-plan-library/shared/ChronicConditionSelect/ChronicConditionSelect';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { toast } from '../../../../../../components/Toast/sonnerToast';
@@ -92,7 +92,7 @@ export function AddMedicalHistoryDrawer({ patientId, onClose }) {
           <CardSkeleton rows={3} />
         ) : conditions.length === 0 ? (
           <div className={styles.emptyCard}>
-            <RingEmptyState icon="custom:medical-history" label="No Medical History" iconSize={31} />
+            <EmptyState icon="custom:medical-history" title="No Medical History" iconSize={31} />
           </div>
         ) : (
           <HistoryTable

@@ -10,7 +10,7 @@
 --      patient_id),
 --   4. re-key patient_id in every referencing table to member_id,
 --   5. set id = member_id on the one-row-per-patient source tables
---      (hcc_members is EXCLUDED — one row per coding record, so member_id repeats;
+--      (hcc_members is EXCLUDED: one row per coding record, so member_id repeats;
 --      its member_id still feeds the map so refs pointing at hcc record ids re-key),
 --   6. ensure every worklist member holds their worklist's care program under
 --      their member_id.
@@ -152,7 +152,7 @@ INSERT INTO public.patient_care_programs
   (id, patient_id, code, name, acuity, status, status_color,
    start_date, end_date, last_updated, assignee, pcp, progress)
 SELECT 'pcp-' || s.id || '-SNP-1', s.id, 'SNP', 'SNP Care Program (SNP)',
-       NULL,'New','var(--primary-300)', to_char(now(),'MM/DD/YYYY'),'—',to_char(now(),'MM/DD/YYYY'),'Unassigned','—',0
+       NULL,'New','var(--primary-300)', to_char(now(),'MM/DD/YYYY'),'-',to_char(now(),'MM/DD/YYYY'),'Unassigned','-',0
 FROM public.snp_worklist_members s WHERE s.id IS NOT NULL AND s.id <> ''
 ON CONFLICT (patient_id, code) DO NOTHING;
 
@@ -160,7 +160,7 @@ INSERT INTO public.patient_care_programs
   (id, patient_id, code, name, acuity, status, status_color,
    start_date, end_date, last_updated, assignee, pcp, progress)
 SELECT 'pcp-' || c.id || '-CCM', c.id, 'CCM', 'Chronic Care Management (CCM)',
-       NULL,'New','var(--primary-300)', to_char(now(),'MM/DD/YYYY'),'—',to_char(now(),'MM/DD/YYYY'),'Unassigned','—',0
+       NULL,'New','var(--primary-300)', to_char(now(),'MM/DD/YYYY'),'-',to_char(now(),'MM/DD/YYYY'),'Unassigned','-',0
 FROM public.ccm_worklist_members c WHERE c.id IS NOT NULL AND c.id <> ''
 ON CONFLICT (patient_id, code) DO NOTHING;
 
@@ -168,7 +168,7 @@ INSERT INTO public.patient_care_programs
   (id, patient_id, code, name, acuity, status, status_color,
    start_date, end_date, last_updated, assignee, pcp, progress)
 SELECT 'pcp-' || a.id || '-AWV', a.id, 'AWV', 'Annual Wellness Visit (AWV)',
-       NULL,'New','var(--primary-300)', to_char(now(),'MM/DD/YYYY'),'—',to_char(now(),'MM/DD/YYYY'),'Unassigned','—',0
+       NULL,'New','var(--primary-300)', to_char(now(),'MM/DD/YYYY'),'-',to_char(now(),'MM/DD/YYYY'),'Unassigned','-',0
 FROM public.awv_members a WHERE a.id IS NOT NULL AND a.id <> ''
 ON CONFLICT (patient_id, code) DO NOTHING;
 
@@ -176,7 +176,7 @@ INSERT INTO public.patient_care_programs
   (id, patient_id, code, name, acuity, status, status_color,
    start_date, end_date, last_updated, assignee, pcp, progress)
 SELECT 'pcp-' || p.id || '-TOC IP', p.id, 'TOC IP', 'Transition of Care - IP (TOC IP)',
-       NULL,'New','var(--primary-300)', to_char(now(),'MM/DD/YYYY'),'—',to_char(now(),'MM/DD/YYYY'),'Unassigned','—',0
+       NULL,'New','var(--primary-300)', to_char(now(),'MM/DD/YYYY'),'-',to_char(now(),'MM/DD/YYYY'),'Unassigned','-',0
 FROM public.patients p WHERE p.id IS NOT NULL AND p.id <> ''
 ON CONFLICT (patient_id, code) DO NOTHING;
 

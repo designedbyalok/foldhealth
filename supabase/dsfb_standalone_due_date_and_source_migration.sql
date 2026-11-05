@@ -10,7 +10,7 @@
 --
 -- This migration rewrites the single gap in each of those five members'
 -- `gaps` array to carry the correct source label AND a `dueDateISO`
--- computed as startDate + 30d. Idempotent — running twice is a no-op.
+-- computed as startDate + 30d. Idempotent, running twice is a no-op.
 --
 -- Ask Alok Kumar to run this migration on Supabase.
 

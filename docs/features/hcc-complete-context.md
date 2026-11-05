@@ -78,7 +78,7 @@ Suspect/recapture rows: **Missed Opportunity** and **Dismiss** are the primary v
 
 ## 3. Assignment engine (`src/features/hcc/assignment/`)
 
-State is per DOS, keyed by `dosKey(pid, date, provider, pos)` → `${pid}::${date}::${provider||'—'}::${pos||'—'}` and stored in `hccDosAssignments`. All lifecycle transitions are pure and return `{ nextMap, events }`. The store dispatches through `transitionHccDos(patientId, dosDate, kind, payload)` (`useAppStore.js:9604`), which diffs status/assignee, patches row fields (`sup/cdr/r1/r2`, `supS/cdrS/r1s/r2s`), persists via `persistHccMemberRoleStatus`, and logs activity.
+State is per DOS, keyed by `dosKey(pid, date, provider, pos)` → `${pid}::${date}::${provider||'-'}::${pos||'-'}` and stored in `hccDosAssignments`. All lifecycle transitions are pure and return `{ nextMap, events }`. The store dispatches through `transitionHccDos(patientId, dosDate, kind, payload)` (`useAppStore.js:9604`), which diffs status/assignee, patches row fields (`sup/cdr/r1/r2`, `supS/cdrS/r1s/r2s`), persists via `persistHccMemberRoleStatus`, and logs activity.
 
 **`dosState.js`**
 

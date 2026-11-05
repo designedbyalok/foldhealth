@@ -55,7 +55,7 @@ export const AllLevels = {
 
 export const Sizes = {
   parameters: {
-    docs: { description: { story: 'Scales cleanly from 14px to 32px — the internal gradient stays legible across sizes.' } },
+    docs: { description: { story: 'Scales cleanly from 14px to 32px, the internal gradient stays legible across sizes.' } },
   },
   render: () => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>

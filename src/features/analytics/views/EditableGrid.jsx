@@ -8,7 +8,7 @@ import s from '../AnalyticsLayout.module.css';
 // Shared grid geometry for every editable analytics dashboard.
 
 // Persisted shape is { layout, manual }. `manual` holds the keys of items
-// the user has explicitly resized — those opt out of auto-fit so their
+// the user has explicitly resized: those opt out of auto-fit so their
 // chosen height sticks. Plain-array values from the older format are read
 // as a layout with no manual overrides.
 function loadState(storageKey, defaultLayout) {
@@ -39,7 +39,7 @@ function rowsForContent(contentPx) {
 }
 
 /**
- * EditableGrid — the single source of truth for the drag/resize analytics
+ * EditableGrid: the single source of truth for the drag/resize analytics
  * dashboards. A view supplies a `defaultLayout` (x/y/w placement; the `h`
  * values are only seeds because heights auto-fit to content) and a
  * `renderers` map keyed by layout id. Panels whose renderer returns null
@@ -81,7 +81,7 @@ export function EditableGrid({ storageKey, defaultLayout, renderers, editing = f
 
   // Render each panel once; drop the ones that return null so they neither
   // occupy a cell nor get observed. Vertical bounds are normalized here
-  // (small floor, no ceiling) so auto-fit is never clamped — per-view
+  // (small floor, no ceiling) so auto-fit is never clamped, per-view
   // minH/maxH seeds tuned for the old fixed rowHeight are intentionally
   // ignored. Width bounds (minW/maxW) are preserved.
   const items = useMemo(

@@ -9,11 +9,13 @@
 .text {
   display: flex;
   flex-direction: column;
+  gap: calc(var(--space-1) / 4);
   min-width: 0;
   flex: 1;
 }
 .name {
-  font-size: var(--font-base);
+  font-size: var(--font-md);
+  font-weight: 500;
   color: var(--neutral-500);
   white-space: nowrap;
   overflow: hidden;
@@ -23,4 +25,26 @@
   font-size: var(--font-sm);
   color: var(--neutral-300);
 }
-.tag { margin-left: auto; flex-shrink: 0; }
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  margin-left: auto;
+  flex-shrink: 0;
+  max-width: 50%;
+}
+
+/* Recipient chip hover card (Figma 2906:39324). */
+.tip {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) * 1.5);
+  min-width: 9rem;
+  text-align: left;
+}
+.tipTag { font-size: var(--font-sm); font-weight: 500; line-height: 1.2; color: var(--placeholder-text); }
+.tipRow { display: flex; align-items: center; gap: var(--space-1); }
+.tipText { display: flex; flex-direction: column; gap: calc(var(--space-1) / 4); min-width: 0; line-height: 1.2; }
+.tipName { font-size: var(--font-base); color: var(--neutral-400); }
+.tipEmail { font-size: var(--font-sm); color: var(--placeholder-text); }

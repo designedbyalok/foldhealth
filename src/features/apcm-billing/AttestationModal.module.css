@@ -28,7 +28,7 @@
   margin: 0;
 }
 
-/* Multi-patient summary — collapsible group. */
+/* Multi-patient summary: collapsible group. */
 .patientSummaryGroup {
   background: var(--primary-100);
   border: 0.5px solid var(--primary-200);
@@ -130,7 +130,7 @@
 }
 .inputReadonly:focus { box-shadow: none; border-color: var(--neutral-150); }
 
-/* Signature field — label + Type/Draw toggle on one row */
+/* Signature field: label + Type/Draw toggle on one row */
 .signatureHeader {
   display: flex;
   align-items: center;
@@ -139,7 +139,7 @@
   margin-bottom: 4px;
 }
 
-/* Drawn-signature pad — canvas with a flex action row pinned to the
+/* Drawn-signature pad: canvas with a flex action row pinned to the
    bottom (not floating). Sized smaller than the previous draft. */
 .signaturePad {
   border: 0.5px solid var(--neutral-150);

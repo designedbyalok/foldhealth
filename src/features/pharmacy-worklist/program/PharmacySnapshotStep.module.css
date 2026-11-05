@@ -29,28 +29,96 @@
   border-bottom: 0.5px solid var(--neutral-150);
 }
 .gapItem + .gapItem { border-top: 0.5px solid var(--neutral-150); }
-/* The whole row toggles the gap's medications. */
+/* The gap code toggles the gap's medications. */
 .gapRow {
   width: 100%;
   padding-top: var(--space-3);
   padding-bottom: var(--space-3);
-  border: none;
-  background: none;
   font-size: var(--font-md);
   color: var(--neutral-400);
   text-align: left;
-  cursor: pointer;
 }
 .gapRow:hover { background: var(--neutral-25); }
-.gapRow:focus-visible { outline: 2px solid var(--primary-200); outline-offset: -2px; }
-.gapCode { display: inline-flex; align-items: center; gap: var(--space-1); }
+.gapCode {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  border: none; background: none; padding: 0; cursor: pointer;
+}
+.gapCode:focus-visible { outline: 2px solid var(--primary-200); outline-offset: 2px; border-radius: 4px; }
+/* Compact gap table (Pharmacy Gap Details), after the Pharmacy Gap table in
+   Figma (5693:49892): title with the toggle beside it, header row, rows,
+   and a grey detail panel. */
+.gapList { display: flex; flex-direction: column; gap: var(--space-2); }
+.listTitleRow { display: flex; align-items: center; gap: 0.625rem; padding: 0.125rem 0; }
+.listTitle { font-size: var(--font-base); font-weight: 400; line-height: var(--leading-tight); color: var(--neutral-300); }
+.list {
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 4px;
+  overflow: hidden;
+}
+/* Gap, Drugs, Status, PDC, Fail Date, Next Fill Due. */
+.listGrid { display: grid; grid-template-columns: minmax(0, 1fr) 64px 120px 80px 110px 110px; align-items: stretch; }
+.listHead {
+  height: 32px;
+  align-items: center;
+  border-bottom: 0.5px solid var(--neutral-150);
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.listHead > span { padding: 0 var(--space-3) 0 var(--space-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.listHead > span:first-child { padding-left: 0.625rem; }
+.listItem + .listItem { border-top: 0.5px solid var(--neutral-150); }
+.listName {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) 0.375rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.listName:focus-visible { outline: 2px solid var(--primary-200); outline-offset: -2px; }
+.chevronBox { display: inline-flex; padding: var(--space-1); }
+.listNameText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.listStatus,
+.listCell {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.125rem;
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+  color: var(--neutral-500);
+}
+
+/* An open gap's details: label over value, three to a row, on grey. */
+.detailPanel { background: var(--neutral-50); padding: var(--space-2) var(--space-4) var(--space-2) var(--space-8); border-top: 0.5px solid var(--neutral-150); }
+.detailGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.detail { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; padding: var(--space-2) var(--space-2) var(--space-2) 0; font-size: var(--font-base); line-height: var(--leading-tight); }
+/* A hairline between rows of three. */
+.detail:nth-child(n + 4) { border-top: 0.5px solid var(--neutral-100); }
+.detailLabel { color: var(--neutral-300); }
+.detailValue { color: var(--neutral-500); min-width: 0; overflow-wrap: anywhere; }
+/* Several prescribers or pharmacies: one per line. */
+.detailLines { display: flex; flex-direction: column; gap: 0.125rem; }
+.statusBtn { border: none; background: none; padding: 0; cursor: pointer; display: inline-flex; }
 .gapStatus { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 0.125rem; }
 .gapStatus > * { align-self: flex-start; }
 .value { font-size: var(--font-md); color: var(--neutral-400); }
 
 /* An open gap: a stroke under its row, then its medications full width in a
    neutral-50 well with 12px around the table. */
-.gapRow[aria-expanded="true"] { border-bottom: 0.5px solid var(--neutral-150); }
+.gapRow[data-expanded="true"] { border-bottom: 0.5px solid var(--neutral-150); }
 .medNest { padding: var(--space-3); background: var(--neutral-50); }
 .medPanel {
   background: var(--neutral-0);
@@ -76,17 +144,8 @@
 .medName { font-weight: 500; }
 
 .muted { font-size: var(--font-md); color: var(--neutral-300); }
-.field { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
-.fieldLabel { font-size: var(--font-sm); color: var(--neutral-300); }
-.fieldValue { font-size: var(--font-md); color: var(--neutral-400); overflow-wrap: anywhere; }
 
-.contactHead { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
 .contactName { font-size: var(--font-md); font-weight: 500; color: var(--neutral-400); }
-.contactGrid {
-  display: grid;
-  grid-template-columns: minmax(120px, 1fr) minmax(110px, 1fr) minmax(180px, 2fr);
-  gap: var(--space-3);
-}
 .address { display: block; margin-top: 0.125rem; font-size: var(--font-sm); color: var(--neutral-300); }
 
 .table { width: 100%; border-collapse: collapse; font-size: var(--font-md); color: var(--neutral-400); }
@@ -104,6 +163,14 @@
 .table th:first-child, .table td:first-child { padding-left: var(--space-4); }
 .table th:last-child, .table td:last-child { padding-right: var(--space-4); }
 .table tbody tr:last-child td { border-bottom: none; }
+/* Contacts: the same four columns in both cards, so they line up. */
+.contactTable { table-layout: fixed; }
+.contactTable th:nth-child(1) { width: 42%; }
+.contactTable th:nth-child(2) { width: 21%; }
+.contactTable th:nth-child(3) { width: 17%; }
+.contactTable td { vertical-align: middle; }
+.contactTable td:not(:first-child) { white-space: nowrap; }
+.lastUsed { margin-left: var(--space-2); vertical-align: middle; }
 
 .toneError { color: var(--status-error); }
 
@@ -122,3 +189,6 @@
 .chevron { flex-shrink: 0; transition: transform 0.15s ease; }
 .chevronRight { transform: rotate(-90deg); }
 .chevronUp { transform: rotate(180deg); }
+
+/* PDC in a gap's details: value with its pencil, where it comes from below. */
+.pdcLine { display: inline-flex; align-items: center; gap: var(--space-1); }

@@ -103,7 +103,6 @@ export function useAllOooRecords({ highlightDate, highlightId, embedded = false,
       <span className={styles.actionDivider} aria-hidden="true" />
       <ActionButton
         icon="custom:filter"
-        size="L"
         tooltip="Filter"
         tooltipBelow
         notification={filterCount > 0}

@@ -1,5 +1,5 @@
 /**
- * Vite dev plugin — runs the Vercel `api/` handlers locally so the SPA can
+ * Vite dev plugin: runs the Vercel `api/` handlers locally so the SPA can
  * fetch them in development. Without this, `/api/send-test-email` 404s and
  * Test Mail silently fails because Vite's dev server is SPA-only.
  *
@@ -65,7 +65,7 @@ export function devApiPlugin() {
       server.middlewares.use(async (req, res, next) => {
         if (!req.url || !req.url.startsWith('/api/')) return next();
 
-        // Collect the body once — needed for both the in-process handler and
+        // Collect the body once: needed for both the in-process handler and
         // the proxy fallback.
         let raw = '';
         if (req.method && req.method !== 'GET' && req.method !== 'HEAD') {

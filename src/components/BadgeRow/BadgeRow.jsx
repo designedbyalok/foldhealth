@@ -6,7 +6,7 @@ import styles from './BadgeRow.module.css';
 const GAP = 4;
 
 /**
- * BadgeRow — a wrapping row of badges clamped to `maxLines`, with the
+ * BadgeRow: a wrapping row of badges clamped to `maxLines`, with the
  * remainder collapsed into a `+N` badge that lists them on hover. Same
  * treatment as the multi-select trigger, but over an arbitrary number of
  * lines so it works inside a table cell.
@@ -18,11 +18,11 @@ const GAP = 4;
  * @param {string[]} props.items          – Badge labels
  * @param {number}   [props.maxLines=2]   – Lines to fill before overflowing
  * @param {string}   [props.tone='grey']
- * @param {'S'|'M'|'L'} [props.size='S']
+ * @param {'xs'|'sm'|'md'|'lg'} [props.size='sm']
  * @param {string}   [props.icon]         – Leading Solar icon on each item badge (not the +N)
  * @param {string}   [props.className]
  */
-export function BadgeRow({ items = [], maxLines = 2, tone = 'grey', size = 'S', icon, className }) {
+export function BadgeRow({ items = [], maxLines = 2, tone = 'neutral', size = 'sm', icon, className }) {
   const rowRef = useRef(null);
   const measureRef = useRef(null);
   const [visibleCount, setVisibleCount] = useState(items.length);
@@ -61,7 +61,7 @@ export function BadgeRow({ items = [], maxLines = 2, tone = 'grey', size = 'S', 
       }
 
       // Anything left over needs the "+N" badge to fit too. On the last line
-      // that means giving badges back — but never the first one: a lone "+N"
+      // that means giving badges back: but never the first one: a lone "+N"
       // tells the reader nothing.
       if (fit < widths.length && line === maxLines) {
         while (fit > 1 && used + GAP + overflowWidth > available) {
@@ -74,7 +74,7 @@ export function BadgeRow({ items = [], maxLines = 2, tone = 'grey', size = 'S', 
 
     const ro = new ResizeObserver(recompute);
     ro.observe(row);
-    // rAF rather than a synchronous call — setting state in an effect body
+    // rAF rather than a synchronous call, setting state in an effect body
     // cascades renders.
     const raf = requestAnimationFrame(recompute);
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };

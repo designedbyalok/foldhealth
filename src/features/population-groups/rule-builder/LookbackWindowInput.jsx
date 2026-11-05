@@ -4,7 +4,7 @@ import { LOOKBACK_UNITS } from './fieldCatalog';
 import styles from './ruleBuilder.module.css';
 
 /**
- * LookbackWindowInput — shared "In the last N {days|weeks|months|years}"
+ * LookbackWindowInput: shared "In the last N {days|weeks|months|years}"
  * temporal window control used by coded-term, observation, and event-count
  * condition editors. Renders a toggle, number input, and unit selector.
  */
@@ -33,7 +33,7 @@ export function LookbackWindowInput({ lookback, onChange }) {
           <Select
             options={LOOKBACK_UNITS.map(u => ({ value: u.value, label: u.label }))}
             value={lookback.unit || 'months'}
-            onChange={v => onChange({ ...lookback, unit: v })}
+            onValueChange={v => onChange({ ...lookback, unit: v })}
             style={{ width: 120 }}
           />
         </div>

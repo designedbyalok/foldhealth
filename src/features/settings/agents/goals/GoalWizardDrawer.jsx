@@ -172,9 +172,9 @@ export function GoalWizardDrawer() {
       headerRight={
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {step >= 2 && !isEdit && (
-            <Button variant="ghost" size="L" onClick={() => saveGoal('draft')}>Save Draft</Button>
+            <Button variant="ghost" onClick={() => saveGoal('draft')}>Save Draft</Button>
           )}
-          <Button variant="primary" size="L" onClick={goNext}>
+          <Button onClick={goNext}>
             {step === 3 ? 'Publish Goal' : 'Next'}
           </Button>
         </div>

@@ -1,7 +1,7 @@
 -- Remove anonymous access to profiles.
 --
--- These four policies let anyone holding the public anon key — which ships in
--- the browser bundle by design — read, insert, update or delete ANY profile
+-- These four policies let anyone holding the public anon key, which ships in
+-- the browser bundle by design: read, insert, update or delete ANY profile
 -- row, including the `role` and `admin_role` columns. That is the direct path
 -- to self-assigning administrator, and it bypasses handle_new_user() entirely,
 -- so the signup-default fix does not close it.
@@ -21,17 +21,17 @@
 --
 -- 2. Every application operation is already covered for `authenticated`:
 --
---      SELECT  — "Authenticated users can read all profiles" and
+--      SELECT: "Authenticated users can read all profiles" and
 --                "profiles_read_all_authenticated", both USING (true). All 11
 --                read sites keep working, including the 5 that read every row
 --                (user directory, chat contacts, scheduling, calendar,
 --                people-pickers).
---      INSERT  — "profiles_self_insert" (auth.uid() = id) covers AppLayout's
+--      INSERT: "profiles_self_insert" (auth.uid() = id) covers AppLayout's
 --                fallback insert.
---      UPDATE  — "Users can update own profile" and
+--      UPDATE: "Users can update own profile" and
 --                "profiles_self_update_identity" for self, plus
 --                "Admins can update any profile" for administrators.
---      DELETE  — there is NO authenticated DELETE policy, so UsersTab's
+--      DELETE: there is NO authenticated DELETE policy, so UsersTab's
 --                delete-user is already blocked for logged-in users today
 --                (it handles the empty result: "Check permissions"). Dropping
 --                the anon policy changes nothing for real users; it only

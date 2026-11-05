@@ -1,14 +1,14 @@
 // Fold Patient ID helpers.
 //
 // Every patient/worklist table's `id` and `member_id` columns now hold the
-// SAME bare-number Fold ID (see supabase/patient_id_unification_migration.sql)
-// — there is no separate registry lookup anymore. These helpers just format
+// SAME bare-number Fold ID (see supabase/patient_id_unification_migration.sql),
+// there is no separate registry lookup anymore. These helpers just format
 // that number for display/search and handle the click-to-copy interaction.
 
-/** Format a Fold ID for display: 10234 → "#10234". No "F-" — bare number
+/** Format a Fold ID for display: 10234 → "#10234". No "F-", bare number
  *  behind the "#" so it stays trivially searchable (strip one char). */
 export function formatFoldId(id) {
-  return id == null || id === '' ? '—' : `#${id}`;
+  return id == null || id === '' ? '-' : `#${id}`;
 }
 
 /**
@@ -26,7 +26,7 @@ export function matchesFoldId(id, query) {
  *  caller so it can show the right toast.
  *
  *  Tries the legacy `document.execCommand('copy')` path FIRST because it
- *  runs synchronously inside the click handler's user-gesture window —
+ *  runs synchronously inside the click handler's user-gesture window,
  *  which is the only way it works in sandboxed iframes (e.g. Storybook's
  *  preview) where the async Clipboard API is blocked. Only falls back to
  *  the modern async Clipboard API if execCommand isn't available or

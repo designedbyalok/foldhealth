@@ -1,4 +1,4 @@
--- Explicit AI Outcome label per patient — decoupled from call-queue status so
+-- Explicit AI Outcome label per patient, decoupled from call-queue status so
 -- demo rows can show Completed / Needs Review / Aborted without appearing Queued.
 
 BEGIN;
@@ -7,7 +7,7 @@ ALTER TABLE public.patients
   ADD COLUMN IF NOT EXISTS ai_outcome_status TEXT
     CHECK (ai_outcome_status IN ('Queued', 'Completed', 'Needs Review', 'Aborted'));
 
--- Rows beyond the first 5 demo blanks — mixed terminal outcomes with sample invoke times.
+-- Rows beyond the first 5 demo blanks, mixed terminal outcomes with sample invoke times.
 UPDATE public.patients SET
   ai_outcome_status = 'Needs Review',
   ai_outcome_invoked_at = '2026-08-16T09:12:00Z',

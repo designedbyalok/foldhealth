@@ -37,13 +37,12 @@ export function DetailDrawerCallCard({ callDir, callDate, callDurationFull, agen
         <ActionButton
           ref={callBtnRef}
           icon="solar:phone-linear"
-          size="L"
           tooltip="Call patient"
           className={styles.callCardBtn}
           onClick={openCall}
         />
         <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-        <ActionButton icon="solar:menu-dots-linear" size="L" tooltip="More options" className={styles.callCardBtn} />
+        <ActionButton icon="solar:menu-dots-linear" tooltip="More options" className={styles.callCardBtn} />
       </div>
     </div>
   );

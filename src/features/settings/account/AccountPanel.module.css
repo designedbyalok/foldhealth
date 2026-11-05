@@ -43,7 +43,7 @@
   margin-top: 4px;
 }
 
-/* Table — wrapper flexes to fill the viewport; scrollWrap holds the
+/* Table: wrapper flexes to fill the viewport; scrollWrap holds the
    scrollable table body so the Pagination footer stays anchored at the
    bottom of the panel (mirrors the HCC worklist layout). */
 .tableWrap {
@@ -476,7 +476,7 @@
   padding: 0 !important;
 }
 
-/* Scrollable form content — column layout with consistent 16px gap */
+/* Scrollable form content: column layout with consistent 16px gap */
 .formScroll {
   display: flex;
   flex-direction: column;
@@ -556,7 +556,7 @@
   width: 100% !important;
 }
 
-/* Multi-select dropdown — portalled to document.body so overflow:auto
+/* Multi-select dropdown: portalled to document.body so overflow:auto
    on ancestor scroll containers doesn't clip it. Position (top/left/
    width) is set inline from the trigger's rect; the class provides
    only the visual chrome. */
@@ -565,7 +565,7 @@
   border: 0.5px solid var(--neutral-150);
   border-radius: 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  /* Sits above the Drawer (z-index 401) — otherwise the portalled
+  /* Sits above the Drawer (z-index 401): otherwise the portalled
      popover renders behind the invite drawer's panel. */
   z-index: 500;
   max-height: 240px;
@@ -595,7 +595,7 @@
   margin: 0;
 }
 
-/* Form sections — gap handled by parent flex, no bottom margin/padding */
+/* Form sections: gap handled by parent flex, no bottom margin/padding */
 .formSection {
   margin: 0;
   padding: 0;
@@ -623,7 +623,7 @@
 }
 
 /* Matches the DS Input/Select built-in label (.label) so the few fields that
-   keep an external label — the roles radiogroup and the tag inputs — read
+   keep an external label, the roles radiogroup and the tag inputs, read
    identically to the built-in-labelled fields. */
 .formLabel {
   font-size: var(--font-base);

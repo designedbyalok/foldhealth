@@ -63,7 +63,7 @@ export const AssignedNoRole = {
 };
 
 // Same value for `role` is passed, but `showRole={false}` hides the
-// sub-line — matches the "role toggle off" state in Storybook controls.
+// sub-line: matches the "role toggle off" state in Storybook controls.
 export const AssignedRoleHidden = {
   name: 'Assigned · role hidden',
   args: {
@@ -81,7 +81,7 @@ export const Unassigned = {
   args: { unassigned: true },
 };
 
-// ── Size + state matrix — mirrors Figma Fold-Pixel-1.0 node 8629:178 ────
+// ── Size + state matrix: mirrors Figma Fold-Pixel-1.0 node 8629:178 ────
 
 export const SizeSmall = {
   name: 'Size · S',
@@ -102,7 +102,7 @@ export const Disabled = {
   args: { name: 'Deborah Hintz', initials: 'DH', role: 'Support team', disabled: true },
 };
 
-// ── hideAvatar variant — used by the HCC worklist role cells. Assigned rows
+// ── hideAvatar variant: used by the HCC worklist role cells. Assigned rows
 // drop the initials avatar entirely; unassigned rows swap the outlined
 // Avatar-with-icon for a plain leading Solar `user-plus` glyph next to the
 // label. ────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ export const DisabledUnassigned = {
   args: { unassigned: true, disabled: true },
 };
 
-// Avatar-only unassigned matrix (default / hover / disabled) — Figma
+// Avatar-only unassigned matrix (default / hover / disabled): Figma
 // Fold-Pixel-1.0 node 8629:419.
 export const AvatarOnlyUnassignedDisabled = {
   name: 'Avatar only · unassigned · disabled',

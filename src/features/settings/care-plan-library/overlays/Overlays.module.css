@@ -1,0 +1,165 @@
+/* IPA overlays: the overlay editor and the IPA registry drawers. */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-top: var(--space-2);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.lead,
+.muted {
+  margin: 0;
+  font-size: var(--font-md);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}
+
+.lead b { font-weight: 500; color: var(--neutral-500); }
+.muted { color: var(--neutral-200); }
+
+.pickers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.summaryChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ── Item table ── */
+.tableWrap { overflow-x: auto; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-md);
+}
+
+.table th {
+  padding: var(--space-2);
+  border-bottom: 0.5px solid var(--neutral-150);
+  font-weight: 400;
+  text-align: left;
+  color: var(--neutral-200);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: var(--space-2);
+  border-bottom: 0.5px solid var(--neutral-100);
+  vertical-align: middle;
+}
+
+.rowHidden .itemTitle {
+  color: var(--neutral-200);
+  text-decoration: line-through;
+}
+
+.itemCell {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+
+.itemTitle {
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+}
+
+.cadence {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr) minmax(0, 1fr);
+  gap: var(--space-1);
+}
+
+.duration { min-width: 0; }
+
+/* ── Local additions ── */
+.localList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.localRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) 0;
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+
+.addRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.addRow > * { min-width: 0; }
+
+/* ── IPA registry ── */
+.ipaList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 0.5px solid var(--neutral-100);
+}
+
+.ipaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+
+.ipaMain {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+
+.ipaName {
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+}
+
+.ipaEdit {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.ipaActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}

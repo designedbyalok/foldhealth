@@ -46,7 +46,7 @@ function makeActiveLegacy(name, role, status) {
   };
 }
 
-// Billed is a terminal post-billing state — if any role's status carries
+// Billed is a terminal post-billing state, if any role's status carries
 // it, the whole DOS is billed and the assignee cell should show that
 // instead of "Billing Ready". Callers rely on the returned kind='billed'
 // to render the green Billed chip in place of the review chip.

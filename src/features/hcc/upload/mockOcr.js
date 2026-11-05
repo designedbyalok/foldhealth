@@ -9,11 +9,11 @@ import { evaluateOcrTier, evaluateCompliance } from '../compliance';
  * filenames to deterministic encounter payloads covering each test case
  * the Jira ticket calls out:
  *
- *   demo-single.pdf         — 1 patient, 1 DOS, clean (happy path)
- *   demo-multi-patient.pdf  — 2 patients, 1 DOS each (multi-group review)
- *   demo-missing-dos.pdf    — 1 patient, DOS field blank (AC-8 mandatory error)
- *   demo-dob-mismatch.pdf   — Patient name doesn't 100%-match any Fold record
- *                              (AC-9 HIPAA gate — manual link required)
+ *   demo-single.pdf, 1 patient, 1 DOS, clean (happy path)
+ *   demo-multi-patient.pdf, 2 patients, 1 DOS each (multi-group review)
+ *   demo-missing-dos.pdf, 1 patient, DOS field blank (AC-8 mandatory error)
+ *   demo-dob-mismatch.pdf, Patient name doesn't 100%-match any Fold record
+ *                              (AC-9 HIPAA gate: manual link required)
  *
  * Any other filename falls back to single-patient/single-DOS with the
  * first available HCC member as the matched patient. Includes a 2.5s
@@ -151,7 +151,7 @@ function resolveByIdOrName(hccMembers, { patientId, name, dob }) {
  */
 function ocrPatientId(member, patientName, dos) {
   if (!member?.memberId) {
-    // Unmatched patient — still emit a plausible looking ID so the
+    // Unmatched patient: still emit a plausible looking ID so the
     // reviewer can see what was extracted from the document.
     return `M-${hashStr(patientName)}-${hashStr(dos || 'x')}`;
   }
@@ -176,7 +176,7 @@ export async function runMockOcr(file, hccMembers) {
 }
 
 /**
- * Synchronous variant — same encounter set, no artificial delay. Used by
+ * Synchronous variant: same encounter set, no artificial delay. Used by
  * the "Re-open Review" affordance in the History drawer where the user
  * has already seen extraction land once and just wants to revisit the
  * skipped records.
@@ -185,7 +185,7 @@ export function extractEncountersSync(file, hccMembers) {
   return assignSourcePages(buildEncountersForFile(file, hccMembers));
 }
 
-// Bundle cohort — one entry per document for the "N Documents" demo chips.
+// Bundle cohort: one entry per document for the "N Documents" demo chips.
 // New rule: a document belongs to exactly ONE patient, who may have several
 // DOS. Each entry therefore carries 2–3 DOS so every bundled doc demonstrates
 // the single-patient / multi-DOS shape. Names/DOBs match real seed members so
@@ -569,7 +569,7 @@ function buildEncountersForFile(file, hccMembers) {
     ];
   }
 
-  // ── Demo: DOB mismatch (AC-9 HIPAA gate — manual link required) ───
+  // ── Demo: DOB mismatch (AC-9 HIPAA gate: manual link required) ───
   if (name.includes('demo-dob-mismatch')) {
     return [
       buildEnc({
@@ -580,12 +580,12 @@ function buildEncountersForFile(file, hccMembers) {
         pos: '02',
         icds: ['E11.9', 'J44.1'],
         docType: 'Progress Note',
-        matchOverride: null,                // explicit null — no auto-match
+        matchOverride: null,                // explicit null, no auto-match
       }),
     ];
   }
 
-  // ── Single-patient demo docs — each maps to a DISTINCT member so
+  // ── Single-patient demo docs: each maps to a DISTINCT member so
   //   uploading several samples produces several unique patients to
   //   page through in review (one patient per document). ──────────────
   const SINGLE_PATIENT_DEMOS = {
@@ -655,7 +655,7 @@ export { mandatoryFields, POS_LABEL };
  *
  * Each encounter is stamped with `documentId` so the UI can group encounters
  * back to their source document (the compliance state is one entity per doc,
- * not per encounter — a single PDF can carry multiple records).
+ * not per encounter: a single PDF can carry multiple records).
  */
 export async function runDocumentPipeline(file, hccMembers) {
   const encounters = await runMockOcr(file, hccMembers);
@@ -663,7 +663,7 @@ export async function runDocumentPipeline(file, hccMembers) {
 }
 
 /**
- * Synchronous variant — same shape as runDocumentPipeline, no artificial
+ * Synchronous variant: same shape as runDocumentPipeline, no artificial
  * delay. Used by the "Re-open Review" affordance in the History drawer.
  */
 export function buildDocumentSync(file, hccMembers) {

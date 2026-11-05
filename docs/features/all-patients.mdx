@@ -1,6 +1,6 @@
 ---
 title: "All Patients"
-description: "The deduped roster across every worklist — the single source of truth for who's in your population."
+description: "The deduped roster across every worklist, the single source of truth for who's in your population."
 ---
 
 **All Patients** is the union of every worklist (TOC, HCC, HEDIS, CCM, SNP, AWV, JSA…) deduped by normalized **member ID**. It's the answer to "does this person exist in our system, and what programs are they in?"
@@ -13,13 +13,13 @@ Each worklist uses its own id space (`p1`, `hcc-42`, `ccmw-001`…). All Patient
 
 ## Columns
 
-Broader than any individual worklist — designed for scanning across programs:
+Broader than any individual worklist: designed for scanning across programs:
 
 | Column | Description |
 | --- | --- |
 | **Members** | Name, gender, age, member ID |
 | **DOB** | Date of birth (hidden by default; toggle via column config) |
-| **Contact** | Phone, email — click to call or compose |
+| **Contact** | Phone, email, click to call or compose |
 | **Address** | City, state |
 | **Insurance** | Plan name, LOB, effective date |
 | **Chronic Conditions** | ICD chip row |
@@ -29,7 +29,7 @@ Broader than any individual worklist — designed for scanning across programs:
 | **Assignee** | Primary care manager |
 | **Actions** | Quick View, call, message, ⋯ menu |
 
-## Walkthrough — is this patient in our system, and where?
+## Walkthrough: is this patient in our system, and where?
 
 <Steps>
   <Step title="Open All Patients">
@@ -39,7 +39,7 @@ Broader than any individual worklist — designed for scanning across programs:
     Type name, member ID, or the last 4 digits of their phone in the search box.
   </Step>
   <Step title="Read the Programs chips">
-    The Programs column shows every list they're on today — e.g. `TOC · HCC · CCM`. Click any chip to jump straight to that worklist filtered to this member.
+    The Programs column shows every list they're on today: e.g. `TOC · HCC · CCM`. Click any chip to jump straight to that worklist filtered to this member.
   </Step>
   <Step title="Open the Quick View">
     Click the row. The Quick View drawer summarizes the member across programs; the Patient Profile deep-link opens the full [Patient Profile](/features/patient-profile).

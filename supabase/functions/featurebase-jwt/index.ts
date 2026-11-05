@@ -1,4 +1,4 @@
-// featurebase-jwt — mints a Featurebase identity-verification JWT for the
+// featurebase-jwt: mints a Featurebase identity-verification JWT for the
 // signed-in user. The FEATUREBASE_IDENTITY_SECRET must never reach the
 // client, so signing happens here; the app passes the returned JWT to
 // FeaturebaseProvider (featurebaseJwt) and the feedback widget admits the
@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     name: user.user_metadata?.full_name || user.email.split("@")[0],
     userId: user.id,
     iat: now,
-    exp: now + 60 * 60 * 24, // 24h — the app re-mints on each session load
+    exp: now + 60 * 60 * 24, // 24h, the app re-mints on each session load
   }));
   const key = await crypto.subtle.importKey(
     "raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"],

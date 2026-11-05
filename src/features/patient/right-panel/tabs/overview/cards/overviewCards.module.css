@@ -8,20 +8,107 @@
 
 .sectionLabel {
   margin: var(--space-1) 0 0;
-  font-size: var(--font-2xs);
+  font-size: var(--font-sm);
   font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--neutral-200);
 }
 
 .empty {
+  margin: 0;
   padding: var(--space-3) 0 var(--space-2);
   font-size: var(--font-md);
   color: var(--neutral-200);
 }
 
 .spacer { flex: 1; }
+
+/* Row controls in fixed slots, so statuses and buttons line up down a list
+   whatever their text (Open vs At risk, Order Lab vs Log Reading). */
+.trail {
+  display: grid;
+  grid-auto-flow: column;
+  align-items: center;
+  column-gap: var(--space-2);
+}
+
+.statusSlot {
+  display: flex;
+  justify-content: flex-start;
+  width: 64px;
+}
+
+.statusSlotWide {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 96px;
+}
+
+.ctaButton {
+  width: 104px;
+  justify-content: center;
+}
+
+/* Narrow action column: same slot for every label, shorter than the gaps CTAs. */
+.ctaButton.suggestCta {
+  width: 80px;
+  height: 22px;
+  min-height: 22px;
+  padding: 0 var(--space-1);
+}
+
+.suggestClose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: var(--space-1);
+  background: transparent;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+
+.suggestClose:hover { background: var(--neutral-50); }
+
+.suggestTrail { column-gap: var(--space-1); }
+
+/* Percent text right-aligned in a fixed width so 0% and 100% line up. */
+.pct {
+  width: var(--space-8);
+  text-align: right;
+}
+
+/* Whole row opens its item: the title button stretches over the row, and
+   controls inside the row (a checkbox) sit above it. */
+.clickRow,
+.listRow {
+  position: relative;
+}
+
+/* Rows sit apart on whitespace; a clickable one tints on hover and
+   answers the press itself at once. */
+.clickRow { transition: background-color 120ms ease-out; }
+.clickRow:hover { background: var(--neutral-25); }
+.clickRow:active { background: var(--neutral-50); transition: none; }
+
+.stretch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.aboveStretch {
+  position: relative;
+  z-index: 1;
+}
+
+.leadPair {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
 
 /* Unity-suggested content without the full AI wash. */
 .aiOutline { border-color: var(--primary-200); }
@@ -68,6 +155,28 @@
 }
 .titleButton:hover { color: var(--primary-300); }
 
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-4) var(--space-3);
+}
+
+.chipButton {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--space-4);
+}
+
+.chipButton:hover { box-shadow: 0 0 0 0.5px var(--primary-200); }
+
+/* One program and its steps; programs are separated by a rule. */
+.programBlock + .programBlock {
+  margin-top: var(--space-2);
+}
+
 /* ── Synopsis ── */
 .poweredBy {
   font-size: var(--font-sm);
@@ -78,8 +187,7 @@
 .synopsisBody {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding-bottom: var(--space-3);
+  gap: var(--space-2);
 }
 
 .synopsisText {
@@ -104,7 +212,7 @@
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
-  font-size: var(--font-md);
+  font-size: var(--font-base);
   line-height: var(--leading-normal);
   color: var(--neutral-400);
 }
@@ -125,6 +233,7 @@
 .legend {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-4);
   font-size: var(--font-sm);
   color: var(--neutral-200);
@@ -143,19 +252,7 @@
 }
 
 .radar {
-  height: 230px;
-}
-
-.scoreRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: var(--space-1) 0 var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border-radius: calc(var(--space-1) * 1.5);
-  background: var(--neutral-50);
-  font-size: var(--font-sm);
-  color: var(--neutral-200);
+  height: 188px;
 }
 
 .scoreValue {
@@ -165,42 +262,6 @@
 }
 
 /* ── Care plan ── */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-2);
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--space-1) / 2);
-  min-width: 0;
-  padding: var(--space-2) var(--space-3);
-  border-radius: calc(var(--space-1) * 1.5);
-  background: var(--neutral-50);
-}
-
-.statValue {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-1);
-  flex-wrap: wrap;
-}
-
-.statNumber {
-  font-size: var(--font-lg);
-  font-weight: 500;
-  color: var(--neutral-500);
-}
-
-.progressRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin: var(--space-3) 0 var(--space-1);
-}
-
 .progressPct {
   font-size: var(--font-sm);
   font-weight: 500;
@@ -230,19 +291,27 @@
 }
 
 /* ── Gaps ── */
-.tabs { padding: 0 var(--space-4) var(--space-1); }
+.tabs { padding: var(--space-2) var(--space-4) 0; }
+
+/* Tabs on the left, a filter chip on the right. */
+.tabsWithFilter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
 
 .codeChip {
   display: inline-flex;
   align-items: center;
-  min-width: var(--space-8);
+  width: var(--space-12);
   justify-content: center;
   padding: calc(var(--space-1) / 2) var(--space-1);
   border-radius: var(--space-1);
   background: var(--neutral-50);
-  font-size: var(--font-2xs);
+  font-size: var(--font-sm);
   font-weight: 500;
-  color: var(--neutral-300);
+  color: var(--neutral-200);
   white-space: nowrap;
 }
 
@@ -259,6 +328,11 @@
   line-height: 1.1;
 }
 .dateMonth { font-size: var(--font-2xs); font-weight: 500; color: var(--primary-300); }
+
+/* A missed visit that still needs rebooking. */
+.dateTileMissed { background: var(--status-error-light); }
+.dateTileMissed .dateMonth,
+.dateTileMissed .dateDay { color: var(--status-error); }
 .dateDay { font-size: var(--font-lg); font-weight: 500; color: var(--primary-400); }
 
 /* ── Quick actions ── */
@@ -268,50 +342,335 @@
 
 .quickGridInner {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-2);
-  padding-bottom: var(--space-2);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1) var(--space-2);
 }
 
-/* Full-width single column: one row of six instead of a stretched 3×2. */
 @container (min-width: 560px) {
-  .quickGridInner { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .quickGridInner { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* List rows run to the card edges; the row itself carries the inline inset. */
+.listBody {
+  padding: 0;
+}
+
+.listBody .empty {
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+/* "View N more" under a card list: its label lines up with the rows. */
+.listBody > button,
+.listBody .listMore {
+  margin-left: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.listNote {
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-2);
+  font-size: var(--font-md);
+}
+
+/* ── Card header actions: groups split by a 1px × 16px divider ── */
+.headerActions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.headerDivider {
+  width: 1px;
+  height: var(--space-4);
+  margin: 0 var(--space-1);
+  background: var(--neutral-150);
 }
 
 /* ── Vitals ── */
-.vitalsGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-2);
-  padding-bottom: var(--space-2);
+.vitalsRow {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
 }
 
+.vitalsRow::-webkit-scrollbar { display: none; }
+
 .vital {
+  --vital-tone: var(--status-success-dark);
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 156px;
+  height: 170px;
+  scroll-snap-align: start;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: calc(var(--space-1) * 2);
+  background: var(--neutral-0);
+  transition: border-color 150ms ease;
+}
+
+.vital:hover {
+  border-color: color-mix(in srgb, var(--vital-tone) 60%, transparent);
+}
+
+.vital[data-tone="error"] { --vital-tone: var(--status-error-dark); }
+.vital[data-tone="warning"] { --vital-tone: var(--status-warning-dark); }
+
+
+.vitalBody {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  padding: var(--space-3) var(--space-3) 0;
   min-width: 0;
-  padding: var(--space-2) var(--space-3);
-  border: 0.5px solid var(--neutral-150);
-  border-radius: calc(var(--space-1) * 1.5);
+}
+
+.vitalGoal,
+.vitalMeta {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+  margin: 0;
+  font-size: var(--font-sm);
+  line-height: var(--leading-tight);
+  color: var(--neutral-200);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vitalName {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 400;
+  line-height: var(--leading-tight);
+  color: var(--neutral-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .vitalValueRow {
   display: flex;
+  align-items: center;
+  gap: calc(var(--space-1) + var(--space-1) / 2);
+  min-width: 0;
+  margin: 0;
+}
+
+.vitalReading {
+  display: inline-flex;
   align-items: baseline;
-  gap: var(--space-1);
+  gap: calc(var(--space-1) / 2);
   min-width: 0;
 }
 
 .vitalValue {
-  font-size: var(--font-lg);
-  font-weight: 500;
-  color: var(--neutral-500);
+  font-size: var(--font-xl);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  color: var(--neutral-400);
+}
+
+.vitalUnit {
+  font-size: var(--font-sm);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+  white-space: nowrap;
 }
 
 .vitalChange {
-  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+  flex-shrink: 0;
+  color: var(--vital-tone);
   font-size: var(--font-sm);
-  font-weight: 500;
+  line-height: var(--leading-tight);
   white-space: nowrap;
 }
+
+.vitalTrend {
+  position: relative;
+  flex: 1;
+  min-height: 48px;
+  margin-top: auto;
+}
+
+
+/* End points sit on the chart's edges; let them show whole. */
+.vitalTrend :global(.recharts-surface) {
+  overflow: visible;
+}
+
+/* Hover tooltip on a vital's trend. */
+.vitalTooltip {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  padding: var(--space-1) var(--space-2);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-1);
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-popover);
+  white-space: nowrap;
+}
+
+.vitalTooltipLabel {
+  font-size: var(--font-xs);
+  line-height: var(--leading-normal);
+  color: var(--neutral-200);
+}
+
+.vitalTooltipValue {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+}
+
+
+/* ── Reminders ── */
+.reminderForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-4) var(--space-3);
+}
+
+.reminderActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.reminderDone {
+  opacity: 0.6;
+}
+
+.struck {
+  text-decoration: line-through;
+}
+
+/* Health Chart: the domains behind the clinic average, under the legend. */
+.behind {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-200);
+}
+
+/* ── Care Plan, Gaps, Programs: rows split by a hairline, as in Figma ── */
+.dividedRows > div:not(:last-child) {
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+
+.dividedRows .listMore {
+  margin-top: var(--space-1);
+}
+
+/* Segment label with its count chip (Goals 8). */
+.toggleLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.toggleCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-4);
+  padding: 0 calc(var(--space-1) / 2);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: calc(var(--space-1) / 2);
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-200);
+}
+
+/* Why a care plan item needs attention, under its title. */
+.why {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* ── Medications: a Name / Status table, as on the PAMI/Hx tab ── */
+.medHead,
+.medRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+}
+
+.medHead {
+  border-bottom: 0.5px solid var(--neutral-150);
+  font-size: var(--font-md);
+  line-height: var(--leading-tight);
+  color: var(--neutral-200);
+}
+
+.medRow {
+  width: 100%;
+  border: none;
+  border-bottom: 0.5px solid var(--neutral-100);
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.medRow:hover { background: var(--neutral-25); }
+
+.medMain {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+
+.medName,
+.medMeta {
+  overflow: hidden;
+  font-size: var(--font-md);
+  line-height: var(--leading-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.medName { font-size: var(--font-base); color: var(--neutral-500); }
+.medMeta { color: var(--neutral-200); }
+
+.medStatus {
+  display: flex;
+  flex: 0 0 100px;
+}
+
+/* What changed, above the table. */
+.medSummary {
+  margin: 0;
+  padding: var(--space-2) var(--space-4) var(--space-1);
+  font-size: var(--font-md);
+  line-height: var(--leading-tight);
+  color: var(--neutral-200);
+}
+
+.medTable .listMore {
+  margin-top: var(--space-1);
+}
+
+.medDiscontinued {
+  display: flex;
+  padding: var(--space-1) var(--space-2) var(--space-2);
+}
+
+.medDiscontinued > button { color: var(--primary-300); }

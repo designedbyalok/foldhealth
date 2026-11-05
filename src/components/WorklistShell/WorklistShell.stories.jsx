@@ -4,7 +4,7 @@ import { FilterChip } from '../FilterChip/FilterChip';
 import { Avatar } from '../Avatar/Avatar';
 import { Badge } from '../Badge/Badge';
 import { ActionButton } from '../ActionButton/ActionButton';
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
 import { Icon } from '../Icon/Icon';
 import { useTableSort } from '../HeaderCell/useTableSort';
 import styles from './WorklistShell.stories.module.css';
@@ -36,7 +36,7 @@ export default {
   args: { state: 'default' },
 };
 
-// ── Sample data — patient-like rows so the story mirrors the real feature ──
+// ── Sample data: patient-like rows so the story mirrors the real feature ──
 const SAMPLE_MEMBERS = [
   { id: 'm-1', initials: 'AB', name: 'Annette Brave',    memberId: '11089', gender: 'M', age: '67y 3m', status: 'New',      assignee: 'Ignacio Beer', startDate: '02/22', mins: 1089 },
   { id: 'm-2', initials: 'DW', name: 'Derek Winslow',    memberId: '#846273915048', gender: 'M', age: '34y 1m', status: 'Engaged',  assignee: 'Ignacio Beer', startDate: '11/11', mins: 1500 },
@@ -48,9 +48,9 @@ const SAMPLE_MEMBERS = [
 ];
 
 const STATUS_VARIANT = {
-  'New':      { variant: 'toc-new',      label: 'New',      icon: 'solar:star-bold' },
-  'Engaged':  { variant: 'toc-engaged',  label: 'Engaged',  icon: 'solar:link-round-bold' },
-  'Enrolled': { variant: 'toc-enrolled', label: 'Enrolled', icon: 'solar:check-circle-bold' },
+  'New':      { variant: 'neutral',      label: 'New',      icon: 'solar:star-bold' },
+  'Engaged':  { variant: 'info',  label: 'Engaged',  icon: 'solar:link-round-bold' },
+  'Enrolled': { variant: 'success', label: 'Enrolled', icon: 'solar:check-circle-bold' },
 };
 
 const fmtMins = (s) => {
@@ -123,17 +123,17 @@ export const Playground = {
               </div>
             </div>
           </td>
-          <td className={styles.td}><Badge variant={cfg.variant} label={cfg.label} icon={cfg.icon} /></td>
+          <td className={styles.td}><Badge tone={cfg.variant} label={cfg.label} icon={cfg.icon} /></td>
           <td className={styles.td}>{r.assignee}</td>
           <td className={styles.td}>{r.startDate}</td>
           <td className={styles.td}>{fmtMins(r.mins)}</td>
           <td className={`${styles.td} ${styles.stickyRight}`}>
             <div className={styles.rowActions}>
-              <ActionButton icon="solar:document-text-linear" size="L" tooltip="View" />
+              <ActionButton icon="solar:document-text-linear" tooltip="View" />
               <span className={styles.actionDivider} />
-              <ActionButton icon="solar:phone-linear" size="L" tooltip="Call" />
+              <ActionButton icon="solar:phone-linear" tooltip="Call" />
               <span className={styles.actionDivider} />
-              <ActionButton icon="solar:menu-dots-linear" size="L" tooltip="More" />
+              <ActionButton icon="solar:menu-dots-linear" tooltip="More" />
             </div>
           </td>
         </tr>
@@ -185,8 +185,8 @@ export const Playground = {
           searchPlaceholder="Search by member name…"
           showFilters={showFilters}
           onToggleFilters={setShowFilters}
-          onHistory={() => alert('History — coming soon')}
-          onExport={() => alert('Export — coming soon')}
+          onHistory={() => alert('History: coming soon')}
+          onExport={() => alert('Export: coming soon')}
           filters={
             <>
               <FilterChip label="Status"   options={statusOptions}   selected={statusFilter}   onChange={setStatusFilter} />

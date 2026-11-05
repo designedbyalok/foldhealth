@@ -5,7 +5,7 @@ import inputStyles from '../Input/Input.module.css';
 import styles from './NumberUnitInput.module.css';
 
 /**
- * NumberUnitInput — a count and its unit in one field: "[3 | Days ⌄]".
+ * NumberUnitInput: a count and its unit in one field: "[3 | Days ⌄]".
  * The number is typed; the unit opens a small menu. For things like
  * "Repeats every 3 days" or "Remind 2 hours before".
  *

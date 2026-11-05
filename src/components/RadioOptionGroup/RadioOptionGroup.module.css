@@ -12,6 +12,11 @@
   flex-direction: column;
   gap: var(--space-2);
 }
+.groupHorizontal {
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: var(--space-5);
+}
 .option {
   display: flex;
   flex-direction: column;
@@ -29,6 +34,11 @@
 .disabledWrap > * { pointer-events: none; }
 
 .optionWrap { display: contents; }
+
+/* A picked option's follow-up field, lined up with the option's label text. */
+.content {
+  padding-left: calc(var(--space-5) + var(--space-2));
+}
 
 /* ── Card variant ── */
 .card {

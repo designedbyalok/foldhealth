@@ -19,7 +19,7 @@ import styles from './SideNav.module.css';
 
 /* Track the global `data-sidebar-shape` attribute from applySidebarShape
    (lib/theme.js). When the user has opted for the floating shape, every
-   SideNav auto-renders a search header + filters items — the floating
+   SideNav auto-renders a search header + filters items, the floating
    card then has the search strip the user asked for, without touching
    every caller. */
 function useFloatingSidebarShape() {
@@ -58,7 +58,7 @@ function renderItemBody(item) {
 }
 
 /**
- * Fold Health SideNav — the shared second-level navigation rail. One root
+ * Fold Health SideNav: the shared second-level navigation rail. One root
  * component behind every section sub-nav in the app (Population worklists,
  * Messages/Calls comm panels, Analytics report pages, Settings menu) so
  * they all read and behave identically.
@@ -142,7 +142,7 @@ export function SideNav({
     />
   ) : header;
 
-  // Sliding active indicator — measured against the active row after layout,
+  // Sliding active indicator: measured against the active row after layout,
   // before paint. `animated` switches transitions on one frame after the
   // first placement so the indicator appears in position instead of flying in.
   const itemRefs = useRef(new Map());

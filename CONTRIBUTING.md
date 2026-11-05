@@ -2,7 +2,7 @@
 
 ## Package manager
 
-This repo uses **Bun** — never `npm` or `pnpm`. Use `bun install` and
+This repo uses **Bun**: never `npm` or `pnpm`. Use `bun install` and
 `bun run <script>`. `bun.lock` is the source of truth; do not commit
 `package-lock.json` or `pnpm-lock.yaml`.
 
@@ -22,17 +22,22 @@ scripts, so the whole build tree runs on the pinned version.
 ## Design system
 
 All UI must follow the Fold Health design system. These rules are enforced
-automatically — **on the lines your change touches**, so existing code isn't
+automatically: **on the lines your change touches**, so existing code isn't
 held against you, but new/modified code must comply.
 
 | Rule | Do | Don't |
 |------|----|-------|
 | **Color** | `var(--neutral-400)`, `var(--primary-300)`, `var(--status-error)` … (see `src/tokens/tokens.css`) | Raw `#hex`, `rgb()`, `hsl()` in CSS or inline `style={{}}` |
-| **Font family** | Nothing — Inter is applied globally | Any `font-family` declaration |
+| **Font family** | Nothing: Inter is applied globally | Any `font-family` declaration |
 | **Icons** | Solar `solar:*-linear` at 1px stroke | `-outline` variants; non-Solar icon sets; custom SVG where a Solar match exists |
 | **Components** | Reuse primitives from `src/components/*` (Button, Input, Select, Drawer, Badge, Checkbox, …) | Raw `<button>/<input>/<select>/<textarea>` in feature code |
-| **Filter badges** | Use the shared `src/components/FilterChip` for every filter — same look + behaviour everywhere (`Label ⌄` → `Label : Value ✕`) | Re-implementing a `*FilterChip`, or using a plain `Select`/`<select>` as a filter |
+| **Filter badges** | Use the shared `src/components/FilterChip` for every filter: same look + behaviour everywhere (`Label ⌄` → `Label : Value ✕`) | Re-implementing a `*FilterChip`, or using a plain `Select`/`<select>` as a filter |
 | **Drawers** | Actions in `headerRight`; add `headerDivider` + pass `noCloseDivider` | A close button that draws its own border |
+| **Component layers** | Add every new `src/components` folder to `src/components/layers.json`; primitives and patterns take data as props | A primitive or pattern importing `store/`, `features/`, `layouts/` or an app/domain component |
+
+The layers, import boundaries and the shared prop vocabulary (`variant`,
+`tone`, `size`, `value` / `defaultValue` / `onValueChange`, …) are in
+[`docs/components/library-contract.mdx`](docs/components/library-contract.mdx).
 
 ### How enforcement works
 

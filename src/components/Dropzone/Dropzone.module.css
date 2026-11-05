@@ -1,4 +1,4 @@
-/* Outer block — drop area + formats line stacked. The 4px gap is
+/* Outer block: drop area + formats line stacked. The 4px gap is
    intentional: the previous HCC implementation used a -10px margin hack
    on .formatsLine that visually overlapped; this is the corrected
    spacing. */
@@ -52,7 +52,7 @@
 }
 .input { display: none; }
 
-/* Format / size meta line — flexed apart, left/right. 4px below the
+/* Format / size meta line: flexed apart, left/right. 4px below the
    drop area via the parent's gap. */
 .formats {
   display: flex;

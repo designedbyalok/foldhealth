@@ -1,4 +1,4 @@
-/* A condition longer than the column clips rather than vanishing into "+N" —
+/* A condition longer than the column clips rather than vanishing into "+N",
    the mirror inherits the same cap so measured widths stay truthful. */
 .row > span,
 .measure > span {
@@ -16,7 +16,7 @@
   min-width: 0;
 }
 
-/* Full-set mirror used only for width measurement — laid out at the row's
+/* Full-set mirror used only for width measurement, laid out at the row's
    own width so wrapping matches, but never painted. */
 .measure {
   position: absolute;

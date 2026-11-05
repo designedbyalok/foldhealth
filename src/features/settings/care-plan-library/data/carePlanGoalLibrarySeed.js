@@ -1,7 +1,7 @@
 // Structured Care Plan Goals Library
 // Generated from structured_care_plan_goals_library.md. Upserted by
 // `bun run seed` (onConflict: 'id'). Priorities assigned by
-// scripts/applyCarePlanLibraryPriorities.mjs — re-run after library content changes.
+// scripts/applyCarePlanLibraryPriorities.mjs, re-run after library content changes.
 
 export const CARE_PLAN_GOAL_LIBRARY = [
   {
@@ -5662,18 +5662,18 @@ const GOAL_CATEGORY_RULES = [
   ['Labs', /\b(a1c|hba1c|ldl|hdl|cholesterol|lipid|triglyceride|kidney|renal|egfr|creatinine|urine|microalbumin|labs?|panel|ferritin|tsh|thyroid|vitamin d|inr)\b/i],
   ['Vitals', /\b(blood pressure|heart[ -]?rate|resting heart|pulse|spo2|oxygen satur|daily weight|weight monitoring|weight for|body weight|height|glucose|glycemic|hypoglycem|hyperglycem|temperature|respiratory rate|respiration|vital sign)\b/i],
   // Diet also captures body-composition outcomes that clinicians manage
-  // through diet (BMI, healthy weight, healthy eating patterns) — the
+  // through diet (BMI, healthy weight, healthy eating patterns), the
   // reference library groups these on the Diet tab.
   ['Diet', /\b(diet|nutrition|sodium|calories?|carb(?:ohydrate)?s?|fiber|fluid intake|water intake|fruits?|vegetables?|dash|mediterranean|hydration|meal plan|bmi|healthy weight|healthier diet|healthy diet|added sugar|sugar intake|saturated fat|protein intake|adequate protein)\b/i],
   ['Exercise', /\b(activity|exercise|walk|physical activit|steps|strength training|aerobic|cardio|mobility|balance|yoga|cycling|swim)\b/i],
   // Assessment covers instrument-driven goals (annual wellness visit,
-  // preventive screening, HRA, etc.) — completion tracked against the
+  // preventive screening, HRA, etc.), completion tracked against the
   // named instrument.
   ['Assessment', /\b(assessment|screening|screen for|wellness visit|preventive|immuniz|vaccin|advance care planning|action plan|risk assessment|caregiver strain|phq|gad|depression screen)\b/i],
 ];
 
 export function goalLibraryCategory(g) {
-  // Title only — descriptions list adjacent services ("...labs, therapy...")
+  // Title only: descriptions list adjacent services ("...labs, therapy...")
   // that would misclassify a coordination goal as a lab goal.
   const hay = g.title || '';
   for (const [cat, re] of GOAL_CATEGORY_RULES) if (re.test(hay)) return cat;
@@ -5718,7 +5718,7 @@ export const GOAL_MEASURE_OVERRIDES = {
   'Manage carbohydrate intake for diabetes': { measure: 'Carbohydrates', comparator: '<=', target_value: '180', target_value_2: '', custom_unit: 'g/day' },
   'Maintain adequate protein intake': { measure: 'Protein', comparator: '>=', target_value: '60', target_value_2: '', custom_unit: 'g/day' },
   'Reduce saturated fat intake': { measure: 'Saturated Fat', comparator: '<=', target_value: '20', target_value_2: '', custom_unit: 'g/day' },
-  // Reference-image style Diet goals — outcome-oriented targets tied to
+  // Reference-image style Diet goals: outcome-oriented targets tied to
   // Diet even when the metric is a body-composition or free-form goal.
   'Consume calories': { measure: 'Calories', comparator: '>=', target_value: '500', target_value_2: '', custom_unit: 'cals' },
   'Target to maintain normal BMI': { measure: 'BMI', comparator: '<', target_value: '25', target_value_2: '', custom_unit: '' },

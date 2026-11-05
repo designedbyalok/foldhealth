@@ -2,6 +2,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import { NewChatDrawer, NewSmsDrawer, VoiceCallDrawer } from './CommsDrawers';
 import { ComposeEmailDrawer } from './ComposeEmailDrawer';
 import { SendContentDrawer, SendAssessmentDrawer } from './PatientSendDrawers';
+import { SendFormDrawer, SendArticleDrawer } from './ThreadShareDrawers';
 
 /**
  * The Comms create drawers, mounted once for the whole app so Comms and the
@@ -36,10 +37,13 @@ export function CommsDrawerHost() {
       />
     );
   }
-  if (drawer.type === 'sms') return <NewSmsDrawer {...drawer.props} onClose={close} onSent={show} />;
+  // Sending an SMS keeps you where you are; the toast confirms it.
+  if (drawer.type === 'sms') return <NewSmsDrawer {...drawer.props} onClose={close} onSent={close} />;
   if (drawer.type === 'call') return <VoiceCallDrawer {...drawer.props} onClose={close} />;
   if (drawer.type === 'content') return <SendContentDrawer {...drawer.props} onClose={close} />;
   if (drawer.type === 'assessment') return <SendAssessmentDrawer {...drawer.props} onClose={close} />;
+  if (drawer.type === 'forms') return <SendFormDrawer {...drawer.props} onClose={close} />;
+  if (drawer.type === 'article') return <SendArticleDrawer {...drawer.props} onClose={close} />;
   if (drawer.type === 'email') {
     return (
       <ComposeEmailDrawer

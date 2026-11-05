@@ -1,9 +1,9 @@
 /**
- * WHO ICD-11 API client — shared by the Vercel serverless function
+ * WHO ICD-11 API client: shared by the Vercel serverless function
  * (`api/icd-search.js`) and the Vite dev middleware. No framework deps: it
  * takes an `env` bag so it works with `process.env` in both places.
  *
- * The ClientSecret NEVER reaches the browser — this module only ever runs
+ * The ClientSecret NEVER reaches the browser, this module only ever runs
  * server-side (Vercel function or the local dev-api plugin).
  *
  * Endpoints (WHO cloud defaults, all overridable via env):
@@ -17,7 +17,7 @@ const TOKEN_REFRESH_MARGIN_MS = 60_000;
 
 // Module-scoped token cache. Persists across warm Vercel invocations; in dev
 // the plugin re-imports the module per request, which just means a fresh token
-// fetch each time — harmless.
+// fetch each time: harmless.
 let tokenCache = { value: null, expiresAt: 0 };
 
 function cfg(env = {}) {
@@ -95,7 +95,7 @@ function normalize(json, limit) {
 
 /**
  * Search ICD by keyword or code. Returns `{ results, source }` where source is
- * 'who' (live API), 'unconfigured' (no creds — caller should fall back), or
+ * 'who' (live API), 'unconfigured' (no creds: caller should fall back), or
  * 'empty' (blank query).
  */
 export async function searchIcd({ q, limit = 15, env }) {
@@ -125,7 +125,7 @@ export async function searchIcd({ q, limit = 15, env }) {
   const json = await resp.json();
   const results = normalize(json, limit);
 
-  // Best-effort write-through cache into Supabase — never blocks the response.
+  // Best-effort write-through cache into Supabase: never blocks the response.
   cacheUpsert(c, results).catch(() => {});
 
   return { results, source: 'who' };

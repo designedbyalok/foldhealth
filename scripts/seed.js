@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Fold Health — Database Seed
+ * Fold Health: Database Seed
  *
  * Creates hedis_members + apcm_patients tables (if they don't exist) and
  * upserts all mock data into Supabase.
@@ -20,10 +20,19 @@ import { ICDS, NOT_LINKED, getIcdsForMember, getNotLinkedForMember } from '../sr
 import { HCC_MEMBER_BY_NAME, HCC_MEMBERS } from '../src/features/hcc/data/mock.js';
 import { AWV_MEMBERS } from '../src/features/awv-worklist/data/mock.js';
 import { sampleCrmActivities, crmToRow } from '../src/features/patient/data/crmActivity.js';
+import { sampleReferralsFor, referralToRow } from '../src/features/patient/data/patientReferrals.js';
+import { sampleOrdersFor, orderToRow } from '../src/features/patient/data/patientOrders.js';
+import { SAMPLE_VITALS } from '../src/features/patient/left-panel/tabs/vitals-labs/vitalsConfig.js';
+import { sampleAssessmentSeed, pickAssessmentForms } from '../src/features/patient/right-panel/tabs/assessments/assessmentSeed.js';
 import { EDUCATION_LIBRARY, educationToRow } from '../src/features/messages/comms/educationLibrary.js';
 import { sampleFaxes, faxToRow } from '../src/features/messages/efax/efaxData.js';
 import { JSA_MEMBERS } from '../src/features/jsa-worklist/data/mock.js';
 import { PHARMACY_WORKLIST_MEMBERS } from '../src/features/pharmacy-worklist/data/mock.js';
+import { CMP_MEMBERS } from '../src/features/cmp-worklist/data/mock.js';
+import { SAMPLE_PROTOCOLS, HARBOR_HYPERTENSION_TEXT_FILE } from '../src/features/settings/clinical-protocols/data/sampleProtocols.js';
+import { protocolToRow } from '../src/features/settings/clinical-protocols/lib/protocolSchema.js';
+import { BUILT_IN_ROLES } from '../src/lib/accessControl.js';
+import { snpSnapshotFormRow } from '../src/features/forms/templates/snpSnapshotForm.js';
 import { POP_GROUPS } from '../src/features/population-groups/PopulationGroupsView.utils.js';
 import { CCM_BILLING_PERIODS, CCM_BILLABLE_ACTIVITIES, CCM_BILLING_REPORTS } from '../src/features/patient/data/ccmBillingMock.js';
 import { CARE_PLAN_MOCK } from '../src/features/patient/data/carePlanMock.js';
@@ -35,11 +44,17 @@ import { CARE_PLAN_TEMPLATE_LIBRARY, carePlanTemplateLibraryToRow } from '../src
 import { MONITORING_SEED, monitoringToRow } from '../src/features/patient/right-panel/tabs/monitoring/monitoringData.js';
 import { OVERVIEW_SEED, overviewToRow } from '../src/features/patient/data/overviewData.js';
 import { CCM_WORKLIST_MEMBERS } from '../src/features/ccm-worklist/data/mock.js';
-import { EMPLOYER_IMPACT_EMPLOYERS, employerImpactRows, employerImpactExportRows } from '../src/features/analytics/views/employer/employerImpactSeed.js';
+import { defaultProgramTypes, programTypeToRow } from '../src/features/settings/care-program-config/careProgramConfigModel.js';
+import { EMPLOYER_IMPACT_EMPLOYERS, employerImpactRows, employerImpactWeeklyRows, employerImpactExportRows } from '../src/features/analytics/views/employer/employerImpactSeed.js';
 import { sampleOooRecords, demoOooForUser, oooToRow } from '../src/features/ooo/oooSeed.js';
 import { sampleOnCallSchedules, onCallToRow } from '../src/features/ooo/onCallSeed.js';
 import { sampleHolidays, holidayToRow } from '../src/features/holidays/holidaySeed.js';
 import { ACCOUNT_EMAIL_TEMPLATES, accountEmailTemplateToRow } from '../src/features/email-builder/accountEmailTemplates.js';
+import { AUTOMATION_EMAILS, automationEmailToRow } from '../src/features/automations/data/automationEmails.js';
+import { SEED_TEMPLATES, SEED_AUTOMATIONS, SEED_EDIT_LOG, buildSeedActivity, wireTemplateIds } from '../src/features/automations/data/automationSeed.js';
+import { automationJsToRow, templateJsToRow, runJsToRow, runMemberJsToRow, messageJsToRow } from '../src/features/automations/lib/mappers.js';
+import { SAMPLE_MEMBERS } from '../src/features/automations/data/sampleMembers.js';
+import { ACCOUNT_SECURITY_EMAIL_TEMPLATES, accountSecurityEmailTemplateToRow } from '../src/features/email-builder/accountSecurityEmailTemplates.js';
 import { sampleAvailability, blockToRow } from '../src/features/settings/calendar/availability/availabilityUtils.js';
 import { careTeamJsToDb } from '../src/store/lib/careTeamMappers.js';
 import { sampleContactsFor, contactToRow } from '../src/features/messages/comms/sendTo.js';
@@ -50,6 +65,7 @@ import { CAREGAP_ACTIVITY_MOCK } from '../src/features/hedis-worklist/data/careg
 import { CAREGAP_WHITELIST_MOCK } from '../src/features/hedis-worklist/data/caregapWhitelistMock.js';
 import { priorLabResultsFor } from '../src/features/hedis-worklist/labs/labMock.js';
 import { buildPatientSnapshot, snapshotToRow } from '../src/lib/patientSnapshot.js';
+import { SAMPLE_PATIENT_DOCUMENTS, patientDocumentToRow } from '../src/features/patient/right-panel/tabs/documents/documentsData.js';
 
 // Astrana phlebotomists who perform the LSC capillary blood lead test.
 const LSC_PHLEBOTOMISTS = [
@@ -59,6 +75,10 @@ const LSC_PHLEBOTOMISTS = [
   'victoria.magallon@astranahealth.com',
 ];
 import { PRACTICE_LOCATIONS } from '../src/features/settings/account/locations/data/mock.js';
+import { CANCEL_REASONS, RETIRED_CANCEL_REASON_IDS, cancelReasonToRow } from '../src/features/calendar/list/cancelReasons.js';
+import { sampleGroupAppointments, sampleListAppointments, sampleLocationChangeDemo, sampleVirtualToInPersonDemo, sampleWindowDemo } from '../src/features/calendar/list/listSeed.js';
+import { DEFAULT_WINDOWS } from '../src/features/calendar/list/typeWindows.js';
+import { DEFAULT_TAGS, tagToRow } from '../src/features/settings/member-leads/tags/contactTags.js';
 
 // Care-program letters library. Metadata mirrors PROGRAM_LETTERS_MOCK; the PDF
 // bytes are read from supabase/seed-assets/letters and stored base64 in the
@@ -131,7 +151,9 @@ CREATE TABLE IF NOT EXISTS hedis_members (
   state             text,
   created_at        timestamptz DEFAULT now()
 );
-ALTER TABLE hedis_members DISABLE ROW LEVEL SECURITY;
+ALTER TABLE hedis_members ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON hedis_members;
+CREATE POLICY "Allow all" ON hedis_members FOR ALL TO authenticated USING (true) WITH CHECK (true);
 `;
 
 const APCM_DDL = `
@@ -157,7 +179,9 @@ CREATE TABLE IF NOT EXISTS apcm_patients (
   program_id                  text,
   created_at                  timestamptz DEFAULT now()
 );
-ALTER TABLE apcm_patients DISABLE ROW LEVEL SECURITY;
+ALTER TABLE apcm_patients ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON apcm_patients;
+CREATE POLICY "Allow all" ON apcm_patients FOR ALL TO authenticated USING (true) WITH CHECK (true);
 `;
 
 const PATIENT_PROBLEMS_DDL = `
@@ -177,7 +201,7 @@ CREATE TABLE IF NOT EXISTS patient_problems (
 CREATE INDEX IF NOT EXISTS patient_problems_patient_id_idx ON patient_problems (patient_id);
 ALTER TABLE patient_problems ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all on patient_problems" ON patient_problems;
-CREATE POLICY "Allow all on patient_problems" ON patient_problems FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on patient_problems" ON patient_problems FOR ALL TO authenticated USING (true) WITH CHECK (true);
 `;
 
 const PATIENT_ALLERGIES_DDL = `
@@ -200,7 +224,7 @@ CREATE TABLE IF NOT EXISTS patient_allergies (
 CREATE INDEX IF NOT EXISTS patient_allergies_patient_id_idx ON patient_allergies (patient_id);
 ALTER TABLE patient_allergies ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all on patient_allergies" ON patient_allergies;
-CREATE POLICY "Allow all on patient_allergies" ON patient_allergies FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on patient_allergies" ON patient_allergies FOR ALL TO authenticated USING (true) WITH CHECK (true);
 `;
 
 const SOCIAL_HISTORY_DDL = `
@@ -210,7 +234,7 @@ CREATE TABLE IF NOT EXISTS patient_social_history (
 );
 ALTER TABLE patient_social_history ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all on patient_social_history" ON patient_social_history;
-CREATE POLICY "Allow all on patient_social_history" ON patient_social_history FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on patient_social_history" ON patient_social_history FOR ALL TO authenticated USING (true) WITH CHECK (true);
 `;
 
 const PAMI_HISTORY_DDL = `
@@ -225,7 +249,7 @@ CREATE TABLE IF NOT EXISTS patient_history_entries (
 CREATE INDEX IF NOT EXISTS patient_history_entries_patient_id_idx ON patient_history_entries (patient_id);
 ALTER TABLE patient_history_entries ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all on patient_history_entries" ON patient_history_entries;
-CREATE POLICY "Allow all on patient_history_entries" ON patient_history_entries FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on patient_history_entries" ON patient_history_entries FOR ALL TO authenticated USING (true) WITH CHECK (true);
 `;
 
 // The History cards' sample rows, on the demo patient only
@@ -289,12 +313,12 @@ CREATE TABLE IF NOT EXISTS patient_immunizations (
 CREATE INDEX IF NOT EXISTS patient_immunizations_patient_id_idx ON patient_immunizations (patient_id);
 ALTER TABLE patient_immunizations ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all on patient_immunizations" ON patient_immunizations;
-CREATE POLICY "Allow all on patient_immunizations" ON patient_immunizations FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on patient_immunizations" ON patient_immunizations FOR ALL TO authenticated USING (true) WITH CHECK (true);
 `;
 
 
 
-// Annette Brave's (11089) problem list — mirrors her care-plan conditions.
+// Annette Brave's (11089) problem list: mirrors her care-plan conditions.
 
 
 const ICD_DDL = `
@@ -311,7 +335,7 @@ CREATE INDEX IF NOT EXISTS idx_icd_codes_title ON icd_codes USING gin (to_tsvect
 ALTER TABLE icd_codes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all on icd_codes" ON icd_codes;
 DROP POLICY IF EXISTS "Read icd_codes" ON icd_codes;
-CREATE POLICY "Read icd_codes" ON icd_codes FOR SELECT USING (true);
+CREATE POLICY "Read icd_codes" ON icd_codes FOR SELECT TO authenticated USING (true);
 `;
 
 const POS_DDL = `
@@ -323,10 +347,10 @@ CREATE TABLE IF NOT EXISTS pos_codes (
 ALTER TABLE pos_codes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all on pos_codes" ON pos_codes;
 DROP POLICY IF EXISTS "Read pos_codes" ON pos_codes;
-CREATE POLICY "Read pos_codes" ON pos_codes FOR SELECT USING (true);
+CREATE POLICY "Read pos_codes" ON pos_codes FOR SELECT TO authenticated USING (true);
 `;
 
-// CCM Billing tables — mirrored in supabase/ccm_billing_migration.sql. Keep
+// CCM Billing tables: mirrored in supabase/ccm_billing_migration.sql. Keep
 // column names + defaults in sync so a fresh `bun run seed` on an empty
 // project produces the same shape the migration would.
 const CCM_PERIODS_DDL = `
@@ -346,7 +370,7 @@ CREATE TABLE IF NOT EXISTS ccm_billing_periods (
 );
 ALTER TABLE ccm_billing_periods ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all for ccm_billing_periods" ON ccm_billing_periods;
-CREATE POLICY "Allow all for ccm_billing_periods" ON ccm_billing_periods FOR ALL USING (true);
+CREATE POLICY "Allow all for ccm_billing_periods" ON ccm_billing_periods FOR ALL TO authenticated USING (true);
 `;
 
 const CCM_ACTIVITIES_DDL = `
@@ -365,7 +389,7 @@ CREATE TABLE IF NOT EXISTS ccm_billable_activities (
 );
 ALTER TABLE ccm_billable_activities ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all for ccm_billable_activities" ON ccm_billable_activities;
-CREATE POLICY "Allow all for ccm_billable_activities" ON ccm_billable_activities FOR ALL USING (true);
+CREATE POLICY "Allow all for ccm_billable_activities" ON ccm_billable_activities FOR ALL TO authenticated USING (true);
 `;
 
 const CCM_WORKLIST_DDL = `
@@ -406,7 +430,7 @@ CREATE TABLE IF NOT EXISTS ccm_worklist_members (
 );
 ALTER TABLE ccm_worklist_members ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all for ccm_worklist_members" ON ccm_worklist_members;
-CREATE POLICY "Allow all for ccm_worklist_members" ON ccm_worklist_members FOR ALL USING (true);
+CREATE POLICY "Allow all for ccm_worklist_members" ON ccm_worklist_members FOR ALL TO authenticated USING (true);
 `;
 
 const SNP_WORKLIST_DDL = `
@@ -438,18 +462,18 @@ CREATE TABLE IF NOT EXISTS snp_worklist_members (
 );
 ALTER TABLE snp_worklist_members ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all for snp_worklist_members" ON snp_worklist_members;
-CREATE POLICY "Allow all for snp_worklist_members" ON snp_worklist_members FOR ALL USING (true);
+CREATE POLICY "Allow all for snp_worklist_members" ON snp_worklist_members FOR ALL TO authenticated USING (true);
 `;
 
 // Self-heal duplicate worklist rows after seeding. The mock data still keys
 // worklist rows on a synthetic `id` (snpw-001, ccmw-002, ap-004, FOLD100001…),
 // while patient_reident_member_id_migration.sql made the canonical row key
 // `id = member_id` (the Fold ID). So a seed run can leave a synthetic-id row
-// next to the canonical `id = member_id` row for the same patient — a duplicate
+// next to the canonical `id = member_id` row for the same patient: a duplicate
 // in the worklist. This removes any synthetic row whose name already has a
 // canonical (`id = member_id`) row in the same table; the canonical row is kept.
 // Keyed on name + non-canonical id, never member_id (member_id is not unique
-// here — the same numeric belonged to more than one seeded person), so it can
+// here: the same numeric belonged to more than one seeded person), so it can
 // only ever match a true duplicate. Idempotent. See
 // supabase/worklist_dedupe_synthetic_ids_migration.sql.
 const worklistDedupeSql = (table) => `
@@ -475,7 +499,7 @@ CREATE TABLE IF NOT EXISTS caregap_activity (
 );
 ALTER TABLE caregap_activity ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all for caregap_activity" ON caregap_activity;
-CREATE POLICY "Allow all for caregap_activity" ON caregap_activity FOR ALL USING (true);
+CREATE POLICY "Allow all for caregap_activity" ON caregap_activity FOR ALL TO authenticated USING (true);
 CREATE INDEX IF NOT EXISTS idx_caregap_activity_member ON caregap_activity (member_id, at DESC);
 `;
 
@@ -498,7 +522,7 @@ CREATE TABLE IF NOT EXISTS ccm_billing_reports (
 );
 ALTER TABLE ccm_billing_reports ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all for ccm_billing_reports" ON ccm_billing_reports;
-CREATE POLICY "Allow all for ccm_billing_reports" ON ccm_billing_reports FOR ALL USING (true);
+CREATE POLICY "Allow all for ccm_billing_reports" ON ccm_billing_reports FOR ALL TO authenticated USING (true);
 `;
 
 const PRACTICE_LOCATIONS_DDL = `
@@ -521,12 +545,12 @@ CREATE TABLE IF NOT EXISTS practice_locations (
 );
 ALTER TABLE practice_locations ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all for practice_locations" ON practice_locations;
-CREATE POLICY "Allow all for practice_locations" ON practice_locations FOR ALL USING (true);
+CREATE POLICY "Allow all for practice_locations" ON practice_locations FOR ALL TO authenticated USING (true);
 `;
 
 // ── Row mappers (JS shape → DB columns) ───────────────────────────────────────
 
-// Fold ID resolution — every worklist row's `member_id` column is written as
+// Fold ID resolution: every worklist row's `member_id` column is written as
 // the bare-number Fold ID from patient_registry (e.g. "10014"), not the raw
 // payer id from the mock (e.g. "#2468029990001"). Mocks predate the Fold-ID
 // scheme; we bridge at seed time so the DB always matches what the app shows.
@@ -537,7 +561,7 @@ async function resolveFoldIdMap(supabase, rawIds) {
   const normalized = [...new Set(rawIds.map(normalizeMemberId).filter(Boolean))];
   if (!normalized.length) return new Map();
 
-  // Insert any missing normalized ids — patient_registry auto-mints fold_id
+  // Insert any missing normalized ids: patient_registry auto-mints fold_id
   // via nextval('patient_fold_id_seq'). onConflict/ignoreDuplicates keeps
   // existing assignments stable.
   await supabase
@@ -557,7 +581,7 @@ function resolveMemberId(rawId, foldIdMap) {
   const key = normalizeMemberId(rawId);
   const foldId = foldIdMap.get(key);
   if (!foldId) {
-    console.warn(`  ⚠  No Fold ID for member_id="${rawId}" — falling back to raw`);
+    console.warn(`  ⚠  No Fold ID for member_id="${rawId}", falling back to raw`);
     return rawId ?? null;
   }
   return foldId;
@@ -636,6 +660,43 @@ function practiceLocationToRow(l) {
     google_map_link: l.googleMapLink ?? null,
     default_phone:   l.defaultPhone ?? null,
     business_hours:  l.businessHours ?? [],
+  };
+}
+
+const clinicalProtocolSeedRow = sourceText => p => ({
+  id: p.id,
+  ...protocolToRow(p),
+  source_kind: p.sourceKind,
+  source_name: p.sourceName,
+  source_text: sourceText,
+  uploaded_by: p.uploadedBy,
+  approved_by: p.approvedBy,
+  approved_at: p.approvedAt,
+});
+
+function cmpToRow(m) {
+  return {
+    id:                 m.id,
+    patient_id:         m.patientId ?? null,
+    member_id:          m.memberId,
+    sub_program:        m.subProgram ?? null,
+    name:               m.name,
+    initials:           m.in,
+    gender:             m.g,
+    age:                m.age,
+    dob:                m.dob ?? null,
+    language:           m.language || 'en',
+    program_sub_status: m.progSubStatus,
+    care_plan_status:   m.carePlanStatus,
+    next_action_due:    m.nextActionDue ?? null,
+    program_start_date: m.programStartDate ?? null,
+    program_due_date:   m.programDueDate ?? null,
+    outreach:           m.outreach ?? 0,
+    last_outreach:      m.lastOutreach ?? null,
+    assignee:           m.assignee ?? null,
+    assignee_initials:  m.assigneeIn ?? null,
+    risk_level:         m.ri ?? null,
+    tasks:              m.task ?? 0,
   };
 }
 
@@ -795,6 +856,8 @@ function pharmacyWorklistToRow(m) {
     days_in_queue:     m.daysInQueue ?? null,
     prescriber:        m.prescriber ?? null,
     pharmacy:          m.pharmacy ?? null,
+    eligibility_status: m.eligibilityStatus || 'Active',
+    term_date:         m.termDate ?? null,
     phones:            m.phones ?? [],
     call_history:      m.callHistory ?? [],
     intervention_log:  m.interventionLog ?? [],
@@ -805,7 +868,7 @@ function pharmacyWorklistToRow(m) {
   };
 }
 
-// Mirrors caregapActivityToRow in useAppStore.js — common columns lifted out,
+// Mirrors caregapActivityToRow in useAppStore.js, common columns lifted out,
 // variant-specific fields ride in payload jsonb.
 function caregapActivityToRow(memberId, e) {
   const { id, when, at, actor, t, title, ...payload } = e;
@@ -863,9 +926,9 @@ function gapToRow(name, i, isLinked) {
 // ── Main ───────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('\n🌱  Fold Health — DB Seed\n');
+  console.log('\n🌱  Fold Health: DB Seed\n');
 
-  // 1. Create tables via direct Postgres connection (best-effort — tables may already exist)
+  // 1. Create tables via direct Postgres connection (best-effort: tables may already exist)
   console.log('Creating tables (if not exist)...');
   try {
     const db = new pg.Client({
@@ -879,48 +942,53 @@ async function main() {
     });
     await db.connect();
     await db.query(HEDIS_DDL);
-    console.log('  ✓ hedis_members — created / already exists');
+    console.log('  ✓ hedis_members: created / already exists');
     await db.query(APCM_DDL);
-    console.log('  ✓ apcm_patients — created / already exists');
+    console.log('  ✓ apcm_patients: created / already exists');
     await db.query(PATIENT_PROBLEMS_DDL);
     await db.query(PATIENT_ALLERGIES_DDL);
     await db.query(PATIENT_IMMUNIZATIONS_DDL);
     await db.query(PAMI_HISTORY_DDL);
     await db.query(SOCIAL_HISTORY_DDL);
     await db.query(readFileSync(new URL('../supabase/patient_crm_activities_migration.sql', import.meta.url), 'utf8'));
+    await db.query(readFileSync(new URL('../supabase/patient_vitals_migration.sql', import.meta.url), 'utf8'));
+    await db.query(readFileSync(new URL('../supabase/patient_contacts_gender_migration.sql', import.meta.url), 'utf8'));
+    await db.query(readFileSync(new URL('../supabase/patient_contacts_one_per_role_migration.sql', import.meta.url), 'utf8'));
+    await db.query(readFileSync(new URL('../supabase/sms_member_attribution_migration.sql', import.meta.url), 'utf8'));
     console.log('  ✓ patient_crm_activities: created / already exists');
     // Run the migration itself rather than a copy of it, so the two can't drift.
     await db.query(readFileSync(new URL('../supabase/employer_impact_migration.sql', import.meta.url), 'utf8'));
+    await db.query(readFileSync(new URL('../supabase/employer_impact_weekly_migration.sql', import.meta.url), 'utf8'));
     await db.query(readFileSync(new URL('../supabase/email_components_migration.sql', import.meta.url), 'utf8'));
     console.log('  ✓ email_header_footer_presets: is_default / slug / updated_at trigger');
-    console.log('  ✓ patient_problems — created / already exists');
-    console.log('  ✓ patient_allergies — created / already exists');
-    console.log('  ✓ patient_immunizations — created / already exists');
-    console.log('  ✓ patient_history_entries — created / already exists');
+    console.log('  ✓ patient_problems: created / already exists');
+    console.log('  ✓ patient_allergies: created / already exists');
+    console.log('  ✓ patient_immunizations: created / already exists');
+    console.log('  ✓ patient_history_entries: created / already exists');
     console.log('  ✓ patient_social_history: created / already exists');
     console.log('  ✓ employer_impact_employers / employer_impact_metrics + rollup functions: created / already exists');
     await db.query(ICD_DDL);
-    console.log('  ✓ icd_codes — created / already exists');
+    console.log('  ✓ icd_codes: created / already exists');
     await db.query(POS_DDL);
-    console.log('  ✓ pos_codes — created / already exists');
+    console.log('  ✓ pos_codes: created / already exists');
     await db.query(CCM_PERIODS_DDL);
-    console.log('  ✓ ccm_billing_periods — created / already exists');
+    console.log('  ✓ ccm_billing_periods: created / already exists');
     await db.query(CCM_ACTIVITIES_DDL);
-    console.log('  ✓ ccm_billable_activities — created / already exists');
+    console.log('  ✓ ccm_billable_activities: created / already exists');
     await db.query(CCM_REPORTS_DDL);
-    console.log('  ✓ ccm_billing_reports — created / already exists');
+    console.log('  ✓ ccm_billing_reports: created / already exists');
     await db.query(CCM_WORKLIST_DDL);
-    console.log('  ✓ ccm_worklist_members — created / already exists');
+    console.log('  ✓ ccm_worklist_members: created / already exists');
     await db.query(SNP_WORKLIST_DDL);
-    console.log('  ✓ snp_worklist_members — created / already exists');
+    console.log('  ✓ snp_worklist_members: created / already exists');
     await db.query(CAREGAP_ACTIVITY_DDL);
-    console.log('  ✓ caregap_activity — created / already exists');
+    console.log('  ✓ caregap_activity: created / already exists');
     await db.query(PRACTICE_LOCATIONS_DDL);
-    console.log('  ✓ practice_locations — created / already exists');
+    console.log('  ✓ practice_locations: created / already exists');
     await db.end();
   } catch (e) {
     console.warn(`  ⚠  Could not connect via pg (${e.message})`);
-    console.warn('     Tables must already exist — continuing to upsert data.\n');
+    console.warn('     Tables must already exist: continuing to upsert data.\n');
   }
 
   // 2. Upsert data via supabase-js (service role bypasses RLS)
@@ -955,6 +1023,68 @@ async function main() {
     .from('hedis_members')
     .upsert(hedisRows, { onConflict: 'id' });
   if (he) { console.error('  ✗', he.message); } else { console.log(`  ✓ ${hedisRows.length} new members (${HEDIS_MEMBERS.length - hedisRows.length} already present)`); }
+
+  console.log('Seeding cmp_members...');
+  const { error: cmpErr } = await supabase
+    .from('cmp_members')
+    .upsert(CMP_MEMBERS.map(cmpToRow), { onConflict: 'id' });
+  if (cmpErr) { console.error('  ✗', cmpErr.message, '(run supabase/cmp_members_migration.sql first)'); } else { console.log(`  ✓ ${CMP_MEMBERS.length} members`); }
+
+  // Each roster row is also the patient's CMP enrollment (Care Programs tab);
+  // the same rows supabase/cmp_members_care_program_sync_migration.sql backfills.
+  console.log('Seeding CMP enrollments (patient_care_programs)...');
+  const today = new Date();
+  const todayStamp = `${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}/${today.getFullYear()}`;
+  const cmpEnrollments = CMP_MEMBERS.filter(m => m.patientId && m.subProgram).map(m => ({
+    id: `pcp-${m.patientId}-CMP-${m.subProgram.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+    patient_id: m.patientId,
+    code: 'CMP',
+    sub_program: m.subProgram,
+    instance: 1,
+    name: `${m.subProgram} (CMP)`,
+    status: 'New',
+    status_color: 'var(--primary-300)',
+    start_date: m.programStartDate || todayStamp,
+    end_date: '-',
+    last_updated: todayStamp,
+    assignee: m.assignee || 'Unassigned',
+    pcp: '-',
+    progress: 0,
+    planned_end_date: m.programDueDate || null,
+  }));
+  const { error: cmpEnrollErr } = await supabase
+    .from('patient_care_programs')
+    .upsert(cmpEnrollments, { onConflict: 'id', ignoreDuplicates: true });
+  if (cmpEnrollErr) { console.error('  ✗', cmpEnrollErr.message, '(run the patient_care_programs sub_program and lifecycle migrations first)'); } else { console.log(`  ✓ ${cmpEnrollments.length} CMP enrollments`); }
+
+  // Sample clinical protocol (Settings > Clinical Protocols), with its document text.
+  console.log('Seeding clinical_protocols...');
+  const protocolText = readFileSync(new URL(`../src/features/settings/clinical-protocols/data/${HARBOR_HYPERTENSION_TEXT_FILE}`, import.meta.url), 'utf8');
+  const { error: protoErr } = await supabase
+    .from('clinical_protocols')
+    .upsert(SAMPLE_PROTOCOLS.map(clinicalProtocolSeedRow(protocolText)), { onConflict: 'id' });
+  if (protoErr) { console.error('  ✗', protoErr.message, '(run supabase/clinical_protocols_migration.sql first)'); } else { console.log(`  ✓ ${SAMPLE_PROTOCOLS.length} protocol`); }
+
+  // Built-in roles for Access Control, everything allowed. By name, so the
+  // permissions an admin has since switched off are left alone.
+  console.log('Seeding access_roles...');
+  const { error: arErr } = await supabase
+    .from('access_roles')
+    .upsert(BUILT_IN_ROLES.map(name => ({ name, built_in: true })), { onConflict: 'name', ignoreDuplicates: true });
+  if (arErr) { console.error('  ✗', arErr.message, '(run supabase/access_roles_migration.sql first)'); } else { console.log(`  ✓ ${BUILT_IN_ROLES.length} built-in roles`); }
+
+  // Added once, by name: later edits in the Form builder are kept.
+  console.log('Seeding SNP Snapshot form...');
+  const snapshotRow = snpSnapshotFormRow();
+  const { data: snapshotExisting, error: snapshotFindErr } = await supabase.from('forms').select('id').eq('name', snapshotRow.name).limit(1);
+  if (snapshotFindErr) {
+    console.error('  ✗', snapshotFindErr.message);
+  } else if (snapshotExisting?.length) {
+    console.log(`  ✓ already present (id=${snapshotExisting[0].id})`);
+  } else {
+    const { error: snapshotErr } = await supabase.from('forms').insert({ ...snapshotRow, response_count: 0 });
+    if (snapshotErr) console.error('  ✗', snapshotErr.message); else console.log('  ✓ added');
+  }
 
   console.log('Seeding apcm_patients...');
   const apcmRows = await withoutExistingPeople(supabase, 'apcm_patients', APCM_PATIENTS.map(apcmToRow));
@@ -1003,6 +1133,40 @@ async function main() {
     .upsert(withPatient(PATIENT_HISTORY_ENTRIES), { onConflict: 'id' });
   if (phe) { console.error('  ✗', phe.message); } else { console.log(`  ✓ ${PATIENT_HISTORY_ENTRIES.length} rows`); }
 
+  // Fixed ids so re-seeding updates the demo patient's vitals instead of duplicating them.
+  console.log('Seeding patient_vitals...');
+  const vitalRows = SAMPLE_VITALS.map((v, i) => ({
+    id: `00000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`,
+    patient_id: PAMI_DEMO_PATIENT,
+    vital_key: v.vital_key, value: v.value, value2: v.value2 ?? null,
+    flag: !!v.flag, recorded_on: v.recorded_on,
+  }));
+  const { error: pve } = await supabase.from('patient_vitals').upsert(vitalRows, { onConflict: 'id' });
+  if (pve) { console.error('  ✗', pve.message); } else { console.log(`  ✓ ${vitalRows.length} rows`); }
+
+  // Patient Documents tab: Annette Brave's documents (program_code NULL).
+  console.log('Seeding program_documents (patient documents)...');
+  const patientDocRows = SAMPLE_PATIENT_DOCUMENTS.map(patientDocumentToRow);
+  const { error: pde } = await supabase.from('program_documents').upsert(patientDocRows, { onConflict: 'id' });
+  if (pde) { console.error('  ✗', pde.message); } else { console.log(`  ✓ ${patientDocRows.length} rows`); }
+
+  // P360 Assessments: sends and responses for the first published forms in
+  // the library, on the demo patient.
+  console.log('Seeding patient_assessment_sends + form_responses (P360 Assessments)...');
+  {
+    const { data: allForms, error: sfErr } = await supabase.from('forms').select('id, name, form_type, schema').limit(300);
+    const seedForms = pickAssessmentForms(allForms || []);
+    if (sfErr || !seedForms.length) {
+      console.error('  ✗', sfErr?.message || 'no assessment forms to send');
+    } else {
+      const { sends, responses } = sampleAssessmentSeed(PAMI_DEMO_PATIENT, seedForms);
+      const { error: sendErr } = await supabase.from('patient_assessment_sends').upsert(sends, { onConflict: 'id' });
+      if (sendErr) { console.error('  ✗', sendErr.message, '(run supabase/patient_assessment_sends_migration.sql first)'); } else { console.log(`  ✓ ${sends.length} sends`); }
+      const { error: respErr } = await supabase.from('form_responses').upsert(responses, { onConflict: 'form_id,session_id' });
+      if (respErr) { console.error('  ✗', respErr.message, '(form_responses.patient_id comes from supabase/automation_rules_migration.sql)'); } else { console.log(`  ✓ ${responses.length} responses`); }
+    }
+  }
+
   // Components: Print Report Header / Footer Options 1–4 (Option 1 is the
   // default Report Header and Report Footer).
   console.log('Seeding email_header_footer_presets (report headers + footers)...');
@@ -1035,6 +1199,18 @@ async function main() {
       if (error) failed = error;
     }
     if (failed) { console.error('  ✗', failed.message); } else { console.log(`  ✓ ${metricRows.length} rows`); }
+
+    // The same months by week, for the Month and Quarter charts.
+    const weeklyRows = employerImpactWeeklyRows(metricRows);
+    console.log(`Seeding employer_impact_weekly_metrics (${weeklyRows.length} rows)...`);
+    failed = null;
+    for (let i = 0; i < weeklyRows.length && !failed; i += 1000) {
+      const { error } = await supabase
+        .from('employer_impact_weekly_metrics')
+        .upsert(weeklyRows.slice(i, i + 1000), { onConflict: 'id' });
+      if (error) failed = error;
+    }
+    if (failed) { console.error('  ✗', failed.message); } else { console.log(`  ✓ ${weeklyRows.length} rows`); }
   }
 
   console.log('Seeding employer_impact_report_exports (sample export history)...');
@@ -1121,6 +1297,125 @@ async function main() {
     if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} holidays`); }
   }
 
+  // Calendar list view: the Cancel Appointments dialog's reasons.
+  console.log('Seeding appointment_cancel_reasons...');
+  {
+    const rows = CANCEL_REASONS.map(cancelReasonToRow);
+    const { error } = await supabase.from('appointment_cancel_reasons').upsert(rows, { onConflict: 'id' });
+    if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} cancel reasons`); }
+    await supabase.from('appointment_cancel_reasons').update({ active: false }).in('id', RETIRED_CANCEL_REASON_IDS);
+  }
+
+  // Settings > Member/Leads > Tags: the practice's member tags.
+  console.log('Seeding contact_tags...');
+  {
+    const rows = DEFAULT_TAGS.map(tagToRow);
+    const { error } = await supabase.from('contact_tags').upsert(rows, { onConflict: 'id' });
+    if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} tags`); }
+  }
+
+  // Calendar List view: appointments for 10 providers who have none yet.
+  // Re-running skips slots a provider already has booked.
+  console.log('Seeding list view appointments...');
+  {
+    const { data: staff, error: pe } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .not('full_name', 'is', null)
+      .order('full_name');
+    const { data: booked } = await supabase.from('appointments').select('primary_user, primary_user_id, date, time_start');
+    if (pe) {
+      console.error('  ✗ profiles:', pe.message);
+    } else {
+      const busy = new Set((booked || []).flatMap(a => [a.primary_user_id, a.primary_user]).filter(Boolean));
+      const seeded = new Set((booked || []).map(a => `${a.primary_user_id || a.primary_user} ${a.date} ${a.time_start}`));
+      const providers = (staff || [])
+        .map(p => ({ id: p.id, name: p.full_name.trim() }))
+        .filter(p => p.name && !busy.has(p.id) && !busy.has(p.name))
+        .slice(0, 10);
+      const rows = sampleListAppointments(providers)
+        .filter(a => !seeded.has(`${a.primary_user_id || a.primary_user} ${a.date} ${a.time_start}`));
+      let { error } = rows.length ? await supabase.from('appointments').insert(rows) : { error: null };
+      if (error && /primary_user_id/.test(error.message || '')) {
+        ({ error } = await supabase.from('appointments').insert(rows.map(({ primary_user_id: _skip, ...a }) => a)));
+      }
+      if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} appointments for ${providers.length} providers`); }
+    }
+  }
+
+  // Calendar List view: group sessions this week (one row per member at the
+  // same provider, date and time) for the first 4 providers. Re-running
+  // skips members already booked in that session.
+  console.log('Seeding group appointments...');
+  {
+    const { data: staff, error: pe } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .not('full_name', 'is', null)
+      .order('full_name')
+      .limit(4);
+    const { data: booked } = await supabase.from('appointments').select('primary_user, primary_user_id, date, time_start, patient_name');
+    if (pe) {
+      console.error('  ✗ profiles:', pe.message);
+    } else {
+      const seeded = new Set((booked || []).map(a => `${a.primary_user_id || a.primary_user} ${a.date} ${a.time_start} ${a.patient_name}`));
+      const providers = (staff || []).map(p => ({ id: p.id, name: p.full_name.trim() })).filter(p => p.name);
+      const rows = sampleGroupAppointments(providers)
+        .filter(a => !seeded.has(`${a.primary_user_id || a.primary_user} ${a.date} ${a.time_start} ${a.patient_name}`));
+      let { error } = rows.length ? await supabase.from('appointments').insert(rows) : { error: null };
+      if (error && /primary_user_id/.test(error.message || '')) {
+        ({ error } = await supabase.from('appointments').insert(rows.map(({ primary_user_id: _skip, ...a }) => a)));
+      }
+      if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} group appointment rows for ${providers.length} providers`); }
+    }
+  }
+
+  // Bulk Edit's location change demo: next week, Abhijit Gupta's seven
+  // appointments at 7 Hills Department and availability at AstranaCare
+  // Centennial Hills, and six virtual follow-ups for the Virtual → In-person
+  // demo. Re-running skips rows already there.
+  console.log('Seeding location change demo...');
+  {
+    const { data: prov } = await supabase.from('profiles').select('id, full_name, email').ilike('full_name', 'abhijit%gupta%').limit(1);
+    const { data: pts } = await supabase.from('all_patients').select('id, name').not('name', 'is', null).order('name').limit(7);
+    if (!prov?.[0] || (pts || []).length < 7) {
+      console.log('  - no Abhijit Gupta profile or not enough patients; skipped');
+    } else {
+      const provider = { id: prov[0].id, name: prov[0].full_name.trim(), email: prov[0].email };
+      const demo = sampleLocationChangeDemo(provider, pts);
+      const { error: ue } = await supabase.from('user_availability').upsert(demo.availability, { onConflict: 'id' });
+      const { data: booked } = await supabase.from('appointments').select('primary_user, date, time_start, patient_name');
+      const seen = new Set((booked || []).map(a => `${a.primary_user} ${a.date} ${a.time_start} ${a.patient_name}`));
+      // With the Virtual → In-person demo's virtual follow-ups.
+      const rows = [...demo.appointments, ...demo.history, ...sampleVirtualToInPersonDemo(provider, pts)].filter(a => !seen.has(`${a.primary_user} ${a.date} ${a.time_start} ${a.patient_name}`));
+      const { error: ae } = rows.length ? await supabase.from('appointments').insert(rows) : { error: null };
+      if (ue || ae) { console.error('  ✗', (ue || ae).message); } else { console.log(`  ✓ availability + ${rows.length} appointments`); }
+    }
+  }
+
+  // Appointment types' cancel and reschedule windows
+  // (appointment_type_windows_migration.sql), for the bulk review step.
+  console.log('Seeding appointment type windows...');
+  for (const [name, windows] of Object.entries(DEFAULT_WINDOWS)) {
+    const { error } = await supabase.from('appointment_types').update(windows).eq('name', name);
+    if (error) { console.error('  ✗', name, error.message); break; }
+  }
+  console.log(`  ✓ ${Object.keys(DEFAULT_WINDOWS).length} types`);
+  // Abhay Chaudhary's Annual Wellness Visits, tomorrow (inside the window)
+  // and next week (outside it), relative to the day the seed runs.
+  {
+    const { data: prov } = await supabase.from('profiles').select('id, full_name, email').ilike('full_name', 'abhay chaudhary').limit(1);
+    const { data: pts } = await supabase.from('all_patients').select('id, name').not('name', 'is', null).order('name').limit(7);
+    if (prov?.[0] && (pts || []).length >= 7) {
+      const provider = { id: prov[0].id, name: prov[0].full_name.trim(), email: prov[0].email };
+      const { data: booked } = await supabase.from('appointments').select('primary_user, date, time_start, patient_name').eq('primary_user', provider.name);
+      const seen = new Set((booked || []).map(a => `${a.date} ${a.time_start} ${a.patient_name}`));
+      const rows = sampleWindowDemo(provider, pts).filter(a => !seen.has(`${a.date} ${a.time_start} ${a.patient_name}`));
+      const { error } = rows.length ? await supabase.from('appointments').insert(rows) : { error: null };
+      if (error) console.error('  ✗ window demo', error.message); else console.log(`  ✓ window demo, ${rows.length} appointments`);
+    }
+  }
+
   console.log('Seeding patient_social_history...');
   const { error: psh } = await supabase
     .from('patient_social_history')
@@ -1133,6 +1428,16 @@ async function main() {
     .from('patient_crm_activities')
     .upsert(crmRows, { onConflict: 'id' });
   if (crmErr) { console.error('  ✗', crmErr.message); } else { console.log(`  ✓ ${crmRows.length} activities`); }
+
+  console.log('Seeding patient_referrals (Orders & Referrals)...');
+  const referralRows = sampleReferralsFor(PAMI_DEMO_PATIENT).map(referralToRow);
+  const { error: refErr } = await supabase.from('patient_referrals').upsert(referralRows, { onConflict: 'id' });
+  if (refErr) { console.error('  ✗', refErr.message); } else { console.log(`  ✓ ${referralRows.length} referrals`); }
+
+  console.log('Seeding patient_orders (Orders & Referrals: Lab, Imaging)...');
+  const orderRows = sampleOrdersFor(PAMI_DEMO_PATIENT).map(orderToRow);
+  const { error: orderErr } = await supabase.from('patient_orders').upsert(orderRows, { onConflict: 'id' });
+  if (orderErr) { console.error('  ✗', orderErr.message); } else { console.log(`  ✓ ${orderRows.length} orders`); }
 
   console.log('Seeding user_availability (Settings → Calendar)...');
   const availRows = sampleAvailability().map(blockToRow);
@@ -1156,6 +1461,27 @@ async function main() {
   const contactRows = sampleContactsFor(PAMI_DEMO_PATIENT).map(contactToRow);
   const { error: contactErr } = await supabase.from('patient_contacts').upsert(contactRows, { onConflict: 'id' });
   if (contactErr) { console.error('  ✗', contactErr.message); } else { console.log(`  ✓ ${contactRows.length} patient contacts`); }
+
+  // Shared phone number (FCS-5677): Annette Brave's son and daughter use her
+  // number, so her SMS thread shows "3 members" and each SMS is logged for
+  // one of them. Ids are prefixed so they can never overwrite a real patient.
+  console.log('Seeding shared-number family (SMS attribution)...');
+  const { data: annette } = await supabase.from('all_patients').select('phone').eq('id', PAMI_DEMO_PATIENT).maybeSingle();
+  const familyPhone = annette?.phone || '+919175367487';
+  const familyRows = [
+    { id: 'sms-family-11089-liam', name: 'Liam Johnson', initials: 'LJ', gender: 'M', dob: '1992-03-29' },
+    { id: 'sms-family-11089-ava', name: 'Ava Carter', initials: 'AC', gender: 'F', dob: '1995-08-14' },
+  ].map(r => ({
+    ...r,
+    member_id: r.id,
+    source: 'manual',
+    age: Math.floor((Date.now() - new Date(`${r.dob}T00:00:00`).getTime()) / (365.25 * 86400000)),
+    phone: familyPhone,
+    family_id: PAMI_DEMO_PATIENT,
+    language: 'en',
+  }));
+  const { error: familyErr } = await supabase.from('all_patients').upsert(familyRows, { onConflict: 'id' });
+  if (familyErr) { console.error('  ✗', familyErr.message); } else { console.log(`  ✓ ${familyRows.length} members sharing ${PAMI_DEMO_PATIENT}'s number`); }
 
   console.log('Seeding efax_inbound (Comms → E-fax)...');
   const { data: faxPatients } = await supabase.from('all_patients').select('id, name, dob, member_id, gender, age, phone').order('name').limit(2);
@@ -1219,7 +1545,7 @@ async function main() {
     .upsert(barrierLibraryRows, { onConflict: 'id' });
   if (cplbErr) {
     if (cplbErr.code === '42P01' || cplbErr.code === 'PGRST205') {
-      console.log('  ⚠ care_plan_barriers table missing — run supabase/care_plan_library_migration.sql first');
+      console.log('  ⚠ care_plan_barriers table missing: run supabase/care_plan_library_migration.sql first');
     } else {
       console.error('  ✗', cplbErr.message);
     }
@@ -1241,7 +1567,7 @@ async function main() {
     .upsert(CARE_PLAN_INTERVENTION_LIBRARY, { onConflict: 'id' });
   if (cpitErr) {
     if (cpitErr.code === '42P01' || cpitErr.code === 'PGRST205') {
-      console.log('  ⚠ care_plan_intervention_templates missing — run supabase/care_plan_intervention_templates_migration.sql');
+      console.log('  ⚠ care_plan_intervention_templates missing: run supabase/care_plan_intervention_templates_migration.sql');
     } else console.error('  ✗', cpitErr.message);
   } else console.log(`  ✓ ${CARE_PLAN_INTERVENTION_LIBRARY.length} intervention templates`);
 
@@ -1253,6 +1579,39 @@ async function main() {
   if (cpgErr) console.error('  ✗', cpgErr.message);
   else console.log(`  ✓ ${goalLibraryRows.length} library goals`);
 
+  console.log('Seeding care_program_types...');
+  // Built-in program types; ignoreDuplicates keeps any configuration already edited in Settings.
+  const programTypeRows = defaultProgramTypes().map(programTypeToRow);
+  const { error: cptypeErr } = await supabase
+    .from('care_program_types')
+    .upsert(programTypeRows, { onConflict: 'id', ignoreDuplicates: true });
+  if (cptypeErr) {
+    if (cptypeErr.code === '42P01') console.log('  ⚠ care_program_types missing: run supabase/care_program_types_migration.sql');
+    else console.error('  ✗', cptypeErr.message);
+  } else console.log(`  ✓ ${programTypeRows.length} care program types`);
+
+  console.log('Seeding care_plan_events (event-based plan updates demo)...');
+  // A few recent events for Annette Brave (11089) so the care plan's "Plan
+  // updates from new events" card has something to evaluate. Live events come
+  // from the triggers in supabase/care_plan_event_updates_migration.sql.
+  const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString();
+  const carePlanEventRows = [
+    { kind: 'adt', action: 'discharge', display: 'Inpatient discharge', occurred_at: daysAgo(5), dedupe_key: 'seed:11089:adt-discharge',
+      meta: { raw: { action: 'discharge', facility: 'St. Mary Medical Center', disposition: 'Home', followUp: 'PCP within 7 days' } } },
+    { kind: 'lab', code: '4548-4', display: 'Hemoglobin A1c', numeric_value: 8.1, unit: '%', abnormal: true, occurred_at: daysAgo(3), dedupe_key: 'seed:11089:lab-a1c',
+      meta: { referenceLow: 4, referenceHigh: 5.6 } },
+    { kind: 'vital', code: 'bp', display: 'bp', value_text: '146/90', numeric_value: 146, abnormal: true, occurred_at: daysAgo(2), dedupe_key: 'seed:11089:vital-bp' },
+    { kind: 'medication', action: 'started', display: 'Empagliflozin 10 mg', value_text: '1 tab once a day', occurred_at: daysAgo(2), dedupe_key: 'seed:11089:med-empagliflozin' },
+    { kind: 'assessment', action: 'completed', display: 'PHQ-9', numeric_value: 14, value_text: 'Moderate', occurred_at: daysAgo(1), dedupe_key: 'seed:11089:phq9' },
+  ].map(r => ({ patient_id: '11089', source_table: 'seed', source_id: r.dedupe_key, ...r }));
+  const { error: cpeErr } = await supabase
+    .from('care_plan_events')
+    .upsert(carePlanEventRows, { onConflict: 'dedupe_key', ignoreDuplicates: true });
+  if (cpeErr) {
+    if (cpeErr.code === '42P01' || cpeErr.code === 'PGRST205') console.log('  \u26a0 care_plan_events missing: run supabase/care_plan_event_updates_migration.sql');
+    else console.error('  \u2717', cpeErr.message);
+  } else console.log(`  \u2713 ${carePlanEventRows.length} care plan events`);
+
   console.log('Seeding care_plan_templates (library)...');
   const templateRows = CARE_PLAN_TEMPLATE_LIBRARY.map(carePlanTemplateLibraryToRow);
   const { error: cptErr } = await supabase
@@ -1260,7 +1619,7 @@ async function main() {
     .upsert(templateRows, { onConflict: 'id' });
   if (cptErr) {
     if (cptErr.code === '42703') {
-      console.log('  ⚠ care_plan_templates.barriers missing — run supabase/care_plan_library_migration.sql');
+      console.log('  ⚠ care_plan_templates.barriers missing, run supabase/care_plan_library_migration.sql');
     } else console.error('  ✗', cptErr.message);
   } else console.log(`  ✓ ${templateRows.length} care plan templates`);
 
@@ -1381,12 +1740,12 @@ async function main() {
         .eq('name', name);
       if (me) console.error(`  ✗ ${name} dos_list:`, me.message);
     }
-    console.log(`  ✓ ${name} — ${rows.length} gaps`);
+    console.log(`  ✓ ${name}: ${rows.length} gaps`);
   }
 
-  // Ensure EVERY worklist member has diagnosis gaps — curated where available,
+  // Ensure EVERY worklist member has diagnosis gaps, curated where available,
   // deterministically generated (getIcdsForMember/getNotLinkedForMember) for the
-  // rest — so no patient opens an empty drawer or an empty Open-ICDs popover.
+  // rest: so no patient opens an empty drawer or an empty Open-ICDs popover.
   console.log('\nSeeding diagnosis gaps for all remaining members...');
   const { data: allMembers, error: mErr } = await supabase
     .from('hcc_members')
@@ -1442,7 +1801,7 @@ async function main() {
 
   // ── Population Groups ──
   // The demo groups used to be concatenated onto the DB rows at render time,
-  // which put rows in the table that Edit and Delete could never persist —
+  // which put rows in the table that Edit and Delete could never persist,
   // they had no row to write to. They live here instead so every group on
   // screen is a real record. Matched on name (id is a generated uuid), so
   // re-running never duplicates and never clobbers edits to other columns.
@@ -1461,7 +1820,7 @@ async function main() {
         // created_at comes from the mock's own date so the demo keeps its
         // spread of dates; updated_at matches it because a freshly seeded
         // group has never been edited. (The mock's own `updated` predates its
-        // `created`, which is impossible — don't carry that over.)
+        // `created`, which is impossible, don't carry that over.)
         const rows = missing.map(g => {
           const createdIso = new Date(g.created).toISOString();
           return {
@@ -1493,7 +1852,7 @@ async function main() {
       .from('p360_profiles')
       .select('id, patient_id, age, sex_at_birth, gender_identity, state, zipcode, problems, diagnoses, diagnosis_groups, immunizations, medication_orders, procedures, lab_results, wearables, forms_submitted, membership_status, past_membership_status, engagement_level');
     if (pErr) {
-      console.log(`  ✗ p360 criteria fields: ${pErr.message} — run supabase/pop_group_rule_builder_migration.sql first`);
+      console.log(`  ✗ p360 criteria fields: ${pErr.message}, run supabase/pop_group_rule_builder_migration.sql first`);
     } else {
       // Deterministic pick: hash the patient id so re-runs are stable.
       const hash = (s) => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
@@ -1515,8 +1874,8 @@ async function main() {
       const ENGAGEMENT = ['High', 'Medium', 'Low', 'Unreachable'];
 
       // Core demographic criteria fields (age / sex / gender / state / zip)
-      // derive from the profile's identity row — patients for p# ids,
-      // all_patients for FOLD# / ap-# — falling back to deterministic values.
+      // derive from the profile's identity row: patients for p# ids,
+      // all_patients for FOLD# / ap-#: falling back to deterministic values.
       // Without these the rule builder's Personal Info and Location
       // conditions have nothing to evaluate against.
       const { data: idPts } = await supabase.from('patients').select('id, age, dob, gender, state');
@@ -1587,7 +1946,7 @@ async function main() {
     const { data: acts, error: aErr } = gErr ? { data: null, error: gErr }
       : await supabase.from('pop_group_activity').select('group_id');
     if (gErr || aErr) {
-      console.log(`  ✗ pop_group_activity: ${(gErr || aErr).message} — run supabase/pop_group_activity_migration.sql first`);
+      console.log(`  ✗ pop_group_activity: ${(gErr || aErr).message}, run supabase/pop_group_activity_migration.sql first`);
     } else {
       const have = new Set((acts || []).map(a => a.group_id));
       const rows = (groups || [])
@@ -1622,7 +1981,7 @@ async function main() {
         ] },
       },
       {
-        name: 'Fall Risk — Age 65+',
+        name: 'Fall Risk: Age 65+',
         description: 'Seniors at elevated fall risk: age ≥ 65 with a fall-risk problem',
         category: 'Risk Management',
         rule: { combinator: 'and', rules: [
@@ -1649,7 +2008,7 @@ async function main() {
         ] },
       },
       {
-        name: 'Preventive — Women 50+',
+        name: 'Preventive: Women 50+',
         description: 'Female patients 50+ for preventive screenings (mammography, colonoscopy)',
         category: 'Preventive Care',
         rule: { combinator: 'and', rules: [
@@ -1698,7 +2057,7 @@ async function main() {
       .from('pop_group_rule_templates')
       .select('name');
     if (exErr) {
-      console.log(`  ✗ pop_group_rule_templates: ${exErr.message} — run supabase/pop_group_rule_templates_migration.sql first`);
+      console.log(`  ✗ pop_group_rule_templates: ${exErr.message}, run supabase/pop_group_rule_templates_migration.sql first`);
     } else {
       const have = new Set((existing || []).map(t => t.name));
       const rows = TEMPLATES.filter(t => !have.has(t.name));
@@ -1716,7 +2075,7 @@ async function main() {
   /* ── patient_clinical_events (coded terminology events for healthcare rules) ── */
   {
     const CLINICAL_EVENTS = [
-      // Annette Brave — diabetes, labs, medications
+      // Annette Brave: diabetes, labs, medications
       { patient_id: 'p1', event_type: 'diagnosis', code: 'E11.9', code_system: 'icd10', display: 'Type 2 diabetes mellitus, without complications', effective_date: '2025-08-15', status: 'active' },
       { patient_id: 'p1', event_type: 'diagnosis', code: 'I10', code_system: 'icd10', display: 'Essential (primary) hypertension', effective_date: '2024-03-10', status: 'active' },
       { patient_id: 'p1', event_type: 'lab', code: '4548-4', code_system: 'loinc', display: 'Hemoglobin A1c/Hemoglobin.total', effective_date: '2026-05-20', numeric_value: 9.2, unit: '%' },
@@ -1726,14 +2085,14 @@ async function main() {
       { patient_id: 'p1', event_type: 'encounter', code: '99281', code_system: 'cpt', display: 'Emergency department visit, level 1', effective_date: '2026-04-12' },
       { patient_id: 'p1', event_type: 'encounter', code: '99282', code_system: 'cpt', display: 'Emergency department visit, level 2', effective_date: '2026-03-05' },
 
-      // William Jammy — COPD, labs
+      // William Jammy: COPD, labs
       { patient_id: 'p2', event_type: 'diagnosis', code: 'J44.1', code_system: 'icd10', display: 'Chronic obstructive pulmonary disease with acute exacerbation', effective_date: '2025-11-20', status: 'active' },
       { patient_id: 'p2', event_type: 'diagnosis', code: 'E78.5', code_system: 'icd10', display: 'Dyslipidemia, unspecified', effective_date: '2024-06-15', status: 'active' },
       { patient_id: 'p2', event_type: 'lab', code: '2089-1', code_system: 'loinc', display: 'LDL Cholesterol', effective_date: '2026-02-10', numeric_value: 195, unit: 'mg/dL' },
       { patient_id: 'p2', event_type: 'medication', code: '36567', code_system: 'rxnorm', display: 'Atorvastatin 40 MG Oral Tablet', effective_date: '2025-06-01', status: 'active' },
       { patient_id: 'p2', event_type: 'procedure', code: 'G0438', code_system: 'cpt', display: 'Annual wellness visit, initial', effective_date: '2025-09-15' },
 
-      // Grace Hill — CHF, multiple encounters
+      // Grace Hill: CHF, multiple encounters
       { patient_id: 'p3', event_type: 'diagnosis', code: 'I50.9', code_system: 'icd10', display: 'Heart failure, unspecified', effective_date: '2025-04-02', status: 'active' },
       { patient_id: 'p3', event_type: 'lab', code: '4548-4', code_system: 'loinc', display: 'Hemoglobin A1c/Hemoglobin.total', effective_date: '2026-06-15', numeric_value: 7.1, unit: '%' },
       { patient_id: 'p3', event_type: 'encounter', code: '99283', code_system: 'cpt', display: 'Emergency department visit, level 3', effective_date: '2026-05-20' },
@@ -1741,7 +2100,7 @@ async function main() {
       { patient_id: 'p3', event_type: 'encounter', code: '99285', code_system: 'cpt', display: 'Emergency department visit, level 5', effective_date: '2026-04-05' },
       { patient_id: 'p3', event_type: 'immunization', code: '135', code_system: 'cvx', display: 'Influenza, high dose', effective_date: '2025-10-01' },
 
-      // Kevin Brown — CKD, labs, meds
+      // Kevin Brown: CKD, labs, meds
       { patient_id: 'p4', event_type: 'diagnosis', code: 'N18.3', code_system: 'icd10', display: 'Chronic kidney disease, stage 3', effective_date: '2025-07-10', status: 'active' },
       { patient_id: 'p4', event_type: 'diagnosis', code: 'E11.65', code_system: 'icd10', display: 'Type 2 diabetes mellitus with hyperglycemia', effective_date: '2025-01-20', status: 'active' },
       { patient_id: 'p4', event_type: 'lab', code: '4548-4', code_system: 'loinc', display: 'Hemoglobin A1c/Hemoglobin.total', effective_date: '2026-07-10', numeric_value: 10.1, unit: '%' },
@@ -1749,7 +2108,7 @@ async function main() {
       { patient_id: 'p4', event_type: 'medication', code: '860975', code_system: 'rxnorm', display: 'Metformin hydrochloride 500 MG', effective_date: '2025-03-01', status: 'active' },
       { patient_id: 'p4', event_type: 'medication', code: '36567', code_system: 'rxnorm', display: 'Atorvastatin 40 MG Oral Tablet', effective_date: '2025-03-01', status: 'active' },
 
-      // Jessica Clark — healthy, preventive care
+      // Jessica Clark: healthy, preventive care
       { patient_id: 'p5', event_type: 'diagnosis', code: 'Z00.00', code_system: 'icd10', display: 'Encounter for general adult medical exam without abnormal findings', effective_date: '2026-01-15' },
       { patient_id: 'p5', event_type: 'procedure', code: '77067', code_system: 'cpt', display: 'Screening mammography, bilateral', effective_date: '2026-01-15' },
       { patient_id: 'p5', event_type: 'lab', code: '2089-1', code_system: 'loinc', display: 'LDL Cholesterol', effective_date: '2026-01-15', numeric_value: 120, unit: 'mg/dL' },
@@ -1761,7 +2120,7 @@ async function main() {
       .select('id')
       .limit(1);
     if (exErr) {
-      console.log(`  ✗ patient_clinical_events: ${exErr.message} — run supabase/patient_clinical_events_migration.sql first`);
+      console.log(`  ✗ patient_clinical_events: ${exErr.message}, run supabase/patient_clinical_events_migration.sql first`);
     } else if (existing?.length) {
       console.log(`  ✓ patient_clinical_events (already seeded)`);
     } else {
@@ -1776,7 +2135,7 @@ async function main() {
 
   // ── Notifications (bell feed) ──
   // Normally these are written by the `tasks_emit_notifications` trigger, not
-  // by hand — assigning a task or @mentioning someone produces them. This
+  // by hand: assigning a task or @mentioning someone produces them. This
   // block only backfills a couple of rows for the demo account so the bell
   // has something in it on a fresh database, before anyone has touched a task.
   {
@@ -1785,7 +2144,7 @@ async function main() {
       .select('id')
       .limit(1);
     if (probeErr) {
-      console.log(`  ✗ notifications: ${probeErr.message} — run supabase/notifications_migration.sql first`);
+      console.log(`  ✗ notifications: ${probeErr.message}, run supabase/notifications_migration.sql first`);
     } else if (probe?.length) {
       console.log('  ✓ notifications (already present)');
     } else {
@@ -1831,17 +2190,234 @@ async function main() {
       : `  ✓ caregap_whitelist (${CAREGAP_WHITELIST_MOCK.length})`);
   }
 
+  // ── Review cadence (demo, #131) ──
+  // Annette Brave (11089): an inpatient discharge 6 days ago, so her programs
+  // with a post-discharge rule (SNP, CCM, HICM) review weekly for 30 days,
+  // and a cadence override on her CCM enrollment (every 2 weeks) with its
+  // History entry. Needs care_plan_cadence_migration.sql and
+  // patient_event_stream_migration.sql (which allows 'adt' events).
+  console.log('\nSeeding review cadence (demo)...');
+  {
+    const patientId = '11089';
+    const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString();
+    const dateOnly = iso => iso.slice(0, 10);
+    const dischargeCode = 'seed:11089:discharge';
+    await supabase.from('patient_clinical_events').delete().eq('patient_id', patientId).eq('code', dischargeCode);
+    const { error: adtErr } = await supabase.from('patient_clinical_events').insert({
+      patient_id: patientId, event_type: 'adt', code: dischargeCode, code_system: 'seed', display: 'Inpatient discharge',
+      effective_date: dateOnly(daysAgo(9)), end_date: dateOnly(daysAgo(6)), status: 'completed', source: 'seed',
+      raw_meta: { action: 'discharge', facility: 'St. Mary Medical Center', disposition: 'Home' },
+    });
+    console.log(adtErr
+      ? `  ✗ discharge event: ${adtErr.message}`
+      : '  ✓ ADT discharge 6 days ago (post-discharge weekly reviews)');
+
+    const { data: ccm } = await supabase.from('patient_care_programs')
+      .select('id, code').eq('patient_id', patientId).eq('code', 'CCM').limit(1).maybeSingle();
+    if (!ccm) {
+      console.log('  ⚠ no CCM enrollment for 11089: override skipped');
+    } else {
+      const actor = 'Delores Conn';
+      const reason = 'Recent fall, closer follow-up';
+      const { error: oErr } = await supabase.from('patient_care_programs').update({
+        cadence_override: { every: 2, unit: 'week', reason, setBy: actor, setAt: daysAgo(4) },
+      }).eq('id', ccm.id);
+      await supabase.from('care_plan_audit').delete().eq('program_id', ccm.id).eq('actor', actor).eq('action', 'cadence_changed');
+      const { error: aErr } = await supabase.from('care_plan_audit').insert({
+        patient_id: patientId, program_id: ccm.id, program_code: ccm.code, entity_type: 'plan', action: 'cadence_changed',
+        summary: 'Review Cadence Set to Every 2 weeks', detail: `Monthly → Every 2 weeks · ${reason}`,
+        actor, created_at: daysAgo(4),
+      });
+      const err = oErr || aErr;
+      console.log(err
+        ? `  ✗ cadence override: ${err.message}${/cadence_override/.test(err.message || '') ? ' (run supabase/care_plan_cadence_migration.sql)' : ''}`
+        : '  ✓ CCM review cadence override: every 2 weeks');
+    }
+  }
+
+  // ── GBI status changes with reasons (demo, #62) ──
+  // A few status changes on Annette Brave's (11089) SNP care plan, each with
+  // the reason and note the status dialog asks for: the items' current status
+  // and reason, the History entries, and gbi_status_history rows. Needs
+  // gbi_status_history_migration.sql (and gbi_status_reason_migration.sql for
+  // the reason on the item).
+  console.log('\nSeeding GBI status changes with reasons (demo)...');
+  {
+    const patientId = '11089';
+    const { data: prog } = await supabase.from('patient_care_programs')
+      .select('id, code').eq('patient_id', patientId).eq('code', 'SNP').limit(1).maybeSingle();
+    const { data: plan } = prog
+      ? await supabase.from('patient_care_plans').select('id').eq('patient_id', patientId).eq('program_id', prog.id).maybeSingle()
+      : { data: null };
+    if (!plan) {
+      console.log('  ⚠ no SNP care plan for 11089: skipped');
+    } else {
+      const TABLE = { goal: 'patient_care_plan_goals', intervention: 'patient_care_plan_interventions', barrier: 'patient_care_plan_barriers' };
+      const items = {};
+      for (const [kind, table] of Object.entries(TABLE)) {
+        const { data } = await supabase.from(table).select('id, title, status').eq('plan_id', plan.id);
+        items[kind] = data || [];
+      }
+      const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString();
+      // Oldest first, so an item changed twice ends on its last status.
+      const CHANGES = [
+        { kind: 'goal', title: 'Improve lipid management', from: 'Not Started', to: 'In Progress', reason: 'Work started', note: 'Statin started at last PCP visit', days: 20 },
+        { kind: 'barrier', title: 'Medication adherence difficulty', from: 'Not Started', to: 'Resolved', reason: 'Resources connected', note: 'Enrolled in pharmacy auto-refill', days: 12 },
+        { kind: 'intervention', title: 'Activity coaching', from: 'Not Started', to: 'Discontinued', reason: 'Patient refused', note: 'Prefers to walk with family instead', days: 9 },
+        { kind: 'goal', title: 'Improve lipid management', from: 'In Progress', to: 'On Hold', reason: 'Waiting on provider', note: 'Cardiology referral pending', days: 6 },
+        { kind: 'intervention', title: 'BP technique education', from: 'In Progress', to: 'Met', reason: 'Target reached', note: 'Teach-back passed on home cuff', days: 3 },
+      ].map(c => ({ ...c, item: items[c.kind].find(i => i.title === c.title) })).filter(c => c.item);
+      const actor = 'Delores Conn';
+      const ids = [...new Set(CHANGES.map(c => String(c.item.id)))];
+      // Re-runs replace the demo rows rather than stacking copies.
+      await supabase.from('gbi_status_history').delete().eq('program_id', prog.id).eq('changed_by', actor).in('entity_id', ids);
+      await supabase.from('care_plan_audit').delete().eq('program_id', prog.id).eq('actor', actor).eq('action', 'status_changed').in('entity_id', ids);
+
+      const { error: hErr } = await supabase.from('gbi_status_history').insert(CHANGES.map(c => ({
+        patient_id: patientId, program_id: prog.id, entity_type: c.kind, entity_id: String(c.item.id), entity_title: c.item.title,
+        from_status: c.from, to_status: c.to, reason: c.reason, note: c.note, source: 'manual', changed_by: actor, changed_at: daysAgo(c.days),
+      })));
+      const { error: aErr } = await supabase.from('care_plan_audit').insert(CHANGES.map(c => ({
+        patient_id: patientId, program_id: prog.id, program_code: prog.code, entity_type: c.kind, entity_id: String(c.item.id),
+        action: 'status_changed', summary: c.item.title, detail: `${c.from} → ${c.to}`, actor, created_at: daysAgo(c.days),
+      })));
+      // Each item ends on its last change, with that change's reason.
+      const latest = new Map(CHANGES.map(c => [`${c.kind}:${c.item.id}`, c]));
+      let reasonColumn = true;
+      for (const c of latest.values()) {
+        const patch = { status: c.to, status_reason: `${c.reason}: ${c.note}` };
+        let { error } = await supabase.from(TABLE[c.kind]).update(reasonColumn ? patch : { status: c.to }).eq('id', c.item.id);
+        if (error && /status_reason/.test(error.message || '')) {
+          reasonColumn = false;
+          ({ error } = await supabase.from(TABLE[c.kind]).update({ status: c.to }).eq('id', c.item.id));
+        }
+        if (error) console.log(`  ✗ ${c.item.title}: ${error.message}`);
+      }
+      const missing = err => err && /does not exist|schema cache|42P01|PGRST205/i.test(`${err.code} ${err.message}`);
+      if (missing(hErr)) console.log('  ⚠ gbi_status_history missing: run supabase/gbi_status_history_migration.sql');
+      else if (hErr) console.log(`  ✗ gbi_status_history: ${hErr.message}`);
+      if (aErr) console.log(`  ✗ care_plan_audit: ${aErr.message}`);
+      if (!reasonColumn) console.log('  ⚠ status_reason column missing: run supabase/gbi_status_reason_migration.sql');
+      console.log(`  ✓ ${CHANGES.length} status changes on ${latest.size} items for 11089 SNP`);
+    }
+  }
+
+  // ── Care Note with @ tag and "/" links (demo) ──
+  // Annette Brave's (11089) SNP care plan gets a Care Note that tags a care
+  // team member and links a goal and an intervention, plus the note_linked
+  // rows that put it in those items' activity logs. It becomes her current
+  // Care Note; the earlier ones stay in the plan's History. The rich text
+  // and links live in care_plan_audit.meta (care_plan_audit_meta_migration.sql);
+  // without that column the note still saves as plain text.
+  console.log('\nSeeding care plan Care Note with tags and links (demo)...');
+  {
+    const patientId = '11089';
+    const { data: prog } = await supabase.from('patient_care_programs')
+      .select('id, code').eq('patient_id', patientId).eq('code', 'SNP').limit(1).maybeSingle();
+    const { data: plan } = prog
+      ? await supabase.from('patient_care_plans').select('id').eq('patient_id', patientId).eq('program_id', prog.id).maybeSingle()
+      : { data: null };
+    if (!plan) {
+      console.log('  ⚠ no SNP care plan for 11089: skipped');
+    } else {
+      const pick = async (table, title) => {
+        const { data } = await supabase.from(table).select('id, title').eq('plan_id', plan.id);
+        return (data || []).find(r => r.title === title) || (data || [])[0] || null;
+      };
+      const goal = await pick('patient_care_plan_goals', 'Improve A1C control');
+      const intv = await pick('patient_care_plan_interventions', 'A1C follow-up');
+      const { data: tagged } = await supabase.from('profiles').select('id, full_name').eq('full_name', 'Fold Demo').limit(1).maybeSingle();
+      const person = { id: tagged?.id || null, name: tagged?.full_name || 'Fold Demo' };
+      const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const mention = `<span data-mention-name="${esc(person.name)}"${person.id ? ` data-mention-id="${esc(person.id)}"` : ''}>@${esc(person.name)}</span>`;
+      const link = (item, kind) => `<span data-link-id="${esc(item.id)}" data-link-kind="${kind}" data-link-label="${esc(item.title)}">${esc(item.title)}</span>`;
+      const links = [goal && { ...goal, kind: 'goal' }, intv && { ...intv, kind: 'intervention' }].filter(Boolean);
+      const detail = `Reviewed the A1C plan with @${person.name}. Next: ${links.map(l => l.title).join(' and ')} before the next review.`;
+      const html = `Reviewed the A1C plan with ${mention}. Next: ${links.map(l => link(l, l.kind)).join(' and ')} before the next review.`;
+      const actor = 'Delores Conn';
+      const base = { patient_id: patientId, program_id: prog.id, program_code: prog.code, actor };
+      // Re-runs replace the demo note rather than stacking copies.
+      await supabase.from('care_plan_audit').delete()
+        .eq('program_id', prog.id).eq('actor', actor).in('action', ['note', 'note_linked']).eq('detail', detail);
+      const noteRow = {
+        ...base, entity_type: 'plan', entity_id: null, action: 'note', summary: 'Note added', detail,
+        meta: { html, mentions: [{ id: person.id, name: person.name }], links: links.map(l => ({ id: l.id, kind: l.kind, label: l.title })) },
+      };
+      const linkedRows = links.map(l => ({ ...base, entity_type: l.kind, entity_id: String(l.id), action: 'note_linked', summary: l.title, detail }));
+      let { error } = await supabase.from('care_plan_audit').insert([noteRow, ...linkedRows]);
+      if (error && /meta/.test(error.message || '')) {
+        const { meta: _meta, ...plain } = noteRow;
+        ({ error } = await supabase.from('care_plan_audit').insert([plain, ...linkedRows]));
+        if (!error) console.log('  ⚠ care_plan_audit.meta missing (run supabase/care_plan_audit_meta_migration.sql): note saved as plain text');
+      }
+      console.log(error
+        ? `  ✗ care note demo: ${error.message}`
+        : `  ✓ Care Note for 11089 SNP tagging ${person.name}, linking ${links.length} item(s)`);
+    }
+  }
+
+  // ── AI summary with action items (demo) ──
+  // Annette Brave's (11089) SNP care plan opens on a saved AI summary whose
+  // action items each name the goal, intervention or barrier they are about,
+  // the shape /api/care-plan-summary returns. One is already ticked off.
+  // Re-runs overwrite it (one row per patient + program).
+  console.log('\nSeeding care plan AI summary with action items (demo)...');
+  {
+    const patientId = '11089';
+    const { data: prog } = await supabase.from('patient_care_programs')
+      .select('id').eq('patient_id', patientId).eq('code', 'SNP').limit(1).maybeSingle();
+    const { data: plan } = prog
+      ? await supabase.from('patient_care_plans').select('id').eq('patient_id', patientId).eq('program_id', prog.id).maybeSingle()
+      : { data: null };
+    if (!plan) {
+      console.log('  ⚠ no SNP care plan for 11089: skipped');
+    } else {
+      const rows = async table => (await supabase.from(table).select('id, title, status').eq('plan_id', plan.id)).data || [];
+      const [goals, intvs, barriers] = await Promise.all([
+        rows('patient_care_plan_goals'), rows('patient_care_plan_interventions'), rows('patient_care_plan_barriers'),
+      ]);
+      const find = (list, title) => list.find(r => r.title === title) || null;
+      const a1c = find(goals, 'Improve A1C control');
+      const renal = find(goals, 'Improve renal risk monitoring');
+      const followUp = find(intvs, 'A1C follow-up');
+      const barrier = barriers.find(b => /A1C/i.test(b.title)) || barriers[0] || null;
+      const ref = (item, type) => (item ? { refType: type, refId: String(item.id) } : { refType: 'plan', refId: '' });
+      const count = (list, status) => list.filter(r => r.status === status).length;
+      const summary = {
+        intro: `Annette Brave's SNP care plan has ${goals.length} goals, ${intvs.length} interventions and ${barriers.length} barriers; most goals have not started yet.`,
+        points: [
+          { title: 'Diabetes', body: 'A1C (average blood sugar over 3 months) is above target, so A1C control is the main focus.' },
+          { title: 'Goals', body: `${count(goals, 'In Progress')} goals are in progress and ${count(goals, 'Not Started')} have not started.` },
+          { title: 'Barriers', body: 'Limited progress toward the A1C target is holding the diabetes goals back.' },
+        ],
+        actions: [
+          { text: 'Schedule the A1C follow-up lab and record the result.', ...ref(followUp, 'intervention') },
+          { text: 'Review A1C control with the patient and set a target date.', ...ref(a1c, 'goal') },
+          { text: 'Start renal risk monitoring: order the yearly kidney function test.', ...ref(renal, 'goal') },
+          { text: 'Talk through what is blocking progress toward the A1C target.', ...ref(barrier, 'barrier') },
+        ],
+        done: [0],
+      };
+      const now = new Date().toISOString();
+      const { error } = await supabase.from('patient_care_plan_program_summaries').upsert(
+        { patient_id: patientId, program_id: prog.id, summary, generated_by: 'Delores Conn', generated_at: now, updated_at: now },
+        { onConflict: 'patient_id,program_id' },
+      );
+      console.log(error ? `  ✗ AI summary demo: ${error.message}` : `  ✓ AI summary for 11089 SNP with ${summary.actions.length} action items`);
+    }
+  }
+
   // ── Patient Care Plan (demo) ──
   // The Care Plan step is Supabase-backed (patient_care_plan_* tables). There is
   // no seeded patient/program to attach to at build time, so we instantiate one
-  // live plan against the first real patient — enough to prove the pipeline. All
+  // live plan against the first real patient, enough to prove the pipeline. All
   // other programs fall back to CARE_PLAN_MOCK in the UI until a user edits them.
   console.log('\nSeeding patient care plan (demo)...');
   {
     const { data: firstPatient, error: fpErr } = await supabase
       .from('patients').select('id, name').order('id', { ascending: true }).limit(1).maybeSingle();
     if (fpErr || !firstPatient) {
-      console.log(`  ✗ patient_care_plan: ${fpErr?.message || 'no patients found — seed patients first'}`);
+      console.log(`  ✗ patient_care_plan: ${fpErr?.message || 'no patients found: seed patients first'}`);
     } else {
       const patientId = firstPatient.id;
       const programId = `pcp-${patientId}-CCM`;
@@ -1861,7 +2437,7 @@ async function main() {
       }, { onConflict: 'patient_id,program_id' }).select().single();
 
       if (planErr) {
-        console.log(`  ✗ patient_care_plans: ${planErr.message} — run supabase/patient_care_plan_migration.sql first`);
+        console.log(`  ✗ patient_care_plans: ${planErr.message}, run supabase/patient_care_plan_migration.sql first`);
       } else {
         // Delete-then-insert children keeps re-runs idempotent without needing
         // deterministic child ids (same pattern as HCC gaps above).
@@ -1941,7 +2517,7 @@ async function main() {
           : `  ✓ patient care plan for "${firstPatient.name}" (${goalRows.length} goals, ${intvRows.length} interventions${bpGoal ? ', BP readings + activity' : ''})`);
       }
 
-      // SNP plans already have live goals — enrich the Figma BP goal so Goal
+      // SNP plans already have live goals, enrich the Figma BP goal so Goal
       // Details can show 70% progress, mmHg readings, and typed activity.
       const snpBpTitle = 'Target an average blood pressure';
       const { data: snpProgs } = await supabase
@@ -2044,9 +2620,21 @@ async function main() {
       .from('campaigns')
       .upsert(rows, { onConflict: 'system_key', ignoreDuplicates: true });
     if (aetErr) {
-      if (aetErr.code === '42703' || aetErr.code === '42P10') console.log('  ⚠ campaigns.system_key missing — run supabase/account_email_templates_migration.sql');
+      if (aetErr.code === '42703' || aetErr.code === '42P10') console.log('  ⚠ campaigns.system_key missing, run supabase/account_email_templates_migration.sql');
       else console.error('  ✗', aetErr.message);
     } else console.log(`  ✓ ${rows.length} account email templates`);
+  }
+
+  // The redesigned account security emails: new templates next to the ones
+  // above (their own `_v2` system keys), so nothing existing is replaced.
+  console.log('Seeding account security email templates (new design)...');
+  {
+    const rows = ACCOUNT_SECURITY_EMAIL_TEMPLATES.map(accountSecurityEmailTemplateToRow);
+    const { error: asetErr } = await supabase
+      .from('campaigns')
+      .upsert(rows, { onConflict: 'system_key', ignoreDuplicates: true });
+    if (asetErr) console.error('  ✗', asetErr.message);
+    else console.log(`  ✓ ${rows.length} account security email templates`);
   }
 
   // ── Audience segments (CampaignBuilder Include/Exclude options) ──
@@ -2069,8 +2657,76 @@ async function main() {
     console.log(asErr ? `  ✗ ${asErr.message}` : `  ✓ audience segments (${segments.length})`);
   }
 
-  // campaign_sends has no seed — it is the delivery log, populated when a
+  // campaign_sends has no seed: it is the delivery log, populated when a
   // campaign is actually run from the CampaignBuilder.
+
+  // ── Automations (Settings → Automations; automations migration) ──
+  // Shared emails first (campaigns, by system_key; a copy already edited in
+  // the email builder is kept), then templates and automations wired to
+  // their ids, then run history simulated over all_patients.
+  console.log('Seeding automations...');
+  {
+    const emailRows = AUTOMATION_EMAILS.map(automationEmailToRow);
+    const { error: emErr } = await supabase.from('campaigns').upsert(emailRows, { onConflict: 'system_key', ignoreDuplicates: true });
+    const { data: emails } = await supabase.from('campaigns').select('id, system_key').like('system_key', 'automation:%');
+    const emailId = new Map((emails || []).map(r => [r.system_key.replace('automation:', ''), r.id]));
+    console.log(emErr ? `  ✗ automation emails: ${emErr.message}` : `  ✓ ${emailRows.length} automation emails`);
+
+    const { data: tplRows, error: tplErr } = await supabase.from('automation_templates')
+      .upsert(SEED_TEMPLATES.map(t => templateJsToRow({ ...t, graph: wireTemplateIds(t.graph, k => emailId.get(k)) })), { onConflict: 'slug' })
+      .select('id, slug');
+    if (tplErr) {
+      if (tplErr.code === '42P01' || tplErr.code === 'PGRST205') console.log('  ⚠ automation tables missing: run supabase/automations_migration.sql');
+      else console.error('  ✗ automation_templates:', tplErr.message);
+    } else {
+      console.log(`  ✓ ${tplRows.length} automation templates`);
+      const tplId = new Map(tplRows.map(r => [r.slug, r.id]));
+      const automations = SEED_AUTOMATIONS.map(a => ({ ...a, graph: wireTemplateIds(a.graph, k => emailId.get(k)) }));
+      const { error: autoErr } = await supabase.from('automations').upsert(automations.map(a => ({
+        id: a.id,
+        ...automationJsToRow({ ...a, templateId: tplId.get(a.templateSlug) || null }),
+        created_by: a.createdBy, updated_by: a.updatedBy, created_at: a.createdAt, updated_at: a.updatedAt,
+      })), { onConflict: 'id' });
+      console.log(autoErr ? `  ✗ automations: ${autoErr.message}` : `  ✓ ${automations.length} automations`);
+
+      // Re-seeding replaces the seeded automations' history (cascades to members and messages).
+      const ids = automations.map(a => a.id);
+      await supabase.from('automation_runs').delete().in('automation_id', ids);
+      await supabase.from('automation_edit_log').delete().in('automation_id', ids);
+      const { data: pts } = await supabase.from('all_patients')
+        .select('id, name, email, phone, gender, age, tags, city, state, language, coverage_type, ccm_consent, apcm_consent, active_care_program, last_visit, patient_app_active')
+        .limit(400);
+      const patients = (pts || []).map(p => ({
+        id: p.id, name: p.name, email: p.email, phone: p.phone, gender: p.gender, age: p.age, tags: p.tags || [],
+        city: p.city, state: p.state, language: p.language, coverageType: p.coverage_type, ccmConsent: p.ccm_consent,
+        apcmConsent: p.apcm_consent, activeCareProgram: p.active_care_program, lastVisit: p.last_visit,
+        patientAppActive: p.patient_app_active,
+      }));
+      // An empty all_patients (fresh dev database) falls back to the sample members.
+      const act = buildSeedActivity(automations, patients.length ? patients : SAMPLE_MEMBERS, { newId: () => crypto.randomUUID() });
+      const insertAll = async (table, rows) => {
+        for (let i = 0; i < rows.length; i += 500) {
+          const { error } = await supabase.from(table).insert(rows.slice(i, i + 500));
+          if (error) { console.error(`  ✗ ${table}: ${error.message}`); return false; }
+        }
+        return true;
+      };
+      if (await insertAll('automation_runs', act.runs.map(runJsToRow))
+        && await insertAll('automation_run_members', act.members.map(runMemberJsToRow))
+        && await insertAll('automation_messages', act.messages.map(messageJsToRow))) {
+        console.log(`  ✓ ${act.runs.length} runs, ${act.members.length} member executions, ${act.messages.length} messages`);
+      }
+      for (const a of automations) {
+        const last = act.runs.filter(r => r.automationId === a.id).sort((x, y) => new Date(y.startedAt) - new Date(x.startedAt))[0];
+        if (last) await supabase.from('automations').update({ last_executed_at: last.startedAt, last_run_status: last.failedCount ? 'errors' : 'ok' }).eq('id', a.id);
+      }
+      const { error: logErr } = await supabase.from('automation_edit_log').insert(SEED_EDIT_LOG.map(e => ({
+        automation_id: e.automationId, actor: e.actor, summary: e.summary,
+        created_at: new Date(Date.now() - e.daysAgo * 86400000).toISOString(),
+      })));
+      console.log(logErr ? `  ✗ automation_edit_log: ${logErr.message}` : `  ✓ ${SEED_EDIT_LOG.length} history edits`);
+    }
+  }
 
   // De-duplicate worklist rows (best-effort). Seeding synthetic-id rows on top
   // of reident's canonical `id = member_id` rows can leave duplicates; this
@@ -2092,7 +2748,7 @@ async function main() {
     await db.end();
     console.log(`  ✓ worklist dedupe (removed ${removed} duplicate row${removed === 1 ? '' : 's'})`);
   } catch (e) {
-    console.warn(`  ⚠  Could not dedupe worklists (${e.message}) — run supabase/worklist_dedupe_synthetic_ids_migration.sql manually`);
+    console.warn(`  ⚠  Could not dedupe worklists (${e.message}), run supabase/worklist_dedupe_synthetic_ids_migration.sql manually`);
   }
 
   console.log('\n✅  Seed complete. Run `bun run dev` to verify.\n');

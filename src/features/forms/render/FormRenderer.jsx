@@ -74,7 +74,7 @@ function ShiftIcon({ size = 13 }) {
   );
 }
 
-// Bare ↵ icon shown after a button label — inherits the label's color + size.
+// Bare ↵ icon shown after a button label, inherits the label's color + size.
 function EnterBadge() {
   return <EnterIcon size="1.05em" className={styles.enterBadge} />;
 }
@@ -107,7 +107,7 @@ function TypeformChoice({ field, value, onChange }) {
   );
 }
 
-function TypeformQuestion({ field, number, answers, onAnswer, missing, onNext, btnSize = 'L', pipe = (t) => t }) {
+function TypeformQuestion({ field, number, answers, onAnswer, missing, onNext, btnSize = 'md', pipe = (t) => t }) {
   if (field.type === 'display') {
     return <div className={styles.tfQuestion}><FieldInput field={field} interactive={false} /></div>;
   }
@@ -137,20 +137,20 @@ function TypeformQuestion({ field, number, answers, onAnswer, missing, onNext, b
         )}
         {/* OK ↵ button for text-style inputs (mirrors the Typeform affordance) */}
         {isTextInput && (
-          <Button variant="primary" size={btnSize} className={styles.okBtn} onClick={onNext}>OK <EnterBadge /></Button>
+          <Button size={btnSize} className={styles.okBtn} onClick={onNext}>OK <EnterBadge /></Button>
         )}
       </div>
     </div>
   );
 }
 
-function StartScreen({ start, formName, onStart, btnSize = 'L', pipe }) {
+function StartScreen({ start, formName, onStart, btnSize = 'md', pipe }) {
   return (
     <div className={styles.tfScreen}>
       <h1 className={styles.tfScreenTitle}>{pipe(start?.title || formName || 'Welcome')}</h1>
       {start?.description ? <p className={styles.tfScreenDesc}>{pipe(start.description)}</p> : null}
-      {/* ↵ badge sits inside the button — Typeform style */}
-      <Button variant="primary" size={btnSize} onClick={onStart}>
+      {/* ↵ badge sits inside the button, Typeform style */}
+      <Button size={btnSize} onClick={onStart}>
         {start?.buttonLabel || 'Start'}<EnterBadge />
       </Button>
     </div>
@@ -249,9 +249,9 @@ export function FormRenderer({
     mq.addEventListener('change', update);
     return () => mq.removeEventListener('change', update);
   }, []);
-  const btnSize = compact || isNarrow ? 'XL' : 'L';
+  const btnSize = compact || isNarrow ? 'lg' : 'md';
 
-  // Reset on a layout switch or a new/edited form — NOT on `total`, which now
+  // Reset on a layout switch or a new/edited form, NOT on `total`, which now
   // changes as branching reveals/hides questions mid-fill.
   useEffect(() => { setStarted(false); setPos(0); setSubmitted(false); setEndingId(null); setMissing(new Set()); }, [layout, fields]);
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
@@ -380,7 +380,7 @@ export function FormRenderer({
           <>
             {fields.map((f) => <FieldNode key={f.linkId} field={f} answers={answers} onAnswer={handleAnswer} missing={missing} visibility={visibility} pipe={pipe} />)}
             <div className={styles.submitRow}>
-              <Button variant="primary" size="L" disabled={submitting} onClick={doSubmit}>{submitting ? 'Submitting…' : 'Submit'}</Button>
+              <Button onClick={doSubmit} loading={submitting}>Submit</Button>
             </div>
           </>
         )}
@@ -424,7 +424,7 @@ export function FormRenderer({
           {/* Nav pinned to the bottom of the screen */}
           <div className={styles.stepNav}>
             <Button variant="ghost" size={btnSize} disabled={safePos === 0 && !startEnabled} onClick={goBack} leadingIcon="solar:arrow-left-linear">Back</Button>
-            <Button variant="primary" size={btnSize} disabled={submitting} onClick={goNext}>
+            <Button size={btnSize} disabled={submitting} onClick={goNext}>
               {isLast ? (submitting ? 'Submitting…' : 'Submit') : <>{' Next '}<EnterBadge /></>}
             </Button>
           </div>

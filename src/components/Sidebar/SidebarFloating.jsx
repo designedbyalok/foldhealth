@@ -1,9 +1,13 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCan } from '../../lib/useCan';
+import { navPermissionKey } from '../../lib/accessControl';
 import { FloatingSidebar } from '../FloatingSidebar/FloatingSidebar';
 import { SubNav } from '../SubNav/SubNav';
 import { setFloatingSubNavSlot } from '../FloatingSidebar/floatingSubNavSlot';
 import { HelpPopover } from '../HelpPopover/HelpPopover';
 import { WhatsNewDrawer } from '../WhatsNewDrawer/WhatsNewDrawer';
+import { FeatureReviewsDrawer } from '../FeatureReviewsDrawer/FeatureReviewsDrawer';
+import { useMyPendingReviewCount } from '../FeatureReviewsDrawer/featureReviewHooks';
 import { useAppStore } from '../../store/useAppStore';
 
 /**
@@ -36,6 +40,7 @@ const NAV_ITEMS = [
 ];
 
 const BOTTOM_ITEMS = [
+  { key: 'reviews', icon: 'solar:clipboard-check-linear', filledIcon: 'solar:clipboard-check-bold', label: 'Signoff', action: 'reviews' },
   { key: 'help', icon: 'solar:question-circle-linear', filledIcon: 'solar:question-circle-bold', label: 'Help', shortcut: '⌘/', action: 'help' },
 ];
 
@@ -71,19 +76,29 @@ export function SidebarFloating() {
   // manual toggle.
   const patientDetailOpen = useAppStore(s => Boolean(s.selectedPatientId));
 
-  // Unread counts for the two badged items — same selectors Sidebar uses, so
+  // Unread counts for the two badged items, same selectors Sidebar uses, so
   // the number on the floating variant stays in sync with the standard one.
   const messagesUnreadCount = useAppStore(s => s.messagesUnreadCount);
   const taskNotificationsUnread = useAppStore(
     s => (s.notifications || []).filter(n => !n.read && (n.type || '').startsWith('task.')).length,
   );
 
-  // Help menu wiring — identical to Sidebar.jsx: warm the changelog +
+  // Help menu wiring: identical to Sidebar.jsx: warm the changelog +
   // Featurebase JWT the moment the user reaches for Help so the popover
   // reads correct unread counts and the feedback link survives popup
   // blockers.
   const [helpOpen, setHelpOpen] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+  const reviewsDrawer = useAppStore(s => s.featureReviewsDrawer);
+  const openReviews = useAppStore(s => s.openFeatureReviewsDrawer);
+  const closeReviews = useAppStore(s => s.closeFeatureReviewsDrawer);
+  const reviewsOpen = !!reviewsDrawer;
+  const fetchFeatureReviews = useAppStore(s => s.fetchFeatureReviews);
+  const myPendingReviews = useMyPendingReviewCount();
+  useEffect(() => { fetchFeatureReviews(); }, [fetchFeatureReviews]);
+  const bottomItems = BOTTOM_ITEMS.map(item => (
+    item.action === 'reviews' ? { ...item, badge: myPendingReviews } : item
+  ));
   const fetchChangelog = useAppStore(s => s.fetchChangelog);
   const ensureFeaturebaseJwt = useAppStore(s => s.ensureFeaturebaseJwt);
   const changelogEntries = useAppStore(s => s.changelogEntries);
@@ -96,7 +111,8 @@ export function SidebarFloating() {
     ensureFeaturebaseJwt();
   }, [fetchChangelog, ensureFeaturebaseJwt]);
 
-  const items = NAV_ITEMS.map(item => ({
+  const can = useCan();
+  const items = NAV_ITEMS.filter(item => can(navPermissionKey(item.page))).map(item => ({
     ...item,
     badge:
       item.page === 'tasks' ? taskNotificationsUnread
@@ -112,6 +128,10 @@ export function SidebarFloating() {
   })();
 
   const handleNavigate = (key, item) => {
+    if (item.action === 'reviews') {
+      openReviews();
+      return;
+    }
     if (item.action === 'help') {
       warmHelpMenu();
       setHelpOpen(v => !v);
@@ -142,8 +162,12 @@ export function SidebarFloating() {
   // their SideNav into the slot div below via `floatingSubNavSlot.js`.
   // Everything else renders a rail-only shell.
   const PORTAL_PAGES = new Set(['analytics', 'settings', 'calls', 'messages']);
-  const showSubNav = (activePage === 'population' && !subnavCollapsed && !patientDetailOpen)
-    || PORTAL_PAGES.has(activePage);
+  const portalPage = PORTAL_PAGES.has(activePage);
+  // Assume a portaled menu is coming so a normal Settings / Analytics page
+  // doesn't flash shut. A screen that never portals one (the care-plan
+  // template editor, a new care plan, an automation builder) collapses to
+  // the rail once we know the slot stayed empty.
+  const [portalFilled, setPortalFilled] = useState(true);
   // 100% so the Population SubNav fills the floating card's sub-panel
   // instead of overflowing (fixed 200px was being clipped by the frame
   // overflow:hidden, which pushed count badges within ~3px of the right
@@ -154,13 +178,46 @@ export function SidebarFloating() {
   // currentSlot and clearing portaled content.
   const slotRef = useRef(null);
   useLayoutEffect(() => {
-    setFloatingSubNavSlot(slotRef.current);
-    return () => setFloatingSubNavSlot(null);
-  }, [showSubNav, activePage]);
+    if (!portalPage) {
+      setFloatingSubNavSlot(null);
+      return undefined;
+    }
+    const el = slotRef.current;
+    setFloatingSubNavSlot(el);
+    if (!el) return () => setFloatingSubNavSlot(null);
+    // The feature layout portals on the commit after this registration.
+    // Don't treat the still-empty slot as "no menu" until that commit has
+    // had a chance to land, or every Settings open would collapse and
+    // spring back. Once a menu has been seen, removing it collapses immediately.
+    let settled = false;
+    const sync = () => {
+      const filled = el.childElementCount > 0;
+      if (filled) {
+        settled = true;
+        setPortalFilled(true);
+      } else if (settled) {
+        setPortalFilled(false);
+      }
+    };
+    const obs = new MutationObserver(sync);
+    obs.observe(el, { childList: true });
+    const frame = requestAnimationFrame(() => {
+      settled = true;
+      setPortalFilled(el.childElementCount > 0);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      obs.disconnect();
+      setFloatingSubNavSlot(null);
+    };
+  }, [portalPage, activePage]);
+
+  const showSubNav = (activePage === 'population' && !subnavCollapsed && !patientDetailOpen)
+    || (portalPage && portalFilled);
 
   const subPanel = activePage === 'population'
     ? <SubNav collapsed={false} width="100%" />
-    : showSubNav
+    : portalPage
       ? <div ref={slotRef} data-floating-subnav-slot style={{ display: 'flex', flex: '1 1 auto', minWidth: 0, minHeight: 0 }} />
       : null;
 
@@ -168,8 +225,8 @@ export function SidebarFloating() {
     <>
       <FloatingSidebar
         items={items}
-        bottomItems={BOTTOM_ITEMS}
-        activeKey={helpOpen ? 'help' : activeKey}
+        bottomItems={bottomItems}
+        activeKey={reviewsOpen ? 'reviews' : helpOpen ? 'help' : activeKey}
         onNavigate={handleNavigate}
         showSubNav={showSubNav}
         subPanel={subPanel}
@@ -184,6 +241,7 @@ export function SidebarFloating() {
         />
       )}
       {whatsNewOpen && <WhatsNewDrawer onClose={() => setWhatsNewOpen(false)} />}
+      {reviewsDrawer && <FeatureReviewsDrawer key={reviewsDrawer.focusId || 'all'} focusId={reviewsDrawer.focusId} onClose={closeReviews} />}
     </>
   );
 }

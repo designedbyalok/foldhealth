@@ -2,19 +2,25 @@ import { useMemo, useRef, useState } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../components/Badge/Badge';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { useAppStore } from '../../store/useAppStore';
 import { worklistMemberCallId } from '../../lib/patientCall';
 import { FoldIdTag } from '../../components/FoldIdTag/FoldIdTag';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
+import { HoverCard } from '../../components/HoverCard/HoverCard';
+import { GapSourceCircle } from './GapSourceCircle';
 import { formatDobDisplay, deriveDob } from '../../lib/patientDob';
 import { computeDsfbDueDateISO } from './dsf/dsfScoring';
 import { CIS_CODE, cisDueIndicator, evaluateCis } from './cis/cisRules';
 import { platformUsersForAssigneePicker } from '../../lib/worklistAssignee';
 import { MEASURE_NAMES } from './ClinicalNotePanel.utils';
+import { gapInstanceLabel, gapSourceLabel } from './hedisFilters';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
+import { ActionsMenuPopover } from '../hcc/RowPopovers';
 import styles from './HedisWorklistRow.module.css';
+import { OutreachStatus } from '../../components/OutreachStatus/OutreachStatus';
+import { outreachFromDots } from '../../components/OutreachStatus/outreachStatusModel';
 
 const LANG_MAP = {
   en: 'English', es: 'Spanish; Castilian', zh: 'Chinese', yue: 'Cantonese',
@@ -22,11 +28,11 @@ const LANG_MAP = {
 };
 
 const RISK_BADGE_VARIANT = {
-  '1_High':     'priority-critical',
-  '2_Mod-High': 'priority-high',
-  '3_Moderate': 'priority-medium',
-  '4_Mod-Low':  'toc-engaged',
-  '5_Low':      'compliance-pass',
+  '1_High':     'danger',
+  '2_Mod-High': 'secondary',
+  '3_Moderate': 'warning',
+  '4_Mod-Low':  'info',
+  '5_Low':      'success',
 };
 
 function CisDueLabel({ member }) {
@@ -40,61 +46,87 @@ function CisDueLabel({ member }) {
   return <span className={`${styles.startDateDue}${due.tone === 'error' ? ` ${styles.startDateOverdue}` : ''}`}>{due.label}</span>;
 }
 
-export const STATUS_BADGE_VARIANT = {
-  Open:                            'ai-care',
-  Engaged:                         'status-queued',
-  'Engaged Requires Follow-Up':    'status-queued',
-  Submitted:                       'status-queued',
-  Completed:                       'status-completed',
-  'Closed - Data':                 'ai-neutral',
-  'Closed - Do not call':          'ai-neutral',
-  'Closed - UTR':                  'ai-neutral',
-  'Closed - Other':                'ai-neutral',
+// Shorter display names for long statuses; the stored value is unchanged.
+const STATUS_LABEL = {
+  'Engaged Requires Follow-Up': 'Engaged: Follow-up',
 };
 
-// Outreach cell — mirrors the TOC worklist's outreach pattern.
-function OutreachCell({ member }) {
-  const dots = Array.isArray(member.outreachDots)
-    ? member.outreachDots
-    : ['pending', 'pending', 'pending'];
-  const hasSuccess = dots.includes('success');
-  const hasFailed = dots.includes('failed') && !hasSuccess;
-
+// Hover card on the source circle: the source, the reason the gap was added
+// (if any) and the gap's other instances, each with an arrow that opens it in
+// Care Gap Details.
+function GapSourceIcon({ gap, gaps, onOpenInstance }) {
+  const manual = gapSourceLabel(gap) === 'Manual';
+  // Instances of this gap newest first, numbered like Care Gap Details.
+  const instances = (gaps || []).filter(x => x.code === gap.code && (x === gap || x.supersededAt));
+  const numbered = instances.map((x, i) => ({ gap: x, no: instances.length - i, active: !x.supersededAt }));
+  const others = numbered.filter(x => x.gap !== gap);
   return (
-    <div className={styles.outreachWl}>
-      <div className={styles.outreachWlMain}>
-        {hasSuccess ? (
-          <>
-            <Icon name="solar:phone-calling-bold" size={15} color="var(--status-success)" />
-            <div>
-              <div className={styles.outreachWlText}>Attended</div>
-              {member.outreachDate && (
-                <div className={styles.outreachWlDate}>{member.outreachDate}</div>
-              )}
-            </div>
-          </>
-        ) : hasFailed ? (
-          <>
-            <Icon name="solar:phone-bold" size={15} color="var(--status-error)" />
-            <div>
-              <div className={styles.outreachWlFailed}>Failed</div>
-              {member.outreachDate && (
-                <div className={styles.outreachWlDateMuted}>{member.outreachDate}</div>
-              )}
-            </div>
-          </>
-        ) : (
-          <>
-            <Icon name="solar:phone-linear" size={15} color="var(--neutral-200)" />
-            <div className={styles.outreachWlNone}>—</div>
-          </>
+    <HoverCard
+      trigger={<GapSourceCircle gap={gap} />}
+      width={300}
+      flush
+      openDelay={200}
+      ariaLabel={`${gap.code} source`}
+    >
+      <div className={styles.srcCard}>
+        <div className={styles.srcRow}>
+          <span className={styles.srcLabel}>Source</span>
+          <Badge size="sm" tone={manual ? 'secondary' : 'primary'} label={manual ? 'Manual' : 'Claim'} />
+        </div>
+        {gap.reason && (
+          <div className={styles.srcBlock}>
+            <span className={styles.srcLabel}>Reason</span>
+            <span className={styles.srcValue}>{gap.reason}</span>
+          </div>
+        )}
+        {others.length > 0 && (
+          <div className={styles.srcBlock}>
+            <span className={styles.srcLabel}>Other Instances</span>
+            <ul className={styles.srcList}>
+              {others.map(o => (
+                <li key={o.no} className={styles.srcItem}>
+                  <GapSourceCircle gap={o.gap} />
+                  <span className={styles.srcItemText}>
+                    <span className={styles.srcValue}>Instance {o.no} • {o.gap.status}</span>
+                    <span className={styles.srcItemMeta}>
+                      {o.active ? 'Active' : 'Previous'} • {o.gap.startDate || '-'}{o.gap.closedDate ? ` – ${o.gap.closedDate}` : ''}
+                    </span>
+                  </span>
+                  <ActionButton
+                    icon="solar:arrow-right-linear"
+                    size="sm"
+                    tooltip={`Open instance ${o.no}`}
+                    onClick={(e) => { e.stopPropagation(); onOpenInstance?.(o.gap.code, o.no); }}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
-      <div className={styles.dotsRow}>
-        {dots.map((d, i) => <div key={i} className={`${styles.dot} ${styles[d]}`} />)}
-      </div>
-    </div>
+    </HoverCard>
   );
+}
+
+// A previous instance (closed, then the gap was added again) reads as history:
+// its line is greyed out in every per-gap column.
+const gapItemClass = (g) => (gapInstanceLabel(g) === 'Previous' ? `${styles.gapItem} ${styles.gapItemPrevious}` : styles.gapItem);
+
+export const STATUS_BADGE_VARIANT = {
+  Open:                            'primary',
+  Engaged:                         'warning',
+  'Engaged Requires Follow-Up':    'warning',
+  Submitted:                       'warning',
+  Completed:                       'success',
+  'Closed - Data':                 'neutral',
+  'Closed - Do not call':          'neutral',
+  'Closed - UTR':                  'neutral',
+  'Closed - Other':                'neutral',
+};
+
+// Outreach: the shared worklist outreach status (icon, result, date, attempt dots).
+function OutreachCell({ member }) {
+  return <OutreachStatus {...outreachFromDots(member.outreachDots, { date: member.outreachDate })} />;
 }
 
 /**
@@ -127,14 +159,15 @@ export const HEDIS_MIDDLE_COLUMNS = [
     renderCell: (member, ctx) => (
       <div className={styles.gapItems}>
         {(ctx.visibleGaps || []).map((g, i) => (
-          <div key={`${g.code}-${i}`} className={styles.gapItem}>
+          <div key={`${g.code}-${i}`} className={gapItemClass(g)}>
             {/* Hover shows the measure's full name; the code alone is hard to read.
                 A superseded gap (closed, then re-added) is history: the drawer
                 and every gap action work on the active gap with that code, so
                 its pill is a label, not a button. */}
+            <span className={styles.gapCodeLine}>
             {g.supersededAt ? (
               <Tooltip label={`${MEASURE_NAMES[g.code] || g.code} · previous gap, re-added ${g.supersededAt}`}>
-                <Badge size="M" variant="compliance-na" label={g.code} />
+                <Badge size="md" label={g.code} />
               </Tooltip>
             ) : (
             <Tooltip label={MEASURE_NAMES[g.code] || g.code}>
@@ -144,10 +177,17 @@ export const HEDIS_MIDDLE_COLUMNS = [
                 aria-label={`Open ${g.code}${MEASURE_NAMES[g.code] ? ` (${MEASURE_NAMES[g.code]})` : ''} care gap details`}
                 onClick={(e) => { e.stopPropagation(); ctx.onOpenGap?.(member, g.code); }}
               >
-                <Badge size="M" variant="compliance-na" label={g.code} />
+                <Badge size="md" label={g.code} />
               </button>
             </Tooltip>
             )}
+            <GapSourceIcon
+              gap={g}
+              gaps={member.allGaps || member.gaps}
+              onOpenInstance={(code, no) => ctx.onOpenGap?.(member, code, no)}
+            />
+            {gapInstanceLabel(g) === 'Previous' && <span className={styles.previousTag}>Previous</span>}
+            </span>
           </div>
         ))}
         {ctx.extraCount > 0 && (
@@ -180,8 +220,8 @@ export const HEDIS_MIDDLE_COLUMNS = [
     renderCell: (member, ctx) => (
       <div className={styles.gapItems}>
         {(ctx.visibleGaps || []).map((g, i) => (
-          <div key={`${g.code}-${i}`} className={styles.gapItem}>
-            <Badge size="M" variant={STATUS_BADGE_VARIANT[g.status] || 'ai-neutral'} label={g.status} />
+          <div key={`${g.code}-${i}`} className={gapItemClass(g)}>
+            <Badge size="md" tone={STATUS_BADGE_VARIANT[g.status] || 'neutral'} label={STATUS_LABEL[g.status] || g.status} />
           </div>
         ))}
         {/* Empty spacer keeps this column bottom-aligned with Total Gaps' expander. */}
@@ -202,7 +242,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
       <div className={styles.gapItems}>
         {(ctx.visibleGaps || []).map((g, i) => {
           const assignee = g.assignee ?? member.assignee;
-          // Gap-level overrides carry name only — derive initials from words
+          // Gap-level overrides carry name only: derive initials from words
           // so the avatar always has content. Member-level overrides keep the
           // curated `assigneeInitials` (handles edge cases like "Dr." prefixes).
           const initials = (g.assignee && g.assignee !== member.assignee)
@@ -216,7 +256,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
             ctx.updateGapAssignee(ctx.memberId, g.code, u?.name || null);
           };
           return (
-            <div key={`${g.code}-${i}`} className={styles.gapItem}>
+            <div key={`${g.code}-${i}`} className={gapItemClass(g)}>
               {assignee ? (
                 <AssigneeChange
                   name={assignee}
@@ -257,7 +297,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
     renderCell: (member, ctx) => (
       <div className={styles.gapItems}>
         {(ctx.visibleGaps || []).map((g, i) => (
-          <div key={`${g.code}-${i}`} className={styles.gapItem}>
+          <div key={`${g.code}-${i}`} className={gapItemClass(g)}>
             <div className={styles.startDateCell}>
               <span className={styles.startDateValue}>{g.startDate ?? member.startDate}</span>
               {/* DSF-B carries a 30-day window. Anchor is the paired
@@ -310,8 +350,8 @@ export const HEDIS_MIDDLE_COLUMNS = [
     sortKey: 'riskLevel',
     renderCell: (member) => (
       member.riskLevel
-        ? <Badge size="M" variant={RISK_BADGE_VARIANT[member.riskLevel]} label={member.riskLevel} />
-        : <span className={styles.muted}>—</span>
+        ? <Badge size="md" tone={RISK_BADGE_VARIANT[member.riskLevel]} label={member.riskLevel} />
+        : <span className={styles.muted}>-</span>
     ),
   },
   {
@@ -324,7 +364,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
       ).length;
       return count > 0
         ? <span className={styles.numText}>{count}</span>
-        : <span className={styles.muted}>—</span>;
+        : <span className={styles.muted}>-</span>;
     },
   },
 ];
@@ -338,6 +378,9 @@ export function HedisWorklistRow({ member, columns, hiddenSet, isSelected, onSel
   const openCallPopover = useAppStore(s => s.openCallPopover);
   const openAddCareGaps = useAppStore(s => s.openAddCareGaps);
   const callBtnRef = useRef(null);
+  const moreBtnRef = useRef(null);
+  const [actionsRect, setActionsRect] = useState(null);
+  const openPatientEdit = useAppStore(s => s.openPatientEdit);
   // useState must sit above the early return: a row whose member loses its last
   // gap would otherwise render two hooks where it previously rendered three, and
   // React throws "rendered fewer hooks than expected".
@@ -391,7 +434,7 @@ export function HedisWorklistRow({ member, columns, hiddenSet, isSelected, onSel
       ].filter(Boolean).join(' ')}
       onClick={() => onOpenGap?.(member, primaryGap.code)}
     >
-      {/* Checkbox — wrapped in `.checkAlign` so it aligns to the avatar's
+      {/* Checkbox: wrapped in `.checkAlign` so it aligns to the avatar's
           vertical centre even on multi-gap rows where the td top-aligns
           to the first gap row. Same pattern the HCC worklist uses. */}
       <td className={`${styles.checkTd} ${styles.stickyLeft} ${styles.stickyCheck}`} onClick={e => e.stopPropagation()}>
@@ -400,7 +443,7 @@ export function HedisWorklistRow({ member, columns, hiddenSet, isSelected, onSel
         </div>
       </td>
 
-      {/* Member — entire cell clickable for patient quick view. The
+      {/* Member: entire cell clickable for patient quick view. The
           onClick stops propagation so the row's own onClick (which
           opens the Care Gap drawer) doesn't also fire. */}
       <td
@@ -456,16 +499,17 @@ export function HedisWorklistRow({ member, columns, hiddenSet, isSelected, onSel
         );
       })}
 
-      {/* Actions — HEDIS rows expose Call, Add Care Gaps and More. The eye affordance
+      {/* Actions: HEDIS rows expose Call, Add Care Gaps and More. The eye affordance
           was removed because the gap pills in-row already open the Care
           Gap Details drawer, so a duplicate view button in the actions
           column added noise without a distinct outcome. */}
-      <td className={`${styles.actionsCell} ${styles.stickyRight}`}>
+      {/* The actions menu is portaled, but its clicks still bubble here through
+          React; stop them so they don't also open the row's gap drawer. */}
+      <td className={`${styles.actionsCell} ${styles.stickyRight}`} onClick={e => e.stopPropagation()}>
         <div className={styles.actionsBtns}>
           <ActionButton
             ref={callBtnRef}
             icon="solar:phone-linear"
-            size="L"
             tooltip="Call patient"
             onClick={(e) => {
               e.stopPropagation();
@@ -475,17 +519,48 @@ export function HedisWorklistRow({ member, columns, hiddenSet, isSelected, onSel
           <span className={styles.actionsDivider} />
           <ActionButton
             icon="solar:clipboard-add-linear"
-            size="L"
             tooltip="Add Care Gaps"
             onClick={(e) => { e.stopPropagation(); openAddCareGaps(member); }}
           />
           <span className={styles.actionsDivider} />
           <ActionButton
+            ref={moreBtnRef}
             icon="solar:menu-dots-linear"
-            size="L"
             tooltip="More"
-            onClick={e => { e.stopPropagation(); showToast('More actions — coming soon'); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              const rect = e.currentTarget.getBoundingClientRect();
+              setActionsRect(prev => (prev ? null : rect));
+            }}
           />
+          {/* Same member actions menu as the HCC worklist row. */}
+          {actionsRect && (
+            <ActionsMenuPopover
+              anchorRect={actionsRect}
+              onClose={() => setActionsRect(null)}
+              onAction={(label) => {
+                if (label === 'Make a Call') {
+                  setActionsRect(null);
+                  openCallPopover(worklistMemberCallId(member), moreBtnRef);
+                  return;
+                }
+                if (label === 'Edit Details') {
+                  openPatientEdit('basic', {
+                    id: member.id,
+                    name: member.name,
+                    initials: member.in,
+                    gender: member.gender,
+                    age: member.age,
+                    dob: formatDobDisplay(member.dob) || deriveDob(member.age, member.name),
+                    email: member.email,
+                    phone: member.phone,
+                  });
+                  return;
+                }
+                showToast(`${label}: coming soon`);
+              }}
+            />
+          )}
         </div>
       </td>
     </tr>

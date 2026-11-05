@@ -76,7 +76,7 @@ export function AiAnalyticsView({ showToast, editing = false, resetTick = 0 }) {
   };
 
   const renderNlq = () => (
-    <Card title="Ask Fold — Natural Language Query Engine" sub="Click an example or type your own question">
+    <Card title="Ask Fold: Natural Language Query Engine" sub="Click an example or type your own question">
       <div style={{ fontSize: 'var(--font-base)', color: 'var(--neutral-300)', marginBottom: 'var(--font-sm)' }}>
         Type any clinical or operational question. Fold Unity translates to structured queries against your data.
       </div>
@@ -92,7 +92,7 @@ export function AiAnalyticsView({ showToast, editing = false, resetTick = 0 }) {
   );
 
   const renderAnomalies = () => (
-    <Card title="Anomaly Detection" actions={<Button variant="ghost" size="S" onClick={() => showToast?.('Configuring alert thresholds')}>Configure Thresholds</Button>}>
+    <Card title="Anomaly Detection" actions={<Button variant="ghost" size="sm" onClick={() => showToast?.('Configuring alert thresholds')}>Configure Thresholds</Button>}>
       {anomalyList.map((a, i) => (
         <div key={i} className={s.ruleCard}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -104,7 +104,7 @@ export function AiAnalyticsView({ showToast, editing = false, resetTick = 0 }) {
           <div className={s.ruleTrigger} style={{ marginTop: 6, color: 'var(--neutral-500)' }}>{a.title}</div>
           <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-300)', lineHeight: 1.55, marginTop: 4 }}>{a.desc}</div>
           {a.actionLabel && (
-            <Button variant={a.severity === 'red' ? 'primary' : 'ghost'} size="S" style={{ marginTop: 8 }} onClick={() => showToast?.(a.actionToast || a.actionLabel)}>
+            <Button variant={a.severity === 'red' ? 'solid' : 'ghost'} size="sm" style={{ marginTop: 8 }} onClick={() => showToast?.(a.actionToast || a.actionLabel)}>
               {a.actionLabel}
             </Button>
           )}

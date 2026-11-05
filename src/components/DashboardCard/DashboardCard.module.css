@@ -1,3 +1,6 @@
+/* A soft white surface: a faint edge and shadow instead of a hard border,
+   and no rules inside, so the content carries the structure. Reads best on
+   a tinted page (see the Overview grid). */
 .card {
   position: relative;
   isolation: isolate;
@@ -5,9 +8,21 @@
   flex-direction: column;
   min-width: 0;
   background: var(--neutral-0);
-  border: 0.5px solid var(--neutral-150);
+  border: 0.5px solid var(--neutral-100);
   border-radius: var(--space-2);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
+  /* Arrives with a short fade when its data replaces the skeleton. */
+  animation: cardIn 180ms ease-out both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: none; }
 }
 
 /* AI wash: the gradient sits on a pseudo-element so it can be faded without
@@ -30,14 +45,15 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: var(--space-10);
-  padding: var(--space-2) var(--space-3) var(--space-1) var(--space-4);
+  /* One height whether or not the header carries buttons, so titles line up. */
+  min-height: calc(var(--space-10) + var(--space-1));
+  padding: var(--space-2) var(--space-4);
 }
 
 .title {
   margin: 0;
   min-width: 0;
-  font-size: var(--font-base);
+  font-size: var(--font-lg);
   font-weight: 500;
   line-height: var(--leading-tight);
   color: var(--neutral-500);
@@ -45,6 +61,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.titleS { font-size: var(--font-base); }
 
 .aiTitle {
   background: var(--ai-gradient-text);
@@ -58,6 +76,12 @@
   color: var(--neutral-200);
 }
 
+.headerTabs {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
 .actions {
   display: flex;
   align-items: center;
@@ -66,32 +90,27 @@
   flex-shrink: 0;
 }
 
+.shell {
+  padding: var(--space-1) var(--space-2);
+}
+
 .body {
   display: flex;
   flex-direction: column;
-  padding: 0 var(--space-4) var(--space-2);
+  padding: var(--space-1) var(--space-4) var(--space-4);
 }
 
+/* Quiet small print at the foot, without a bar of its own. */
 .footer {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  border-top: 0.5px solid var(--neutral-100);
+  padding: 0 var(--space-4) var(--space-3);
   font-size: var(--font-sm);
   color: var(--neutral-200);
 }
 
-.ai .footer {
-  border-top-color: var(--primary-200);
-}
-
 /* ── Skeleton ── */
-@keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
-
 .skeleton {
   display: flex;
   flex-direction: column;
@@ -105,17 +124,8 @@
   gap: var(--space-1);
 }
 
-.bone {
-  display: block;
-  height: 10px;
-  border-radius: var(--space-1);
-  background: linear-gradient(90deg, var(--neutral-100) 25%, var(--neutral-50) 50%, var(--neutral-100) 75%);
-  background-size: 400px 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-
 .boneTitle { width: 70%; height: 12px; }
-.boneMeta { width: 45%; }
+.boneMeta { width: 45%; height: 10px; }
 
 @media (prefers-reduced-motion: reduce) {
   .bone { animation: none; }

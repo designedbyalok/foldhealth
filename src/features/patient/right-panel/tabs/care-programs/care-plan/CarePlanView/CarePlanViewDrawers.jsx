@@ -11,7 +11,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog/ConfirmDialog';
 import { goalCascade } from '../lib/carePlanGoalCascade';
 import { RemoveGoalDialog } from '../drawers/RemoveGoalDialog';
 import { ChronicConditionSelect } from '../../../../../../settings/care-plan-library/shared';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/Dialog/Dialog';
 import { AddGoalsDrawer } from '../../../../../../settings/care-plan-library/goals/AddGoalsDrawer/AddGoalsDrawer';
 import { AddBarriersDrawer } from '../../../../../../settings/care-plan-library/barriers/AddBarriersDrawer/AddBarriersDrawer';
 import { BarrierDrawer } from '../../../../../../settings/care-plan-library/barriers/BarrierDrawer/BarrierDrawer';
@@ -31,6 +31,21 @@ import { ApplyAgainDialog } from './ApplyAgainDialog';
 import { interventionActivityEntries } from './carePlanLinkedItems';
 import styles from './CarePlanView.module.css';
 
+// The note box opens ready to type at the end of the saved note. The editor's
+// value is written after mount, so the caret is placed a frame later.
+const focusAtEnd = (el) => {
+  if (!el) return;
+  requestAnimationFrame(() => {
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+  });
+};
+
 /** Drawers, dialogs, and bulk modals for the care plan step (presentation only). */
 export function CarePlanViewDrawers(d) {
   const {
@@ -43,7 +58,8 @@ export function CarePlanViewDrawers(d) {
     addBarriersDrawerOpen, setAddBarriersDrawerOpen, barrierAddGoalIdRef, handleAddBarriersFromPicker,
     barrierDrawer, setBarrierDrawer, handleAddBarrier, shareOpen, clearCarePlanShareRequest, canEdit,
     historyOpen, setHistoryOpen, versionsOpen, setVersionsOpen, signOpen, setSignOpen, doSign, signNote, setSignNote,
-    noteOpen, closeNoteDrawer, doAddNote, noteText, setNoteText, noteDirty, latestPlanNote, noteTimelineEntries,
+    noteOpen, closeNoteDrawer, doAddNote, noteText, setNoteText, notePlain, setNotePlain, noteDirty, latestPlanNote, noteTimelineEntries,
+    noteMentionUsers, noteLinkItems,
     noteDiscardOpen, setNoteDiscardOpen, noteDeleteOpen, setNoteDeleteOpen, doClearCareNote,
     problemOpen, setProblemOpen, doAddProblem, problemText, setProblemText,
     trendsOpen, setTrendsOpen, measurements,
@@ -255,8 +271,8 @@ export function CarePlanViewDrawers(d) {
         <Drawer
           title="Sign Care Plan"
           onClose={() => setSignOpen(false)}
-          secondaryAction={<Button variant="secondary" size="L" onClick={() => setSignOpen(false)}>Cancel</Button>}
-          primaryAction={<Button variant="primary" size="L" onClick={doSign}>Sign</Button>}
+          secondaryAction={<Button variant="outline" onClick={() => setSignOpen(false)}>Cancel</Button>}
+          primaryAction={<Button onClick={doSign}>Sign</Button>}
         >
           <div className={styles.drawerBody}>
             <p className={styles.drawerHint}>Signing saves a version snapshot of the plan and records who signed it. You can still add notes and change statuses afterwards.</p>
@@ -274,21 +290,27 @@ export function CarePlanViewDrawers(d) {
           onClose={() => closeNoteDrawer()}
           primaryAction={
             <Button
-              variant="primary"
-              size="L"
               onClick={doAddNote}
-              disabled={!noteText.trim() || !noteDirty}
+              disabled={!notePlain.trim() || !noteDirty}
             >
               {latestPlanNote ? 'Update Note' : 'Add Note'}
             </Button>
           }
         >
           <div className={styles.drawerBody}>
-            <p className={styles.drawerHint}>Records a maintenance note on the signed plan without editing it — it appears in the plan's History.</p>
-            <div className={styles.drawerField}>
-              <span className={styles.drawerLabel}>Note <span className={styles.required}>*</span></span>
-              <Textarea autoFocus value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="e.g. Reviewed with patient; no changes needed." rows={3} />
-            </div>
+            <p className={styles.drawerHint}>Records a maintenance note on the signed plan without editing it, it appears in the plan's History.</p>
+            <Textarea
+              ref={focusAtEnd}
+              title="Note"
+              mandatory
+              richText
+              mentions
+              mentionUsers={noteMentionUsers}
+              links={noteLinkItems}
+              value={noteText}
+              onValueChange={(html, plain) => { setNoteText(html); setNotePlain(plain || ''); }}
+              placeholder="e.g. Reviewed with patient; no changes needed. Type @ to tag someone, / to link a goal, intervention or barrier."
+            />
             {noteTimelineEntries.length > 0 && (
               <div className={styles.noteTimeline}>
                 <span className={styles.noteTimelineLabel}>Change log</span>
@@ -325,8 +347,8 @@ export function CarePlanViewDrawers(d) {
         <Drawer
           title="Add Problem"
           onClose={() => setProblemOpen(false)}
-          secondaryAction={<Button variant="secondary" size="L" onClick={() => setProblemOpen(false)}>Cancel</Button>}
-          primaryAction={<Button variant="primary" size="L" onClick={doAddProblem} disabled={!problemText.trim()}>Add</Button>}
+          secondaryAction={<Button variant="outline" onClick={() => setProblemOpen(false)}>Cancel</Button>}
+          primaryAction={<Button onClick={doAddProblem} disabled={!problemText.trim()}>Add</Button>}
         >
           <div className={styles.drawerBody}>
             <p className={styles.drawerHint}>Adds a problem/condition to this care plan. It shows in the problems bar and groups the goals, interventions, and barriers that address it.</p>
@@ -360,7 +382,7 @@ export function CarePlanViewDrawers(d) {
           appliedTemplatePriorities={appliedTemplatePriorities}
           patientProblems={patientProblems}
           onClose={() => { setTemplatesDrawerOpen(false); setCreatedTemplateIds([]); }}
-          onApply={(ids, priorities) => { setCreatedTemplateIds([]); handleApplyTemplates(ids, priorities); }}
+          onApply={(ids, priorities, categoryPicks) => { setCreatedTemplateIds([]); handleApplyTemplates(ids, priorities, categoryPicks); }}
           onCreateNew={() => { setTemplatesDrawerOpen(false); setTemplateCreateOpen(true); }}
           preselectedIds={createdTemplateIds}
           onApplyAgain={canEdit ? setApplyAgainTemplate : undefined}
@@ -407,21 +429,21 @@ export function CarePlanViewDrawers(d) {
                   ...appliedTemplates.map(t => ({ value: t.id, label: t.name })),
                 ]}
                 value={templateSourceId}
-                onChange={pickTemplateSource}
+                onValueChange={pickTemplateSource}
                 searchable={appliedTemplates.length > 6}
                 searchPlaceholder="Search templates"
               />
             )}
             <div className={styles.drawerField}>
               <span className={styles.drawerLabel}>Template Name <span className={styles.required}>*</span></span>
-              <Input autoFocus value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="e.g. Type 2 Diabetes — Standard" aria-label="Template name" />
+              <Input autoFocus value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="e.g. Type 2 Diabetes, Standard" aria-label="Template name" />
             </div>
             <ChronicConditionSelect value={templateConditions} onChange={setTemplateConditions} label="Conditions" />
             <TemplateScopeChoice value={templateScope} onChange={setTemplateScope} choices={PATIENT_SCOPE_CHOICES} />
           </div>
           <div className={styles.templateDialogFooter}>
-            <Button variant="primary" size="L" onClick={saveTemplate} disabled={!templateName.trim()}>Save</Button>
-            <Button variant="secondary" size="L" onClick={() => setTemplateOpen(false)}>Cancel</Button>
+            <Button onClick={saveTemplate} disabled={!templateName.trim()}>Save</Button>
+            <Button variant="outline" onClick={() => setTemplateOpen(false)}>Cancel</Button>
           </div>
         </DialogContent>
       </Dialog>

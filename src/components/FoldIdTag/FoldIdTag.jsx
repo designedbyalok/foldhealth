@@ -6,11 +6,11 @@ import styles from './FoldIdTag.module.css';
 const COPIED_LABEL_MS = 1500;
 
 /**
- * FoldIdTag — the clickable "#10070" Fold ID shown on every worklist row.
+ * FoldIdTag: the clickable "#10070" Fold ID shown on every worklist row.
  * Hover shows "Click to copy Fold ID"; clicking copies it and swaps the
  * tooltip to "Copied: #10070" for a beat instead of firing a toast, so the
  * confirmation sits right where the user is already looking. The label swap
- * is remounted with a keyed span so it fades in — see FoldIdTag.module.css.
+ * is remounted with a keyed span so it fades in, see FoldIdTag.module.css.
  *
  * `display`/`label` override the shown text or hover copy for the rare case
  * where the visible value isn't the raw id (or the label needs a tweak).

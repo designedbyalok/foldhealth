@@ -5,12 +5,12 @@ import { Drawer } from '../Drawer/Drawer';
 import { ComplianceBadges } from '../ComplianceBadges/ComplianceBadges';
 import { DepartmentSelector, TransferringState, TransferFailure, NoHumanAvailable, CallbackOffer, PostTransferFeedback } from '../TransferFlow/TransferFlow';
 import { useAppStore } from '../../store/useAppStore';
+import { LiveCallDuration } from '../../features/toc/worklist/LiveCallDuration';
 import styles from './LiveDrawer.module.css';
 
 export function LiveDrawer() {
-  const liveDrawerPatient = useAppStore(s => s.liveDrawerPatient);
   const closeLiveDrawer = useAppStore(s => s.closeLiveDrawer);
-  const patients = useAppStore(s => s.patients);
+  const p = useAppStore(s => s.patients.find(x => x.id === s.liveDrawerPatient));
   const callDetails = useAppStore(s => s.callDetails);
   const showToast = useAppStore(s => s.showToast);
   const [listenActive, setListenActive] = useState(false);
@@ -20,7 +20,6 @@ export function LiveDrawer() {
   const [transferState, setTransferState] = useState(null);
   const [transferDept, setTransferDept] = useState(null);
 
-  const p = patients.find(x => x.id === liveDrawerPatient);
   if (!p) return null;
 
   // Resolve call data from call_details (ongoing record) with fallback to patient fields
@@ -39,7 +38,7 @@ export function LiveDrawer() {
 
   return (
     <Drawer title={liveTag} onClose={closeLiveDrawer}>
-      {/* Call Info Card — matches DetailDrawer */}
+      {/* Call Info Card: matches DetailDrawer */}
       <div className={styles.callCard}>
         <div className={styles.callCardLeft}>
           <div className={styles.callIcon}>
@@ -51,7 +50,7 @@ export function LiveDrawer() {
               <span className={styles.dot}>•</span>
               <span className={styles.callLine1Detail}>{p.name}</span>
               <span className={styles.dot}>•</span>
-              <span className={styles.callTimer}>{p.callDuration || '00:00'}</span>
+              <span className={styles.callTimer}><LiveCallDuration patient={p} /></span>
             </div>
             <div className={styles.callLine2}>
               Via: <Icon name="solar:bot-bold" size={13} color="var(--primary-300)" /> {p.agentAssigned || 'Anna'} → To: {p.name}
@@ -69,20 +68,18 @@ export function LiveDrawer() {
       {/* Action buttons */}
       <div className={styles.actions}>
         <Button
-          variant="secondary"
-          size="L"
+          variant="outline"
           leadingIcon="solar:headphones-round-sound-bold"
           className={listenActive ? styles.active : ''}
           onClick={() => setListenActive(v => !v)}
         >
           Live Listen
         </Button>
-        <Button variant="primary" size="L" leadingIcon="solar:phone-calling-bold" onClick={() => showToast('Take Over Call – coming soon')}>
+        <Button leadingIcon="solar:phone-calling-bold" onClick={() => showToast('Take Over Call – coming soon')}>
           Take Over Call
         </Button>
         <Button
-          variant="secondary"
-          size="L"
+          variant="outline"
           leadingIcon="solar:call-medicine-bold"
           className={transferState ? styles.active : ''}
           onClick={() => setTransferState(transferState ? null : 'select-dept')}
@@ -90,8 +87,7 @@ export function LiveDrawer() {
           Transfer
         </Button>
         <Button
-          variant="secondary"
-          size="L"
+          variant="outline"
           leadingIcon="solar:microphone-slash-linear"
           className={muteActive ? styles.active : ''}
           onClick={() => setMuteActive(v => !v)}
@@ -150,7 +146,7 @@ export function LiveDrawer() {
         </div>
       )}
 
-      {/* Goals Section — collapsible */}
+      {/* Goals Section: collapsible */}
       <button type="button" className={styles.sectionHeader} onClick={() => toggleSection('goals')}>
         <span className={styles.sectionTitle}>
           <Icon name="solar:target-bold" size={15} color="var(--primary-300)" />
@@ -184,7 +180,7 @@ export function LiveDrawer() {
         </div>
       )}
 
-      {/* Transcript — collapsible */}
+      {/* Transcript: collapsible */}
       <button type="button" className={styles.sectionHeader} onClick={() => toggleSection('transcript')}>
         <span className={styles.sectionTitle}>
           <Icon name="solar:chat-round-dots-bold" size={15} color="var(--primary-300)" />

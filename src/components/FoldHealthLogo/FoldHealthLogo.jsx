@@ -1,5 +1,5 @@
 /**
- * FoldHealthLogo — the Fold Health brand mark.
+ * FoldHealthLogo: the Fold Health brand mark.
  *
  * Single source of truth for the logo SVG. Both LoginPage and
  * ResetPasswordPage used to inline this path; extracting it prevents

@@ -1,5 +1,5 @@
 -- ============================================================
--- Profile tab / Insurance view — extend p360_profiles with the
+-- Profile tab / Insurance view: extend p360_profiles with the
 -- primary-insurance + policyholder fields that back the Update
 -- Member drawer's Insurance Details step (Figma P360 Revamp
 -- 6821:316529) and the Insurance segmented view on the Profile
@@ -8,7 +8,7 @@
 --
 -- Every `ADD COLUMN IF NOT EXISTS` is idempotent so this migration is
 -- safe to re-run. The Edit Patient drawer's form state already carries
--- values under these exact keys — `updateP360Profile` / `invitePatient`
+-- values under these exact keys: `updateP360Profile` / `invitePatient`
 -- will start persisting them once the columns exist.
 
 -- ── Primary Insurance ─────────────────────────────────────────

@@ -10,17 +10,17 @@ import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Input } from '../../../components/Input/Input';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { Select } from '../../../components/Select/Select';
 import { Dropzone } from '../../../components/Dropzone/Dropzone';
 import { DatePicker } from '../../../components/DatePicker/DatePicker';
 import { DemoPhiStrip } from '../../../components/DemoPhiStrip/DemoPhiStrip';
 import { IcdSearch } from '../../../components/IcdSearch/IcdSearch';
 import { POS_SELECT_OPTIONS } from '../data/posCodes';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { ConfidenceBadge } from '../components/ConfidenceBadge';
 import { getScoreStyle, getFieldConfidence } from '../data/confidence';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { useAppStore } from '../../../store/useAppStore';
@@ -31,17 +31,17 @@ import styles from './UploadDocumentDrawer.module.css';
 // Accepted file types for clinical document upload. PDFs are the canonical
 // source; Word docs cover dictated notes from EHRs that export to .docx;
 // JPG/PNG cover scanned/photographed encounter sheets and lab reports.
-// Keep the MIME and extension lists in sync — `accept=` uses extensions
+// Keep the MIME and extension lists in sync, `accept=` uses extensions
 // for cross-OS reliability, the runtime check uses MIME.
 // Numbered step indicator shared between the picker (active=1) and the
 // review phases (active=2). Keeps both surfaces visually anchored to the
 // same flow so the user knows where they are.
 /**
- * ProcessingPhase — shown while the AI extracts encounters from the
+ * ProcessingPhase: shown while the AI extracts encounters from the
  * uploaded file. Mirrors the population-groups CSV processing surface:
  * animated hero, headline + filename, hint, and a primary Minimize +
  * outline Discard action pair. The actual extraction work runs in the
- * parent's useEffect — this view is purely the "please wait" canvas
+ * parent's useEffect: this view is purely the "please wait" canvas
  * the user can step away from.
  */
 import { ProcessingPhase, StepIndicator } from './UploadDocumentDrawer.helpers';
@@ -93,12 +93,12 @@ const isAcceptedFile = (file) => {
   if (!file) return false;
   if (ACCEPT_MIME.has(file.type)) return true;
   // Some browsers (older Safari, drag-drop from certain sources) report
-  // an empty MIME — fall back to extension matching.
+  // an empty MIME: fall back to extension matching.
   return /\.(pdf|docx?|jpe?g|png|tiff?)$/i.test(file.name || '');
 };
 
 /**
- * UploadDocumentDrawer — three phases (picker · processing · review).
+ * UploadDocumentDrawer: three phases (picker · processing · review).
  * Implements the Jira "Individual Upload" path: Support picks a PDF,
  * OCR (mocked) extracts every encounter section across all patients,
  * each encounter is shown grouped by patient with editable fields and
@@ -152,7 +152,7 @@ export function UploadDocumentDrawer() {
   }, [session?.phase, session?.file, session?.seededMemberId, hccMembers, setEncounters]);
 
   // When the user closes the drawer while AI extraction is running we hide
-  // the drawer but keep the session alive — HccUploadProcessingHost
+  // the drawer but keep the session alive, HccUploadProcessingHost
   // (mounted in AppLayout) takes over with a floating progress chip.
   if (!session || minimized) return null;
   return <Inner
@@ -169,7 +169,7 @@ export function UploadDocumentDrawer() {
 }
 
 /**
- * PickerPhase — picker UI per Figma 121:81202 + 223:96599.
+ * PickerPhase: picker UI per Figma 121:81202 + 223:96599.
  *
  * Two-stage flow:
  *  1. Drop / pick one or more files → they appear in a staged list
@@ -268,7 +268,7 @@ function Inner({ session, setFile, setEncounters, appendEncounters, patchEnc, re
   const [drag, setDrag] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [filter, setFilter] = useState('all'); // all | error | mismatched | ready
-  // Review phase is now table-only per the new Figma — Option 1 / master-detail
+  // Review phase is now table-only per the new Figma, Option 1 / master-detail
   // is gone. We still keep `layout` as a constant so the existing selection /
   // bulk-confirm logic that branches on it stays intact.
   const layout = 'table';
@@ -336,7 +336,7 @@ function Inner({ session, setFile, setEncounters, appendEncounters, patchEnc, re
   }, [session.encounters]);
 
   // Confirm gates on validity. In table layout with bulk selection active
-  // we only validate the SELECTED rows — the unselected ones are about to
+  // we only validate the SELECTED rows, the unselected ones are about to
   // be rejected, so their errors / unmatched state don't block the action.
   // In card layout (or table with no selection) all encounters must be
   // valid, matching the original AC-8 / AC-9 contract.
@@ -398,7 +398,7 @@ function Inner({ session, setFile, setEncounters, appendEncounters, patchEnc, re
 
   // Phase-specific drawer title. Picker uses a single bold "Upload a
   // Document" line per Figma 121:81202. Back button removed per latest
-  // direction — the popover on the worklist toolbar is the canonical
+  // direction: the popover on the worklist toolbar is the canonical
   // entry, so there's no chooser to step back to.
   const title = session.phase === 'picker' ? (
     <span className={styles.titleBlock}>
@@ -419,8 +419,7 @@ function Inner({ session, setFile, setEncounters, appendEncounters, patchEnc, re
   const headerRight = session.phase === 'picker' ? null
   : session.phase === 'single' ? (
     <Button
-      variant="primary"
-      size="S"
+      size="sm"
       disabled={!singleSave.canSave}
       onClick={singleSave.save}
     >
@@ -441,11 +440,11 @@ function Inner({ session, setFile, setEncounters, appendEncounters, patchEnc, re
         <span className={styles.headerDocBadge}>{maxPage || 1}</span>
       </button>
       <span className={styles.headerDivider} />
-      {/* Upload-more — append a second PDF's encounters into the current
+      {/* Upload-more: append a second PDF's encounters into the current
           review session without losing edits. */}
       <Button
-        variant="alt"
-        size="S"
+        variant="outline" tone="primary"
+        size="sm"
         leadingIcon={appending ? undefined : 'solar:add-circle-linear'}
         disabled={appending}
         onClick={() => appendInputRef.current?.click()}
@@ -461,8 +460,7 @@ function Inner({ session, setFile, setEncounters, appendEncounters, patchEnc, re
       />
       <span className={styles.headerDivider} />
       <Button
-        variant="primary"
-        size="S"
+        size="sm"
         disabled={!canConfirm}
         onClick={handleConfirm}
       >
@@ -472,7 +470,7 @@ function Inner({ session, setFile, setEncounters, appendEncounters, patchEnc, re
   ) : null;
 
   // Only the review panel needs the wide canvas (master-detail layout).
-  // Every other phase — including processing — uses the narrow 660px
+  // Every other phase, including processing, uses the narrow 660px
   // shell so the centered processing hero reads correctly.
   const isWidePhase = session.phase === 'review';
   const drawerCls = [
@@ -485,7 +483,7 @@ function Inner({ session, setFile, setEncounters, appendEncounters, patchEnc, re
       title={title}
       onClose={() => {
         // While AI extraction is running, closing the drawer minimizes
-        // it to a floating progress chip instead of cancelling — the
+        // it to a floating progress chip instead of cancelling, the
         // user can keep working and we re-expand when extraction
         // completes. Every other phase still fully cancels.
         if (session.phase === 'processing') minimize();
@@ -565,7 +563,7 @@ function Inner({ session, setFile, setEncounters, appendEncounters, patchEnc, re
 }
 
 /**
- * Status of a single encounter — drives status chip color and filter
+ * Status of a single encounter: drives status chip color and filter
  * bucketing. Priority: mismatched > error > ready.
  */
 function encounterStatus(enc) {
@@ -577,7 +575,7 @@ function encounterStatus(enc) {
 // ── Chooser phase ──────────────────────────────────────────────────
 // Three-card menu shown when the user opens Upload Document from the
 // worklist toolbar (no patient seeded). Mirrors the Figma "Choose how
-// you'd like to add team members" layout — first option primary-tinted,
+// you'd like to add team members" layout: first option primary-tinted,
 // the other two secondary-tinted (matches Fold's purple/orange split).
 function ChooserPhase({ onPick }) {
   return (
@@ -633,7 +631,7 @@ function SftpPhase({ showToast }) {
       await navigator.clipboard.writeText(sftpPath);
       showToast('SFTP path copied to clipboard');
     } catch {
-      showToast('Could not copy — your browser blocked clipboard access');
+      showToast('Could not copy: your browser blocked clipboard access');
     }
   };
   return (
@@ -657,7 +655,7 @@ function SftpPhase({ showToast }) {
         </div>
         <ul className={styles.sftpHints}>
           <li>Files: PDF, DOC, JPG, PNG, TIFF</li>
-          <li>Naming: any — AI resolves patient + DOS from the document contents</li>
+          <li>Naming: any, AI resolves patient + DOS from the document contents</li>
           <li>New files trigger a batch within ~5 minutes</li>
         </ul>
       </div>
@@ -675,7 +673,7 @@ function SftpPhase({ showToast }) {
         <span className={styles.sftpExternalHint}>· opens in a new tab</span>
       </div>
 
-      {/* Demo trigger — kicks off a batch of 3 dummy documents through
+      {/* Demo trigger: kicks off a batch of 3 dummy documents through
           the SFTP path so the multi-doc review drawer can be exercised
           without an actual SFTP connection. */}
       <div className={styles.sftpDemo}>
@@ -690,8 +688,8 @@ function SftpPhase({ showToast }) {
         </p>
         <div className={styles.sftpDemoActions}>
           <Button
-            variant="alt"
-            size="S"
+            variant="outline" tone="primary"
+            size="sm"
             leadingIcon="solar:cloud-upload-linear"
             onClick={async () => {
               cancel?.();  // close this drawer so the user goes back to the worklist
@@ -758,7 +756,7 @@ function SinglePhase({ hccMembers, batchId, showToast, createFromEncounter, onDo
     };
   }, [patientPickerOpen]);
 
-  // Multiple DOS blocks — each an independent record for the same
+  // Multiple DOS blocks: each an independent record for the same
   // patient. New blocks default empty; user fills date/provider/pos +
   // document type, drops a file, adds ICDs.
   const [dosBlocks, setDosBlocks] = useState(() => [createNewDosBlock()]);
@@ -766,7 +764,7 @@ function SinglePhase({ hccMembers, batchId, showToast, createFromEncounter, onDo
   const addDosBlock = () => setDosBlocks(prev => [...prev, createNewDosBlock()]);
   const removeDosBlock = (id) => setDosBlocks(prev => prev.length > 1 ? prev.filter(b => b.id !== id) : prev);
 
-  // Provider list is derived once from the reference pool — dedupe
+  // Provider list is derived once from the reference pool, dedupe
   // across visit types so the Select shows every doctor the demo seeds.
   const providerOptions = useMemo(() => {
     const set = new Set();
@@ -794,7 +792,7 @@ function SinglePhase({ hccMembers, batchId, showToast, createFromEncounter, onDo
         pos: b.pos,
         posDesc: POS_LABEL[b.pos] || '',
         icds: b.icds.map(i => ({ code: i.code, valid: true })),
-        _docName: b.file?.name || `Manual entry — ${patient.name} ${b.dos}.pdf`,
+        _docName: b.file?.name || `Manual entry: ${patient.name} ${b.dos}.pdf`,
         _docType: b.docType || 'Progress Note',
         errors: [],
       });
@@ -815,7 +813,7 @@ function SinglePhase({ hccMembers, batchId, showToast, createFromEncounter, onDo
 
   return (
     <div className={styles.singlePhase}>
-      {/* Member selector — the field itself is the search input. Focus
+      {/* Member selector: the field itself is the search input. Focus
           reveals the match list in an absolutely-positioned popover so
           the DOS card below never shifts. */}
       <div className={styles.singleSection} ref={patientPickerWrapRef}>
@@ -883,7 +881,7 @@ function SinglePhase({ hccMembers, batchId, showToast, createFromEncounter, onDo
         )}
       </div>
 
-      {/* Repeatable DOS blocks — layout mirrors HccAddDosDrawer's
+      {/* Repeatable DOS blocks: layout mirrors HccAddDosDrawer's
           Patient-level Add DOS drawer: dropzone + 2×2 field grid +
           ICD list. */}
       {dosBlocks.map((block) => (
@@ -898,7 +896,7 @@ function SinglePhase({ hccMembers, batchId, showToast, createFromEncounter, onDo
         />
       ))}
 
-      {/* Add More DOS — dashed primary-tinted CTA. */}
+      {/* Add More DOS: dashed primary-tinted CTA. */}
       <button
         type="button"
         className={styles.addMoreDosBtn}
@@ -912,7 +910,7 @@ function SinglePhase({ hccMembers, batchId, showToast, createFromEncounter, onDo
 }
 
 /**
- * SingleDosCard — one DOS block inside the Add-DOS drawer. Layout
+ * SingleDosCard: one DOS block inside the Add-DOS drawer. Layout
  * mirrors the Patient-level Add DOS drawer (`HccAddDosDrawer` →
  * `DosBlock`): expand-arrow + "DOS: {value}" header with Ready/Not
  * Ready badge + trash, a full-width Dropzone (or attached-file chip),
@@ -1010,7 +1008,7 @@ function SingleDosCard({ block, providerOptions, patient, onPatch, onRemove, sho
               placeholder="Select Rendering Provider"
               searchable
               searchPlaceholder="Search providers…"
-              onChange={(v) => onPatch({ provider: v })}
+              onValueChange={(v) => onPatch({ provider: v })}
             />
           </div>
           <div className={styles.singleField}>
@@ -1024,7 +1022,7 @@ function SingleDosCard({ block, providerOptions, patient, onPatch, onRemove, sho
               placeholder="Select Place of Service"
               searchable
               searchPlaceholder="Search POS code or name…"
-              onChange={(v) => onPatch({ pos: v })}
+              onValueChange={(v) => onPatch({ pos: v })}
             />
           </div>
           <div className={styles.singleField}>
@@ -1036,7 +1034,7 @@ function SingleDosCard({ block, providerOptions, patient, onPatch, onRemove, sho
               options={DOC_TYPE_OPTIONS}
               value={block.docType}
               placeholder="Select Document Type"
-              onChange={(v) => onPatch({ docType: v })}
+              onValueChange={(v) => onPatch({ docType: v })}
             />
           </div>
         </div>
@@ -1096,7 +1094,7 @@ const DOC_TYPE_OPTIONS = [
 function ReviewPhase({ encounters, groups, hccMembers, patchEnc, removeEnc, addEnc, selectedIdx, setSelectedIdx, filter, setFilter, layout, selectedIdxs, toggleSelected, setSelectedAll, sourceFileName, showToast, openPagePreview }) {
   // Aggregate counts per status for the filter chips. The bucket keys
   // here must match what encounterStatus() returns ('error' singular,
-  // 'mismatched', 'ready') — historically had a typo where the chip
+  // 'mismatched', 'ready'): historically had a typo where the chip
   // initialized `errors: 0` and the increment created a new `error` key.
   const counts = useMemo(() => {
     const c = { all: encounters.length, error: 0, mismatched: 0, ready: 0 };
@@ -1126,7 +1124,7 @@ function ReviewPhase({ encounters, groups, hccMembers, patchEnc, removeEnc, addE
 
   const handleRemove = (idx) => {
     removeEnc(idx);
-    // After remove, indices shift — let the useEffect above refind a valid one.
+    // After remove, indices shift, let the useEffect above refind a valid one.
     if (idx === selectedIdx) setSelectedIdx(Math.max(0, idx - 1));
   };
 
@@ -1136,7 +1134,7 @@ function ReviewPhase({ encounters, groups, hccMembers, patchEnc, removeEnc, addE
 
   return (
     <div className={styles.reviewPhase}>
-      {/* Step indicator — mirrors the picker phase but with step 2 active. */}
+      {/* Step indicator: mirrors the picker phase but with step 2 active. */}
       <div className={styles.reviewSteps}>
         <StepIndicator activeStep={2} />
       </div>
@@ -1167,7 +1165,7 @@ function ReviewPhase({ encounters, groups, hccMembers, patchEnc, removeEnc, addE
         </div>
       </div>
 
-      {/* Bulk-action bar — two quick affordances pulled from the spec:
+      {/* Bulk-action bar: two quick affordances pulled from the spec:
           "Accept All High Confidence" selects every encounter with
           match confidence ≥ 85 and no errors; "Review Flagged (N)"
           scrolls the first low-confidence / error row into view and
@@ -1221,7 +1219,7 @@ function ReviewPhase({ encounters, groups, hccMembers, patchEnc, removeEnc, addE
         )}
       </div>
 
-      {/* Layout body — master-detail or editable table. */}
+      {/* Layout body: master-detail or editable table. */}
       {layout === 'table' ? (
         <TableLayout
           visibleGroups={visibleGroups}
@@ -1255,7 +1253,7 @@ function ReviewPhase({ encounters, groups, hccMembers, patchEnc, removeEnc, addE
                   </span>
                   {!member && <span className={styles.unmatchedBadge}>Unmatched</span>}
                   {member && (
-                    /* Manual-encounter trigger — spawns a blank encounter
+                    /* Manual-encounter trigger: spawns a blank encounter
                        pre-linked to this patient so the user can add a DOS
                        that wasn't captured by OCR (e.g. a separate scanned
                        progress note). New row lands at the bottom of the
@@ -1308,7 +1306,7 @@ function ReviewPhase({ encounters, groups, hccMembers, patchEnc, removeEnc, addE
                     {selectedMember?.name || selectedEnc.patient?.name || 'Unmatched patient'}
                   </span>
                   <span className={styles.detailHeaderMeta}>
-                    DOS {selectedEnc.dos || '—'} · {selectedEnc.provider || '—'}
+                    DOS {selectedEnc.dos || '-'} · {selectedEnc.provider || '-'}
                   </span>
                 </div>
                 <button
@@ -1337,13 +1335,13 @@ function ReviewPhase({ encounters, groups, hccMembers, patchEnc, removeEnc, addE
 }
 
 /**
- * Option 2 — flat editable table. Each row is one encounter with all
+ * Option 2: flat editable table. Each row is one encounter with all
  * fields editable inline. Designed for keyboard-driven bulk review at
  * scale. Patient column shows the matched member's name (or a "Link
  * patient" picker for unmatched rows).
  */
 function TableLayout({ visibleGroups, encounters, hccMembers, patchEnc, handleRemove, selectedIdxs, toggleSelected, setSelectedAll, sourceFileName, showToast, openPagePreview }) {
-  // Keep the grouped shape — TableLayout now renders patient header rows
+  // Keep the grouped shape: TableLayout now renders patient header rows
   // followed by their encounter rows so the same-patient cluster is
   // visually obvious (matches the master-detail panel grouping).
   const rows = useMemo(
@@ -1456,7 +1454,7 @@ function TableRow({ enc, hccMembers, onPatch, onRemove, checked, onToggle, sourc
           onCheckedChange={() => onToggle?.({ target: { checked: !checked } })}
         />
       </td>
-      {/* Patient — chip when matched (clickable to swap), picker when
+      {/* Patient: chip when matched (clickable to swap), picker when
           unmatched or when the user has opened the swap UI. */}
       <td className={styles.tdPatient}>
         {picking ? (
@@ -1464,7 +1462,7 @@ function TableRow({ enc, hccMembers, onPatch, onRemove, checked, onToggle, sourc
             {enc.patient?.idMismatch && (
               <div className={styles.tdPatientPickerHint} title="Document's Patient ID didn't match this Fold record exactly.">
                 <Icon name="solar:danger-circle-bold" size={11} color="var(--status-warning)" />
-                Document ID <strong>{enc.patient.patientId}</strong> · Fold ID <strong>{enc.patient.matchedMemberDisplayId || '—'}</strong>
+                Document ID <strong>{enc.patient.patientId}</strong> · Fold ID <strong>{enc.patient.matchedMemberDisplayId || '-'}</strong>
               </div>
             )}
             <Input
@@ -1524,7 +1522,7 @@ function TableRow({ enc, hccMembers, onPatch, onRemove, checked, onToggle, sourc
               {enc.patient?.idMismatch && (
                 <span
                   className={styles.tdPatientIdMismatch}
-                  title={`Document shows ID ${enc.patient.patientId}; Fold has ${member?.memberId || '—'}. Linked by name + DOB.`}
+                  title={`Document shows ID ${enc.patient.patientId}; Fold has ${member?.memberId || '-'}. Linked by name + DOB.`}
                 >
                   <Icon name="solar:danger-circle-bold" size={10} color="var(--status-warning)" />
                   ID mismatch · doc: {enc.patient.patientId}
@@ -1545,10 +1543,10 @@ function TableRow({ enc, hccMembers, onPatch, onRemove, checked, onToggle, sourc
           </button>
         )}
       </td>
-      {/* DOS — date input + per-field AI confidence chip. */}
+      {/* DOS: date input + per-field AI confidence chip. */}
       <td className={styles.tdField}>
         <Input
-          variant={errors.has('dos') ? 'error' : 'default'}
+          invalid={errors.has('dos')}
           value={enc.dos || ''}
           placeholder="Enter DOS"
           onChange={(e) => onPatch({ dos: e.target.value })}
@@ -1556,7 +1554,7 @@ function TableRow({ enc, hccMembers, onPatch, onRemove, checked, onToggle, sourc
         />
         <FieldConfidence score={getFieldConfidence(enc, 'dos')} sourcePage={enc.sourcePage} sourceFileName={sourceFileName} onOpenSource={openPagePreview} />
       </td>
-      {/* Rendering Provider — Select dropdown + confidence chip. */}
+      {/* Rendering Provider: Select dropdown + confidence chip. */}
       <td className={styles.tdField}>
         <ProviderSelect
           value={enc.provider || ''}
@@ -1565,7 +1563,7 @@ function TableRow({ enc, hccMembers, onPatch, onRemove, checked, onToggle, sourc
         />
         <FieldConfidence score={getFieldConfidence(enc, 'provider')} sourcePage={enc.sourcePage} sourceFileName={sourceFileName} onOpenSource={openPagePreview} />
       </td>
-      {/* POS — Select dropdown + confidence chip. */}
+      {/* POS: Select dropdown + confidence chip. */}
       <td className={styles.tdField}>
         <PosSelect
           value={enc.pos || ''}
@@ -1574,7 +1572,7 @@ function TableRow({ enc, hccMembers, onPatch, onRemove, checked, onToggle, sourc
         />
         <FieldConfidence score={getFieldConfidence(enc, 'pos')} sourcePage={enc.sourcePage} sourceFileName={sourceFileName} onOpenSource={openPagePreview} />
       </td>
-      {/* ICD Codes — chip + "+N" overflow + "+" add + confidence chip. */}
+      {/* ICD Codes: chip + "+N" overflow + "+" add + confidence chip. */}
       <td className={styles.tdField}>
         <IcdChipStack
           icds={enc.icds || []}
@@ -1586,7 +1584,7 @@ function TableRow({ enc, hccMembers, onPatch, onRemove, checked, onToggle, sourc
         />
         <FieldConfidence score={getFieldConfidence(enc, 'icds')} sourcePage={enc.sourcePage} sourceFileName={sourceFileName} onOpenSource={openPagePreview} />
       </td>
-      {/* Status — second-to-last. Solid-text inline chip with leading icon. */}
+      {/* Status: second-to-last. Solid-text inline chip with leading icon. */}
       <td className={styles.tdStatus}>
         <span className={[
           styles.statusInline,
@@ -1600,7 +1598,7 @@ function TableRow({ enc, hccMembers, onPatch, onRemove, checked, onToggle, sourc
           {status === 'ready' ? 'Ready' : status === 'error' ? 'Missing Fields' : 'Mismatched'}
         </span>
       </td>
-      {/* Action — last column, sticky-right at right:0 so destructive
+      {/* Action: last column, sticky-right at right:0 so destructive
           affordances stay reachable at any horizontal scroll. */}
       <td className={styles.tdActions}>
         <button
@@ -1630,7 +1628,7 @@ function CellInput({ value, onChange, error, placeholder, narrow }) {
   return (
     <td className={narrow ? styles.tdNarrow : ''}>
       <Input
-        variant={error ? 'error' : 'default'}
+        invalid={error}
         value={value || ''}
         placeholder={placeholder || ''}
         onChange={(e) => onChange(e.target.value)}
@@ -1646,7 +1644,7 @@ function CellInput({ value, onChange, error, placeholder, narrow }) {
  * struck-through.
  */
 /**
- * FieldConfidence — minimal, text-only per-field confidence indicator.
+ * FieldConfidence: minimal, text-only per-field confidence indicator.
  *
  * Renders the percent in the tier color (no pill, no icon). Hover
  * surfaces a richer popover explaining what the score means + what
@@ -1671,17 +1669,17 @@ function FieldConfidence({ score, sourcePage, sourceFileName, onOpenSource }) {
   if (score === 0) {
     return (
       <span className={[styles.fieldConf, styles.fieldConfMissing].join(' ')} title="No value detected by AI">
-        —
+,
       </span>
     );
   }
   let tier = 'Low';
   let tierCls = styles.fieldConfLow;
-  let helpText = "Below 60%. AI is uncertain — verify against the source document before accepting.";
+  let helpText = "Below 60%. AI is uncertain, verify against the source document before accepting.";
   if (score >= 85) {
     tier = 'High';
     tierCls = styles.fieldConfHigh;
-    helpText = "85% or above. Strong match between the document and the field — safe to accept.";
+    helpText = "85% or above. Strong match between the document and the field, safe to accept.";
   } else if (score >= 60) {
     tier = 'Medium';
     tierCls = styles.fieldConfMedium;
@@ -1740,7 +1738,7 @@ function FieldConfidence({ score, sourcePage, sourceFileName, onOpenSource }) {
 }
 
 /**
- * Provider select — picks from a small canned list. Real EHR data
+ * Provider select: picks from a small canned list. Real EHR data
  * would back this; for the mock we surface a representative dropdown.
  */
 function ProviderSelect({ value, onChange, error }) {
@@ -1776,16 +1774,16 @@ function ProviderSelect({ value, onChange, error }) {
   return (
     <Select
       value={value}
-      onChange={onChange}
+      onValueChange={onChange}
       options={items.map(o => ({ value: o, label: o }))}
       placeholder="Select provider"
-      variant={error ? 'error' : 'default'}
+      invalid={error}
     />
   );
 }
 
 /**
- * Place-of-service select — backed by the canonical POS_LABEL map so
+ * Place-of-service select: backed by the canonical POS_LABEL map so
  * the dropdown label and underlying code stay in sync.
  */
 function PosSelect({ value, onChange, error }) {
@@ -1796,16 +1794,16 @@ function PosSelect({ value, onChange, error }) {
   return (
     <Select
       value={value}
-      onChange={onChange}
+      onValueChange={onChange}
       options={options}
       placeholder="Select POS"
-      variant={error ? 'error' : 'default'}
+      invalid={error}
     />
   );
 }
 
 /**
- * IcdPicker — small inline typeahead anchored to the chip stack's `+`
+ * IcdPicker: small inline typeahead anchored to the chip stack's `+`
  * button. Searches the codebase's ICD library by code or description.
  * Used for both Add (new ICD) and Edit (replace an existing chip).
  */
@@ -1917,9 +1915,9 @@ function MasterRow({ enc, selected, onSelect, onRemove }) {
   return (
     <div className={rowCls} onClick={onSelect}>
       <div className={styles.masterRowMain}>
-        <span className={styles.masterRowDos}>{enc.dos || '— No DOS —'}</span>
+        <span className={styles.masterRowDos}>{enc.dos || 'No DOS'}</span>
         <span className={styles.masterRowMeta}>
-          {enc.provider || '—'} · POS {enc.pos || '—'}
+          {enc.provider || '-'} · POS {enc.pos || '-'}
         </span>
       </div>
       <span className={styles.masterRowChips}>
@@ -2008,7 +2006,7 @@ function EncounterCard({ enc, hccMembers, onPatch }) {
         </div>
       )}
 
-      {/* Re-match affordance — visible on matched encounters so the user
+      {/* Re-match affordance: visible on matched encounters so the user
           can swap an auto-matched (or previously-linked) patient. Hidden
           while the picker is open to avoid two open trigger states. */}
       {isMatched && !picking && (
@@ -2028,7 +2026,7 @@ function EncounterCard({ enc, hccMembers, onPatch }) {
         </div>
       )}
 
-      {/* Shared picker — opens from either the mismatch banner (Manually
+      {/* Shared picker: opens from either the mismatch banner (Manually
           link) or the rematch row (Change patient). */}
       {picking && (
         <div className={styles.memberPicker}>
@@ -2137,11 +2135,11 @@ function EncounterCard({ enc, hccMembers, onPatch }) {
           ))}
         </div>
 
-        {/* Add ICD — typeahead over the catalog. Excludes codes already
+        {/* Add ICD: typeahead over the catalog. Excludes codes already
             on this encounter so the user doesn't see false duplicates. */}
         <div className={styles.icdAddRow}>
           <IcdSearch
-            placeholder="Add ICD — search by code or description (e.g. E11.9, COPD)…"
+            placeholder="Add ICD: search by code or description (e.g. E11.9, COPD)…"
             excludeCodes={(enc.icds || []).map(i => i.code)}
             onSelect={(icd) => addIcd({ code: icd.code, desc: icd.title, hcc: icd.hcc || '' })}
           />
@@ -2160,7 +2158,7 @@ function Field({ label, value, onChange, error, required, placeholder, hint }) {
         {required && <span className={styles.fieldRequired}>*</span>}
       </span>
       <Input
-        variant={error ? 'error' : 'default'}
+        invalid={error}
         value={value || ''}
         placeholder={placeholder || ''}
         onChange={(e) => onChange(e.target.value)}
@@ -2177,7 +2175,7 @@ function Field({ label, value, onChange, error, required, placeholder, hint }) {
 }
 
 /**
- * PagePreviewModal — full-screen overlay showing a "scanned page" of the
+ * PagePreviewModal: full-screen overlay showing a "scanned page" of the
  * uploaded document. Backed by a single dummy template (real OCR would
  * return PDF bytes or a page image URL). Page navigation via prev/next
  * + jump-to-page input. The dummy template renders the page number,
@@ -2242,7 +2240,7 @@ function PagePreviewModal({ page, maxPage, fileName, onChangePage, onClose }) {
 }
 
 /**
- * Single dummy page — looks like a scanned progress-note template. Deterministic
+ * Single dummy page: looks like a scanned progress-note template. Deterministic
  * variation by page so each page reads as a distinct extract.
  */
 function DummyPage({ page, fileName }) {
@@ -2280,7 +2278,7 @@ function DummyPage({ page, fileName }) {
         <p>{sample.assessment}</p>
         <ul className={styles.dummyPageIcdList}>
           {sample.icds.map(icd => (
-            <li key={icd.code}><strong>{icd.code}</strong> — {icd.desc}</li>
+            <li key={icd.code}><strong>{icd.code}</strong>, {icd.desc}</li>
           ))}
         </ul>
       </div>
@@ -2299,7 +2297,7 @@ const DUMMY_PAGE_SAMPLES = [
     provider: 'Dr. Sarah Connor, MD',
     subjective: 'Patient reports good adherence to current diabetes regimen. Denies polyuria, polydipsia, or hypoglycemic episodes. Continues to monitor BG twice daily; values trending 110-140 fasting.',
     objective: 'BP 132/84, HR 76, BMI 31.2. HbA1c 7.6 (last 6 mo: 8.1). LDL 88. eGFR 62. Foot exam normal, monofilament intact.',
-    assessment: 'Type 2 DM with neuropathy — improving control. CHF stable on current regimen.',
+    assessment: 'Type 2 DM with neuropathy: improving control. CHF stable on current regimen.',
     icds: [
       { code: 'E11.22', desc: 'T2DM with diabetic chronic kidney disease' },
       { code: 'I48.91', desc: 'Unspecified atrial fibrillation' },

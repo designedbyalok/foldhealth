@@ -1,11 +1,9 @@
 import { useMemo } from 'react';
-import { useAppStore } from '../../../store/useAppStore';
 import { Badge } from '../../../components/Badge/Badge';
-import { DatePicker } from '../../../components/DatePicker/DatePicker';
 import { DashboardCard } from '../../../components/DashboardCard/DashboardCard';
 import { Icon } from '../../../components/Icon/Icon';
 import {
-  FAIL_DATE_HINT, GAP_STATUS_TONE, MEASURE_NAMES, MEASURE_ORDER, isActiveGap, addDaysMdy, daysFromToday, effectiveFailDate, fillDueTone, measureStatus, parseMdy, pdcTone,
+  FAIL_DATE_HINT, gapBadge, MEASURE_NAMES, MEASURE_ORDER, isActiveGap, addDaysMdy, daysFromToday, effectiveFailDate, fillDueTone, measureStatus, parseMdy, pdcTone, reconcileMeasure,
 } from '../pharmacyWorklist.utils';
 import { MeasureCode, SubStatus } from '../PharmacyCells';
 import { usePharmacyProgramMember } from './usePharmacyProgramMember';
@@ -17,30 +15,20 @@ function Fact({ label, children, tone }) {
   return (
     <div className={styles.fact}>
       <span className={styles.factLabel}>{label}</span>
-      <span className={`${styles.factValue} ${TONE_CLASS[tone] || ''}`}>{children ?? '—'}</span>
+      <span className={`${styles.factValue} ${TONE_CLASS[tone] || ''}`}>{children ?? '-'}</span>
     </div>
   );
 }
 
-// MM/DD/YYYY (stored) ↔ YYYY-MM-DD (date input).
-const toIso = (mdy) => {
-  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(mdy || '');
-  return m ? `${m[3]}-${m[1]}-${m[2]}` : '';
-};
-const fromIso = (iso) => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
-  return m ? `${m[2]}/${m[3]}/${m[1]}` : '';
-};
-
 const latestDate = (dates) => dates.filter(Boolean).reduce((max, d) => (!max || parseMdy(d) > parseMdy(max) ? d : max), null);
 
-// Recent Fill, per active drug: set by an outreach outcome (pickup confirmed /
-// refill approval received) and editable here while closing the gap.
-function RecentFill({ member, x }) {
-  const setRecentFill = useAppStore(s => s.setPharmacyRecentFill);
+// Recent Fill, per active drug. Read-only here, like every closure field: it
+// comes from a confirmed pickup (outreach or verification) or is entered in
+// Medication Review, and stays projected until its claim matches.
+function RecentFill({ x }) {
   const active = x.medications.filter(d => d.status !== 'Discontinued');
-  const hintOf = (d) => (!d.recentFill ? 'Set by a pickup or refill-approved outreach'
-    : d.recentFillSource?.manual ? `Edited ${d.recentFillSource.date}`
+  const hintOf = (d) => (!d.recentFill ? 'Set by a confirmed pickup or in Medication Review'
+    : d.recentFillSource?.manual ? `Entered ${d.recentFillSource.date} in Medication Review`
     : d.recentFillSource?.outcome ? `From ${d.recentFillSource.outcome.split(' · ').pop()}`
     : null);
   return (
@@ -49,11 +37,7 @@ function RecentFill({ member, x }) {
       {active.map(d => (
         <div key={d.id} className={styles.recentFillRow}>
           {active.length > 1 && <span className={styles.factValue}>{d.name} {d.strength} {d.unit}</span>}
-          <DatePicker
-            value={toIso(d.recentFill)}
-            onSelect={(iso) => setRecentFill(member.id, x.code, d.id, fromIso(iso) || null)}
-            aria-label={`${d.name} recent fill date`}
-          />
+          <span className={styles.factValue}>{d.recentFill || '-'}</span>
           {hintOf(d) && <span className={styles.factHint}>{hintOf(d)}</span>}
         </div>
       ))}
@@ -87,7 +71,7 @@ export function PharmacyGapClosureStep() {
     return (
       <div className={styles.empty}>
         <Icon name="solar:pills-linear" size={40} color="var(--neutral-200)" />
-        <p>No MAD, MAH or MAC measures on file for this member.</p>
+        <p>No MAC, MAD or MAH measures on file for this member.</p>
       </div>
     );
   }
@@ -96,14 +80,15 @@ export function PharmacyGapClosureStep() {
     <div className={styles.wrap}>
       <div className={styles.banner}>
         <Icon name="solar:refresh-circle-linear" size={16} color="var(--status-info)" />
-        <span>Closure repeats every fill. A confirmed pickup or a fill date entered here marks the gap Completed, but only as a projection: the gap closes (Closed-Data) when a matching Part D claim arrives, and is flagged for rework if none matches. It reopens when the next fill comes due or the claim reverses.</span>
+        <span>Closure repeats every fill. A confirmed pickup or a fill date entered in Medication Review makes the gap Pending Claim, but only as a projection: the gap closes when a matching Part D claim arrives, and is flagged for rework if none matches. It reopens when the next fill comes due or the claim reverses.</span>
       </div>
 
       {measures.map(x => {
         const st = measureStatus(x, member);
         // A fill confirmed in Fold is only projected; the plan sees it once
         // the claim lands, and its report lags 1–4 weeks.
-        const planBehind = st.label === 'Pending claim';
+        const planBehind = st.gap === 'Pending Claim';
+        const recon = reconcileMeasure(x, member.healthPlan);
         const cycles = closureCycles(member, x);
         const failDate = effectiveFailDate(x);
         const failIn = daysFromToday(failDate);
@@ -114,7 +99,7 @@ export function PharmacyGapClosureStep() {
           <DashboardCard
             key={x.code}
             title={<span className={styles.measureTitle}><MeasureCode code={x.code} />{MEASURE_NAMES[x.code]}</span>}
-            actions={<Badge size="S" tone={GAP_STATUS_TONE[st.gap]} label={st.gap} />}
+            actions={<Badge size="sm" {...gapBadge(st)} />}
           >
             <div className={styles.body}>
             <div className={styles.detail}><SubStatus label={st.label} /><span>{st.detail}</span></div>
@@ -128,20 +113,20 @@ export function PharmacyGapClosureStep() {
                 <span title={FAIL_DATE_HINT}>{failDate ? `${failDate}${failIn != null ? ` · ${failIn}d` : ''}` : null}</span>
               </Fact>
               <Fact label="Last Fill Date">{latestDate(x.medications.filter(d => d.status !== 'Discontinued').map(d => d.lastFill))}</Fact>
-              <RecentFill member={member} x={x} />
+              <RecentFill x={x} />
               <Fact label="Allowable Days Left">{x.daysLeft}</Fact>
               <Fact label="Pickup Confirmed">{x.pickupConfirmed}</Fact>
-              <Fact label="Claim Match" tone={st.label === 'Claim not matched' ? 'error' : null}>
-                {st.label === 'Claim not matched' || st.label === 'Pending claim' || st.label === 'Claim matched' ? st.label : null}
+              <Fact label="Claim Match" tone={recon?.rework ? 'error' : null}>
+                {recon?.status ?? null}
               </Fact>
             </div>
 
             <div className={styles.signals}>
               <span className={styles.signalsLabel}>Plan Signals</span>
-              {x.projectedStatus && <Badge size="S" tone="grey" label={x.projectedStatus} />}
-              {x.oneFillToInvincible && <Badge size="S" tone="grey" label="1 fill left" />}
-              {x.excluded && <Badge size="S" tone="grey" label="Excluded" />}
-              {x.priorYearNonCompliant && <Badge size="S" tone="grey" label="Prior-year non-compliant" />}
+              {x.projectedStatus && <Badge size="sm" label={x.projectedStatus} />}
+              {x.oneFillToInvincible && <Badge size="sm" label="1 fill left" />}
+              {x.excluded && <Badge size="sm" label="Excluded" />}
+              {x.priorYearNonCompliant && <Badge size="sm" label="Prior-year non-compliant" />}
               {!x.projectedStatus && !x.oneFillToInvincible && !x.excluded && !x.priorYearNonCompliant && <span className={styles.muted}>None reported</span>}
             </div>
 
@@ -153,7 +138,7 @@ export function PharmacyGapClosureStep() {
             )}
 
             <div className={styles.cycles}>
-              <span className={styles.signalsLabel}>Closure History</span>
+              <span className={styles.signalsLabel}>Pickup History</span>
               {cycles.length === 0
                 ? <span className={styles.muted}>No confirmed pickups yet.</span>
                 : cycles.map((c, i) => (

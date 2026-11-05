@@ -31,7 +31,11 @@ const FALLBACK_AUDIENCE_SEGMENTS = [
 import { hccDocumentRowToJs, hccDocumentJsToDb } from '../lib/hccDocumentMapper';
 import { readCachedWorklistOrder, getFirstWorklistLabel, populationEntryPatch, normalizeWorklistLabel } from '../lib/worklistDefaults';
 import { MONITORING_SEED, mapMonitoringRow } from '../features/patient/right-panel/tabs/monitoring/monitoringData';
+import { DEFAULT_WINDOWS, WINDOW_FIELD } from '../features/calendar/list/typeWindows';
 import { OVERVIEW_SEED, mapOverviewRow } from '../features/patient/data/overviewData';
+import { CLOSURE_REASONS, closureReasonLabel, statusColorFor as programStatusColor } from '../features/patient/data/programStatus';
+import { nextEnrollment, plannedEndDate } from '../features/patient/data/programLifecycle';
+import { CARE_PROGRAM_CATALOG } from '../features/patient/data/careProgramCatalog';
 import { toast } from '../components/Toast/sonnerToast';
 // Fallback datasets (~220KB raw across all of these) are imported lazily
 // inside the fetch actions that consume them, so they don't bloat the entry
@@ -79,22 +83,27 @@ import { makeActivityRow as buildHccActivityRow } from '../features/hcc/activity
 import { hccRoleDefaultFilters } from '../features/hcc/filters';
 import { deriveGoalTableFields } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/goalMetrics';
 import { barrierPayloadFromTemplateEntry, goalPayloadFromTemplateEntry, interventionPayloadFromTemplateEntry, templateLinkOwners } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateApply';
-import { buildPatientFacts, buildTemplateChoices, draftCounts } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/individualizedPlan';
+import { dischargeDates } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/cadence';
+import { EVENT_LOOKBACK_DAYS, evaluateEventImpact, eventsToEvaluate, mapCarePlanEventRow, mapEventImpactRow, planForPrompt } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/eventImpact';
+import { buildPatientFacts, buildTemplateChoices, draftCounts, withDescription } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/individualizedPlan';
+import { assessmentSuggestionsFor, pendingRecommendation } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanRecommendation';
 import { buildTemplateCatalog } from '../features/settings/care-plan-library/lib/aiTemplateDraft';
 import { apiFetch } from '../lib/apiFetch';
-import { buildRuleInputs, evaluateRule, mapAutomationRuleRow, rulesForProgram } from '../features/settings/automation-rules/lib/automationRules';
 import { sdohSocialRisk } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/sdohReport';
-import { isDueToAutoResume, nextTouchpoint as computeNextTouchpoint, pauseAuditEntry, pauseFields, resumeAuditEntry } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanPause';
+import { EPISODE_PAUSE_REASON, isDueToAutoResume, isoDay as isoDayString, nextTouchpoint as computeNextTouchpoint, pauseAuditEntry, pauseFields, pauseReasonLabel, resumeAuditEntry } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanPause';
+import { EPISODE_PROGRAM_CODES, dayAfter, episodeEndsOn, episodeOf, episodePauseNote, isEpisodeDue } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/episodeTemplates';
 import { INSTANCE_STATUS, formatInstanceDate, instanceOutcome, templateEndsOn } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/templateRenewal';
 import { barrierGoalIdsOf, goalCascade } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanGoalCascade';
 import { templateContentFromApplied, templateContentFromWholePlan } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateSave';
 import { DEFAULT_CARE_PLAN_MODE, normalizeCarePlanMode } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanMode';
 import { buildCarePlanSnapshot, carePlanUnsignedChanges, isFullSnapshot, withLiveValues } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanDraft';
-import { resolvePatientStoreId } from '../lib/resolvePatientStoreId';
+import { resolvePatientStoreId, worklistRowId } from '../lib/resolvePatientStoreId';
 import { resolvePatientForCall } from '../lib/patientCall';
 
 import { reportPersistFailure } from './lib/reportPersistFailure';
 import { createResyncGate, isRealUserId } from './lib/resyncGate';
+import { BUILT_IN_ROLES } from '../lib/accessControl';
+import { sampleAssessmentSeed, pickAssessmentForms } from '../features/patient/right-panel/tabs/assessments/assessmentSeed';
 import { isPastDate, parseDuration, formatDuration } from './lib/taskDateUtils';
 import {
   campaignSendRowToJs,
@@ -106,6 +115,8 @@ import {
   formRowToJs,
   clinicalNoteRowToJs,
   clinicalNoteVersionRowToJs,
+  patientFormResponseRowToJs,
+  assessmentSendRowToJs,
 } from './lib/contentStoreMappers';
 import {
   mapCarePlanGoalRow,
@@ -147,6 +158,7 @@ import {
   persistSnpMemberUpdate,
   projectSnpProgramState,
   writeSnpProgramField,
+  snpCarePlanStatusLabel,
   persistHccGapDosAction,
   persistHccGapDosActionDelete,
   persistHccGapDosActionDeleteAll,
@@ -171,6 +183,20 @@ import { fetchCaregapCommentRows, persistCaregapCommentInsert, persistCaregapCom
 import { fetchCaregapReminderRows, persistCaregapReminderInsert, persistCaregapReminderUpdate, persistCaregapReminderDelete } from './lib/caregapRemindersPersist';
 
 // cis_dose_appointments row → app object.
+// A note's "@" tags and "/" links as saved on its audit row (`text` is only
+// for the note_linked rows).
+const noteMeta = (details) => {
+  if (!details) return undefined;
+  const { text, ...meta } = details;
+  void text;
+  return meta;
+};
+// One note_linked row per goal, intervention or barrier a note links with
+// "/", so the note also shows in that item's activity.
+const noteLinkedRows = details => (details?.links || []).map(l => ({
+  entityType: l.kind, entityId: l.id, action: 'note_linked', summary: l.label, detail: details.text || '',
+}));
+
 const cisAppointmentFromRow = (r) => ({
   id: r.id,
   memberId: r.hedis_member_id,
@@ -195,6 +221,12 @@ import { CAREGAP_WHITELIST_MOCK } from '../features/hedis-worklist/data/caregapW
 import { fetchEfaxNumberRows, persistEfaxNumberInsert, persistEfaxNumberUpdate, persistEfaxNumberDelete } from './lib/efaxNumbersPersist';
 import { fetchCaregapLabRows, persistLabOrder, persistLabResult } from './lib/caregapLabsPersist';
 import { fetchStepStatusRows, persistStepStatus } from './lib/careProgramStepStatusPersist';
+import { fetchConsentRows, fetchPreferencesRow, insertConsentRow, persistPreferences, preferencesFromRow, uploadConsentArtifact } from './lib/patientConsentPersist';
+import { CONSENT_METHODS, canBill, validateCapture } from '../features/patient/data/consentRules';
+import { fetchProgramAccessRows, insertOverride, persistMembership } from './lib/programAccessPersist';
+import { validateOverride } from '../features/patient/data/programAccess';
+import { fetchProgramTypeRows, persistProgramType, persistProgramTypeDelete } from './lib/careProgramTypesPersist';
+import { defaultProgramTypes } from '../features/settings/care-program-config/careProgramConfigModel';
 import { fetchPatientSnapshotRow } from './lib/patientSnapshotsPersist';
 import { buildPatientSnapshot, patientSnapshotKey } from '../lib/patientSnapshot';
 import { EFAX_NUMBERS_MOCK } from '../features/settings/messages/efax/efaxNumbersMock';
@@ -222,9 +254,29 @@ import {
 import { HCC_TRANSITION_LABEL, HCC_ROLE_LABEL, hccTransitionRole, hccRoleStatusHeadline } from '../features/hcc/hccTransitionLabels';
 import { buildSeedHccActivityFeed } from '../features/hcc/seed/buildSeedHccActivityFeed';
 import { createShellSlice } from './slices/shellSlice';
+import { createAutomationsSlice } from './slices/automationsSlice';
+import { retirementToday } from '../features/settings/care-plan-library/lib/templateRetirement';
 import { rowToCrm, sampleCrmActivities } from '../features/patient/data/crmActivity';
+import { rowToReferral, sampleReferralsFor } from '../features/patient/data/patientReferrals';
 import { createHccWorklistFiltersSlice } from './slices/hccWorklistFiltersSlice';
 import { createPharmacyWorklistSlice } from './slices/pharmacyWorklistSlice';
+import { createPatientOrdersSlice } from './slices/patientOrdersSlice';
+import { createPatientPortalSlice } from './slices/patientPortalSlice';
+import { createFeatureReviewsSlice } from './slices/featureReviewsSlice';
+import { createTemplateVersionsSlice } from './slices/templateVersionsSlice';
+import { createIpaOverlaysSlice } from './slices/ipaOverlaysSlice';
+import { applyOverlay, blockedSignoffs } from '../features/settings/care-plan-library/lib/ipaOverlays';
+import { contentOf as templateContentOf } from '../features/settings/care-plan-library/lib/templateVersions';
+import { itemsLeaving, withCategory } from '../features/settings/care-plan-library/lib/templateCategories';
+import { buildRuleInputs } from '../features/automations/lib/clinicalCriteria';
+import { effectiveVersion as effectiveTemplateVersion, todayIso as todayIsoDate } from '../features/settings/care-plan-library/lib/templateVersions';
+import { createClinicalProtocolsSlice } from './slices/clinicalProtocolsSlice';
+import { createProtocolMigrationsSlice } from './slices/protocolMigrationsSlice';
+import { createTemplateSuggestionsSlice } from './slices/templateSuggestionsSlice';
+import { createTemplateGroupsSlice } from './slices/templateGroupsSlice';
+
+// patientId → in-flight fetchPatientConsents request.
+const consentFetches = new Map();
 
 // Timer handle for the 3-second row-flash on the tasks page.
 let _flashTaskTimer = null;
@@ -238,7 +290,7 @@ async function hasSession() {
 }
 
 // Central failure reporter for every persistHccXxx helper. Historically
-// each of these was fire-and-forget with only console.warn on error — so
+// each of these was fire-and-forget with only console.warn on error, so
 // when RLS blocked a write, or an UPDATE matched 0 rows (spawned row
 // never persisted), or the underlying table didn't exist (e.g. the
 // hcc_activity_log migration was never applied), the user saw a success
@@ -258,6 +310,22 @@ const _savedSettingsTab = sessionStorage.getItem('settingsTab');
 
 // The review call's total length in seconds from the drawer's clock, or null
 // when the timer was never started.
+// A template's episode settings as care_plan_templates columns; `episode` is
+// episodeOf()'s shape or null (ongoing).
+const episodeRow = (episode) => ({
+  episodic: !!episode,
+  episode_days: episode?.days || null,
+  episode_pauses_ongoing: episode ? episode.pausesOngoing !== false : true,
+  episode_program_code: episode?.programCode || null,
+  episode_supersedes: episode?.supersedes || [],
+});
+const EPISODE_PROGRAM_COLUMNS_RE = /episode_program_code|episode_supersedes/;
+// YYYY-MM-DD as the MM/DD/YYYY the program rows use.
+const toProgramDate = (iso) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  return m ? `${m[2]}/${m[3]}/${m[1]}` : null;
+};
+
 function reviewSeconds(clock) {
   if (!clock?.startedAt) return null;
   return (clock.baseSeconds || 0) + Math.max(0, Math.round(((clock.stoppedAt ?? Date.now()) - clock.startedAt) / 1000));
@@ -330,19 +398,84 @@ const CARE_PLAN_LOG_ACTIONS = [
   'note', 'note_deleted', 'note_cleared', 'review_requested', 'discarded', 'restored',
 ];
 
+// Patients whose CMP roster rows were already turned into enrollments this session (syncCmpEnrollments).
+const cmpSyncedPatients = new Set();
 // patientId → in-flight patient_care_programs request (see fetchCareProgramsForPatient).
 const careProgramsInFlight = new Map();
 // One gate per resync query; see lib/resyncGate.js for why these exist.
 const notificationsResync = createResyncGate();
 const unreadMessagesResync = createResyncGate();
+// Reference-data fetches that components fire on every mount. Visiting a
+// page again within a minute reuses what's loaded, and mounts in the same
+// tick share one request; after a save, callers pass { force: true }.
+const mountFetchGates = new Map();
+function mountFetch(name, fn, opts) {
+  if (!mountFetchGates.has(name)) mountFetchGates.set(name, createResyncGate());
+  return mountFetchGates.get(name)('all', fn, { force: !!opts?.force });
+}
 const tabHidden = () => typeof document !== 'undefined' && document.visibilityState === 'hidden';
+
+const mapReminderRow = r => ({
+  id: r.id,
+  title: r.title,
+  note: r.note || null,
+  remindAt: r.remind_at,
+  doneAt: r.done_at || null,
+  createdAt: r.created_at,
+});
+
+// Reasons picked in the status dialog, waiting for the save they belong to
+// (recordGbiStatusHistory reads them when the save's audit is written).
+const pendingStatusReasons = new Map();
+
+// Bulk appointment jobs kept in this browser until appointment_bulk_jobs exists.
+const LOCAL_BULK_KEY = 'fold.bulkAppointmentJobs';
+const LOCAL_BULK_READ_KEY = 'fold.bulkAppointmentJobs.read';
+function readLocalBulkJobs() {
+  try { return JSON.parse(localStorage.getItem(LOCAL_BULK_KEY) || '[]'); } catch { return []; }
+}
+function writeLocalBulkJobs(jobs) {
+  try { localStorage.setItem(LOCAL_BULK_KEY, JSON.stringify((jobs || []).slice(0, 20))); } catch { /* storage blocked */ }
+}
+function readLocalBulkRead() {
+  try { return JSON.parse(localStorage.getItem(LOCAL_BULK_READ_KEY) || '[]'); } catch { return []; }
+}
+// Reading a kept job's notification sticks across reloads too.
+function rememberBulkRead(notifications) {
+  const ids = (notifications || []).filter(n => n?.type === 'bulk.summary').map(n => n.id);
+  if (!ids.length) return;
+  try { localStorage.setItem(LOCAL_BULK_READ_KEY, JSON.stringify([...new Set([...readLocalBulkRead(), ...ids])].slice(-50))); } catch { /* storage blocked */ }
+}
+
+// Appointment types' cancel and reschedule windows, kept in this browser
+// until appointment_type_windows_migration.sql adds their columns.
+const LOCAL_TYPE_WINDOWS_KEY = 'fold.appointmentTypeWindows';
+function readLocalTypeWindows() {
+  try { return JSON.parse(localStorage.getItem(LOCAL_TYPE_WINDOWS_KEY) || '{}'); } catch { return {}; }
+}
+function writeLocalTypeWindow(id, windows) {
+  try { localStorage.setItem(LOCAL_TYPE_WINDOWS_KEY, JSON.stringify({ ...readLocalTypeWindows(), [id]: windows })); } catch { /* storage blocked */ }
+}
+// A type row with its windows: its own columns once they exist, else what
+// this browser saved, else the windows the migration seeds.
+const withTypeWindows = (t, local) => (WINDOW_FIELD.cancel in t ? t : { ...t, ...(DEFAULT_WINDOWS[t.name] || {}), ...(local[t.id] || {}) });
 
 export const useAppStore = create((set, get) => ({
   ...createShellSlice(set, get),
+  ...createAutomationsSlice(set, get),
   ...createHccWorklistFiltersSlice(set, get),
   ...createPharmacyWorklistSlice(set, get),
+  ...createPatientOrdersSlice(set, get),
+  ...createPatientPortalSlice(set, get),
+  ...createFeatureReviewsSlice(set, get),
+  ...createTemplateVersionsSlice(set, get),
+  ...createIpaOverlaysSlice(set, get),
+  ...createClinicalProtocolsSlice(set, get),
+  ...createProtocolMigrationsSlice(set, get),
+  ...createTemplateSuggestionsSlice(set, get),
+  ...createTemplateGroupsSlice(set, get),
 
-  // Patient Monitoring — per-patient snapshot for the P360 Monitoring tab,
+  // Patient Monitoring: per-patient snapshot for the P360 Monitoring tab,
   // keyed by member id. Falls back to the bundled MONITORING_SEED until
   // patient_monitoring is migrated + seeded. A cached value of `null` means
   // "fetched, no monitoring episode" (distinct from `undefined` = not fetched).
@@ -370,6 +503,151 @@ export const useAppStore = create((set, get) => ({
       patientMonitoring: { ...st.patientMonitoring, [key]: obj },
       patientMonitoringLoading: { ...st.patientMonitoringLoading, [key]: false },
     }));
+  },
+
+  // A user's private reminders on a patient (patient_reminders), keyed by
+  // member id. RLS returns only the signed-in user's own rows. `undefined`
+  // until fetched; `[]` when there are none or the table is missing.
+  patientReminders: {},
+  fetchPatientReminders: async (memberId) => {
+    if (!memberId) return;
+    const key = String(memberId);
+    if (get().patientReminders[key] !== undefined) return;
+    const { data, error } = await supabase
+      .from('patient_reminders')
+      .select('id, title, note, remind_at, done_at, created_at')
+      .eq('member_id', key)
+      .order('remind_at', { ascending: true });
+    if (error) console.warn('[store] patient_reminders fetch failed (run supabase/patient_reminders_migration.sql):', error.message);
+    set(st => ({ patientReminders: { ...st.patientReminders, [key]: (data || []).map(mapReminderRow) } }));
+  },
+  addPatientReminder: async (memberId, { title, remindAt, note = null }) => {
+    const key = String(memberId);
+    const { data, error } = await supabase
+      .from('patient_reminders')
+      .insert({ member_id: key, title: title.trim(), remind_at: remindAt, note })
+      .select('id, title, note, remind_at, done_at, created_at')
+      .single();
+    if (error) {
+      console.warn('[store] add reminder failed:', error.message);
+      get().showToast?.('Could not save the reminder. Please try again.');
+      return null;
+    }
+    const row = mapReminderRow(data);
+    set(st => ({ patientReminders: { ...st.patientReminders, [key]: [...(st.patientReminders[key] || []), row] } }));
+    return row;
+  },
+  // Optimistic: the card updates at once and goes back if the save fails.
+  updatePatientReminder: async (memberId, id, patch) => {
+    const key = String(memberId);
+    const before = get().patientReminders[key] || [];
+    set(st => ({ patientReminders: { ...st.patientReminders, [key]: before.map(r => (r.id === id ? { ...r, ...patch } : r)) } }));
+    const cols = {};
+    if ('title' in patch) cols.title = patch.title;
+    if ('note' in patch) cols.note = patch.note;
+    if ('remindAt' in patch) cols.remind_at = patch.remindAt;
+    if ('doneAt' in patch) cols.done_at = patch.doneAt;
+    const { error } = await supabase.from('patient_reminders').update(cols).eq('id', id);
+    if (error) {
+      console.warn('[store] update reminder failed:', error.message);
+      set(st => ({ patientReminders: { ...st.patientReminders, [key]: before } }));
+      get().showToast?.('Could not update the reminder. Please try again.');
+    }
+  },
+  deletePatientReminder: async (memberId, id) => {
+    const key = String(memberId);
+    const before = get().patientReminders[key] || [];
+    set(st => ({ patientReminders: { ...st.patientReminders, [key]: before.filter(r => r.id !== id) } }));
+    const { error } = await supabase.from('patient_reminders').delete().eq('id', id);
+    if (error) {
+      console.warn('[store] delete reminder failed:', error.message);
+      set(st => ({ patientReminders: { ...st.patientReminders, [key]: before } }));
+      get().showToast?.('Could not delete the reminder. Please try again.');
+    }
+  },
+
+  // Unity's Recap summaries this user last generated (patient_recap_summaries),
+  // keyed "memberId|period" → { saved: { summaries, generatedAt } | null,
+  // loading, error }. Reopening the Recap shows the saved ones; Unity writes
+  // new ones only the first time or on Refresh. `write()` resolves to
+  // { [sectionKey]: text }.
+  recapSummaries: {},
+  loadRecapSummaries: async (memberId, period, write) => {
+    const key = `${memberId}|${period}`;
+    const entry = get().recapSummaries[key];
+    if (entry?.saved || entry?.loading) return;
+    if (entry?.error) { await get().refreshRecapSummaries(memberId, period, write); return; }
+    set(st => ({ recapSummaries: { ...st.recapSummaries, [key]: { saved: null, loading: true, error: null } } }));
+    const { data, error } = await supabase
+      .from('patient_recap_summaries')
+      .select('summaries, generated_at')
+      .eq('member_id', String(memberId))
+      .eq('period', period)
+      .maybeSingle();
+    if (error) console.warn('[store] patient_recap_summaries fetch failed (run supabase/patient_recap_summaries_migration.sql):', error.message);
+    if (data) {
+      set(st => ({ recapSummaries: { ...st.recapSummaries, [key]: { saved: { summaries: data.summaries, generatedAt: data.generated_at }, loading: false, error: null } } }));
+      return;
+    }
+    await get().refreshRecapSummaries(memberId, period, write);
+  },
+  refreshRecapSummaries: async (memberId, period, write) => {
+    const key = `${memberId}|${period}`;
+    const patch = p => set(st => ({ recapSummaries: { ...st.recapSummaries, [key]: { saved: null, ...st.recapSummaries[key], ...p } } }));
+    patch({ loading: true, error: null });
+    try {
+      const summaries = await write();
+      const generatedAt = new Date().toISOString();
+      patch({ saved: { summaries, generatedAt }, loading: false });
+      const { error } = await supabase
+        .from('patient_recap_summaries')
+        .upsert({ member_id: String(memberId), period, summaries, generated_at: generatedAt }, { onConflict: 'user_id,member_id,period' });
+      if (error) console.warn('[store] save recap summaries failed:', error.message);
+    } catch (err) {
+      patch({ loading: false, error: err.message });
+      if (get().recapSummaries[key]?.saved) get().showToast?.('Could not refresh the summary. Showing the last one.');
+    }
+  },
+
+  // Needs Attention reviews on the Overview (patient_signal_reviews), keyed
+  // by member id → { [signalId]: { reviewedBy, reviewedByName, reviewedAt } }.
+  // Shared by the team. Read once per patient; `{}` when the table is missing
+  // (reviews then live for the session only).
+  patientSignalReviews: {},
+  fetchPatientSignalReviews: async (memberId) => {
+    if (!memberId) return;
+    const key = String(memberId);
+    if (get().patientSignalReviews[key] !== undefined) return;
+    set(st => ({ patientSignalReviews: { ...st.patientSignalReviews, [key]: {} } }));
+    const { data, error } = await supabase
+      .from('patient_signal_reviews')
+      .select('signal_id, reviewed_by, reviewed_by_name, reviewed_at')
+      .eq('member_id', key);
+    if (error) {
+      console.warn('[store] patient_signal_reviews fetch failed (run supabase/patient_signal_reviews_migration.sql):', error.message);
+      return;
+    }
+    const map = Object.fromEntries((data || []).map(r => [r.signal_id, {
+      reviewedBy: r.reviewed_by, reviewedByName: r.reviewed_by_name, reviewedAt: r.reviewed_at,
+    }]));
+    set(st => ({ patientSignalReviews: { ...st.patientSignalReviews, [key]: map } }));
+  },
+  setPatientSignalReviewed: async (memberId, signalId, reviewed) => {
+    if (!memberId || !signalId) return;
+    const key = String(memberId);
+    const userId = await get()._resolveWorklistUser();
+    const name = get().currentUserProfile?.name || 'You';
+    const entry = { reviewedBy: userId, reviewedByName: name, reviewedAt: new Date().toISOString() };
+    const prev = get().patientSignalReviews[key] || {};
+    const next = { ...prev };
+    if (reviewed) next[signalId] = entry; else delete next[signalId];
+    set(st => ({ patientSignalReviews: { ...st.patientSignalReviews, [key]: next } }));
+    const { error } = reviewed
+      ? await supabase.from('patient_signal_reviews').upsert({
+        member_id: key, signal_id: signalId, reviewed_by: userId, reviewed_by_name: name, reviewed_at: entry.reviewedAt,
+      }, { onConflict: 'member_id,signal_id' })
+      : await supabase.from('patient_signal_reviews').delete().eq('member_id', key).eq('signal_id', signalId);
+    if (error) console.warn('[store] save signal review failed (run supabase/patient_signal_reviews_migration.sql):', error.message);
   },
 
   // Patient Overview: the Overview tab's own data (Unity synopsis, health
@@ -419,13 +697,13 @@ export const useAppStore = create((set, get) => ({
     if (error) reportPersistFailure(`setSuggestedActionStatus(${key})`, error);
   },
 
-  // Pending add-task request — set by CreateNewPopover or WorklistRow "Add Task"
+  // Pending add-task request: set by CreateNewPopover or WorklistRow "Add Task"
   pendingAddTask: null,
 
-  // Pending "open this task's drawer" request — set by NotificationsPopover
+  // Pending "open this task's drawer" request: set by NotificationsPopover
   // (or a copied task link) and consumed by TasksView on mount.
   pendingOpenTaskId: null,
-  // Optional companion signal — when set alongside pendingOpenTaskId, the
+  // Optional companion signal: when set alongside pendingOpenTaskId, the
   // TaskDetailDrawer auto-opens the linked-note preview after mount so a
   // caller like the paperclip hover card's "View note" action lands the
   // reader on the note itself, not just the task shell.
@@ -439,7 +717,7 @@ export const useAppStore = create((set, get) => ({
   clearPendingOpenTaskId: () => set({ pendingOpenTaskId: null }),
   clearPendingPreviewNoteForTaskId: () => set({ pendingPreviewNoteForTaskId: null }),
 
-  // Standalone linked-note preview surface — TasksView mounts a
+  // Standalone linked-note preview surface: TasksView mounts a
   // ClinicalNotePreviewDrawer against this state so a caller (paperclip
   // hover card, activity log, etc.) can open just the note without
   // dragging the whole task drawer in behind it. Payload is the note
@@ -447,14 +725,14 @@ export const useAppStore = create((set, get) => ({
   previewNoteFromHover: null,
   openNotePreview: (note) => set({ previewNoteFromHover: note || null }),
   closeNotePreview: () => set({ previewNoteFromHover: null }),
-  // Edit target for the standalone note preview's "Edit" affordance —
+  // Edit target for the standalone note preview's "Edit" affordance,
   // TasksView renders a ClinicalNotePanel against this state so the
   // preview → edit flow doesn't require the Task Details drawer either.
   editHoverNote: null,
   setEditHoverNote: (note) => set({ editHoverNote: note || null }),
   clearEditHoverNote: () => set({ editHoverNote: null }),
 
-  // "Reopen this clinical note for editing" signal — set from the
+  // "Reopen this clinical note for editing" signal: set from the
   // ActivityLog note-variant card's pencil affordance. The HEDIS worklist
   // consumes it to open CareGapDetailDrawer at the requested gap and
   // route the note back through the ClinicalNotePanel edit path.
@@ -485,7 +763,7 @@ export const useAppStore = create((set, get) => ({
   },
   clearPendingUsersStatusFilter: () => set({ pendingUsersStatusFilter: null }),
 
-  // Top-level navigation (sidebar) — restored from sessionStorage
+  // Top-level navigation (sidebar): restored from sessionStorage
   activePage: _savedPage === 'builder' ? 'settings' : _savedPage,
   // Tab navigation within pages
   activeTab: _savedTab,
@@ -497,6 +775,67 @@ export const useAppStore = create((set, get) => ({
   stickyNoteHistory: [],
   quickNotes: [],
   quickNoteHistory: [],
+  // Recorded vitals per patient: { [patientId]: rows }. Empty or failed
+  // loads leave the Vitals tab on its sample history.
+  patientVitals: {},
+  patientVitalsLoading: false,
+  fetchPatientVitals: async (patientId) => {
+    if (!patientId) return;
+    set({ patientVitalsLoading: true });
+    const { data, error } = await supabase.from('patient_vitals').select('*').eq('patient_id', String(patientId)).order('recorded_on', { ascending: false });
+    set(s => ({ patientVitalsLoading: false, patientVitals: error ? s.patientVitals : { ...s.patientVitals, [patientId]: data || [] } }));
+  },
+  recordPatientVitals: async (patientId, readings) => {
+    const rows = readings.map(r => ({ ...r, patient_id: String(patientId) }));
+    const { data, error } = await supabase.from('patient_vitals').insert(rows).select();
+    if (error) return { error };
+    track('patient.vitals_recorded', { count: rows.length });
+    set(s => ({ patientVitals: { ...s.patientVitals, [patientId]: [...data, ...(s.patientVitals[patientId] || [])] } }));
+    return { data };
+  },
+  // Rows pinned to the top of the Vitals/Labs tables: { [patientId]: row ids }.
+  // Absent until loaded, and null when the patient has none saved yet (the
+  // tab then uses its default pins).
+  patientVitalPins: {},
+  fetchPatientVitalPins: async (patientId) => {
+    if (!patientId) return;
+    const { data, error } = await supabase.from('patient_vital_pins').select('pinned').eq('patient_id', String(patientId)).maybeSingle();
+    if (error) return;
+    set(s => ({ patientVitalPins: { ...s.patientVitalPins, [patientId]: data?.pinned ?? null } }));
+  },
+  setPatientVitalPins: async (patientId, pinned) => {
+    const before = get().patientVitalPins[patientId];
+    set(s => ({ patientVitalPins: { ...s.patientVitalPins, [patientId]: pinned } }));
+    const { error } = await supabase.from('patient_vital_pins')
+      .upsert({ patient_id: String(patientId), pinned, updated_at: new Date().toISOString() }, { onConflict: 'patient_id' });
+    // Until patient_vital_pins is migrated, pins hold for the session only.
+    if (error && error.code !== '42P01' && error.code !== 'PGRST205') {
+      set(s => ({ patientVitalPins: { ...s.patientVitalPins, [patientId]: before } }));
+      get().showToast?.('Could not update pinned rows');
+    }
+  },
+  // The Overview Vitals widget's tiles, in order, shared by the care team:
+  // { [patientId]: vital keys }. null = no saved choice (the overview's own vitals).
+  overviewVitalKeys: {},
+  fetchOverviewVitalKeys: async (patientId) => {
+    if (!patientId) return;
+    const { data, error } = await supabase.from('patient_overview_vitals').select('vital_keys').eq('patient_id', String(patientId)).maybeSingle();
+    if (error) return;
+    set(s => ({ overviewVitalKeys: { ...s.overviewVitalKeys, [patientId]: data?.vital_keys ?? null } }));
+  },
+  setOverviewVitalKeys: async (patientId, keys) => {
+    const before = get().overviewVitalKeys[patientId];
+    set(s => ({ overviewVitalKeys: { ...s.overviewVitalKeys, [patientId]: keys } }));
+    const table = supabase.from('patient_overview_vitals');
+    const { error } = keys
+      ? await table.upsert({ patient_id: String(patientId), vital_keys: keys, updated_at: new Date().toISOString() }, { onConflict: 'patient_id' })
+      : await table.delete().eq('patient_id', String(patientId));
+    // Until patient_overview_vitals is migrated, the choice holds for the session only.
+    if (error && error.code !== '42P01' && error.code !== 'PGRST205') {
+      set(s => ({ overviewVitalKeys: { ...s.overviewVitalKeys, [patientId]: before } }));
+      get().showToast?.('Could not update the Vitals widget');
+    }
+  },
   fetchStickyNotes: async (patientId) => {
     const { data } = await supabase.from('sticky_notes').select('*').eq('patient_id', patientId).order('created_at', { ascending: true });
     if (data) set({ stickyNotes: data });
@@ -549,6 +888,29 @@ export const useAppStore = create((set, get) => ({
   // falls back to a local mock for patients with no rows yet.
   patientProblems: {},           // { [patientId]: Problem[] }
   patientProblemsLoadedFor: {},  // { [patientId]: true }: gates the skeleton
+  // What a template category's criteria read for a patient (buildRuleInputs):
+  // the problem list and dated lab results. Reused for 10 minutes, so new
+  // results show up without a refetch on every render.
+  patientCriteriaInputs: {},
+  patientCriteriaFetchedAt: {},
+  fetchPatientCriteriaInputs: async (patientId) => {
+    if (!patientId) return null;
+    const cached = get().patientCriteriaInputs[patientId];
+    if (cached && Date.now() - (get().patientCriteriaFetchedAt[patientId] || 0) < 10 * 60 * 1000) return cached;
+    const [problems, events] = await Promise.all([
+      supabase.from('patient_problems').select('title, status').eq('patient_id', String(patientId)),
+      supabase.from('patient_clinical_events').select('event_type, code, display, effective_date, status, numeric_value, unit').eq('patient_id', String(patientId)),
+    ]);
+    if (problems.error) console.warn('fetchPatientCriteriaInputs (problems):', problems.error.message);
+    if (events.error) console.warn('fetchPatientCriteriaInputs (events):', events.error.message);
+    const inputs = buildRuleInputs({ problems: problems.data || [], clinicalEvents: events.data || [] });
+    set(s => ({
+      patientCriteriaInputs: { ...s.patientCriteriaInputs, [patientId]: inputs },
+      patientCriteriaFetchedAt: { ...s.patientCriteriaFetchedAt, [patientId]: Date.now() },
+    }));
+    return inputs;
+  },
+
   fetchPatientProblems: async (patientId) => {
     if (!patientId) return;
     const { data, error } = await supabase.from('patient_problems')
@@ -774,7 +1136,7 @@ export const useAppStore = create((set, get) => ({
     if (error) {
       // Table not created yet: keep the pick for this session.
       if (error.code === '42P01' || error.code === 'PGRST205') {
-        console.warn('[setCisSeriesDoses] cis_series_doses table missing — run supabase/cis_series_doses_migration.sql');
+        console.warn('[setCisSeriesDoses] cis_series_doses table missing: run supabase/cis_series_doses_migration.sql');
         return true;
       }
       console.warn('setCisSeriesDoses:', error.message);
@@ -793,7 +1155,7 @@ export const useAppStore = create((set, get) => ({
       .select('*').eq('hedis_member_id', String(memberId));
     if (error) {
       if (error.code === '42P01' || error.code === 'PGRST205') {
-        console.warn('[fetchCisDoseNotes] cis_dose_notes table missing — run supabase/cis_dose_notes_migration.sql');
+        console.warn('[fetchCisDoseNotes] cis_dose_notes table missing: run supabase/cis_dose_notes_migration.sql');
         set({ cisDoseNotesTableMissing: true });
       } else console.warn('fetchCisDoseNotes:', error.message);
       return;
@@ -896,7 +1258,7 @@ export const useAppStore = create((set, get) => ({
       .select('*').eq('hedis_member_id', String(memberId)).order('appointment_date');
     if (error) {
       if (error.code === '42P01' || error.code === 'PGRST205') {
-        console.warn('[fetchCisAppointments] cis_dose_appointments table missing — run supabase/cis_dose_appointments_migration.sql');
+        console.warn('[fetchCisAppointments] cis_dose_appointments table missing: run supabase/cis_dose_appointments_migration.sql');
         set(s => ({
           cisAppointmentsTableMissing: true,
           cisAppointments: { ...s.cisAppointments, [memberId]: s.cisAppointments[memberId] || CIS_APPOINTMENTS_MOCK.filter(a => a.memberId === String(memberId)) },
@@ -994,7 +1356,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   // ── PAMI/Hx history cards (Medical, Surgical, Family, Social). Recent
-  // Clinical Events and Lab / Imaging Reports are still static in the tab —
+  // Clinical Events and Lab / Imaging Reports are still static in the tab,
   // they have no source yet.
   patientPamiRecords: {},           // { [patientId]: { history } }
   patientPamiRecordsLoadedFor: {},  // { [patientId]: true }: gates the skeletons
@@ -1023,6 +1385,54 @@ export const useAppStore = create((set, get) => ({
     set(s => ({
       patientCrmActivities: { ...s.patientCrmActivities, [patientId]: list },
       patientCrmActivitiesLoadedFor: { ...s.patientCrmActivitiesLoadedFor, [patientId]: true },
+    }));
+  },
+
+  // Orders & Referrals tab: the patient's referrals, newest first. Sample
+  // rows stand in only while patient_referrals is missing.
+  // Documents tab folders added with Add Category (document_categories),
+  // shared across patients. Until the table exists they last the session.
+  documentCategories: [],
+  documentCategoriesLoaded: false,
+  fetchDocumentCategories: async () => {
+    if (get().documentCategoriesLoaded) return;
+    set({ documentCategoriesLoaded: true });
+    const { data, error } = await supabase.from('document_categories').select('key, name').order('created_at');
+    if (error) return;
+    set(s => ({ documentCategories: [...(data || []), ...s.documentCategories.filter(c => !(data || []).some(d => d.key === c.key))] }));
+  },
+  addDocumentCategory: async (name) => {
+    const label = String(name || '').trim();
+    if (!label) return null;
+    const existing = get().documentCategories.find(c => c.name.toLowerCase() === label.toLowerCase());
+    if (existing) return existing.key;
+    const slug = label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'folder';
+    const key = `custom_${slug}_${Math.random().toString(36).slice(2, 6)}`;
+    set(s => ({ documentCategories: [...s.documentCategories, { key, name: label }] }));
+    const { error } = await supabase.from('document_categories').insert({ key, name: label, created_by: get().currentActorName?.() || null });
+    if (error && error.code !== '42P01' && error.code !== 'PGRST205') {
+      set(s => ({ documentCategories: s.documentCategories.filter(c => c.key !== key) }));
+      get().showToast?.('Could not add the category');
+      return null;
+    }
+    return key;
+  },
+  patientReferrals: {},           // { [patientId]: referral[] }
+  patientReferralsLoadedFor: {},  // { [patientId]: true }: gates the skeleton
+  fetchPatientReferrals: async (patientId) => {
+    if (!patientId) return;
+    const { data, error } = await supabase.from('patient_referrals')
+      .select('*').eq('patient_id', String(patientId)).order('created_at', { ascending: false });
+    const missing = error && (error.code === '42P01' || error.code === 'PGRST205');
+    if (error && !missing) console.warn('fetchPatientReferrals:', error.message);
+    set(s => ({
+      patientReferrals: {
+        ...s.patientReferrals,
+        [patientId]: missing
+          ? [...(s.patientReferrals[patientId] || []).filter(r => r.local), ...sampleReferralsFor(patientId)]
+          : (data || []).map(rowToReferral),
+      },
+      patientReferralsLoadedFor: { ...s.patientReferralsLoadedFor, [patientId]: true },
     }));
   },
 
@@ -1113,10 +1523,10 @@ export const useAppStore = create((set, get) => ({
   },
 
   // Quick Notes (global / home page)
-  fetchQuickNotes: async () => {
+  fetchQuickNotes: (opts) => mountFetch('fetchQuickNotes', async () => {
     const { data } = await supabase.from('sticky_notes').select('*').eq('patient_id', 'global').order('created_at', { ascending: false });
     if (data) set({ quickNotes: data });
-  },
+  }, opts),
   fetchQuickNoteHistory: async () => {
     const { data } = await supabase.from('sticky_note_history').select('*').eq('patient_id', 'global').order('created_at', { ascending: false });
     if (data) set({ quickNoteHistory: data });
@@ -1127,7 +1537,7 @@ export const useAppStore = create((set, get) => ({
     if (!error && data) {
       track('note.quick_created', { noteId: data.id });
       await supabase.from('sticky_note_history').insert({ sticky_note_id: data.id, patient_id: 'global', author_name: 'You', action: 'added a Note', note_text: text, ehr_instance: 'Quick Note' });
-      get().fetchQuickNotes();
+      get().fetchQuickNotes({ force: true });
       get().fetchQuickNoteHistory();
     }
     return data;
@@ -1136,7 +1546,7 @@ export const useAppStore = create((set, get) => ({
     track('note.quick_updated', { noteId: id });
     await supabase.from('sticky_notes').update({ text, author_name: 'You' }).eq('id', id);
     await supabase.from('sticky_note_history').insert({ sticky_note_id: id, patient_id: 'global', author_name: 'You', action: 'Updated a Note', note_text: text, ehr_instance: 'Quick Note' });
-    get().fetchQuickNotes();
+    get().fetchQuickNotes({ force: true });
     get().fetchQuickNoteHistory();
   },
   deleteQuickNote: async (id) => {
@@ -1146,7 +1556,7 @@ export const useAppStore = create((set, get) => ({
       await supabase.from('sticky_note_history').insert({ sticky_note_id: id, patient_id: 'global', author_name: 'You', action: 'deleted a Note', note_text: noteData.text, ehr_instance: 'Quick Note' });
     }
     await supabase.from('sticky_notes').delete().eq('id', id);
-    get().fetchQuickNotes();
+    get().fetchQuickNotes({ force: true });
     get().fetchQuickNoteHistory();
   },
 
@@ -1172,6 +1582,62 @@ export const useAppStore = create((set, get) => ({
     }
     set({ p360Loading: false });
   },
+  // ── Primary Care Team (patient_care_team) ──
+  // { [patientId]: { current: member[], history: member[] } }. Until the
+  // migration runs, the profile's care_team is the current team and saves
+  // stay in memory (careTeamLocal).
+  careTeams: {},
+  careTeamLocal: false,
+  fetchCareTeam: async (patientId) => {
+    if (!patientId) return;
+    const key = String(patientId);
+    const { data, error } = await supabase
+      .from('patient_care_team')
+      .select('*')
+      .eq('patient_id', key)
+      .order('sort_order')
+      .order('created_at');
+    if (error) {
+      // The profile's team, read once it has loaded.
+      if (get().p360ProfilesById[key] === undefined) await get().fetchP360Profile(key);
+      const fromProfile = (get().p360ProfilesById[key]?.care_team || []).map((m, i) => ({ ...m, id: `ct-${key}-${i + 1}` }));
+      set(s => ({ careTeamLocal: true, careTeams: { ...s.careTeams, [key]: s.careTeams[key] || { current: fromProfile, history: [] } } }));
+      return;
+    }
+    const toMember = r => ({ id: r.id, userId: r.user_id, name: r.name, initials: r.initials, role: r.role, title: r.title, endedAt: r.ended_at });
+    set(s => ({ careTeams: { ...s.careTeams, [key]: {
+      current: data.filter(r => r.status === 'current').map(toMember),
+      history: data.filter(r => r.status === 'historical').map(toMember),
+    } } }));
+  },
+  // Writes the whole team: members kept are updated, members removed are deleted.
+  saveCareTeam: async (patientId, current, history) => {
+    const key = String(patientId);
+    const before = get().careTeams[key] || { current: [], history: [] };
+    const now = new Date().toISOString();
+    const stamp = (m, status) => (status === 'historical' ? { ...m, endedAt: m.endedAt || now } : { ...m, endedAt: null });
+    const next = { current: current.map(m => stamp(m, 'current')), history: history.map(m => stamp(m, 'historical')) };
+    if (!get().careTeamLocal) {
+      const by = get().currentUserProfile?.name || null;
+      const row = (m, status, i) => ({
+        id: m.id, patient_id: key, user_id: m.userId || null, name: m.name, initials: m.initials || null,
+        role: m.role || null, title: m.title || null, status, sort_order: i, ended_at: m.endedAt, added_by: m.addedBy || by,
+      });
+      const rows = [...next.current.map((m, i) => row(m, 'current', i)), ...next.history.map((m, i) => row(m, 'historical', i))];
+      const keep = new Set(rows.map(r => r.id));
+      const gone = [...before.current, ...before.history].map(m => m.id).filter(id => !keep.has(id));
+      if (rows.length) {
+        const { error } = await supabase.from('patient_care_team').upsert(rows, { onConflict: 'id' });
+        if (error) return false;
+      }
+      if (gone.length) {
+        const { error } = await supabase.from('patient_care_team').delete().in('id', gone);
+        if (error) return false;
+      }
+    }
+    set(s => ({ careTeams: { ...s.careTeams, [key]: next } }));
+    return true;
+  },
   updateP360Profile: async (patientId, updates) => {
     const { error } = await supabase
       .from('p360_profiles')
@@ -1191,7 +1657,7 @@ export const useAppStore = create((set, get) => ({
   // Care Management sub-tab ('Care Programs' | 'Comprehensive Care Plan' |
   // 'Program Activity Log') and rides the URL so a refresh restores it.
   careManagementTab: 'Care Programs',
-  // Care program open in the Care Programs tab, as its URL key — a slug of
+  // Care program open in the Care Programs tab, as its URL key, a slug of
   // the program code plus the trigger ordinal past 1 ('awv', 'snp-2'). Kept
   // as the key (not the program object or row id) so the hash router can
   // write and restore it before the patient's programs have loaded.
@@ -1199,7 +1665,7 @@ export const useAppStore = create((set, get) => ({
   // Active step id inside that program ('step-3a', 'ccm-billing'). null means
   // the program's default step.
   careProgramStep: null,
-  // Summary view for Care Plans across all programs — a read-only pane in
+  // Summary view for Care Plans across all programs, a read-only pane in
   // CareProgramsTab that must survive refresh via URL (#/.../care-programs/summary).
   carePlanSummaryOpen: false,
   // When set alongside a navigateToPatient({ programCode }) call, the Care
@@ -1207,6 +1673,8 @@ export const useAppStore = create((set, get) => ({
   // its ProgramDetailView on mount. Cleared once consumed.
   pendingCareProgramCode: null,
   pendingCareProgramCarePlan: false,
+  // CMP only: which sub-program to open or enroll (opts.subProgram).
+  pendingCareProgramSubProgram: null,
   navigateToPatient: (patientId, opts = {}) => {
     const from = get().activePage;
     track('nav.patient_opened', { patientId, from });
@@ -1232,6 +1700,7 @@ export const useAppStore = create((set, get) => ({
       updates.pendingCareProgramCode = opts.programCode;
       // Land on the program's Care Plan step rather than its first step.
       updates.pendingCareProgramCarePlan = !!opts.carePlan;
+      updates.pendingCareProgramSubProgram = opts.subProgram || null;
     }
     set(updates);
     const state = get();
@@ -1267,6 +1736,11 @@ export const useAppStore = create((set, get) => ({
     track('care_program.opened', { patientId: get().selectedPatientId, programKey });
     set({ selectedCareProgramKey: programKey, careProgramStep: null, carePlanSummaryOpen: false });
     updateHash?.(get());
+    // Remember the user's program context: the Care Programs tab reopens it
+    // the next time they land on a patient enrolled in it.
+    if (programKey && get().panelLayouts['care-program-context']?.key !== programKey) {
+      get().savePanelLayout('care-program-context', { key: programKey });
+    }
   },
   closeCareProgram: () => {
     set({ selectedCareProgramKey: null, careProgramStep: null, carePlanSummaryOpen: false });
@@ -1280,13 +1754,13 @@ export const useAppStore = create((set, get) => ({
     set({ carePlanSummaryOpen: !!open, selectedCareProgramKey: null, careProgramStep: null });
     updateHash?.(get());
   },
-  clearPendingCareProgramCode: () => set({ pendingCareProgramCode: null, pendingCareProgramCarePlan: false }),
+  clearPendingCareProgramCode: () => set({ pendingCareProgramCode: null, pendingCareProgramCarePlan: false, pendingCareProgramSubProgram: null }),
 
-  // EditPatientDrawer — one drawer shared by every "Edit …" entry-point
+  // EditPatientDrawer: one drawer shared by every "Edit …" entry-point
   // on the Profile tab, the P360 banner overflow menu, and every worklist
   // row's 3-dot menu. Setting the section name mounts the drawer scrolled
   // to that section; null tears it down. `patientEditPatient` is the row
-  // being edited — required when the drawer is opened from outside the
+  // being edited: required when the drawer is opened from outside the
   // Profile tab (worklist rows / QuickView / P360 banner), where there
   // isn't a surrounding `patient` prop to pass through.
   patientEditSection: null, // 'basic' | 'contact' | 'address' | 'other' | 'insurance' | null
@@ -1297,7 +1771,7 @@ export const useAppStore = create((set, get) => ({
   })),
   closePatientEdit: () => set({ patientEditSection: null, patientEditPatient: null }),
 
-  // Invite Patient — same drawer as Edit, but no patient prop and the Save
+  // Invite Patient: same drawer as Edit, but no patient prop and the Save
   // button creates a fresh row. Driven by CreateNewPopover → "Patient".
   invitePatientOpen: false,
   openInvitePatient:  () => set({ invitePatientOpen: true }),
@@ -1354,7 +1828,7 @@ export const useAppStore = create((set, get) => ({
       profile_source:     'Invite',
       profile_created_on: now.toISOString().slice(0, 10),
     };
-    // Optimistic local insert — matches the "additive worklists" pattern the
+    // Optimistic local insert: matches the "additive worklists" pattern the
     // other slices use so the new patient shows up in All Patients / any
     // search immediately without waiting on the round-trip.
     set((s) => ({ patients: [{ ...dbToJs(patientRow), status: 'Invited' }, ...s.patients] }));
@@ -1367,7 +1841,7 @@ export const useAppStore = create((set, get) => ({
       console.warn('invitePatient persist failed:', err?.message || err);
       // Roll the optimistic insert back if the patients insert itself failed.
       set((s) => ({ patients: s.patients.filter(p => p.id !== id) }));
-      get().showToast?.('Could not send invite — please try again.');
+      get().showToast?.('Could not send invite: please try again.');
       return null;
     }
     get().showToast?.(`Invited ${patientRow.name}`);
@@ -1422,8 +1896,8 @@ export const useAppStore = create((set, get) => ({
     });
   },
   // Load persisted uploads so manually-added docs survive a reload. Grouped by
-  // member id into the same map addChartDoc maintains. Single-fire per session
-  // — the HCC worklist and DiagPanel both mount and call this on entry.
+  // member id into the same map addChartDoc maintains. Single-fire per session,
+  // the HCC worklist and DiagPanel both mount and call this on entry.
   hccAddedChartsDidFetch: false,
   // True once the fetch has resolved (success or error). The DiagPanel unread
   // baseline waits on this so docs that load late aren't all flagged as new.
@@ -1467,7 +1941,7 @@ export const useAppStore = create((set, get) => ({
   hccChartStatus: {},
   // Fail-picker state per doc: { [memberId]: { [docId]: { reasons: string[], note: string } } }.
   // Separate from hccChartStatus (which stays a string map so every existing
-  // reader keeps its shape) — this slice only carries the extra fields the
+  // reader keeps its shape): this slice only carries the extra fields the
   // Fail picker needs to rehydrate on reload. Populated by fetchHccChartStatus
   // from the same row and by setChartDocStatus when the caller passes
   // opts.failReasons / opts.failNote.
@@ -1528,7 +2002,7 @@ export const useAppStore = create((set, get) => ({
     // Persist so the Pass/Fail mark AND (when Failed) the reason list + comment
     // survive reload. Non-failed statuses clear the two fail columns. Failures
     // route through reportPersistFailure (not a silent console.warn) so an RLS
-    // block or unreachable backend surfaces a user-visible toast — a silent
+    // block or unreachable backend surfaces a user-visible toast, a silent
     // failure here is exactly what made doc reviews "vanish" on refresh with
     // no signal. `.select('id')` lets us catch an UPDATE that matched 0 rows.
     supabase
@@ -1548,12 +2022,12 @@ export const useAppStore = create((set, get) => ({
         if (!data || data.length === 0) reportPersistFailure(`setChartDocStatus(${memberId}|${docId})`, { message: 'affected 0 rows' });
       });
     // Callers reviewing docs inside the ChartDetailDrawer pass deferSync so
-    // the record's supS doesn't flip mid-review — flipping it there would
+    // the record's supS doesn't flip mid-review: flipping it there would
     // drop the row out of the "New / In Progress" filter and unmount the
     // drawer before the user finishes reviewing. The drawer syncs the
     // derived status itself on close via deriveStatus + syncSupportStatus.
     if (opts?.deferSync) return;
-    // Cascade to Support status when Support has just marked docs failed —
+    // Cascade to Support status when Support has just marked docs failed,
     // "all documents failed" is the coder's contract for Insufficient. If
     // AT LEAST ONE doc lands as Passed later, revert Support to In Progress
     // so the coder can pick it back up.
@@ -1618,7 +2092,7 @@ export const useAppStore = create((set, get) => ({
       },
     }));
     // Persist the tombstone so removed system-seeded docs (`::sys{n}`) also
-    // stay removed after reload — hcc_added_charts DELETE only covers
+    // stay removed after reload: hcc_added_charts DELETE only covers
     // uploaded rows.
     supabase
       .from('hcc_removed_charts')
@@ -1646,7 +2120,7 @@ export const useAppStore = create((set, get) => ({
   // which both read that array, drop the DOS on the next render) and
   // clears every hccDosAssignments entry for that date. Fire-and-forget
   // Supabase write via persistHccMemberDetails so the removal survives a
-  // reload. Callers are expected to enforce the role/stage gate — this
+  // reload. Callers are expected to enforce the role/stage gate, this
   // action does not re-check it.
   hccDeleteDos: (memberId, dosDate) => {
     if (!memberId || !dosDate) return;
@@ -1689,12 +2163,63 @@ export const useAppStore = create((set, get) => ({
     });
   },
 
-  // Care Programs — enrolled programs are per-patient. A patient starts with
+  // Care Programs: enrolled programs are per-patient. A patient starts with
   // none; only programs a user explicitly adds are visible on their profile.
   // Persisted to Supabase (patient_care_programs) so enrollments survive
   // reload; on cold load we hydrate from the DB and fall back to
   // programsForPatient() when the row set is empty.
   careProgramsByPatient: {},
+
+  // Care Program Configuration (Settings): program types, their steps,
+  // worklists, care team, completion criteria and access. The program view
+  // reads each type's steps (see stepsFor). Until care_program_types exists
+  // the built-in types stand in and edits last for the session.
+  careProgramTypes: [],
+  careProgramTypesLoading: false,
+  careProgramTypesDidFetch: false,
+  careProgramTypesMissing: false,
+  fetchCareProgramTypes: async ({ force = false } = {}) => {
+    const s0 = get();
+    if (s0.careProgramTypesLoading || (s0.careProgramTypesDidFetch && !force)) return;
+    set({ careProgramTypesLoading: true });
+    const { types, missing, error } = await fetchProgramTypeRows();
+    if (error && !missing) console.warn('fetchCareProgramTypes:', error.message);
+    set({
+      careProgramTypes: types.length ? types : defaultProgramTypes(),
+      careProgramTypesMissing: missing,
+      careProgramTypesLoading: false,
+      careProgramTypesDidFetch: true,
+    });
+  },
+  saveCareProgramType: async (type) => {
+    const actor = get().currentUserProfile?.name || null;
+    const next = { ...type, createdBy: type.createdBy || actor, updatedAt: new Date().toISOString() };
+    set(s => ({
+      careProgramTypes: s.careProgramTypes.some(t => t.id === next.id)
+        ? s.careProgramTypes.map(t => (t.id === next.id ? next : t))
+        : [...s.careProgramTypes, next],
+    }));
+    if (get().careProgramTypesMissing) return next;
+    const { type: saved, error } = await persistProgramType(next);
+    if (error) {
+      get().showToast?.(`Couldn't save ${next.name}: ${error.message}`);
+      return null;
+    }
+    set(s => ({ careProgramTypes: s.careProgramTypes.map(t => (t.id === saved.id ? saved : t)) }));
+    return saved;
+  },
+  deleteCareProgramType: async (id) => {
+    const prev = get().careProgramTypes;
+    set({ careProgramTypes: prev.filter(t => t.id !== id) });
+    if (get().careProgramTypesMissing) return true;
+    const { error } = await persistProgramTypeDelete(id);
+    if (error) {
+      set({ careProgramTypes: prev });
+      get().showToast?.(`Couldn't delete the program type: ${error.message}`);
+      return false;
+    }
+    return true;
+  },
   careProgramsLoadedFor: {},
   // Program Activity Log entries, keyed by patientId.
   patientProgramActivity: {},
@@ -1703,7 +2228,7 @@ export const useAppStore = create((set, get) => ({
   patientProgramActivityLoading: {},
   patientProgramActivityLoadedFor: {},
 
-  // Patient medications — backs the Medication Reconciliation step.
+  // Patient medications: backs the Medication Reconciliation step.
   // Keyed by patientId; the loaded-for map guards the fetch per-patient
   // (same shape as careProgramsLoadedFor).
   patientMedications: {},
@@ -1735,13 +2260,15 @@ export const useAppStore = create((set, get) => ({
       status: r.status || 'Active',
       note: r.note || '',
       stopReason: r.stop_reason || '',
+      lastFilledOn: r.last_filled_on || '',
+      daysSupply: r.days_supply ?? null,
       source: r.source,
       openfdaMeta: r.openfda_meta || null,
     }));
     set(s => ({ patientMedications: { ...s.patientMedications, [patientId]: rows } }));
   },
 
-  // Optimistic insert — the picker adds the row locally first, then persists.
+  // Optimistic insert: the picker adds the row locally first, then persists.
   // The DB row id (a UUID) replaces the temp id when the write returns so
   // subsequent edits/deletes have the real id to work with. Rolls back the
   // optimistic row on failure and surfaces a toast.
@@ -1757,6 +2284,8 @@ export const useAppStore = create((set, get) => ({
       status: med.status || 'Active',
       note: med.note || '',
       stopReason: med.stopReason || '',
+      lastFilledOn: med.lastFilledOn || '',
+      daysSupply: med.daysSupply ?? null,
       source: med.source || 'manual',
       openfdaMeta: med.openfdaMeta || null,
     };
@@ -1777,6 +2306,10 @@ export const useAppStore = create((set, get) => ({
         status: optimistic.status,
         note: optimistic.note || null,
         stop_reason: optimistic.stopReason || null,
+        // Refill fields only when filled in, so saving works before
+        // patient_medications_refill_migration.sql has run.
+        ...(optimistic.lastFilledOn ? { last_filled_on: optimistic.lastFilledOn } : {}),
+        ...(optimistic.daysSupply ? { days_supply: optimistic.daysSupply } : {}),
         source: optimistic.source,
         openfda_meta: optimistic.openfdaMeta,
       })
@@ -1830,6 +2363,9 @@ export const useAppStore = create((set, get) => ({
     if ('status' in updates) dbUpdates.status = updates.status;
     if ('note' in updates) dbUpdates.note = updates.note || null;
     if ('stopReason' in updates) dbUpdates.stop_reason = updates.stopReason || null;
+    // Refill fields only when set now or before (see addPatientMedication).
+    if ('lastFilledOn' in updates && (updates.lastFilledOn || prev.lastFilledOn)) dbUpdates.last_filled_on = updates.lastFilledOn || null;
+    if ('daysSupply' in updates && (updates.daysSupply || prev.daysSupply)) dbUpdates.days_supply = updates.daysSupply ?? null;
     const { error } = await supabase
       .from('patient_medications')
       .update(dbUpdates)
@@ -1848,7 +2384,7 @@ export const useAppStore = create((set, get) => ({
     return true;
   },
 
-  // Optimistic delete — drops the row locally first, then removes it from
+  // Optimistic delete: drops the row locally first, then removes it from
   // Supabase. Restores it in place on failure so the list can't silently
   // lose a medication the DB still has.
   deletePatientMedication: async (patientId, medId) => {
@@ -1882,6 +2418,175 @@ export const useAppStore = create((set, get) => ({
 
   // `force` re-reads a log already loaded, so opening it shows what other
   // screens (care plans above all) have written since.
+  // ── Patient event stream sources (Timeline) ──
+  // The records the store doesn't load elsewhere: clinical events, calls,
+  // notes, appointments and completed assessments, for one patient. Medications,
+  // CRM touchpoints and program activity come from their own slices.
+  // patient_event_stream_migration.sql / data/patientStream.js.
+  patientStreamSources: {},
+  fetchPatientStreamSources: async (patientId, { force = false } = {}) => {
+    if (!patientId) return;
+    const id = String(resolvePatientStoreId(get(), patientId));
+    if (!force && get().patientStreamSources[id]) return;
+    const rows = (res, label) => {
+      if (res.error) console.warn(`fetchPatientStreamSources ${label}:`, res.error.message);
+      return res.data || [];
+    };
+    const [ce, calls, notes, appts, forms] = await Promise.all([
+      supabase.from('patient_clinical_events')
+        .select('id, event_type, code, code_system, display, effective_date, end_date, status, numeric_value, unit, reference_low, reference_high, source, raw_meta')
+        .eq('patient_id', id).order('effective_date', { ascending: false }).limit(500),
+      supabase.from('call_sessions').select('id, name, status, dir, created_at').eq('patient_id', id).limit(200),
+      supabase.from('clinical_notes').select('id, form_type, status, author_name, signed_by_name, signed_at, created_at').eq('patient_id', id).limit(200),
+      supabase.from('appointments')
+        .select('id, appointment_type_name, mode, location, primary_user, secondary_users, date, time_start, status, reason_for_visit')
+        .eq('patient_id', id).limit(200),
+      supabase.from('form_responses').select('id, form_id, status, completed_at, created_at').eq('patient_id', id).eq('status', 'completed').limit(200),
+    ]);
+    const assessments = rows(forms, 'form_responses');
+    const formIds = [...new Set(assessments.map(r => r.form_id).filter(v => v != null))];
+    const names = formIds.length ? rows(await supabase.from('forms').select('id, name').in('id', formIds), 'forms') : [];
+    set(s => ({
+      patientStreamSources: {
+        ...s.patientStreamSources,
+        [id]: {
+          clinicalEvents: rows(ce, 'patient_clinical_events'),
+          calls: rows(calls, 'call_sessions'),
+          notes: rows(notes, 'clinical_notes'),
+          appointments: rows(appts, 'appointments'),
+          assessments,
+          formNames: new Map(names.map(f => [String(f.id), f.name])),
+        },
+      },
+    }));
+  },
+
+  // ── P360 Assessments tab ──
+  // Per patient: the Forms library forms they were sent or filled, their
+  // form_responses, and the sends (patient_assessment_sends_migration.sql).
+  // A missing sends table or form_responses.patient_id column reads as none.
+  patientAssessments: {},
+  patientAssessmentsLoading: {},
+  fetchPatientAssessments: async (patientId, { force = false } = {}) => {
+    if (!patientId) return;
+    const id = String(resolvePatientStoreId(get(), patientId));
+    if (!force && (get().patientAssessments[id] || get().patientAssessmentsLoading[id])) return;
+    set(s => ({ patientAssessmentsLoading: { ...s.patientAssessmentsLoading, [id]: true } }));
+    const MISSING = new Set(['42P01', 'PGRST205', '42703']);
+    const rowsOf = (res, label) => {
+      if (res.error && !MISSING.has(res.error.code)) console.warn(`fetchPatientAssessments ${label}:`, res.error.message);
+      return res.error ? [] : (res.data || []);
+    };
+    const responsesQuery = (select) => supabase.from('form_responses').select(select)
+      .eq('patient_id', id).order('created_at', { ascending: false }).limit(300);
+    const [firstResponsesRes, sendsRes] = await Promise.all([
+      responsesQuery('*, created_by_profile:profiles!created_by(id, full_name)'),
+      supabase.from('patient_assessment_sends').select('*').eq('patient_id', id)
+        .order('sent_at', { ascending: false }).limit(300),
+    ]);
+    const responsesRes = firstResponsesRes.error?.code === 'PGRST200' ? await responsesQuery('*') : firstResponsesRes;
+    let responses = rowsOf(responsesRes, 'form_responses').map(patientFormResponseRowToJs);
+    let sends = rowsOf(sendsRes, 'patient_assessment_sends').map(assessmentSendRowToJs);
+    const FORM_COLUMNS = 'id, name, description, category, form_type, status, schema, scoring, settings';
+    // Until patient_assessment_sends is migrated (and seeded), the tab shows
+    // the seed's own sample sends and responses on real assessment forms, so
+    // the screen isn't empty. Once the table exists, only real rows show.
+    if (MISSING.has(sendsRes.error?.code) && !responses.length) {
+      const candidates = rowsOf(await supabase.from('forms').select(FORM_COLUMNS).limit(300), 'forms');
+      const sample = sampleAssessmentSeed(id, pickAssessmentForms(candidates));
+      sends = sample.sends.map(assessmentSendRowToJs);
+      responses = sample.responses
+        .map((r, i) => ({ ...r, id: `sample-${id}-${i + 1}`, created_at: r.completed_at || sample.sends[i]?.sent_at }))
+        .map(patientFormResponseRowToJs);
+    }
+    const formIds = [...new Set([...responses, ...sends].map(r => r.formId).filter(Boolean))];
+    const forms = formIds.length
+      ? rowsOf(await supabase.from('forms')
+        .select(FORM_COLUMNS)
+        .in('id', formIds), 'forms').map(formRowToJs)
+      : [];
+    set(s => ({
+      patientAssessments: { ...s.patientAssessments, [id]: { forms, responses, sends } },
+      patientAssessmentsLoading: { ...s.patientAssessmentsLoading, [id]: false },
+    }));
+  },
+
+  // Care plan templates a completed assessment suggested for this patient
+  // (form builder Care Plan tab rules, matched by the database trigger in
+  // assessment_care_plan_suggestions_migration.sql). Pending only; a missing
+  // table reads as none.
+  // Cached per patient (store id) for the care plan's suggestion card.
+  assessmentCarePlanSuggestions: {},
+  fetchAssessmentCarePlanSuggestions: async (patientId) => {
+    if (!patientId) return [];
+    const id = String(resolvePatientStoreId(get(), patientId));
+    const { data, error } = await supabase.from('assessment_care_plan_suggestions')
+      .select('id, template_id, form_id, form_response_id, mapping_id, program_codes, reason, created_at')
+      .eq('patient_id', id).eq('status', 'pending').order('created_at', { ascending: true });
+    if (error) {
+      if (!['42P01', 'PGRST205'].includes(error.code)) console.warn('fetchAssessmentCarePlanSuggestions:', error.message);
+      return [];
+    }
+    const list = (data || []).map(r => ({
+      id: r.id,
+      templateId: String(r.template_id),
+      formId: r.form_id,
+      formResponseId: r.form_response_id,
+      mappingId: r.mapping_id,
+      programCodes: r.program_codes || [],
+      reason: r.reason,
+      createdAt: r.created_at,
+    }));
+    set(s => ({ assessmentCarePlanSuggestions: { ...s.assessmentCarePlanSuggestions, [id]: list } }));
+    return list;
+  },
+  // Resolve this program's pending suggestions, for the given templates or
+  // all of them: 'accepted' (the template was applied) | 'dismissed'.
+  resolveAssessmentSuggestionsFor: async (patientId, program, status, templateIds = null) => {
+    const id = String(resolvePatientStoreId(get(), patientId));
+    const cached = get().assessmentCarePlanSuggestions[id] || await get().fetchAssessmentCarePlanSuggestions(patientId);
+    const only = templateIds && new Set(templateIds.map(String));
+    const ids = assessmentSuggestionsFor(cached, program.code)
+      .filter(s => !only || only.has(s.templateId)).map(s => s.id);
+    if (!ids.length) return true;
+    const resolvedBy = await get()._resolveUpdatedBy();
+    const { error } = await supabase.from('assessment_care_plan_suggestions')
+      .update({ status, resolved_by: resolvedBy || null, resolved_at: new Date().toISOString() })
+      .in('id', ids);
+    if (error) {
+      console.warn('resolveAssessmentSuggestionsFor:', error.message);
+      return false;
+    }
+    const done = new Set(ids);
+    set(s => ({ assessmentCarePlanSuggestions: {
+      ...s.assessmentCarePlanSuggestions,
+      [id]: (s.assessmentCarePlanSuggestions[id] || []).filter(x => !done.has(x.id)),
+    } }));
+    return true;
+  },
+
+  // One send record per form (Send Assessment drawer). Best effort: the
+  // message itself already went out, so a missing table only logs.
+  recordAssessmentSends: async ({ patientId, formIds, sentByName, channels = [], programCodes = [] }) => {
+    if (!patientId || !formIds?.length) return;
+    const id = String(resolvePatientStoreId(get(), patientId));
+    const sentById = await get()._resolveUpdatedBy();
+    const rows = formIds.map(formId => ({
+      patient_id: id,
+      form_id: formId,
+      sent_by_id: sentById,
+      sent_by_name: sentByName || null,
+      channels,
+      program_codes: programCodes,
+    }));
+    const { error } = await supabase.from('patient_assessment_sends').insert(rows);
+    if (error) {
+      console.warn('recordAssessmentSends:', error.message);
+      return;
+    }
+    if (get().patientAssessments[id]) get().fetchPatientAssessments(id, { force: true });
+  },
+
   fetchPatientProgramActivity: async (patientId, { force = false } = {}) => {
     if (!patientId) return;
     const resolvedId = resolvePatientStoreId(get(), patientId);
@@ -1912,8 +2617,8 @@ export const useAppStore = create((set, get) => ({
         .in('patient_id', ids),
     ]);
     if (error) console.warn('fetchPatientProgramActivity:', error.message);
-    if (auditError) console.warn('fetchPatientProgramActivity — care plan audit:', auditError.message);
-    if (versionError) console.warn('fetchPatientProgramActivity — care plan versions:', versionError.message);
+    if (auditError) console.warn('fetchPatientProgramActivity: care plan audit:', auditError.message);
+    if (versionError) console.warn('fetchPatientProgramActivity: care plan versions:', versionError.message);
     const carePlanSource = {
       audit: (auditRows || []).map(r => ({
         id: r.id, programId: r.program_id, programCode: r.program_code || '', entityType: r.entity_type,
@@ -1990,7 +2695,7 @@ export const useAppStore = create((set, get) => ({
       status_type:     statusType,
       activity_kind:   activityKind,
     }).then(({ error }) => {
-      if (error) console.warn('logProgramActivity — insert failed:', error.message);
+      if (error) console.warn('logProgramActivity: insert failed:', error.message);
     });
   },
 
@@ -2012,19 +2717,42 @@ export const useAppStore = create((set, get) => ({
     const rows = (data || []).map(r => ({
       id:           r.id,
       code:         r.code,
+      subProgram:   r.sub_program || null,
+      triggerType:  r.trigger_type || null,
+      triggerDate:  r.trigger_date || null,
+      memberInfo:   r.member_info || null,
       name:         r.name,
       acuity:       r.acuity,
       status:       r.status || 'New',
       statusColor:  r.status_color || 'var(--primary-300)',
-      startDate:    r.start_date || '—',
-      endDate:      r.end_date || '—',
-      lastUpdated:  r.last_updated || '—',
+      startDate:    r.start_date || '-',
+      endDate:      r.end_date || '-',
+      lastUpdated:  r.last_updated || '-',
       assignee:     r.assignee || 'Unassigned',
-      pcp:          r.pcp || '—',
+      pcp:          r.pcp || '-',
       progress:     Number(r.progress) || 0,
       medReconSignedBy:   r.med_recon_signed_by || null,
       medReconSignedRole: r.med_recon_signed_role || null,
       medReconSignedAt:   r.med_recon_signed_at || null,
+      // Lifecycle (patient_care_program_lifecycle_migration.sql).
+      instance:       r.instance || null,
+      plannedEndDate: r.planned_end_date || null,
+      enrolledBy:     r.enrolled_by || null,
+      // Review cadence override (care_plan_cadence_migration.sql).
+      cadenceOverride: r.cadence_override || null,
+      closureReason:  r.closure_reason || null,
+      closureNote:    r.closure_note || null,
+      closedAt:       r.closed_at || null,
+      closedBy:       r.closed_by || null,
+      // Pause (care_program_pause_migration.sql), only while Paused.
+      pause: r.status === 'Paused' && r.paused_on ? {
+        reason: r.pause_reason || 'other',
+        note: r.pause_note || '',
+        pausedOn: r.paused_on,
+        resumeOn: r.resume_on || null,
+        autoResume: !!r.auto_resume,
+        pausedBy: r.paused_by || '',
+      } : null,
     }));
     // `trigger` is derived (not stored): the 1-based position among same-code
     // enrollments in created_at order. SNP can be enrolled repeatedly, so its
@@ -2035,35 +2763,104 @@ export const useAppStore = create((set, get) => ({
       careProgramsByPatient: { ...s.careProgramsByPatient, [patientId]: rows },
       careProgramsLoadedFor: { ...s.careProgramsLoadedFor, [patientId]: true },
     }));
+    // Auto-resume runs when the programs are next loaded on or after the resume date.
+    rows.filter(r => r.status === 'Paused' && isDueToAutoResume({ status: 'paused', pause: r.pause }))
+      .forEach(r => get().resumeCareProgramInstance(patientId, r, { auto: true }));
+    get().syncCmpEnrollments(patientId);
+  },
+
+  // CMP worklist members live in cmp_members (one row per sub-program), but
+  // the patient's Care Programs read patient_care_programs. Enroll any CMP
+  // sub-program the roster has and the patient doesn't, with the roster's
+  // start, due date and assignee. Once per patient per session.
+  syncCmpEnrollments: async (patientId) => {
+    if (!patientId || cmpSyncedPatients.has(patientId)) return;
+    cmpSyncedPatients.add(patientId);
+    // Only the roster's own patient id: programs also load under the member id,
+    // and syncing both would enroll the patient twice.
+    const matches = m => m.patientId && String(m.patientId) === String(patientId);
+    const { cmpMembers, cmpMembersDidFetch } = get();
+    let roster;
+    if (cmpMembersDidFetch) {
+      roster = (cmpMembers || []).filter(matches);
+    } else {
+      // Not loaded yet (patient opened outside the CMP worklist): ask for this patient only.
+      const { data, error } = await supabase
+        .from('cmp_members')
+        .select('sub_program, program_start_date, program_due_date, assignee')
+        .eq('patient_id', patientId);
+      if (error) { console.warn('syncCmpEnrollments:', error.message); return; }
+      roster = (data || []).map(r => ({
+        subProgram: r.sub_program,
+        programStartDate: r.program_start_date,
+        programDueDate: r.program_due_date,
+        assignee: r.assignee,
+      }));
+    }
+    if (!roster.length) return;
+    const cmpName = (get().careProgramTypes || []).find(t => t.code === 'CMP')?.name || 'Care Management Program';
+    roster.forEach((m) => {
+      if (!m.subProgram) return;
+      const enrolled = (get().careProgramsByPatient[patientId] || []).some(p => p.code === 'CMP' && p.subProgram === m.subProgram);
+      if (enrolled) return;
+      get().addCareProgram(patientId, {
+        code: 'CMP',
+        name: cmpName,
+        subProgram: m.subProgram,
+        startDate: m.programStartDate || undefined,
+        plannedEndDate: m.programDueDate || undefined,
+        assignee: m.assignee || undefined,
+        fromRoster: true,
+      });
+    });
   },
 
   addCareProgram: (patientId, entry) => {
     if (!patientId || !entry) return;
-    // Creation date — stamped at enroll time so the Start Date column shows
-    // when the program was actually added (not '—' until an Enrolled status
+    // Creation date: stamped at enroll time so the Start Date column shows
+    // when the program was actually added (not '-' until an Enrolled status
     // change backfills it).
     const now = new Date();
     const createdStamp = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}/${now.getFullYear()}`;
     let program;
     set((state) => {
       const existing = state.careProgramsByPatient[patientId] || [];
-      // SNP is "triggerable" — it can be enrolled repeatedly, each enrollment a
-      // new trigger (1, 2, 3…). Every other program stays single-instance.
+      // SNP is "triggerable", it can be enrolled repeatedly, each enrollment a
+      // new trigger (1, 2, 3…). CMP allows one enrollment per sub-program
+      // (SPD, Maternity Program, …). Every other program stays single-instance.
       const isTriggerable = entry.code === 'SNP';
-      if (!isTriggerable && existing.some((p) => p.code === entry.code)) return {};
+      const subProgram = entry.subProgram || null;
+      // A program can be enrolled again once its earlier enrollment ended
+      // (instance 2, 3 …), and is then Re-enrolled.
+      const next = nextEnrollment(existing, entry.code, subProgram, { triggerable: isTriggerable });
+      if (!next.allowed) return {};
       const trigger = existing.filter((p) => p.code === entry.code).length + 1;
+      const subSlug = subProgram ? subProgram.toLowerCase().replace(/[^a-z0-9]+/g, '-') : null;
+      const again = next.instance > 1 ? `-${next.instance}` : '';
+      const maxDays = (state.careProgramTypes || []).find(t => t.code === entry.code)?.completion?.maxDurationDays;
       program = {
-        id: isTriggerable ? `pcp-${patientId}-${entry.code}-${trigger}` : `pcp-${patientId}-${entry.code}`,
+        id: subSlug
+          ? `pcp-${patientId}-${entry.code}-${subSlug}${again}`
+          : isTriggerable ? `pcp-${patientId}-${entry.code}-${trigger}` : `pcp-${patientId}-${entry.code}${again}`,
+        instance: next.instance,
+        enrolledBy: state.currentUserProfile?.name || null,
+        plannedEndDate: entry.plannedEndDate || plannedEndDate(createdStamp, maxDays),
         code: entry.code,
-        name: `${entry.name} (${entry.code})`,
+        subProgram,
+        // SNP: what triggered the enrollment and for which plan id (Create SNP Program).
+        triggerType: entry.triggerType || null,
+        triggerDate: entry.triggerDate || null,
+        memberInfo: entry.memberInfo || null,
+        name: subProgram ? `${subProgram} (${entry.code})` : `${entry.name} (${entry.code})`,
         acuity: null,
-        status: 'New',
-        statusColor: 'var(--primary-300)',
-        startDate: createdStamp,
-        endDate: '—',
+        status: next.reEnrolled ? 'Re-enrolled' : 'New',
+        statusColor: programStatusColor(next.reEnrolled ? 'Re-enrolled' : 'New'),
+        // A roster-backed enrollment (CMP worklist) keeps the roster's dates and assignee.
+        startDate: entry.startDate || createdStamp,
+        endDate: '-',
         lastUpdated: createdStamp,
-        assignee: 'Unassigned',
-        pcp: '—',
+        assignee: entry.assignee || 'Unassigned',
+        pcp: '-',
         progress: 0,
         trigger,
       };
@@ -2075,14 +2872,14 @@ export const useAppStore = create((set, get) => ({
         },
       };
     });
-    // SNP enrollment implies SNP-worklist membership — keep the two in sync.
+    // SNP enrollment implies SNP-worklist membership: keep the two in sync.
     if (program && entry.code === 'SNP') {
       get().ensureSnpWorklistMembership(patientId);
     }
-    // Persist. Fire-and-forget — the optimistic local update already
+    // Persist. Fire-and-forget, the optimistic local update already
     // rendered the row; a slow network shouldn't block the UI.
     if (program) {
-      supabase.from('patient_care_programs').upsert({
+      const row = {
         id:            program.id,
         patient_id:    patientId,
         code:          program.code,
@@ -2099,6 +2896,7 @@ export const useAppStore = create((set, get) => ({
         med_recon_signed_by:   program.medReconSignedBy || null,
         med_recon_signed_role: program.medReconSignedRole || null,
         med_recon_signed_at:   program.medReconSignedAt || null,
+      };
       // ON CONFLICT DO NOTHING against (patient_id, code): the local guard at
       // the top bails when an enrollment already exists locally, so we only
       // reach here when local state was blind to it. Seed rows carry ids like
@@ -2107,21 +2905,53 @@ export const useAppStore = create((set, get) => ({
       // miss the seed row, INSERT, and trip the (patient_id, code) unique key.
       // DO UPDATE would rewrite the id column and dangle references in
       // care_plan_audit / patient_care_plans / patient_care_plan_versions.
-      }, { onConflict: 'patient_id, code', ignoreDuplicates: true }).select('id').then(({ data, error }) => {
-        if (error) { console.warn('addCareProgram — insert failed:', error.message); return; }
+      // With patient_care_programs_sub_program_migration.sql the key is
+      // (patient_id, code, sub_program), so CMP can hold one row per
+      // sub-program. Until that migration runs, fall back to the old key
+      // (a second CMP sub-program then only saves locally). Each save tries
+      // the key its row most likely needs first, then the other.
+      // The trigger columns come from
+      // patient_care_programs_snp_trigger_migration.sql; until it runs, the
+      // last tries save without them.
+      const trigger = Object.fromEntries(Object.entries({
+        trigger_type: program.triggerType, trigger_date: program.triggerDate, member_info: program.memberInfo,
+      }).filter(([, v]) => v));
+      const upsertSubProgram = (extra) => supabase.from('patient_care_programs')
+        .upsert({ ...row, ...extra, sub_program: program.subProgram || '' }, { onConflict: 'patient_id, code, sub_program', ignoreDuplicates: true })
+        .select('id');
+      const upsertLegacy = (extra) => supabase.from('patient_care_programs')
+        .upsert({ ...row, ...extra }, { onConflict: 'patient_id, code', ignoreDuplicates: true })
+        .select('id');
+      // patient_care_program_lifecycle_migration.sql keys rows per instance
+      // and adds who enrolled / the planned end; tried first, then the older keys.
+      const lifecycle = Object.fromEntries(Object.entries({
+        enrolled_by: program.enrolledBy, planned_end_date: program.plannedEndDate,
+      }).filter(([, v]) => v));
+      const upsertInstance = () => supabase.from('patient_care_programs')
+        .upsert({ ...row, ...trigger, ...lifecycle, sub_program: program.subProgram || '', instance: program.instance }, { onConflict: 'patient_id, code, sub_program, instance', ignoreDuplicates: true })
+        .select('id');
+      const keyOrder = program.subProgram ? [upsertSubProgram, upsertLegacy] : [upsertLegacy, upsertSubProgram];
+      const tries = [upsertInstance, ...(Object.keys(trigger).length
+        ? [...keyOrder.map(fn => () => fn(trigger)), ...keyOrder.map(fn => () => fn({}))]
+        : keyOrder.map(fn => () => fn({})))];
+      tries.reduce((p, attempt) => p.then(res => (res && !res.error ? res : attempt())), Promise.resolve(null)).then(({ data, error }) => {
+        if (error) { console.warn('addCareProgram: insert failed:', error.message); return; }
         // Enrolling is program activity, but only when it really enrolled: a
         // duplicate is ignored above, and logging it anyway filled the log
         // with "Program Enrolled" for a patient enrolled once.
         if ((data || []).length === 0) return;
+        // Created from a worklist roster (syncCmpEnrollments): the patient was
+        // already in the program, so it isn't logged or run as a new enrollment.
+        if (entry.fromRoster) return;
         get().logProgramActivity({
           patientId,
           programCode: program.code,
-          title: `${program.code} Program Enrolled`,
+          title: `${program.code} Program ${program.status === 'Re-enrolled' ? 'Re-enrolled' : 'Enrolled'}`,
           activityKind: 'status',
-          statusLabel: 'New',
+          statusLabel: program.status,
           statusType: 'success',
         });
-        // Auto-apply rules run on a real enrollment only (Settings > Automation Rules).
+        // Enrollment automations run on a real enrollment only (Settings > Automations).
         get().runAutoApplyRules(patientId, program).catch(err => console.warn('runAutoApplyRules:', err?.message || err));
       });
     }
@@ -2133,7 +2963,7 @@ export const useAppStore = create((set, get) => ({
   // Supabase upsert, mirroring addCareProgram.
   // Discharge-imported medications the user has already seen. The "New" badge
   // shows through the first viewing of the step and is dropped on the next.
-  // Session-only — not persisted yet.
+  // Session-only: not persisted yet.
   viewedNewMedIds: {},          // { [patientId]: string[] }
   markNewMedsViewed: (patientId, ids) => set(s => {
     const prev = s.viewedNewMedIds[patientId] || [];
@@ -2143,9 +2973,9 @@ export const useAppStore = create((set, get) => ({
   }),
 
   // New Care Plan takes over the entire Settings area (the sub-nav is hidden,
-  // only the app rail remains) — so the flag lives above CarePlanLibraryPanel.
+  // only the app rail remains): so the flag lives above CarePlanLibraryPanel.
   carePlanCreateOpen: false,
-  // { mode: 'view' | 'edit', template } — the full-pane template screen,
+  // { mode: 'view' | 'edit', template }, the full-pane template screen,
   // which owns the Settings area the same way New Care Plan does.
   carePlanTemplateScreen: null,
   setCarePlanTemplateScreen: (v) => set({ carePlanTemplateScreen: v }),
@@ -2164,7 +2994,7 @@ export const useAppStore = create((set, get) => ({
   // Keyed by `<patientId>::<programId>`; each entry drives one "Possible
   // Duplicate" banner in the Care Plan (Figma SNP-Story 8464:289403).
   carePlanDuplicateFlags: {},  // { [key]: Flag[] }
-  carePlanDuplicateDismissed: {}, // { [key]: Set<flagId> } — Ignored/resolved this session
+  carePlanDuplicateDismissed: {}, // { [key]: Set<flagId> }: Ignored/resolved this session
   // The comprehensive (all-programs) view loads every plan for a patient in one
   // pass and warms the per-program cache above, keyed by patient id.
   patientCarePlanAllLoading: {},   // { [patientId]: bool }
@@ -2196,7 +3026,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   // Upsert on patient_id so a fresh generation overwrites the previous recap.
-  // Optimistic — the card already shows the new summary before this resolves.
+  // Optimistic: the card already shows the new summary before this resolves.
   savePatientCarePlanSummary: async (patientId, summary) => {
     if (!patientId || !summary) return;
     const now = new Date().toISOString();
@@ -2229,6 +3059,81 @@ export const useAppStore = create((set, get) => ({
       .delete()
       .eq('patient_id', patientId);
     if (error) reportPersistFailure(`deletePatientCarePlanSummary(${patientId})`, error);
+  },
+
+  // The same AI recap for one program's care plan, one row per patient +
+  // program (patient_care_plan_program_summaries), keyed here by carePlanKey.
+  // Kept until regenerated (overwrite) or dismissed (delete).
+  programCarePlanSummaries: {},        // { [carePlanKey]: { summary, generatedBy, generatedAt } | null }
+  programCarePlanSummaryLoadedFor: {}, // { [carePlanKey]: bool }
+
+  fetchProgramCarePlanSummary: async (patientId, programId) => {
+    if (!patientId || !programId) return;
+    const key = carePlanKey(patientId, programId);
+    if (get().programCarePlanSummaryLoadedFor[key]) return;
+    const { data, error } = await supabase
+      .from('patient_care_plan_program_summaries')
+      .select('summary, generated_by, generated_at')
+      .eq('patient_id', String(patientId))
+      .eq('program_id', programId)
+      .maybeSingle();
+    if (error) console.warn('fetchProgramCarePlanSummary:', error.message);
+    set(s => ({
+      programCarePlanSummaries: {
+        ...s.programCarePlanSummaries,
+        [key]: data ? { summary: data.summary, generatedBy: data.generated_by, generatedAt: data.generated_at } : null,
+      },
+      programCarePlanSummaryLoadedFor: { ...s.programCarePlanSummaryLoadedFor, [key]: true },
+    }));
+  },
+
+  saveProgramCarePlanSummary: async (patientId, programId, summary) => {
+    if (!patientId || !programId || !summary) return;
+    const key = carePlanKey(patientId, programId);
+    const now = new Date().toISOString();
+    const generatedBy = get().currentUserProfile?.name || null;
+    set(s => ({
+      programCarePlanSummaries: { ...s.programCarePlanSummaries, [key]: { summary, generatedBy, generatedAt: now } },
+      programCarePlanSummaryLoadedFor: { ...s.programCarePlanSummaryLoadedFor, [key]: true },
+    }));
+    const { error } = await supabase
+      .from('patient_care_plan_program_summaries')
+      .upsert(
+        { patient_id: String(patientId), program_id: programId, summary, generated_by: generatedBy, generated_at: now, updated_at: now },
+        { onConflict: 'patient_id,program_id' },
+      );
+    if (error) reportPersistFailure(`saveProgramCarePlanSummary(${key})`, error);
+  },
+
+  // Tick or untick a summary's action items (`done`: their indexes). Kept in
+  // the summary itself, so generated_at still dates the summary, not the tick.
+  setProgramCarePlanSummaryDone: async (patientId, programId, done) => {
+    const key = carePlanKey(patientId, programId);
+    const entry = get().programCarePlanSummaries[key];
+    if (!entry?.summary) return;
+    const summary = { ...entry.summary, done };
+    set(s => ({ programCarePlanSummaries: { ...s.programCarePlanSummaries, [key]: { ...entry, summary } } }));
+    const { error } = await supabase
+      .from('patient_care_plan_program_summaries')
+      .update({ summary, updated_at: new Date().toISOString() })
+      .eq('patient_id', String(patientId))
+      .eq('program_id', programId);
+    if (error) reportPersistFailure(`setProgramCarePlanSummaryDone(${key})`, error);
+  },
+
+  deleteProgramCarePlanSummary: async (patientId, programId) => {
+    if (!patientId || !programId) return;
+    const key = carePlanKey(patientId, programId);
+    set(s => ({
+      programCarePlanSummaries: { ...s.programCarePlanSummaries, [key]: null },
+      programCarePlanSummaryLoadedFor: { ...s.programCarePlanSummaryLoadedFor, [key]: true },
+    }));
+    const { error } = await supabase
+      .from('patient_care_plan_program_summaries')
+      .delete()
+      .eq('patient_id', String(patientId))
+      .eq('program_id', programId);
+    if (error) reportPersistFailure(`deleteProgramCarePlanSummary(${key})`, error);
   },
 
   fetchPatientCarePlan: async (patientId, programId) => {
@@ -2293,7 +3198,7 @@ export const useAppStore = create((set, get) => ({
       // If barriers table hasn't been migrated yet, supabase returns error; treat as empty.
       if (b.error && (b.error.code === '42P01' || b.error.code === 'PGRST205')) barriers = [];
       if (a.error && (a.error.code === '42P01' || a.error.code === 'PGRST205')) automations = [];
-      // Measurements hang off goal ids — fetch them once the goals are known.
+      // Measurements hang off goal ids: fetch them once the goals are known.
       const goalIds = goals.map(x => x.id);
       if (goalIds.length) {
         const mm = await supabase.from('patient_care_plan_goal_measurements').select('*')
@@ -2313,6 +3218,16 @@ export const useAppStore = create((set, get) => ({
     // Auto-resume runs when the plan is next opened on or after its resume date.
     if (plan && isDueToAutoResume(plan)) {
       await get().resumeCarePlan(patientId, { id: programId, code: plan.programCode }, { auto: true });
+    }
+    // Likewise an episode closes when its plan is next opened after its last day.
+    for (const run of templateInstances.filter(i => isEpisodeDue(i))) {
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
+      await get().endCarePlanEpisode(patientId, { id: programId, code: plan.programCode }, run.id, { reason: 'episode_end' });
+    }
+    // Template versions published with "migrate all / a cohort" land when the plan is next opened.
+    if (plan && templateInstances.some(i => i.pendingVersionId)) {
+      get().applyPendingTemplateMigrations(patientId, { id: programId, code: plan.programCode }, 'load')
+        .catch(err => console.warn('applyPendingTemplateMigrations:', err?.message || err));
     }
   },
 
@@ -2351,6 +3266,7 @@ export const useAppStore = create((set, get) => ({
         ...c, plan: { ...c.plan, status: 'paused', pause: { ...pause, pausedBy: pausedBy || '' }, nextTouchpoint: null },
       } } };
     });
+    get().syncSnpCarePlanStatus(patientId, program, { status: 'paused', signed_at: cur.plan.signedAt }, pause);
     await get().logCarePlanAudit(patientId, program, pauseAuditEntry(cur.plan.id, pause));
     return true;
   },
@@ -2368,7 +3284,9 @@ export const useAppStore = create((set, get) => ({
         return i.config?.dueDateOverride || task?.dueDate || task?.due_date || i.config?.dueDate;
       } },
     );
-    const { error } = await supabase.from('patient_care_plans').update({
+    // Only a still-paused row updates, so when several views load the plan at
+    // once and each auto-resumes it, one resume wins and is logged.
+    const { data: resumed, error } = await supabase.from('patient_care_plans').update({
       status: 'active',
       pause_reason: null,
       pause_note: null,
@@ -2378,7 +3296,7 @@ export const useAppStore = create((set, get) => ({
       paused_by: null,
       next_touchpoint: next,
       updated_at: new Date().toISOString(),
-    }).eq('id', cur.plan.id);
+    }).eq('id', cur.plan.id).eq('status', 'paused').select('id');
     if (error) {
       console.warn('resumeCarePlan:', error.message);
       if (!auto) get().showToast('Could not resume the care plan');
@@ -2391,8 +3309,39 @@ export const useAppStore = create((set, get) => ({
         ...c, plan: { ...c.plan, status: 'active', pause: null, nextTouchpoint: next },
       } } };
     });
+    get().syncSnpCarePlanStatus(patientId, program, { status: 'active', signed_at: cur.plan.signedAt }, null);
+    if (!resumed?.length) return false;
     await get().logCarePlanAudit(patientId, program, resumeAuditEntry(cur.plan.id, { auto, nextTouchpoint: next }));
     return true;
+  },
+
+  // The patient's record as citable facts for UnityAI (care-plan/lib/
+  // individualizedPlan.js): conditions, profile condition tags, labs, events,
+  // assessments, open barriers. Empty when there's nothing to plan from; a plan can then be
+  // drafted from the care manager's description instead.
+  loadCarePlanFacts: async (patientId) => {
+    const pid = String(patientId);
+    const [problems, events, responses, forms, otherBarriers, profile] = await Promise.all([
+      supabase.from('patient_problems').select('title, status').eq('patient_id', pid),
+      supabase.from('patient_clinical_events').select('event_type, code, display, effective_date, status, numeric_value, unit, reference_low, reference_high').eq('patient_id', pid),
+      supabase.from('form_responses').select('form_id, answers, status, completed_at, created_at').eq('patient_id', pid)
+        .order('created_at', { ascending: false }).limit(50),
+      supabase.from('forms').select('id, name').limit(300),
+      supabase.from('patient_care_plans').select('program_code, patient_care_plan_barriers(title, status)').eq('patient_id', pid),
+      supabase.from('p360_profiles').select('condition_tags').eq('patient_id', pid).maybeSingle(),
+    ]);
+    const openBarriers = (otherBarriers.data || []).flatMap(p => (p.patient_care_plan_barriers || [])
+      .filter(b => !['Met', 'Resolved', 'Not Met', 'Discontinued', 'Not Applicable'].includes(b.status))
+      .map(b => ({ title: b.title, program: p.program_code })));
+    return buildPatientFacts({
+      problems: problems.data || [],
+      clinicalEvents: events.data || [],
+      // patient_id on form_responses arrives with the automation rules migration.
+      responses: responses.error ? [] : (responses.data || []),
+      formNames: new Map((forms.data || []).map(f => [String(f.id), f.name])),
+      barriers: openBarriers,
+      profileTags: Array.isArray(profile.data?.condition_tags) ? profile.data.condition_tags : [],
+    });
   },
 
   // ── Individualized Plan AI (care_plan_ai_suggestions migration) ──
@@ -2401,8 +3350,12 @@ export const useAppStore = create((set, get) => ({
   // best templates and a tailored GBI set, and writes it onto this program's
   // plan unsigned (a draft): every item flagged for review with its rationale
   // and the facts it cites. Pipeline: care-plan/lib/individualizedPlan.js.
-  // Returns { counts, templates } or throws with a message for the caller.
-  draftIndividualizedPlan: async (patientId, program) => {
+  // `recommended` ([{ templateId, rule, criteria }], from matchCarePlanTemplates)
+  // limits it to the templates the enrollment automations matched and has the
+  // model merge all of them. Returns { counts, templates } or throws.
+  // `description`: the care manager's plain-English account of the patient,
+  // planned from (and cited) alongside the record, or instead of an empty one.
+  draftIndividualizedPlan: async (patientId, program, { recommended = [], description = '' } = {}) => {
     // Without the AI columns the drafted items can't carry their flag or
     // evidence, so say so before calling the model or touching the plan.
     const probe = await supabase.from('patient_care_plan_goals').select('ai_suggested').limit(1);
@@ -2411,34 +3364,23 @@ export const useAppStore = create((set, get) => ({
     }
     if (!get().carePlanTemplates.length || !get().carePlanGoals.length) await get().fetchCarePlanLibrary();
     const s0 = get();
-    const pid = String(patientId);
-    const [problems, events, responses, forms, otherBarriers] = await Promise.all([
-      supabase.from('patient_problems').select('title, status').eq('patient_id', pid),
-      supabase.from('patient_clinical_events').select('event_type, code, display, effective_date, status, numeric_value, unit, reference_low, reference_high').eq('patient_id', pid),
-      supabase.from('form_responses').select('form_id, answers, status, completed_at, created_at').eq('patient_id', pid)
-        .order('created_at', { ascending: false }).limit(50),
-      supabase.from('forms').select('id, name').limit(300),
-      supabase.from('patient_care_plans').select('program_code, patient_care_plan_barriers(title, status)').eq('patient_id', pid),
-    ]);
-    const openBarriers = (otherBarriers.data || []).flatMap(p => (p.patient_care_plan_barriers || [])
-      .filter(b => !['Met', 'Resolved', 'Not Met', 'Discontinued', 'Not Applicable'].includes(b.status))
-      .map(b => ({ title: b.title, program: p.program_code })));
-    const facts = buildPatientFacts({
-      problems: problems.data || [],
-      clinicalEvents: events.data || [],
-      // patient_id on form_responses arrives with the automation rules migration.
-      responses: responses.error ? [] : (responses.data || []),
-      formNames: new Map((forms.data || []).map(f => [String(f.id), f.name])),
-      barriers: openBarriers,
-    });
-    if (!facts.length) throw new Error('There’s nothing on this patient’s record to plan from yet: no conditions, labs, events, assessments or barriers.');
+    const facts = withDescription(await get().loadCarePlanFacts(patientId), description);
+    if (!facts.length) {
+      const err = new Error('There’s nothing on this patient’s profile or record to plan from yet: no conditions, condition tags, labs, events, assessments or barriers. Describe the patient instead.');
+      err.code = 'no_record';
+      throw err;
+    }
 
-    const templates = buildTemplateChoices(s0.carePlanTemplates, s0.carePlanGoals);
+    const recommendedIds = new Set(recommended.map(r => String(r.templateId)));
+    const templates = buildTemplateChoices(
+      recommendedIds.size ? s0.carePlanTemplates.filter(t => recommendedIds.has(String(t.id))) : s0.carePlanTemplates,
+      s0.carePlanGoals,
+    );
     const catalog = buildTemplateCatalog({ goals: s0.carePlanGoals, interventions: s0.carePlanInterventionTemplates, barriers: s0.carePlanBarriers });
     const res = await apiFetch('/api/care-plan-individualized', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ facts, templates, catalog, programName: program.name || program.code }),
+      body: JSON.stringify({ facts, templates, catalog, programName: program.name || program.code, recommended }),
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok || !json?.draft) throw new Error(json?.error?.message || 'Could not draft the plan. Please try again.');
@@ -2474,6 +3416,13 @@ export const useAppStore = create((set, get) => ({
       }),
     ]);
 
+    // The templates it's built from wait with it, applied on approval.
+    if (draft.templates.length) {
+      await get().setCarePlanRecommendedTemplates(patientId, program, draft.templates.map(t => ({
+        id: t.id, name: t.name, why: t.why || '', ...(t.automation ? { automation: t.automation } : {}),
+      })));
+    }
+
     const counts = draftCounts(draft);
     await get().logCarePlanAudit(patientId, program, {
       entityType: 'plan',
@@ -2482,7 +3431,12 @@ export const useAppStore = create((set, get) => ({
       detail: [
         draft.summary,
         draft.templates.length ? `Based on: ${draft.templates.map(t => t.name).join(', ')}` : 'No template fit; tailored from the record',
-        `${facts.length} patient inputs read`,
+        recommended.length ? `Recommended by automations: ${[...new Set(recommended.map(r => r.rule))].join(', ')}` : null,
+        description.trim() ? 'From the care manager’s description' : null,
+        ...(() => {
+          const n = facts.filter(f => f.kind !== 'description').length;
+          return n ? [`${n} patient ${n === 1 ? 'input' : 'inputs'} read`] : [];
+        })(),
       ].filter(Boolean).join(' · '),
     });
     return { counts, summary: draft.summary, templates: draft.templates };
@@ -2501,7 +3455,59 @@ export const useAppStore = create((set, get) => ({
     const results = await Promise.all(items
       .filter(({ item }) => item?.aiSuggested && !item.aiReviewedAt)
       .map(({ kind, item }) => save[kind]?.({ ...item, aiReviewedBy: by, aiReviewedAt: at })));
+    // The last item approved approves the recommendation: its templates apply.
+    const cur = get().patientCarePlans[carePlanKey(patientId, program.id)];
+    if (cur?.plan?.recommendedTemplates?.length && !pendingRecommendation(cur).length) {
+      await get().applyRecommendedTemplates(patientId, program);
+    }
     return results.filter(Boolean).length;
+  },
+
+  // Record a recommendation's templates on the plan, pending approval
+  // (care_plan_recommended_templates migration); [] clears them.
+  setCarePlanRecommendedTemplates: async (patientId, program, recommended) => {
+    const key = carePlanKey(patientId, program.id);
+    const planId = get().patientCarePlans[key]?.plan?.id;
+    if (!planId) return false;
+    const list = recommended?.length ? recommended : [];
+    const { error } = await supabase.from('patient_care_plans')
+      .update({ recommended_templates: list.length ? list : null }).eq('id', planId);
+    if (error) {
+      // Before the migration the recommendation still works, without its templates.
+      if (!/recommended_templates/.test(error.message || '')) console.warn('setCarePlanRecommendedTemplates:', error.message);
+      return false;
+    }
+    set(s => {
+      const c = s.patientCarePlans[key];
+      if (!c?.plan) return {};
+      return { patientCarePlans: { ...s.patientCarePlans, [key]: { ...c, plan: { ...c.plan, recommendedTemplates: list } } } };
+    });
+    return true;
+  },
+
+  // Approving a recommendation applies its templates like any template
+  // (recorded on the plan, a run with its version and renewal, its
+  // conditions) without merging their items again, then clears them.
+  applyRecommendedTemplates: async (patientId, program) => {
+    const key = carePlanKey(patientId, program.id);
+    const plan = get().patientCarePlans[key]?.plan;
+    const recommended = plan?.recommendedTemplates || [];
+    if (!recommended.length) return false;
+    if (!get().carePlanTemplates.length) await get().fetchCarePlanLibrary();
+    const known = new Set(get().carePlanTemplates.map(t => String(t.id)));
+    const prev = plan.appliedTemplateIds || [];
+    const ids = recommended.map(t => t.id).filter(id => known.has(String(id)));
+    const ok = await get().applyPatientCarePlanTemplates(patientId, program, [...prev, ...ids], undefined, {}, { mergeContent: false });
+    if (!ok) return false;
+    await get().resolveAssessmentSuggestionsFor(patientId, program, 'accepted', ids);
+    await get().setCarePlanRecommendedTemplates(patientId, program, []);
+    await get().logCarePlanAudit(patientId, program, {
+      entityType: 'plan',
+      action: 'recommendation_approved',
+      summary: 'Approved the recommended care plan',
+      detail: `Templates applied: ${recommended.map(t => t.name).join(', ')}`,
+    });
+    return true;
   },
 
   // Lazily create the plan header row so the first goal/intervention has a
@@ -2637,6 +3643,9 @@ export const useAppStore = create((set, get) => ({
     const templates = get().carePlanTemplates || [];
     const appliedIds = cur?.plan?.appliedTemplateIds || [];
     if (!cur?.plan || !appliedIds.length || !templates.length) return 0;
+    // A UnityAI-drafted plan holds the items chosen from its templates;
+    // restoring their full content would bring back what it left out.
+    if ((cur.goals || []).some(g => g.aiSuggested)) return 0;
     set(s => ({ carePlanTemplatesSyncedFor: { ...s.carePlanTemplatesSyncedFor, [key]: true } }));
 
     const before = (cur.goals?.length || 0) + (cur.interventions?.length || 0) + (cur.barriers?.length || 0);
@@ -2645,8 +3654,13 @@ export const useAppStore = create((set, get) => ({
     set({ carePlanAuditSuppressed: true });
     try {
       for (const id of appliedIds) {
-        const template = templates.find(t => String(t.id) === String(id));
-        if (template) await applyTemplateToPlan(get, patientId, program, template, libraryGoals);
+        const stored = templates.find(t => String(t.id) === String(id));
+        if (!stored) continue;
+        // With the category its active run went on with. One at a time: each
+        // template merges into the same plan, de-duplicating by title.
+        const run = (cur.templateInstances || []).find(i => String(i.templateId) === String(id) && i.status === 'active');
+        // react-doctor-disable-next-line react-doctor/async-await-in-loop
+        await applyTemplateToPlan(get, patientId, program, withCategory(stored, run?.categoryId || null), libraryGoals);
       }
     } finally {
       set({ carePlanAuditSuppressed: false });
@@ -2662,7 +3676,8 @@ export const useAppStore = create((set, get) => ({
   // interventions and barriers, and until apply recorded the linkage it carried
   // none. So for each matching goal: an item already on the plan is attached to
   // it, and one that is missing is created against it. Plan items with no
-  // library match are left alone — they were authored by hand here.
+  // library match are left alone, they were authored by hand here, and so
+  // are UnityAI-drafted goals.
   //
   // Deliberately no audit rows: this reconciles the plan with the library it
   // was built from, it is not a care decision someone made.
@@ -2689,6 +3704,9 @@ export const useAppStore = create((set, get) => ({
     const newBarriers = new Map();   // title → { link, goalIds }
 
     for (const goal of cur.goals || []) {
+      // A UnityAI-drafted goal already carries the items UnityAI chose for
+      // this patient; adding the library's full set would undo that curation.
+      if (goal.aiSuggested) continue;
       const lib = libraryGoals.find(g => norm(g.title) === norm(goal.title));
       if (!lib) continue;
       for (const link of lib.interventions || []) {
@@ -2831,7 +3849,7 @@ export const useAppStore = create((set, get) => ({
   // ALL of a patient's care plans (every program). A G/B/I on this plan is
   // flagged when another item of the same kind + title lives on another
   // program's plan (cross-program) or elsewhere on this plan (same-plan). Runs
-  // on load — so duplicates already sitting on existing plans surface too — and
+  // on load, so duplicates already sitting on existing plans surface too, and
   // after each add. Flags the user dismissed/resolved this session stay hidden.
   refreshCarePlanDuplicates: async (patientId, program, { reset = false } = {}) => {
     if (!patientId || !program?.id) return 0;
@@ -2860,7 +3878,7 @@ export const useAppStore = create((set, get) => ({
     // Duplicate detection only runs for goals + interventions. Barriers
     // are legitimately shared across patients/goals (many hit the same
     // barrier text) and the M:N join table already collapses same-title
-    // rows into a single canonical barrier — so a "possible duplicate"
+    // rows into a single canonical barrier, so a "possible duplicate"
     // banner on the Barriers section reads as noise, not signal.
     const KINDS = [
       { kind: 'goal', table: 'patient_care_plan_goals', map: mapPatientCarePlanGoalRow },
@@ -3144,7 +4162,7 @@ export const useAppStore = create((set, get) => ({
     const row = patientCarePlanInterventionToRow(values, planId);
     // Stamp the last editor so the Intervention Details "Last Updated … by <name>" line has an actor.
     row.updated_by = get().currentUserProfile?.name || row.updated_by || null;
-    // Schema-tolerant write for `task_id` — if the column hasn't been
+    // Schema-tolerant write for `task_id`, if the column hasn't been
     // added yet (care_plan_intervention_task_link migration not run),
     // strip it and retry. The legacy `config.taskId` fallback keeps the
     // paired-task link visible in the meantime.
@@ -3270,7 +4288,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   // Save the patient's live plan back into the shared library as a reusable
-  // template (roadmap #4). Reuses the library's saveCarePlanTemplate — the
+  // template (roadmap #4). Reuses the library's saveCarePlanTemplate: the
   // template's goals/interventions are free-text line items, so we flatten.
   // Load every care plan for a patient across all their programs, in one pass,
   // for the comprehensive read-only view (roadmap E2). Warms the per-program
@@ -3376,11 +4394,18 @@ export const useAppStore = create((set, get) => ({
   // over the live row, so detail edits waiting in the draft are kept.
   saveCarePlanLiveField: async (patientId, program, type, id, patch) => {
     const key = carePlanKey(patientId, program.id);
+    // A status picked by hand replaces whatever reason an automation gave the
+    // old one (only where the item carries a reason, i.e. the column exists).
+    const withPatch = (base) => {
+      const next = { ...base, ...patch, config: patch.config ? { ...(base.config || {}), ...patch.config } : base.config };
+      if (patch.status !== undefined && patch.status !== base.status && base.statusReason !== undefined && !('statusReason' in patch)) next.statusReason = '';
+      return next;
+    };
     const lists = { goal: 'goals', intervention: 'interventions', barrier: 'barriers' };
     const loaded = (get().patientCarePlans[key]?.[lists[type]] || []).find(x => x.id === id);
     let saved;
     if (loaded) {
-      const next = { ...loaded, ...patch, config: patch.config ? { ...(loaded.config || {}), ...patch.config } : loaded.config };
+      const next = withPatch(loaded);
       const save = { goal: get().savePatientCarePlanGoal, intervention: get().savePatientCarePlanIntervention, barrier: get().savePatientCarePlanBarrier }[type];
       saved = await save(patientId, program, next, id);
     } else {
@@ -3392,7 +4417,7 @@ export const useAppStore = create((set, get) => ({
       const { data: row, error: readErr } = await supabase.from(table).select('*').eq('id', id).maybeSingle();
       if (readErr || !row) { get().showToast('Could not update the care plan'); return null; }
       const current = mapRow(row);
-      const next = { ...current, ...patch, config: patch.config ? { ...(current.config || {}), ...patch.config } : current.config };
+      const next = withPatch(current);
       const { plan_id: _p, ...update } = toRow(next, row.plan_id);
       const { data, error } = await supabase.from(table)
         // Barriers have no updated_by column.
@@ -3461,7 +4486,7 @@ export const useAppStore = create((set, get) => ({
       }
       for (const row of (ti.error ? [] : ti.data || [])) (instancesByPlan[row.plan_id] ||= []).push(mapTemplateInstanceRow(row));
       if (b.error && (b.error.code === '42P01' || b.error.code === 'PGRST205')) {
-        // barriers table not yet migrated — treat as empty, don't warn
+        // barriers table not yet migrated: treat as empty, don't warn
       }
     }
 
@@ -3562,7 +4587,13 @@ export const useAppStore = create((set, get) => ({
     return true;
   },
 
-  applyPatientCarePlanTemplates: async (patientId, program, nextTemplateIds, priorityUpdates) => {
+  // `categoryPicks` ({ templateId: categoryId }) chooses the category a newly
+  // applied template goes on with: Common + that category. No pick = Common.
+  // `mergeContent: false` applies the templates (record, runs, conditions)
+  // without merging their items: an approved recommendation already holds
+  // the items UnityAI chose from them. `quiet` leaves the toast to the
+  // caller (a template group says what it applied itself).
+  applyPatientCarePlanTemplates: async (patientId, program, nextTemplateIds, priorityUpdates, categoryPicks = {}, { mergeContent = true, quiet = false } = {}) => {
     const key = carePlanKey(patientId, program.id);
     const cur = get().patientCarePlans[key];
     const prevIds = cur?.plan?.appliedTemplateIds || [];
@@ -3571,9 +4602,28 @@ export const useAppStore = create((set, get) => ({
     const libraryGoals = get().carePlanGoals;
     const templates = get().carePlanTemplates;
 
+    // A template goes on with the patient's IPA overlay on top, when there is an active one.
+    const resolved = new Map();
+    const baseById = new Map(templates.map(t => [t.id, t]));
+    // One at a time: each template merges into the same plan's goals, so
+    // concurrent applies would race on the de-duplication.
     for (const templateId of toAdd) {
-      const template = templates.find(t => t.id === templateId);
-      if (template) await applyTemplateToPlan(get, patientId, program, template, libraryGoals);
+      const stored = baseById.get(templateId);
+      if (!stored) continue;
+      const base = withCategory(stored, categoryPicks?.[templateId] || null);
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
+      const found = await get().overlayForPatient(templateId, patientId);
+      const template = found
+        ? {
+          ...base, ...applyOverlay(templateContentOf(base), found.overlay.overrides),
+          overlayId: found.overlay.id,
+          signoffRoute: found.overlay.overrides?.signoff?.mode && found.overlay.overrides.signoff.mode !== 'default'
+            ? { ...found.overlay.overrides.signoff, ipaName: found.ipa.name } : null,
+        }
+        : base;
+      resolved.set(templateId, template);
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
+      if (mergeContent) await applyTemplateToPlan(get, patientId, program, template, libraryGoals);
     }
 
     const ok = await get().setPatientCarePlanAppliedTemplates(patientId, program, nextIds, priorityUpdates);
@@ -3584,7 +4634,7 @@ export const useAppStore = create((set, get) => ({
     const templateById = new Map(templates.map(t => [t.id, t]));
     const nextSet = new Set(nextIds);
     await Promise.allSettled([
-      ...toAdd.map(id => templateById.get(id)).filter(Boolean)
+      ...toAdd.map(id => resolved.get(id) || templateById.get(id)).filter(Boolean)
         .map(template => get().startCarePlanTemplateInstance(patientId, program, template)),
       ...prevIds.filter(id => !nextSet.has(id))
         .map(id => get().closeCarePlanTemplateInstance(patientId, program, id)),
@@ -3604,10 +4654,191 @@ export const useAppStore = create((set, get) => ({
 
     const added = toAdd.length;
     const removed = prevIds.filter(id => !nextIds.includes(id)).length;
-    if (added) get().showToast(`Applied ${added} template${added === 1 ? '' : 's'}`);
-    else if (removed) get().showToast('Updated applied templates');
-    else get().showToast('Templates updated');
+    if (!quiet) {
+      if (added) get().showToast(`Applied ${added} template${added === 1 ? '' : 's'}`);
+      else if (removed) get().showToast('Updated applied templates');
+      else get().showToast('Templates updated');
+    }
     get().touchCarePlanModified(patientId, program.id);
+    return true;
+  },
+
+  // ── Review cadence (care_plan_cadence_migration.sql) ──
+  // Discharge dates per patient from ADT clinical events, for the cadence's
+  // post-discharge spike: { [patientId]: Date[] }.
+  patientDischarges: {},
+  fetchPatientDischarges: async (patientId) => {
+    if (!patientId) return;
+    const { data, error } = await supabase.from('patient_clinical_events')
+      .select('event_type, effective_date, end_date, raw_meta')
+      .eq('patient_id', String(patientId)).eq('event_type', 'adt')
+      .order('effective_date', { ascending: false }).limit(50);
+    if (error) { console.warn('fetchPatientDischarges:', error.message); return; }
+    set(s => ({ patientDischarges: { ...s.patientDischarges, [patientId]: dischargeDates(data || []) } }));
+  },
+  // Sets (or with null clears) one enrollment's review cadence override and
+  // logs it to the care plan History.
+  setCadenceOverride: async (patientId, program, override, { fromLabel, toLabel } = {}) => {
+    if (!patientId || !program?.id) return false;
+    const value = override ? { ...override, setBy: get().currentUserProfile?.name || null, setAt: new Date().toISOString() } : null;
+    const prev = (get().careProgramsByPatient[patientId] || []).find(p => p.id === program.id)?.cadenceOverride ?? null;
+    const apply = v => set(s => ({
+      careProgramsByPatient: {
+        ...s.careProgramsByPatient,
+        [patientId]: (s.careProgramsByPatient[patientId] || []).map(p => (p.id === program.id ? { ...p, cadenceOverride: v } : p)),
+      },
+    }));
+    apply(value);
+    const { error } = await supabase.from('patient_care_programs').update({ cadence_override: value }).eq('id', program.id);
+    if (error) {
+      console.warn('setCadenceOverride:', error.message);
+      apply(prev);
+      get().showToast?.('Couldn\u2019t save the review cadence');
+      return false;
+    }
+    get().logCarePlanAudit(patientId, program, {
+      entityType: 'plan',
+      action: 'cadence_changed',
+      summary: override ? `Review Cadence Set to ${toLabel}` : 'Review Cadence Reset to the Program Default',
+      detail: [fromLabel && toLabel ? `${fromLabel} \u2192 ${toLabel}` : '', override?.reason || ''].filter(Boolean).join(' \u00b7 '),
+    });
+    return true;
+  },
+
+  // ── Event-based plan updates (care_plan_event_updates_migration.sql, #84) ──
+  // `${patientId}::${programId}` → { events: { [id]: event }, impacts: [impact],
+  // loading, evaluating, missing }. Events come from the care_plan_events
+  // inbox (database triggers); each one is evaluated once per plan with the
+  // rules in care-plan/lib/eventImpact.js and, when they match, drafted by
+  // /api/care-plan-event-update. The result is a care_plan_event_impacts row.
+  carePlanEventUpdates: {},
+  fetchCarePlanEventUpdates: async (patientId, program, plan) => {
+    if (!patientId || !program?.id || !plan) return;
+    const key = carePlanKey(patientId, program.id);
+    const cur = get().carePlanEventUpdates[key];
+    if (cur?.loading || cur?.evaluating) return;
+    const patch = p => set(s => ({ carePlanEventUpdates: { ...s.carePlanEventUpdates, [key]: { ...(s.carePlanEventUpdates[key] || {}), ...p } } }));
+    patch({ loading: true });
+    const since = new Date(Date.now() - EVENT_LOOKBACK_DAYS * 86400000).toISOString();
+    const [ev, im] = await Promise.all([
+      supabase.from('care_plan_events').select('*').eq('patient_id', String(patientId))
+        .gte('occurred_at', since).order('occurred_at', { ascending: false }).limit(100),
+      supabase.from('care_plan_event_impacts').select('*').eq('patient_id', String(patientId))
+        .eq('program_id', String(program.id)).order('evaluated_at', { ascending: false }).limit(200),
+    ]);
+    const err = ev.error || im.error;
+    if (err) {
+      // Before the migration has run the tables don't exist: show nothing.
+      if (!/does not exist|schema cache|42P01|PGRST205/i.test(`${err.code} ${err.message}`)) console.warn('fetchCarePlanEventUpdates:', err.message);
+      patch({ loading: false, missing: true, events: {}, impacts: [] });
+      return;
+    }
+    const events = (ev.data || []).map(mapCarePlanEventRow);
+    let impacts = (im.data || []).map(mapEventImpactRow);
+    patch({ loading: false, missing: false, events: Object.fromEntries(events.map(e => [e.id, e])), impacts });
+
+    const todo = eventsToEvaluate(events, impacts, { planCreatedAt: plan.plan?.createdDate });
+    if (!todo.length) return;
+    patch({ evaluating: true });
+    const planView = { goals: plan.goals || [], interventions: plan.interventions || [], barriers: plan.barriers || [] };
+    // Oldest first, and only a handful of AI drafts per visit; the rest wait for the next one.
+    let aiBudget = 5;
+    for (const event of todo.slice().reverse()) {
+      const result = evaluateEventImpact(event, planView);
+      const row = {
+        event_id: event.id, patient_id: String(patientId), program_id: String(program.id),
+        status: result.relevant ? 'pending' : 'no_impact', reasons: result.reasons, changes: result.changes,
+      };
+      if (result.relevant && result.askAi) {
+        if (aiBudget-- <= 0) continue;
+        try {
+          const res = await apiFetch('/api/care-plan-event-update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event, reasons: result.reasons, ruleChanges: result.changes, plan: planForPrompt(planView), programName: program.name || program.code }),
+          });
+          const json = await res.json().catch(() => ({}));
+          if (res.ok && json.draft) {
+            row.changes = [...result.changes, ...json.draft.changes];
+            row.ai_summary = json.draft.summary || null;
+          } else row.ai_error = json.error?.message || 'Could not draft plan updates for this event.';
+        } catch (e) {
+          row.ai_error = e?.message || 'Could not reach the AI service.';
+        }
+      }
+      // Nothing to change after all: record it as reviewed so it isn't asked again.
+      if (row.status === 'pending' && !row.changes.length && !row.ai_error) row.status = 'no_impact';
+      const { data, error } = await supabase.from('care_plan_event_impacts')
+        .upsert(row, { onConflict: 'event_id,program_id', ignoreDuplicates: true }).select();
+      if (error) { console.warn('fetchCarePlanEventUpdates: save impact:', error.message); continue; }
+      if (data?.[0]) {
+        impacts = [mapEventImpactRow(data[0]), ...impacts];
+        patch({ impacts });
+      }
+    }
+    patch({ evaluating: false });
+  },
+  // Sets aside an event with nothing left to decide (e.g. the AI draft failed).
+  dismissCarePlanEventImpact: async (patientId, program, impactId) => {
+    const key = carePlanKey(patientId, program.id);
+    const actor = get().currentUserProfile?.name || null;
+    const next = { status: 'resolved', resolved_at: new Date().toISOString(), resolved_by: actor };
+    set(s => ({
+      carePlanEventUpdates: {
+        ...s.carePlanEventUpdates,
+        [key]: {
+          ...s.carePlanEventUpdates[key],
+          impacts: (s.carePlanEventUpdates[key]?.impacts || []).map(i => (i.id === impactId
+            ? { ...i, status: 'resolved', resolvedAt: next.resolved_at, resolvedBy: actor } : i)),
+        },
+      },
+    }));
+    const { error } = await supabase.from('care_plan_event_impacts').update(next).eq('id', impactId);
+    if (error) console.warn('dismissCarePlanEventImpact:', error.message);
+  },
+  // Accepts (applying it to the plan) or dismisses one proposed change.
+  decideCarePlanEventChange: async (patientId, program, impactId, changeId, decision) => {
+    const key = carePlanKey(patientId, program.id);
+    const state = get().carePlanEventUpdates[key];
+    const impact = state?.impacts.find(i => i.id === impactId);
+    const change = impact?.changes.find(c => c.id === changeId);
+    if (!impact || !change || change.decision) return false;
+    if (decision === 'accepted') {
+      const event = state.events?.[impact.eventId];
+      let ok = true;
+      if (change.kind === 'goal_value') {
+        ok = !!(await get().saveGoalMeasurement(patientId, program.id, change.targetId, {
+          value: change.value ?? change.to, unit: change.unit || '', takenAt: event?.occurredAt,
+        }));
+      } else if (change.kind === 'status') {
+        ok = !!(await get().saveCarePlanLiveField(patientId, program, change.targetType, change.targetId, { status: change.to }));
+      } else if (change.kind === 'goal_target') {
+        ok = !!(await get().saveCarePlanLiveField(patientId, program, 'goal', change.targetId, { targetValue: change.to }));
+      } else if (change.kind === 'add_goal') {
+        ok = !!(await get().savePatientCarePlanGoal(patientId, program, { title: change.item?.title || change.to, status: 'Not Started' }));
+      } else if (change.kind === 'add_intervention') {
+        ok = !!(await get().savePatientCarePlanIntervention(patientId, program, { title: change.item?.title || change.to, kind: change.item?.kind || 'internal-task', goalId: change.item?.goalId || null, status: 'Not Started' }));
+      } else if (change.kind === 'add_barrier') {
+        ok = !!(await get().savePatientCarePlanBarrier(patientId, program, { title: change.item?.title || change.to, status: 'Not Started' }));
+      }
+      if (!ok) { get().showToast?.('Couldn’t apply the change'); return false; }
+    }
+    const actor = get().currentUserProfile?.name || null;
+    const changes = impact.changes.map(c => (c.id === changeId ? { ...c, decision, decidedBy: actor, decidedAt: new Date().toISOString() } : c));
+    const done = changes.every(c => c.decision);
+    const next = { changes, status: done ? 'resolved' : 'pending', resolved_at: done ? new Date().toISOString() : null, resolved_by: done ? actor : null };
+    set(s => ({
+      carePlanEventUpdates: {
+        ...s.carePlanEventUpdates,
+        [key]: {
+          ...s.carePlanEventUpdates[key],
+          impacts: (s.carePlanEventUpdates[key]?.impacts || []).map(i => (i.id === impactId
+            ? { ...i, changes, status: next.status, resolvedAt: next.resolved_at, resolvedBy: next.resolved_by } : i)),
+        },
+      },
+    }));
+    const { error } = await supabase.from('care_plan_event_impacts').update(next).eq('id', impactId);
+    if (error) console.warn('decideCarePlanEventChange:', error.message);
     return true;
   },
 
@@ -3707,23 +4938,25 @@ export const useAppStore = create((set, get) => ({
   },
   // The call note and the finished review are also logged to the plan's
   // activity (care_plan_audit), so the Activity Log shows them.
-  saveCarePlanReviewNote: async (patientId, program, note, clock) => {
+  // `details` (noteDetails): the note's "@" tags and "/" links.
+  saveCarePlanReviewNote: async (patientId, program, note, clock, details) => {
     const seconds = reviewSeconds(clock);
     const saved = await get().patchCarePlanReview(patientId, program, {
       call_note: note,
       ...(seconds != null ? { duration_seconds: seconds } : {}),
     });
     if (saved && note?.trim()) {
-      get().logCarePlanAudit(patientId, program, {
-        entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim(),
-      });
+      get().logCarePlanAudit(patientId, program, [
+        { entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim(), meta: noteMeta(details) },
+        ...noteLinkedRows(details),
+      ]);
     }
     return saved;
   },
   // clock: { startedAt, stoppedAt, baseSeconds } from the drawer's review
   // timer (baseSeconds: what the review had already run before this sitting),
   // and discussedCount (items still on the plan) so the log matches the drawer.
-  finishCarePlanReview: async (patientId, program, note, clock) => {
+  finishCarePlanReview: async (patientId, program, note, clock, details) => {
     const durationMs = clock?.startedAt ? (clock.stoppedAt ?? Date.now()) - clock.startedAt : 0;
     const seconds = reviewSeconds(clock);
     const before = get().carePlanReviews[carePlanKey(patientId, program.id)]?.open;
@@ -3735,7 +4968,10 @@ export const useAppStore = create((set, get) => ({
     if (saved) {
       const rows = [];
       if (note?.trim() && note.trim() !== (before?.callNote || '')) {
-        rows.push({ entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim() });
+        rows.push(
+          { entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim(), meta: noteMeta(details) },
+          ...noteLinkedRows(details),
+        );
       }
       const n = clock?.discussedCount ?? Object.keys(saved.discussed || {}).length;
       rows.push({
@@ -3743,6 +4979,10 @@ export const useAppStore = create((set, get) => ({
         detail: `${n} item${n === 1 ? '' : 's'} discussed${durationMs > 0 ? ` · ${Math.max(1, Math.round(durationMs / 60000))} min` : ''}`,
       });
       get().logCarePlanAudit(patientId, program, rows);
+      // "Next review only" template versions land now.
+      await get().applyPendingTemplateMigrations(patientId, program, 'review');
+      // So do clinical protocol versions approved with "Next review only".
+      await get().applyPendingProtocolMigrations(patientId, program);
     }
     return saved;
   },
@@ -3847,7 +5087,12 @@ export const useAppStore = create((set, get) => ({
     const key = carePlanKey(patientId, program.id);
     const planId = get().patientCarePlans[key]?.plan?.id;
     if (!planId) return null;
-    const { data, error } = await supabase.from('patient_care_plan_template_instances').insert({
+    // An episode ends on its own last day, not the goals' longest duration.
+    const episode = episodeOf(template);
+    const suggestedEnd = () => (episode
+      ? episodeEndsOn(startedAt, episode.days)
+      : templateEndsOn(template, get().carePlanGoals || [], startedAt));
+    const row = {
       plan_id: planId,
       template_id: template.id,
       template_name: template.name || '',
@@ -3857,9 +5102,27 @@ export const useAppStore = create((set, get) => ({
       started_at: startedAt ? startedAt.toISOString() : null,
       ends_on: endsOn !== undefined
         ? endsOn
-        : (startedAt ? templateEndsOn(template, get().carePlanGoals || [], startedAt) : null),
+        : (startedAt ? suggestedEnd() : null),
+      // Only sent for episodes, so ongoing templates apply before the episodic migration.
+      ...(episode ? { episodic: true } : {}),
       created_by: get().currentUserProfile?.name || null,
-    }).select().single();
+      // The IPA overlay it went on with, and who must sign because of it.
+      ...(template.overlayId ? { overlay_id: template.overlayId, signoff_route: template.signoffRoute || null } : {}),
+      // The category it went on with (withCategory tags the template).
+      ...(template.category ? { category_id: template.category.id, category_name: template.category.name } : {}),
+      // The version applied, so the plan keeps it when a newer one is published.
+      ...(() => {
+        const v = effectiveTemplateVersion(get().carePlanTemplateVersions?.[template.id] || [], todayIsoDate());
+        return v ? { template_version_id: v.id, template_version_number: v.versionNumber } : {};
+      })(),
+    };
+    const insert = (r) => supabase.from('patient_care_plan_template_instances').insert(r).select().single();
+    let { data, error } = await insert(row);
+    // Before the categories migration the run saves without its category.
+    if (error && /category_/.test(error.message || '') && row.category_id) {
+      const { category_id: _ci, category_name: _cn, ...rowWithoutCategory } = row;
+      ({ data, error } = await insert(rowWithoutCategory));
+    }
     if (error) { console.warn('startCarePlanTemplateInstance:', error.message); return null; }
     const instance = mapTemplateInstanceRow(data);
     get().patchCarePlanTemplateInstances(key, list => [...list, instance]);
@@ -3876,6 +5139,69 @@ export const useAppStore = create((set, get) => ({
       .update({ status: 'closed', ended_at: endedAt }).eq('id', active.id);
     if (error) { console.warn('closeCarePlanTemplateInstance:', error.message); return; }
     get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === active.id ? { ...i, status: 'closed', endedAt } : i)));
+    if (active.episodic) await get().resumeEpisodePausedPlans(patientId, active);
+  },
+
+  // A run's goals, interventions and barriers leave the live lists for the
+  // plan's history (tagged with the run), as when a template is reinstated or
+  // an episode ends. With `keepShared`, items another applied template also
+  // covers stay live: an episode ending must not take an ongoing template's
+  // goal with it. Returns the run's outcome ({ status, done, total }), or
+  // null when the items could not be moved.
+  retireCarePlanTemplateRun: async (patientId, program, template, run, { keepShared = false } = {}) => {
+    const key = carePlanKey(patientId, program.id);
+    const slice = get().patientCarePlans[key];
+    if (!slice) return null;
+    const libraryGoals = get().carePlanGoals || [];
+    let items = templateItems(template, slice, libraryGoals);
+    if (keepShared) {
+      const shared = new Set();
+      for (const id of slice.plan?.appliedTemplateIds || []) {
+        if (String(id) === String(template.id)) continue;
+        const other = (get().carePlanTemplates || []).find(t => String(t.id) === String(id));
+        if (!other) continue;
+        const o = templateItems(other, slice, libraryGoals);
+        [...o.goals, ...o.interventions, ...o.barriers].forEach(x => shared.add(x.id));
+      }
+      const own = list => list.filter(x => !shared.has(x.id));
+      items = { goals: own(items.goals), interventions: own(items.interventions), barriers: own(items.barriers) };
+    }
+    const outcome = instanceOutcome(items);
+    const retire = (table, list) => (list.length
+      ? supabase.from(table).update({ retired_instance_id: run.id }).in('id', list.map(x => x.id))
+      : Promise.resolve({ error: null }));
+    const results = await Promise.all([
+      retire('patient_care_plan_goals', items.goals),
+      retire('patient_care_plan_interventions', items.interventions),
+      retire('patient_care_plan_barriers', items.barriers),
+    ]);
+    const retireError = results.find(r => r.error)?.error;
+    if (retireError) { console.warn('retireCarePlanTemplateRun:', retireError.message); return null; }
+
+    const ids = new Set([...items.goals, ...items.interventions, ...items.barriers].map(x => x.id));
+    const tag = x => ({ ...x, retiredInstanceId: run.id });
+    set(s => {
+      const c = s.patientCarePlans[key];
+      if (!c) return {};
+      const r = c.retired || { goals: [], interventions: [], barriers: [] };
+      return {
+        patientCarePlans: {
+          ...s.patientCarePlans,
+          [key]: {
+            ...c,
+            goals: c.goals.filter(x => !ids.has(x.id)),
+            interventions: c.interventions.filter(x => !ids.has(x.id)),
+            barriers: (c.barriers || []).filter(x => !ids.has(x.id)),
+            retired: {
+              goals: [...r.goals, ...items.goals.map(tag)],
+              interventions: [...r.interventions, ...items.interventions.map(tag)],
+              barriers: [...r.barriers, ...items.barriers.map(tag)],
+            },
+          },
+        },
+      };
+    });
+    return outcome;
   },
 
   // Adding a template that is already on the plan. `mode` is 'extend' (same
@@ -3885,17 +5211,19 @@ export const useAppStore = create((set, get) => ({
   // suggestion from the template's longest goal duration.
   renewPatientCarePlanTemplate: async (patientId, program, templateId, mode, endsOn = null) => {
     const key = carePlanKey(patientId, program.id);
-    const template = (get().carePlanTemplates || []).find(t => String(t.id) === String(templateId));
+    const stored = (get().carePlanTemplates || []).find(t => String(t.id) === String(templateId));
     const slice = get().patientCarePlans[key];
-    if (!template || !slice?.plan) return false;
+    if (!stored || !slice?.plan) return false;
     const libraryGoals = get().carePlanGoals || [];
     const now = new Date();
-    const fail = () => { get().showToast(`Could not ${mode} "${template.name}"`); return false; };
+    const fail = () => { get().showToast(`Could not ${mode} "${stored.name}"`); return false; };
 
     let current = (slice.templateInstances || [])
       .find(i => String(i.templateId) === String(templateId) && i.status === 'active');
-    if (!current) current = await get().startCarePlanTemplateInstance(patientId, program, template, null);
+    if (!current) current = await get().startCarePlanTemplateInstance(patientId, program, stored, null);
     if (!current) return fail();
+    // Applying again keeps the run's category.
+    const template = withCategory(stored, current.categoryId);
     const instances = supabase.from('patient_care_plan_template_instances');
 
     if (mode === 'extend') {
@@ -3904,6 +5232,7 @@ export const useAppStore = create((set, get) => ({
       const { error } = await instances.update(patch).eq('id', current.id);
       if (error) { console.warn('renewPatientCarePlanTemplate:', error.message); return fail(); }
       get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === current.id ? { ...i, endsOn: newEnd, extendedAt: patch.extended_at } : i)));
+      if (current.episodic) await get().syncEpisodePausedPlans(current.pausedPlanIds, newEnd);
       // Anything of the template's that came off the plan since goes back on.
       await applyTemplateToPlan(get, patientId, program, template, libraryGoals);
       get().logCarePlanAudit(patientId, program, {
@@ -3912,18 +5241,8 @@ export const useAppStore = create((set, get) => ({
       });
       get().showToast(`"${template.name}" extended${newEnd ? ` to ${formatInstanceDate(newEnd)}` : ''}`);
     } else {
-      const items = templateItems(template, slice, libraryGoals);
-      const outcome = instanceOutcome(items);
-      const retire = (table, list) => (list.length
-        ? supabase.from(table).update({ retired_instance_id: current.id }).in('id', list.map(x => x.id))
-        : Promise.resolve({ error: null }));
-      const results = await Promise.all([
-        retire('patient_care_plan_goals', items.goals),
-        retire('patient_care_plan_interventions', items.interventions),
-        retire('patient_care_plan_barriers', items.barriers),
-      ]);
-      const retireError = results.find(r => r.error)?.error;
-      if (retireError) { console.warn('renewPatientCarePlanTemplate:', retireError.message); return fail(); }
+      const outcome = await get().retireCarePlanTemplateRun(patientId, program, template, current);
+      if (!outcome) return fail();
       const closed = {
         status: outcome.status, auto_closed: true, ended_at: now.toISOString(),
         done_count: outcome.done, total_count: outcome.total,
@@ -3931,33 +5250,14 @@ export const useAppStore = create((set, get) => ({
       const { error } = await instances.update(closed).eq('id', current.id);
       if (error) console.warn('renewPatientCarePlanTemplate:', error.message);
 
-      // The old items leave the live lists for the plan's history.
-      const ids = new Set([...items.goals, ...items.interventions, ...items.barriers].map(x => x.id));
-      const tag = x => ({ ...x, retiredInstanceId: current.id });
-      set(s => {
-        const c = s.patientCarePlans[key];
-        if (!c) return {};
-        const r = c.retired || { goals: [], interventions: [], barriers: [] };
-        return {
-          patientCarePlans: {
-            ...s.patientCarePlans,
-            [key]: {
-              ...c,
-              goals: c.goals.filter(x => !ids.has(x.id)),
-              interventions: c.interventions.filter(x => !ids.has(x.id)),
-              barriers: (c.barriers || []).filter(x => !ids.has(x.id)),
-              retired: {
-                goals: [...r.goals, ...items.goals.map(tag)],
-                interventions: [...r.interventions, ...items.interventions.map(tag)],
-                barriers: [...r.barriers, ...items.barriers.map(tag)],
-              },
-            },
-          },
-        };
-      });
-
       const next = await get().startCarePlanTemplateInstance(patientId, program, template, now, endsOn || undefined);
       if (next) await instances.update({ replaced_by: next.id }).eq('id', current.id);
+      // A new episode takes over the plans the last one paused, until its own end.
+      if (next?.episodic && current.pausedPlanIds?.length) {
+        await instances.update({ paused_plan_ids: current.pausedPlanIds }).eq('id', next.id);
+        get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === next.id ? { ...i, pausedPlanIds: current.pausedPlanIds } : i)));
+        await get().syncEpisodePausedPlans(current.pausedPlanIds, next.endsOn);
+      }
       get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === current.id
         ? { ...i, status: outcome.status, autoClosed: true, endedAt: closed.ended_at, doneCount: outcome.done, totalCount: outcome.total, replacedBy: next?.id || null }
         : i)));
@@ -3972,6 +5272,362 @@ export const useAppStore = create((set, get) => ({
       get().showToast(`"${template.name}" reinstated. The previous run is now marked ${label}.`);
     }
     get().refreshCarePlanDuplicates?.(patientId, program);
+    get().touchCarePlanModified(patientId, program.id);
+    return true;
+  },
+
+  // Moving a run to another of its template's categories (the switch
+  // suggestion). The run closes like a reinstated one; items only the old
+  // category had move to history with it, the new category's are added, and
+  // Common stays as it is. The new run keeps the old one's end date.
+  switchCarePlanTemplateCategory: async (patientId, program, templateId, categoryId, reason = '') => {
+    const key = carePlanKey(patientId, program.id);
+    const stored = (get().carePlanTemplates || []).find(t => String(t.id) === String(templateId));
+    const slice = get().patientCarePlans[key];
+    const current = (slice?.templateInstances || [])
+      .find(i => String(i.templateId) === String(templateId) && i.status === 'active');
+    const next = stored && withCategory(stored, categoryId);
+    if (!current || !next?.category || !slice?.plan) return false;
+    const libraryGoals = get().carePlanGoals || [];
+    const now = new Date();
+    const fail = () => { get().showToast(`Could not change the category of "${stored.name}"`); return false; };
+    const listsOf = t => ({ goals: t.goals, interventions: t.interventions, barriers: t.barriers });
+
+    // Plan rows the old category alone brought, by title; anything the new
+    // lists also account for stays on the plan.
+    const staying = templateItems(listsOf(next), slice, libraryGoals);
+    const stayIds = new Set([...staying.goals, ...staying.interventions, ...staying.barriers].map(x => x.id));
+    const found = templateItems(itemsLeaving(stored, current.categoryId, categoryId), slice, libraryGoals);
+    const leaving = {
+      goals: found.goals.filter(x => !stayIds.has(x.id)),
+      interventions: found.interventions.filter(x => !stayIds.has(x.id)),
+      barriers: found.barriers.filter(x => !stayIds.has(x.id)),
+    };
+    const outcome = instanceOutcome(templateItems(listsOf(withCategory(stored, current.categoryId)), slice, libraryGoals));
+    const retire = (table, list) => (list.length
+      ? supabase.from(table).update({ retired_instance_id: current.id }).in('id', list.map(x => x.id))
+      : Promise.resolve({ error: null }));
+    const results = await Promise.all([
+      retire('patient_care_plan_goals', leaving.goals),
+      retire('patient_care_plan_interventions', leaving.interventions),
+      retire('patient_care_plan_barriers', leaving.barriers),
+    ]);
+    const retireError = results.find(r => r.error)?.error;
+    if (retireError) { console.warn('switchCarePlanTemplateCategory:', retireError.message); return fail(); }
+    const instances = supabase.from('patient_care_plan_template_instances');
+    const closed = {
+      status: outcome.status, auto_closed: true, ended_at: now.toISOString(),
+      done_count: outcome.done, total_count: outcome.total,
+    };
+    const { error } = await instances.update(closed).eq('id', current.id);
+    if (error) { console.warn('switchCarePlanTemplateCategory:', error.message); return fail(); }
+
+    const ids = new Set([...leaving.goals, ...leaving.interventions, ...leaving.barriers].map(x => x.id));
+    const tag = x => ({ ...x, retiredInstanceId: current.id });
+    set((s) => {
+      const c = s.patientCarePlans[key];
+      if (!c) return {};
+      const r = c.retired || { goals: [], interventions: [], barriers: [] };
+      return {
+        patientCarePlans: {
+          ...s.patientCarePlans,
+          [key]: {
+            ...c,
+            goals: c.goals.filter(x => !ids.has(x.id)),
+            interventions: c.interventions.filter(x => !ids.has(x.id)),
+            barriers: (c.barriers || []).filter(x => !ids.has(x.id)),
+            retired: {
+              goals: [...r.goals, ...leaving.goals.map(tag)],
+              interventions: [...r.interventions, ...leaving.interventions.map(tag)],
+              barriers: [...r.barriers, ...leaving.barriers.map(tag)],
+            },
+          },
+        },
+      };
+    });
+
+    const started = await get().startCarePlanTemplateInstance(patientId, program, next, now, current.endsOn ?? undefined);
+    if (started) await instances.update({ replaced_by: started.id }).eq('id', current.id);
+    get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === current.id
+      ? { ...i, status: outcome.status, autoClosed: true, endedAt: closed.ended_at, doneCount: outcome.done, totalCount: outcome.total, replacedBy: started?.id || null }
+      : i)));
+    await applyTemplateToPlan(get, patientId, program, next, libraryGoals);
+
+    const moved = ids.size;
+    get().logCarePlanAudit(patientId, program, {
+      entityType: 'template', entityId: templateId, action: 'recategorized',
+      summary: stored.name,
+      detail: `${current.categoryName || 'Common only'} → ${next.category.name}${reason ? ` (${reason})` : ''}. ${moved} item${moved === 1 ? '' : 's'} moved to history.`,
+    });
+    get().showToast(`"${stored.name}" now follows ${next.category.name}`);
+    get().refreshCarePlanDuplicates?.(patientId, program);
+    get().touchCarePlanModified(patientId, program.id);
+    return true;
+  },
+
+  // Declining a category switch for a run: not offered again for that category.
+  dismissCarePlanCategorySuggestion: async (patientId, program, instanceId, categoryId) => {
+    const key = carePlanKey(patientId, program.id);
+    get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === instanceId ? { ...i, dismissedCategoryId: categoryId } : i)));
+    const { error } = await supabase.from('patient_care_plan_template_instances')
+      .update({ dismissed_category_id: categoryId }).eq('id', instanceId);
+    // Before the migration the dismissal lasts for this session only.
+    if (error) console.warn('dismissCarePlanCategorySuggestion:', error.message);
+  },
+
+  // ── Episodes (care_plan_episodic_templates migration) ──
+  // An episodic template's run is an episode: day 1 to its last day (or until
+  // closed). While it runs it can pause the patient's other care plans
+  // (pause_reason 'episode'); the run's paused_plan_ids says which, so only
+  // those resume when it ends. Each paused plan also carries resume_on = the
+  // day after the episode with auto_resume, so it comes back on its own even
+  // if nobody opens the episode's plan.
+
+  // The patient's other care plans an episode could pause: every plan but this
+  // program's, without one that is itself running an episode.
+  fetchEpisodePausablePlans: async (patientId, excludeProgramId) => {
+    let query = supabase.from('patient_care_plans')
+      .select('id, program_id, program_code, status, pause_reason')
+      .eq('patient_id', patientId);
+    if (excludeProgramId) query = query.neq('program_id', excludeProgramId);
+    const { data, error } = await query;
+    if (error) { console.warn('fetchEpisodePausablePlans:', error.message); return []; }
+    const plans = data || [];
+    if (!plans.length) return [];
+    const { data: episodes, error: epError } = await supabase.from('patient_care_plan_template_instances')
+      .select('plan_id')
+      .in('plan_id', plans.map(p => p.id))
+      .eq('episodic', true)
+      .eq('status', 'active');
+    if (epError) console.warn('fetchEpisodePausablePlans:', epError.message);
+    const inEpisode = new Set((episodes || []).map(e => e.plan_id));
+    const programs = get().careProgramsByPatient?.[patientId] || [];
+    // Other episodes never pause, and a closed enrollment has nothing to pause.
+    const isOngoing = p => !EPISODE_PROGRAM_CODES.includes(p.program_code)
+      && !programs.some(x => String(x.id) === String(p.program_id) && (x.closedAt || ['Completed', 'Discontinued'].includes(x.status)));
+    return plans.filter(p => !inEpisode.has(p.id) && isOngoing(p)).map(p => {
+      const prog = programs.find(x => String(x.id) === String(p.program_id));
+      return {
+        planId: p.id,
+        programId: p.program_id,
+        programCode: p.program_code || prog?.code || '',
+        programName: prog?.name || p.program_code || 'Care plan',
+        paused: p.status === 'paused',
+        pausedForEpisode: p.status === 'paused' && p.pause_reason === EPISODE_PAUSE_REASON,
+      };
+    });
+  },
+
+  // Pauses the picked plans for an episode run and records which on the run.
+  // A plan already paused is left as it is (and not resumed by the episode).
+  pauseCarePlansForEpisode: async (patientId, program, run, plans) => {
+    const paused = [];
+    for (const p of plans) {
+      if (p.paused) continue;
+      const other = { id: p.programId, code: p.programCode };
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
+      await get().fetchPatientCarePlan(patientId, p.programId);
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
+      const ok = await get().pauseCarePlan(patientId, other, {
+        reason: EPISODE_PAUSE_REASON,
+        note: episodePauseNote(run.templateName),
+        pausedOn: isoDayString(new Date()),
+        resumeOn: dayAfter(run.endsOn),
+        autoResume: !!run.endsOn,
+      });
+      if (ok) paused.push(p.planId);
+    }
+    if (!paused.length) return [];
+    const key = carePlanKey(patientId, program.id);
+    const { error } = await supabase.from('patient_care_plan_template_instances')
+      .update({ paused_plan_ids: paused }).eq('id', run.id);
+    if (error) console.warn('pauseCarePlansForEpisode:', error.message);
+    get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === run.id ? { ...i, pausedPlanIds: paused } : i)));
+    return paused;
+  },
+
+  // An episode's end date moved: its paused plans now resume the day after.
+  // Only plans still paused for an episode change; one someone re-paused for
+  // another reason keeps that pause.
+  syncEpisodePausedPlans: async (planIds, endsOn) => {
+    if (!planIds?.length) return;
+    const resumeOn = dayAfter(endsOn);
+    const { error } = await supabase.from('patient_care_plans')
+      .update({ resume_on: resumeOn, auto_resume: !!resumeOn, updated_at: new Date().toISOString() })
+      .in('id', planIds).eq('status', 'paused').eq('pause_reason', EPISODE_PAUSE_REASON);
+    if (error) { console.warn('syncEpisodePausedPlans:', error.message); return; }
+    const ids = new Set(planIds);
+    set(s => {
+      const next = { ...s.patientCarePlans };
+      let changed = false;
+      for (const [k, c] of Object.entries(next)) {
+        if (!c?.plan || !ids.has(c.plan.id) || c.plan.pause?.reason !== EPISODE_PAUSE_REASON) continue;
+        next[k] = { ...c, plan: { ...c.plan, pause: { ...c.plan.pause, resumeOn, autoResume: !!resumeOn } } };
+        changed = true;
+      }
+      return changed ? { patientCarePlans: next } : {};
+    });
+  },
+
+  // The episode is over: resume the plans it paused that are still paused for it.
+  resumeEpisodePausedPlans: async (patientId, run) => {
+    const ids = run?.pausedPlanIds || [];
+    if (!ids.length) return;
+    const { data, error } = await supabase.from('patient_care_plans')
+      .select('id, program_id, program_code, status, pause_reason').in('id', ids);
+    if (error) { console.warn('resumeEpisodePausedPlans:', error.message); return; }
+    const still = (data || []).filter(p => p.status === 'paused' && p.pause_reason === EPISODE_PAUSE_REASON);
+    for (const p of still) {
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
+      await get().fetchPatientCarePlan(patientId, p.program_id);
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
+      await get().resumeCarePlan(patientId, { id: p.program_id, code: p.program_code }, { auto: true });
+    }
+  },
+
+  // Applying an episodic template: the run starts now (applyPatientCarePlanTemplates
+  // already recorded it); this sets the end the user picked and pauses the plans they chose.
+  startCarePlanEpisode: async (patientId, program, templateId, { endsOn, pausePlans = [] }) => {
+    const key = carePlanKey(patientId, program.id);
+    const run = (get().patientCarePlans[key]?.templateInstances || [])
+      .find(i => String(i.templateId) === String(templateId) && i.status === 'active');
+    if (!run) return false;
+    let current = run;
+    if ((endsOn || null) !== (run.endsOn || null)) {
+      const { error } = await supabase.from('patient_care_plan_template_instances')
+        .update({ ends_on: endsOn || null }).eq('id', run.id);
+      if (error) console.warn('startCarePlanEpisode:', error.message);
+      else {
+        current = { ...run, endsOn: endsOn || null };
+        get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === run.id ? current : i)));
+      }
+    }
+    const paused = await get().pauseCarePlansForEpisode(patientId, program, current, pausePlans);
+    get().logCarePlanAudit(patientId, program, {
+      entityType: 'template', entityId: templateId, action: 'episode_started',
+      summary: current.templateName,
+      detail: [
+        current.endsOn ? `Ends ${formatInstanceDate(current.endsOn)}` : 'Runs until closed',
+        paused.length ? `Paused ${paused.length} other care plan${paused.length === 1 ? '' : 's'}` : '',
+      ].filter(Boolean).join(' · '),
+    });
+    return true;
+  },
+
+  // An episodic template that runs as its own program (episodeOf().programCode):
+  // enrolls the patient in that program, or uses their open enrollment in it,
+  // applies the template to that program's plan and starts the episode there.
+  // Returns the program, or null.
+  startEpisodeProgram: async (patientId, template, { endsOn, pausePlans = [] }) => {
+    const code = episodeOf(template)?.programCode;
+    if (!code) return null;
+    await get().fetchCareProgramsForPatient(patientId);
+    const isOpen = p => p.code === code && !p.closedAt && !['Completed', 'Discontinued'].includes(p.status);
+    let program = (get().careProgramsByPatient[patientId] || []).find(isOpen);
+    if (!program) {
+      get().addCareProgram(patientId, { code, name: CARE_PROGRAM_CATALOG.find(c => c.code === code)?.name || code });
+      program = (get().careProgramsByPatient[patientId] || []).find(isOpen);
+    }
+    if (!program) { get().showToast(`Could not enroll the patient in ${code}`); return null; }
+    await get().fetchPatientCarePlan(patientId, program.id);
+    const applied = get().patientCarePlans[carePlanKey(patientId, program.id)]?.plan?.appliedTemplateIds || [];
+    if (!applied.map(String).includes(String(template.id))) {
+      const ok = await get().applyPatientCarePlanTemplates(patientId, program, [...applied, template.id], undefined, {}, { quiet: true });
+      if (ok === false) return null;
+    }
+    const started = await get().startCarePlanEpisode(patientId, program, template.id, { endsOn, pausePlans });
+    if (!started) return null;
+    if (endsOn) get().updateCareProgram(patientId, program.id, { plannedEndDate: toProgramDate(endsOn) });
+    return program;
+  },
+
+  // A new last day for a running episode (and its paused plans' resume date).
+  extendCarePlanEpisode: async (patientId, program, runId, endsOn) => {
+    const key = carePlanKey(patientId, program.id);
+    const run = (get().patientCarePlans[key]?.templateInstances || []).find(i => i.id === runId);
+    if (!run || run.status !== 'active') return false;
+    const extendedAt = new Date().toISOString();
+    const { error } = await supabase.from('patient_care_plan_template_instances')
+      .update({ ends_on: endsOn || null, extended_at: extendedAt }).eq('id', runId);
+    if (error) {
+      console.warn('extendCarePlanEpisode:', error.message);
+      get().showToast('Could not change the episode end date');
+      return false;
+    }
+    get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === runId ? { ...i, endsOn: endsOn || null, extendedAt } : i)));
+    await get().syncEpisodePausedPlans(run.pausedPlanIds, endsOn);
+    get().logCarePlanAudit(patientId, program, {
+      entityType: 'template', entityId: run.templateId, action: 'episode_extended',
+      summary: run.templateName,
+      detail: endsOn ? `Now ends ${formatInstanceDate(endsOn)}` : 'Now runs until closed',
+    });
+    get().showToast(endsOn
+      ? `"${run.templateName}" now ends ${formatInstanceDate(endsOn)}`
+      : `"${run.templateName}" now runs until you close it`);
+    get().touchCarePlanModified(patientId, program.id);
+    return true;
+  },
+
+  // Ends an episode: `reason` is 'episode_end' (its last day passed) or
+  // 'ended_early' (someone closed it). Its items move to the plan's history,
+  // the template comes off the plan (the ended run stays viewable on the
+  // template strip), and the plans it paused resume.
+  endCarePlanEpisode: async (patientId, program, runId, { reason = 'ended_early' } = {}) => {
+    const key = carePlanKey(patientId, program.id);
+    const slice = get().patientCarePlans[key];
+    const run = (slice?.templateInstances || []).find(i => i.id === runId);
+    if (!slice?.plan || !run || run.status !== 'active') return false;
+    const auto = reason === 'episode_end';
+    const template = (get().carePlanTemplates || []).find(t => String(t.id) === String(run.templateId))
+      || { id: run.templateId, name: run.templateName, goals: [], interventions: [], barriers: [] };
+
+    // Claim the run first: when several views open the plan at once, only one
+    // closes it.
+    const endedAt = new Date().toISOString();
+    const instances = supabase.from('patient_care_plan_template_instances');
+    const { data: claimed, error } = await instances
+      .update({ status: 'closed', auto_closed: true, ended_at: endedAt, close_reason: reason })
+      .eq('id', runId).eq('status', 'active').select('id');
+    if (error) {
+      console.warn('endCarePlanEpisode:', error.message);
+      if (!auto) get().showToast('Could not end the episode');
+      return false;
+    }
+    if (!claimed?.length) return false;
+
+    const outcome = await get().retireCarePlanTemplateRun(patientId, program, template, run, { keepShared: true });
+    if (outcome) {
+      await supabase.from('patient_care_plan_template_instances')
+        .update({ status: outcome.status, done_count: outcome.done, total_count: outcome.total }).eq('id', runId);
+    }
+    get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === runId ? {
+      ...i, status: outcome?.status || 'closed', autoClosed: true, endedAt, closeReason: reason,
+      doneCount: outcome?.done ?? null, totalCount: outcome?.total ?? null,
+    } : i)));
+    const ids = (slice.plan.appliedTemplateIds || []).filter(id => String(id) !== String(run.templateId));
+    await get().setPatientCarePlanAppliedTemplates(patientId, program, ids);
+    await get().resumeEpisodePausedPlans(patientId, run);
+
+    get().logCarePlanAudit(patientId, program, {
+      entityType: 'template', entityId: run.templateId, action: 'episode_ended',
+      summary: run.templateName,
+      detail: [
+        auto ? `Ended on its last day (${formatInstanceDate(run.endsOn)})` : 'Ended early',
+        outcome ? `${outcome.done} of ${outcome.total} goals and interventions met` : '',
+        run.pausedPlanIds?.length ? 'Paused care plans resumed' : '',
+      ].filter(Boolean).join(' · '),
+    });
+    // An episode that ran as its own program ends that enrollment too.
+    if (EPISODE_PROGRAM_CODES.includes(program.code) && episodeOf(template)?.programCode === program.code) {
+      await get().fetchCareProgramsForPatient(patientId);
+      const enrolled = (get().careProgramsByPatient[patientId] || []).find(p => String(p.id) === String(program.id));
+      if (enrolled && !enrolled.closedAt) {
+        get().closeCareProgramInstance(patientId, program.id, {
+          reason: 'other', status: 'Completed', note: auto ? 'Episode ended on its last day' : 'Episode ended early',
+        });
+      }
+    }
+    if (!auto) get().showToast(`"${run.templateName}" episode ended`);
     get().touchCarePlanModified(patientId, program.id);
     return true;
   },
@@ -4000,6 +5656,10 @@ export const useAppStore = create((set, get) => ({
   carePlanBulkMode: false,
   toggleCarePlanBulkMode: () => set(s => ({ carePlanBulkMode: !s.carePlanBulkMode })),
   setCarePlanBulkMode: (on) => set({ carePlanBulkMode: on }),
+  // 'tables' lists goals, interventions and barriers apart; 'linkage' nests
+  // them under their goals. Switched from the content header's More menu.
+  carePlanLayout: 'tables',
+  setCarePlanLayout: (layout) => set({ carePlanLayout: layout }),
   // Care plan search text and filter-bar visibility. Same split as bulk
   // mode: the Search / Filter buttons live in the content header, and
   // CarePlanView filters the GBI tables with them.
@@ -4050,11 +5710,11 @@ export const useAppStore = create((set, get) => ({
 
   // ── Care Plan audit (History) ──
   // Append-only trail in care_plan_audit (roadmap #9). Writes are
-  // fire-and-forget — an audit failure must never block the user's action.
+  // fire-and-forget: an audit failure must never block the user's action.
   patientCarePlanAudit: {},        // { [key]: entries[] }
   patientCarePlanAuditLoading: {}, // { [key]: bool }
 
-  // Accepts one entry or a list — a save that touched several fields logs a
+  // Accepts one entry or a list, a save that touched several fields logs a
   // row per field so History can show each change on its own line. Awaitable,
   // so a caller that needs its rows ordered (sign-off) can sequence them;
   // callers that don't care stay fire-and-forget.
@@ -4062,13 +5722,69 @@ export const useAppStore = create((set, get) => ({
   // it already carries: those writes restore what should have been there, so
   // they must not read as care decisions in History.
   carePlanAuditSuppressed: false,
+  // ── GBI status reasons (gbi_status_history_migration.sql, #62) ──
+  // A status change asks for a reason first: the caller awaits
+  // requestGbiStatusReason({ items: [{ type, id, title, from }], to, source })
+  // and gets { reason, note } or null when cancelled. GbiStatusReasonDialog
+  // renders the open request.
+  gbiStatusReasonRequest: null,
+  requestGbiStatusReason: ({ items, to, source = 'manual' }) => new Promise((resolve) => {
+    get().gbiStatusReasonRequest?.resolve(null);
+    set({ gbiStatusReasonRequest: { items, to, source, resolve } });
+  }),
+  resolveGbiStatusReason: (result) => {
+    const req = get().gbiStatusReasonRequest;
+    set({ gbiStatusReasonRequest: null });
+    if (!req) return;
+    if (result) {
+      for (const it of req.items) {
+        pendingStatusReasons.set(String(it.id), { reason: result.reason || null, note: result.note || null, source: req.source, at: Date.now() });
+      }
+    }
+    req.resolve(result);
+  },
+  // Records a reason without asking, for a status the app sets as part of
+  // another action (e.g. completing an assessment goal sets it to Met).
+  presetGbiStatusReason: (ids, { reason, note = null, source = 'manual' }) => {
+    for (const id of ids) pendingStatusReasons.set(String(id), { reason, note, source, at: Date.now() });
+  },
+  // Writes a gbi_status_history row for each status change in an audit batch.
+  recordGbiStatusHistory: (patientId, program, entries, actor) => {
+    const rows = entries
+      .filter(e => e.action === 'status_changed' && ['goal', 'intervention', 'barrier'].includes(e.entityType) && e.entityId != null)
+      .map((e) => {
+        const id = String(e.entityId);
+        const pending = pendingStatusReasons.get(id);
+        if (pending) pendingStatusReasons.delete(id);
+        const fresh = pending && Date.now() - pending.at < 120000 ? pending : null;
+        const [from, to] = e.history ? [e.history.from, e.history.to] : String(e.detail || '').split(': ').pop().split(' → ');
+        if (!to) return null;
+        return {
+          patient_id: String(patientId), program_id: String(program.id),
+          entity_type: e.entityType, entity_id: id, entity_title: e.summary || '',
+          from_status: from || null, to_status: to,
+          reason: fresh?.reason ?? e.history?.reason ?? null, note: fresh?.note ?? null,
+          source: fresh?.source || e.history?.source || 'manual',
+          changed_by: e.history?.source === 'automation' ? 'Automations' : actor,
+        };
+      })
+      .filter(Boolean);
+    if (!rows.length) return;
+    supabase.from('gbi_status_history').insert(rows).then(({ error }) => {
+      // Until the migration has run there is no table: the change itself still saves.
+      if (error && !/does not exist|schema cache|42P01|PGRST205/i.test(`${error.code} ${error.message}`)) {
+        console.warn('recordGbiStatusHistory:', error.message);
+      }
+    });
+  },
   logCarePlanAudit: async (patientId, program, entry) => {
     if (get().carePlanAuditSuppressed) return true;
     if (!patientId || !program?.id || !entry) return false;
     const list = (Array.isArray(entry) ? entry : [entry]).filter(Boolean);
     if (list.length === 0) return false;
     const actor = get().currentUserProfile?.name || null;
-    return supabase.from('care_plan_audit').insert(list.map(e => ({
+    get().recordGbiStatusHistory(patientId, program, list, actor);
+    const rows = list.map(e => ({
       patient_id: patientId,
       program_id: program.id,
       program_code: program.code || null,
@@ -4078,7 +5794,14 @@ export const useAppStore = create((set, get) => ({
       summary: e.summary || '',
       detail: e.detail || '',
       actor,
-    }))).select().then(({ data, error }) => {
+      // Only sent when set, so a database without the `meta` column
+      // (care_plan_audit_meta_migration.sql) keeps saving every other row.
+      ...(e.meta ? { meta: e.meta } : {}),
+    }));
+    const insert = payload => supabase.from('care_plan_audit').insert(payload).select();
+    return insert(rows).then(res => (res.error && rows.some(r => r.meta) && /meta/.test(res.error.message || '')
+      ? insert(rows.map(r => { const { meta, ...rest } = r; void meta; return rest; }))
+      : res)).then(({ data, error }) => {
       if (error) { console.warn('logCarePlanAudit:', error.message); return false; }
       const key = carePlanKey(patientId, program.id);
       const mapped = (data || []).map(mapCarePlanAuditRow).reverse();
@@ -4099,7 +5822,8 @@ export const useAppStore = create((set, get) => ({
     const { data, error } = await supabase
       .from('care_plan_audit').select('*')
       .eq('patient_id', patientId).eq('program_id', programId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(500);
     if (error) console.warn('fetchCarePlanAudit:', error.message);
     set(s => ({
       patientCarePlanAudit: { ...s.patientCarePlanAudit, [key]: (data || []).map(mapCarePlanAuditRow) },
@@ -4117,8 +5841,8 @@ export const useAppStore = create((set, get) => ({
     set(s => ({ patientCarePlanVersionsLoading: { ...s.patientCarePlanVersionsLoading, [key]: true } }));
     // Read by plan, the way version numbers are assigned. Reading by patient
     // instead loses rows whose patient_id has since moved (the member_id
-    // re-identification did exactly that), while the numbering — which counts
-    // by plan_id — keeps climbing past them, so the list opens at v3.
+    // re-identification did exactly that), while the numbering, which counts
+    // by plan_id: keeps climbing past them, so the list opens at v3.
     // The header asks for versions before the plan is loaded, so the id is
     // looked up when the cache has none rather than silently falling back.
     let planId = get().patientCarePlans[key]?.plan?.id || null;
@@ -4172,11 +5896,54 @@ export const useAppStore = create((set, get) => ({
   },
 
   // Sign the plan: snapshot a version, stamp signed_by/at, and audit it.
+  /**
+   * Create the tasks this plan's task templates are due to spawn
+   * (care_plan_task_templates migration), then pull the links and the new
+   * tasks into the store. Silent when the migration hasn't run.
+   */
+  spawnCarePlanTasks: async (patientId, program) => {
+    const key = carePlanKey(patientId, program.id);
+    const planId = get().patientCarePlans[key]?.plan?.id;
+    if (!planId) return 0;
+    const { data: made, error } = await supabase.rpc('spawn_care_plan_tasks', { p_plan_id: planId });
+    if (error) { console.warn('spawnCarePlanTasks:', error.message); return 0; }
+    if (!made) return 0;
+    const { data: links } = await supabase.from('patient_care_plan_interventions')
+      .select('id, task_id, assignee_name, assignee_initials').eq('plan_id', planId).not('task_id', 'is', null);
+    const byId = new Map((links || []).map(l => [l.id, l]));
+    set(s => {
+      const c = s.patientCarePlans[key];
+      if (!c) return {};
+      const interventions = (c.interventions || []).map(i => {
+        const l = byId.get(i.id);
+        return l ? { ...i, taskId: l.task_id, assignee: { name: l.assignee_name || 'Unassigned', initials: l.assignee_initials || '' } } : i;
+      });
+      return { patientCarePlans: { ...s.patientCarePlans, [key]: { ...c, interventions } } };
+    });
+    if (get().tasksDidFetch) {
+      const known = new Set(get().tasks.map(t => t.id));
+      const ids = (links || []).map(l => l.task_id).filter(id => !known.has(id));
+      if (ids.length) {
+        const { data: rows } = await supabase.from('tasks').select('*').in('id', ids);
+        if (rows?.length) set(s => ({ tasks: [...s.tasks, ...rows.map(t => ({ ...t, hedisMemberId: null, hedisGapCodes: [] }))] }));
+      }
+    }
+    get().showToast(`${made} task${made === 1 ? '' : 's'} created from the care plan`);
+    return made;
+  },
+
   signCarePlan: async (patientId, program, note = '') => {
     const key = carePlanKey(patientId, program.id);
     const cur = get().patientCarePlans[key];
     const planId = cur?.plan?.id;
     if (!planId) { get().showToast('Add a goal before signing.'); return null; }
+    // An IPA overlay can route sign-off to specific roles or people.
+    const blocked = blockedSignoffs(cur.templateInstances, get().currentUserProfile);
+    if (blocked.length) {
+      const b = blocked[0];
+      get().showToast(`Only ${b.label} can sign this care plan (${b.templateName}${b.ipaName ? `, ${b.ipaName} sign-off route` : ''}).`);
+      return null;
+    }
     // A signed plan with nothing changed since is already that version, so
     // signing again (Share does) must not cut an identical one.
     if (cur.plan.signedAt) {
@@ -4200,6 +5967,8 @@ export const useAppStore = create((set, get) => ({
       const c = s.patientCarePlans[key];
       return c ? { patientCarePlans: { ...s.patientCarePlans, [key]: { ...c, plan: { ...c.plan, signedBy: name, signedAt, updatedAt: signedAt } } } } : {};
     });
+    // "Care Plan Signed" is the default task creation trigger.
+    get().spawnCarePlanTasks(patientId, program);
     // Care Plan Status on the SNP worklist is derived from the plan's signed
     // state, so reflect the signature there immediately (the projection on next
     // load would too, but this keeps an open worklist in sync).
@@ -4208,12 +5977,12 @@ export const useAppStore = create((set, get) => ({
         snpWorklistMembers: (s.snpWorklistMembers || []).map(m => {
           if (m.patientId !== patientId) return m;
           if (m.programId && m.programId !== program.id) return m;
-          return { ...m, carePlanStatus: 'Signed' };
+          return { ...m, carePlanStatus: m.carePlanStatus === 'On Hold' ? 'On Hold' : 'Signed' };
         }),
       }));
     }
     // Signing is what cuts a version, so the templates this version carries are
-    // recorded here — added ones with the goals / interventions / barriers
+    // recorded here: added ones with the goals / interventions / barriers
     // sitting under them, removed ones by name. Logged before the signature so
     // History reads them as part of the version that signature closes.
     const slice = get().patientCarePlans[key];
@@ -4264,7 +6033,7 @@ export const useAppStore = create((set, get) => ({
 
   // "Send for Review" from the care-plan Sign menu. Fans out to three
   // side-effects so the request is visible everywhere a reviewer looks:
-  //   1. Persist a `plan/review_requested` audit entry — this is the
+  //   1. Persist a `plan/review_requested` audit entry: this is the
   //      source of truth the header derives its warning state from.
   //   2. Create a task for the reviewer (goes to Supabase) and register
   //      it under the program so it lands in the Program Related Tasks
@@ -4316,7 +6085,7 @@ export const useAppStore = create((set, get) => ({
     });
     if (task && program?.code) get().addProgramTask?.(program.code, task);
 
-    // 3. Notify the reviewer — persisted rows land via realtime for the
+    // 3. Notify the reviewer: persisted rows land via realtime for the
     //    other session; the ephemeral fallback fires in this tab so the
     //    sender also sees a confirmation.
     get().addNotification?.({
@@ -4330,29 +6099,42 @@ export const useAppStore = create((set, get) => ({
     return task;
   },
 
-  // Post-sign maintenance note — recorded without editing the plan (roadmap #36).
+  // Post-sign maintenance note: recorded without editing the plan (roadmap #36).
   // Goal Details also uses this for per-goal notes; those rows stay editable
   // so the Figma Edit / Delete actions can persist.
   addCarePlanNote: async (patientId, program, note, meta = {}) => {
     if (!note?.trim()) return;
-    get().logCarePlanAudit(patientId, program, {
-      entityType: meta.entityType || 'plan',
-      entityId: meta.entityId,
-      action: 'note',
-      summary: meta.summary || 'Note added',
-      detail: note.trim(),
-    });
+    get().logCarePlanAudit(patientId, program, [
+      {
+        entityType: meta.entityType || 'plan',
+        entityId: meta.entityId,
+        action: 'note',
+        summary: meta.summary || 'Note added',
+        detail: note.trim(),
+        meta: noteMeta(meta.details),
+      },
+      ...noteLinkedRows({ ...meta.details, text: note.trim() }),
+    ]);
     get().showToast('Note added');
   },
 
-  updateCarePlanNote: async (patientId, programId, id, detail) => {
+  // `program` and `details` (noteDetails) are passed when the edit can add
+  // "/" links: a newly linked item gets its note_linked row.
+  updateCarePlanNote: async (patientId, programId, id, detail, { program, details } = {}) => {
     if (!id || !detail?.trim()) return;
     const key = carePlanKey(patientId, programId);
     const prev = get().patientCarePlanAudit[key] || [];
-    const { data, error } = await supabase.from('care_plan_audit')
+    const before = prev.find(e => e.id === id);
+    const meta = noteMeta(details);
+    const update = payload => supabase.from('care_plan_audit')
       // Call notes (Review care plan drawer) are edited the same way.
-      .update({ detail: detail.trim() }).eq('id', id).in('action', ['note', 'call_note']).select().single();
+      .update(payload).eq('id', id).in('action', ['note', 'call_note']).select().single();
+    let { data, error } = await update({ detail: detail.trim(), ...(meta ? { meta } : {}) });
+    if (error && meta && /meta/.test(error.message || '')) ({ data, error } = await update({ detail: detail.trim() }));
     if (error) { console.warn('updateCarePlanNote:', error.message); get().showToast('Could not update note'); return; }
+    const linked = new Set((before?.meta?.links || []).map(l => `${l.kind}:${l.id}`));
+    const added = (details?.links || []).filter(l => !linked.has(`${l.kind}:${l.id}`));
+    if (program && added.length) get().logCarePlanAudit(patientId, program, noteLinkedRows({ ...details, links: added }));
     const mapped = mapCarePlanAuditRow(data);
     set(s => ({
       patientCarePlanAudit: {
@@ -4652,7 +6434,7 @@ export const useAppStore = create((set, get) => ({
   toggleCarePlanFavorite: async (templateId) => {
     const userId = await get()._resolveWorklistUser();
     const wasFav = get().carePlanFavorites.includes(templateId);
-    // Optimistic — the star flips immediately; revert on failure.
+    // Optimistic: the star flips immediately; revert on failure.
     set(s => ({
       carePlanFavorites: wasFav
         ? s.carePlanFavorites.filter(id => id !== templateId)
@@ -4673,187 +6455,11 @@ export const useAppStore = create((set, get) => ({
     }
   },
 
-  // ── Automation Rules (Settings > Automation Rules; automation_rules migration) ──
-  // Account-level auto-apply rules evaluated at care program enrollment
-  // (runAutoApplyRules, from addCareProgram). The engine is pure:
-  // features/settings/automation-rules/lib/automationRules.js.
-  automationRules: [],
-  automationRulesStatus: 'idle', // 'idle' | 'loading' | 'ready' | 'missing'
-  automationRuleRuns: [],
-  fetchAutomationRules: async () => {
-    set({ automationRulesStatus: 'loading' });
-    const { data, error } = await supabase.from('automation_rules').select('*')
-      .order('sort_order', { ascending: true }).order('created_at', { ascending: true });
-    if (error) {
-      const missing = error.code === '42P01' || error.code === 'PGRST205';
-      if (!missing) console.warn('fetchAutomationRules:', error.message);
-      set({ automationRules: [], automationRulesStatus: missing ? 'missing' : 'ready' });
-      return [];
-    }
-    const rules = (data || []).map(mapAutomationRuleRow);
-    set({ automationRules: rules, automationRulesStatus: 'ready' });
-    return rules;
-  },
-  fetchAutomationRuleRuns: async () => {
-    const { data, error } = await supabase.from('automation_rule_runs').select('*')
-      .order('created_at', { ascending: false }).limit(100);
-    if (error) { set({ automationRuleRuns: [] }); return; }
-    set({ automationRuleRuns: (data || []).map(r => ({
-      id: r.id, ruleId: r.rule_id, patientId: r.patient_id, programCode: r.program_code,
-      matched: !!r.matched, reasons: Array.isArray(r.reasons) ? r.reasons : [],
-      templateIds: r.template_ids || [], taskId: r.task_id || null, createdAt: r.created_at,
-    })) });
-  },
-  saveAutomationRule: async (values, id = null) => {
-    const actor = get().currentUserProfile?.name || null;
-    const row = {
-      name: values.name.trim(),
-      description: (values.description || '').trim(),
-      enabled: values.enabled !== false,
-      program_codes: values.programCodes || [],
-      match: values.match === 'any' ? 'any' : 'all',
-      conditions: values.conditions || [],
-      template_ids: values.templateIds || [],
-      reviewer: values.reviewer?.name ? { id: values.reviewer.id || null, name: values.reviewer.name } : null,
-      updated_by: actor,
-      updated_at: new Date().toISOString(),
-    };
-    const q = id
-      ? supabase.from('automation_rules').update(row).eq('id', id)
-      : supabase.from('automation_rules').insert({ ...row, created_by: actor, sort_order: get().automationRules.length });
-    const { data, error } = await q.select().single();
-    if (error) {
-      console.warn('saveAutomationRule:', error.message);
-      get().showToast(/automation_rules/.test(error.message || '') && /exist/.test(error.message || '')
-        ? 'Automation rules need the automation rules migration'
-        : 'Could not save the rule');
-      return null;
-    }
-    const rule = mapAutomationRuleRow(data);
-    set(s => ({ automationRules: id ? s.automationRules.map(r => (r.id === id ? rule : r)) : [...s.automationRules, rule] }));
-    return rule;
-  },
-  // Forms an assessment condition can point at (id + name only).
+  // Forms a clinical criteria assessment answer can point at (id + name only).
   fetchAssessmentFormOptions: async () => {
     const { data, error } = await supabase.from('forms').select('id, name').order('name').limit(300);
     if (error) { console.warn('fetchAssessmentFormOptions:', error.message); return []; }
     return (data || []).map(f => ({ id: String(f.id), name: f.name || `Form ${f.id}` }));
-  },
-  deleteAutomationRule: async (id) => {
-    const prev = get().automationRules;
-    set({ automationRules: prev.filter(r => r.id !== id) });
-    const { error } = await supabase.from('automation_rules').delete().eq('id', id);
-    if (error) {
-      console.warn('deleteAutomationRule:', error.message);
-      set({ automationRules: prev });
-      get().showToast('Could not delete the rule');
-      return false;
-    }
-    return true;
-  },
-
-  // Evaluate the enabled rules that watch this program against the patient's
-  // conditions, labs, recent encounters and assessment answers. Each match
-  // attaches its templates to the program's care plan unsigned (a draft), and
-  // one review task goes to the care manager listing why. Every evaluation is
-  // logged in automation_rule_runs. Returns { matched: rule[], taskId }.
-  runAutoApplyRules: async (patientId, program) => {
-    if (!patientId || !program?.id) return { matched: [], taskId: null };
-    const rules = get().automationRulesStatus === 'ready' ? get().automationRules : await get().fetchAutomationRules();
-    const applicable = rulesForProgram(rules, program.code);
-    if (!applicable.length) return { matched: [], taskId: null };
-
-    const [problems, events, responses] = await Promise.all([
-      supabase.from('patient_problems').select('title, status').eq('patient_id', String(patientId)),
-      supabase.from('patient_clinical_events').select('event_type, code, display, effective_date, status, numeric_value, unit').eq('patient_id', String(patientId)),
-      // patient_id on form_responses comes with the automation rules migration.
-      supabase.from('form_responses').select('form_id, answers, status, completed_at, created_at').eq('patient_id', String(patientId))
-        .order('created_at', { ascending: false }).limit(50),
-    ]);
-    const inputs = buildRuleInputs({
-      problems: problems.data || [],
-      clinicalEvents: events.data || [],
-      responses: responses.error ? [] : (responses.data || []),
-    });
-    const results = applicable.map(rule => ({ rule, ...evaluateRule(rule, inputs) }));
-    const matched = results.filter(r => r.matched);
-
-    let taskId = null;
-    let attached = [];
-    if (matched.length) {
-      if (!get().carePlanTemplates.length) await get().fetchCarePlanLibrary();
-      const templates = get().carePlanTemplates;
-      await get().fetchPatientCarePlan(patientId, program.id);
-      const key = carePlanKey(patientId, program.id);
-      const prev = get().patientCarePlans[key]?.plan?.appliedTemplateIds || [];
-      const known = new Set(templates.map(t => t.id));
-      const already = new Set(prev);
-      attached = [...new Set(matched.flatMap(r => r.rule.templateIds || []))]
-        .filter(id => known.has(id) && !already.has(id));
-      if (attached.length) await get().applyPatientCarePlanTemplates(patientId, program, [...prev, ...attached]);
-
-      const memberName = get().patients.find(p => String(p.id) === String(patientId))?.name || '';
-      const users = get().platformUsers || [];
-      const named = matched.map(r => r.rule.reviewer).find(rv => rv?.name)
-        || (program.assignee && program.assignee !== 'Unassigned' ? users.find(u => u.name === program.assignee) : null);
-      const reviewer = named ? { id: named.id || null, name: named.name } : null;
-      const templateNames = attached.map(id => templates.find(t => t.id === id)?.name).filter(Boolean);
-      const lines = matched.map(r => `• ${r.rule.name}: ${r.reasons.filter(x => x.ok).map(x => x.text).join('; ')}`);
-      const due = new Date(); due.setDate(due.getDate() + 2);
-      const task = await get().createTask({
-        name: `Review auto-applied care plan for ${memberName || 'patient'}`,
-        status: 'pending',
-        priority: 'medium',
-        due_date: `${String(due.getMonth() + 1).padStart(2, '0')}/${String(due.getDate()).padStart(2, '0')}/${due.getFullYear()}`,
-        assigned_to: reviewer?.name || null,
-        assigned_to_id: reviewer?.id || null,
-        member: memberName,
-        labels: ['Care Plan Review', 'Automation'],
-        meta: program.name || program.code || '',
-        description: [
-          `On enrollment in ${program.name || program.code}, automation rules matched and ${templateNames.length ? `attached ${templateNames.join(', ')} in draft` : 'found the templates already on the plan'}. Review, edit and sign the plan.`,
-          ...lines,
-        ].join('\n'),
-        pool: null,
-        mentions: reviewer ? [reviewer.name] : [],
-        attachments: 0,
-        comments: 0,
-        is_subtask: false,
-        parent_task: null,
-        parent_task_id: null,
-      }, { auditUserName: 'Automation Rules' });
-      taskId = task?.id != null ? String(task.id) : null;
-      if (task && program.code) get().addProgramTask?.(program.code, task);
-      get().logCarePlanAudit(patientId, program, {
-        entityType: 'plan',
-        action: 'auto_applied',
-        summary: matched.map(r => r.rule.name).join(', '),
-        detail: templateNames.length ? `Attached in draft: ${templateNames.join(', ')}` : 'Templates were already on the plan',
-      });
-      if (reviewer?.id) {
-        get().addNotification?.({
-          type: 'care_plan.review_requested',
-          title: 'Auto-applied care plan to review',
-          body: `Automation rules attached ${templateNames.join(', ') || 'templates'} for ${memberName}.`,
-          action: 'openCarePlan',
-          recipientId: reviewer.id,
-        });
-      }
-    }
-
-    // The run log: every rule evaluated, matched or not, with its reasons.
-    const runs = results.map(r => ({
-      rule_id: r.rule.id,
-      patient_id: String(patientId),
-      program_code: program.code || null,
-      matched: r.matched,
-      reasons: r.reasons.map(x => `${x.ok ? '✓' : '✗'} ${x.text}`),
-      template_ids: r.matched ? attached.filter(id => new Set(r.rule.templateIds || []).has(id)) : [],
-      task_id: r.matched ? taskId : null,
-    }));
-    const { error: runErr } = await supabase.from('automation_rule_runs').insert(runs);
-    if (runErr) console.warn('automation_rule_runs insert:', runErr.message);
-    return { matched: matched.map(r => r.rule), taskId };
   },
 
   fetchCarePlanLibrary: async () => {
@@ -4879,7 +6485,7 @@ export const useAppStore = create((set, get) => ({
     // shouldn't blank the other three tabs.
     const firstError = templates.error || goals.error || barriers.error || interventions.error;
     if (firstError) {
-      // Table missing (migration not run yet) or blocked — keep the tabs as
+      // Table missing (migration not run yet) or blocked, keep the tabs as
       // they are rather than blanking work in progress.
       console.warn('care plan library fetch failed (run migration?):', firstError.message);
       set({ carePlanLibraryLoading: false });
@@ -4900,6 +6506,8 @@ export const useAppStore = create((set, get) => ({
       carePlanLibraryLoading: false,
       carePlanLibraryDidFetch: true,
     });
+    // Versions (care_plan_template_versioning migration) load alongside.
+    get().fetchCarePlanTemplateVersions().catch(err => console.warn('fetchCarePlanTemplateVersions:', err?.message || err));
   },
 
   saveCarePlanInterventionTemplate: async (values, id = null) => {
@@ -5033,6 +6641,14 @@ export const useAppStore = create((set, get) => ({
       row.patient_id = row.scope === 'patient' ? (values.patientId != null ? String(values.patientId) : null) : null;
     }
     if (values.renewal) row.renewal = values.renewal;
+    // Per-patient categories on top of the Common lists.
+    if (Array.isArray(values.categories)) row.categories = values.categories;
+    // Episodic or ongoing, when the caller says: `episode` is { days, pausesOngoing } or null.
+    if (values.episode !== undefined) Object.assign(row, episodeRow(values.episode));
+    // A draft revision of a published template, waiting for approval.
+    if (!id && values.replacesTemplateId) row.replaces_template_id = values.replacesTemplateId;
+    // The clinical protocol (and version) a new template was drafted from.
+    if (!id && values.sourceProtocol) row.source_protocol = values.sourceProtocol;
     if (!id) {
       // The owner must be the signed-in auth user: RLS checks it against auth.uid().
       const { data: { session } } = await supabase.auth.getSession();
@@ -5057,9 +6673,32 @@ export const useAppStore = create((set, get) => ({
     }
     // And the renewal column: the template saves, re-applying falls back to
     // the condition-based default.
+    if (error && /replaces_template_id/.test(error.message || '') && 'replaces_template_id' in row) {
+      const { replaces_template_id: _rt, ...rowWithoutReplaces } = row;
+      ({ data, error } = await run(rowWithoutReplaces));
+    }
+    if (error && /categories/.test(error.message || '') && 'categories' in row) {
+      const { categories: _c, ...rowWithoutCategories } = row;
+      ({ data, error } = await run(rowWithoutCategories));
+    }
+    if (error && /source_protocol/.test(error.message || '') && 'source_protocol' in row) {
+      const { source_protocol: _spr, ...rowWithoutProtocol } = row;
+      ({ data, error } = await run(rowWithoutProtocol));
+    }
     if (error && /renewal/i.test(error.message || '') && 'renewal' in row) {
       const { renewal: _r, ...rowWithoutRenewal } = row;
       ({ data, error } = await run(rowWithoutRenewal));
+    }
+    // Before the episode programs migration it saves without the program and pause rules.
+    if (error && EPISODE_PROGRAM_COLUMNS_RE.test(error.message || '') && 'episode_program_code' in row) {
+      const { episode_program_code: _c, episode_supersedes: _s, ...rowWithoutProgram } = row;
+      ({ data, error } = await run(rowWithoutProgram));
+    }
+    // Before the episodic migration the template saves as an ongoing one.
+    if (error && /episod/i.test(error.message || '') && 'episodic' in row) {
+      const { episodic: _e, episode_days: _d, episode_pauses_ongoing: _p, episode_program_code: _c, episode_supersedes: _s, ...rowWithoutEpisode } = row;
+      ({ data, error } = await run(rowWithoutEpisode));
+      if (!error && values.episode) get().showToast('Saved, but episodic templates need the episodic templates migration');
     }
     if (error) {
       console.warn('save care plan template failed:', error.message);
@@ -5072,7 +6711,244 @@ export const useAppStore = create((set, get) => ({
         ? s.carePlanTemplates.map(t => (t.id === template.id ? template : t))
         : [...s.carePlanTemplates, template],
     }));
+    // A template published for the first time starts its version chain.
+    if (template.status !== 'draft') await get().ensureCarePlanTemplateVersion(template, { effectiveDate: todayIsoDate() });
     return template;
+  },
+
+  // Episodic or ongoing is a setting on the template, not part of its
+  // versioned content, so it saves straight onto the row. `episode` is
+  // { days, pausesOngoing } or null.
+  saveCarePlanTemplateEpisode: async (id, episode) => {
+    const row = {
+      ...episodeRow(episode),
+      updated_by: get().currentUserProfile?.name || null,
+      updated_at: new Date().toISOString(),
+    };
+    let { data, error } = await supabase.from('care_plan_templates').update(row).eq('id', id).select().single();
+    if (error && EPISODE_PROGRAM_COLUMNS_RE.test(error.message || '')) {
+      const { episode_program_code: _c, episode_supersedes: _s, ...rowWithoutProgram } = row;
+      ({ data, error } = await supabase.from('care_plan_templates').update(rowWithoutProgram).eq('id', id).select().single());
+    }
+    if (error) {
+      console.warn('saveCarePlanTemplateEpisode:', error.message);
+      get().showToast(/episod/i.test(error.message || '')
+        ? 'Episodic templates need the episodic templates migration'
+        : 'Could not save the template type');
+      return null;
+    }
+    const template = mapCarePlanTemplateRow(data);
+    set(s => ({ carePlanTemplates: s.carePlanTemplates.map(t => (t.id === id ? template : t)) }));
+    return template;
+  },
+
+  // Bulk import (Care Plan Library > Import): every planned add or update
+  // lands as a draft for approval. Adds are inserted in chunks so hundreds of
+  // templates go in a few requests; an update of a draft rewrites it, an
+  // update of a published template is a draft revision that replaces it on
+  // approval. `plans` come from planTemplateImport; skips are only recorded.
+  importCarePlanTemplates: async (plans, { fileName = '', totals = {} } = {}) => {
+    const actor = get().currentUserProfile?.name || null;
+    const { data: { session } } = await supabase.auth.getSession();
+    const owner = session?.user?.id || null;
+    const isMissingColumn = (e) => /import_batch_id|replaces_template_id|approved_/.test(e?.message || '');
+
+    const { data: batch, error: batchErr } = await supabase.from('care_plan_template_imports').insert({
+      file_name: fileName || 'import',
+      totals,
+      summary: plans.map(p => ({ name: p.name, action: p.action, why: p.why, issues: p.issues })),
+      created_by: actor,
+    }).select('id').single();
+    if (batchErr) console.warn('care_plan_template_imports insert (run care_plan_template_import_migration.sql?):', batchErr.message);
+    const batchId = batch?.id || null;
+
+    const rowFor = (p) => ({
+      name: p.template.name,
+      conditions: p.template.conditions,
+      goals: p.template.goals,
+      interventions: p.template.interventions,
+      barriers: p.template.barriers,
+      status: 'draft',
+      // Every row names its renewal: a multi-row insert sends the union of the
+      // rows' columns, so one row without it would send null (NOT NULL column).
+      renewal: p.template.renewal || ((p.template.conditions || []).length ? 'extend' : 'reinstate'),
+      ...(batchId ? { import_batch_id: batchId } : {}),
+      updated_by: actor,
+    });
+    const created = [];
+    const updated = [];
+    let failed = 0;
+
+    const inserts = plans.filter(p => p.action === 'add' || (p.action === 'update' && p.existing?.status !== 'draft'))
+      .map(p => ({
+        ...rowFor(p), scope: 'org', owner_user_id: owner, created_by: actor,
+        replaces_template_id: p.action === 'update' ? p.existing.id : null,
+      }));
+    const insertParts = Array.from({ length: Math.ceil(inserts.length / 100) }, (_, i) => inserts.slice(i * 100, i * 100 + 100));
+    const inserted = await Promise.all(insertParts.map(async (part) => {
+      let { data, error } = await supabase.from('care_plan_templates').insert(part).select();
+      if (error && isMissingColumn(error)) {
+        ({ data, error } = await supabase.from('care_plan_templates')
+          .insert(part.map(({ import_batch_id: _b, replaces_template_id: _r, ...rest }) => rest)).select());
+      }
+      if (error) { console.warn('importCarePlanTemplates insert:', error.message); failed += part.length; return []; }
+      return (data || []).map(mapCarePlanTemplateRow);
+    }));
+    created.push(...inserted.flat());
+
+    const draftUpdates = plans.filter(p => p.action === 'update' && p.existing?.status === 'draft');
+    const results = await Promise.all(draftUpdates.map(async (p) => {
+      const row = { ...rowFor(p), updated_at: new Date().toISOString() };
+      let { data, error } = await supabase.from('care_plan_templates').update(row).eq('id', p.existing.id).select().single();
+      if (error && isMissingColumn(error)) {
+        const { import_batch_id: _b, ...rest } = row;
+        ({ data, error } = await supabase.from('care_plan_templates').update(rest).eq('id', p.existing.id).select().single());
+      }
+      if (error) { console.warn('importCarePlanTemplates update:', error.message); return null; }
+      return mapCarePlanTemplateRow(data);
+    }));
+    for (const t of results) { if (t) updated.push(t); else failed += 1; }
+
+    const byId = new Map(updated.map(t => [t.id, t]));
+    set(s => ({ carePlanTemplates: [...s.carePlanTemplates.map(t => byId.get(t.id) || t), ...created] }));
+    return { created: created.length, updated: updated.length, failed, batchId };
+  },
+
+  // Approve drafts: a new one is published as is; a revision of a published
+  // template writes its content over that template and the draft goes away.
+  approveCarePlanTemplateDrafts: async (ids) => {
+    const actor = get().currentUserProfile?.name || null;
+    const now = new Date().toISOString();
+    const idSet = new Set(ids);
+    const drafts = get().carePlanTemplates.filter(t => idSet.has(t.id) && t.status === 'draft');
+    const stamp = (row) => ({ ...row, status: 'published', approved_by: actor, approved_at: now, updated_by: actor, updated_at: now });
+    const write = async (id, row) => {
+      let res = await supabase.from('care_plan_templates').update(stamp(row)).eq('id', id).select().single();
+      if (res.error && /approved_/.test(res.error.message || '')) {
+        const { approved_by: _a, approved_at: _t, ...rest } = stamp(row);
+        res = await supabase.from('care_plan_templates').update(rest).eq('id', id).select().single();
+      }
+      return res;
+    };
+    const outcomes = await Promise.all(drafts.map(async (d) => {
+      const target = d.replacesTemplateId && get().carePlanTemplates.find(t => t.id === d.replacesTemplateId);
+      if (!target) {
+        const { data, error } = await write(d.id, {});
+        if (error) return { failed: d };
+        const fresh = mapCarePlanTemplateRow(data);
+        await get().ensureCarePlanTemplateVersion(fresh, { effectiveDate: todayIsoDate(), note: 'Approved' });
+        return { published: get().carePlanTemplates.find(t => t.id === fresh.id) || fresh };
+      }
+      const content = { name: d.name, conditions: d.conditions, goals: d.goals, interventions: d.interventions, barriers: d.barriers, renewal: d.renewal, categories: d.categories || [] };
+      if (get().carePlanTemplateVersioningReady) {
+        // A revision is the template's next version, in effect today; plans
+        // move to it at their next review (Publish version offers the rest).
+        const impactRows = await get().fetchCarePlanTemplateImpact(target.id);
+        const res = await get().publishCarePlanTemplateVersion(target, content, {
+          effectiveDate: todayIsoDate(), note: `Approved revision${d.importBatchId ? ' (imported)' : ''}`, mode: 'review', impactRows,
+        });
+        if (!res) return { failed: d };
+        await supabase.from('care_plan_templates').update({ approved_by: actor, approved_at: now }).eq('id', target.id);
+      } else {
+        const { error } = await write(target.id, content);
+        if (error) return { failed: d };
+      }
+      await supabase.from('care_plan_templates').delete().eq('id', d.id);
+      return { published: get().carePlanTemplates.find(t => t.id === target.id), removed: d.id };
+    }));
+    const published = new Map(outcomes.filter(o => o.published).map(o => [o.published.id, o.published]));
+    const removed = new Set(outcomes.map(o => o.removed).filter(Boolean));
+    set(s => ({ carePlanTemplates: s.carePlanTemplates.filter(t => !removed.has(t.id)).map(t => published.get(t.id) || t) }));
+    const failed = outcomes.filter(o => o.failed).length;
+    if (failed) get().showToast(`Could not approve ${failed} template${failed === 1 ? '' : 's'}`);
+    return { approved: published.size, failed };
+  },
+
+  // Retiring: no longer offered for new plans; plans using it keep it.
+  // `replacementId` is the template to use instead (optional). A future
+  // `retireOn` (Los Angeles day) schedules it: the template stays in use and
+  // the nightly retire_scheduled_care_plan_templates job retires it that day.
+  retireCarePlanTemplate: async (id, { replacementId = null, reason = '', retireOn = null } = {}) => {
+    const now = new Date().toISOString();
+    const actor = get().currentActorName?.() || get().currentUserProfile?.name || null;
+    if (retireOn && retireOn > retirementToday()) {
+      const { error } = await supabase.from('care_plan_templates').update({
+        retire_on: retireOn, replaced_by_template_id: replacementId || null,
+        retired_by: actor, retired_reason: reason.trim() || null,
+      }).eq('id', id);
+      if (error) {
+        console.warn('retireCarePlanTemplate:', error.message);
+        get().showToast('Could not schedule the retirement');
+        return false;
+      }
+      set(s => ({ carePlanTemplates: s.carePlanTemplates.map(t => (t.id === id ? {
+        ...t, retireOn, replacedByTemplateId: replacementId || null, retiredBy: actor || '', retiredReason: reason.trim(),
+      } : t)) }));
+      return true;
+    }
+    const patch = {
+      status: 'archived', replaced_by_template_id: replacementId || null,
+      retired_at: now, retired_by: actor, retired_reason: reason.trim() || null,
+      updated_by: actor, updated_at: now,
+      // Only a scheduled one has a date to clear; leaving the column out
+      // otherwise keeps Retire now working before the scheduling migration.
+      ...(get().carePlanTemplates.find(t => t.id === id)?.retireOn && { retire_on: null }),
+    };
+    const update = p => supabase.from('care_plan_templates').update(p).eq('id', id);
+    let { error } = await update(patch);
+    // Before the retirement migration it still retires, without the details.
+    if (error && /replaced_by_template_id|retired_|retire_on/.test(error.message || '')) {
+      ({ error } = await update({ status: 'archived', updated_by: actor, updated_at: now }));
+    }
+    if (error) {
+      console.warn('retireCarePlanTemplate:', error.message);
+      get().showToast('Could not retire the template');
+      return false;
+    }
+    set(s => ({ carePlanTemplates: s.carePlanTemplates.map(t => (t.id === id ? {
+      ...t, status: 'archived', replacedByTemplateId: replacementId || null,
+      retiredAt: now, retiredBy: actor || '', retiredReason: reason.trim(), retireOn: null, updatedBy: actor || t.updatedBy, updatedAt: now,
+    } : t)) }));
+    return true;
+  },
+
+  // Calls off a scheduled retirement: the date, replacement and reason are cleared.
+  cancelCarePlanTemplateRetirement: async (id) => {
+    const { error } = await supabase.from('care_plan_templates').update({
+      retire_on: null, replaced_by_template_id: null, retired_by: null, retired_reason: null,
+    }).eq('id', id);
+    if (error) {
+      console.warn('cancelCarePlanTemplateRetirement:', error.message);
+      get().showToast('Could not cancel the retirement');
+      return false;
+    }
+    set(s => ({ carePlanTemplates: s.carePlanTemplates.map(t => (t.id === id ? {
+      ...t, retireOn: null, replacedByTemplateId: null, retiredBy: '', retiredReason: '',
+    } : t)) }));
+    return true;
+  },
+
+  // Back into use: published again, the retirement details cleared.
+  restoreCarePlanTemplate: async (id) => {
+    const now = new Date().toISOString();
+    const actor = get().currentActorName?.() || get().currentUserProfile?.name || null;
+    const update = p => supabase.from('care_plan_templates').update(p).eq('id', id);
+    let { error } = await update({
+      status: 'published', replaced_by_template_id: null, retired_at: null, retired_by: null, retired_reason: null,
+      updated_by: actor, updated_at: now,
+    });
+    if (error && /replaced_by_template_id|retired_/.test(error.message || '')) {
+      ({ error } = await update({ status: 'published', updated_by: actor, updated_at: now }));
+    }
+    if (error) {
+      console.warn('restoreCarePlanTemplate:', error.message);
+      get().showToast('Could not restore the template');
+      return false;
+    }
+    set(s => ({ carePlanTemplates: s.carePlanTemplates.map(t => (t.id === id ? {
+      ...t, status: 'published', replacedByTemplateId: null, retiredAt: null, retiredBy: '', retiredReason: '', retireOn: null, updatedBy: actor || t.updatedBy, updatedAt: now,
+    } : t)) }));
+    return true;
   },
 
   deleteCarePlanTemplate: async (id) => {
@@ -5089,7 +6965,7 @@ export const useAppStore = create((set, get) => ({
 
   // Med Recon checklist ticks, keyed by patient. Lives in the store rather
   // than the step component because the Sign control (in the program header)
-  // gates on every box being ticked. Session-only — not persisted yet.
+  // gates on every box being ticked. Session-only, not persisted yet.
   medReconChecks: {},           // { [patientId]: { [checkId]: true } }
   setMedReconCheck: (patientId, checkId, value) => set(s => ({
     medReconChecks: {
@@ -5097,6 +6973,80 @@ export const useAppStore = create((set, get) => ({
       [patientId]: { ...(s.medReconChecks[patientId] || {}), [checkId]: value },
     },
   })),
+
+  // End an enrollment with a reason (Close Program): Completed for "Goal met",
+  // else Discontinued, unless the user picked the status; today is the end date.
+  closeCareProgramInstance: (patientId, programId, { reason, note = '', status } = {}) => {
+    const d = new Date();
+    const today = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
+    const finalStatus = status || CLOSURE_REASONS.find(r => r.value === reason)?.status || 'Discontinued';
+    get().updateCareProgram(patientId, programId, {
+      status: finalStatus,
+      statusColor: programStatusColor(finalStatus),
+      endDate: today,
+      closureReason: reason || 'other',
+      closureNote: note || null,
+      closedAt: d.toISOString(),
+      closedBy: get().currentUserProfile?.name || null,
+    });
+  },
+
+  // Paused asks why and until when (PauseCarePlanDialog), records it on the
+  // program (care_program_pause_migration.sql) and pauses the program's care
+  // plan with the same details, so cadence, overdue flags and outreach stop.
+  pauseCareProgramInstance: async (patientId, program, form) => {
+    if (!patientId || !program?.id) return false;
+    const { status: _planStatus, ...pause } = pauseFields(form);
+    const pausedBy = get().currentUserProfile?.name || null;
+    const { error } = await supabase.from('patient_care_programs').update({
+      pause_reason: pause.reason,
+      pause_note: pause.note,
+      paused_on: pause.pausedOn,
+      resume_on: pause.resumeOn,
+      auto_resume: pause.autoResume,
+      paused_by: pausedBy,
+    }).eq('id', program.id);
+    if (error) {
+      console.warn('pauseCareProgramInstance:', error.message);
+      get().showToast(/pause|resume/i.test(error.message || '')
+        ? 'Pausing needs the care program pause migration'
+        : 'Could not pause the program');
+      return false;
+    }
+    get().updateCareProgram(patientId, program.id, {
+      status: 'Paused', statusColor: programStatusColor('Paused'), pause: { ...pause, pausedBy: pausedBy || '' },
+    });
+    await get().fetchPatientCarePlan(patientId, program.id);
+    const plan = get().patientCarePlans[carePlanKey(patientId, program.id)]?.plan;
+    if (plan?.id && plan.status !== 'paused') await get().pauseCarePlan(patientId, program, form);
+    return true;
+  },
+
+  // Moving a program off Paused (by hand, or on its resume date with
+  // auto-resume) clears the pause and resumes its care plan.
+  resumeCareProgramInstance: async (patientId, program, { status = 'Active', auto = false } = {}) => {
+    if (!patientId || !program?.id) return;
+    const { error } = await supabase.from('patient_care_programs').update({
+      pause_reason: null, pause_note: null, paused_on: null, resume_on: null, auto_resume: false, paused_by: null,
+    }).eq('id', program.id);
+    if (error) console.warn('resumeCareProgramInstance:', error.message);
+    get().updateCareProgram(patientId, program.id, { status, statusColor: programStatusColor(status), pause: null });
+    await get().fetchPatientCarePlan(patientId, program.id);
+    const plan = get().patientCarePlans[carePlanKey(patientId, program.id)]?.plan;
+    if (plan?.status === 'paused') await get().resumeCarePlan(patientId, program, { auto });
+  },
+
+  // An SNP plan's pause shows on the worklist's Care Plan Status (On Hold).
+  syncSnpCarePlanStatus: (patientId, program, planRow, pause) => {
+    if (program?.code !== 'SNP') return;
+    set(s => ({
+      snpWorklistMembers: (s.snpWorklistMembers || []).map(m => {
+        if (m.patientId !== patientId) return m;
+        if (m.programId && m.programId !== program.id) return m;
+        return { ...m, carePlanStatus: snpCarePlanStatusLabel(planRow), carePlanPause: pause };
+      }),
+    }));
+  },
 
   updateCareProgram: (patientId, programId, patch) => {
     if (!patientId || !programId) return;
@@ -5136,7 +7086,7 @@ export const useAppStore = create((set, get) => ({
         }),
       }));
     }
-    // A status change is a program activity — log it so the Program Activity Log
+    // A status change is a program activity, log it so the Program Activity Log
     // reflects it, grouped under the program.
     if (updated && patch.assignee && patch.assignee !== prevAssignee) {
       get().logProgramActivity({
@@ -5149,14 +7099,20 @@ export const useAppStore = create((set, get) => ({
       });
     }
     if (updated && patch.status && patch.status !== prevStatus) {
+      const reason = closureReasonLabel(patch.closureReason);
+      const pauseReason = patch.pause ? pauseReasonLabel(patch.pause.reason) : null;
       get().logProgramActivity({
         patientId,
         programCode: updated.code,
-        title: `${updated.code} Program Status Change`,
+        title: reason ? `${updated.code} Program Closed` : `${updated.code} Program Status Change`,
         activityKind: 'status',
-        statusLabel: patch.status,
+        statusLabel: [patch.status, reason || pauseReason].filter(Boolean).join(' · '),
         statusType: 'warning',
       });
+      // UTR / Paused / Completed / Closed carry the program's open care plan
+      // items with them (Settings > Automations, program status changes);
+      // leaving UTR or Paused puts them back.
+      get().runProgramStatusRules(patientId, updated, patch.status, { from: prevStatus }).catch(err => console.warn('runProgramStatusRules:', err?.message || err));
     }
     if (updated) {
       supabase.from('patient_care_programs').upsert({
@@ -5176,8 +7132,15 @@ export const useAppStore = create((set, get) => ({
         med_recon_signed_by:   updated.medReconSignedBy || null,
         med_recon_signed_role: updated.medReconSignedRole || null,
         med_recon_signed_at:   updated.medReconSignedAt || null,
+        // Lifecycle columns only once set, so saves still work before
+        // patient_care_program_lifecycle_migration.sql has run.
+        ...Object.fromEntries(Object.entries({
+          closure_reason: updated.closureReason, closure_note: updated.closureNote,
+          closed_at: updated.closedAt, closed_by: updated.closedBy,
+          planned_end_date: updated.plannedEndDate,
+        }).filter(([, v]) => v)),
       }, { onConflict: 'id' }).then(({ error }) => {
-        if (error) console.warn('updateCareProgram — update failed:', error.message);
+        if (error) console.warn('updateCareProgram: update failed:', error.message);
       });
     }
   },
@@ -5185,7 +7148,7 @@ export const useAppStore = create((set, get) => ({
   // Session-only items created from a program's Outreach quick-actions (the
   // "Add Task" / "Schedule Appointment" icons). Keyed by program code so each
   // program's Related Tasks / Appointments lists merge only their own additions
-  // on top of the mock data — no DB, cleared on reload.
+  // on top of the mock data, no DB, cleared on reload.
   programAddedTasks: {},        // { [code]: task[] }  (mock task shape)
   programAddedAppointments: {}, // { [code]: appt[] }  (mock appointment shape)
   addProgramTask: (code, task) => set(s => ({
@@ -5221,13 +7184,13 @@ export const useAppStore = create((set, get) => ({
       }));
       set({ letters: rows, lettersDidFetch: true });
     } catch (e) {
-      console.warn('fetchLetters — falling back to PROGRAM_LETTERS_MOCK:', e?.message || e);
+      console.warn('fetchLetters: falling back to PROGRAM_LETTERS_MOCK:', e?.message || e);
     }
   },
 
   // ── Care-program documents (Supabase `program_documents`) ──────────────
   // A patient's Program Documents library, keyed by program_code + patient_id.
-  // Empty by default — the Documents step shows an empty state until the user
+  // Empty by default: the Documents step shows an empty state until the user
   // uploads a file via the inline DocumentUploader. Uploads append optimistically
   // to local state (so the row shows immediately and the widget works even
   // before the migration is run) AND insert into the table for persistence.
@@ -5256,10 +7219,15 @@ export const useAppStore = create((set, get) => ({
         fileUrl:     r.file_url,
         storagePath: r.storage_path,
         ext:         r.ext,
+        category:    r.category,
+        sharedWithPatient: !!r.shared_with_patient,
+        uploadedByPatient: !!r.uploaded_by_patient,
+        sharedBy:    r.shared_by,
+        sharedAt:    r.shared_at,
       }));
       set({ programDocuments: rows, programDocumentsDidFetch: true });
     } catch (e) {
-      console.warn('fetchProgramDocuments — starting empty:', e?.message || e);
+      console.warn('fetchProgramDocuments: starting empty:', e?.message || e);
     }
   },
   // `file` (when present) is kept on the in-memory row so FilePreview can show
@@ -5269,7 +7237,7 @@ export const useAppStore = create((set, get) => ({
   // callers that log to their own feed (the HEDIS Care Gap drawer).
   addProgramDocument: (doc, file, opts = {}) => {
     const nextDoc = file ? { ...doc, file } : doc;
-    // Optimistic local append — dedup by id so a later fetch can't double it.
+    // Optimistic local append: dedup by id so a later fetch can't double it.
     set(s => ({ programDocuments: [nextDoc, ...s.programDocuments.filter(d => d.id !== doc.id)] }));
     persistProgramDocument(nextDoc, file);
     if (doc.programCode && opts.logActivity !== false) {
@@ -5302,6 +7270,9 @@ export const useAppStore = create((set, get) => ({
   // Org-level feature flags (from org_settings).
   showPatientAppIndicator: false,
   carePlanMode: DEFAULT_CARE_PLAN_MODE,
+  // Off by default: a care plan status change only asks for a reason when
+  // the org turns this on (org_settings_status_change_reason_migration.sql).
+  askStatusChangeReason: false,
   orgFeaturesDidFetch: false,
   fetchOrgFeatures: async () => {
     if (useAppStore.getState().orgFeaturesDidFetch) return;
@@ -5312,19 +7283,20 @@ export const useAppStore = create((set, get) => ({
         set({ orgFeaturesDidFetch: false });
         return;
       }
-      let { data, error } = await supabase
+      // Schema-tolerant: a column whose migration hasn't run is dropped from
+      // the select and its setting stays on the default.
+      let columns = ['show_patient_app_indicator', 'care_plan_mode', 'ask_status_change_reason'];
+      const read = () => supabase
         .from('org_settings')
-        .select('show_patient_app_indicator, care_plan_mode')
+        .select(columns.join(', '))
         .eq('user_id', session.user.id)
         .maybeSingle();
-      // Schema-tolerant: before the care_plan_mode migration runs, read the
-      // indicator alone and stay on the program-level default.
-      if (error && /care_plan_mode/.test(error.message || '')) {
-        ({ data, error } = await supabase
-          .from('org_settings')
-          .select('show_patient_app_indicator')
-          .eq('user_id', session.user.id)
-          .maybeSingle());
+      let { data, error } = await read();
+      for (let i = 0; i < 2 && error; i += 1) {
+        const missing = columns.find(c => c !== 'show_patient_app_indicator' && (error.message || '').includes(c));
+        if (!missing) break;
+        columns = columns.filter(c => c !== missing);
+        ({ data, error } = await read());
       }
       if (error) {
         console.warn('fetchOrgFeatures error:', error.message);
@@ -5334,6 +7306,7 @@ export const useAppStore = create((set, get) => ({
       set({
         showPatientAppIndicator: !!data?.show_patient_app_indicator,
         carePlanMode: normalizeCarePlanMode(data?.care_plan_mode),
+        askStatusChangeReason: !!data?.ask_status_change_reason,
       });
     } catch (err) {
       console.warn('fetchOrgFeatures failed:', err?.message || err);
@@ -5345,7 +7318,7 @@ export const useAppStore = create((set, get) => ({
   patients: [],
   patientsLoading: true,
   patientsError: null,
-  // Single-fire guard — several call sites (SubNav, WorklistTable, QueueTable,
+  // Single-fire guard: several call sites (SubNav, WorklistTable, QueueTable,
   // PatientDetailView) all trigger fetchPatients on mount, and hash-routing
   // remounts each of them across tab switches. Without the guard every
   // navigation re-runs a full `select('*')`; with it the first caller wins
@@ -5368,7 +7341,7 @@ export const useAppStore = create((set, get) => ({
   // of flashing the default and re-sorting when the DB fetch resolves.
   worklistOrder: _cachedWorklistOrder,
   worklistOrderLoaded: false,
-  // Set once the user manually picks a list this session — fetchWorklistOrder
+  // Set once the user manually picks a list this session, fetchWorklistOrder
   // only auto-lands on the top worklist while this is still false.
   _subnavNavigated: false,
 
@@ -5405,8 +7378,8 @@ export const useAppStore = create((set, get) => ({
       set({ worklistCountsDidFetch: false });
     };
 
-    // Same normalization SubNav and useHccWorklistTable use for the union key
-    // — # stripped, trimmed, lowercased. member_id is the one identity field
+    // Same normalization SubNav and useHccWorklistTable use for the union key,
+    // # stripped, trimmed, lowercased. member_id is the one identity field
     // every worklist shares; JS mocks use memberId. Fall back to the row id
     // so a member without one still counts once.
     const norm = (v) => String(v ?? '').replace(/^#/, '').trim().toLowerCase();
@@ -5420,7 +7393,7 @@ export const useAppStore = create((set, get) => ({
     };
 
     // HEDIS has no count query here on purpose: its badge reads from the
-    // local HEDIS_MEMBERS constant, so the number needs no network at all —
+    // local HEDIS_MEMBERS constant, so the number needs no network at all,
     // but it does belong in the All Patients union.
     const { HEDIS_MEMBERS } = await import('../features/hedis-worklist/data/mock');
     const hedisKeys = keysOf(HEDIS_MEMBERS);
@@ -5500,7 +7473,7 @@ export const useAppStore = create((set, get) => ({
 
   // Boot-safe identity for worklist prefs. auth.getUser() validates against
   // the server and returns null on cold load while the persisted JWT is
-  // still refreshing — which made fetch read the wrong row ("order resets
+  // still refreshing: which made fetch read the wrong row ("order resets
   // after refresh"). getSession() awaits client init and reads the locally
   // persisted session, so fetch and save always agree on the same key.
   _resolveWorklistUser: async () => {
@@ -5524,7 +7497,7 @@ export const useAppStore = create((set, get) => ({
       if (!error && Array.isArray(data?.worklist_order) && data.worklist_order.length > 0) {
         order = data.worklist_order;
       }
-    } catch { /* table may not exist yet — fall back to default order */ }
+    } catch { /* table may not exist yet, fall back to default order */ }
 
     // Reconcile the saved order with the current worklist set: drop labels
     // that no longer exist, append any new worklists at the end.
@@ -5542,13 +7515,13 @@ export const useAppStore = create((set, get) => ({
     set({ worklistOrder: merged, worklistOrderLoaded: true });
     try { localStorage.setItem('worklistOrder', JSON.stringify(merged)); } catch { /* */ }
 
-    // Land the user on the top worklist — but never override a list they've
+    // Land the user on the top worklist, but never override a list they've
     // already picked this session.
     const hash = typeof window !== 'undefined' ? (window.location.hash || '') : '';
     const deepPatientLink = /\/patient\//.test(hash);
     if (!get()._subnavNavigated && !deepPatientLink && merged[0] && get().activeSubnavList !== merged[0]) {
       get().setActiveSubnavList(merged[0]);
-      set({ _subnavNavigated: false }); // programmatic — keep the flag clear
+      set({ _subnavNavigated: false }); // programmatic, keep the flag clear
     }
   },
 
@@ -5580,9 +7553,9 @@ export const useAppStore = create((set, get) => ({
         try {
           localStorage.setItem('autoPageSize', String(auto));
           localStorage.setItem('manualPageSize', String(size));
-        } catch { /* private mode — DB stays the source of truth */ }
+        } catch { /* private mode: DB stays the source of truth */ }
       }
-    } catch { /* columns may not exist yet — keep the local defaults */ }
+    } catch { /* columns may not exist yet, keep the local defaults */ }
     set({ pageSizePrefLoaded: true });
   },
 
@@ -5607,7 +7580,7 @@ export const useAppStore = create((set, get) => ({
           },
           { onConflict: 'user_id' },
         );
-      if (error) console.warn('[store] savePageSizePref failed — run supabase/user_worklist_prefs_page_size_migration.sql:', error.message);
+      if (error) console.warn('[store] savePageSizePref failed: run supabase/user_worklist_prefs_page_size_migration.sql:', error.message);
     } catch (e) {
       console.warn('[store] savePageSizePref failed:', e?.message);
     }
@@ -5643,7 +7616,7 @@ export const useAppStore = create((set, get) => ({
     newBuildHighlights: remote?.highlights || [],
   }),
 
-  // HCC role — the logged-in user's role for the HCC coding workflow (Support
+  // HCC role: the logged-in user's role for the HCC coding workflow (Support
   // / Coder / QA / Compliance). Drives which status vocab and per-role actions
   // the worklist and DiagPanel expose. Persisted so it survives reload.
   hccUserRole: (() => {
@@ -5661,7 +7634,7 @@ export const useAppStore = create((set, get) => ({
   // active saved filter so the SavedFiltersChip doesn't lie.
   applyHccRoleDefaultFilters: async () => {
     let s = get();
-    // Ensure a currentUserProfile has been resolved once — otherwise the very
+    // Ensure a currentUserProfile has been resolved once, otherwise the very
     // first paint in dev-bypass mode ships with Assignee = null and the queue
     // looks empty until profiles arrive.
     if (!s.currentUserProfile && s.taskProfiles.length === 0) {
@@ -5689,7 +7662,7 @@ export const useAppStore = create((set, get) => ({
   pgReopenToken: 0,
 
   // HEDIS worklist state lives at line ~1558 (caregapActivity, hedisMembers,
-  // setHedisMembers, updateGapStatus, etc.) — defined by upstream.
+  // setHedisMembers, updateGapStatus, etc.), defined by upstream.
 
 
   // Call Details
@@ -5697,12 +7670,12 @@ export const useAppStore = create((set, get) => ({
   callDetails: [],
   callDetailsLoading: true,
   callDetailsHasMore: false,
-  // Same single-fire guard as `patientsDidFetch` — the QueueTable effect used
+  // Same single-fire guard as `patientsDidFetch`, the QueueTable effect used
   // to re-fire fetchCallDetails on every dep change (patients.length flip on
   // cold-load caused a second full pull immediately after the first).
   callDetailsDidFetch: false,
 
-  // Calls UI config (nav items, phone lines, session list) — loaded from Supabase
+  // Calls UI config (nav items, phone lines, session list), loaded from Supabase
   callNavItems: [],       // inbox + channel nav items
   callLines: [],          // phone line dropdown options
   callSessions: [],       // middle-panel call list
@@ -5748,10 +7721,12 @@ export const useAppStore = create((set, get) => ({
   embeddedComponentsTab: 'domain-registry',
   accountTab: 'users',
   contentTab: 'emails',
-  // Settings → Care Plan Library tab ('template' | 'goals' | 'barriers') —
+  // Settings → Care Plan Library tab ('template' | 'goals' | 'barriers'),
   // mirrored into the URL (#/settings/care-plan-library/<tab>) so a refresh
   // restores the exact library.
   carePlanTab: 'template',
+  careProgramConfigId: null,     // program type open in Settings > Care Program Configuration
+  careProgramConfigTab: 'overview',
   componentWizardOpen: false,
   componentWizardEditId: null,
   componentPreviewId: null,
@@ -5768,9 +7743,9 @@ export const useAppStore = create((set, get) => ({
   builderFlow: null,        // { id, nodes, edges, viewport, version }
   builderFlowLoading: false,
   builderSelectedNode: null, // id of currently selected node
-  _pendingAgentId: null,    // set by router on refresh — triggers re-open in AppLayout
-  _pendingCampaignBuilderId: null, // set by router on refresh — triggers campaign builder open
-  _pendingEmailEditId: null,       // set by router on refresh — triggers email builder open
+  _pendingAgentId: null,    // set by router on refresh, triggers re-open in AppLayout
+  _pendingCampaignBuilderId: null, // set by router on refresh, triggers campaign builder open
+  _pendingEmailEditId: null,       // set by router on refresh, triggers email builder open
   builderVersions: [],      // list of saved versions
   builderPrompt: '',        // original creation prompt
   builderConfig: null,      // agent_config row for current agent
@@ -5778,6 +7753,7 @@ export const useAppStore = create((set, get) => ({
 
   // UI state
   callPopoverPatient: null,
+  callPopoverNumber: null, // { number, label, onDial } for prescriber / pharmacy calls
   callPopoverBtnRef: null,
   outreachPopoverPatient: null,
   activeCallPatient: null,
@@ -5794,10 +7770,10 @@ export const useAppStore = create((set, get) => ({
   // 'openHccReview' → expandHccUpload + nav).
   //
   // Two kinds live in this one list:
-  //   • persisted (`persisted: true`) — rows from public.notifications,
+  //   • persisted (`persisted: true`): rows from public.notifications,
   //     addressed to this user by the `tasks_emit_notifications` trigger.
   //     These survive reloads and arrive on other devices in real time.
-  //   • ephemeral — local-only announcements about something that just
+  //   • ephemeral: local-only announcements about something that just
   //     happened in THIS tab (HCC extraction finished, a chat message
   //     landed). There is no recipient to address them to, so they stay
   //     in memory and die with the tab. That is deliberate, not a gap.
@@ -5816,7 +7792,7 @@ export const useAppStore = create((set, get) => ({
 
   /**
    * Load this user's persisted notifications, replacing the persisted slice
-   * while leaving ephemeral entries alone. Safe to call repeatedly — it is
+   * while leaving ephemeral entries alone. Safe to call repeatedly, it is
    * the recovery path for anything realtime missed while the socket was
    * down, so it runs on subscribe, on reconnect, and on tab refocus.
    * Gated to one run a minute per user (`force` skips the wait).
@@ -5838,10 +7814,12 @@ export const useAppStore = create((set, get) => ({
       .limit(50);
     // referral_id comes with caregap_referrals_migration.sql; until it runs,
     // read without it rather than losing the whole feed.
-    let { data, error } = await query(`${COLS}, referral_id`);
+    // reassignment_job_id comes with reassignment_notifications_migration.sql.
+    let { data, error } = await query(`${COLS}, referral_id, reassignment_job_id`);
+    if (error && /reassignment_job_id/.test(error.message || '')) ({ data, error } = await query(`${COLS}, referral_id`));
     if (error && /referral_id/.test(error.message || '')) ({ data, error } = await query(COLS));
     if (error) {
-      // Table missing (migration not run yet) or blocked — keep whatever is
+      // Table missing (migration not run yet) or blocked, keep whatever is
       // already on screen rather than blanking the panel.
       console.warn('notifications fetch failed (run migration?):', error.message);
       set({ notificationsLoading: false, notificationsDidFetch: true });
@@ -5879,7 +7857,7 @@ export const useAppStore = create((set, get) => ({
         const known = (get().notifications || []).some(n => n.id === row.id);
         set(s => ({
           // Realtime can redeliver, and a refetch may have already inserted
-          // this id — dedupe rather than showing the same thing twice.
+          // this id: dedupe rather than showing the same thing twice.
           notifications: mergeNotifications([row], (s.notifications || []).filter(n => n.id !== row.id)),
         }));
         // OS-level banner for when the app isn't the visible tab. Guarded on
@@ -5916,6 +7894,7 @@ export const useAppStore = create((set, get) => ({
     set(s => ({
       notifications: (s.notifications || []).map(n => n.id === id ? { ...n, read: true } : n),
     }));
+    rememberBulkRead([target]);
     if (!target?.persisted) return;
     const { error } = await supabase.from('notifications').update({ read: true }).eq('id', id);
     if (error) {
@@ -5930,6 +7909,7 @@ export const useAppStore = create((set, get) => ({
     const prev = get().notifications || [];
     const unreadPersisted = prev.filter(n => !n.read && n.persisted).map(n => n.id);
     set({ notifications: prev.map(n => ({ ...n, read: true })) });
+    rememberBulkRead(prev);
     if (unreadPersisted.length === 0) return;
     const { error } = await supabase
       .from('notifications')
@@ -5960,7 +7940,7 @@ export const useAppStore = create((set, get) => ({
 
   // ─── Supabase: Fetch patients ───
   fetchPatients: async () => {
-    // Idempotent per session. See `patientsDidFetch` init for rationale —
+    // Idempotent per session. See `patientsDidFetch` init for rationale,
     // callers don't need to coordinate; the first one wins and the rest
     // return immediately.
     if (useAppStore.getState().patientsDidFetch) return;
@@ -5973,7 +7953,7 @@ export const useAppStore = create((set, get) => ({
     if (error) {
       console.warn('Supabase patients fetch failed:', error.message);
       // Reset the guard so ErrorState's Retry (which re-calls fetchPatients)
-      // can actually retry — otherwise the second call short-circuits.
+      // can actually retry: otherwise the second call short-circuits.
       set({
         patients: [],
         patientsLoading: false,
@@ -6020,9 +8000,9 @@ export const useAppStore = create((set, get) => ({
     }
   },
 
-  // ─── Supabase: Fetch call details — all records, client-side pagination ───
+  // ─── Supabase: Fetch call details, all records, client-side pagination ───
   fetchCallDetails: async () => {
-    // Idempotent per session — see `callDetailsDidFetch` init. Previously the
+    // Idempotent per session: see `callDetailsDidFetch` init. Previously the
     // QueueTable effect re-fired this on every dep change.
     if (useAppStore.getState().callDetailsDidFetch) return;
     const PAGE_SIZE = 10;
@@ -6065,7 +8045,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   // ─── Supabase: Fetch calls UI config (nav items, phone lines, session list) ───
-  fetchCallsConfig: async () => {
+  fetchCallsConfig: (opts) => mountFetch('fetchCallsConfig', async () => {
     set({ callsConfigLoading: true });
     const [navRes, linesRes, sessRes] = await Promise.allSettled([
       supabase.from('call_nav_items').select('*').order('sort_order'),
@@ -6099,7 +8079,7 @@ export const useAppStore = create((set, get) => ({
       callSessions: sessData.map(mapSession),
       callsConfigLoading: false,
     });
-  },
+  }, opts),
 
   // Helper: get call records for a patient
   getCallsForPatient: (patientId) => {
@@ -6154,7 +8134,7 @@ export const useAppStore = create((set, get) => ({
 
   // Open a task's detail drawer from a non-Tasks surface (e.g. the HEDIS
   // care-gap activity feed). Reuses the same pendingOpenTaskId signal the
-  // notifications bell already drives — TasksView consumes it on mount.
+  // notifications bell already drives: TasksView consumes it on mount.
   openTaskFromActivity: (taskId) => {
     if (!taskId) return;
     set({ pendingOpenTaskId: taskId });
@@ -6163,7 +8143,7 @@ export const useAppStore = create((set, get) => ({
     // the drawer came from (primary-50 background + primary-300 border).
     get().flashTaskRow?.(taskId);
   },
-  // Row-highlight signal used by TaskRow / TaskTableRow — set for 3s
+  // Row-highlight signal used by TaskRow / TaskTableRow, set for 3s
   // after a click-through from the activity feed lands the user on the
   // tasks page. Cleared via a timer so no external cleanup is needed.
   flashTaskId: null,
@@ -6182,7 +8162,7 @@ export const useAppStore = create((set, get) => ({
 
   // Navigation guard for full-screen takeovers. When the user clicks a Sidebar
   // entry while the EmailBuilder or CampaignBuilder is open, we don't want the
-  // page to silently change underneath them — instead we ask the open builder
+  // page to silently change underneath them, instead we ask the open builder
   // to handle the navigation, including any unsaved-changes confirmation it
   // owns. `pendingNavTarget` is the page we're trying to reach; the builder
   // clears it once it has decided what to do.
@@ -6190,12 +8170,12 @@ export const useAppStore = create((set, get) => ({
   setPendingNavTarget: (page) => set({ pendingNavTarget: page }),
   requestNavigate: (page) => {
     const s = get();
-    // Email Builder takeover — defer to its unsaved-changes flow.
+    // Email Builder takeover: defer to its unsaved-changes flow.
     if (s.editingCampaignId) {
       set({ pendingNavTarget: page });
       return;
     }
-    // Campaign Builder takeover — auto-saved on every edit, so we can close
+    // Campaign Builder takeover: auto-saved on every edit, so we can close
     // and navigate immediately.
     if (s.campaignBuilderId) {
       set({ campaignBuilderId: null });
@@ -6204,7 +8184,7 @@ export const useAppStore = create((set, get) => ({
       updateHash(get);
       return;
     }
-    // No takeover open — plain navigation.
+    // No takeover open: plain navigation.
     sessionStorage.setItem('activePage', page);
     const popPatch = page === 'population' ? populationEntryPatch(get()) : {};
     set({ activePage: page, ...popPatch });
@@ -6239,6 +8219,8 @@ export const useAppStore = create((set, get) => ({
     if (from !== item) track('nav.settings_section_changed', { from, to: item });
     sessionStorage.setItem('settingsNavItem', item);
     set({ settingsNavItem: item });
+    // The section link always lands on the automations list, not a builder left open.
+    if (item === 'automations') set(s => ({ automationsView: { ...s.automationsView, screen: 'list', id: null, runMemberId: null, drawer: null } }));
     updateHash(get);
   },
   setMemberLeadsTab: (tab) => {
@@ -6254,7 +8236,7 @@ export const useAppStore = create((set, get) => ({
    * Unread direct-message count for the Messages nav badge.
    *
    * `messagesUnreadCount` has existed with a setter for a while and nothing
-   * ever called it, so the badge was permanently 0 — the Sidebar was reading
+   * ever called it, so the badge was permanently 0, the Sidebar was reading
    * state no writer produced. This is that writer.
    *
    * Counted server-side (head + exact) rather than by pulling rows: the badge
@@ -6291,7 +8273,13 @@ export const useAppStore = create((set, get) => ({
     if (!isRealUserId(me?.id)) return () => {};
     get()._unreadMessagesChannel?.unsubscribe();
     // A real insert/update always recounts; only the resync path is gated.
-    const recount = () => get().fetchMessagesUnreadCount({ force: true });
+    // Debounced: opening a chat stamps read_at on many rows at once, and each
+    // row arrives as its own UPDATE event; one count after the burst is enough.
+    let recountTimer = null;
+    const recount = () => {
+      clearTimeout(recountTimer);
+      recountTimer = setTimeout(() => get().fetchMessagesUnreadCount({ force: true }), 500);
+    };
     const ch = supabase
       .channel(`unread-messages:${me.id}`)
       .on('postgres_changes', {
@@ -6330,7 +8318,7 @@ export const useAppStore = create((set, get) => ({
         if (status === 'SUBSCRIBED' && !tabHidden()) get().fetchMessagesUnreadCount();
       });
     set({ _unreadMessagesChannel: ch });
-    return () => { ch.unsubscribe(); set({ _unreadMessagesChannel: null }); };
+    return () => { clearTimeout(recountTimer); ch.unsubscribe(); set({ _unreadMessagesChannel: null }); };
   },
   _unreadMessagesChannel: null,
   setPendingChatUserEmail: (email) => set({ pendingChatUserEmail: email }),
@@ -6342,8 +8330,9 @@ export const useAppStore = create((set, get) => ({
   // Worklist row menu → Comms drawers (Send SMS / Send Email / Send
   // Education / Send Assessment). `row` is the worklist row; it's matched to
   // its all_patients record so the drawers have the email and phone. Returns
-  // false for actions it doesn't handle.
-  runPatientRowAction: (key, row) => {
+  // false for actions it doesn't handle. `drawerProps` go to the Send
+  // Education / Send Assessment drawer (e.g. initialFormIds for a resend).
+  runPatientRowAction: (key, row, drawerProps = {}) => {
     const types = { 'Send SMS': 'sms', 'Send Email': 'email', 'Send Education': 'content', 'Send Assessment': 'assessment' };
     const type = types[key];
     if (!type || !row) return false;
@@ -6357,7 +8346,7 @@ export const useAppStore = create((set, get) => ({
         || { id, name: row.name, email: row.email || '', phone: row.phone || '' };
       if (type === 'sms') get().openCommsDrawer('sms', { initialPatient: patient });
       else if (type === 'email') get().openCommsDrawer('email', { initial: { patient, to: patient.email ? [patient.email] : [] } });
-      else get().openCommsDrawer(type, { patient });
+      else get().openCommsDrawer(type, { patient, ...drawerProps });
     })();
     return true;
   },
@@ -6382,7 +8371,11 @@ export const useAppStore = create((set, get) => ({
   setEmbeddedComponentsTab: (tab) => { set({ embeddedComponentsTab: tab }); updateHash(get); },
   setAccountTab: (tab) => { set({ accountTab: tab }); updateHash(get); },
   setContentTab: (tab) => { set({ contentTab: tab }); updateHash(get); },
-  setCarePlanTab: (tab) => {
+  openCareProgramConfig: (id, tab = 'overview') => {
+    set({ careProgramConfigId: id, careProgramConfigTab: tab });
+    updateHash(get);
+  },
+    setCarePlanTab: (tab) => {
     const from = get().carePlanTab;
     if (from !== tab) track('nav.tab_changed', { scope: 'settings', from, to: tab });
     set({ carePlanTab: tab });
@@ -6491,19 +8484,19 @@ export const useAppStore = create((set, get) => ({
   // ── Population Groups (Supabase-backed) ──
   popGroups: [],
   popGroupsLoading: false,
-  fetchPopGroups: async () => {
+  fetchPopGroups: (opts) => mountFetch('fetchPopGroups', async () => {
     set({ popGroupsLoading: true });
     const { data, error } = await supabase
       .from('population_groups')
       .select('*')
       .order('created_at', { ascending: false });
     if (error) {
-      console.warn('[store] population_groups fetch failed — run supabase/population_groups_migration.sql:', error.message);
+      console.warn('[store] population_groups fetch failed: run supabase/population_groups_migration.sql:', error.message);
       set({ popGroupsLoading: false });
       return;
     }
     set({ popGroups: (data || []).map(popGroupRowToJs), popGroupsLoading: false });
-  },
+  }, opts),
   createPopGroup: async (group) => {
     const { data, error } = await supabase
       .from('population_groups')
@@ -6537,27 +8530,28 @@ export const useAppStore = create((set, get) => ({
     get().logPopGroupActivity(id, {
       action: 'override',
       title: 'rule' in updates && updates.rule != null ? 'Rule Updated' : 'Group Details Updated',
-      detail: `"${saved.name}" — ${saved.count} active member${saved.count === 1 ? '' : 's'}`,
+      detail: `"${saved.name}", ${saved.count} active member${saved.count === 1 ? '' : 's'}`,
     });
     return saved;
   },
   // ── Population group activity log (Supabase-backed, audit trail) ──
   // Fire-and-forget writes from create/update/delete; the History drawer
-  // fetches per group. Failures only warn — activity must never block the
+  // fetches per group. Failures only warn, activity must never block the
   // action it records.
   logPopGroupActivity: async (groupId, { action, title, detail }) => {
     const actor = get().currentUserProfile?.name || 'Fold Demo';
     const { error } = await supabase
       .from('pop_group_activity')
       .insert({ group_id: groupId, action, title, detail: detail || null, actor });
-    if (error) console.warn('[store] logPopGroupActivity failed — run supabase/pop_group_activity_migration.sql:', error.message);
+    if (error) console.warn('[store] logPopGroupActivity failed: run supabase/pop_group_activity_migration.sql:', error.message);
   },
   fetchPopGroupActivity: async (groupId) => {
     const { data, error } = await supabase
       .from('pop_group_activity')
       .select('*')
       .eq('group_id', groupId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(500);
     if (error) {
       console.warn('[store] fetchPopGroupActivity failed:', error.message);
       return [];
@@ -6582,7 +8576,7 @@ export const useAppStore = create((set, get) => ({
     set({ pgRuleBuilder: null, pgRuleRestoreId: null });
     updateHash?.(get());
   },
-  // Inline rename from the detail rail — keeps the open session's name in
+  // Inline rename from the detail rail, keeps the open session's name in
   // step so the breadcrumb / rail / sub-bar all update together.
   setPgRuleBuilderName: (name) => set(s => (
     s.pgRuleBuilder ? { pgRuleBuilder: { ...s.pgRuleBuilder, name } } : {}
@@ -6591,7 +8585,7 @@ export const useAppStore = create((set, get) => ({
   /* Silent count-sync: the rule-builder detail screen evaluates live
      membership and pushes the real Active/Inactive split back so the table's
      columns stay honest (profile data changes between visits).  Fire and
-     forget — never blocks the view or toasts the user. */
+     forget: never blocks the view or toasts the user. */
   syncPopGroupCounts: async (id, { count, inactive }) => {
     const { error } = await supabase
       .from('population_groups')
@@ -6646,7 +8640,7 @@ export const useAppStore = create((set, get) => ({
     }
         const newDomain = domainDbToJs(data[0]);
     set(s => ({ embedDomains: [newDomain, ...s.embedDomains] }));
-    get().logAudit('Domain', newDomain.id, newDomain.domain, 'created', `Registered — category: ${newDomain.category}, HIPAA: ${newDomain.hipaa}`, 'Lifecycle');
+    get().logAudit('Domain', newDomain.id, newDomain.domain, 'created', `Registered: category: ${newDomain.category}, HIPAA: ${newDomain.hipaa}`, 'Lifecycle');
     return newDomain;
   },
   updateEmbedDomain: async (id, updates) => {
@@ -6670,7 +8664,7 @@ export const useAppStore = create((set, get) => ({
     // Block deletion if components reference this domain
     const compsUsingDomain = get().embedComponents.filter(c => c.domainId === id);
     if (compsUsingDomain.length > 0) {
-      get().showToast(`Cannot delete — ${compsUsingDomain.length} component(s) use this domain. Remove or reassign them first.`);
+      get().showToast(`Cannot delete: ${compsUsingDomain.length} component(s) use this domain. Remove or reassign them first.`);
       return false;
     }
     const domain = get().embedDomains.find(d => d.id === id);
@@ -6876,11 +8870,11 @@ export const useAppStore = create((set, get) => ({
 
   // Holidays
   holidaysData: null,
-  fetchHolidays: async () => {
+  fetchHolidays: (opts) => mountFetch('fetchHolidays', async () => {
     const { data, error } = await supabase.from('holidays').select('*').order('date');
     if (error) { console.warn('[store] holidays fetch failed:', error.message); return; }
     set({ holidaysData: data.map(r => ({ id: r.id, date: r.date, name: r.name })) });
-  },
+  }, opts),
   addHoliday: async (holiday) => {
     const { data, error } = await supabase.from('holidays').insert({ date: holiday.date, name: holiday.name }).select();
     if (!error && data) set(s => ({ holidaysData: [...(s.holidaysData || []), { id: data[0].id, date: data[0].date, name: data[0].name }] }));
@@ -6961,7 +8955,7 @@ export const useAppStore = create((set, get) => ({
     };
     const { error } = await supabase.from('goals').insert(row);
     if (error) console.warn('Failed to persist goal:', error.message);
-    get().logAudit('Goal', goal.id, goal.name, 'created', `Goal created — program: ${goal.program}, status: ${goal.status}`, 'Lifecycle');
+    get().logAudit('Goal', goal.id, goal.name, 'created', `Goal created: program: ${goal.program}, status: ${goal.status}`, 'Lifecycle');
   },
 
   updateGoal: async (goal) => {
@@ -6987,7 +8981,7 @@ export const useAppStore = create((set, get) => ({
     };
     const { error } = await supabase.from('goals').update(row).eq('id', goal.id);
     if (error) console.warn('Failed to update goal:', error.message);
-    get().logAudit('Goal', goal.id, goal.name, 'updated', `Goal updated — ${goal.name}`, 'Configuration');
+    get().logAudit('Goal', goal.id, goal.name, 'updated', `Goal updated: ${goal.name}`, 'Configuration');
   },
 
   deleteGoal: async (id) => {
@@ -7026,7 +9020,7 @@ export const useAppStore = create((set, get) => ({
     const normalized = normalizeWorklistLabel(list);
     const from = get().activeSubnavList;
     if (from !== normalized) track('nav.list_changed', { from, to: normalized });
-    // Any explicit list change pins the session — fetchWorklistOrder's
+    // Any explicit list change pins the session, fetchWorklistOrder's
     // top-of-list auto-landing resets this flag after its own call.
     // TOC is the standalone queue worklist; TCM keeps the Worklist / Queue tabs.
     const tabPatch = normalized === 'TOC IP' ? { activeTab: 'toc-queue' }
@@ -7353,36 +9347,43 @@ export const useAppStore = create((set, get) => ({
   },
 
   // ─── HCC Worklist (Supabase-backed) ───
-  // ─── HEDIS worklist — DB is the sole source of truth. `caregapActivity`
+  // ─── HEDIS worklist: DB is the sole source of truth. `caregapActivity`
   //     starts empty and is filled by `fetchCaregapActivity`; the local
   //     mock (`CAREGAP_ACTIVITY_MOCK`) is used only by `scripts/seed.js`
   //     to populate a fresh Supabase env. Removing the in-store mock
   //     union prevents half-persisted feeds where some entries are DB-
   //     backed and others live only in memory.
   caregapActivity: {},
-  caregapActivityLoaded: false,
-  fetchCaregapActivity: async () => {
-    if (get().caregapActivityLoaded) return;
+  // Per member: the drawer shows one member's feed, so it reads only those
+  // rows (the whole table grows with every action on every member).
+  caregapActivityLoadedFor: {},
+  fetchCaregapActivity: async (memberId) => {
+    if (!memberId || get().caregapActivityLoadedFor[memberId]) return;
+    set(s => ({ caregapActivityLoadedFor: { ...s.caregapActivityLoadedFor, [memberId]: 'loading' } }));
     const { data, error } = await supabase
       .from('caregap_activity')
       .select('*')
-      .order('at', { ascending: false });
-    if (error) {
-      console.warn('fetchCaregapActivity failed:', error.message);
-      set({ caregapActivityLoaded: true });
-      return;
-    }
-    const byMember = {};
-    for (const row of (data || [])) {
-      (byMember[row.member_id] ??= []).push(caregapRowToEntry(row));
-    }
-    set({ caregapActivity: byMember, caregapActivityLoaded: true });
+      .eq('member_id', memberId)
+      .order('at', { ascending: false })
+      .limit(500);
+    if (error) console.warn('fetchCaregapActivity failed:', error.message);
+    set(s => ({
+      // Entries logged while this read was in flight are already in the map.
+      caregapActivity: error ? s.caregapActivity : {
+        ...s.caregapActivity,
+        [memberId]: [
+          ...(s.caregapActivity[memberId] || []).filter(e => !(data || []).some(r => r.id === e.id)),
+          ...(data || []).map(caregapRowToEntry),
+        ],
+      },
+      caregapActivityLoadedFor: { ...s.caregapActivityLoadedFor, [memberId]: true },
+    }));
   },
   // Status updates applied to the local HEDIS mock data via setHedisMembers.
   hedisMembers: [],
   hedisLoading: false,
   setHedisMembers: (members) => set({ hedisMembers: members }),
-  // Single-fire guard — see `ccmWorklistDidFetch`. Also had none.
+  // Single-fire guard: see `ccmWorklistDidFetch`. Also had none.
   hedisDidFetch: false,
   fetchHedisMembers: async () => {
     if (useAppStore.getState().hedisDidFetch) return;
@@ -7400,7 +9401,7 @@ export const useAppStore = create((set, get) => ({
       .select('*')
       .order('start_date', { ascending: false });
     if (error) {
-      // Log and stop — do NOT paper over a Supabase error with the local
+      // Log and stop: do NOT paper over a Supabase error with the local
       // mock (the UI has no way to distinguish "seed hasn't run" from
       // "network down" when the mock silently fills in). Reset the
       // one-shot guard so a future call can retry.
@@ -7409,9 +9410,9 @@ export const useAppStore = create((set, get) => ({
       return;
     }
     if (!data?.length) {
-      // DB is empty — surface the empty state instead of unioning the
+      // DB is empty: surface the empty state instead of unioning the
       // mock. Fresh dev envs should run `bun run seed` to populate.
-      console.warn('fetchHedisMembers — hedis_members table is empty; run `bun run seed` to load HEDIS mock data.');
+      console.warn('fetchHedisMembers: hedis_members table is empty; run `bun run seed` to load HEDIS mock data.');
       set({ hedisMembers: [], hedisLoading: false });
       return;
     }
@@ -7442,7 +9443,7 @@ export const useAppStore = create((set, get) => ({
       city:            r.city,
       state:           r.state,
     }));
-    // DB is the authoritative source once the seed has landed — do NOT
+    // DB is the authoritative source once the seed has landed, do NOT
     // union the local mock here. Any mock member not yet in the DB is
     // treated as missing from the worklist rather than silently patched
     // in, so a stale seed shows up as an obvious data gap instead of a
@@ -7462,7 +9463,7 @@ export const useAppStore = create((set, get) => ({
       .is('deleted_at', null)
       .order('name', { ascending: true });
     if (error || !data?.length) {
-      if (error) console.warn('fetchPracticeLocations — falling back to local mock:', error.message);
+      if (error) console.warn('fetchPracticeLocations: falling back to local mock:', error.message);
       const { PRACTICE_LOCATIONS } = await import('../features/settings/account/locations/data/mock');
       set({ practiceLocations: PRACTICE_LOCATIONS, practiceLocationsLoading: false, practiceLocationsFetched: true });
       return;
@@ -7501,14 +9502,14 @@ export const useAppStore = create((set, get) => ({
 
   apcmPatients: [],
   apcmPatientsLoading: false,
-  fetchApcmPatients: async () => {
+  fetchApcmPatients: (opts) => mountFetch('fetchApcmPatients', async () => {
     set({ apcmPatientsLoading: true });
     const { data, error } = await supabase
       .from('apcm_patients')
       .select('*')
       .order('name', { ascending: true });
     if (error || !data?.length) {
-      if (error) console.warn('fetchApcmPatients — falling back to local mock:', error.message);
+      if (error) console.warn('fetchApcmPatients: falling back to local mock:', error.message);
       const { APCM_PATIENTS } = await import('../features/apcm-billing/data/mock');
       set({ apcmPatients: APCM_PATIENTS, apcmPatientsLoading: false });
       return;
@@ -7537,7 +9538,7 @@ export const useAppStore = create((set, get) => ({
       })),
       apcmPatientsLoading: false,
     });
-  },
+  }, opts),
 
   // ─── CCM Worklist (shared list) ─────────────────────────────────────────
   ccmWorklistMembers: [],
@@ -7554,11 +9555,11 @@ export const useAppStore = create((set, get) => ({
       .select('*')
       .order('name', { ascending: true });
     if (error || !data?.length) {
-      if (error) console.warn('fetchCcmWorklistMembers — falling back:', error.message);
+      if (error) console.warn('fetchCcmWorklistMembers: falling back:', error.message);
       const { CCM_WORKLIST_MEMBERS } = await import('../features/ccm-worklist/data/mock');
       // Release the guard only on a real error, so a transient network blip
       // does not pin the session to mock data. An empty table is a stable
-      // condition — retrying it every mount would just re-fetch nothing.
+      // condition: retrying it every mount would just re-fetch nothing.
       set({
         ccmWorklistMembers: CCM_WORKLIST_MEMBERS,
         ccmWorklistLoading: false,
@@ -7608,7 +9609,7 @@ export const useAppStore = create((set, get) => ({
   // ─── SNP worklist ──────────────────────────────────────────────────────
   snpWorklistMembers: [],
   snpWorklistLoading: false,
-  // Single-fire guard — see `ccmWorklistDidFetch`. Also had none.
+  // Single-fire guard: see `ccmWorklistDidFetch`. Also had none.
   snpWorklistDidFetch: false,
   fetchSnpWorklistMembers: async () => {
     if (useAppStore.getState().snpWorklistDidFetch) return;
@@ -7618,7 +9619,7 @@ export const useAppStore = create((set, get) => ({
       .select('*')
       .order('name', { ascending: true });
     if (error || !data?.length) {
-      if (error) console.warn('fetchSnpWorklistMembers — falling back:', error.message);
+      if (error) console.warn('fetchSnpWorklistMembers: falling back:', error.message);
       const { SNP_WORKLIST_MEMBERS } = await import('../features/snp-worklist/data/mock');
       set({
         snpWorklistMembers: SNP_WORKLIST_MEMBERS,
@@ -7682,7 +9683,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   // Assign / re-assign an SNP member to a platform user. Accepts the shape
-  // AssigneeChange's picker emits — { id, name, initials, role } — and also
+  // AssigneeChange's picker emits, { id, name, initials, role }, and also
   // tolerates raw platformUsers rows that carry `clinicalRoles[]`. Passing
   // null clears the assignment. Persisted to Supabase alongside the local
   // update so a reload keeps the new assignment.
@@ -7718,7 +9719,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   // Enrolling a patient in the SNP care program implies membership in the
-  // SNP worklist — this keeps the two in sync. Resolves the patient across
+  // SNP worklist: this keeps the two in sync. Resolves the patient across
   // every worklist slice (profiles can be opened from any of them, so
   // selectedPatientId may be a patients.id, an hcc UUID, a member id, …),
   // dedupes against existing SNP rows by id / patientId / normalized
@@ -7735,7 +9736,7 @@ export const useAppStore = create((set, get) => ({
       (s.ccmWorklistMembers || []).find(matchesId) ||
       (s.snpWorklistMembers || []).find(matchesId) ||
       (s.hedisMembers || []).find(matchesId);
-    if (!src) return; // no slice loaded yet — nothing to mirror from
+    if (!src) return; // no slice loaded yet, nothing to mirror from
 
     const norm = (v) => String(v || '').replace(/^#/, '').trim().toLowerCase();
     const already = (s.snpWorklistMembers || []).some(m =>
@@ -7748,7 +9749,7 @@ export const useAppStore = create((set, get) => ({
     const now = new Date();
     const stamp = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}/${now.getFullYear()}`;
     const row = {
-      id:               `snpw-${Date.now()}`,
+      id:               worklistRowId(src),
       initials:         src.initials || (src.name || '').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase(),
       name:             src.name,
       gender:           src.gender || src.g || null,
@@ -7791,7 +9792,7 @@ export const useAppStore = create((set, get) => ({
       patient_id:         row.patientId,
     });
     if (error) {
-      console.warn('ensureSnpWorklistMembership — insert failed:', error.message);
+      console.warn('ensureSnpWorklistMembership: insert failed:', error.message);
       // Roll back the optimistic row so the worklist doesn't show a phantom
       // member that won't survive a reload.
       set(st => ({ snpWorklistMembers: (st.snpWorklistMembers || []).filter(m => m.id !== row.id) }));
@@ -7800,7 +9801,7 @@ export const useAppStore = create((set, get) => ({
 
   // ─── SNP filter slice ──────────────────────────────────────────────────
   // Same {[k]: string[]} shape HCC/HEDIS use so the shared saveSavedFilter /
-  // applySavedFilter / clearSavedFilters flow works for SNP too — LIST_FILTER_KEY
+  // applySavedFilter / clearSavedFilters flow works for SNP too, LIST_FILTER_KEY
   // routes 'SNP' → 'snpFilters'.
   snpFilters: {},
   snpVisibleFilterKeys: null,
@@ -7824,7 +9825,7 @@ export const useAppStore = create((set, get) => ({
   applySnpSavedFilter: (id) => useAppStore.getState().applySavedFilter('SNP', id),
 
   // ─── CCM Billing ───────────────────────────────────────────────────────
-  // Keyed by patientId — the Billing Review step only ever needs one
+  // Keyed by patientId: the Billing Review step only ever needs one
   // patient's data at a time, so we avoid loading everything up front.
   ccmBillingPeriodsByPatient: {},
   ccmBillableActivitiesByPatient: {},
@@ -7844,7 +9845,7 @@ export const useAppStore = create((set, get) => ({
     const periodsData = periodsRes.data;
     const activitiesData = activitiesRes.data;
 
-    // Fall back to local mock if either fetch fails or returns 0 rows — same
+    // Fall back to local mock if either fetch fails or returns 0 rows, same
     // pattern apcmPatients uses so the UI still renders while migration is
     // pending on a fresh env.
     if (periodsError || activitiesError || !periodsData?.length) {
@@ -7910,7 +9911,7 @@ export const useAppStore = create((set, get) => ({
       .order('generated_at', { ascending: false });
 
     if (error || !data?.length) {
-      if (error) console.warn('fetchCcmBillingReports — falling back:', error.message);
+      if (error) console.warn('fetchCcmBillingReports: falling back:', error.message);
       const { CCM_BILLING_REPORTS } = await import('../features/patient/data/ccmBillingMock');
       // Clone the reference mock for the on-screen patient so the History
       // tab has something to render before Alok runs the migration.
@@ -7942,7 +9943,7 @@ export const useAppStore = create((set, get) => ({
     }));
   },
 
-  // Optimistic add — inserts locally, then persists. The row must already
+  // Optimistic add: inserts locally, then persists. The row must already
   // include a client id (`act-<uuid>`), periodId, patientId, activityType,
   // durationSeconds, occurredAt. Called by the timer widget on Stop and by
   // the unlogged-time drawer when classifying entries.
@@ -7966,8 +9967,14 @@ export const useAppStore = create((set, get) => ({
     });
     if (error) console.warn('logTimerInactivityEvent:', error.message);
   },
+  // Hard consent gate (Phase 2A.3): no CCM time is recorded without a
+  // current CCM consent. Returns { ok, blocked, reason } so callers keep the
+  // time instead of dropping it. Off until patient_consents exists, so an
+  // environment without the migration keeps logging time.
   addCcmBillableActivity: async (activity) => {
     const { patientId } = activity;
+    const gate = await get().checkBillingConsent(patientId, 'CCM');
+    if (!gate.allowed) return { ok: false, blocked: true, reason: gate.reason };
     set(s => {
       const prev = s.ccmBillableActivitiesByPatient[patientId] || [];
       return {
@@ -7990,7 +9997,8 @@ export const useAppStore = create((set, get) => ({
       is_unlogged:        !!activity.isUnlogged,
     };
     const { error } = await supabase.from('ccm_billable_activities').insert(row);
-    if (error) console.warn('addCcmBillableActivity — insert failed:', error.message);
+    if (error) console.warn('addCcmBillableActivity: insert failed:', error.message);
+    return { ok: true, blocked: false, reason: null };
   },
 
   updateGapStatus: (memberId, gapCode, nextStatus) => {
@@ -8100,9 +10108,9 @@ export const useAppStore = create((set, get) => ({
 
   // Open a NEW HEDIS gap on a member natively inside Fold, distinct
   // from gaps ingested from the Astrana API. Today's caller is DSF-A's
-  // "Save score" path — a Positive PHQ-2 automatically opens DSF-B on
+  // "Save score" path: a Positive PHQ-2 automatically opens DSF-B on
   // the same member so the follow-up PHQ-9 flow has a row to attach to.
-  // Idempotent — a gap with the same code is not duplicated. Also
+  // Idempotent: a gap with the same code is not duplicated. Also
   // drops a Fold-native activity entry so the timeline reads "Gap
   // opened by PHQ-2 Positive" instead of the Astrana ingestion source.
   openNativeGap: (memberId, code, meta = {}) => {
@@ -8189,9 +10197,15 @@ export const useAppStore = create((set, get) => ({
     });
   },
 
+  // Add Care Gaps opens on a row's patient, or (worklist header) with a
+  // Member picker first, like HCC's Add Manually.
   addCareGapsMember: null,
-  openAddCareGaps: (member) => set({ addCareGapsMember: member }),
-  closeAddCareGaps: () => set({ addCareGapsMember: null }),
+  addCareGapsPicker: false,
+  openAddCareGaps: (member) => set({ addCareGapsMember: member, addCareGapsPicker: false }),
+  openAddCareGapsPicker: () => set({ addCareGapsMember: null, addCareGapsPicker: true }),
+  // The member picked in the drawer's Member field (picker mode).
+  pickAddCareGapsMember: (member) => set({ addCareGapsMember: member }),
+  closeAddCareGaps: () => set({ addCareGapsMember: null, addCareGapsPicker: false }),
 
   // Adds whitelisted gaps to a member. When the member already has a closed
   // gap for the same measure, that gap becomes the new gap's parent: it stays
@@ -8199,7 +10213,8 @@ export const useAppStore = create((set, get) => ({
   // `parentGap` snapshot) is inserted just before it. Gaps are looked up by
   // code across the app, so first-match lookups land on the active gap and
   // the status / assignee mutations skip superseded ones.
-  addCareGaps: (memberId, { items, ipa, hpCode, measureYear, workflows }) => {
+  // Each item carries its own workflows and (when re-added) reason.
+  addCareGaps: (memberId, { items, ipa, hpCode, measureYear }) => {
     track('hedis.gaps_added', { memberId, count: items.length });
     const startDate = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
     const actor = get().currentActorName();
@@ -8207,7 +10222,7 @@ export const useAppStore = create((set, get) => ({
       hedisMembers: (s.hedisMembers || []).map(m => {
         if (m.id !== memberId) return m;
         let gaps = [...(m.gaps || [])];
-        items.forEach(({ whitelist, parent }) => {
+        items.forEach(({ whitelist, parent, workflows, reason }) => {
           const next = {
             code: whitelist.code,
             status: 'Open',
@@ -8219,6 +10234,7 @@ export const useAppStore = create((set, get) => ({
             ipa,
             hpCode,
             workflows,
+            reason: reason || null,
             parentGap: parent ? { ...parent } : null,
           };
           const idx = gaps.findIndex(g => g.code === whitelist.code && !g.supersededAt);
@@ -8541,6 +10557,179 @@ export const useAppStore = create((set, get) => ({
     if (missing) set({ programStepStatusTableMissing: true });
   },
 
+  // ── Patient consent + preferences (Supabase `patient_consents`, ──────────
+  // `patient_preferences`). Consent history is keyed by patient id, newest
+  // first; a capture prepends locally, then inserts (rows are never edited).
+  // Rules live in features/patient/data/consentRules.js. Until the migration
+  // runs, consent reads as missing and captures stay session-only.
+  patientConsents: {},
+  patientConsentsLoadedFor: {},
+  patientPreferences: {},
+  patientConsentTableMissing: false,
+  // Capture Consent drawer, mounted once in AppLayout so the banner, the
+  // Overview card and (2A.3) billing gates can all open it.
+  // { patientId, scopeType?, scope?, status?, programId?, onCaptured?(record) } | null
+  consentCapture: null,
+  openConsentCapture: (patientId, preset = {}) => { if (patientId) set({ consentCapture: { patientId: String(patientId), ...preset } }); },
+  closeConsentCapture: () => set({ consentCapture: null }),
+  // Consent History drawer (every consent record, by category), mounted in AppLayout.
+  consentHistoryPatientId: null,
+  openConsentHistory: (patientId) => { if (patientId) set({ consentHistoryPatientId: String(patientId) }); },
+  closeConsentHistory: () => set({ consentHistoryPatientId: null }),
+  // Contact consent dialog (Figma 29:7133 / 29:7206): accept or withdraw one
+  // or more channels in one step. { patientId, scopes: string[], status } | null
+  contactConsent: null,
+  openContactConsent: (patientId, scopes, status) => { if (patientId && scopes?.length) set({ contactConsent: { patientId: String(patientId), scopes, status } }); },
+  closeContactConsent: () => set({ contactConsent: null }),
+  // Concurrent callers (the banner, the card, a billing gate) share one
+  // request, so a gate never reads the history before it has arrived.
+  fetchPatientConsents: (patientId, { force = false } = {}) => {
+    if (!patientId) return Promise.resolve();
+    const inflight = consentFetches.get(patientId);
+    if (inflight && !force) return inflight;
+    if (!force && get().patientConsentsLoadedFor[patientId]) return Promise.resolve();
+    set(s => ({ patientConsentsLoadedFor: { ...s.patientConsentsLoadedFor, [patientId]: true } }));
+    const request = Promise.all([fetchConsentRows(patientId), fetchPreferencesRow(patientId)]).then(([{ rows, missing }, prefs]) => {
+      set(s => ({
+        patientConsentTableMissing: missing || prefs.missing || s.patientConsentTableMissing,
+        // Keep anything captured locally while this was in flight.
+        patientConsents: { ...s.patientConsents, [patientId]: [...(s.patientConsents[patientId] || []).filter(c => !rows.some(r => r.id === c.id)), ...rows] },
+        patientPreferences: { ...s.patientPreferences, [patientId]: preferencesFromRow(prefs.row) },
+      }));
+    }).finally(() => consentFetches.delete(patientId));
+    consentFetches.set(patientId, request);
+    return request;
+  },
+  // `capture`: { scopeType, scope, status, method, witness, expiresOn, note,
+  // programId }, plus `file` (signature PNG or signed scan) for written and
+  // e-signed consent. Returns { ok, error }.
+  capturePatientConsent: async (patientId, capture) => {
+    if (!patientId) return { ok: false, error: 'No patient' };
+    const id = `pc-${patientId}-${Date.now()}`;
+    const { file, ...fields } = capture || {};
+    let artifactPath = null;
+    if (file && !get().patientConsentTableMissing) {
+      artifactPath = await uploadConsentArtifact(patientId, id, file);
+      if (!artifactPath) return { ok: false, error: 'Could not upload the signed document' };
+    }
+    const now = new Date();
+    const record = {
+      ...fields,
+      id,
+      patientId: String(patientId),
+      artifactPath: artifactPath || (file ? `session/${id}` : null),
+      artifactKind: file ? (fields.artifactKind || 'upload') : null,
+      capturedBy: get().currentActorName(),
+      capturedByRole: get().currentUserProfile?.role || null,
+      capturedAt: now.toISOString(),
+      effectiveOn: fields.effectiveOn || now.toISOString().slice(0, 10),
+    };
+    const invalid = validateCapture(record);
+    if (invalid) return { ok: false, error: invalid };
+    set(s => ({ patientConsents: { ...s.patientConsents, [patientId]: [record, ...(s.patientConsents[patientId] || [])] } }));
+    if (!get().patientConsentTableMissing) {
+      const { missing } = await insertConsentRow(record);
+      if (missing) set({ patientConsentTableMissing: true });
+    }
+    if (record.scopeType === 'program') {
+      get().logProgramActivity({
+        patientId,
+        programCode: record.scope,
+        title: `${record.scope} Consent ${{ given: 'Captured', declined: 'Declined', withdrawn: 'Withdrawn' }[record.status]}`,
+        statusLabel: CONSENT_METHODS.find(m => m.value === record.method)?.label || '',
+        statusType: record.status === 'given' ? 'success' : 'neutral',
+      });
+    }
+    return { ok: true, error: null, record };
+  },
+  // canBill against freshly loaded consent. Allowed while the consent table
+  // is missing (pre-migration), so billing isn't switched off by a rollout.
+  checkBillingConsent: async (patientId, programCode) => {
+    await get().fetchPatientConsents(patientId);
+    if (get().patientConsentTableMissing) return { allowed: true, state: 'unavailable', reason: null };
+    return canBill(get().patientConsents[patientId] || [], programCode);
+  },
+  savePatientPreferences: async (patientId, patch) => {
+    if (!patientId) return;
+    const next = { ...preferencesFromRow(null), ...(get().patientPreferences[patientId] || {}), ...patch };
+    set(s => ({ patientPreferences: { ...s.patientPreferences, [patientId]: next } }));
+    if (get().patientConsentTableMissing) return;
+    const { missing } = await persistPreferences(patientId, next, get().currentActorName());
+    if (missing) set({ patientConsentTableMissing: true });
+  },
+
+  // ── Program health (program_health migration): the supervisor "Team
+  // programs" card on Home. One RPC per load, keyed by the codes asked for;
+  // `codes` null means every program (admins). No mock fallback: made-up
+  // health counts would mislead, so a missing function shows as such.
+  programHealth: null, // [{ code, activeMembers, attentionMembers, carePlanGaps, overdueOutreach, overdueTasks, reviewGaps }]
+  programHealthKey: null,
+  programHealthLoading: false,
+  programHealthMissing: false,
+  fetchProgramHealth: async (codes) => {
+    const key = codes ? [...codes].sort().join('|') : '*';
+    if (get().programHealthLoading || get().programHealthKey === key) return;
+    set({ programHealthLoading: true, programHealthKey: key });
+    const { data, error } = await supabase.rpc('program_health', { p_codes: codes || null });
+    if (error) {
+      console.warn('fetchProgramHealth:', error.message);
+      set({
+        programHealth: [],
+        programHealthLoading: false,
+        programHealthMissing: /program_health|does not exist|schema cache/i.test(error.message),
+      });
+      return;
+    }
+    set({
+      programHealth: (data || []).map(r => ({
+        code: r.program_code,
+        activeMembers: r.active_members || 0,
+        attentionMembers: r.attention_members || 0,
+        carePlanGaps: r.care_plan_gaps || 0,
+        overdueOutreach: r.overdue_outreach || 0,
+        overdueTasks: r.overdue_tasks || 0,
+        reviewGaps: r.review_gaps || 0,
+      })),
+      programHealthLoading: false,
+      programHealthMissing: false,
+    });
+  },
+
+  // ── Program access (Supabase `program_memberships`, `vendor_organizations`,
+  // `access_override_log`). All active memberships load once (the table is
+  // small and co-sign needs other users' roles); the current user's scope is
+  // derived in features/patient/data/programAccess.js (useProgramAccess).
+  // Until the migration runs everyone stays unscoped.
+  programMemberships: [],
+  vendorOrganizations: [],
+  programAccessLoaded: false,
+  programAccessTableMissing: false,
+  fetchProgramAccess: async ({ force = false } = {}) => {
+    if (!force && (get().programAccessLoaded || get()._programAccessFetching)) return;
+    set({ _programAccessFetching: true });
+    const { memberships, vendors, missing } = await fetchProgramAccessRows();
+    set({ programMemberships: memberships, vendorOrganizations: vendors, programAccessTableMissing: missing, programAccessLoaded: true, _programAccessFetching: false });
+  },
+  // Admin-only in the database; returns { ok, error }.
+  saveProgramMembership: async (membership) => {
+    const next = { ...membership, id: membership.id || `pm-${membership.userId}-${String(membership.programCode).toLowerCase()}`, updatedBy: get().currentActorName() };
+    const { ok, missing, error } = await persistMembership(next);
+    if (missing) { set({ programAccessTableMissing: true }); return { ok: false, error: 'Program access needs its migration first' }; }
+    if (!ok) return { ok: false, error };
+    set(s => ({ programMemberships: [...s.programMemberships.filter(m => !(m.userId === next.userId && m.programCode === next.programCode)), next].filter(m => m.active !== false) }));
+    return { ok: true, error: null };
+  },
+  // A supervisor stepping outside their scope: always with a reason, always
+  // logged. Returns { ok, error }.
+  logAccessOverride: async ({ patientId, programCode, action, reason }) => {
+    const invalid = validateOverride({ reason, programCode });
+    if (invalid) return { ok: false, error: invalid };
+    if (get().programAccessTableMissing) return { ok: true, error: null };
+    const { missing } = await insertOverride({ patientId, programCode, action, reason, userName: get().currentActorName() });
+    if (missing) set({ programAccessTableMissing: true });
+    return { ok: true, error: null };
+  },
+
   // ── Care Gap lab orders / results (Supabase `caregap_lab_*`) ────────────
   // Keyed by HEDIS member id. Local state updates first; until
   // caregap_lab_orders_migration.sql has run they stay session-only and the
@@ -8657,7 +10846,7 @@ export const useAppStore = create((set, get) => ({
     const me = get().currentUserProfile;
     // Route through createTask so this hits Supabase + task_audit_log like
     // every other task. Assign to the reviewer picked in the Submit-for-
-    // Review popup — that write is what fires tasks_emit_notifications on
+    // Review popup: that write is what fires tasks_emit_notifications on
     // the notifications table (recipient_id = assigned_to_id). Without a
     // reviewer, the task lands in the HEDIS Sign-Off pool for anyone to
     // claim, matching the pre-review-picker behavior.
@@ -8699,7 +10888,7 @@ export const useAppStore = create((set, get) => ({
     return get().createTask(payload, {
       auditUserName: me?.name || 'HEDIS Automation',
       auditUserId: me?.id || null,
-      // Only these two remain client-only — `consolidatedPdf` because the
+      // Only these two remain client-only: `consolidatedPdf` because the
       // PDF blob lives on `clinical_notes.pdf_data_url`, and `state`
       // because the string is duplicated in `meta` already.
       dbOmit: ['consolidatedPdf', 'state'],
@@ -8713,7 +10902,7 @@ export const useAppStore = create((set, get) => ({
     track('hedis.signoff_task_pdf_attached', { taskId });
     const task = get().tasks.find(t => t.id === taskId);
     if (!task || !pdf) return false;
-    // Keep consolidatedPdf in-memory (no DB column — stripped on retry so the
+    // Keep consolidatedPdf in-memory (no DB column: stripped on retry so the
     // attachments count still persists) and ensure the task row's attachments
     // / updated_at survive reload via updateTask's Supabase write.
     set(s => ({
@@ -8757,10 +10946,10 @@ export const useAppStore = create((set, get) => ({
   // Mirrors `public.forms` rows where form_type='Note'. `noteTemplatesById`
   // stores every fetched template row; `noteTemplatesByGap` maps a HEDIS
   // gap code (e.g. 'CBP') to the default template row. Callers should
-  // prefer `noteTemplateForGap(code)` — it falls back to the hand-rolled
+  // prefer `noteTemplateForGap(code)`, it falls back to the hand-rolled
   // GAP_TEMPLATES JS constant when the DB hasn't been seeded yet.
   noteTemplatesById: {},
-  // `noteTemplatesByGap[code]` — the Visit-context default template for
+  // `noteTemplatesByGap[code]`, the Visit-context default template for
   // a care gap (kept as the flat shape existing callers already expect;
   // see GenericEvidenceForm in ClinicalNotePanelParts). Non-Visit
   // defaults live in `noteTemplatesByGapNonVisit[code]` alongside so
@@ -8772,7 +10961,7 @@ export const useAppStore = create((set, get) => ({
   fetchNoteTemplates: async ({ force = false } = {}) => {
     if (!force && get().noteTemplatesDidFetch) return;
     // `context` was added by note_templates_context_migration.sql. Older
-    // DBs return the row without it — the catch-block below downgrades
+    // DBs return the row without it, the catch-block below downgrades
     // to a schema-tolerant re-select so the Settings tab still renders.
     // `updated_by_profile:profiles!updated_by(...)` hydrates the display
     // name for the Updated column; degrades gracefully on PGRST200.
@@ -8797,11 +10986,11 @@ export const useAppStore = create((set, get) => ({
     }
     if (error) {
       if (error.code === '42P01' || error.code === 'PGRST205' || /column .* does not exist/i.test(error.message || '')) {
-        // Table or gap_code column missing — happens before
+        // Table or gap_code column missing: happens before
         // note_templates_migration.sql lands. Mark fetched so we don't
         // spam the console; the store selector falls back to
         // GAP_TEMPLATES automatically.
-        console.warn('[fetchNoteTemplates] forms table or gap_code column missing — run supabase/note_templates_migration.sql');
+        console.warn('[fetchNoteTemplates] forms table or gap_code column missing, run supabase/note_templates_migration.sql');
         set({ noteTemplatesDidFetch: true });
         return;
       }
@@ -8880,7 +11069,7 @@ export const useAppStore = create((set, get) => ({
       .select('*')
       .single();
     // Legacy DB fallback: note_templates_context_migration.sql may not
-    // have run yet — the `context` column is missing. Same fallback we
+    // have run yet: the `context` column is missing. Same fallback we
     // already do in fetchNoteTemplates. Also handle missing gap_code /
     // is_default_for_gap for a pre-P2-1 DB.
     if (error && /column .* does not exist|context|gap_code|is_default_for_gap/i.test(error.message || '')) {
@@ -9011,7 +11200,7 @@ export const useAppStore = create((set, get) => ({
       .order('updated_at', { ascending: false });
     if (error) {
       if (error.code === '42P01' || error.code === 'PGRST205') {
-        console.warn('[fetchClinicalNotesForMember] clinical_notes table missing — run supabase/clinical_notes_migration.sql');
+        console.warn('[fetchClinicalNotesForMember] clinical_notes table missing: run supabase/clinical_notes_migration.sql');
         set(s => ({ clinicalNotesByMember: { ...s.clinicalNotesByMember, [hedisMemberId]: [] } }));
         return [];
       }
@@ -9032,7 +11221,7 @@ export const useAppStore = create((set, get) => ({
       .order('updated_at', { ascending: false });
     if (error) {
       if (error.code === '42P01' || error.code === 'PGRST205') {
-        console.warn('[fetchClinicalNotesForPatient] clinical_notes table missing — run supabase/clinical_notes_migration.sql');
+        console.warn('[fetchClinicalNotesForPatient] clinical_notes table missing: run supabase/clinical_notes_migration.sql');
         set(s => ({ clinicalNotesByPatient: { ...s.clinicalNotesByPatient, [patientId]: [] } }));
         return [];
       }
@@ -9053,7 +11242,7 @@ export const useAppStore = create((set, get) => ({
       .order('version', { ascending: false });
     if (error) {
       if (error.code === '42P01' || error.code === 'PGRST205') {
-        console.warn('[fetchClinicalNoteVersions] clinical_note_versions missing — run supabase/clinical_note_versions_migration.sql');
+        console.warn('[fetchClinicalNoteVersions] clinical_note_versions missing: run supabase/clinical_note_versions_migration.sql');
         return [];
       }
       console.error('fetchClinicalNoteVersions error:', error);
@@ -9086,7 +11275,7 @@ export const useAppStore = create((set, get) => ({
     reviewerId,
     reviewerName,
     signedByName,
-    // Polymorphic origin — see clinical_notes_origin_migration.sql.
+    // Polymorphic origin: see clinical_notes_origin_migration.sql.
     // Callers pass e.g. { originKind: 'care_gap' }, { originKind: 'task',
     // originRef: String(task.id) }, or the Global Add Note surface
     // passes 'patient' with no ref. HEDIS Care Gap notes default to
@@ -9141,7 +11330,7 @@ export const useAppStore = create((set, get) => ({
     let saved;
     if (error) {
       if (error.code === '42P01' || error.code === 'PGRST205') {
-        console.warn('[upsertClinicalNote] clinical_notes table missing — run supabase/clinical_notes_migration.sql; using local-only row.');
+        console.warn('[upsertClinicalNote] clinical_notes table missing: run supabase/clinical_notes_migration.sql; using local-only row.');
       } else {
         console.error('upsertClinicalNote error:', error);
       }
@@ -9256,7 +11445,7 @@ export const useAppStore = create((set, get) => ({
     // Flip any linked clinical_note row from submitted → signed so the
     // Clinical Notes tab, P360 Notes tab, and the reviewer's note history
     // all agree the review is done. Sign as the actual current user
-    // (usually the reviewer completing their own task) — signClinicalNote
+    // (usually the reviewer completing their own task), signClinicalNote
     // falls back to `currentUserProfile` when no `signer` is passed.
     const memberNotes = get().clinicalNotesByMember?.[task.hedisMemberId] || [];
     const linkedNote = memberNotes.find(n => n.reviewTaskId === taskId);
@@ -9307,7 +11496,7 @@ export const useAppStore = create((set, get) => ({
   hccMembersLoading: false,
   hccMembersDidFetch: false,
   fetchHccMembers: async () => {
-    // Single-fire per session — SubNav and HccWorklistTable both call this
+    // Single-fire per session: SubNav and HccWorklistTable both call this
     // on mount, and re-mounts across page navigation would otherwise re-run
     // the whole hcc_members select every route change. The store already
     // holds the result; no need to re-fetch.
@@ -9315,7 +11504,7 @@ export const useAppStore = create((set, get) => ({
     // (which must be set AFTER data arrives so a mid-fetch caller doesn't
     // see an empty array and think the fetch completed).
     if (useAppStore.getState().hccMembersLoading) return;
-    // Local helpers scoped to this action — stamp the WS1/WS8 grouping
+    // Local helpers scoped to this action, stamp the WS1/WS8 grouping
     // fields onto each worklist row deterministically so the demo is
     // stable across reloads. Real backends would materialize these at
     // ingest time instead.
@@ -9342,7 +11531,7 @@ export const useAppStore = create((set, get) => ({
     // ~30% AWV, ~60% doc-first, and doc-first rows sharing a patient name
     // cluster into the same source-document bucket so mini-sweep groups
     // materialize naturally on load.
-    // No DOS or Created Date may be in the future — a service can't have
+    // No DOS or Created Date may be in the future, a service can't have
     // happened, and a record can't have been created, after today. (Due
     // labels are left as-is; a due date is a deadline and may be future.)
     const _pad2 = (n) => String(n).padStart(2, '0');
@@ -9355,7 +11544,7 @@ export const useAppStore = create((set, get) => ({
       while (new Date(yyyy, mm - 1, dd) > new Date()) yyyy -= 1;
       return `${_pad2(mm)}/${_pad2(dd)}/${yyyy}`;
     };
-    // Canonical Visit Type list — same set as the Visit Type filter options
+    // Canonical Visit Type list: same set as the Visit Type filter options
     // in filters.js. Assigned deterministically from the member's name so it
     // stays stable across reloads (and matches whichever the filter picks).
     const CANONICAL_VT_LIST = [
@@ -9377,7 +11566,7 @@ export const useAppStore = create((set, get) => ({
       'Chronic Care Management (CCM)',
     ];
     // Clinical Place-of-Service code + description per Visit Type. Real CMS
-    // POS codes — a healthcare pro would immediately flag a Telehealth visit
+    // POS codes: a healthcare pro would immediately flag a Telehealth visit
     // billed as POS 11 (Office). This map is the single source of truth so
     // the DOS-level cells, filter buckets and per-DOS drill-downs all agree.
     const POS_BY_VT = {
@@ -9388,7 +11577,7 @@ export const useAppStore = create((set, get) => ({
       'Established Patient Office Visit':           { code: '11', desc: 'Office' },
       'Telehealth Visit':                           { code: '02', desc: 'Telehealth (Other)' },
       'Specialist Visit / Consult':                 { code: '22', desc: 'On-Campus OP Hospital' },
-      'ER Visit':                                   { code: '23', desc: 'ER — Hospital' },
+      'ER Visit':                                   { code: '23', desc: 'ER: Hospital' },
       'Inpatient Visit / Admission':                { code: '21', desc: 'Inpatient Hospital' },
       'Observation Visit':                          { code: '22', desc: 'On-Campus OP Hospital' },
       'Skilled Nursing Facility Visit':             { code: '31', desc: 'SNF' },
@@ -9398,7 +11587,7 @@ export const useAppStore = create((set, get) => ({
       'Transitional Care Management (TCM) Visit':   { code: '11', desc: 'Office' },
       'Chronic Care Management (CCM)':              { code: '11', desc: 'Office' },
     };
-    // Specialty-appropriate provider pools per Visit Type — an ER encounter
+    // Specialty-appropriate provider pools per Visit Type, an ER encounter
     // should be attributed to an emergency physician, hospice care to a
     // palliative-care lead, etc. Pool size ≥2 so multiple records don't all
     // share one name.
@@ -9491,7 +11680,7 @@ export const useAppStore = create((set, get) => ({
         { name: 'Dr. Indigo Bolen', pos: '12', posDesc: 'Home' },
         { name: 'Dr. Karen Mills',  pos: '34', posDesc: 'Hospice' },
       ];
-      // Every record must have ≥2 DOS entries — if we only have one, synthesize
+      // Every record must have ≥2 DOS entries, if we only have one, synthesize
       // a second earlier past encounter. Deterministic per record so the mix
       // stays stable across reloads. Spawned rows keep their real dos_list.
       const inputDosList = Array.isArray(row.dos_list) ? row.dos_list : [];
@@ -9505,7 +11694,7 @@ export const useAppStore = create((set, get) => ({
               labelColor: 'var(--status-warning)',
             },
           ];
-      // Row-level POS + provider must match the Visit Type — no more "Telehealth
+      // Row-level POS + provider must match the Visit Type, no more "Telehealth
       // visit at POS 11 (Office)" or "ER visit attributed to a family-medicine
       // doctor". Deterministic per record so the mix stays stable across reloads.
       const rowPos = POS_BY_VT[visitType] || { code: '11', desc: 'Office' };
@@ -9589,10 +11778,10 @@ export const useAppStore = create((set, get) => ({
         supS: supS2, cdrS: cdrS2, r1s: r1s2, r2s: r2s2,
       };
     };
-    // WS3 — port AWV mock rows into the unified worklist shape so the
+    // WS3: port AWV mock rows into the unified worklist shape so the
     // Visit Type filter has real rows to surface. AWV rows don't carry a
     // rendering provider, open-ICD count or POS, so we synthesize them
-    // deterministically — these are mandatory at record creation and must
+    // deterministically: these are mandatory at record creation and must
     // never render empty on the worklist.
     const AWV_PROVIDER_POOL = [
       'Dr. Alan Morse', 'Dr. Mallory Hayes', 'Dr. Susan Park', 'Dr. Calvin Reed',
@@ -9611,8 +11800,8 @@ export const useAppStore = create((set, get) => ({
       visits: null,
       ch: null,
       docStatus: [],
-      open: a.open || (3 + (i % 12)),           // mandatory — never zero
-      // AWV rows carry no created date — synthesize a recent-past spread
+      open: a.open || (3 + (i % 12)),           // mandatory, never zero
+      // AWV rows carry no created date, synthesize a recent-past spread
       // (matching the HCC SLA window) so Created Date is never in the future.
       date: _fmtMDY(new Date(2026, 6, 9 - Math.round((i * 35) / Math.max((n || 1) - 1, 1)))),
       due: a.dueLabel,
@@ -9644,7 +11833,7 @@ export const useAppStore = create((set, get) => ({
 
     set({ hccMembersLoading: true });
     // Reads the base table plus the normalized child tables and rebuilds the
-    // legacy fat-row shape (dos_list / doc_status / gap counters) in JS —
+    // legacy fat-row shape (dos_list / doc_status / gap counters) in JS,
     // byte-for-byte what the retired hcc_members_v2 compatibility view used
     // to return. The view was dropped so no writer can ever mistake it for a
     // writable table again (it rejected writes to its derived columns).
@@ -9660,7 +11849,7 @@ export const useAppStore = create((set, get) => ({
     // fetchHccMembers is called unguarded from several surfaces (worklist,
     // TopBar, home card, patient detail). If a LATER call transiently errors
     // or returns empty, we must NOT overwrite already-loaded real rows with
-    // the seed mock — that is exactly what made persisted statuses/assignees
+    // the seed mock: that is exactly what made persisted statuses/assignees
     // "reset" mid-session. Only fall back to the mock on a genuine cold start
     // (nothing loaded yet); otherwise keep what we have.
     const haveRealRows = (get().hccMembers || []).length > 0;
@@ -9671,7 +11860,7 @@ export const useAppStore = create((set, get) => ({
       set({ hccMembers: await finalize(HCC_MEMBERS), hccMembersLoading: false, hccMembersDidFetch: true });
       return;
     }
-    // Empty result set: same guard — keep loaded rows, else seed from mock.
+    // Empty result set: same guard, keep loaded rows, else seed from mock.
     if (!data || data.length === 0) {
       if (haveRealRows) { set({ hccMembersLoading: false, hccMembersDidFetch: true }); return; }
       const { HCC_MEMBERS } = await import('../features/hcc/data/mock');
@@ -9679,7 +11868,7 @@ export const useAppStore = create((set, get) => ({
       return;
     }
     const POS_MAP = { 'Walk-in': { code: '11', desc: 'Office' }, Telehealth: { code: '02', desc: 'Telehealth' } };
-    // Phase 2f — when Supabase rows are missing prototype-shape fields
+    // Phase 2f: when Supabase rows are missing prototype-shape fields
     // (dos_list, docStatus, cv/tv), fall back to the local rich mock keyed
     // by name. This keeps the DiagPanel's DosSelector + Snapshot tiles
     // populated even when the backend hasn't seeded that data yet.
@@ -9797,7 +11986,7 @@ export const useAppStore = create((set, get) => ({
         ipa: row.ipa,
         hp: row.health_plan,
         pcp: row.pcp,
-        dec: row.decile,       // INTEGER — already a JS number
+        dec: row.decile,       // INTEGER, already a JS number
         coh: row.cohort,
         rl: row.risk_level,
         ad: row.advillness,    // INTEGER
@@ -9809,7 +11998,7 @@ export const useAppStore = create((set, get) => ({
         // The DiagPanel uses it to skip the name-keyed mock ICD fallback
         // (which would leak the source patient's ICDs into the new row).
         isSpawned: row.is_spawned === true,
-        // v3 filter-backing fields — contact, gap-count/last-activity (from
+        // v3 filter-backing fields: contact, gap-count/last-activity (from
         // the hcc_diagnosis_gaps aggregation above), and per-role
         // Assigned/Completion timestamps. Timestamps come back as ISO strings.
         city:  row.city,
@@ -9836,7 +12025,7 @@ export const useAppStore = create((set, get) => ({
   hccDiagnosisGapsLoading: false,
   _hccGapFetchId: 0,
   fetchHccDiagnosisGaps: async (memberId, memberName) => {
-    // Clear the previous member's rows immediately — otherwise the panel
+    // Clear the previous member's rows immediately: otherwise the panel
     // flashes (and can act on) stale cross-member data while the new
     // member's fetch is in flight.
     set({ hccDiagnosisGaps: [], hccDiagnosisGapsLoading: true });
@@ -9857,7 +12046,7 @@ export const useAppStore = create((set, get) => ({
       q = q.eq('member_name', memberName);
     }
     const { data, error } = await q;
-    // Stale: a newer fetch started while this one was in flight — discard.
+    // Stale: a newer fetch started while this one was in flight, discard.
     if (fetchId !== get()._hccGapFetchId) return;
     if (error) {
       console.error('fetchHccDiagnosisGaps error:', error.message);
@@ -9865,7 +12054,7 @@ export const useAppStore = create((set, get) => ({
       return;
     }
     const gaps = (data || []).map(row => {
-      // `kind` is the canonical identity — Associated | Manual | Suspect |
+      // `kind` is the canonical identity: Associated | Manual | Suspect |
       // Recapture. `type` and `isLinked` are legacy shadows kept in sync for
       // components that still read them.
       const kind = row.kind
@@ -9935,11 +12124,11 @@ export const useAppStore = create((set, get) => ({
   // optimistic append so the panel switches from mock-fallback to DB-backed
   // rows immediately.
   //
-  // "Evidence" = mock.docs > 0 OR mock.cmts > 0 — the seed data uses those
+  // "Evidence" = mock.docs > 0 OR mock.cmts > 0: the seed data uses those
   // counters to record how many documents / claim mentions back the code,
   // which matches the OR semantics agreed for this feature.
   // Per-session guard so React StrictMode's double-invoke of the DiagPanel
-  // fetch effect doesn't insert the same rows twice. Reset never — a page
+  // fetch effect doesn't insert the same rows twice. Reset never, a page
   // reload gets a fresh module and a fresh Set, which is the right window.
   _hccNotLinkedBackfilled: new Set(),
   backfillMockNotLinkedGaps: async (memberId, memberName) => {
@@ -9952,7 +12141,7 @@ export const useAppStore = create((set, get) => ({
     if (!mock.length) return;
     const s = get();
     // Dedupe against every gap already scoped to this member, regardless of
-    // is_linked — the DB carries a UNIQUE (member_name, code) constraint
+    // is_linked: the DB carries a UNIQUE (member_name, code) constraint
     // (see hcc_diag_kind_migration.sql), so promoting a code that's already
     // present as a Linked gap would fail the insert. Skip it either way.
     const existing = new Set(
@@ -9984,7 +12173,7 @@ export const useAppStore = create((set, get) => ({
         is_linked: false,
       };
     });
-    // Optimistic append — mirrors fetchHccDiagnosisGaps's row-shape so
+    // Optimistic append: mirrors fetchHccDiagnosisGaps's row-shape so
     // downstream memos see the promoted rows immediately.
     set(state => ({
       hccDiagnosisGaps: [
@@ -9998,7 +12187,7 @@ export const useAppStore = create((set, get) => ({
         })),
       ],
     }));
-    // ON CONFLICT (member_name, code) DO NOTHING — the constraint is
+    // ON CONFLICT (member_name, code) DO NOTHING, the constraint is
     // patient-level while gap fetches are scoped per worklist row
     // (member_id), so a code promoted from one of the patient's rows is
     // invisible to the in-memory dedupe when a sibling row promotes it
@@ -10011,7 +12200,7 @@ export const useAppStore = create((set, get) => ({
 
   // Per-member Activity Log entries (DiagPanel Timeline tab)
   //
-  // Ported from data/activity.js — mixed event types, each carrying its
+  // Ported from data/activity.js, mixed event types, each carrying its
   // full JSON payload so new event types can land without a schema
   // change. Consumers (LeftWorkspace rawActivity memo) call
   // getActivityFromDb which returns the member's rows, else the seeded
@@ -10035,7 +12224,7 @@ export const useAppStore = create((set, get) => ({
       }
       set({ hccGapActivity: map, hccGapActivityDidFetch: true });
     } catch (err) {
-      console.warn('fetchHccGapActivity error — components will fall back to mock:', err?.message || err);
+      console.warn('fetchHccGapActivity error: components will fall back to mock:', err?.message || err);
     }
   },
 
@@ -10075,11 +12264,11 @@ export const useAppStore = create((set, get) => ({
       }
       set({ hccGapSweep: map, hccGapSweepDidFetch: true });
     } catch (err) {
-      console.warn('fetchHccGapSweep error — components will fall back to mock:', err?.message || err);
+      console.warn('fetchHccGapSweep error: components will fall back to mock:', err?.message || err);
     }
   },
 
-  // Platform users — the "everyone with a profile" roster used by
+  // Platform users: the "everyone with a profile" roster used by
   // people-pickers across the app (HCC Assignee filter, bulk Change
   // Assignees dialog, etc.). Reads full_name from the profiles table;
   // the JS mock in features/hcc/systemUsers.js remains as fallback so
@@ -10092,11 +12281,23 @@ export const useAppStore = create((set, get) => ({
   // In-flight promise cache. Many components (RoleAssigneePicker,
   // CommentComposer, mention menus, DiagPanel, ChartDetailDrawer) each
   // fire fetchPlatformUsers() from their own useEffect. Without this
-  // cache, all of those callers hit Supabase in parallel — the network
+  // cache, all of those callers hit Supabase in parallel, the network
   // tab shows 30+ /profiles round-trips totaling 7s+ on first load.
   // First caller kicks off the request; every subsequent caller during
   // the flight awaits the same promise.
   _platformUsersPromise: null,
+  // The roster also resolves who is signed in (currentUserProfile, roles,
+  // admin). Logout doesn't reload the page, so a new sign-in in the same tab
+  // would keep the previous user's answer without this.
+  resetSignedInUser: () => {
+    set({
+      platformUsersDidFetch: false,
+      _platformUsersPromise: null,
+      currentUserProfile: null,
+      currentUserClinicalRoles: [],
+      currentUserIsAdmin: false,
+    });
+  },
   fetchPlatformUsers: async () => {
     const s0 = get();
     if (s0.platformUsersDidFetch) return;
@@ -10109,13 +12310,13 @@ export const useAppStore = create((set, get) => ({
         .from('profiles')
         // locations: the departments (practice locations) each person works
         // at, for picking covering providers when reassigning appointments.
-        .select('id, full_name, first_name, last_name, email, clinical_roles, locations')
+        .select('id, full_name, first_name, last_name, email, clinical_roles, locations, admin_role, status')
         .order('full_name', { ascending: true });
       if (error) throw error;
       const raw = data || [];
 
       // Task assignees keep every row (keyed by id). The people-picker
-      // roster below dedupes by name — two auth accounts can share a
+      // roster below dedupes by name: two auth accounts can share a
       // full_name, and pickers key their rows by name.
       const taskProfiles = raw.map(p => ({
         id: p.id,
@@ -10124,6 +12325,7 @@ export const useAppStore = create((set, get) => ({
       }));
       let me = null;
       let meRoles = [];
+      let meIsAdmin = false;
       if (authUser) {
         const meRow = raw.find(p => p.id === authUser.id)
           || raw.find(p => p.email && authUser.email
@@ -10134,8 +12336,14 @@ export const useAppStore = create((set, get) => ({
             id: meRow.id,
             name: (meRow.full_name || meRow.email?.split('@')[0] || 'Unknown').trim(),
             email: meRow.email || '',
+            // For program access (isPracticeAdmin), matching the database's admin check.
+            adminRole: meRow.admin_role || null,
+            clinicalRoles: meRow.clinical_roles || [],
           };
           meRoles = meRow.clinical_roles || [];
+          meIsAdmin = meRow.status === 'Active'
+            && (['Admin/Practice Manager', 'Business/Practice Owner'].includes(meRow.admin_role)
+              || meRoles.includes('Admin/Practice Manager'));
         } else {
           const meta = authUser.user_metadata || {};
           const meName = (meta.full_name || meta.first_name
@@ -10143,7 +12351,7 @@ export const useAppStore = create((set, get) => ({
           if (meName) me = { id: authUser.id, name: meName, email: authUser.email || '' };
         }
       } else {
-        // Dev-bypass (no Supabase session) — resolve to the Fold Demo identity
+        // Dev-bypass (no Supabase session): resolve to the Fold Demo identity
         // so the worklist defaults, activity actors, and profile popover all
         // show "Fold Demo" instead of the empty fallback.
         try {
@@ -10159,7 +12367,7 @@ export const useAppStore = create((set, get) => ({
               };
               meRoles = demoRow.clinical_roles || [];
             } else {
-              // No seeded demo profile row yet — synthetic fallback so UI still
+              // No seeded demo profile row yet, synthetic fallback so UI still
               // shows the right name even on empty DBs.
               let stored = null;
               try { stored = JSON.parse(sessionStorage.getItem('__auth_bypass_user') || 'null'); } catch { /* */ }
@@ -10170,10 +12378,10 @@ export const useAppStore = create((set, get) => ({
               };
             }
           }
-        } catch { /* ignore — leave me null */ }
+        } catch { /* ignore: leave me null */ }
       }
 
-      // Dedupe by name — profiles occasionally carries the same full_name
+      // Dedupe by name: profiles occasionally carries the same full_name
       // across multiple auth accounts (mail2… vs. .health, etc.), and
       // downstream people-pickers key their rows by name. UNION the
       // clinical_roles across duplicates: keeping the first-seen row
@@ -10218,6 +12426,7 @@ export const useAppStore = create((set, get) => ({
         taskProfiles,
         currentUserProfile: me,
         currentUserClinicalRoles: meRoles,
+        currentUserIsAdmin: meIsAdmin,
       });
       // If the HCC worklist already applied a role-scoped default filter
       // using a dev-fallback, backfill it once the real user is known.
@@ -10228,7 +12437,7 @@ export const useAppStore = create((set, get) => ({
         if (needsUpdate) set({ hccFilters: { ...cur.hccFilters, asgn: [me.name] } });
       }
     } catch (err) {
-      console.warn('fetchPlatformUsers error — pickers will fall back to systemUsers mock:', err?.message || err);
+      console.warn('fetchPlatformUsers error: pickers will fall back to systemUsers mock:', err?.message || err);
       set({ platformUsersDidFetch: true });
     } finally {
       set({ _platformUsersPromise: null });
@@ -10263,7 +12472,7 @@ export const useAppStore = create((set, get) => ({
       }
       set({ hccMemberRaf: map, hccMemberRafDidFetch: true });
     } catch (err) {
-      console.warn('fetchHccMemberRaf error — components will fall back to mock:', err?.message || err);
+      console.warn('fetchHccMemberRaf error: components will fall back to mock:', err?.message || err);
       set({ hccMemberRafDidFetch: true });
     }
   },
@@ -10293,15 +12502,15 @@ export const useAppStore = create((set, get) => ({
       }
       set({ hccGapConfidence: map, hccGapConfidenceDidFetch: true });
     } catch (err) {
-      console.warn('fetchHccGapConfidence error — components will fall back to mock:', err?.message || err);
+      console.warn('fetchHccGapConfidence error: components will fall back to mock:', err?.message || err);
       set({ hccGapConfidenceDidFetch: true });
     }
   },
 
   // Diagnosis-panel ancillary tabs (Comments / Documents / Notes / History)
   //
-  // The four hcc_diag_* tables are org-scoped in Phase 2 — every drawer
-  // shows the same content — so a single fire-and-forget fetch on first
+  // The four hcc_diag_* tables are org-scoped in Phase 2, every drawer
+  // shows the same content: so a single fire-and-forget fetch on first
   // panel open is enough. Store keeps a `didFetch` flag so we don't
   // re-round-trip on every open. Empty results fall back to the local
   // src/features/hcc/data/ancillary.js constants (kept as a safety net
@@ -10386,13 +12595,13 @@ export const useAppStore = create((set, get) => ({
           mentionIds: r.mention_ids ?? [],
           role: r.role, date: r.date, time: r.time,
           edited: r.edited, body: r.body,
-          // Optional ICD/DOS scope — added later; DB rows seeded before the
+          // Optional ICD/DOS scope: added later; DB rows seeded before the
           // column existed simply won't have these keys.
           icd: r.icd ?? null, dos: r.dos ?? null,
           // Patient scope (hcc_diag_comment_member_migration.sql). Null on
           // rows written before the column existed.
           memberId: r.hcc_member_id ?? null,
-          // Status-change linkage — populated when the comment was
+          // Status-change linkage: populated when the comment was
           // required for a workflow transition (e.g. Records Requested).
           statusFrom: r.status_from ?? null,
           statusTo:   r.status_to   ?? null,
@@ -10415,7 +12624,7 @@ export const useAppStore = create((set, get) => ({
         hccDiagAncillaryDidFetch: true,
       });
     } catch (err) {
-      console.warn('fetchHccDiagAncillary error — components will fall back to local mock:', err?.message || err);
+      console.warn('fetchHccDiagAncillary error: components will fall back to local mock:', err?.message || err);
       set({ hccDiagAncillaryLoading: false, hccDiagAncillaryDidFetch: true });
     }
   },
@@ -10453,7 +12662,7 @@ export const useAppStore = create((set, get) => ({
     get().addActivityEntry({
       t: 'dismiss', by: 'You', role: useAppStore.getState().hccUserRole || 'Coder',
       icds: [code],
-      headline: `Dismissed ICD ${code}${reason ? ` — ${reason}` : ''}`,
+      headline: `Dismissed ICD ${code}${reason ? `, ${reason}` : ''}`,
       from: 'None', to: 'Dismissed',
     });
   },
@@ -10480,7 +12689,7 @@ export const useAppStore = create((set, get) => ({
   // code-level gap status above. Passing the same action twice toggles it
   // off (undo).
   hccGapDosActions: {},
-  // Dismiss reason + note per (code × DOS) — populated by dismissHccGapDos,
+  // Dismiss reason + note per (code × DOS): populated by dismissHccGapDos,
   // surfaced by the "Dismiss Reason" link on a dismissed row.
   hccGapDosMeta: {},
   // Shared: on the first ICD action by the current role (Coder / QA /
@@ -10559,12 +12768,12 @@ export const useAppStore = create((set, get) => ({
     get().addActivityEntry({
       t: 'dismiss', by: 'You', role: useAppStore.getState().hccUserRole || 'Coder',
       icds: [code],
-      headline: `Dismissed ICD ${code} on DOS ${dos} — ${reason}`,
+      headline: `Dismissed ICD ${code} on DOS ${dos}: ${reason}`,
       from: 'None', to: 'Dismissed',
     });
   },
 
-  // Set by addHccGap and consumed by IcdRow — when the code matches, the row
+  // Set by addHccGap and consumed by IcdRow, when the code matches, the row
   // pulses a primary-300 border briefly and scrolls into view so the user
   // sees where their manual add landed in the current list of ICDs. Auto-
   // clears via a timer so the animation only fires once per add.
@@ -10573,7 +12782,7 @@ export const useAppStore = create((set, get) => ({
 
   // Manual DOSs the coder removed from an ICD card. Keyed as `${code}|${dos}`
   // so both the card's entry filter and the DOS action bookkeeping know to
-  // ignore the row. Only manual DOS entries are removable — real seeded DOSs
+  // ignore the row. Only manual DOS entries are removable, real seeded DOSs
   // are the record's source of truth and shouldn't be silently dropped.
   hccGapDosDeleted: [],
   removeIcdDos: (code, dos) => {
@@ -10667,7 +12876,7 @@ export const useAppStore = create((set, get) => ({
       hccJustAddedCode: code,
     }));
     // Persist the new gap into Supabase so it survives reload. Scope by
-    // member_id AND member_name — member_id is the per-row identity so
+    // member_id AND member_name: member_id is the per-row identity so
     // sibling rows for the same patient don't share gaps; member_name is
     // kept for legacy fallback in fetchHccDiagnosisGaps.
     if (memberName) {
@@ -10733,7 +12942,7 @@ export const useAppStore = create((set, get) => ({
     // patient-identity fields (name/initials/etc.) so shared ICD mock data
     // + team routing keep working. id/memberId are now the same Fold-ID
     // space as every other worklist row (see
-    // supabase/patient_id_unification_migration.sql) — millisecond
+    // supabase/patient_id_unification_migration.sql), millisecond
     // timestamp keeps this synchronous (no DB round-trip to mint a
     // sequence value) while staying a plain, searchable number and, in
     // practice, never colliding with another spawn in the same session.
@@ -10771,18 +12980,18 @@ export const useAppStore = create((set, get) => ({
       rp: provider || source.rp,
       pos: pos || source.pos,
       posDesc,
-      // Reset workflow — a brand-new encounter always starts fresh. When a
+      // Reset workflow: a brand-new encounter always starts fresh. When a
       // QA / Compliance user spawned the DOS, Support AND Coder are
       // pre-marked Skipped so the worklist row shows the correct provenance
       // immediately (the engine will mirror this after hccInitializeManualDos
       // runs, but we want the initial render to match too). The DOS lands
-      // directly on the originator's role — QA (r1s) or Compliance (r2s).
+      // directly on the originator's role: QA (r1s) or Compliance (r2s).
       supS: isManualOrigin ? 'Skipped' : 'Assign',
       cdrS: isManualOrigin ? 'Skipped' : 'Assign',
       r1s: isManualOrigin && originatorRole === 'reviewer'  ? 'New' : 'Assign',
       r2s: isManualOrigin && originatorRole === 'reviewer2' ? 'New' : 'Assign',
       open: 1,
-      // Provenance markers — hydrateFromMember reads these on reload.
+      // Provenance markers: hydrateFromMember reads these on reload.
       manuallyAdded: !!isManualOrigin,
       originatorRole: originatorRole || null,
       originatorAssignee: originatorAssignee || null,
@@ -10826,7 +13035,7 @@ export const useAppStore = create((set, get) => ({
       useAppStore.getState().initializeHccPatient(newId);
     }
     // Persist both the new row and its ICD so the whole thing survives a
-    // reload. Fire-and-forget — in-memory state is authoritative for the
+    // reload. Fire-and-forget, in-memory state is authoritative for the
     // current session; the DB catches up asynchronously.
     persistHccMemberInsert(newRow);
     persistHccGapInsert({
@@ -10837,7 +13046,7 @@ export const useAppStore = create((set, get) => ({
       is_linked: true, dos,
     });
     // Audit the +ICD action so the History drawer shows who added what,
-    // when, and against which DOS — the manual-init role diffs below only
+    // when, and against which DOS, the manual-init role diffs below only
     // cover the workflow transitions; this row captures the intent.
     useAppStore.getState().logHccActivity?.({
       eventName: 'icd.created_manual',
@@ -10859,7 +13068,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   // Add a gap to an EXISTING sibling row (same patient, different Created
-  // date) — used when the user picks a DOS from another created-date group
+  // date): used when the user picks a DOS from another created-date group
   // in the NewDiagGapPanel dropdown. Avoids spawning a duplicate row for a
   // DOS that already lives on another row.
   addHccGapToRow: ({ sourceMemberId, targetMemberId, code, desc, hcc, dos, provider, pos, visitType }) => {
@@ -10926,7 +13135,7 @@ export const useAppStore = create((set, get) => ({
   })(),
   awvMembersLoading: false,
   // `awvMembers.length > 0` was the guard, which is read *before* the first
-  // fetch resolves — two callers in the same tick both saw 0 and both fetched.
+  // fetch resolves: two callers in the same tick both saw 0 and both fetched.
   // A boolean set synchronously before the await closes that window.
   awvMembersDidFetch: false,
   fetchAwvMembers: async () => {
@@ -10939,7 +13148,7 @@ export const useAppStore = create((set, get) => ({
       .order('create_date', { ascending: true });
 
     if (error || !data || data.length === 0) {
-      console.warn('fetchAwvMembers error or empty — falling back to local mock:', error?.message);
+      console.warn('fetchAwvMembers error or empty: falling back to local mock:', error?.message);
       const { AWV_MEMBERS } = await import('../features/awv-worklist/data/mock');
       set({
         awvMembers: AWV_MEMBERS,
@@ -11015,13 +13224,13 @@ export const useAppStore = create((set, get) => ({
     }
   },
 
-  // ── JSA (Joint Screening Assessment) — mirrors the AWV slice exactly:
+  // ── JSA (Joint Screening Assessment): mirrors the AWV slice exactly:
   // same shape, same column map, same filter/select/status flows. Its own
   // slice (not an AWV filter view) so counts, saved filters, and bulk
   // selection stay isolated from AWV. Backed by jsa_members in Supabase.
   jsaMembers: [],
   jsaMembersLoading: false,
-  // Same racy length-check as awvMembers had — see `awvMembersDidFetch`.
+  // Same racy length-check as awvMembers had, see `awvMembersDidFetch`.
   jsaMembersDidFetch: false,
   fetchJsaMembers: async () => {
     if (useAppStore.getState().jsaMembersDidFetch) return;
@@ -11033,7 +13242,7 @@ export const useAppStore = create((set, get) => ({
       .order('create_date', { ascending: true });
 
     if (error || !data || data.length === 0) {
-      console.warn('fetchJsaMembers error or empty — falling back to local mock:', error?.message);
+      console.warn('fetchJsaMembers error or empty: falling back to local mock:', error?.message);
       const { JSA_MEMBERS } = await import('../features/jsa-worklist/data/mock');
       set({
         jsaMembers: JSA_MEMBERS,
@@ -11109,6 +13318,84 @@ export const useAppStore = create((set, get) => ({
     if (error) console.warn('Failed to update JSA status:', error.message);
   },
 
+  // ── CMP (Care Management Program) worklist: same shape as the JSA slice,
+  // backed by cmp_members (supabase/cmp_members_migration.sql). Falls back to
+  // the local mock until that table exists and is seeded.
+  cmpMembers: [],
+  cmpMembersLoading: false,
+  cmpMembersDidFetch: false,
+  fetchCmpMembers: async () => {
+    if (useAppStore.getState().cmpMembersDidFetch) return;
+    set({ cmpMembersDidFetch: true, cmpMembersLoading: true });
+
+    const { data, error } = await supabase
+      .from('cmp_members')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (error || !data || data.length === 0) {
+      console.warn('fetchCmpMembers error or empty, falling back to local mock:', error?.message);
+      const { CMP_MEMBERS } = await import('../features/cmp-worklist/data/mock');
+      set({
+        cmpMembers: CMP_MEMBERS,
+        cmpMembersLoading: false,
+        ...(error ? { cmpMembersDidFetch: false } : {}),
+      });
+      return;
+    }
+
+    set({
+      cmpMembers: data.map(m => ({
+        id: m.id,
+        patientId: m.patient_id,
+        memberId: m.member_id,
+        subProgram: m.sub_program,
+        name: m.name,
+        in: m.initials,
+        g: m.gender,
+        age: m.age,
+        dob: m.dob,
+        language: m.language || 'en',
+        progSubStatus: m.program_sub_status,
+        carePlanStatus: m.care_plan_status,
+        nextActionDue: m.next_action_due,
+        programStartDate: m.program_start_date,
+        programDueDate: m.program_due_date,
+        outreach: m.outreach ?? 0,
+        lastOutreach: m.last_outreach,
+        assignee: m.assignee,
+        assigneeIn: m.assignee_initials,
+        ri: m.risk_level,
+        task: m.tasks ?? 0,
+      })),
+      cmpMembersLoading: false,
+    });
+  },
+  cmpFilters: hydrateListFilters('CMP'),
+  setCmpFilter: (k, vals) => set(s => {
+    const next = { ...s.cmpFilters };
+    if (!vals || vals.length === 0) delete next[k];
+    else next[k] = vals;
+    return { cmpFilters: next };
+  }),
+  clearCmpFilters: () => set(s => ({ cmpFilters: {}, activeSavedIdByList: detachSaved(s.activeSavedIdByList, 'CMP') })),
+  selectedCmpIds: [],
+  selectCmpMember: (id) => set(s => ({
+    selectedCmpIds: s.selectedCmpIds.includes(id)
+      ? s.selectedCmpIds.filter(x => x !== id)
+      : [...s.selectedCmpIds, id],
+  })),
+  selectAllCmp: (ids) => set({ selectedCmpIds: ids }),
+  clearCmpSelected: () => set({ selectedCmpIds: [] }),
+  updateCmpMemberStatus: async (id, newStatus) => {
+    set(s => ({ cmpMembers: s.cmpMembers.map(m => (m.id === id ? { ...m, progSubStatus: newStatus } : m)) }));
+    const { error } = await supabase
+      .from('cmp_members')
+      .update({ program_sub_status: newStatus })
+      .eq('id', id);
+    if (error) console.warn('Failed to update CMP status:', error.message);
+  },
+
   selectedHccIds: [],
   selectHccMember: (id) => {
     track('hcc.member_selected', { memberId: id });
@@ -11124,7 +13411,7 @@ export const useAppStore = create((set, get) => ({
   // HCC worklist filter / column prefs → hccWorklistFiltersSlice.js
 
   // ─── HEDIS worklist filter state ───
-  // Same shape as hccFilters — `{ [filterKey]: string[] }`. The store's
+  // Same shape as hccFilters: `{ [filterKey]: string[] }`. The store's
   // save/apply flow already routes HEDIS via LIST_FILTER_KEY['HEDIS']. Hydrated
   // from the active saved filter so a reload keeps the applied view.
   hedisFilters: hydrateListFilters('HEDIS'),
@@ -11293,6 +13580,8 @@ export const useAppStore = create((set, get) => ({
     if (get().worklistColumnPrefsLoaded) return;
     try {
       const userId = await get()._resolveWorklistUser();
+      // The dev bypass has no real user id; Postgres rejects it as a uuid.
+      if (!isRealUserId(userId)) { set({ worklistColumnPrefsLoaded: true }); return; }
       const { data, error } = await supabase
         .from('user_worklist_column_prefs')
         .select('worklist_key, column_order, hidden_cols')
@@ -11308,7 +13597,7 @@ export const useAppStore = create((set, get) => ({
         set({ worklistColumnPrefs: merged });
         try { localStorage.setItem('worklistColumnPrefs', JSON.stringify(merged)); } catch { /* */ }
       }
-    } catch { /* table may not exist yet — keep local cache */ }
+    } catch { /* table may not exist yet, keep local cache */ }
     set({ worklistColumnPrefsLoaded: true });
   },
 
@@ -11329,7 +13618,7 @@ export const useAppStore = create((set, get) => ({
           },
           { onConflict: 'user_id,worklist_key' },
         );
-      if (error) console.warn('[store] persist column prefs failed — run supabase/user_worklist_column_prefs_migration.sql:', error.message);
+      if (error) console.warn('[store] persist column prefs failed: run supabase/user_worklist_column_prefs_migration.sql:', error.message);
     } catch (e) {
       console.warn('[store] persist column prefs failed:', e?.message);
     }
@@ -11425,18 +13714,18 @@ export const useAppStore = create((set, get) => ({
   // ─── HCC DOS-level assignment engine ─────────────────────────────────
   // Per-(patient, DOS) assignment state keyed as `${patientId}::${dosDate}`.
   // The shape is defined in features/hcc/assignment/dosState.js. Lifecycle
-  // transitions live in features/hcc/assignment/lifecycle.js — this slice
+  // transitions live in features/hcc/assignment/lifecycle.js, this slice
   // just stores the result and exposes thin wrappers per AC.
   hccDosAssignments: {},
   // Reject metadata keyed by dosKey(patientId, dos, provider, pos). Set by
   // DiagPanel's Reject confirmation dialog; read by the read-only banner
-  // ("Rejected by X — reasons — note") that pins to the top of the ICD
+  // ("Rejected by X, reasons, note") that pins to the top of the ICD
   // list once a record has been terminally rejected.
   hccRejectInfo: {},
   setHccRejectInfo: (key, info) => set(s => ({
     hccRejectInfo: { ...s.hccRejectInfo, [key]: info },
   })),
-  // Client-level config — sampling rates can be overridden per client.
+  // Client-level config: sampling rates can be overridden per client.
   hccConfig: {
     astrana: true,
     samplingRates: { ...DEFAULT_SAMPLING_RATES },
@@ -11480,7 +13769,7 @@ export const useAppStore = create((set, get) => ({
   // worklist row renders correctly without waiting on a reload.
   hccInitializeManualDos: (patientId, dosDate, opts = {}) => {
     // Diff the engine's before/after per role so each Skipped / New / assign
-    // transition lands in hcc_activity_log — otherwise the manual +ICD flow
+    // transition lands in hcc_activity_log: otherwise the manual +ICD flow
     // would flip four roles silently and the History drawer would show
     // nothing beyond the gap.icd_added envelope.
     const roleDiffs = [];
@@ -11504,7 +13793,7 @@ export const useAppStore = create((set, get) => ({
       const next = nextMap?.[compositeKey] || {};
       const statusFieldByRole = { support: 'supS', coder: 'cdrS', reviewer: 'r1s', reviewer2: 'r2s' };
       const nameFieldByRole   = { support: 'sup',  coder: 'cdr',  reviewer: 'r1',  reviewer2: 'r2'  };
-      // 'Assign' is the null-equivalent (unassigned) status — never worth an
+      // 'Assign' is the null-equivalent (unassigned) status: never worth an
       // activity row. Only real transitions (Skipped / New / In Progress …)
       // are surfaced in the History drawer.
       ['support', 'coder', 'reviewer', 'reviewer2'].forEach(role => {
@@ -11571,7 +13860,7 @@ export const useAppStore = create((set, get) => ({
     });
   },
 
-  // Generic dispatcher — `kind` corresponds to a lifecycle.js export. Each
+  // Generic dispatcher: `kind` corresponds to a lifecycle.js export. Each
   // call rebuilds `hccDosAssignments` immutably. UI components use the named
   // wrappers below; this is the single chokepoint for the engine.
   //
@@ -11579,7 +13868,7 @@ export const useAppStore = create((set, get) => ({
   // status changes, then patches the matching legacy member field
   // (supS/cdrS/r1s/r2s) AND persists the change to Supabase so the
   // worklist row survives reload. This is the single source of persistence
-  // for every AC transition — convenience wrappers below don't need to know
+  // for every AC transition: convenience wrappers below don't need to know
   // about it.
   transitionHccDos: (patientId, dosDate, kind, payload = {}) => {
     let statusChanges = [];
@@ -11625,13 +13914,13 @@ export const useAppStore = create((set, get) => ({
           );
           break;
         case 'recordsReceivedFor':
-          // Rarely invoked directly — the completeSupport / completeCoder
+          // Rarely invoked directly: the completeSupport / completeCoder
           // cascade fires this automatically when a records_request targets
           // them. Exposed here for completeness / manual overrides.
           result = fn(s.hccDosAssignments, patient, dos, payload.requesterRole, actor);
           break;
         case 'completeReviewer2':
-          // Takes the full config (not just samplingRates) — completeReviewer2
+          // Takes the full config (not just samplingRates): completeReviewer2
           // also runs the Phase 0 (WR7) validateAsmReadinessConfig guard, which
           // reads config.minReviewsBeforeAsm alongside samplingRates.
           result = fn(s.hccDosAssignments, patient, dos, actor, s.hccConfig);
@@ -11649,7 +13938,7 @@ export const useAppStore = create((set, get) => ({
         if (ns && ns !== prev[role]?.status) statusChanges.push({ role, status: ns });
         // Also diff the assignee. Engine cascades (e.g. completeSupport
         // auto-assigning a Coder) set an assignee on a role that previously
-        // had none — the legacy name field must follow so the worklist
+        // had none: the legacy name field must follow so the worklist
         // Support/Coder columns (which read member.sup/.cdr/.r1/.r2 directly)
         // reflect the new owner, not just the status.
         const na = next[role]?.assignee;
@@ -11667,7 +13956,7 @@ export const useAppStore = create((set, get) => ({
             fromName: hccStaffById(prev[role]?.assignee)?.name
               || (s.platformUsers || []).find(u => u.id === prev[role]?.assignee)?.name
               || prev[role]?.assignee
-              || '—',
+              || '-',
           });
         }
       });
@@ -11682,7 +13971,7 @@ export const useAppStore = create((set, get) => ({
             return patched;
           })
         : s.hccMembers;
-      // DOS-level log entry — no `icds`, so it appears only in the global
+      // DOS-level log entry: no `icds`, so it appears only in the global
       // (DOS-level) Activity Log, not in any ICD-scoped view. Deferred to a
       // microtask so the addActivityEntry side-effect doesn't run inside the
       // same set() call.
@@ -11692,14 +13981,14 @@ export const useAppStore = create((set, get) => ({
         // role → destination role) that makes the audit line legible. All
         // other transitions just show the plain label.
         const ROLE_LABEL_H = { support: 'Support', coder: 'Coder', reviewer: 'QA', reviewer2: 'Compliance' };
-        let headline = `DOS ${dosDate} — ${transitionLabel}`;
+        let headline = `DOS ${dosDate}: ${transitionLabel}`;
         if (kind === 'requestRecordsFrom') {
           const from = ROLE_LABEL_H[payload.requesterRole] || payload.requesterRole;
           const to   = ROLE_LABEL_H[payload.destinationRole] || payload.destinationRole;
-          headline = `DOS ${dosDate} — ${transitionLabel} — ${from} → ${to}`;
+          headline = `DOS ${dosDate}, ${transitionLabel}, ${from} → ${to}`;
         } else if (kind === 'recordsReceivedFor') {
           const requester = ROLE_LABEL_H[payload.requesterRole] || payload.requesterRole;
-          headline = `DOS ${dosDate} — ${transitionLabel} — returned to ${requester}`;
+          headline = `DOS ${dosDate}, ${transitionLabel}, returned to ${requester}`;
         }
         useAppStore.getState().addActivityEntry({
           _memberId: patientId,
@@ -11714,7 +14003,7 @@ export const useAppStore = create((set, get) => ({
             ? { requesterRole: payload.requesterRole, destinationRole: payload.destinationRole, note: payload.note }
             : {}),
         });
-        // Emit one row per role whose status changed — including engine
+        // Emit one row per role whose status changed, including engine
         // cascades (e.g. Support Completed auto-flipping Coder to In
         // Progress). This is what surfaces the role-pill state changes on
         // the DiagPanel Activity tab.
@@ -11775,7 +14064,7 @@ export const useAppStore = create((set, get) => ({
     });
     // Persist any assignee change that didn't ride along with a status change,
     // AND log it to the activity feed. Direct manual reassigns from
-    // hccReassignRole log there themselves — skip the log here for kind ===
+    // hccReassignRole log there themselves: skip the log here for kind ===
     // 'reassignRole' so the History drawer doesn't show duplicate entries.
     const statusRoles = new Set(statusChanges.map(sc => sc.role));
     for (const { role, name, fromName } of assigneeChanges) {
@@ -11797,7 +14086,7 @@ export const useAppStore = create((set, get) => ({
     return { nextMap: useAppStore.getState().hccDosAssignments };
   },
 
-  // Convenience wrappers — one per AC transition so consumers don't have to
+  // Convenience wrappers: one per AC transition so consumers don't have to
   // remember string kinds. They forward to transitionHccDos above.
   hccMarkSupportInProgress: (pid, dos, actor) => {
     track('hcc.support_started', { memberId: pid });
@@ -11862,7 +14151,7 @@ export const useAppStore = create((set, get) => ({
     // picking a user from the system pool (Account → Users + Astrana
     // staff). For Account-pool users not in the Astrana roster,
     // hccStaffById() returns null and the legacy field would never get
-    // patched — the displayName override solves that.
+    // patched: the displayName override solves that.
     const fieldByRole = { support: 'sup', coder: 'cdr', reviewer: 'r1', reviewer2: 'r2' };
     const statusFieldByRole = { support: 'supS', coder: 'cdrS', reviewer: 'r1s', reviewer2: 'r2s' };
     const preMember = useAppStore.getState().hccMembers.find(m => m.id === pid);
@@ -11874,10 +14163,10 @@ export const useAppStore = create((set, get) => ({
     const sf = statusFieldByRole[role];
     if (!f || !name) return { ok: false, reason: 'unresolvable-assignee' };
     // Snapshot everything the optimistic patches touch, so a failed DB
-    // write can roll ALL of it back — UI and DB must never disagree
+    // write can roll ALL of it back, UI and DB must never disagree
     // (production users lost trust seeing an assignee that reverted on
     // the next reload).
-    const fromName = preMember[f] || '—';
+    const fromName = preMember[f] || '-';
     const prevName = preMember[f] ?? null;
     const prevStatus = preMember[sf] ?? null;
     const patientName = preMember.name;
@@ -11892,12 +14181,12 @@ export const useAppStore = create((set, get) => ({
     const compositeKey = hccDosKey(pid, dos, provider, pos);
     const prevBucket = useAppStore.getState().hccDosAssignments?.[compositeKey];
     useAppStore.getState().transitionHccDos(pid, dos, 'reassignRole', { role, staffId, actor, reason });
-    // Optimistic UI — ALL of it happens before the network write so every
+    // Optimistic UI: ALL of it happens before the network write so every
     // surface (worklist RoleStatusCell reading member.sup/.cdr/.r1/.r2,
     // DiagPanel AssigneeAvatar reading hccDosAssignments) flips instantly:
     //  1. the member's legacy role field + status. Default status on
     //     assignment is role-dependent: Support starts at "Awaiting"
-    //     (displays "Action Needed"), Coder / QA / Compliance at "New" —
+    //     (displays "Action Needed"), Coder / QA / Compliance at "New",
     //     either takes the cell out of its "Assign" empty state.
     //  2. the engine bucket's status: reassignRole stamps the assignee but
     //     leaves status null, which makes resolveCurrentAssignee() still
@@ -11922,12 +14211,12 @@ export const useAppStore = create((set, get) => ({
       return next;
     });
     // Persist to Supabase so the reassignment survives reload. Awaited so
-    // the caller can distinguish "written to DB" from "optimistic only" —
+    // the caller can distinguish "written to DB" from "optimistic only",
     // silent writes were masking RLS / missing-row failures in production
     // (user sees success toast, refresh reverts the assignment).
     const persist = await persistHccMemberRoleStatus(pid, role, assignStatus, name);
     if (persist?.error) {
-      // Roll back every optimistic patch — the row returns to its last
+      // Roll back every optimistic patch: the row returns to its last
       // saved state instead of showing an assignee the DB never accepted.
       set(s => {
         const nextAssignments = { ...s.hccDosAssignments };
@@ -11942,7 +14231,7 @@ export const useAppStore = create((set, get) => ({
       });
       return { ok: false, reason: 'persistence-failed', detail: persist.error.message, name, previous: fromName };
     }
-    // Log to the canonical activity feed for the History drawer — only
+    // Log to the canonical activity feed for the History drawer, only
     // after the DB write landed, so failed writes don't leave phantom
     // "assignee changed" entries.
     const ROLE_LABEL = { support: 'Support', coder: 'Coder', reviewer: 'Reviewer', reviewer2: 'Reviewer 2' };
@@ -11961,7 +14250,7 @@ export const useAppStore = create((set, get) => ({
     return { ok: true, name, previous: fromName };
   },
 
-  // Generic role-status patch — used by the DiagPanel status menu for
+  // Generic role-status patch: used by the DiagPanel status menu for
   // transitions the engine doesn't have a dedicated AC for (e.g. New →
   // In Progress on coder/reviewer roles, where the spec assumes work
   // starts implicitly on assignment). Patches BOTH the engine's dosState
@@ -12032,14 +14321,14 @@ export const useAppStore = create((set, get) => ({
     track('hcc.role_status_set', { memberId: pid, role, status });
   },
 
-  // Helpers exposed for the UI — resolve a staff id back to a display name.
+  // Helpers exposed for the UI: resolve a staff id back to a display name.
   hccStaffName: (staffId) => (hccStaffById(staffId)?.name || staffId || ''),
   hccStaffInitials: (staffId) => (hccStaffById(staffId)?.initials || ''),
 
   // ─── All Patients (unified TOC + HCC view, Supabase-backed) ───
   allPatients: [],
   allPatientsLoading: false,
-  // Single-fire guard — same pattern and same reason as `patientsDidFetch`.
+  // Single-fire guard: same pattern and same reason as `patientsDidFetch`.
   // Every caller guarded with `allPatients.length === 0` instead, which reads
   // the length *before* the first fetch resolves: two components mounting in
   // the same tick both see 0 and both fire, pulling this table's ~100 KB
@@ -12054,7 +14343,7 @@ export const useAppStore = create((set, get) => ({
       .order('name', { ascending: true });
     if (error) {
       console.warn('fetchAllPatients error (falling back to combined TOC+HCC):', error.message);
-      // Release the guard so a retry (or the next mount) can try again —
+      // Release the guard so a retry (or the next mount) can try again,
       // otherwise one transient failure means an empty table for the session.
       set({ allPatients: [], allPatientsLoading: false, allPatientsDidFetch: false });
       return;
@@ -12151,7 +14440,7 @@ export const useAppStore = create((set, get) => ({
   openIcdPanel: (panel, code) => set({ diagLeftPanel: panel, diagActivityIcd: code || null }),
   clearDiagActivityIcd: () => set({ diagActivityIcd: null }),
 
-  // Documents tab — currently-open doc in the preview. null = show the list.
+  // Documents tab: currently-open doc in the preview. null = show the list.
   // Set by (a) DiagPanel Documents-toolbar click (first doc), (b) DOS-row
   // click in IcdDosCard (doc matching that DOS date), (c) manual selection
   // inside the Documents tab.
@@ -12164,19 +14453,19 @@ export const useAppStore = create((set, get) => ({
   diagClaimDos: null,
   openHccClaimForDos: (dos) => set({ diagLeftPanel: 'claims', diagActivityIcd: null, diagClaimDos: dos || null }),
   clearDiagClaimDos: () => set({ diagClaimDos: null }),
-  // Claims tab — id of the currently previewed claim (Figma 10891:325889).
+  // Claims tab: id of the currently previewed claim (Figma 10891:325889).
   // Mirrors the docs tab's `diagOpenDocId` pattern so LeftWorkspace can
   // hide the filter row while a claim detail is on-screen.
   diagOpenClaimId: null,
   setDiagOpenClaimId: (id) => set({ diagOpenClaimId: id || null }),
 
-  // Documents tab — inline uploader widget toggle. Replaces the old drawer
+  // Documents tab: inline uploader widget toggle. Replaces the old drawer
   // open for the in-drawer Upload button (Figma 278:162482).
   hccDocsUploaderOpen: false,
   toggleHccDocsUploader: () => set(s => ({ hccDocsUploaderOpen: !s.hccDocsUploaderOpen })),
   closeHccDocsUploader: () => set({ hccDocsUploaderOpen: false }),
 
-  // Live-uploaded documents — appended to the static DOCUMENTS list in the
+  // Live-uploaded documents: appended to the static DOCUMENTS list in the
   // Documents tab so a newly-uploaded file appears at the top with status
   // 'pending'. Newest-first.
   hccUploadedDocs: [],
@@ -12219,7 +14508,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   // Edit an existing comment's body. `edited: true` stamps the row so the
-  // UI can render the "Edited" badge. Only the author can edit — enforced by
+  // UI can render the "Edited" badge. Only the author can edit, enforced by
   // RLS (hcc_diag_comment_rls_and_edit_mentions_migration.sql), not just the
   // UI. `mentionIds` is the edited body's full mention set; the DB trigger
   // notifies only the newly added ones. Omit it to leave mentions untouched.
@@ -12239,7 +14528,7 @@ export const useAppStore = create((set, get) => ({
     });
   },
 
-  // Remove a comment. Author-only — the caller checks author identity.
+  // Remove a comment. Author-only, the caller checks author identity.
   deleteHccDiagComment: (id) => {
     if (!id) return;
     const before = get().hccDiagComments?.find(c => c.id === id);
@@ -12440,7 +14729,7 @@ export const useAppStore = create((set, get) => ({
   // at the top of the timeline.
   //
   // Shape: { [memberName]: Entry[] } where the newest entry is at index 0.
-  // Entry contract — see src/features/hcc/data/activity.js for the legacy
+  // Entry contract: see src/features/hcc/data/activity.js for the legacy
   // shape; live entries additionally carry { id, ts } so they can be deduped
   // and sorted. `icds: [code]` means the entry is ICD-level and will appear
   // in BOTH the global DOS-level log AND any ICD-scoped log for that code.
@@ -12465,7 +14754,7 @@ export const useAppStore = create((set, get) => ({
     const date = `${pad(now.getMonth() + 1)}/${pad(now.getDate())}/${now.getFullYear()}`;
     const hours = now.getHours();
     const time = `${((hours + 11) % 12) + 1}:${pad(now.getMinutes())} ${hours >= 12 ? 'PM' : 'AM'}`;
-    // Resolve the effective DOS the same way DiagPanel does — fall back to
+    // Resolve the effective DOS the same way DiagPanel does, fall back to
     // the first DOS in the member's list when no explicit filter is set.
     const effectiveDos = s.diagDosFilter || member?.dos_list?.[0]?.date || member?.dos || null;
     const filled = {
@@ -12476,7 +14765,7 @@ export const useAppStore = create((set, get) => ({
       ...cleanEntry,
     };
     const list = s.hccActivityLog[memberKey] || [];
-    // Dedup guard — React StrictMode in dev double-invokes some store-set
+    // Dedup guard: React StrictMode in dev double-invokes some store-set
     // pathways which would otherwise produce two identical entries per click.
     // Drop a new entry if the previous one has the same type + headline within
     // the last 1500ms.
@@ -12490,7 +14779,7 @@ export const useAppStore = create((set, get) => ({
   // ─── HCC Activity Log (Supabase-backed, append-only) ─────────────────
   // Canonical event store described in docs/features/hcc-activity-log-spec.md.
   // Coexists with the legacy `hccActivityLog` map above while consumers
-  // migrate — every mutation that wants to land in the worklist History
+  // migrate: every mutation that wants to land in the worklist History
   // drawer calls logHccActivity().
   hccActivityFeed: buildSeedHccActivityFeed(),
   hccActivityFeedLoading: false,
@@ -12515,17 +14804,17 @@ export const useAppStore = create((set, get) => ({
   // (the underlying documents reload from Supabase via fetchHccDocuments).
   hccSftpReviewOpen: sessionStorage.getItem('hccSftpReviewOpen') === '1',
   hccSftpActiveBatchId: sessionStorage.getItem('hccSftpActiveBatchId') || null,
-  // Inline review — when true, the Document Review renders INSIDE the ICD
+  // Inline review: when true, the Document Review renders INSIDE the ICD
   // Creation surface (same drawer, no second overlay). Standalone entry
   // points (bell notification, upload ribbon) keep the floating 700px
   // drawer and leave this false.
   hccReviewInline: sessionStorage.getItem('hccReviewInline') === '1',
-  // ICD Creation screen — unified upload + manual + SFTP entry surface
+  // ICD Creation screen: unified upload + manual + SFTP entry surface
   // (replaces the legacy 3-item popover anchored under the worklist's
   // Upload Document toolbar button).
   icdCreationOpen: sessionStorage.getItem('icdCreationOpen') === '1',
   // Batches created during the CURRENT ICD-Creation session so the right
-  // panel's "Records" list only shows what this user just added — not
+  // panel's "Records" list only shows what this user just added, not
   // every historical batch from prior reloads.
   icdCreationSessionBatchIds: readSessionJson('icdCreationSessionBatchIds', []),
   openIcdCreation: () => {
@@ -12564,7 +14853,7 @@ export const useAppStore = create((set, get) => ({
     }
   },
   /**
-   * Persist (insert-or-update) one document. Fire-and-forget — local
+   * Persist (insert-or-update) one document. Fire-and-forget, local
    * state already reflects the change before this completes.
    */
   persistHccDocument: (batch) => {
@@ -12592,7 +14881,7 @@ export const useAppStore = create((set, get) => ({
       status: 'pending',
     }));
     set(s => ({ hccSftpBatches: [...(s.hccSftpBatches || []), ...seeded] }));
-    state.showToast?.(`SFTP — extracting ${fileNames.length} document${fileNames.length === 1 ? '' : 's'} in the background`);
+    state.showToast?.(`SFTP: extracting ${fileNames.length} document${fileNames.length === 1 ? '' : 's'} in the background`);
     // Stamp intake events so the Documents tab can surface these
     // batches even while OCR is still in flight.
     seeded.forEach(entry => {
@@ -12609,7 +14898,7 @@ export const useAppStore = create((set, get) => ({
       useAppStore.getState().logHccActivity?.({
         eventName: 'file.uploaded',
         scope:     { batchId: entry.id, fileId: entry.fileName, source: 'sftp' },
-        payload:   { actor: 'SFTP', fileName: entry.fileName, pageCount: '—' },
+        payload:   { actor: 'SFTP', fileName: entry.fileName, pageCount: '-' },
       });
       useAppStore.getState().logHccActivity?.({
         eventName: 'ocr.started',
@@ -12653,7 +14942,7 @@ export const useAppStore = create((set, get) => ({
       body: `${total} encounter${total === 1 ? '' : 's'} extracted across ${done.length} file${done.length === 1 ? '' : 's'}`,
       action: 'openSftpReview',
     });
-    useAppStore.getState().showToast?.(`SFTP extraction complete — ${total} encounter${total === 1 ? '' : 's'} ready for review`);
+    useAppStore.getState().showToast?.(`SFTP extraction complete: ${total} encounter${total === 1 ? '' : 's'} ready for review`);
   },
   /**
    * Queue a single uploaded document for background OCR.
@@ -12661,7 +14950,7 @@ export const useAppStore = create((set, get) => ({
    * Unlike the legacy single-document flow (which set
    * `hccUploadSession` and blocked the drawer on a single file at a
    * time), this path lets the user fire-and-forget any number of
-   * documents in parallel — each OCRs in the background and lands on
+   * documents in parallel: each OCRs in the background and lands on
    * the same multi-doc review surface used by SFTP ingestion. The
    * picker stays open so the user can keep adding files.
    *
@@ -12697,7 +14986,7 @@ export const useAppStore = create((set, get) => ({
     useAppStore.getState().logHccActivity?.({
       eventName: 'file.uploaded',
       scope:     { batchId: id, fileId: fileName, source: 'manual' },
-      payload:   { actor: 'You', fileName, pageCount: '—' },
+      payload:   { actor: 'You', fileName, pageCount: '-' },
     });
     useAppStore.getState().logHccActivity?.({
       eventName: 'ocr.started',
@@ -12721,14 +15010,14 @@ export const useAppStore = create((set, get) => ({
     useAppStore.getState().persistHccDocument?.(completed);
 
     // Auto-route: any encounter that's matched to a Fold member AND
-    // has no field-level errors is high-confidence "ready" — apply it
+    // has no field-level errors is high-confidence "ready", apply it
     // straight to the worklist and tag _docStatus='added' so the
     // Document Review Pending tab only surfaces error/mismatch rows
     // (per spec A + K). Same path the user would have walked manually
     // by clicking Add to Worklist on each card.
     //
     // The ICD Creation review flow passes autoApply:false so EVERY record
-    // stays pending — the reviewer decides per patient what to add.
+    // stays pending: the reviewer decides per patient what to add.
     if (!autoApply) {
       useAppStore.getState().logHccActivity?.({
         eventName: 'ocr.completed',
@@ -12746,7 +15035,7 @@ export const useAppStore = create((set, get) => ({
         pendingForReview += 1;
         return enc;
       }
-      // Duplicate detection — same patient + DOS + provider + POS
+      // Duplicate detection: same patient + DOS + provider + POS
       // already on the member's dos_list? Skip create and flag the
       // row so the reviewer sees the warning (spec L).
       const member = state.hccMembers.find(m => m.id === enc.patient.matchedMemberId);
@@ -12799,7 +15088,7 @@ export const useAppStore = create((set, get) => ({
       const total = totalAuto + totalPending;
       const docsCount = after.length;
       const body = totalPending === 0
-        ? `${totalAuto} record${totalAuto === 1 ? '' : 's'} loaded automatically — no manual review needed.`
+        ? `${totalAuto} record${totalAuto === 1 ? '' : 's'} loaded automatically: no manual review needed.`
         : `${totalAuto} loaded automatically · ${totalPending} waiting for manual intervention.`;
       useAppStore.getState().addNotification?.({
         type: 'hcc.documents_ready',
@@ -12854,7 +15143,7 @@ export const useAppStore = create((set, get) => ({
   },
   // Open review INLINE (inside the ICD Creation surface). Same aggregate
   // semantics as openHccReviewForBatches, but flags inline mode and does
-  // NOT set hccSftpReviewOpen — so the global floating drawer stays closed
+  // NOT set hccSftpReviewOpen: so the global floating drawer stays closed
   // and the review renders in-place instead.
   openHccReviewInline: (batchIds, focusBatchId) => set(() => {
     const ordered = focusBatchId
@@ -12870,7 +15159,7 @@ export const useAppStore = create((set, get) => ({
       hccSftpActiveBatchId: activeId,
     };
   }),
-  // Exit inline review — returns to the ICD Creation categorized doc list
+  // Exit inline review: returns to the ICD Creation categorized doc list
   // (leaves the ICD Creation screen itself open).
   closeHccReviewInline: () => {
     sessionStorage.setItem('hccReviewInline', '0');
@@ -12882,7 +15171,7 @@ export const useAppStore = create((set, get) => ({
     set({ hccSftpActiveBatchId: id });
   },
   /**
-   * Patch one encounter inside an SFTP batch — proxies to the same
+   * Patch one encounter inside an SFTP batch, proxies to the same
    * shape patchHccUploadEncounter uses (idx + partial). Used by the
    * SFTP table cells when the user edits a field.
    */
@@ -12934,14 +15223,14 @@ export const useAppStore = create((set, get) => ({
    * specific batch. Per spec, every manual pass AND every manual fail
    * carries a reason. Throws (via applyManualDecision) if reason missing.
    *
-   *   batchId   — the hccSftpBatches[] id
-   *   checkKey  — one of CHECK_KEYS (compliance.js)
-   *   decision  — 'pass' | 'fail'
-   *   reason    — { code?, freeText? }   (at least one required)
-   *   actor     — display name; defaults to current user / 'Support'
+   *   batchId: the hccSftpBatches[] id
+   *   checkKey: one of CHECK_KEYS (compliance.js)
+   *   decision: 'pass' | 'fail'
+   *   reason: { code?, freeText? }   (at least one required)
+   *   actor: display name; defaults to current user / 'Support'
    *
    * Stamps an activity-log event so the audit trail records WHO passed
-   * what, WHEN, and WHY — distinct from AI auto-passes.
+   * what, WHEN, and WHY, distinct from AI auto-passes.
    */
   applyHccComplianceDecision: ({ batchId, checkKey, decision, reason, actor }) => {
     set(s => ({
@@ -12960,7 +15249,7 @@ export const useAppStore = create((set, get) => ({
     // when, and why).
     const updated = useAppStore.getState().hccSftpBatches.find(b => b.id === batchId);
     useAppStore.getState().persistHccDocument?.(updated);
-    // Audit-trail event — names the actor so HCC submission audits can
+    // Audit-trail event: names the actor so HCC submission audits can
     // tell AI auto-passes apart from Support overrides.
     useAppStore.getState().logHccActivity?.({
       eventName: decision === 'pass' ? 'compliance.passed' : 'compliance.failed',
@@ -13004,7 +15293,7 @@ export const useAppStore = create((set, get) => ({
    * document extract once.
    *
    * Real backend would persist the original encounter rows in the
-   * batch record and load them directly — no re-extraction needed.
+   * batch record and load them directly, no re-extraction needed.
    */
   reopenHccSkippedReview: ({ batchId, fileName, rejectedList }) => {
     const state = useAppStore.getState();
@@ -13071,7 +15360,7 @@ export const useAppStore = create((set, get) => ({
   },
   // logHccActivity({ eventName, scope, payload })
   // Optimistically prepends to hccActivityFeed, then fires the Supabase
-  // insert. Producers don't await — the in-memory append is the UI's
+  // insert. Producers don't await: the in-memory append is the UI's
   // source of truth for this session.
   logHccActivity: ({ eventName, scope = {}, payload = {} }) => {
     const row = buildHccActivityRow(eventName, scope, payload);
@@ -13087,7 +15376,7 @@ export const useAppStore = create((set, get) => ({
     persistHccActivityRow(row);
   },
 
-  // Upload chart drawer — member object or null. Opened from ChartPopover's
+  // Upload chart drawer: member object or null. Opened from ChartPopover's
   // "Upload New Chart" CTA and from the DiagPanel chart-upload action.
   hccUploadMember: null,
   // When set, UploadChartDrawer opens in edit mode: caption + docType are
@@ -13114,7 +15403,7 @@ export const useAppStore = create((set, get) => ({
       };
     });
     // Persist the metadata change so the row survives reload. `visit_type`
-    // is optional in the schema — if the column exists the update lands,
+    // is optional in the schema: if the column exists the update lands,
     // otherwise the warn logs and the in-memory update stays authoritative.
     supabase
       .from('hcc_added_charts')
@@ -13199,12 +15488,12 @@ export const useAppStore = create((set, get) => ({
 
   // ─── HCC Document Upload + OCR Review (Individual Upload path) ──────
   // Session state for the multi-encounter PDF upload flow described in the
-  // Jira ticket. Lives at app level — drawer is mounted once in AppLayout.
+  // Jira ticket. Lives at app level, drawer is mounted once in AppLayout.
   //   phase: 'chooser' → ('single' | 'picker' | 'sftp')
   //   - chooser: pick a mode (single encounter / single multi-patient PDF / SFTP)
   //   - single:  manual single-encounter form (no OCR)
   //   - picker → processing → review: OCR-driven multi-encounter PDF flow
-  //   - sftp:    informational — show external SFTP path + credentials link
+  //   - sftp:    informational, show external SFTP path + credentials link
   //   file:        The selected File object (PDF)
   //   encounters:  Array of OCR-extracted encounter sections (across all
   //                patients in the PDF). Each: { tempId, patient:{name,dob,
@@ -13214,7 +15503,7 @@ export const useAppStore = create((set, get) => ({
   //                specific patient (AllPatientsRow / QuickView), this is
   //                that member's id. Bypasses the chooser → straight to picker
   //                so the patient-context flow stays unchanged.
-  //   summary:     Set after confirm — { created, updated }
+  //   summary:     Set after confirm, { created, updated }
   hccUploadSession: null,
   startHccUpload: (seededMemberId = null) => set({
     hccUploadSession: {
@@ -13250,7 +15539,7 @@ export const useAppStore = create((set, get) => ({
     useAppStore.getState().logHccActivity({
       eventName: 'file.uploaded',
       scope:     { batchId, fileId: file?.name, source: 'manual' },
-      payload:   { actor: 'You', fileName: file?.name || 'Uploaded file', pageCount: '—' },
+      payload:   { actor: 'You', fileName: file?.name || 'Uploaded file', pageCount: '-' },
     });
     useAppStore.getState().logHccActivity({
       eventName: 'ocr.started',
@@ -13261,7 +15550,7 @@ export const useAppStore = create((set, get) => ({
   setHccUploadEncounters: (encounters) => {
     const session = useAppStore.getState().hccUploadSession;
     if (!session) return;
-    // Unified Document Review surface — the legacy in-drawer review
+    // Unified Document Review surface: the legacy in-drawer review
     // table is gone. Adopt the OCR output as a new SFTP batch, run the
     // same auto-routing pipeline as the multi-doc queue, then open the
     // full-screen Document Review drawer. The legacy upload session is
@@ -13306,10 +15595,10 @@ export const useAppStore = create((set, get) => ({
       hccSftpBatches: [...(s.hccSftpBatches || []), newBatch],
       hccSftpActiveBatchId: batchId,
       hccSftpReviewOpen: true,
-      // Cancel the legacy session — Document Review now owns this flow.
+      // Cancel the legacy session: Document Review now owns this flow.
       hccUploadSession: null,
     }));
-    // Activity log — point at the new SFTP batch id since the legacy
+    // Activity log: point at the new SFTP batch id since the legacy
     // session is gone now.
     useAppStore.getState().logHccActivity({
       eventName: 'ocr.completed',
@@ -13319,7 +15608,7 @@ export const useAppStore = create((set, get) => ({
         encounterCount: encounters.length,
         autoApplied,
         pendingForReview,
-        pageCount: '—',
+        pageCount: '-',
       },
     });
     encounters.forEach(enc => {
@@ -13332,17 +15621,17 @@ export const useAppStore = create((set, get) => ({
             dos: enc.dos,
             confidencePct: enc.patient?.matchConfidence
               ? Math.round((enc.patient.matchConfidence || 0) * 100)
-              : '—',
+              : '-',
             thresholdPct: 95,
           },
         });
       }
     });
     // Extraction-complete notification mirrors the multi-doc queue
-    // behavior — auto/pending breakdown, deep-link into the Document
+    // behavior: auto/pending breakdown, deep-link into the Document
     // Review drawer.
     const body = pendingForReview === 0
-      ? `${autoApplied} record${autoApplied === 1 ? '' : 's'} loaded automatically — no manual review needed.`
+      ? `${autoApplied} record${autoApplied === 1 ? '' : 's'} loaded automatically: no manual review needed.`
       : `${autoApplied} loaded automatically · ${pendingForReview} waiting for manual intervention.`;
     useAppStore.getState().addNotification?.({
       type: 'hcc.extraction_complete',
@@ -13380,7 +15669,7 @@ export const useAppStore = create((set, get) => ({
   }),
   // Manually add a blank encounter for an existing patient. Used in the
   // review phase when an OCR pass missed a DOS the user has a separate
-  // document for — they get a fresh row pre-linked to the patient and
+  // document for: they get a fresh row pre-linked to the patient and
   // fill in DOS / provider / POS / ICDs / doc themselves.
   addHccUploadEncounter: (member) => set(s => {
     if (!s.hccUploadSession || !member) return {};
@@ -13414,7 +15703,7 @@ export const useAppStore = create((set, get) => ({
 
   // ── Background-processing minimize/expand ────────────────────────
   // After picking a file, the user can close the drawer and continue
-  // working — AI extraction keeps running in the background and a
+  // working: AI extraction keeps running in the background and a
   // floating chip (HccUploadProcessingHost) tracks progress + offers a
   // "Show Records" CTA when extraction completes. Mirrors the
   // population-groups pgSession / pgMinimized pattern.
@@ -13422,7 +15711,7 @@ export const useAppStore = create((set, get) => ({
   minimizeHccUpload: () => set({ hccUploadMinimized: true }),
   expandHccUpload: () => set({ hccUploadMinimized: false }),
 
-  // Exact match by normalized name + DOB. AC-9 requires 100% confidence —
+  // Exact match by normalized name + DOB. AC-9 requires 100% confidence,
   // partial / probabilistic matching is forbidden (HIPAA). Returns the
   // member object or null.
   findHccMemberByNameAndDob: (name, dob) => {
@@ -13458,7 +15747,7 @@ export const useAppStore = create((set, get) => ({
       if (i.valid !== false) icdCodes.push(i.code);
     }
     const now = new Date();
-    // WS1/WS8 — every upload-sourced row belongs to a mini-sweep. Stamp
+    // WS1/WS8: every upload-sourced row belongs to a mini-sweep. Stamp
     // the batch id onto `sourceDocumentIds` and force `arrivalOrder` to
     // 'doc-first' so the grouping engine buckets this row alongside its
     // siblings under the same document.
@@ -13472,7 +15761,7 @@ export const useAppStore = create((set, get) => ({
     const pad = (n) => String(n).padStart(2, '0');
     const dateStr = `${pad(now.getMonth() + 1)}/${pad(now.getDate())}/${now.getFullYear()}`;
 
-    // Helper — append to per-member activity log without requiring the
+    // Helper: append to per-member activity log without requiring the
     // DiagPanel to be open (the upload flow runs from a global drawer).
     const logActivity = (entry) => {
       const memberKey = member.name;
@@ -13553,7 +15842,7 @@ export const useAppStore = create((set, get) => ({
         headline: `New row created from upload (related DOS ${enc.dos} was completed)`,
         file: docName, fileType: docType, icds: icdCodes,
       });
-      // Worklist History — encounter approved + related DOS spawned.
+      // Worklist History: encounter approved + related DOS spawned.
       useAppStore.getState().logHccActivity({
         eventName: 'encounter.approved',
         scope:     { patientId: memberId, dos: newDosDate, source: 'manual' },
@@ -13600,7 +15889,7 @@ export const useAppStore = create((set, get) => ({
           : 'Document attached to existing DOS (no net-new ICDs)',
         file: docName, fileType: docType, icds: netNew,
       });
-      // Worklist History — DOS match found + (optional) net-new ICD merge.
+      // Worklist History: DOS match found + (optional) net-new ICD merge.
       useAppStore.getState().logHccActivity({
         eventName: 'encounter.approved',
         scope:     { patientId: memberId, dos: enc.dos, source: 'manual' },
@@ -13668,7 +15957,7 @@ export const useAppStore = create((set, get) => ({
       headline: `DOS ${enc.dos} created via document upload`,
       file: docName, fileType: docType, icds: icdCodes,
     });
-    // Worklist History — encounter approved + new worklist row spawned.
+    // Worklist History: encounter approved + new worklist row spawned.
     useAppStore.getState().logHccActivity({
       eventName: 'encounter.approved',
       scope:     { patientId: memberId, dos: enc.dos, source: 'manual' },
@@ -13725,7 +16014,7 @@ export const useAppStore = create((set, get) => ({
     });
     const rejected = rejectedList.length;
     track('hcc.upload_confirmed', { created, updated, rejected });
-    // Summary event — payload includes both lists so the History drawer's
+    // Summary event: payload includes both lists so the History drawer's
     // details expander shows accepted/rejected patients individually.
     useAppStore.getState().logHccActivity({
       eventName: 'batch.processing_completed',
@@ -13774,7 +16063,7 @@ export const useAppStore = create((set, get) => ({
     diagOpenDocId: opts.openDocId ?? null,
   }),
   // Bell / OS-banner entry point for a Diagnosis Gap comment mention. The bell
-  // can be clicked from any page, where the HCC slice may not be loaded yet —
+  // can be clicked from any page, where the HCC slice may not be loaded yet,
   // DiagPanel resolves its member from hccMembers, so load it first, then land
   // on the Comments tab.
   openDiagPanelFromNotification: async (memberId) => {
@@ -13787,12 +16076,12 @@ export const useAppStore = create((set, get) => ({
   setDiagDosFilter: (dos) => set({ diagDosFilter: dos }),
   setDiagViewMode: (mode) => set({ diagViewMode: mode }),
 
-  // Quick View drawer — opened by clicking a patient name in any worklist
+  // Quick View drawer: opened by clicking a patient name in any worklist
   quickViewPatient: null,
   openQuickView: (patient) => set({ quickViewPatient: patient }),
   closeQuickView: () => set({ quickViewPatient: null }),
 
-  // TOC Queue → Assessment drawer — opened by clicking the Assessment pill in a row.
+  // TOC Queue → Assessment drawer: opened by clicking the Assessment pill in a row.
   // Holds the patient id (not the full object) so state stays in sync when the
   // underlying patient row updates (e.g. status flips) while the drawer is open.
   assessmentDrawerPatientId: null,
@@ -13803,12 +16092,12 @@ export const useAppStore = create((set, get) => ({
   }),
   closeAssessmentDrawer: () => set({ assessmentDrawerPatientId: null, assessmentDrawerPrefilled: true }),
 
-  // TOC Queue → Outreach Status drawer — same pattern as the assessment drawer.
+  // TOC Queue → Outreach Status drawer, same pattern as the assessment drawer.
   outreachStatusDrawerPatientId: null,
   openOutreachStatusDrawer: (patientId) => set({ outreachStatusDrawerPatientId: patientId }),
   closeOutreachStatusDrawer: () => set({ outreachStatusDrawerPatientId: null }),
 
-  // TOC worklist → AI Tasks drawer — same id-only pattern as assessment / outreach.
+  // TOC worklist → AI Tasks drawer, same id-only pattern as assessment / outreach.
   aiTasksDrawerPatientId: null,
   openAiTasksDrawer: (patientId) => set({ aiTasksDrawerPatientId: patientId }),
   closeAiTasksDrawer: () => set({ aiTasksDrawerPatientId: null }),
@@ -13822,7 +16111,7 @@ export const useAppStore = create((set, get) => ({
     get().persistPatient(id, updates);
   },
 
-  // Core-identity update — name / dob / gender / age / contact fields edited
+  // Core-identity update: name / dob / gender / age / contact fields edited
   // in the Update Member drawer. One patient can be mirrored across several
   // slices (patients, hcc, awv, ccm, snp, all_patients), each backed by its
   // own table, so a rename that only touched `patients` would leave every
@@ -13830,7 +16119,7 @@ export const useAppStore = create((set, get) => ({
   // updates every slice row sharing the identity (id match or normalized
   // memberId match) and persists per-table with each table's column shape.
   // `core` fields: name, initials, chosenName, gender ('M'/'F'), age ("Ny Mm"),
-  // dob (MM/DD/YYYY), language, email, phone, city, state — all optional.
+  // dob (MM/DD/YYYY), language, email, phone, city, state, all optional.
   updatePatientCore: (patientId, core) => {
     if (!patientId || !core) return;
     const norm = (v) => String(v || '').replace(/^#/, '').trim().toLowerCase();
@@ -13878,7 +16167,7 @@ export const useAppStore = create((set, get) => ({
       snpWorklistMembers: (st.snpWorklistMembers || []).map(m => rowMatches(m)
         ? { ...m, ...defined({ name: core.name, initials: core.initials, chosenName: core.chosenName, gender: core.gender, age: core.age }) }
         : m),
-      // The QuickView drawer renders a snapshot — refresh it so an open
+      // The QuickView drawer renders a snapshot, refresh it so an open
       // drawer reflects the save immediately.
       quickViewPatient: st.quickViewPatient && rowMatches(st.quickViewPatient)
         ? { ...st.quickViewPatient, ...defined({ name: core.name, initials: core.initials, chosenName: core.chosenName, gender: core.gender, age: core.age, dob: core.dob, language: core.language, memberId: st.quickViewPatient.memberId }) }
@@ -13886,7 +16175,7 @@ export const useAppStore = create((set, get) => ({
     }));
 
     // ── Persistence (fire-and-forget, per-table column shapes) ─────────
-    // patients — via the shared persist path (mapper covers the new columns).
+    // patients: via the shared persist path (mapper covers the new columns).
     const patientRow = get().patients.find(rowMatches);
     if (patientRow) {
       get().persistPatient(patientRow.id, defined({ name: core.name, initials: core.initials, gender: core.gender, age: core.age, dob: core.dob, language: core.language, email: core.email, phone: core.phone, city: core.city, state: core.state }));
@@ -13896,7 +16185,7 @@ export const useAppStore = create((set, get) => ({
       const clean = defined(payload);
       if (!Object.keys(clean).length) return;
       supabase.from(table).update(clean).eq('member_id', src.memberId).then(({ error }) => {
-        if (error) console.warn(`updatePatientCore — ${table} update failed:`, error.message);
+        if (error) console.warn(`updatePatientCore: ${table} update failed:`, error.message);
       });
     };
     fire('all_patients',         { name: core.name, initials: core.initials, gender: core.gender, age: ageYears, email: core.email, phone: core.phone, city: core.city, state: core.state });
@@ -13929,7 +16218,7 @@ export const useAppStore = create((set, get) => ({
         } else {
           newP.status = 'queued';
           newP.onCall = false;
-          newP.nextAction = 'Queued — waiting for available line';
+          newP.nextAction = 'Queued: waiting for available line';
         }
       } else if (p.status !== 'completed' && p.status !== 'failed') {
         if (activeCount < MAX_CONCURRENT) {
@@ -13941,7 +16230,7 @@ export const useAppStore = create((set, get) => ({
         } else {
           newP.status = 'queued';
           newP.onCall = false;
-          newP.nextAction = 'Queued — waiting for available line';
+          newP.nextAction = 'Queued: waiting for available line';
         }
       }
       return newP;
@@ -14009,10 +16298,15 @@ export const useAppStore = create((set, get) => ({
     }
     const updated = state.patients.map(p => {
       if (!p.agentAssigned) return p;
-      const newP = { ...p, agentAssigned: '', agentRole: '', onCall: false, status: p.status === 'oncall' || p.status === 'queued' ? 'scheduled' : p.status };
+      const secs = state.agentCallSeconds[p.id];
+      const newP = {
+        ...p, agentAssigned: '', agentRole: '', onCall: false,
+        status: p.status === 'oncall' || p.status === 'queued' ? 'scheduled' : p.status,
+        ...(secs != null ? { callDuration: formatDuration(secs) } : {}),
+      };
       return newP;
     });
-    set({ patients: updated, callTimerRef: null, queueTabDot: false, toast: 'All agent runs aborted' });
+    set({ patients: updated, callTimerRef: null, agentCallSeconds: {}, queueTabDot: false, toast: 'All agent runs aborted' });
     // Persist changes
     for (const p of updated) {
       if (p.agentAssigned === '') {
@@ -14022,40 +16316,45 @@ export const useAppStore = create((set, get) => ({
     setTimeout(() => set(s => s.toast === 'All agent runs aborted' ? { toast: null } : {}), 2800);
   },
 
+  // Agent calls tick in `agentCallSeconds` (id → seconds), not in `patients`:
+  // rebuilding the patients array every second re-rendered every component
+  // subscribed to it. Rows read the clock through useCallDuration.
   startCallTimers: () => {
     const existing = get().callTimerRef;
     if (existing) return;
     const ref = setInterval(() => {
       const state = get();
-      const anyActive = state.patients.some(p => p.status === 'oncall' && p.onCall);
-      if (!anyActive) {
+      const active = state.patients.filter(p => p.status === 'oncall' && p.onCall);
+      if (!active.length) {
         clearInterval(ref);
-        set({ callTimerRef: null });
+        set({ callTimerRef: null, agentCallSeconds: {} });
         return;
       }
-      set(s => ({
-        patients: s.patients.map(p => {
-          if (p.status !== 'oncall' || !p.onCall) return p;
-          const secs = parseDuration(p.callDuration || '00:00') + 1;
-          return { ...p, callDuration: formatDuration(secs) };
-        })
-      }));
+      const prev = state.agentCallSeconds;
+      const next = {};
+      for (const p of active) {
+        next[p.id] = (prev[p.id] ?? parseDuration(p.callDuration || '00:00')) + 1;
+      }
+      set({ agentCallSeconds: next });
       // Note: call duration ticks are NOT persisted every second (too noisy).
-      // They get persisted when the call ends.
     }, 1000);
     set({ callTimerRef: ref });
   },
+  agentCallSeconds: {},
 
   openCallPopover: (patientId, btnRef) => {
     const state = get();
     const patient = resolvePatientForCall(state, patientId);
     if (!patient) {
-      state.showToast?.('Unable to start call — patient not found');
+      state.showToast?.('Unable to start call: patient not found');
       return;
     }
-    set({ callPopoverPatient: patient.id, callPopoverBtnRef: btnRef });
+    set({ callPopoverPatient: patient.id, callPopoverNumber: null, callPopoverBtnRef: btnRef });
   },
-  closeCallPopover: () => set({ callPopoverPatient: null, callPopoverBtnRef: null }),
+  openNumberCallPopover: (target, btnRef) => {
+    set({ callPopoverNumber: target, callPopoverPatient: null, callPopoverBtnRef: btnRef });
+  },
+  closeCallPopover: () => set({ callPopoverPatient: null, callPopoverNumber: null, callPopoverBtnRef: null }),
 
   startActiveCall: (patientId) => {
     track('call.started', { patientId });
@@ -14071,15 +16370,10 @@ export const useAppStore = create((set, get) => ({
     }));
     get().persistPatient(patientId, updates);
 
+    // Only the seconds tick; rows read the live clock through
+    // useCallDuration, and endActiveCall writes the final duration.
     const ref = setInterval(() => {
-      set(s => {
-        const newSecs = s.activeCallSeconds + 1;
-        const timeStr = formatDuration(newSecs);
-        return {
-          activeCallSeconds: newSecs,
-          patients: s.patients.map(p => p.id === patientId ? { ...p, callDuration: timeStr } : p)
-        };
-      });
+      set(s => ({ activeCallSeconds: s.activeCallSeconds + 1 }));
     }, 1000);
     set({ activeCallTimerRef: ref });
   },
@@ -14142,17 +16436,20 @@ export const useAppStore = create((set, get) => ({
     const { localEmployerImpactFilters } = await import('../features/analytics/views/employer/employerImpactLocal');
     set({ employerImpactFilters: localEmployerImpactFilters(), employerImpactFiltersLoaded: true, employerImpactLocal: true });
   },
-  fetchEmployerImpact: async ({ from, to, employer = null, scope = 'patient', location = null }) => {
-    const key = [from, to, employer || '*', scope, location || '*'].join('|');
+  // `weekly` reads the weekly table (Month and Quarter charts) instead of
+  // the monthly one. A weekly read resolves null when that table's function
+  // isn't there yet (migration not run), so the report can fall back to months.
+  fetchEmployerImpact: async ({ from, to, employer = null, scope = 'patient', location = null, weekly = false }) => {
+    const key = [weekly ? 'w' : 'm', from, to, employer || '*', scope, location || '*'].join('|');
     const cached = get().employerImpactRollups[key];
     if (cached) return cached;
     if (get().employerImpactLocal) {
-      const { localEmployerImpactRollup } = await import('../features/analytics/views/employer/employerImpactLocal');
-      const rows = localEmployerImpactRollup({ from, to, employer, scope, location });
+      const { localEmployerImpactRollup, localEmployerImpactWeeklyRollup } = await import('../features/analytics/views/employer/employerImpactLocal');
+      const rows = (weekly ? localEmployerImpactWeeklyRollup : localEmployerImpactRollup)({ from, to, employer, scope, location });
       set(s => ({ employerImpactRollups: { ...s.employerImpactRollups, [key]: rows } }));
       return rows;
     }
-    const { data, error } = await supabase.rpc('employer_impact_rollup', {
+    const { data, error } = await supabase.rpc(weekly ? 'employer_impact_weekly_rollup' : 'employer_impact_rollup', {
       p_from: `${from}-01`,
       p_to: `${to}-01`,
       p_employer: employer,
@@ -14161,7 +16458,7 @@ export const useAppStore = create((set, get) => ({
     });
     if (error) {
       console.warn('fetchEmployerImpact:', error.message);
-      return [];
+      return weekly ? null : [];
     }
     const rows = Array.isArray(data) ? data : [];
     set(s => ({ employerImpactRollups: { ...s.employerImpactRollups, [key]: rows } }));
@@ -14432,9 +16729,83 @@ export const useAppStore = create((set, get) => ({
       import('../features/messages/comms/sendTo'),
       supabase.from('patient_contacts').select('*').eq('patient_id', String(patientId)),
     ]);
-    if (error) console.warn('fetchPatientContacts — falling back to samples:', error.message);
+    if (error) console.warn('fetchPatientContacts: falling back to samples:', error.message);
     const list = !error && data?.length ? data.map(rowToContact) : sampleContactsFor(String(patientId));
     set(s => ({ patientContacts: { ...s.patientContacts, [patientId]: list } }));
+    // People added in Add Family, Caregivers & Decision Makers win over both.
+    await get().fetchFamilyMembers(patientId);
+  },
+
+  // ── Family, caregivers & decision makers (patient_family_members) ──
+  // { [patientId]: person[] }, and who lists the patient as their family
+  // ({ [patientId]: count }). Until the migration runs, additions stay in
+  // memory (familyMembersLocal).
+  familyMembers: {},
+  familyOfCount: {},
+  familyMembersLocal: false,
+  fetchFamilyMembers: async (patientId) => {
+    if (!patientId) return;
+    const key = String(patientId);
+    const { rowToFamilyMember } = await import('../features/patient/family/familyMembers');
+    const { data, error } = await supabase
+      .from('patient_family_members')
+      .select('*')
+      .or(`patient_id.eq.${key},related_patient_id.eq.${key}`)
+      .order('created_at');
+    if (error) {
+      set(s => ({ familyMembersLocal: true, familyMembers: { ...s.familyMembers, [key]: s.familyMembers[key] || [] } }));
+      return;
+    }
+    const rows = (data || []).map(rowToFamilyMember);
+    const mine = rows.filter(m => m.patientId === key);
+    set(s => ({
+      familyMembers: { ...s.familyMembers, [key]: mine },
+      familyOfCount: { ...s.familyOfCount, [key]: rows.filter(m => m.relatedPatientId === key).length },
+    }));
+    if (mine.length) get().syncFamilyContacts(key);
+  },
+  // Send To reads the patient's people as role contacts.
+  syncFamilyContacts: async (patientId) => {
+    const key = String(patientId);
+    const { familyToContacts } = await import('../features/patient/family/familyMembers');
+    const mine = get().familyMembers[key] || [];
+    set(s => ({ patientContacts: { ...s.patientContacts, [key]: familyToContacts(mine, s.allPatients || []) } }));
+  },
+  // Adds a person. A decision-maker role moves off whoever held it.
+  addFamilyMember: async (patientId, person) => {
+    const key = String(patientId);
+    const { familyMemberToRow } = await import('../features/patient/family/familyMembers');
+    const member = {
+      ...person,
+      id: `fam-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      patientId: key,
+      createdBy: get().currentUserProfile?.name || null,
+    };
+    const current = get().familyMembers[key] || [];
+    const displaced = member.decisionMaker ? current.find(m => m.decisionMaker === member.decisionMaker) : null;
+    if (!get().familyMembersLocal) {
+      if (displaced) {
+        const { error } = await supabase.from('patient_family_members')
+          .update({ decision_maker: null, authority_type: null, document_ids: [] }).eq('id', displaced.id);
+        if (error) return null;
+      }
+      const { error } = await supabase.from('patient_family_members').insert(familyMemberToRow(member));
+      if (error) return null;
+    }
+    const kept = current.map(m => (m.id === displaced?.id ? { ...m, decisionMaker: null, authorityType: null, documentIds: [] } : m));
+    set(s => ({ familyMembers: { ...s.familyMembers, [key]: [...kept, member] } }));
+    get().syncFamilyContacts(key);
+    return member;
+  },
+  removeFamilyMember: async (patientId, id) => {
+    const key = String(patientId);
+    if (!get().familyMembersLocal) {
+      const { error } = await supabase.from('patient_family_members').delete().eq('id', id);
+      if (error) return false;
+    }
+    set(s => ({ familyMembers: { ...s.familyMembers, [key]: (s.familyMembers[key] || []).filter(m => m.id !== id) } }));
+    get().syncFamilyContacts(key);
+    return true;
   },
 
   // ── Inbound eFax (Comms → E-fax) ──
@@ -14448,10 +16819,8 @@ export const useAppStore = create((set, get) => ({
   fetchEfaxes: async () => {
     if (get().efaxesDidFetch) return;
     set({ efaxesDidFetch: true, efaxesLoading: true });
-    const [{ rowToFax, sampleFaxes }, { data, error }] = await Promise.all([
-      import('../features/messages/efax/efaxData'),
-      supabase.from('efax_inbound').select('*').order('received_at', { ascending: false }),
-    ]);
+    const { rowToFax, sampleFaxes } = await import('../features/messages/efax/efaxData');
+    const { data, error } = await supabase.from('efax_inbound').select('*').order('received_at', { ascending: false }).limit(500);
     if (error) console.warn('fetchEfaxes: falling back to samples:', error.message);
     if (!error && data?.length) {
       set({ efaxes: data.map(rowToFax), efaxesLoading: false, efaxLive: true });
@@ -14495,7 +16864,7 @@ export const useAppStore = create((set, get) => ({
     ]);
     const pick = (res, map, sample, name) => {
       if (!res.error && res.data?.length) return res.data.map(map);
-      if (res.error) console.warn(`fetchCareProgramBilling (${name}) — falling back to samples:`, res.error.message);
+      if (res.error) console.warn(`fetchCareProgramBilling (${name}): falling back to samples:`, res.error.message);
       return sample;
     };
     set({
@@ -14533,7 +16902,7 @@ export const useAppStore = create((set, get) => ({
       set({ userAvailability: (data || []).map(rowToBlock), userAvailabilityLoading: false, userAvailabilityFetched: true, userAvailabilityLocal: false });
       return;
     }
-    console.warn('fetchUserAvailability — falling back to samples:', error.message);
+    console.warn('fetchUserAvailability: falling back to samples:', error.message);
     set({ userAvailability: sampleAvailability(), userAvailabilityLoading: false, userAvailabilityFetched: true, userAvailabilityLocal: true });
   },
   /**
@@ -14610,6 +16979,23 @@ export const useAppStore = create((set, get) => ({
   reassignmentLocal: false,
   reassignmentSummaryJobId: null,
   openReassignmentSummary: (jobId) => set({ reassignmentSummaryJobId: jobId }),
+  // "View Appointments" on a reassignment notification: the calendar's List
+  // view on the week of the first appointment moved to me, with the moved
+  // ones highlighted (calendarFocus, consumed by CalendarView).
+  calendarFocus: null,
+  openAssignedAppointments: async (jobId) => {
+    await get().fetchReassignmentJobs({ force: true });
+    const job = (get().reassignmentJobs || []).find(j => j.id === jobId);
+    const me = get().currentUserProfile;
+    const mine = (job?.results || []).filter(r => r.outcome === 'reassigned'
+      && ((r.toId && me?.id && String(r.toId) === String(me.id)) || (!r.toId && r.to === me?.name)));
+    const moved = mine.length ? mine : (job?.results || []).filter(r => r.outcome === 'reassigned');
+    const iso = (d) => { const [m, dd, y] = String(d || '').split('-'); return y ? `${y}-${m}-${dd}` : null; };
+    const date = moved.map(r => iso(r.appointment?.date)).filter(Boolean).sort()[0] || null;
+    set({ activePage: 'calendar', calendarFocus: { ids: moved.map(r => r.appointmentId), date, at: Date.now() } });
+    try { if (typeof window !== 'undefined') window.location.hash = '#/calendar'; } catch { /* */ }
+  },
+  clearCalendarFocus: () => set({ calendarFocus: null }),
   closeReassignmentSummary: () => set({ reassignmentSummaryJobId: null }),
   fetchReassignmentJobs: async ({ force = false } = {}) => {
     if (get().reassignmentJobsFetched && !force) return;
@@ -14697,6 +17083,21 @@ export const useAppStore = create((set, get) => ({
       action: 'openReassignmentSummary',
       reassignmentJobId: job.id,
     });
+    // Covering providers hear about it from the database trigger
+    // (reassignment_notifications_migration.sql). When the job couldn't be
+    // saved, and I'm one of them, show mine here instead.
+    const me = get().currentUserProfile;
+    const toMe = job.results.filter(r => r.outcome === 'reassigned'
+      && ((r.toId && me?.id && String(r.toId) === String(me.id)) || (!r.toId && r.to === me?.name))).length;
+    if (get().reassignmentLocal && toMe) {
+      get().addNotification?.({
+        type: 'appointment.reassigned',
+        title: `${toMe} new ${toMe === 1 ? 'appointment' : 'appointments'} assigned to you.`,
+        body: `${job.createdBy || 'Someone'} reassigned ${toMe} ${toMe === 1 ? 'appointment' : 'appointments'} from ${fromUser} to you.`,
+        action: 'viewAssignedAppointments',
+        reassignmentJobId: job.id,
+      });
+    }
     return job;
   },
   /**
@@ -14902,18 +17303,50 @@ export const useAppStore = create((set, get) => ({
 
   // ── Appointment Types ──
   appointmentTypes: [],
-  fetchAppointmentTypes: async () => {
+  fetchAppointmentTypes: (opts) => mountFetch('fetchAppointmentTypes', async () => {
     const { data, error } = await supabase
       .from('appointment_types')
       .select('*')
       .order('name');
-    if (!error && data) set({ appointmentTypes: data });
+    if (!error && data) {
+      const local = readLocalTypeWindows();
+      set({ appointmentTypes: data.map(t => withTypeWindows(t, local)) });
+    }
+  }, opts),
+  // Appointment Type drawer: mode, duration, online booking and the cancel
+  // and reschedule windows. The windows save to this browser until their
+  // columns exist. Returns false when the save failed.
+  saveAppointmentType: async (id, patch) => {
+    const before = get().appointmentTypes.find(t => t.id === id);
+    set(s => ({ appointmentTypes: s.appointmentTypes.map(t => (t.id === id ? { ...t, ...patch } : t)) }));
+    const windows = { [WINDOW_FIELD.cancel]: patch[WINDOW_FIELD.cancel] ?? null, [WINDOW_FIELD.reschedule]: patch[WINDOW_FIELD.reschedule] ?? null };
+    const core = Object.fromEntries(Object.entries(patch).filter(([k]) => !(k in windows)));
+    const { error } = await supabase.from('appointment_types').update(core).eq('id', id);
+    if (error) {
+      set(s => ({ appointmentTypes: s.appointmentTypes.map(t => (t.id === id ? before : t)) }));
+      return false;
+    }
+    const { error: windowError } = await supabase.from('appointment_types').update(windows).eq('id', id);
+    if (windowError) writeLocalTypeWindow(id, windows);
+    return true;
+  },
+  // Settings → Calendar → Online booking. Optimistic; rolls back on failure.
+  setAppointmentTypeBookable: async (id, bookable) => {
+    const patch = (value) => set(s => ({ appointmentTypes: s.appointmentTypes.map(t => (t.id === id ? { ...t, patient_bookable: value } : t)) }));
+    patch(bookable);
+    const { error } = await supabase.from('appointment_types').update({ patient_bookable: bookable }).eq('id', id);
+    if (error) {
+      patch(!bookable);
+      get().showToast?.('Online booking could not be updated. Try again.');
+      return false;
+    }
+    return true;
   },
 
   // ── Appointments ──
   appointments: [],
   appointmentsLoading: false,
-  fetchAppointments: async () => {
+  fetchAppointments: (opts) => mountFetch('fetchAppointments', async () => {
     set({ appointmentsLoading: true });
     const { data, error } = await supabase
       .from('appointments')
@@ -14921,7 +17354,7 @@ export const useAppStore = create((set, get) => ({
       .order('date', { ascending: true });
     if (!error && data) set({ appointments: data });
     set({ appointmentsLoading: false });
-  },
+  }, opts),
 
   // Signal-based drawer opener (mirrors pendingAddTask / pendingOpenTaskId
   // pattern). Set by NotificationsPopover on an "openAppointment" action;
@@ -14935,7 +17368,7 @@ export const useAppStore = create((set, get) => ({
   },
   clearPendingOpenAppointmentId: () => set({ pendingOpenAppointmentId: null }),
 
-  // Local helper — returns true when the appointment's primary_user or any
+  // Local helper: returns true when the appointment's primary_user or any
   // secondary_users entry matches the signed-in user's display name. No
   // uuid-based owner is stored on the row (see calendar survey notes), so
   // name-match is the only join we can do.
@@ -14962,8 +17395,8 @@ export const useAppStore = create((set, get) => ({
     }
     if (error) { console.error('Create appointment error:', error); return null; }
     // Refresh list
-    get().fetchAppointments();
-    // Notify me if I'm listed on the appointment — but not when I created
+    get().fetchAppointments({ force: true });
+    // Notify me if I'm listed on the appointment: but not when I created
     // the invite myself (the store surfaces that via the drawer instead).
     if (data && get()._appointmentInvolvesMe(data)) {
       const me = get().currentUserProfile;
@@ -14992,7 +17425,7 @@ export const useAppStore = create((set, get) => ({
       ({ error } = await supabase.from('appointments').update(byName).eq('id', id));
     }
     if (error) { console.error('Update appointment error:', error); return false; }
-    get().fetchAppointments();
+    get().fetchAppointments({ force: true });
     // Notify me if this update newly puts me on the appointment (name
     // becomes primary_user, or gets added to secondary_users).
     if (prev) {
@@ -15018,8 +17451,243 @@ export const useAppStore = create((set, get) => ({
       .delete()
       .eq('id', id);
     if (error) { console.error('Delete appointment error:', error); return false; }
-    get().fetchAppointments();
+    get().fetchAppointments({ force: true });
     return true;
+  },
+
+  // ── Member tags (Settings > Member/Leads > Tags) and patient tags ──
+  // Until contact_tags_migration.sql runs, the built-in tags, and edits and
+  // patient tags stay in memory (contactTagsLocal).
+  contactTags: [],
+  contactTagsLoading: false,
+  contactTagsDidFetch: false,
+  contactTagsLocal: false,
+  fetchContactTags: (opts) => mountFetch('fetchContactTags', async () => {
+    const { DEFAULT_TAGS, rowToTag } = await import('../features/settings/member-leads/tags/contactTags');
+    set({ contactTagsLoading: true });
+    const { data, error } = await supabase.from('contact_tags').select('*').eq('active', true).order('sort_order');
+    const live = !error && data?.length;
+    set({
+      contactTags: live ? data.map(rowToTag) : (get().contactTags.length ? get().contactTags : DEFAULT_TAGS),
+      contactTagsLocal: !!error,
+      contactTagsLoading: false,
+      contactTagsDidFetch: true,
+    });
+  }, opts),
+  saveContactTag: async (tag) => {
+    const { tagToRow } = await import('../features/settings/member-leads/tags/contactTags');
+    const list = get().contactTags;
+    const existing = list.find(t => t.id === tag.id);
+    const next = existing
+      ? { ...existing, ...tag }
+      : { ...tag, id: tag.id || `tag-${Date.now().toString(36)}`, sortOrder: list.length + 1 };
+    if (!get().contactTagsLocal) {
+      const { error } = await supabase.from('contact_tags').upsert({ ...tagToRow(next), updated_at: new Date().toISOString() }, { onConflict: 'id' });
+      if (error) return null;
+    }
+    set({ contactTags: existing ? list.map(t => (t.id === next.id ? next : t)) : [...list, next] });
+    return next;
+  },
+  deleteContactTag: async (id) => {
+    if (!get().contactTagsLocal) {
+      const { error } = await supabase.from('contact_tags').update({ active: false }).eq('id', id);
+      if (error) return false;
+    }
+    const patientTags = Object.fromEntries(Object.entries(get().patientTags).map(([pid, ids]) => [pid, ids.filter(x => x !== id)]));
+    set({ contactTags: get().contactTags.filter(t => t.id !== id), patientTags });
+    return true;
+  },
+  // patientId → tag ids.
+  patientTags: {},
+  fetchPatientTags: async (patientId) => {
+    if (patientId == null) return;
+    const key = String(patientId);
+    const { data, error } = await supabase.from('patient_tags').select('tag_id').eq('patient_id', key).order('created_at');
+    // Until patient_tags exists a patient has no tags (no sample ones: they'd read as real).
+    if (error) {
+      if (!get().patientTags[key]) set({ patientTags: { ...get().patientTags, [key]: [] } });
+      return;
+    }
+    set({ patientTags: { ...get().patientTags, [key]: data.map(r => r.tag_id) } });
+  },
+  addPatientTags: async (patientId, tagIds) => {
+    const key = String(patientId);
+    const current = get().patientTags[key] || [];
+    const added = tagIds.filter(id => !current.includes(id));
+    if (!added.length) return true;
+    if (!get().contactTagsLocal) {
+      const by = get().currentUserProfile?.name || null;
+      const { error } = await supabase.from('patient_tags').upsert(added.map(tag_id => ({ patient_id: key, tag_id, added_by: by })), { onConflict: 'patient_id,tag_id' });
+      if (error) return false;
+    }
+    set({ patientTags: { ...get().patientTags, [key]: [...current, ...added] } });
+    return true;
+  },
+  removePatientTag: async (patientId, tagId) => {
+    const key = String(patientId);
+    if (!get().contactTagsLocal) {
+      const { error } = await supabase.from('patient_tags').delete().eq('patient_id', key).eq('tag_id', tagId);
+      if (error) return false;
+    }
+    set({ patientTags: { ...get().patientTags, [key]: (get().patientTags[key] || []).filter(id => id !== tagId) } });
+    return true;
+  },
+
+  // ── Bulk appointment actions (calendar List view, VBC-25651) ──
+  // Until appointment_cancel_reasons_migration.sql runs, the built-in list.
+  appointmentCancelReasons: [],
+  fetchAppointmentCancelReasons: (opts) => mountFetch('fetchAppointmentCancelReasons', async () => {
+    const { CANCEL_REASONS, rowToCancelReason } = await import('../features/calendar/list/cancelReasons');
+    const { data, error } = await supabase
+      .from('appointment_cancel_reasons')
+      .select('*')
+      .eq('active', true)
+      .order('sort_order');
+    set({ appointmentCancelReasons: !error && data?.length ? data.map(rowToCancelReason) : CANCEL_REASONS });
+  }, opts),
+
+  // Cancels the appointments with a reason. Before the migration adds the
+  // cancel_* columns, only the status is saved.
+  cancelAppointments: async (appts, reason) => {
+    const ids = appts.map(a => a.id);
+    const by = get().currentUserProfile?.name || null;
+    let { error } = await supabase.from('appointments')
+      .update({ status: 'Cancelled', cancel_reason: reason, cancelled_at: new Date().toISOString(), cancelled_by: by })
+      .in('id', ids);
+    if (error && /cancel/.test(error.message || '')) {
+      ({ error } = await supabase.from('appointments').update({ status: 'Cancelled' }).in('id', ids));
+    }
+    if (error) { console.error('cancelAppointments:', error.message); return false; }
+    appts.forEach(a => get().logAudit('Appointment', a.id, a.patient_name || 'Appointment', 'cancelled', `Cancelled: ${reason}`, 'Lifecycle',
+      [{ field: 'status', from: a.status || 'Scheduled', to: 'Cancelled', type: 'status' }]));
+    await get().fetchAppointments({ force: true });
+    return true;
+  },
+
+  // Sets one status on several appointments (e.g. bulk Mark as No Show).
+  setAppointmentsStatus: async (appts, status) => {
+    const { error } = await supabase.from('appointments').update({ status }).in('id', appts.map(a => a.id));
+    if (error) { console.error('setAppointmentsStatus:', error.message); return false; }
+    appts.forEach(a => get().logAudit('Appointment', a.id, a.patient_name || 'Appointment', 'updated', `Status: ${status}`, 'Lifecycle',
+      [{ field: 'status', from: a.status || 'Scheduled', to: status, type: 'status' }]));
+    await get().fetchAppointments({ force: true });
+    return true;
+  },
+
+  // Sets the same fields (location, reason for visit, instructions) on
+  // every appointment; fields not in `changes` stay as they are.
+  updateAppointmentsDetails: async (appts, changes) => {
+    const { error } = await supabase.from('appointments').update(changes).in('id', appts.map(a => a.id));
+    if (error) { console.error('updateAppointmentsDetails:', error.message); return false; }
+    appts.forEach(a => get().logAudit('Appointment', a.id, a.patient_name || 'Appointment', 'updated', 'Bulk edited', 'Configuration',
+      Object.entries(changes).map(([field, to]) => ({ field, from: a[field] || '', to, type: 'text' }))));
+    await get().fetchAppointments({ force: true });
+    return true;
+  },
+
+  // Moves each appointment to its new date and time ({ appt, date:
+  // 'MM-DD-YYYY', time_start, time_end }). Returns how many failed.
+  rescheduleAppointments: async (changes) => {
+    const saved = await get()._rescheduleEach(changes);
+    await get().fetchAppointments({ force: true });
+    return saved.filter(ok => !ok).length;
+  },
+  // Moves each appointment; resolves whether each one saved, in order.
+  _rescheduleEach: async (changes) => Promise.all(changes.map(async ({ appt, date, time_start, time_end }) => {
+    // A cancelled appointment given a new time is booked again.
+    const rebook = appt.status === 'Cancelled' ? { status: 'Scheduled' } : {};
+    const { error } = await supabase.from('appointments').update({ date, time_start, time_end, ...rebook }).eq('id', appt.id);
+    if (error) { console.error('rescheduleAppointments:', error.message); return false; }
+    get().logAudit('Appointment', appt.id, appt.patient_name || 'Appointment', 'updated', 'Rescheduled', 'Lifecycle', [
+      { field: 'date', from: appt.date || '', to: date, type: 'text' },
+      { field: 'time', from: `${appt.time_start || ''} - ${appt.time_end || ''}`, to: `${time_start} - ${time_end}`, type: 'text' },
+    ]);
+    return true;
+  })),
+
+  // ── Bulk appointment jobs (Bulk Reschedule → Save, cancelling several) ──
+  // Like reassignment: the outcome is kept in appointment_bulk_jobs, and a
+  // notification links to its summary. Until that table exists
+  // (bulkJobsLocal), jobs are kept in this browser instead, and their
+  // notifications come back on load, so a summary survives a reload.
+  bulkJobs: [],
+  bulkJobsFetched: false,
+  bulkJobsLocal: false,
+  bulkSummaryJobId: null,
+  openBulkSummary: (jobId) => set({ bulkSummaryJobId: jobId }),
+  closeBulkSummary: () => set({ bulkSummaryJobId: null }),
+  fetchBulkJobs: async ({ force = false } = {}) => {
+    if (get().bulkJobsFetched && !force) return;
+    const { rowToBulkJob } = await import('../features/calendar/list/bulkJobs');
+    const { data, error } = await supabase.from('appointment_bulk_jobs').select('*').order('created_at', { ascending: false }).limit(100);
+    if (error) {
+      console.warn('fetchBulkJobs (kept in this browser until the migration runs):', error.message);
+      const local = readLocalBulkJobs();
+      set({ bulkJobs: local, bulkJobsFetched: true, bulkJobsLocal: true });
+      local.forEach(job => get()._notifyBulkJob(job, { restore: true }));
+      return;
+    }
+    set({ bulkJobs: (data || []).map(rowToBulkJob), bulkJobsFetched: true, bulkJobsLocal: false });
+  },
+  // Keep a finished job (in the table, or in this browser) and announce it.
+  _saveBulkJob: async (job) => {
+    const { bulkJobToRow } = await import('../features/calendar/list/bulkJobs');
+    if (!get().bulkJobsLocal) {
+      const { error } = await supabase.from('appointment_bulk_jobs').insert(bulkJobToRow(job));
+      if (error) { console.warn('save bulk job:', error.message); set({ bulkJobsLocal: true }); }
+    }
+    set(st => ({ bulkJobs: [job, ...st.bulkJobs] }));
+    if (get().bulkJobsLocal) writeLocalBulkJobs(get().bulkJobs);
+    get()._notifyBulkJob(job);
+    return job;
+  },
+  /**
+   * Run a Bulk Reschedule: move each appointment to its new time, record
+   * what happened, then notify with a link to the summary. Resolves the job.
+   *
+   * @param {{ provider: { id?, name }, providerRole?, changes: { appt, date, time_start, time_end }[] }} input
+   */
+  runRescheduleJob: async ({ provider, providerRole, changes }) => {
+    const { buildRescheduleJob } = await import('../features/calendar/list/bulkJobs');
+    await get().fetchBulkJobs();
+    const saved = await get()._rescheduleEach(changes);
+    await get().fetchAppointments({ force: true });
+    return get()._saveBulkJob(buildRescheduleJob({
+      provider: provider.name, providerId: provider.id, providerRole, changes, saved,
+      createdBy: get().currentUserProfile?.name || null,
+    }));
+  },
+  /**
+   * Cancel several appointments with one reason, record it, then notify with
+   * a link to the summary. Resolves whether the cancel saved.
+   */
+  runCancelJob: async ({ appointments, reason }) => {
+    const { buildCancelJob } = await import('../features/calendar/list/bulkJobs');
+    await get().fetchBulkJobs();
+    const saved = await get().cancelAppointments(appointments, reason);
+    await get()._saveBulkJob(buildCancelJob({
+      appointments, reason, saved,
+      createdBy: get().currentUserProfile?.name || null,
+    }));
+    return saved;
+  },
+  // The "summary is ready" notification for a job; restored ones (from this
+  // browser) keep their time and read state, and aren't added twice.
+  _notifyBulkJob: async (job, { restore = false } = {}) => {
+    const { BULK_JOB_COPY } = await import('../features/calendar/list/bulkJobs');
+    const id = `n-${job.id}`;
+    if ((get().notifications || []).some(n => n.id === id)) return;
+    const copy = BULK_JOB_COPY[job.kind] || BULK_JOB_COPY.reschedule;
+    get().addNotification?.({
+      id,
+      ...(restore ? { ts: new Date(job.createdAt).getTime(), read: readLocalBulkRead().includes(id) } : {}),
+      type: 'bulk.summary',
+      kind: job.kind,
+      title: job.provider ? `${copy.ready} for ${job.provider}.` : `${copy.ready}.`,
+      body: `${job.results.length} Appointments • ${job.doneCount} ${copy.done} • ${job.failedCount} Failed`,
+      action: 'openBulkSummary',
+      bulkJobId: job.id,
+    });
   },
 
   // ── Campaign ──
@@ -15031,7 +17699,7 @@ export const useAppStore = create((set, get) => ({
   // Builder takeover. `campaignBuilderId` is the campaigns.id we're editing in
   // the New Campaign full-screen view. It coexists with `editingCampaignId`:
   // when both are set, the EmailBuilder shows on top; closing it returns to
-  // the CampaignBuilder. `campaignBuilderSaving` is "draft-row creation" — the
+  // the CampaignBuilder. `campaignBuilderSaving` is "draft-row creation", the
   // brief moment between "user clicked New Campaign" and "draft row exists".
   campaignBuilderId: null,
   campaignBuilderSaving: false,
@@ -15128,7 +17796,7 @@ export const useAppStore = create((set, get) => ({
 
   // ── Audience segments (CampaignBuilder Include/Exclude options) ──
   audienceSegments: FALLBACK_AUDIENCE_SEGMENTS,
-  fetchAudienceSegments: async () => {
+  fetchAudienceSegments: (opts) => mountFetch('fetchAudienceSegments', async () => {
     const { data, error } = await supabase
       .from('audience_segments')
       .select('*')
@@ -15140,7 +17808,7 @@ export const useAppStore = create((set, get) => ({
         id: r.id, label: r.label, resolverKey: r.resolver_key, sortOrder: r.sort_order,
       })),
     });
-  },
+  }, opts),
 
   // ── Delivery log (campaign_sends), keyed by campaign id ──
   campaignSends: {},
@@ -15154,7 +17822,7 @@ export const useAppStore = create((set, get) => ({
       .eq('campaign_id', id)
       .order('created_at', { ascending: true });
     if (error) {
-      console.warn('[store] campaign_sends fetch failed — run supabase/campaign_sends_migration.sql:', error.message);
+      console.warn('[store] campaign_sends fetch failed: run supabase/campaign_sends_migration.sql:', error.message);
       set(s => ({ campaignSendsLoading: { ...s.campaignSendsLoading, [id]: false } }));
       return;
     }
@@ -15187,7 +17855,7 @@ export const useAppStore = create((set, get) => ({
       console.error('resolveCampaignAudience failed:', e);
     }
     if (!recipients.length) {
-      get().showToast('No patients match this audience — adjust it and try again');
+      get().showToast('No patients match this audience: adjust it and try again');
       return false;
     }
 
@@ -15213,7 +17881,7 @@ export const useAppStore = create((set, get) => ({
     const { error } = await supabase.from('campaign_sends').upsert(rows, { onConflict: 'id' });
     if (error) {
       console.error('sendCampaignNow log error:', error);
-      get().showToast('Could not record campaign send — is the migration run?');
+      get().showToast('Could not record campaign send: is the migration run?');
       return false;
     }
 
@@ -15315,11 +17983,11 @@ export const useAppStore = create((set, get) => ({
         contentEmailsTotal: cached.total,
         contentEmailsLoading: false,
       });
-      // Fresh cache — done; no network request.
+      // Fresh cache: done; no network request.
       if (!force && now - cached.fetchedAt < CONTENT_EMAILS_TTL_MS) {
         return;
       }
-      // Stale cache — continue and revalidate in the background. We
+      // Stale cache: continue and revalidate in the background. We
       // intentionally don't toggle contentEmailsLoading because the user
       // already sees the cached rows; flickering a shimmer back in would
       // be worse than letting the swap happen invisibly.
@@ -15329,7 +17997,7 @@ export const useAppStore = create((set, get) => ({
 
     const from = (page - 1) * perPage;
     const to = from + perPage - 1;
-    // Slim column list — explicitly excludes `email_template` and
+    // Slim column list: explicitly excludes `email_template` and
     // `color_variables`. Those JSONB columns can be 10-100KB per row and
     // we don't render them in the table at all. They're fetched on demand
     // when Preview / Edit is clicked via fetchCampaignById(id).
@@ -15348,7 +18016,7 @@ export const useAppStore = create((set, get) => ({
     // The select also pulls the foreign-keyed profile (updated_by →
     // profiles.id) so the table can show "Last Updated By" without a second
     // round trip. If the migration that creates the FK hasn't been applied
-    // yet, PostgREST returns PGRST200 — we fall back to a plain select so
+    // yet, PostgREST returns PGRST200, we fall back to a plain select so
     // the page still renders.
     const buildQuery = (select) => {
       let q = supabase
@@ -15369,10 +18037,10 @@ export const useAppStore = create((set, get) => ({
       `${LIST_COLUMNS}, updated_by_profile:profiles!updated_by(id, full_name)`,
     );
 
-    // PGRST200 = "no foreign key relationship" — migration not applied yet.
+    // PGRST200 = "no foreign key relationship", migration not applied yet.
     if (error?.code === 'PGRST200') {
       console.warn(
-        '[fetchContentEmails] FK to profiles missing — run supabase/campaigns_category_updated_by_migration.sql. Falling back to plain select.',
+        '[fetchContentEmails] FK to profiles missing: run supabase/campaigns_category_updated_by_migration.sql. Falling back to plain select.',
       );
       ({ data, error, count } = await buildQuery(LIST_COLUMNS));
     }
@@ -15413,6 +18081,21 @@ export const useAppStore = create((set, get) => ({
   // returns to #/settings/content/emails.
   openContentEmailBuilder: async (campaignOrNull) => {
     let campaign = campaignOrNull;
+    // A template listed from code (not in the database yet): save it now,
+    // as New Email does, then open the saved copy.
+    if (campaign?.local && campaign.dbRow) {
+      set({ campaignBuilderSaving: true });
+      const { data, error } = await supabase.from('campaigns').insert(campaign.dbRow).select('*').single();
+      set({ campaignBuilderSaving: false });
+      if (error) {
+        console.error('openContentEmailBuilder local template insert error:', error);
+        get().showToast?.('Could not save the template');
+        return null;
+      }
+      campaign = campaignRowToJs(data);
+      set(s => ({ campaigns: [...s.campaigns, campaign] }));
+      invalidateContentEmailsCache();
+    }
     // Slim-list optimisation: if we were passed a row from the list (no
     // emailTemplate because we excluded it from the list select), fetch the
     // full row now so the email builder gets the saved doc instead of a
@@ -15452,7 +18135,7 @@ export const useAppStore = create((set, get) => ({
     return campaign.id;
   },
 
-  // Clone an existing campaign — copies every column except the primary key
+  // Clone an existing campaign: copies every column except the primary key
   // and timestamps. New copy lands as a draft with a " (Copy)" suffix so it
   // never re-runs a live campaign by accident.
   duplicateCampaign: async (id) => {
@@ -15503,7 +18186,7 @@ export const useAppStore = create((set, get) => ({
     }
     const idSet = new Set(ids);
     set(s => {
-      // Count what was actually on this page — some deleted ids may not be
+      // Count what was actually on this page, some deleted ids may not be
       // in the current list, and decrementing by ids.length would drift the
       // server-side pagination total.
       const removed = s.contentEmails.filter(c => idSet.has(c.id)).length;
@@ -15551,7 +18234,7 @@ export const useAppStore = create((set, get) => ({
   formBuilderSaving: false,
   // Active builder tab + Analytics sub-tab, mirrored into the URL hash so a
   // refresh restores the exact view. Set by the router (_pending*) on reload.
-  formBuilderMode: 'edit',          // 'edit' | 'score' | 'preview' | 'analytics'
+  formBuilderMode: 'edit',          // 'edit' | 'logic' | 'score' | 'care-plan' | 'preview' | 'analytics'
   formAnalyticsTab: 'insight',      // 'insight' | 'report' | 'responses'
   _pendingFormMode: null,           // set by router on refresh
   _pendingFormAnalyticsTab: null,   // set by router on refresh
@@ -15601,11 +18284,11 @@ export const useAppStore = create((set, get) => ({
     if (error?.code === 'PGRST200') {
       ({ data, error, count } = await buildQuery(LIST_COLUMNS));
     }
-    // Table not created yet (42P01 / PGRST205) — degrade to an empty list so
+    // Table not created yet (42P01 / PGRST205): degrade to an empty list so
     // the page still renders. The toolbar's "New Form" still opens the builder
     // against a local draft.
     if (error && (error.code === '42P01' || error.code === 'PGRST205' || error.code === '42703')) {
-      console.warn('[fetchContentForms] forms table missing — run supabase/forms_migration.sql');
+      console.warn('[fetchContentForms] forms table missing: run supabase/forms_migration.sql');
       contentFormsCache.set(cacheKey, { rows: [], total: 0, fetchedAt: Date.now() });
       set({ contentForms: [], contentFormsTotal: 0, contentFormsLoading: false });
       return;
@@ -15639,7 +18322,7 @@ export const useAppStore = create((set, get) => ({
     return formRowToJs(data);
   },
 
-  // Look up a single full form by its (case-insensitive) name — used to render a
+  // Look up a single full form by its (case-insensitive) name: used to render a
   // named form (e.g. "HRA Assessment form") inside the program workflow.
   fetchFormByName: async (name) => {
     if (!name) return null;
@@ -15658,7 +18341,7 @@ export const useAppStore = create((set, get) => ({
 
   // Resolve the current user's profiles.id to stamp as updated_by. The DB
   // trigger sets updated_by = COALESCE(auth.uid(), NEW.updated_by), so when
-  // auth.uid() is null (e.g. no JWT) the client-supplied id is what sticks —
+  // auth.uid() is null (e.g. no JWT) the client-supplied id is what sticks,
   // this is why we stamp it here rather than relying on the trigger alone.
   // Prefer the already-loaded profile, else fall back to the auth session.
   _resolveUpdatedBy: async () => {
@@ -15701,7 +18384,7 @@ export const useAppStore = create((set, get) => ({
       set({ formBuilderSaving: false });
       if (error) {
         if (error.code === '42P01' || error.code === 'PGRST205') {
-          get().showToast?.('Run forms_migration.sql to save forms — editing locally for now');
+          get().showToast?.('Run forms_migration.sql to save forms, editing locally for now');
           form = formRowToJs({ id: `local-${Date.now()}`, ...draft });
         } else {
           console.error('openFormBuilder insert error:', error);
@@ -15743,7 +18426,7 @@ export const useAppStore = create((set, get) => ({
         ...(createdBy ? { created_by: createdBy } : {}),
       }, { onConflict: 'form_id,session_id' });
     if (error) {
-      // Missing column/index (migration not run) or RLS — don't break the fill.
+      // Missing column/index (migration not run) or RLS: don't break the fill.
       if (import.meta.env?.DEV) console.warn('savePartialResponse skipped:', error.message);
       return false;
     }
@@ -15768,7 +18451,7 @@ export const useAppStore = create((set, get) => ({
     };
     // Retry with a reduced payload ONLY when the failure proves the columns /
     // unique index don't exist yet (pre-migration DB). Retrying on any error
-    // masks the real cause (RLS, network) — and if the first attempt actually
+    // masks the real cause (RLS, network), and if the first attempt actually
     // committed but the response was lost, the retry inserts a DUPLICATE
     // completed response.
     const SCHEMA_ERRS = new Set(['PGRST204', '42703', '42P10']);
@@ -15787,6 +18470,22 @@ export const useAppStore = create((set, get) => ({
       return false;
     }
     return true;
+  },
+
+  // The response saved under one session (e.g. a patient program's Snapshot,
+  // session `snapshot:<patientId>:<programId>`), or null.
+  fetchFormResponseBySession: async (formId, sessionId) => {
+    if (!formId || !sessionId || (typeof formId === 'string' && formId.startsWith('local-'))) return null;
+    const { data, error } = await supabase
+      .from('form_responses').select('id, answers, completed_at, created_at')
+      .eq('form_id', formId).eq('session_id', sessionId)
+      .order('created_at', { ascending: false }).limit(1);
+    if (error) {
+      console.warn('fetchFormResponseBySession:', error.message);
+      return null;
+    }
+    const row = data?.[0];
+    return row ? { id: row.id, answers: row.answers || {}, savedAt: row.completed_at || row.created_at } : null;
   },
 
   // All responses for a form (newest first), with the submitter's name when the
@@ -15833,7 +18532,7 @@ export const useAppStore = create((set, get) => ({
 
     if (typeof current.id === 'string' && current.id.startsWith('local-')) {
       set({ formBuilderSaving: false });
-      if (!opts.silent) get().showToast?.('Saved locally — run forms_migration.sql to persist');
+      if (!opts.silent) get().showToast?.('Saved locally: run forms_migration.sql to persist');
       return false;
     }
 
@@ -15858,7 +18557,7 @@ export const useAppStore = create((set, get) => ({
       .single();
     set({ formBuilderSaving: false });
     if (error) {
-      // Roll the builder back to the last saved state — otherwise the UI
+      // Roll the builder back to the last saved state, otherwise the UI
       // keeps showing unsaved edits as if they landed, and a refresh loses
       // them silently.
       set({ formBuilderForm: prevForm });
@@ -15927,7 +18626,7 @@ export const useAppStore = create((set, get) => ({
     }
     const idSet = new Set(ids);
     set(s => {
-      // Count what was actually on this page — some deleted ids may not be
+      // Count what was actually on this page, some deleted ids may not be
       // in the current list, and decrementing by ids.length would drift the
       // server-side pagination total.
       const removed = s.contentForms.filter(f => idSet.has(f.id)).length;
@@ -16074,7 +18773,7 @@ export const useAppStore = create((set, get) => ({
     };
   }),
 
-  // Named color variables — global "design tokens" for the open template.
+  // Named color variables: global "design tokens" for the open template.
   // Setting/picking a variable applies its hex; we don't persist a reference,
   // so updating a variable later does not retroactively change usages (matches
   // common email-design tool behaviour where colors are baked into the markup).
@@ -16090,7 +18789,7 @@ export const useAppStore = create((set, get) => ({
   })),
   removeColorVariable: (name) => set(s => ({ colorVariables: s.colorVariables.filter(v => v.name !== name) })),
 
-  // Recently used colors — capped MRU list shown above Variables in the
+  // Recently used colors: capped MRU list shown above Variables in the
   // ColorPicker so users don't have to re-pick the same custom hex twice.
   // Hydrated from localStorage on boot; every commit re-saves the list.
   recentlyUsedColors: (() => {
@@ -16170,7 +18869,7 @@ export const useAppStore = create((set, get) => ({
       emailFuture: [],
       _lastEmailHistoryTime: 0,
     });
-    // Fire-and-forget — the picker reads from customHeaderPresets /
+    // Fire-and-forget: the picker reads from customHeaderPresets /
     // customFooterPresets which both default to [], so the builder renders
     // immediately and gets populated when the fetch resolves.
     get().fetchCustomPresets();
@@ -16306,7 +19005,7 @@ export const useAppStore = create((set, get) => ({
       if (msg.includes('does not exist') || msg.includes('schema cache')) {
         s.showToast('Run email_header_footer_presets migration to enable saving');
       } else {
-        s.showToast(`Save failed — ${msg}`);
+        s.showToast(`Save failed: ${msg}`);
       }
       console.error('saveCurrentAsPreset error:', error);
       return null;
@@ -16320,7 +19019,7 @@ export const useAppStore = create((set, get) => ({
     return fresh;
   },
 
-  // Rename / re-describe a saved preset. Only the metadata is updated —
+  // Rename / re-describe a saved preset. Only the metadata is updated,
   // the underlying tree stays the same so existing applies aren't affected.
   updateCustomPreset: async (id, role, { name, description }) => {
     const patch = {};
@@ -16383,7 +19082,7 @@ export const useAppStore = create((set, get) => ({
       current.delete(id);
     } else {
       // Seed with the existing single selection if there isn't already a
-      // bulk list — gives the user "click A → cmd-click B" semantics.
+      // bulk list: gives the user "click A → cmd-click B" semantics.
       if (current.size === 0 && s.selectedBlockId && s.selectedBlockId !== id) {
         current.add(s.selectedBlockId);
       }
@@ -16665,13 +19364,13 @@ export const useAppStore = create((set, get) => ({
   // ── Tasks ──
   tasks: [],
   tasksLoading: true,
-  // Single-fire guard — same pattern as patientsDidFetch. Prevents refetch
+  // Single-fire guard: same pattern as patientsDidFetch. Prevents refetch
   // storms when a caller's effect re-runs on unrelated dependency churn.
   tasksDidFetch: false,
   tasksTab: 'all',
   // Seed filters + view mode from localStorage so a reload keeps the user's
   // Sort By / View By / applied chips and their list/board choice. Per-device
-  // UI state — no Supabase round-trip needed.
+  // UI state: no Supabase round-trip needed.
   tasksFilters: (() => {
     try {
       const raw = localStorage.getItem('tasksFilters');
@@ -16706,7 +19405,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   fetchTasks: async () => {
-    // Idempotent per session — see `tasksDidFetch`.
+    // Idempotent per session: see `tasksDidFetch`.
     if (useAppStore.getState().tasksDidFetch) return;
     set({ tasksDidFetch: true, tasksLoading: true });
     const { data, error } = await supabase
@@ -16751,7 +19450,7 @@ export const useAppStore = create((set, get) => ({
         .in('id', overdueIds);
     }
 
-    // Preserve any locally-created HEDIS sign-off tasks (prototype only —
+    // Preserve any locally-created HEDIS sign-off tasks (prototype only,
     // they aren't persisted to supabase yet). Without this, navigating to
     // Tasks after a Submit-for-Review would wipe them out.
     const localHedisTasks = get().tasks.filter(t => t.hedisMemberId && !now.some(n => n.id === t.id));
@@ -16764,7 +19463,7 @@ export const useAppStore = create((set, get) => ({
 
     // Attribution is mandatory. Resolve in this order: explicit payload →
     // opts.auditUserName override (used by AI/automation callers) → current
-    // signed-in profile. If none of those give a real actor, refuse — a task
+    // signed-in profile. If none of those give a real actor, refuse, a task
     // with no known creator would silently escape the audit log.
     const me = get().currentUserProfile;
     const resolvedCreatedBy = normalized.created_by || opts.auditUserName || me?.name || null;
@@ -16804,7 +19503,7 @@ export const useAppStore = create((set, get) => ({
 
     // dbOmit: client-only fields the tasks table has no columns for
     // (consolidatedPdf blob, duplicated state string). They stay on the
-    // in-memory task but are stripped from the INSERT — without this the
+    // in-memory task but are stripped from the INSERT, without this the
     // insert fails, the legacy retry keeps failing on the same unknown
     // columns, and the task silently vanishes while the caller's success
     // toast still fires.
@@ -16827,7 +19526,7 @@ export const useAppStore = create((set, get) => ({
     let { data, error } = await supabase.from('tasks').insert(dbPayload).select().single();
     if (error && /column .* does not exist|schema cache/.test(error.message || '')) {
       // Legacy fallback for envs where the HEDIS-linkage migration hasn't
-      // landed yet — drop the new columns too so the row still lands.
+      // landed yet: drop the new columns too so the row still lands.
       const {
         parent_task_id, pool, mentions, completed_at, description,
         assigned_to_id, created_by_id, program_code, patient_id, source_key,
@@ -16987,7 +19686,7 @@ export const useAppStore = create((set, get) => ({
         final.completed_at = null;
       } else if (updates.status === 'pending') {
         // An explicit user move to pending (drag a Missed card to Pending,
-        // uncheck a completed task, …) is intent — respect it. If the due
+        // uncheck a completed task, …) is intent, respect it. If the due
         // date is still in the past, bump it forward to today so (a) the row
         // actually reads as pending and (b) the fetch-time sweeper does not
         // flip it back to missed on the next reload.
@@ -17029,7 +19728,7 @@ export const useAppStore = create((set, get) => ({
     // in the error ("Could not find the 'mention_ids' column of 'tasks' in the
     // schema cache"). The previous retry stripped a fixed list of
     // maybe-missing columns, so introducing one new column silently dropped
-    // every other name on that list too — adding `mention_ids` to it meant an
+    // every other name on that list too, adding `mention_ids` to it meant an
     // @mention write lost its `mentions` names as collateral damage on any DB
     // that hadn't run the migration yet, with no error surfaced. Falls back to
     // the blunt list when the message names nothing parseable.
@@ -17056,7 +19755,7 @@ export const useAppStore = create((set, get) => ({
     // client-only `hedisMemberId` / `hedisGapCodes` fields (they aren't
     // persisted columns), so the older completeCareGapSignOffTask path
     // that keyed on task.hedisMemberId silently no-ops when a Provider
-    // completes the task from the Tasks page — the linked note stays
+    // completes the task from the Tasks page, the linked note stays
     // 'submitted'. Bridge the gap here by scanning every member's notes
     // for one linked to this task and flipping it to signed.
     if (prev && updates.status === 'completed' && prev.status !== 'completed') {
@@ -17275,6 +19974,144 @@ export const useAppStore = create((set, get) => ({
     return true;
   },
 
+  // ── Access Control (Settings > Account > Access Control) ──
+  // One row per role: { id, name, builtIn, permissions: { key: false } }.
+  // See src/lib/accessControl.js for the keys and how they're read.
+  accessRoles: [],
+  accessRolesLoading: false,
+  accessRolesDidFetch: false,
+  // True while the table is missing (migration not run): edits stay in this
+  // tab so the screen still works, and nothing is written.
+  accessRolesLocalOnly: false,
+  fetchAccessRoles: async () => {
+    if (get().accessRolesDidFetch) return;
+    set({ accessRolesDidFetch: true, accessRolesLoading: true });
+    const { data, error } = await supabase
+      .from('access_roles')
+      .select('id, name, built_in, permissions, created_at')
+      .order('created_at', { ascending: true });
+    const builtIns = BUILT_IN_ROLES.map(name => ({ id: `builtin:${name}`, name, builtIn: true, permissions: {} }));
+    if (error) {
+      console.warn('[store] access_roles fetch failed, using built-in roles:', error.message);
+      set({ accessRoles: builtIns, accessRolesLoading: false, accessRolesLocalOnly: true });
+      return;
+    }
+    const rows = (data || []).map(r => ({ id: r.id, name: r.name, builtIn: !!r.built_in, permissions: r.permissions || {} }));
+    // Built-in roles the table doesn't have yet still show, allowed everywhere.
+    const missing = builtIns.filter(b => !rows.some(r => r.name === b.name));
+    set({ accessRoles: [...rows, ...missing], accessRolesLoading: false, accessRolesLocalOnly: false });
+  },
+
+  // Writes one role's row (insert when it only exists locally). Resolves to
+  // true on success; on failure the caller's optimistic change is rolled back.
+  _saveAccessRole: async (role) => {
+    if (get().accessRolesLocalOnly) return true;
+    const row = { name: role.name, built_in: role.builtIn, permissions: role.permissions, updated_at: new Date().toISOString() };
+    const isLocal = String(role.id).startsWith('builtin:') || String(role.id).startsWith('local:');
+    const q = isLocal
+      ? supabase.from('access_roles').upsert(row, { onConflict: 'name' }).select('id').single()
+      : supabase.from('access_roles').update(row).eq('id', role.id).select('id').single();
+    const { data, error } = await q;
+    if (error) {
+      get().showToast?.(`Couldn't save ${role.name}. ${error.message}`);
+      return false;
+    }
+    if (isLocal && data?.id) {
+      set(s => ({ accessRoles: s.accessRoles.map(r => (r.id === role.id ? { ...r, id: data.id } : r)) }));
+    }
+    return true;
+  },
+
+  setRolePermissions: async (roleId, patch) => {
+    const prev = get().accessRoles;
+    const role = prev.find(r => r.id === roleId);
+    if (!role) return;
+    const next = { ...role, permissions: { ...role.permissions, ...patch } };
+    set({ accessRoles: prev.map(r => (r.id === roleId ? next : r)) });
+    if (!(await get()._saveAccessRole(next))) set({ accessRoles: prev });
+  },
+
+  createAccessRole: async (name, permissions = {}) => {
+    const clean = String(name || '').trim();
+    if (!clean) return null;
+    if (get().accessRoles.some(r => r.name.toLowerCase() === clean.toLowerCase())) {
+      get().showToast?.(`A role named ${clean} already exists.`);
+      return null;
+    }
+    const role = { id: `local:${crypto.randomUUID()}`, name: clean, builtIn: false, permissions };
+    const prev = get().accessRoles;
+    set({ accessRoles: [role, ...prev] });
+    if (!(await get()._saveAccessRole(role))) { set({ accessRoles: prev }); return null; }
+    return get().accessRoles.find(r => r.name === clean)?.id || role.id;
+  },
+
+  duplicateAccessRole: async (roleId) => {
+    const role = get().accessRoles.find(r => r.id === roleId);
+    if (!role) return null;
+    const taken = new Set(get().accessRoles.map(r => r.name.toLowerCase()));
+    let name = `${role.name} (COPY)`;
+    for (let n = 2; taken.has(name.toLowerCase()); n += 1) name = `${role.name} (COPY ${n})`;
+    return get().createAccessRole(name, { ...role.permissions });
+  },
+
+  copyRolePermissions: async (fromId, toIds) => {
+    const from = get().accessRoles.find(r => r.id === fromId);
+    if (!from) return;
+    await Promise.all(toIds.map(id => {
+      const target = get().accessRoles.find(r => r.id === id);
+      if (!target) return null;
+      // Replace, not merge: the target ends up with exactly the source's switches.
+      const prev = get().accessRoles;
+      const next = { ...target, permissions: { ...from.permissions } };
+      set({ accessRoles: prev.map(r => (r.id === id ? next : r)) });
+      return get()._saveAccessRole(next).then(ok => { if (!ok) set(s => ({ accessRoles: s.accessRoles.map(r => (r.id === id ? target : r)) })); });
+    }));
+  },
+
+  // Renaming and deleting also update everyone who holds the role, so they
+  // go through admin-only database functions (profiles.clinical_roles is
+  // guarded against direct writes).
+  renameAccessRole: async (roleId, newName) => {
+    const role = get().accessRoles.find(r => r.id === roleId);
+    const clean = String(newName || '').trim();
+    if (!role || role.builtIn || !clean || clean === role.name) return false;
+    if (get().accessRoles.some(r => r.id !== roleId && r.name.toLowerCase() === clean.toLowerCase())) {
+      get().showToast?.(`A role named ${clean} already exists.`);
+      return false;
+    }
+    const prev = get().accessRoles;
+    set({ accessRoles: prev.map(r => (r.id === roleId ? { ...r, name: clean } : r)) });
+    if (get().accessRolesLocalOnly || String(roleId).startsWith('local:')) return true;
+    const { error } = await supabase.rpc('admin_rename_access_role', { p_id: roleId, p_name: clean });
+    if (error) {
+      set({ accessRoles: prev });
+      get().showToast?.(`Couldn't rename ${role.name}. ${error.message}`);
+      return false;
+    }
+    set(s => ({
+      platformPeople: (s.platformPeople || []).map(p => ({ ...p, clinicalRoles: (p.clinicalRoles || []).map(x => (x === role.name ? clean : x)) })),
+    }));
+    return true;
+  },
+
+  deleteAccessRole: async (roleId) => {
+    const role = get().accessRoles.find(r => r.id === roleId);
+    if (!role || role.builtIn) return false;
+    const prev = get().accessRoles;
+    set({ accessRoles: prev.filter(r => r.id !== roleId) });
+    if (get().accessRolesLocalOnly || String(roleId).startsWith('local:')) return true;
+    const { error } = await supabase.rpc('admin_delete_access_role', { p_id: roleId });
+    if (error) {
+      set({ accessRoles: prev });
+      get().showToast?.(`Couldn't delete ${role.name}. ${error.message}`);
+      return false;
+    }
+    set(s => ({
+      platformPeople: (s.platformPeople || []).map(p => ({ ...p, clinicalRoles: (p.clinicalRoles || []).filter(x => x !== role.name) })),
+    }));
+    return true;
+  },
+
   // ── Task Profiles (assignees from Settings → Users / profiles table) ──
   taskProfiles: [],
   currentUserProfile: null,
@@ -17282,19 +20119,20 @@ export const useAppStore = create((set, get) => ({
   // switcher used to issue its own `select clinical_roles` for the signed-in
   // user; that is a third GET of the same table on every page.
   currentUserClinicalRoles: [],
+  currentUserIsAdmin: false,
   // Display name to stamp on things the signed-in user just did (activity
   // entries, audit lines). `currentUserProfile` only resolves once
   // fetchTaskProfiles has run against a real session, so fall back to the
   // same 'You' label the rest of the store uses in dev-bypass mode.
   currentActorName: () => get().currentUserProfile?.name || 'You',
-  // Same roster as fetchPlatformUsers — two names because Tasks, Home, and
+  // Same roster as fetchPlatformUsers: two names because Tasks, Home, and
   // the notification feed already call this one, and HCC pickers call the
   // other. One GET fills both slices.
   fetchTaskProfiles: async () => get().fetchPlatformUsers(),
 
   // ── Task Labels (custom labels stored in DB) ──
   taskLabels: [],
-  fetchTaskLabels: async () => {
+  fetchTaskLabels: (opts) => mountFetch('fetchTaskLabels', async () => {
     const { data, error } = await supabase
       .from('task_labels')
       .select('name')
@@ -17305,7 +20143,7 @@ export const useAppStore = create((set, get) => ({
       return;
     }
     set({ taskLabels: (data || []).map(l => l.name) });
-  },
+  }, opts),
   createTaskLabel: async (name) => {
     const trimmed = name.trim();
     if (!trimmed) return null;
@@ -17325,12 +20163,12 @@ export const useAppStore = create((set, get) => ({
     { name: 'Documentation', description: 'Chart review and documentation tasks' },
     { name: 'Follow-up', description: 'Post-visit follow-up tasks awaiting assignment' },
   ],
-  fetchTaskPools: async () => {
+  fetchTaskPools: (opts) => mountFetch('fetchTaskPools', async () => {
     const { data, error } = await supabase.from('task_pools').select('name, description').order('name');
     if (!error && data && data.length > 0) {
       set({ taskPools: data });
     }
-  },
+  }, opts),
   claimTask: async (taskId) => {
     track('task.claimed', { taskId });
     const me = get().currentUserProfile;

@@ -24,12 +24,12 @@ const thStyle = {
 const tdStyle = { padding: '12px 16px', fontSize: 'var(--font-base)', fontWeight: 400, color: 'var(--neutral-300)', verticalAlign: 'middle' };
 
 const CATEGORY_BADGE_MAP = {
-  'Internal': 'ai-care', 'Prior authorization': 'ai-care',
-  'Analytics': 'compliance-warn', 'Care gaps / HEDIS': 'toc-engaged',
+  'Internal': 'primary', 'Prior authorization': 'primary',
+  'Analytics': 'warning', 'Care gaps / HEDIS': 'info',
 };
 const HIPAA_BADGE_MAP = {
-  'Verified': 'status-completed', 'BAA in place': 'status-completed',
-  'Pending BAA': 'compliance-warn', 'Verify externally': 'ai-neutral',
+  'Verified': 'success', 'BAA in place': 'success',
+  'Pending BAA': 'warning', 'Verify externally': 'neutral',
 };
 
 function getComponentStats(domainId, components) {
@@ -61,9 +61,9 @@ function AddDomainDrawer({ onClose, onSave }) {
 
   const domainHint = useMemo(() => {
     const d = form.domain;
-    if (d.includes('http')) return { text: 'Remove https:// — root domain only', color: 'var(--status-error)' };
-    if (d.includes('/')) return { text: 'No paths — root domain only', color: 'var(--status-error)' };
-    return { text: 'Root domain only — no https://, no paths', color: 'var(--neutral-200)' };
+    if (d.includes('http')) return { text: 'Remove https://, root domain only', color: 'var(--status-error)' };
+    if (d.includes('/')) return { text: 'No paths: root domain only', color: 'var(--status-error)' };
+    return { text: 'Root domain only: no https://, no paths', color: 'var(--neutral-200)' };
   }, [form.domain]);
 
   const canSave = form.vendor.trim() && form.domain.trim() && !form.domain.includes('http') && !form.domain.includes('/');
@@ -73,7 +73,7 @@ function AddDomainDrawer({ onClose, onSave }) {
       title="Register New Domain"
       onClose={onClose}
       headerRight={
-        <Button variant="primary" size="L" disabled={!canSave} onClick={() => canSave && onSave(form)}>
+        <Button disabled={!canSave} onClick={() => canSave && onSave(form)}>
           Register domain
         </Button>
       }
@@ -93,7 +93,7 @@ function AddDomainDrawer({ onClose, onSave }) {
               id={`${uid}-category`}
               options={DOMAIN_CATEGORIES.map(c => ({ value: c, label: c }))}
               value={form.category}
-              onChange={v => setForm(f => ({ ...f, category: v }))}
+              onValueChange={v => setForm(f => ({ ...f, category: v }))}
             />
           </FormField>
           <FormField label="HIPAA compliance" controlId={`${uid}-hipaa`}>
@@ -101,7 +101,7 @@ function AddDomainDrawer({ onClose, onSave }) {
               id={`${uid}-hipaa`}
               options={HIPAA_OPTIONS.map(h => ({ value: h, label: h }))}
               value={form.hipaa}
-              onChange={v => setForm(f => ({ ...f, hipaa: v }))}
+              onValueChange={v => setForm(f => ({ ...f, hipaa: v }))}
             />
           </FormField>
         </div>
@@ -129,10 +129,10 @@ function EditDomainDrawer({ domain, onClose, onSave }) {
 
   return (
     <Drawer
-      title={`Edit — ${domain.domain}`}
+      title={`Edit: ${domain.domain}`}
       onClose={onClose}
       headerRight={
-        <Button variant="primary" size="L" disabled={!canSave} onClick={() => canSave && onSave(form)}>
+        <Button disabled={!canSave} onClick={() => canSave && onSave(form)}>
           Save changes
         </Button>
       }
@@ -152,7 +152,7 @@ function EditDomainDrawer({ domain, onClose, onSave }) {
               id={`${uid}-category`}
               options={DOMAIN_CATEGORIES.map(c => ({ value: c, label: c }))}
               value={form.category}
-              onChange={v => setForm(f => ({ ...f, category: v }))}
+              onValueChange={v => setForm(f => ({ ...f, category: v }))}
             />
           </FormField>
           <FormField label="HIPAA compliance" controlId={`${uid}-hipaa`}>
@@ -160,7 +160,7 @@ function EditDomainDrawer({ domain, onClose, onSave }) {
               id={`${uid}-hipaa`}
               options={HIPAA_OPTIONS.map(h => ({ value: h, label: h }))}
               value={form.hipaa}
-              onChange={v => setForm(f => ({ ...f, hipaa: v }))}
+              onValueChange={v => setForm(f => ({ ...f, hipaa: v }))}
             />
           </FormField>
         </div>
@@ -312,21 +312,21 @@ export function DomainRegistryPanel({ searchQuery = '' }) {
                 <td style={tdStyle}>
                   <code style={{ background: 'var(--neutral-50)', padding: '2px 6px', borderRadius: 4, fontSize: 'var(--font-xs)', fontFamily: "'SF Mono', monospace", color: 'var(--neutral-400)' }}>{d.domain}</code>
                 </td>
-                <td style={tdStyle}><Badge variant={CATEGORY_BADGE_MAP[d.category] || 'ai-neutral'} label={d.category} /></td>
-                <td style={tdStyle}><Badge variant={HIPAA_BADGE_MAP[d.hipaa] || 'ai-neutral'} label={d.hipaa} /></td>
+                <td style={tdStyle}><Badge tone={CATEGORY_BADGE_MAP[d.category] || 'neutral'} label={d.category} /></td>
+                <td style={tdStyle}><Badge tone={HIPAA_BADGE_MAP[d.hipaa] || 'neutral'} label={d.hipaa} /></td>
                 <td style={tdStyle}>
-                  {stats.active > 0 && <Badge variant="status-completed" label={`${stats.active} active`} />}
-                  {stats.active === 0 && stats.disabled === 0 && <Badge variant="status-queued" label="0 active" />}
-                  {stats.disabled > 0 && <span style={{ marginLeft: stats.active > 0 ? 4 : 0 }}><Badge variant="status-failed" label={`${stats.disabled} disabled`} /></span>}
+                  {stats.active > 0 && <Badge tone="success" label={`${stats.active} active`} />}
+                  {stats.active === 0 && stats.disabled === 0 && <Badge tone="warning" label="0 active" />}
+                  {stats.disabled > 0 && <span style={{ marginLeft: stats.active > 0 ? 4 : 0 }}><Badge tone="danger" label={`${stats.disabled} disabled`} /></span>}
                 </td>
                 <td style={tdStyle} {...(isFirst ? { 'data-tour': 'embed-toggle' } : {})}><Switch checked={d.enabled !== false} onChange={() => handleToggle(d.id)} /></td>
                 <td style={tdStyle}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} {...(isFirst ? { 'data-tour': 'embed-actions' } : {})}>
-                    <ActionButton icon="solar:pen-linear" size="L" tooltip="Edit" onClick={() => setEditingDomain(d)} />
+                    <ActionButton icon="solar:pen-linear" tooltip="Edit" onClick={() => setEditingDomain(d)} />
                     <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-                    <ActionButton icon="solar:history-linear" size="L" tooltip="Audit Log" onClick={() => setAuditDrawerEntity({ type: 'Domain', name: d.vendor, domain: d.domain, id: d.id })} />
+                    <ActionButton icon="solar:history-linear" tooltip="Audit Log" onClick={() => setAuditDrawerEntity({ type: 'Domain', name: d.vendor, domain: d.domain, id: d.id })} />
                     <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
-                    <ActionButton icon="solar:trash-bin-minimalistic-linear" size="L" tooltip="Delete" onClick={() => setDeleteTarget(d)} />
+                    <ActionButton icon="solar:trash-bin-minimalistic-linear" tooltip="Delete" onClick={() => setDeleteTarget(d)} />
                   </div>
                 </td>
               </tr>

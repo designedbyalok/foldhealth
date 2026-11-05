@@ -24,15 +24,15 @@ export function ChatHeader({ otherUser, isOtherTyping }) {
         </div>
       </div>
       <div className={styles.chatHeaderActions}>
-        <ActionButton icon="solar:phone-linear"       size="S" tooltip="Call" />
+        <ActionButton icon="solar:phone-linear"       size="sm" tooltip="Call" />
         <div className={styles.divider} />
-        <ActionButton icon="solar:videocamera-linear" size="S" tooltip="Video" />
+        <ActionButton icon="solar:videocamera-linear" size="sm" tooltip="Video" />
         <div className={styles.divider} />
-        <ActionButton icon="solar:magnifer-linear"    size="S" tooltip="Search" />
+        <ActionButton icon="solar:magnifer-linear"    size="sm" tooltip="Search" />
         <div className={styles.divider} />
-        <ActionButton icon="solar:info-circle-linear" size="S" tooltip="Info" />
+        <ActionButton icon="solar:info-circle-linear" size="sm" tooltip="Info" />
         <div className={styles.divider} />
-        <ActionButton icon="solar:menu-dots-bold"     size="S" tooltip="More" />
+        <ActionButton icon="solar:menu-dots-bold"     size="sm" tooltip="More" />
       </div>
     </div>
   );

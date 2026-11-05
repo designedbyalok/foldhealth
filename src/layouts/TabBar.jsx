@@ -35,10 +35,10 @@ function ConfirmDialog({ message, onConfirm, onCancel }) {
           {message}
         </p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <Button variant="secondary" size="L" onClick={onCancel}>
+          <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button variant="primary" size="L" onClick={onConfirm}>
+          <Button onClick={onConfirm}>
             Open Agent Builder
           </Button>
         </div>
@@ -49,7 +49,7 @@ function ConfirmDialog({ message, onConfirm, onCancel }) {
 
 // Two-tab TCM switch (Worklist / Agent Queue) rendered through SectionTitleBar
 // variant 3. Falls back to a title-only header for single-list subnav routes
-// (TOC, All Patients, HCC, CCM) — SectionTitleBar drops the segmented toggle
+// (TOC, All Patients, HCC, CCM), SectionTitleBar drops the segmented toggle
 // when only one item is supplied.
 export function TabBar() {
   const activeTab = useAppStore(s => s.activeTab);
@@ -135,7 +135,7 @@ export function TabBar() {
         leftExtras={queueTabDot && toggleItems.length > 1 && (
           <span
             className={styles.notifDot}
-            title="Agent invoked — view queue"
+            title="Agent invoked: view queue"
             aria-label="Agent Queue has new activity"
           />
         )}
@@ -152,16 +152,14 @@ export function TabBar() {
             {onQueueTab && (
               <>
                 <Button
-                  variant="secondary"
-                  size="L"
+                  variant="outline"
                   leadingIcon="solar:pen-new-square-linear"
                   onClick={handleEditConfiguration}
                 >
                   Edit Configuration
                 </Button>
                 <Button
-                  variant="danger"
-                  size="L"
+                  variant="soft" tone="danger"
                   leadingIcon="solar:close-circle-bold"
                   onClick={handleAbort}
                   disabled={!hasActiveAgents}
@@ -171,7 +169,7 @@ export function TabBar() {
                 <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
               </>
             )}
-            {/* Saved Filters dropdown — writes to whichever list this TabBar
+            {/* Saved Filters dropdown: writes to whichever list this TabBar
                 is currently rendering (TOC / SNP / High Utilizers / DM),
                 falling back to TCM when no subnav list is active. */}
             <SavedFiltersChip list={activeSubnavList || 'TCM'} />

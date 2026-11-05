@@ -1,0 +1,730 @@
+{
+  "metadata": {
+    "title": "Hypertension Clinical Practice Guidance",
+    "organization": "Harbor Health",
+    "conditions": [
+      "Essential hypertension",
+      "Hypertensive chronic kidney disease"
+    ],
+    "programCodes": [
+      "DM",
+      "SNP"
+    ],
+    "effectiveDate": "2026-01-15",
+    "reviewDate": "2027-01-15",
+    "author": "Clinical Quality and Pharmacy & Therapeutics Committee",
+    "version": "2.1"
+  },
+  "protocol": {
+    "schemaVersion": 1,
+    "summary": "This guidance covers blood pressure measurement, categories, treatment goals, medication titration, laboratory monitoring, and follow-up for adults with hypertension. It also describes escalation actions and care-management check-ins.",
+    "scope": {
+      "conditions": [
+        {
+          "name": "Essential hypertension",
+          "code": "I10"
+        },
+        {
+          "name": "Hypertensive chronic kidney disease",
+          "code": "I12.9"
+        }
+      ],
+      "population": "Adults 18 years and older enrolled in Disease Management or the Special Needs Plan care program.",
+      "exclusions": [
+        "Pregnancy or the first 12 weeks postpartum",
+        "Patients under 18",
+        "Hospice or comfort-focused care",
+        "Secondary hypertension managed by a specialist"
+      ]
+    },
+    "thresholds": [
+      {
+        "id": "t1",
+        "measure": "Systolic blood pressure",
+        "comparator": "<",
+        "value": 120,
+        "value2": null,
+        "unit": null,
+        "label": "Normal",
+        "action": "Reinforce healthy lifestyle; recheck yearly.",
+        "source": "Normal: systolic below 120 and diastolic below 80 mmHg. Reinforce healthy lifestyle; recheck yearly.",
+        "page": 1
+      },
+      {
+        "id": "t2",
+        "measure": "Diastolic blood pressure",
+        "comparator": "<",
+        "value": 80,
+        "value2": null,
+        "unit": "mmHg",
+        "label": "Normal",
+        "action": "Reinforce healthy lifestyle; recheck yearly.",
+        "source": "Normal: systolic below 120 and diastolic below 80 mmHg. Reinforce healthy lifestyle; recheck yearly.",
+        "page": 1
+      },
+      {
+        "id": "t3",
+        "measure": "Systolic blood pressure",
+        "comparator": "between",
+        "value": 120,
+        "value2": 129,
+        "unit": null,
+        "label": "Elevated",
+        "action": "Lifestyle changes; recheck in 3 to 6 months.",
+        "source": "Elevated: systolic 120-129 and diastolic below 80 mmHg. Lifestyle changes; recheck in 3 to 6 months.",
+        "page": 1
+      },
+      {
+        "id": "t4",
+        "measure": "Diastolic blood pressure",
+        "comparator": "<",
+        "value": 80,
+        "value2": null,
+        "unit": "mmHg",
+        "label": "Elevated",
+        "action": "Lifestyle changes; recheck in 3 to 6 months.",
+        "source": "Elevated: systolic 120-129 and diastolic below 80 mmHg. Lifestyle changes; recheck in 3 to 6 months.",
+        "page": 1
+      },
+      {
+        "id": "t5",
+        "measure": "Systolic blood pressure",
+        "comparator": "between",
+        "value": 130,
+        "value2": 139,
+        "unit": null,
+        "label": "Stage 1",
+        "action": "Lifestyle changes for all. Start medication when 10-year ASCVD risk is 10% or higher, or the patient has diabetes or chronic kidney disease.",
+        "source": "Stage 1: systolic 130-139 or diastolic 80-89 mmHg. Lifestyle changes for all.",
+        "page": 1
+      },
+      {
+        "id": "t6",
+        "measure": "Diastolic blood pressure",
+        "comparator": "between",
+        "value": 80,
+        "value2": 89,
+        "unit": "mmHg",
+        "label": "Stage 1",
+        "action": "Lifestyle changes for all. Start medication when 10-year ASCVD risk is 10% or higher, or the patient has diabetes or chronic kidney disease.",
+        "source": "Stage 1: systolic 130-139 or diastolic 80-89 mmHg. Lifestyle changes for all.",
+        "page": 1
+      },
+      {
+        "id": "t7",
+        "measure": "10-year ASCVD risk",
+        "comparator": ">=",
+        "value": 10,
+        "value2": null,
+        "unit": "%",
+        "label": null,
+        "action": "Start medication when the patient has Stage 1 blood pressure.",
+        "source": "Start medication when 10-year ASCVD risk is 10% or higher, or the patient has diabetes or chronic kidney disease.",
+        "page": 1
+      },
+      {
+        "id": "t8",
+        "measure": "Systolic blood pressure",
+        "comparator": ">=",
+        "value": 140,
+        "value2": null,
+        "unit": null,
+        "label": "Stage 2",
+        "action": "Start medication.",
+        "source": "Stage 2: systolic 140 or higher, or diastolic 90 or higher. Start medication.",
+        "page": 1
+      },
+      {
+        "id": "t9",
+        "measure": "Diastolic blood pressure",
+        "comparator": ">=",
+        "value": 90,
+        "value2": null,
+        "unit": "mmHg",
+        "label": "Stage 2",
+        "action": "Start medication.",
+        "source": "Stage 2: systolic 140 or higher, or diastolic 90 or higher. Start medication.",
+        "page": 1
+      },
+      {
+        "id": "t10",
+        "measure": "Blood pressure above goal",
+        "comparator": ">",
+        "value": 20,
+        "value2": null,
+        "unit": "mmHg",
+        "label": null,
+        "action": "Start two first-line agents from different classes when BP is more than 20/10 mmHg above goal.",
+        "source": "When BP is more than 20/10 mmHg above goal, start two first-line agents from different classes.",
+        "page": 1
+      },
+      {
+        "id": "t11",
+        "measure": "Blood pressure above goal",
+        "comparator": ">",
+        "value": 10,
+        "value2": null,
+        "unit": "mmHg",
+        "label": null,
+        "action": "Start two first-line agents from different classes when BP is more than 20/10 mmHg above goal.",
+        "source": "When BP is more than 20/10 mmHg above goal, start two first-line agents from different classes.",
+        "page": 1
+      },
+      {
+        "id": "t12",
+        "measure": "Systolic blood pressure",
+        "comparator": ">=",
+        "value": 180,
+        "value2": null,
+        "unit": null,
+        "label": "Severe elevation",
+        "action": "Without symptoms, contact the treating provider the same day and recheck within 1 week. With listed symptoms, direct the patient to call 911 or go to the emergency department.",
+        "source": "Severe elevation: systolic 180 or higher, or diastolic 120 or higher.",
+        "page": 1
+      },
+      {
+        "id": "t13",
+        "measure": "Diastolic blood pressure",
+        "comparator": ">=",
+        "value": 120,
+        "value2": null,
+        "unit": "mmHg",
+        "label": "Severe elevation",
+        "action": "Without symptoms, contact the treating provider the same day and recheck within 1 week. With listed symptoms, direct the patient to call 911 or go to the emergency department.",
+        "source": "Severe elevation: systolic 180 or higher, or diastolic 120 or higher.",
+        "page": 1
+      },
+      {
+        "id": "t14",
+        "measure": "Systolic blood pressure",
+        "comparator": "<",
+        "value": 100,
+        "value2": null,
+        "unit": "mmHg",
+        "label": "Low BP",
+        "action": "Do not increase any antihypertensive; provider review within 1 business day.",
+        "source": "Low BP: systolic below 100 mmHg, or dizziness or fainting on standing. Do not increase any antihypertensive; provider review within 1 business day.",
+        "page": 1
+      },
+      {
+        "id": "t15",
+        "measure": "Blood pressure goal for most adults",
+        "comparator": "<",
+        "value": 130,
+        "value2": null,
+        "unit": "mmHg systolic and mmHg diastolic",
+        "label": "BP goal",
+        "action": null,
+        "source": "Most adults, including those with diabetes or chronic kidney disease: below 130/80 mmHg.",
+        "page": 1
+      },
+      {
+        "id": "t16",
+        "measure": "Systolic blood pressure goal",
+        "comparator": "<",
+        "value": 140,
+        "value2": null,
+        "unit": "mmHg",
+        "label": "Individualized BP goal",
+        "action": "Individualized by the provider.",
+        "source": "Age 65 and older with frailty, falls or orthostatic hypotension: systolic below 140 mmHg, individualized by the provider.",
+        "page": 1
+      },
+      {
+        "id": "t17",
+        "measure": "Potassium",
+        "comparator": ">",
+        "value": 5.5,
+        "value2": null,
+        "unit": "mmol/L",
+        "label": null,
+        "action": "Hold the new or increased agent, repeat the panel within 72 hours and notify the provider.",
+        "source": "Potassium above 5.5 mmol/L, or creatinine up more than 30% from baseline: hold the new or increased agent, repeat the panel within 72 hours and notify the provider.",
+        "page": 2
+      },
+      {
+        "id": "t18",
+        "measure": "Creatinine change from baseline",
+        "comparator": ">",
+        "value": 30,
+        "value2": null,
+        "unit": "%",
+        "label": null,
+        "action": "Hold the new or increased agent, repeat the panel within 72 hours and notify the provider.",
+        "source": "creatinine up more than 30% from baseline: hold the new or increased agent, repeat the panel within 72 hours and notify the provider.",
+        "page": 2
+      },
+      {
+        "id": "t19",
+        "measure": "Potassium on a thiazide-type diuretic",
+        "comparator": "<",
+        "value": 3.5,
+        "value2": null,
+        "unit": "mmol/L",
+        "label": null,
+        "action": "Notify the provider for replacement.",
+        "source": "Potassium below 3.5 mmol/L on a thiazide-type diuretic: notify the provider for replacement.",
+        "page": 2
+      },
+      {
+        "id": "t20",
+        "measure": "Proportion of days covered",
+        "comparator": "<",
+        "value": 80,
+        "value2": null,
+        "unit": "%",
+        "label": null,
+        "action": "Triggers a pharmacist referral.",
+        "source": "Proportion of days covered below 80% triggers a pharmacist referral.",
+        "page": 2
+      },
+      {
+        "id": "t21",
+        "measure": "Average home systolic blood pressure above goal",
+        "comparator": ">=",
+        "value": 10,
+        "value2": null,
+        "unit": "mmHg",
+        "label": null,
+        "action": "Provider review within 5 business days when this occurs at two consecutive check-ins despite confirmed adherence.",
+        "source": "Two consecutive check-ins with an average home systolic BP 10 mmHg or more above goal despite confirmed adherence: provider review within 5 business days.",
+        "page": 2
+      }
+    ],
+    "decisionRules": [
+      {
+        "id": "r1",
+        "when": "When blood pressure is Stage 1 and the 10-year ASCVD risk is 10% or higher, or the patient has diabetes or chronic kidney disease, then start medication.",
+        "then": "Start medication.",
+        "source": "Start medication when 10-year ASCVD risk is 10% or higher, or the patient has diabetes or chronic kidney disease.",
+        "page": 1
+      },
+      {
+        "id": "r2",
+        "when": "When blood pressure is more than 20/10 mmHg above goal, then start two first-line agents from different classes.",
+        "then": "Start two first-line agents from different classes.",
+        "source": "When BP is more than 20/10 mmHg above goal, start two first-line agents from different classes.",
+        "page": 1
+      },
+      {
+        "id": "r3",
+        "when": "When severe elevation occurs without symptoms, then contact the treating provider the same day and recheck within 1 week.",
+        "then": "Contact the treating provider the same day; recheck within 1 week.",
+        "source": "Without symptoms: contact the treating provider the same day; recheck within 1 week.",
+        "page": 1
+      },
+      {
+        "id": "r4",
+        "when": "When severe elevation occurs with chest pain, shortness of breath, new weakness or numbness, confusion or vision change, then direct the patient to call 911 or go to the emergency department.",
+        "then": "Direct the patient to call 911 or go to the emergency department.",
+        "source": "With chest pain, shortness of breath, new weakness or numbness, confusion or vision change: direct the patient to call 911 or go to the emergency department.",
+        "page": 1
+      },
+      {
+        "id": "r5",
+        "when": "When systolic blood pressure is below 100 mmHg, or there is dizziness or fainting on standing, then do not increase any antihypertensive and arrange provider review within 1 business day.",
+        "then": "Do not increase any antihypertensive; provider review within 1 business day.",
+        "source": "Low BP: systolic below 100 mmHg, or dizziness or fainting on standing. Do not increase any antihypertensive; provider review within 1 business day.",
+        "page": 1
+      },
+      {
+        "id": "r6",
+        "when": "When potassium is above 5.5 mmol/L, or creatinine is up more than 30% from baseline, then hold the new or increased agent, repeat the panel within 72 hours and notify the provider.",
+        "then": "Hold the new or increased agent, repeat the panel within 72 hours and notify the provider.",
+        "source": "Potassium above 5.5 mmol/L, or creatinine up more than 30% from baseline: hold the new or increased agent, repeat the panel within 72 hours and notify the provider.",
+        "page": 2
+      },
+      {
+        "id": "r7",
+        "when": "When potassium is below 3.5 mmol/L on a thiazide-type diuretic, then notify the provider for replacement.",
+        "then": "Notify the provider for replacement.",
+        "source": "Potassium below 3.5 mmol/L on a thiazide-type diuretic: notify the provider for replacement.",
+        "page": 2
+      },
+      {
+        "id": "r8",
+        "when": "When proportion of days covered is below 80%, then refer to a pharmacist.",
+        "then": "Trigger a pharmacist referral.",
+        "source": "Proportion of days covered below 80% triggers a pharmacist referral.",
+        "page": 2
+      },
+      {
+        "id": "r9",
+        "when": "When two consecutive check-ins show average home systolic BP 10 mmHg or more above goal despite confirmed adherence, then obtain provider review within 5 business days.",
+        "then": "Provider review within 5 business days.",
+        "source": "Two consecutive check-ins with an average home systolic BP 10 mmHg or more above goal despite confirmed adherence: provider review within 5 business days.",
+        "page": 2
+      },
+      {
+        "id": "r10",
+        "when": "When any reading is in the severe range, then follow section 3.",
+        "then": "Follow section 3.",
+        "source": "Any reading in the severe range: follow section 3.",
+        "page": 2
+      },
+      {
+        "id": "r11",
+        "when": "When angioedema occurs, then stop ACE inhibitors and ARBs.",
+        "then": "Stop ACE inhibitors and ARBs.",
+        "source": "Stop ACE inhibitors and ARBs if angioedema occurs.",
+        "page": 1
+      },
+      {
+        "id": "r12",
+        "when": "When using an ACE inhibitor, do not combine it with an ARB.",
+        "then": "Never combine an ACE inhibitor with an ARB.",
+        "source": "Never combine an ACE inhibitor with an ARB.",
+        "page": 1
+      }
+    ],
+    "cadence": [
+      {
+        "id": "c1",
+        "activity": "Recheck blood pressure",
+        "kind": "measurement",
+        "times": 1,
+        "every": 1,
+        "unit": "year",
+        "appliesWhen": "Normal blood pressure",
+        "source": "Normal: systolic below 120 and diastolic below 80 mmHg. Reinforce healthy lifestyle; recheck yearly.",
+        "page": 1
+      },
+      {
+        "id": "c2",
+        "activity": "Recheck blood pressure",
+        "kind": "measurement",
+        "times": 1,
+        "every": 3,
+        "unit": "month",
+        "appliesWhen": "Elevated blood pressure; source specifies recheck in 3 to 6 months.",
+        "source": "Lifestyle changes; recheck in 3 to 6 months.",
+        "page": 1
+      },
+      {
+        "id": "c3",
+        "activity": "Blood pressure readings",
+        "kind": "measurement",
+        "times": 2,
+        "every": 1,
+        "unit": "day",
+        "appliesWhen": "Home readings; take morning and evening, with 2 readings 1 minute apart each time.",
+        "source": "Home readings count when taken with a validated device: 2 readings 1 minute apart, morning and evening.",
+        "page": 1
+      },
+      {
+        "id": "c4",
+        "activity": "Check-in with home BP log review",
+        "kind": "check_in",
+        "times": 1,
+        "every": 2,
+        "unit": "week",
+        "appliesWhen": "Not at goal, or a medication change in the last 30 days; continue until at goal at 2 consecutive check-ins.",
+        "source": "Not at goal, or a medication change in the last 30 days: care manager check-in every 2 weeks with a home BP log review, until at goal at 2 consecutive check-ins.",
+        "page": 2
+      },
+      {
+        "id": "c5",
+        "activity": "Check-in",
+        "kind": "check_in",
+        "times": 1,
+        "every": 1,
+        "unit": "month",
+        "appliesWhen": "At goal, for 3 months.",
+        "source": "At goal: monthly check-ins for 3 months, then every 3 months.",
+        "page": 2
+      },
+      {
+        "id": "c6",
+        "activity": "Check-in",
+        "kind": "check_in",
+        "times": 1,
+        "every": 3,
+        "unit": "month",
+        "appliesWhen": "At goal after monthly check-ins for 3 months; source specifies every 3 months.",
+        "source": "At goal: monthly check-ins for 3 months, then every 3 months.",
+        "page": 2
+      },
+      {
+        "id": "c7",
+        "activity": "Home blood pressure",
+        "kind": "measurement",
+        "times": 2,
+        "every": 1,
+        "unit": "day",
+        "appliesWhen": "Before each provider visit, for 7 days; morning and evening.",
+        "source": "Before each provider visit: home BP twice daily (morning and evening) for 7 days.",
+        "page": 2
+      },
+      {
+        "id": "c8",
+        "activity": "Provider visit",
+        "kind": "visit",
+        "times": 1,
+        "every": 4,
+        "unit": "week",
+        "appliesWhen": "During titration.",
+        "source": "Provider visits every 4 weeks during titration;",
+        "page": 2
+      },
+      {
+        "id": "c9",
+        "activity": "Provider visit",
+        "kind": "visit",
+        "times": 1,
+        "every": 3,
+        "unit": "month",
+        "appliesWhen": "Once BP is controlled; source specifies every 3 to 6 months.",
+        "source": "every 3 to 6 months once BP is controlled.",
+        "page": 2
+      },
+      {
+        "id": "c10",
+        "activity": "Medication adherence review",
+        "kind": "medication_review",
+        "times": 1,
+        "every": 1,
+        "unit": "week",
+        "appliesWhen": "At every check-in; cadence follows the applicable check-in schedule.",
+        "source": "Review medication adherence at every check-in.",
+        "page": 2
+      },
+      {
+        "id": "c11",
+        "activity": "Basic metabolic panel (potassium, creatinine, eGFR)",
+        "kind": "lab",
+        "times": 1,
+        "every": 1,
+        "unit": "week",
+        "appliesWhen": "At baseline and 1 to 2 weeks after starting or increasing an ACE inhibitor, ARB, diuretic or spironolactone.",
+        "source": "Basic metabolic panel (potassium, creatinine, eGFR) at baseline and 1 to 2 weeks after starting or increasing an ACE inhibitor, ARB, diuretic or spironolactone.",
+        "page": 1
+      },
+      {
+        "id": "c12",
+        "activity": "Basic metabolic panel",
+        "kind": "lab",
+        "times": 1,
+        "every": 1,
+        "unit": "year",
+        "appliesWhen": "Annual monitoring.",
+        "source": "Every 12 months: basic metabolic panel, lipid panel, urine albumin-to-creatinine ratio, and HbA1c for patients with diabetes.",
+        "page": 2
+      },
+      {
+        "id": "c13",
+        "activity": "Lipid panel",
+        "kind": "lab",
+        "times": 1,
+        "every": 1,
+        "unit": "year",
+        "appliesWhen": "Annual monitoring.",
+        "source": "Every 12 months: basic metabolic panel, lipid panel, urine albumin-to-creatinine ratio, and HbA1c for patients with diabetes.",
+        "page": 2
+      },
+      {
+        "id": "c14",
+        "activity": "Urine albumin-to-creatinine ratio",
+        "kind": "lab",
+        "times": 1,
+        "every": 1,
+        "unit": "year",
+        "appliesWhen": "Annual monitoring.",
+        "source": "Every 12 months: basic metabolic panel, lipid panel, urine albumin-to-creatinine ratio, and HbA1c for patients with diabetes.",
+        "page": 2
+      },
+      {
+        "id": "c15",
+        "activity": "HbA1c",
+        "kind": "lab",
+        "times": 1,
+        "every": 1,
+        "unit": "year",
+        "appliesWhen": "Patients with diabetes; annual monitoring.",
+        "source": "Every 12 months: basic metabolic panel, lipid panel, urine albumin-to-creatinine ratio, and HbA1c for patients with diabetes.",
+        "page": 2
+      }
+    ],
+    "titration": [
+      {
+        "id": "m1",
+        "medication": "amlodipine",
+        "drugClass": null,
+        "step": 1,
+        "action": "start",
+        "dose": "5 mg once daily",
+        "criteria": "For Black patients without chronic kidney disease or albuminuria, start amlodipine 5 mg once daily or chlorthalidone 12.5 mg once daily instead.",
+        "monitoring": "Confirm adherence and home technique before every step. Allow 4 weeks between steps unless BP is in the severe range.",
+        "source": "For Black patients without chronic kidney disease or albuminuria, start amlodipine 5 mg once daily",
+        "page": 1
+      },
+      {
+        "id": "m2",
+        "medication": "amlodipine",
+        "drugClass": null,
+        "step": 3,
+        "action": "add",
+        "dose": "5 mg once daily",
+        "criteria": "Still not at goal.",
+        "monitoring": "Confirm adherence and home technique before every step. Allow 4 weeks between steps unless BP is in the severe range.",
+        "source": "Step 3: Still not at goal: add amlodipine 5 mg once daily;",
+        "page": 1
+      },
+      {
+        "id": "m3",
+        "medication": "amlodipine",
+        "drugClass": null,
+        "step": 3,
+        "action": "increase",
+        "dose": "10 mg",
+        "criteria": "After 4 weeks.",
+        "monitoring": "Confirm adherence and home technique before every step. Allow 4 weeks between steps unless BP is in the severe range.",
+        "source": "increase to 10 mg after 4 weeks.",
+        "page": 1
+      },
+      {
+        "id": "m4",
+        "medication": "chlorthalidone",
+        "drugClass": null,
+        "step": 1,
+        "action": "start",
+        "dose": "12.5 mg once daily",
+        "criteria": "For Black patients without chronic kidney disease or albuminuria, start amlodipine 5 mg once daily or chlorthalidone 12.5 mg once daily instead.",
+        "monitoring": "Confirm adherence and home technique before every step. Allow 4 weeks between steps unless BP is in the severe range.",
+        "source": "or chlorthalidone 12.5 mg once daily instead.",
+        "page": 1
+      },
+      {
+        "id": "m5",
+        "medication": "chlorthalidone",
+        "drugClass": null,
+        "step": 4,
+        "action": "add",
+        "dose": "12.5 mg once daily",
+        "criteria": "Still not at goal.",
+        "monitoring": "Confirm adherence and home technique before every step. Allow 4 weeks between steps unless BP is in the severe range.",
+        "source": "Step 4: Still not at goal: add chlorthalidone 12.5 mg once daily",
+        "page": 1
+      },
+      {
+        "id": "m6",
+        "medication": "hydrochlorothiazide",
+        "drugClass": null,
+        "step": 4,
+        "action": "add",
+        "dose": "25 mg once daily",
+        "criteria": "Alternative to chlorthalidone when still not at goal.",
+        "monitoring": "Confirm adherence and home technique before every step. Allow 4 weeks between steps unless BP is in the severe range.",
+        "source": "(or hydrochlorothiazide 25 mg once daily).",
+        "page": 1
+      },
+      {
+        "id": "m7",
+        "medication": "lisinopril",
+        "drugClass": "ACE inhibitor",
+        "step": 1,
+        "action": "start",
+        "dose": "10 mg once daily",
+        "criteria": "Step 1.",
+        "monitoring": "Confirm adherence and home technique before every step. Allow 4 weeks between steps unless BP is in the severe range.",
+        "source": "Step 1: Start lisinopril 10 mg once daily (ACE inhibitor).",
+        "page": 1
+      },
+      {
+        "id": "m8",
+        "medication": "lisinopril",
+        "drugClass": "ACE inhibitor",
+        "step": 2,
+        "action": "increase",
+        "dose": "20 mg, then to 40 mg once daily",
+        "criteria": "Not at goal after 4 weeks.",
+        "monitoring": "Confirm adherence and home technique before every step. Allow 4 weeks between steps unless BP is in the severe range.",
+        "source": "Step 2: Not at goal after 4 weeks: increase lisinopril to 20 mg, then to 40 mg once daily",
+        "page": 1
+      },
+      {
+        "id": "m9",
+        "medication": "losartan",
+        "drugClass": "ARB",
+        "step": 1,
+        "action": "switch",
+        "dose": "50 mg once daily",
+        "criteria": "If ACE inhibitor cough, use losartan.",
+        "monitoring": "Confirm adherence and home technique before every step. Allow 4 weeks between steps unless BP is in the severe range.",
+        "source": "If ACE inhibitor cough, use losartan 50 mg once daily (ARB).",
+        "page": 1
+      },
+      {
+        "id": "m10",
+        "medication": "losartan",
+        "drugClass": "ARB",
+        "step": 2,
+        "action": "increase",
+        "dose": "100 mg",
+        "criteria": "Not at goal after 4 weeks.",
+        "monitoring": "Confirm adherence and home technique before every step. Allow 4 weeks between steps unless BP is in the severe range.",
+        "source": "then to 40 mg once daily (losartan to 100 mg).",
+        "page": 1
+      },
+      {
+        "id": "m11",
+        "medication": "spironolactone",
+        "drugClass": null,
+        "step": 5,
+        "action": "add",
+        "dose": "25 mg once daily",
+        "criteria": "Above goal on three agents including a diuretic at maximum tolerated doses (resistant hypertension), if potassium is below 4.5 mmol/L and eGFR is above 45 mL/min/1.73m2.",
+        "monitoring": "Refer to nephrology or a hypertension specialist.",
+        "source": "add spironolactone 25 mg once daily if potassium is below 4.5 mmol/L and eGFR is above 45 mL/min/1.73m2, and refer to nephrology or a hypertension specialist.",
+        "page": 1
+      }
+    ],
+    "crossReferences": [
+      {
+        "id": "x1",
+        "title": "Hypertensive Disorders of Pregnancy",
+        "kind": "guideline",
+        "citation": "HH-CPG-OB-002",
+        "source": "pregnancy or the first 12 weeks postpartum (follow HH-CPG-OB-002)",
+        "page": 1
+      },
+      {
+        "id": "x2",
+        "title": "2017 ACC/AHA Guideline for the Prevention, Detection, Evaluation, and Management of High Blood Pressure in Adults",
+        "kind": "guideline",
+        "citation": "Hypertension. 2018;71:e13-e115.",
+        "source": "2017 ACC/AHA Guideline for the Prevention, Detection, Evaluation, and Management of High Blood Pressure in Adults. Hypertension. 2018;71:e13-e115.",
+        "page": 2
+      },
+      {
+        "id": "x3",
+        "title": "Standards of Care in Diabetes, Section 10: Cardiovascular Disease and Risk Management",
+        "kind": "guideline",
+        "citation": null,
+        "source": "American Diabetes Association. Standards of Care in Diabetes, Section 10: Cardiovascular Disease and Risk Management.",
+        "page": 2
+      },
+      {
+        "id": "x4",
+        "title": "KDIGO 2021 Clinical Practice Guideline for the Management of Blood Pressure in Chronic Kidney Disease",
+        "kind": "guideline",
+        "citation": null,
+        "source": "KDIGO 2021 Clinical Practice Guideline for the Management of Blood Pressure in Chronic Kidney Disease.",
+        "page": 2
+      },
+      {
+        "id": "x5",
+        "title": "Medication Reconciliation",
+        "kind": "policy",
+        "citation": "HH-POL-MED-011",
+        "source": "Harbor Health policy HH-POL-MED-011, Medication Reconciliation.",
+        "page": 2
+      }
+    ]
+  },
+  "warnings": [
+    "This is explicitly identified in the document as a sample document for demonstrations and not an actual Harbor Health po",
+    "The source gives the BP goal as below 130/80 mmHg; the threshold is represented as a combined systolic/diastolic goal be",
+    "Cadence fields use the shorter interval where a range is stated, with the original range preserved in appliesWhen."
+  ],
+  "model": "gpt-6-luna"
+}

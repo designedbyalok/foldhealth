@@ -55,7 +55,7 @@ Expected: tens of MB total today. Letters, PDFs, a few avatars.
 node scripts/migration/export-auth-users.mjs
 ```
 
-Writes `~/foldhealth-migration/auth-users.json` with every row from `auth.users`. Password hashes are not accessible via the Supabase API — the file carries ids, emails, metadata, and timestamps only. Phase 04 (Cognito) will force a password reset per user, unless we build a bcrypt-hash import path at that time.
+Writes `~/foldhealth-migration/auth-users.json` with every row from `auth.users`. Password hashes are not accessible via the Supabase API, the file carries ids, emails, metadata, and timestamps only. Phase 04 (Cognito) will force a password reset per user, unless we build a bcrypt-hash import path at that time.
 
 Verify:
 

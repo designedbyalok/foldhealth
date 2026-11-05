@@ -1,11 +1,11 @@
 // SLA logic for the HCC (Astrana, DOS-structured) worklist.
 //
 // Confirmed rules (Prospect / Astrana working sessions):
-//  • 14-calendar-day window. The clock starts at Support-Team receipt — which
+//  • 14-calendar-day window. The clock starts at Support-Team receipt, which
 //    the worklist represents as the record's Created Date ("when it gets
-//    loaded") — and ends at Coder / Reviewer-1 completion.
+//    loaded"): and ends at Coder / Reviewer-1 completion.
 //  • On breach the record is simply flagged "Overdue" (no re-routing).
-//  • The window is NOT hardcoded — it is configurable per client/tenant. The
+//  • The window is NOT hardcoded, it is configurable per client/tenant. The
 //    default lives here so a future per-tenant org setting can override it in
 //    one place.
 //  • SLA weighting applies only to the DOS-structured (Astrana) worklist;
@@ -28,7 +28,7 @@ function parseMDY(value) {
 }
 
 /**
- * computeSla — SLA state for a Created Date on the DOS worklist.
+ * computeSla: SLA state for a Created Date on the DOS worklist.
  *
  * elapsed   = today − createdDate (calendar days)
  * remaining = windowDays − elapsed  (negative once breached)
@@ -75,7 +75,7 @@ export function computeSla(createdDate, cfg = SLA_CONFIG) {
 }
 
 /**
- * slaOutcome — the resolved SLA verdict once Support AND Coder are done.
+ * slaOutcome: the resolved SLA verdict once Support AND Coder are done.
  * "SLA Met" when the Coder completed within the 14-day window from the Created
  * Date, otherwise "SLA Breached". Uses the real Coder completion timestamp
  * when available; falls back to today as the completion proxy.
@@ -103,7 +103,7 @@ export function slaOutcome(createdDate, coderDoneAt, cfg = SLA_CONFIG) {
  * Map a record's live SLA state to the Due Date filter buckets, so the
  * "Due Date" filter agrees with the colour-coded Created Date column (rather
  * than the legacy static `due` string). The SLA clock stops at Coder
- * (Reviewer 1) completion — resolved records fall into no bucket.
+ * (Reviewer 1) completion: resolved records fall into no bucket.
  *
  * Buckets mirror DUE_OPTIONS: Overdue / Due Today / Due This Week /
  * Due Next Week / Due More Than 2 Weeks.

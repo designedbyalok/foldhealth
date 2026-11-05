@@ -1,0 +1,95 @@
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.wrap { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.titleStack { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+.titleSub { display: flex; align-items: center; font-size: var(--font-sm); font-weight: 400; color: var(--neutral-300); }
+
+/* What stands now: a fixed label column, so every card's chips start at the
+   same point, then the chips. */
+.current {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  align-items: stretch;
+  padding: 0 var(--space-4) var(--space-2);
+}
+/* Each row (label + chips) gets its own padding; a hairline splits rows. */
+/* Cells fill the row's height (so both halves of a hairline line up) and
+   center their content. */
+.current > * { display: flex; align-items: center; padding: var(--space-2) 0; }
+/* No column gap, so a row's hairline runs unbroken; the chips cell pads in. */
+.current > :nth-child(even) { padding-left: var(--space-4); }
+.current > :nth-child(n + 3) { border-top: 0.5px solid var(--neutral-150); }
+/* One block per drug: its name, then labelled Barriers / Interventions. */
+.drugs { display: flex; flex-direction: column; padding: 0 var(--space-4) var(--space-2); }
+.drugBlock { display: flex; flex-direction: column; padding-top: var(--space-2); }
+.drugBlock + .drugBlock { margin-top: var(--space-2); border-top: 0.5px solid var(--neutral-150); padding-top: var(--space-3); }
+.drugBlock .current { padding: 0; }
+.label { font-size: var(--font-md); color: var(--neutral-300); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.resolvable { display: inline-flex; align-items: center; gap: 0.125rem; }
+.since { margin-left: var(--space-1); font-size: var(--font-sm); color: var(--neutral-300); white-space: nowrap; }
+/* Active chips sit at the card's right edge, each with its actions in fixed
+   slots (✓, then ✕ or an empty slot), so the buttons form one column. */
+.current .chips { justify-content: flex-end; }
+.actionSlot { width: var(--space-6); flex-shrink: 0; }
+.none { font-size: var(--font-md); color: var(--neutral-200); }
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-4) var(--space-4);
+}
+/* A hairline only when the gap's own lines sit above it. */
+.current + .block {
+  padding-top: var(--space-3);
+  border-top: 0.5px solid var(--neutral-150);
+}
+.block.drugs { gap: 0; padding-bottom: var(--space-2); }
+.drugName { font-size: var(--font-base); font-weight: 500; color: var(--neutral-400); }
+
+.note { font-size: var(--font-md); color: var(--neutral-300); margin-top: var(--space-1); }
+
+/* One drug's view (its detail panel): no card, the same rows. */
+.drugPanel { display: flex; flex-direction: column; gap: var(--space-2); }
+.drugPanel .current { padding: 0; }
+.historyToggle {
+  display: inline-flex; align-items: center; gap: var(--space-1); align-self: flex-start;
+  padding: 0; border: none; background: none; cursor: pointer;
+  font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300);
+}
+.historyToggle:hover { color: var(--neutral-400); }
+.chevron { transition: transform 0.15s ease; }
+.chevronRight { transform: rotate(-90deg); }
+
+/* History entry: its title • View Details, then a card of what changed,
+   in the Active rows' layout (label left, badges right). */
+.entryTitleRow { display: flex; align-items: center; flex-wrap: wrap; }
+.entryTitle { font-size: var(--font-base); font-weight: 400; color: var(--neutral-500); }
+.entryCard {
+  margin-top: var(--space-2);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+}
+.entryCard .current { padding: 0 var(--space-3); }
+.entryLabel { font-size: var(--font-md); color: var(--neutral-300); }
+.entryNote {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-top: 0.5px solid var(--neutral-150);
+  font-size: var(--font-md);
+  color: var(--neutral-400);
+}
+.struck { text-decoration: line-through; }
+
+/* A drug's inline add: pickers, note, then Cancel / Add. */
+.addForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+}
+.addActions { display: flex; justify-content: flex-end; gap: var(--space-2); }

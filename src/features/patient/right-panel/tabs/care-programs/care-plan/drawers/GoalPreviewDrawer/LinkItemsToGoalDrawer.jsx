@@ -18,7 +18,7 @@ import styles from '../BarrierDetailDrawer/LinkGoalToBarrierDrawer.module.css';
  * Selected group with divider, primary Link button in the header), so
  * every "link existing" surface across the care plan reads the same.
  *
- * `items` is the pre-filtered candidate list — the caller strips out
+ * `items` is the pre-filtered candidate list: the caller strips out
  * anything already linked to this goal so the picker only offers new
  * connections. Each item is:
  *   { id, title, subtitle?, badge? }
@@ -73,7 +73,7 @@ export function LinkItemsToGoalDrawer({
       noCloseDivider
       headerRight={
         <>
-          <Button variant="primary" size="M" disabled={!canLink} onClick={handleLink}>
+          <Button disabled={!canLink} onClick={handleLink}>
             Link
           </Button>
           <span className={styles.headerDivider} aria-hidden />
@@ -150,7 +150,7 @@ function renderRow(item, selected, toggle) {
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}>
           {item.badge && (
             <>
-              <Badge tone="grey" size="S" label={item.badge} />
+              <Badge size="sm" label={item.badge} />
               {(item.priority || linkedTotal > 0) && (
                 <span className={styles.headerDivider} aria-hidden />
               )}

@@ -13,7 +13,7 @@ function formatStickyNoteDate(dateStr) {
 }
 
 /**
- * StickyNote — Reusable sticky note component with multiple states.
+ * StickyNote: Reusable sticky note component with multiple states.
  *
  * Notes are paginated by insurance profile (ehr_profile).
  * Chevrons switch between different profile sticky notes.
@@ -23,7 +23,7 @@ function formatStickyNoteDate(dateStr) {
  * @param {object[]}  notes         - Array of note objects { id, text, author_name, author_date, ehr_profile }
  * @param {function}  onSave        - (id, text) => void
  * @param {function}  onCreate      - (text) => void
- * @param {function}  onDelete      - (id) => void — soft-delete: logs activity, removes note
+ * @param {function}  onDelete      - (id) => void: soft-delete: logs activity, removes note
  * @param {function}  onAuditLog    - () => void
  * @param {boolean}   collapsedOnly - If true, always show collapsed single-line view
  */
@@ -85,9 +85,9 @@ export function StickyNote({ notes = [], onSave, onCreate, onDelete, onAuditLog,
         <div className={styles.collapsedActions}>
           {hasNotes && (
             <>
-              <ActionButton icon="solar:clock-circle-linear" size="S" tooltip="Audit Log" onClick={e => { e.stopPropagation(); onAuditLog?.(); }} />
-              <ActionButton icon="solar:trash-bin-minimalistic-linear" size="S" tooltip="Delete" onClick={e => { e.stopPropagation(); handleDelete(); }} />
-              <ActionButton icon="solar:pen-2-linear" size="S" tooltip="Edit" onClick={e => { e.stopPropagation(); handleEdit(); }} />
+              <ActionButton icon="solar:clock-circle-linear" size="sm" tooltip="Audit Log" onClick={e => { e.stopPropagation(); onAuditLog?.(); }} />
+              <ActionButton icon="solar:trash-bin-minimalistic-linear" size="sm" tooltip="Delete" onClick={e => { e.stopPropagation(); handleDelete(); }} />
+              <ActionButton icon="solar:pen-2-linear" size="sm" tooltip="Edit" onClick={e => { e.stopPropagation(); handleEdit(); }} />
             </>
           )}
         </div>
@@ -103,20 +103,20 @@ export function StickyNote({ notes = [], onSave, onCreate, onDelete, onAuditLog,
         <StickyNoteIcon size={16} />
         <span className={styles.headerTitle}>Sticky Note</span>
         <div className={styles.headerActions}>
-          <ActionButton icon="solar:clock-circle-linear" size="S" tooltip="Audit Log" onClick={onAuditLog} />
+          <ActionButton icon="solar:clock-circle-linear" size="sm" tooltip="Audit Log" onClick={onAuditLog} />
           {editing ? (
             <>
-              <ActionButton size="S" tooltip="Cancel" aria-label="Cancel edit" onClick={handleCancelEdit}>
+              <ActionButton size="sm" tooltip="Cancel" aria-label="Cancel edit" onClick={handleCancelEdit}>
                 <CloseIcon size={16} color="var(--neutral-300)" />
               </ActionButton>
-              <ActionButton size="S" tooltip="Save" aria-label="Save note" onClick={handleSaveEdit}>
+              <ActionButton size="sm" tooltip="Save" aria-label="Save note" onClick={handleSaveEdit}>
                 <CheckIcon size={16} color="var(--neutral-300)" />
               </ActionButton>
             </>
           ) : (
             <>
-              <ActionButton icon="solar:trash-bin-minimalistic-linear" size="S" tooltip="Delete" onClick={handleDelete} />
-              <ActionButton icon="solar:pen-2-linear" size="S" tooltip="Edit" onClick={handleEdit} />
+              <ActionButton icon="solar:trash-bin-minimalistic-linear" size="sm" tooltip="Delete" onClick={handleDelete} />
+              <ActionButton icon="solar:pen-2-linear" size="sm" tooltip="Edit" onClick={handleEdit} />
             </>
           )}
         </div>

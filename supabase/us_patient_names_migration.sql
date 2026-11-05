@@ -1,4 +1,4 @@
--- US patient names — replaces every Indian first/last name with a
+-- US patient names: replaces every Indian first/last name with a
 -- unique US-typical name (target audience is US; demo data should read
 -- accordingly). Applied per member_id across all six patient tables;
 -- initials regenerated; all_patients emails follow the new first name;

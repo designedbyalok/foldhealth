@@ -37,7 +37,7 @@ const formatTime12 = (v) => {
 };
 
 /**
- * TimePicker — a time field that opens the date-time picker's Hr / Min /
+ * TimePicker: a time field that opens the date-time picker's Hr / Min /
  * AM-PM columns (no calendar). Each pick applies at once; clicking outside
  * closes it. Use instead of `<input type="time">`, whose own picker doesn't
  * open in every browser (none on Mac Chrome).

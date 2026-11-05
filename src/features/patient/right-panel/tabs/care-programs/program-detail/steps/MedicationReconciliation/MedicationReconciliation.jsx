@@ -7,9 +7,10 @@ import { Select } from '../../../../../../../../components/Select/Select';
 import { DatePicker } from '../../../../../../../../components/DatePicker/DatePicker';
 import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
+import { CollapsibleContent } from '../../../../../../../../components/Collapsible/Collapsible';
 import { AIIcon } from '../../../../../../../../components/Icon/AIIcon';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
-import { RingEmptyState } from '../../../../../../../../components/RingEmptyState/RingEmptyState';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
+import { EmptyState } from '../../../../../../../../components/EmptyState/EmptyState';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
 import { SearchBar } from '../../../../../../../../components/SearchBar/SearchBar';
 import { DocumentUploader, FileRow } from '../../../../../../../../components/DocumentUploader/DocumentUploader';
@@ -18,7 +19,7 @@ import { ActionButton } from '../../../../../../../../components/ActionButton/Ac
 import { Tooltip } from '../../../../../../../../components/Tooltip/Tooltip';
 import { Link } from '../../../../../../../../components/Link/Link';
 import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChevronIcon';
-import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../../../components/SegmentedControl/SegmentedControl';
 import { TableIcon } from '../../../../../../../../components/Icon/TableIcon';
 import { ConfirmDialog } from '../../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
@@ -27,7 +28,7 @@ import { searchMedications } from '../../../../../../../../lib/openfda';
 import { WorklistShell } from '../../../../../../../../components/WorklistShell/WorklistShell';
 import { MED_RECON_MOCK } from '../../../../../../data/medReconMock';
 
-// Stable identity — a fresh {} from the selector would re-render every tick.
+// Stable identity: a fresh {} from the selector would re-render every tick.
 const EMPTY_CHECKS = {};
 const EMPTY_VIEWED = [];
 import styles from './MedicationReconciliation.module.css';
@@ -49,7 +50,7 @@ const STOP_REASON_OPTIONS = [
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 // DatePicker needs ISO (native <input type="date">); the table/store use
-// MM/DD/YYYY strings — convert only at save time.
+// MM/DD/YYYY strings: convert only at save time.
 function isoToMMDDYYYY(iso) {
   if (!iso) return '';
   const [y, m, d] = iso.split('-');
@@ -85,7 +86,7 @@ const blankDraft = () => ({
   sig: '', note: '', noteOpen: false, openfdaMeta: null, source: 'manual',
 });
 
-// "Add New" dropdown — only "Add Manually" is wired (opens the existing
+// "Add New" dropdown: only "Add Manually" is wired (opens the existing
 // search → form container); the other two are placeholders for future flows.
 const ADD_NEW_MENU_ITEMS = [
   { key: 'manual', icon: 'solar:pen-2-linear', label: 'Add Manually' },
@@ -93,9 +94,9 @@ const ADD_NEW_MENU_ITEMS = [
   { key: 'surescript', icon: 'solar:refresh-circle-linear', label: 'Sync Surescript' },
 ];
 
-// Active Medications view toggle — mirrors the list/grid Toggle used on
+// Active Medications view toggle: mirrors the list/grid Toggle used on
 // Program Related Files.
-// Table columns — widths carried over from the grid tracks this replaced
+// Table columns: widths carried over from the grid tracks this replaced
 // (32 / name fills / 110 / 139 / 139 / 260 / 100). The name column takes no
 // width so it soaks up slack above the 980px min, exactly like the old 1fr.
 const MED_COLUMNS = [
@@ -116,10 +117,10 @@ const MED_VIEW_ITEMS = [
 ];
 
 // Matches a numbered line like "1. Metformin 1000mg - 1 tab daily on empty
-// stomach" — the format our own sample discharge PDFs use.
+// stomach", the format our own sample discharge PDFs use.
 const NUMBERED_MED_LINE_RE = /^\d+\.\s*(.+?)\s+(\d+(?:\.\d+)?\s*(?:mg|mcg|g))\b\s*-\s*(.+)$/i;
 // Looser fallback for real-world summaries: a drug-dose token anywhere in the
-// line (e.g. "Lisinopril 10 MG Tablet — take 1 tablet by mouth daily").
+// line (e.g. "Lisinopril 10 MG Tablet: take 1 tablet by mouth daily").
 const DOSE_TOKEN_RE = /\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|unit|units|iu)\b/i;
 
 function parseMedLine(line) {
@@ -130,7 +131,7 @@ function parseMedLine(line) {
   if (!dose) return null;
   const cut = dose.index + dose[0].length;
   const name = line.slice(0, cut).trim();
-  const sig = line.slice(cut).replace(/^[\s\-–—:,]+/, '').trim();
+  const sig = line.slice(cut).replace(/^[\s\-–\u2014:,]+/, '').trim();
   // Require the name half to actually look like a drug name, not a stray number/date.
   if (!/[A-Za-z]{3,}/.test(name)) return null;
   return { name, sig };
@@ -146,7 +147,7 @@ function parseMedsFromLines(lines) {
   return meds;
 }
 
-// Fast path: works when the PDF has a real (uncompressed) text layer — true
+// Fast path: works when the PDF has a real (uncompressed) text layer: true
 // for the sample discharge PDFs generated for this feature, not for most
 // real-world exports/scans (see ocrPdf below for those).
 async function parseMedsFromPdfText(file) {
@@ -155,7 +156,7 @@ async function parseMedsFromPdfText(file) {
   return parseMedsFromLines(lines);
 }
 
-// Renders each PDF page to a canvas via pdf.js — needed for scanned/
+// Renders each PDF page to a canvas via pdf.js, needed for scanned/
 // image-only discharge summaries, which have no text layer at all.
 async function renderPdfPagesToCanvases(file) {
   const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
@@ -177,10 +178,10 @@ async function renderPdfPagesToCanvases(file) {
 }
 
 // OCRs a scanned PDF page-by-page with Tesseract.js. Slow (real recognition,
-// not a mock) — callers should show progress via `onProgress`.
+// not a mock): callers should show progress via `onProgress`.
 async function ocrPdf(file, onProgress) {
   // Loading tesseract.js and rasterising the PDF are independent, and both are
-  // slow — the import is a network/parse cost, the rasterisation walks every
+  // slow: the import is a network/parse cost, the rasterisation walks every
   // page. Run them concurrently; createWorker still has to wait for the import.
   const [{ createWorker }, canvases] = await Promise.all([
     import('tesseract.js'),
@@ -201,7 +202,7 @@ async function ocrPdf(file, onProgress) {
   }
 }
 
-// OpenFDA matching — disabled for now, kept for reference.
+// OpenFDA matching: disabled for now, kept for reference.
 // Splits a parsed name like "acetaminophen (TYLENOL) 500 mg" into its
 // generic/brand/strength parts so OpenFDA lookup can search the more
 // specific brand name (when present) and score candidates by matching
@@ -217,7 +218,7 @@ async function ocrPdf(file, onProgress) {
 // }
 //
 // Scores an OpenFDA candidate against the parsed generic/brand/strength.
-// The NDC directory returns many packager/combo variants per drug — a bare
+// The NDC directory returns many packager/combo variants per drug, a bare
 // generic-prefix match is weak evidence on its own, since combo products
 // (e.g. "acetaminophen and diphenhydramine…") also start with the target
 // generic name. Exact-name matches, matching strength, and single-ingredient
@@ -226,9 +227,9 @@ async function ocrPdf(file, onProgress) {
 //
 // `strengthMatched` is tracked separately from the score: when the
 // extracted line has a dose and no candidate at that dose exists (a real
-// gap — e.g. the directory only carries Tricor at 145mg, not the patient's
+// gap: e.g. the directory only carries Tricor at 145mg, not the patient's
 // 54mg), the caller must NOT accept a same-name-wrong-dose candidate just
-// because it scored well on name alone — that would silently show the
+// because it scored well on name alone, that would silently show the
 // wrong strength, which is worse than leaving the OCR text untouched.
 // function scoreCandidate(x, { generic, brand, strength }) {
 //   let score = 0;
@@ -258,7 +259,7 @@ async function ocrPdf(file, onProgress) {
 //   return { score, strengthMatched };
 // }
 //
-// Minimum score to accept a match at all — at least one exact name signal
+// Minimum score to accept a match at all, at least one exact name signal
 // (brand or generic), so a lone weak generic-prefix hit can't win by default.
 // const MIN_MATCH_SCORE = 4;
 //
@@ -267,7 +268,7 @@ async function ocrPdf(file, onProgress) {
 // same as the manual-add search does, instead of whatever the OCR/text
 // scrape produced verbatim. Searches by brand name first (more specific),
 // falling back to generic, and picks the best-scored candidate rather than
-// the first result — the NDC directory returns many packager/strength
+// the first result: the NDC directory returns many packager/strength
 // variants per drug, and an unscored pick regularly landed on the wrong
 // strength. Leaves the as-extracted med untouched when the score is too
 // low, or when the line names a specific dose that no candidate matches.
@@ -284,7 +285,7 @@ async function ocrPdf(file, onProgress) {
 //           const { score, strengthMatched } = scoreCandidate(x, parts);
 //           if (!best || score > best.score) best = { x, score, strengthMatched };
 //         }
-//         // A strong, dose-confirmed hit is good enough — no need to also
+//         // A strong, dose-confirmed hit is good enough, no need to also
 //         // burn a generic-name request.
 //         if (best?.score >= 7 && best.strengthMatched) break;
 //       }
@@ -304,7 +305,7 @@ async function extractMedsFromFile(file, onProgress) {
     meds = parseMedsFromLines(text.split(/\r?\n/));
   }
 
-  // OpenFDA matching is disabled for now — return the extracted meds as-is.
+  // OpenFDA matching is disabled for now, return the extracted meds as-is.
   // return meds.length === 0 ? meds : matchMedsWithOpenFDA(meds);
   return meds;
 }
@@ -369,7 +370,7 @@ export function MedicationReconciliation({ programCode } = {}) {
   const markNewMedsViewed = useAppStore(s => s.markNewMedsViewed);
 
   // Badge lifetime: a discharge-imported med keeps its "New" badge for the
-  // whole of the first visit, and is marked viewed on the way out — so the
+  // whole of the first visit, and is marked viewed on the way out, so the
   // badge doesn't vanish under the user mid-read. Tracked in a ref (written
   // and read only inside effects) so rendering stays a pure derivation of
   // `viewedNewMedIds`.
@@ -390,13 +391,13 @@ export function MedicationReconciliation({ programCode } = {}) {
     }
   }, [patientId, markNewMedsViewed]);
 
-  // Checklist stays local — it's not persisted yet. Items come from the
+  // Checklist stays local: it's not persisted yet. Items come from the
   // mock (labels only); every box starts unchecked regardless of the mock's
   // `checked` field.
   const checks = useAppStore(s => s.medReconChecks[patientId]) || EMPTY_CHECKS;
   const setMedReconCheck = useAppStore(s => s.setMedReconCheck);
 
-  // Which Active Medications rows have their "View Note" expanded — keyed
+  // Which Active Medications rows have their "View Note" expanded: keyed
   // by medication id, matches Figma 2556:46848.
   const [noteExpanded, setNoteExpanded] = useState({});
 
@@ -404,9 +405,9 @@ export function MedicationReconciliation({ programCode } = {}) {
   const [medView, setMedView] = useState('table');
 
   // Add-New container state. Three phases:
-  //   closed  — the "Add New" button is idle, nothing rendered below the header.
-  //   search  — the container shows a search input; the user is typing or picking.
-  //   form    — a med was picked; the container shows the inline row with
+  //   closed: the "Add New" button is idle, nothing rendered below the header.
+  //   search: the container shows a search input; the user is typing or picking.
+  //   form: a med was picked; the container shows the inline row with
   //             editable Name/Start/Stop/Sig + Save/Discard.
   const [phase, setPhase] = useState('closed');
   const [query, setQuery] = useState('');
@@ -428,7 +429,7 @@ export function MedicationReconciliation({ programCode } = {}) {
   const abortRef = useRef(null);
 
   // Debounced OpenFDA search. Cancels the previous in-flight fetch before
-  // firing a new one — typeahead should never race stale responses onto the
+  // firing a new one: typeahead should never race stale responses onto the
   // list. Minimum 2 chars because 1-letter wildcards are noise.
   useEffect(() => {
     if (phase !== 'search') return;
@@ -527,7 +528,7 @@ export function MedicationReconciliation({ programCode } = {}) {
   const saveDraft = async () => {
     if (!canSave) return;
 
-    // Editing a not-yet-added discharge extraction — update that row in
+    // Editing a not-yet-added discharge extraction: update that row in
     // place and re-close the form. It stays in the extracted list until the
     // user explicitly clicks "Add to List"; it must NOT land in Active
     // Medications just because it was edited.
@@ -548,7 +549,7 @@ export function MedicationReconciliation({ programCode } = {}) {
       return;
     }
 
-    // Editing a medication that's already persisted — update it in place
+    // Editing a medication that's already persisted: update it in place
     // rather than inserting a duplicate row.
     if (editingMedId) {
       if (!patientId) return;
@@ -608,7 +609,7 @@ export function MedicationReconciliation({ programCode } = {}) {
         setDischargeUploadOpen(false);
       }
     } catch {
-      showToast('Extraction failed — try a different file.');
+      showToast('Extraction failed: try a different file.');
     } finally {
       setExtracting(false);
       setExtractStage('');
@@ -658,7 +659,7 @@ export function MedicationReconciliation({ programCode } = {}) {
     }
   };
 
-  // Stop/Continue toggle — commented out for now, kept for reference.
+  // Stop/Continue toggle: commented out for now, kept for reference.
   // "Stop" set the medication Stopped as of today; "Continue" had no backing
   // field yet, so it only marked the pill green locally (continuedIds), and
   // clicking Stop cleared that so both never looked selected.
@@ -679,7 +680,7 @@ export function MedicationReconciliation({ programCode } = {}) {
   //   setContinuedIds(prev => new Set(prev).add(m.id));
   // };
 
-  // Inline note editor — the Note action expands the med's own row into a
+  // Inline note editor: the Note action expands the med's own row into a
   // grey strip holding a labelled Textarea (Figma 2529:16692). Edits live in
   // `noteDrafts` while typing and persist to Supabase on blur, so we're not
   // firing a write per keystroke.
@@ -736,7 +737,7 @@ export function MedicationReconciliation({ programCode } = {}) {
   }, []);
 
   // The Note action badges the number of notes on the med. There's a single
-  // `note` field today, so that's 1 or nothing — `count` is left undefined
+  // `note` field today, so that's 1 or nothing: `count` is left undefined
   // when empty so ActionButton skips the badge entirely.
   const noteCount = (m) => (m.note?.trim() ? 1 : undefined);
 
@@ -768,7 +769,7 @@ export function MedicationReconciliation({ programCode } = {}) {
     </div>
   );
 
-  // Inline single-cell editing in the table — clicking Start/Stop Date, Sig
+  // Inline single-cell editing in the table, clicking Start/Stop Date, Sig
   // or Status swaps just that cell for its matching control. Dates and
   // Status commit on change (the control closes itself); Sig commits on
   // blur or Enter, and Escape abandons the edit.
@@ -778,7 +779,7 @@ export function MedicationReconciliation({ programCode } = {}) {
   const isEditingCell = (m, field) => editingCell?.id === m.id && editingCell?.field === field;
 
   const beginCellEdit = (m, field) => {
-    // A full-row edit owns the whole row — don't let a cell edit race it.
+    // A full-row edit owns the whole row, don't let a cell edit race it.
     if (editingMedId) return;
     setEditingCell({ id: m.id, field });
     setCellDraft(
@@ -821,7 +822,7 @@ export function MedicationReconciliation({ programCode } = {}) {
     const onPointerDown = (e) => {
       if (cellEditRef.current?.contains(e.target)) return;
       // Status portals its menu to document.body, so clicking an option is
-      // technically outside the cell — don't treat that as clicking away.
+      // technically outside the cell: don't treat that as clicking away.
       if (e.target.closest?.('[role="listbox"]')) return;
       commitCell(med, editingCell.field);
     };
@@ -841,7 +842,7 @@ export function MedicationReconciliation({ programCode } = {}) {
     </button>
   );
 
-  // Bulk selection — mirrors the Letters step: a Set of ids drives the row
+  // Bulk selection: mirrors the Letters step: a Set of ids drives the row
   // checkboxes and a floating action bar (Figma 2570:46879).
   const [selectedMedIds, setSelectedMedIds] = useState(new Set());
   const allMedsSelected = selectedMedIds.size === medications.length && medications.length > 0;
@@ -856,8 +857,8 @@ export function MedicationReconciliation({ programCode } = {}) {
   const [bulkBusy, setBulkBusy] = useState(false);
 
   // Deleting a medication slides its row out before the row leaves state.
-  // The store's delete is optimistic — calling it up front would unmount the
-  // row mid-animation — so the row is marked exiting first and the actual
+  // The store's delete is optimistic: calling it up front would unmount the
+  // row mid-animation: so the row is marked exiting first and the actual
   // delete fires from onAnimationEnd. `pendingDeletes` holds the ids still
   // animating plus the callback that reports the result once they land.
   const [exitingMedIds, setExitingMedIds] = useState(new Set());
@@ -866,7 +867,7 @@ export function MedicationReconciliation({ programCode } = {}) {
   const beginMedExit = (ids, onDone) => {
     if (ids.length === 0) return;
     pendingDeletes.current = { remaining: new Set(ids), onDone, failures: 0 };
-    // Reduced motion skips the slide — animationend never fires when
+    // Reduced motion skips the slide: animationend never fires when
     // animations are off, so the rows would otherwise linger forever.
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       ids.forEach(id => finishMedExit(id));
@@ -885,7 +886,7 @@ export function MedicationReconciliation({ programCode } = {}) {
     p.remaining.delete(id);
     if (!ok) p.failures += 1;
     // Only report once the whole batch has settled, and only if at least one
-    // actually deleted — the store surfaces its own error toast per failure.
+    // actually deleted: the store surfaces its own error toast per failure.
     if (p.remaining.size === 0 && p.failures === 0) p.onDone?.();
   };
 
@@ -914,7 +915,7 @@ export function MedicationReconciliation({ programCode } = {}) {
     });
   };
 
-  // Delete confirmation — Figma 2564:46849. Holds the medication pending
+  // Delete confirmation: Figma 2564:46849. Holds the medication pending
   // deletion; null means the dialog is closed.
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -948,7 +949,7 @@ export function MedicationReconciliation({ programCode } = {}) {
 
   // Shared by the top "Add New" container (a fresh manual add), the inline
   // edit of a discharge-extracted row, and the inline edit of a saved
-  // medication — same draft/handlers, just rendered in a different spot
+  // medication: same draft/handlers, just rendered in a different spot
   // depending on `editingExtractedId` / `editingMedId`.
   const formCard = (
     <div className={styles.formCard}>
@@ -961,7 +962,7 @@ export function MedicationReconciliation({ programCode } = {}) {
           <Select
             options={STATUS_OPTIONS}
             value={draft.status}
-            onChange={v => setDraft(d => ({ ...d, status: v }))}
+            onValueChange={v => setDraft(d => ({ ...d, status: v }))}
           />
         </div>
         <div className={styles.formField}>
@@ -985,7 +986,7 @@ export function MedicationReconciliation({ programCode } = {}) {
               <Select
                 options={STOP_REASON_OPTIONS}
                 value={draft.stopReason}
-                onChange={v => setDraft(d => ({ ...d, stopReason: v }))}
+                onValueChange={v => setDraft(d => ({ ...d, stopReason: v }))}
                 placeholder="Select Reason"
               />
             </div>
@@ -1023,8 +1024,8 @@ export function MedicationReconciliation({ programCode } = {}) {
       )}
 
       <div className={styles.formActions}>
-        <Button variant="primary" size="S" onClick={saveDraft} disabled={!canSave}>
-          {saving ? 'Saving…' : 'Save'}
+        <Button size="sm" onClick={saveDraft} disabled={!canSave} loading={saving}>
+          Save
         </Button>
         <span className={styles.formDivider} />
         <button type="button" className={styles.formCancel} onClick={discard} disabled={saving}>
@@ -1042,17 +1043,16 @@ export function MedicationReconciliation({ programCode } = {}) {
           <span className={styles.medHeaderTitle}>Member's Medications</span>
         </div>
         <div className={styles.medHeaderRight}>
-          <Toggle size="S" items={MED_VIEW_ITEMS} active={medView} onChange={setMedView} />
+          <SegmentedControl size="sm" items={MED_VIEW_ITEMS} value={medView} onValueChange={setMedView} />
           <Button
-            variant="tertiary"
-            size="L"
+            variant="soft"
             menuItems={ADD_NEW_MENU_ITEMS}
             menuWidth={250}
             menuAriaLabel="Add medication"
             onMenuSelect={(key) => {
               if (key === 'manual') { setDischargeUploadOpen(false); openContainer(); }
               else if (key === 'discharge') { discard(); setDischargeUploadOpen(true); }
-              else showToast(`${ADD_NEW_MENU_ITEMS.find(i => i.key === key)?.label} — coming soon`);
+              else showToast(`${ADD_NEW_MENU_ITEMS.find(i => i.key === key)?.label}, coming soon`);
             }}
           >
             Add New
@@ -1060,7 +1060,7 @@ export function MedicationReconciliation({ programCode } = {}) {
         </div>
       </div>
 
-      {/* Search phase — no wrapping card, the search bar sits flush in the
+      {/* Search phase: no wrapping card, the search bar sits flush in the
           panel until a med is picked or another "Add New" method is chosen. */}
       {phase === 'search' && !editingExtractedId && (
         <div className={styles.panelEnter}>
@@ -1086,7 +1086,7 @@ export function MedicationReconciliation({ programCode } = {}) {
               items={results.map(m => ({
                 key: m.id,
                 label: (m.dosageForm || m.route)
-                  ? `${m.displayName} — ${[m.dosageForm, m.route].filter(Boolean).join(', ').toLowerCase()}`
+                  ? `${m.displayName}, ${[m.dosageForm, m.route].filter(Boolean).join(', ').toLowerCase()}`
                   : m.displayName,
               }))}
               onSelect={(key) => pickMed(results.find(m => m.id === key))}
@@ -1097,7 +1097,7 @@ export function MedicationReconciliation({ programCode } = {}) {
         </div>
       )}
 
-      {/* Form phase — a med was picked; card matches Figma 2086:24739.
+      {/* Form phase: a med was picked; card matches Figma 2086:24739.
           When editing an extracted med, its form renders inline in the
           discharge list below instead (see editingExtractedId). */}
       {phase === 'form' && !editingExtractedId && !editingMedId && (
@@ -1118,8 +1118,7 @@ export function MedicationReconciliation({ programCode } = {}) {
                 actions={
                   <>
                     <Button
-                      variant="primary"
-                      size="S"
+                      size="sm"
                       leadingIconElement={<AIIcon size={14} />}
                       disabled={extracting}
                       onClick={() => extractMeds(file)}
@@ -1139,7 +1138,7 @@ export function MedicationReconciliation({ programCode } = {}) {
         </div>
       )}
 
-      {/* Discharge updates callout — the entry point banked for this flow;
+      {/* Discharge updates callout: the entry point banked for this flow;
           now live once "Extract Meds" has produced results. */}
       {extractedMeds && extractedMeds.length > 0 && (
         <>
@@ -1192,10 +1191,12 @@ export function MedicationReconciliation({ programCode } = {}) {
                           </>
                         )}
                       </div>
-                      {noteExpanded[m.id] && m.note && (
-                        <div className={styles.noteLine}>
-                          <span className={styles.noteLabel}>Note:</span> {m.note}
-                        </div>
+                      {m.note && (
+                        <CollapsibleContent open={!!noteExpanded[m.id]} className={styles.noteCollapse}>
+                          <div className={styles.noteLine}>
+                            <span className={styles.noteLabel}>Note:</span> {m.note}
+                          </div>
+                        </CollapsibleContent>
                       )}
                     </div>
                     <div className={styles.extractedActions}>
@@ -1224,10 +1225,10 @@ export function MedicationReconciliation({ programCode } = {}) {
         </>
       )}
 
-      {/* Medications — table (columns) or card (Figma 7211:452572) view */}
+      {/* Medications: table (columns) or card (Figma 7211:452572) view */}
       {medications.length === 0 ? (
         <div className={styles.empty}>
-          <RingEmptyState icon="solar:pill-linear" label="No Active Medications" />
+          <EmptyState icon="solar:pill-linear" title="No Active Medications" />
         </div>
       ) : medView === 'card' ? (
         <div className={styles.medCardSection}>
@@ -1264,11 +1265,11 @@ export function MedicationReconciliation({ programCode } = {}) {
                 <div className={styles.medCardNameRow}>
                   <span className={styles.medCardName}>{m.name}</span>
                   {m.source === 'discharge_import' && !viewedNewMedIds.includes(m.id) && (
-                    <Badge tone="primary" size="S" label="New" />
+                    <Badge tone="primary" size="sm" label="New" />
                   )}
                 </div>
                 <div className={styles.medCardMeta}>
-                  {m.status || 'Active'} <span className={styles.extractedDot}>•</span> {m.start} - {m.stop || '—'} <span className={styles.extractedDot}>•</span> {m.sig || '—'}
+                  {m.status || 'Active'} <span className={styles.extractedDot}>•</span> {m.start} - {m.stop || '-'} <span className={styles.extractedDot}>•</span> {m.sig || '-'}
                   {!m.note?.trim() && (
                     <>
                       {' '}<span className={styles.extractedDot}>•</span>{' '}
@@ -1289,7 +1290,7 @@ export function MedicationReconciliation({ programCode } = {}) {
                 </div>
               </div>
               <div className={styles.medCardActions}>
-                {/* Stop/Continue toggle — commented out for now.
+                {/* Stop/Continue toggle: commented out for now.
                 <div className={styles.medStopContinue}>
                   <button
                     type="button"
@@ -1312,7 +1313,7 @@ export function MedicationReconciliation({ programCode } = {}) {
                 */}
                 <ActionButton
                   icon="solar:document-text-linear"
-                  size="S"
+                  size="sm"
                   tooltip={noteTooltip(m)}
                   count={noteCount(m)}
                   onClick={() => toggleNote(m)}
@@ -1377,7 +1378,7 @@ export function MedicationReconciliation({ programCode } = {}) {
                     <Select
                       options={STATUS_OPTIONS}
                       value={cellDraft}
-                      onChange={v => commitCell(m, 'status', v)}
+                      onValueChange={v => commitCell(m, 'status', v)}
                       portal
                     />
                   </span>
@@ -1393,7 +1394,7 @@ export function MedicationReconciliation({ programCode } = {}) {
                       className={styles.cellDateInput}
                     />
                   </span>
-                ) : cellTrigger(m, 'start', m.start || '—')}
+                ) : cellTrigger(m, 'start', m.start || '-')}
               </td>
               <td className={styles.dateCell}>
                 {isEditingCell(m, 'stop') ? (
@@ -1405,7 +1406,7 @@ export function MedicationReconciliation({ programCode } = {}) {
                       className={styles.cellDateInput}
                     />
                   </span>
-                ) : cellTrigger(m, 'stop', m.stop || '—')}
+                ) : cellTrigger(m, 'stop', m.stop || '-')}
               </td>
               <td className={styles.sigCell}>
                 {isEditingCell(m, 'sig') ? (
@@ -1416,7 +1417,7 @@ export function MedicationReconciliation({ programCode } = {}) {
                       aria-label="Sig"
                       onChange={e => setCellDraft(e.target.value)}
                       // mousedown fires before blur, so an outside click has
-                      // already committed and closed by now — guard against
+                      // already committed and closed by now, guard against
                       // committing the same edit twice.
                       onBlur={() => { if (isEditingCell(m, 'sig')) commitCell(m, 'sig'); }}
                       onKeyDown={e => {
@@ -1425,13 +1426,13 @@ export function MedicationReconciliation({ programCode } = {}) {
                       }}
                     />
                   </span>
-                ) : cellTrigger(m, 'sig', m.sig || '—')}
+                ) : cellTrigger(m, 'sig', m.sig || '-')}
               </td>
               <td className={styles.actionsCell}>
                 <div className={styles.actionsInner}>
                   <ActionButton
                     icon="solar:document-text-linear"
-                    size="S"
+                    size="sm"
                     tooltip={noteTooltip(m)}
                     count={noteCount(m)}
                     onClick={() => toggleNote(m)}
@@ -1458,7 +1459,7 @@ export function MedicationReconciliation({ programCode } = {}) {
         </div>
       )}
 
-      {/* Medication Checklist — items from the mock, all boxes start unchecked */}
+      {/* Medication Checklist: items from the mock, all boxes start unchecked */}
       <div className={styles.checklist}>
         <div className={styles.checklistTitle}>
           Medication Checklist
@@ -1475,7 +1476,7 @@ export function MedicationReconciliation({ programCode } = {}) {
         ))}
       </div>
 
-      {/* Delete confirmation — Figma 2564:46849 */}
+      {/* Delete confirmation: Figma 2564:46849 */}
       {deleteTarget && (
         <ConfirmDialog
           variant="error"
@@ -1490,7 +1491,7 @@ export function MedicationReconciliation({ programCode } = {}) {
         />
       )}
 
-      {/* Bulk delete — same dialog, pluralised for the selection. */}
+      {/* Bulk delete: same dialog, pluralised for the selection. */}
       {bulkDeleteOpen && (
         <ConfirmDialog
           variant="error"
@@ -1505,7 +1506,7 @@ export function MedicationReconciliation({ programCode } = {}) {
         />
       )}
 
-      {/* Bulk action bar — Figma 2570:46879. Mirrors the Letters step: sits
+      {/* Bulk action bar: Figma 2570:46879. Mirrors the Letters step: sits
           absolutely over the content column so it stays put while the
           medication list scrolls underneath. */}
       {selectedMedIds.size > 0 && (
@@ -1520,8 +1521,7 @@ export function MedicationReconciliation({ programCode } = {}) {
           </div>
           <span className={styles.bulkDivider} />
           <Button
-            variant="secondary"
-            size="L"
+            variant="outline"
             leadingIcon="solar:forbidden-circle-linear"
             disabled={bulkBusy}
             onClick={stopSelectedMeds}
@@ -1530,14 +1530,14 @@ export function MedicationReconciliation({ programCode } = {}) {
           </Button>
           <ActionButton
             icon="solar:trash-bin-trash-linear"
-            size="S"
+            size="sm"
             tooltip="Delete"
             onClick={() => setBulkDeleteOpen(true)}
           />
           <span className={styles.bulkDivider} />
           <ActionButton
             icon="solar:close-circle-linear"
-            size="S"
+            size="sm"
             tooltip="Clear selection"
             onClick={clearMedSelection}
           />

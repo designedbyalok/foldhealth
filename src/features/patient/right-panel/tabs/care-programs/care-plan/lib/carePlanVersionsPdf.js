@@ -1,4 +1,3 @@
-import { PDFDocument } from 'pdf-lib';
 import { generateCarePlanPdf } from './generateCarePlanPdf';
 
 /**
@@ -14,6 +13,7 @@ import { generateCarePlanPdf } from './generateCarePlanPdf';
 export async function buildCarePlanVersionsPdf(parts, options) {
   const blobs = parts.map(p => generateCarePlanPdf(p.meta, p.selection, options));
   if (blobs.length === 1) return blobs[0];
+  const { PDFDocument } = await import('pdf-lib');
   // Parse every part at once; copy pages in part order so versions stay sequential.
   const [out, sources] = await Promise.all([
     PDFDocument.create(),

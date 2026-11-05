@@ -1,27 +1,48 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { Button } from '../../../components/Button/Button';
 import { Select } from '../../../components/Select/Select';
 import { Input } from '../../../components/Input/Input';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { RadioButton } from '../../../components/RadioButton/RadioButton';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../components/Banner/Banner';
 import { Icon } from '../../../components/Icon/Icon';
 import { Link } from '../../../components/Link/Link';
+import { SendToPicker } from './SendToPicker';
 import { toast } from '../../../components/Toast/sonnerToast';
 import { findOrCreateConversation, addMessage, updateConversation } from './commsRepo';
 import { sendSms } from './commsSend';
 import { useBrowserCall } from './call/useBrowserCall';
 import { useCommsPeople } from './useCommsPeople';
 import { formatPhone, toE164, DIAL_COUNTRIES, isDialable } from './commsUtils';
+import { useAppStore } from '../../../store/useAppStore';
+import {
+  personMeta, withDecisionMakers, pickOneDecisionMaker, verifyForSendTo, DEFAULT_ID_VERIFICATION, verifyBlockers, hasLink, protectSms, SECURE_SMS_PREFIX, SEND_TO_INFO, SEND_TO_PLACEHOLDER, sendToChipLabel,
+} from './sendTo';
+import { VerifyIdCard, VerifyIdReveal } from './VerifyIdCard';
+import { PersonOption, PersonTip } from './PersonOption';
+import {
+  membersForConversation, memberMeta, memberLabel, withForPrefix, keepPrefix, forPrefix,
+} from './smsMembers';
 import styles from './CommsDrawers.module.css';
+
+const firstName = (name) => String(name || '').trim().split(/\s+/)[0];
 
 const PHI_NOTICE = 'Do not send PHI via email or text without verifying and obtaining consent.';
 const SMS_LIMIT = 500;
 
 const patientOption = (p, contact) => ({
   value: String(p.id),
-  label: contact ? `${p.name} (${contact})` : p.name,
+  triggerLabel: contact ? `${p.name} (${contact})` : p.name,
+  searchText: `${p.name} ${contact || ''}`,
+  label: <PersonOption name={p.name} initials={p.initials} meta={contact || personMeta(p)} />,
+});
+
+const memberOption = (m) => ({
+  value: m.id,
+  triggerLabel: memberLabel(m),
+  searchText: m.name,
+  label: <PersonOption name={m.name} initials={m.initials} meta={memberMeta(m)} />,
 });
 
 // ── New Chat (Figma 1:30607) ─────────────────────────────────────────────
@@ -71,14 +92,14 @@ export function NewChatDrawer({ initialType = 'patient', onClose, onCreated, onI
     <Drawer
       title="New Chat"
       onClose={onClose}
-      primaryAction={<Button variant="primary" size="L" onClick={start} disabled={saving}>Start Chat</Button>}
+      primaryAction={<Button onClick={start} disabled={saving}>Start Chat</Button>}
     >
       <div className={styles.form}>
         <Select
           label="Type"
           options={[{ value: 'patient', label: 'Chat with Patient' }, { value: 'internal', label: 'Internal Chat' }]}
           value={type}
-          onChange={setType}
+          onValueChange={setType}
         />
         {type === 'internal' ? (
           <Select
@@ -87,7 +108,7 @@ export function NewChatDrawer({ initialType = 'patient', onClose, onCreated, onI
             searchable
             options={staffOptions}
             value={staffId}
-            onChange={setStaffId}
+            onValueChange={setStaffId}
             placeholder="Select user"
             errorText={touched && !staffId ? 'Choose who to chat with.' : undefined}
           />
@@ -100,7 +121,7 @@ export function NewChatDrawer({ initialType = 'patient', onClose, onCreated, onI
             searchable
             options={patients.map(p => patientOption(p))}
             value={patientId}
-            onChange={(v) => {
+            onValueChange={(v) => {
               setPatientId(v);
               const p = patients.find(x => String(x.id) === v);
               if (p && !groupName) setGroupName(`Care for ${p.name}`);
@@ -128,7 +149,7 @@ export function NewChatDrawer({ initialType = 'patient', onClose, onCreated, onI
             disabled={!patient}
             options={staffOptions}
             value={members}
-            onChange={setMembers}
+            onValueChange={setMembers}
             placeholder="Select user"
           />
           <Input label="Family Members" disabled placeholder="Search Patient Family Member" />
@@ -156,27 +177,102 @@ export function NewSmsDrawer({ onClose, onSent, initialPatient }) {
       .map(p => patientOption(p, formatPhone(p.phone)));
     if (typedNumber.replace(/\D/g, '').length >= 10) list.unshift({ value: `num:${typedNumber}`, label: `Send to ${formatPhone(typedNumber)}` });
     if (to && !list.some(o => o.value === to)) {
-      const p = patients.find(x => String(x.id) === to);
+      // Opened for a patient (row menu, patient page): keep them listed even
+      // before the patients load, or when they aren't in that list.
+      const p = patients.find(x => String(x.id) === to)
+        || (initialPatient && String(initialPatient.id) === to ? initialPatient : null);
       if (p) list.unshift(patientOption(p, formatPhone(p.phone)));
       else if (to.startsWith('num:')) list.unshift({ value: to, label: formatPhone(to.slice(4)) });
     }
     return list;
-  }, [patients, query, typedNumber, to]);
+  }, [patients, query, typedNumber, to, initialPatient]);
 
   const recipient = to.startsWith('num:')
     ? { id: null, name: formatPhone(to.slice(4)), phone: to.slice(4) }
-    : patients.find(p => String(p.id) === to);
+    : (patients.find(p => String(p.id) === to)
+      || (initialPatient && String(initialPatient.id) === to ? initialPatient : undefined));
+
+  // Send To (as in Compose Email): once a patient is picked, the text can go to
+  // them and/or their recorded contacts; someone without a phone can't be picked.
+  const patient = recipient?.id ? recipient : null;
+  const contacts = useAppStore(st => (patient ? st.patientContacts[patient.id] : null));
+  const fetchPatientContacts = useAppStore(st => st.fetchPatientContacts);
+  useEffect(() => { if (patient?.id) fetchPatientContacts(patient.id); }, [patient?.id, fetchPatientContacts]);
+  const people = patient ? [
+    { value: 'patient', label: patient.name, phone: patient.phone, email: patient.email, dob: patient.dob, type: 'Patient', meta: personMeta(patient), initials: patient.initials },
+    ...(contacts ? withDecisionMakers(contacts) : []).map(c => ({ value: c.id, label: c.name, phone: c.phone, email: c.email, dob: c.dob, type: c.type, missing: c.missing, meta: personMeta(c) })),
+  ] : [];
+  // Starts with the member picked; their contacts are added on purpose.
+  const memberPick = (id) => (id && !id.startsWith('num:') ? ['patient'] : []);
+  const [picked, setPicked] = useState(() => memberPick(to));
+  const [logForId, setLogForId] = useState(null);
+  const [appliedTag, setAppliedTag] = useState(null);
+  const [pickedFor, setPickedFor] = useState(to);
+  if (pickedFor !== to) { setPickedFor(to); setPicked(memberPick(to)); setLogForId(null); setAppliedTag(null); setBody(b => withForPrefix(b, null)); }
+  // Send To only shows when the member has other people on record (care
+  // giver, decision maker…); otherwise the text goes to the member.
+  const hasRoles = !!patient && (contacts || []).length > 0;
+  const targets = hasRoles
+    ? people.filter(o => picked.includes(o.value) && o.phone)
+    : recipient?.phone ? [{ label: recipient.name, phone: recipient.phone }] : [];
+  const updatePicked = (raw) => {
+    const next = pickOneDecisionMaker(raw, picked, id => people.find(o => o.value === id)?.type);
+    // Anyone but the patient turns Verify identity on; patient only, off.
+    const on = verifyForSendTo(next, picked);
+    if (on !== null) setVerifyId(x => ({ ...x, on }));
+    setPicked(next);
+  };
+
+  // Verify ID only matters once the text has a link, so it shows up then.
+  // A typed number has no name or date of birth on record to check.
+  const [verifyId, setVerifyId] = useState(DEFAULT_ID_VERIFICATION);
+  // Only when Send To shows (the member has other people on record).
+  // Protect links only matters once the text goes to someone besides the patient.
+  const withOthers = hasRoles && targets.some(t => t.value !== 'patient');
+  const protect = withOthers && verifyId.on && hasLink(body);
+  const blockers = protect
+    ? verifyBlockers(verifyId, targets.map(t => (patient ? { ...t, name: t.label } : { phone: t.phone })))
+    : [];
+
+  // A number several members share (FCS-5677): the SMS is logged for one.
+  const members = recipient?.phone ? membersForConversation({
+    patient_id: recipient.id, patient_name: recipient.name, patient_phone: recipient.phone,
+  }, patients) : [];
+  const sharedNumber = members.length > 1;
+  const logFor = sharedNumber ? (members.find(m => m.id === logForId) || members[0]) : null;
+  // On a shared number every SMS starts "For Liam: " (FCS-5677): it follows
+  // Log For and can't be deleted, so the family always sees who it's for.
+  const tagName = sharedNumber ? logFor.name : null;
+  if (tagName !== appliedTag) {
+    setAppliedTag(tagName);
+    setBody(b => withForPrefix(b, tagName));
+  }
+  const editBody = (value) => setBody(prev => (tagName ? keepPrefix(value, forPrefix(tagName), prev) : value));
+  // The tag alone isn't a message.
+  const hasText = !!(tagName ? body.slice(forPrefix(tagName).length) : body).trim();
+  const limit = protect ? SMS_LIMIT - SECURE_SMS_PREFIX : SMS_LIMIT;
 
   const send = async () => {
     setTouched(true);
-    if (!recipient || !body.trim()) return;
+    if (!recipient || !targets.length || !hasText || blockers.length) return;
     setSending(true);
     const phone = toE164(recipient.phone);
+    const secured = protect ? protectSms(body.trim()) : null;
+    const text = secured ? secured.text : body.trim();
+    const meta = secured ? { verifyId, secureLinks: secured.links } : undefined;
     try {
+      // One thread for the patient; each picked person gets the text.
       const conv = await findOrCreateConversation('sms', { ...recipient, phone }, { patient_phone: phone });
-      const msg = await sendSms({ conversation: conv, sender: { id: me?.id, name: me?.name }, to: phone, body: body.trim() });
-      if (msg?.status === 'failed') toast.error(`SMS not sent: ${msg.failure_reason}`);
-      else toast.success('SMS sent');
+      const sent = [];
+      for (const t of targets) {
+        sent.push(await sendSms({
+          conversation: conv, sender: { id: me?.id, name: me?.name }, to: toE164(t.phone), body: text, meta,
+          loggedFor: logFor ? { id: logFor.id, name: logFor.name } : undefined,
+        }));
+      }
+      const failed = sent.filter(m => m?.status === 'failed');
+      if (failed.length) toast.error(`SMS not sent: ${failed[0].failure_reason}`);
+      else toast.success('SMS Sent Successfully');
       onSent(conv);
     } catch {
       toast.error('Could not send the SMS.');
@@ -188,36 +284,89 @@ export function NewSmsDrawer({ onClose, onSent, initialPatient }) {
     <Drawer
       title="New SMS"
       onClose={onClose}
-      primaryAction={<Button variant="primary" size="L" onClick={send} disabled={sending || !recipient || !body.trim()}>Send</Button>}
+      primaryAction={(
+        <Button
+          onClick={send}
+          disabled={sending || !recipient || !targets.length || !hasText || blockers.length > 0}
+          disabledReason={
+            sending ? null
+              : !recipient ? 'Pick a member or type a number'
+                : !targets.length ? (hasRoles ? 'Pick who to text' : "This member doesn't have a phone number on record")
+                  : !hasText ? 'Write a message'
+                    : blockers.length ? "Someone in Send To can't verify their identity"
+                      : null
+          }
+        >
+          Send
+        </Button>
+      )}
     >
       <div className={styles.form}>
-        <InfoBar>{PHI_NOTICE}</InfoBar>
-        <Select label="Send Via" required options={[{ ...line, label: `${line.label} (Default)` }]} value="default" onChange={() => {}} />
+        <Banner>{PHI_NOTICE}</Banner>
+        <Select label="Send Via" required options={[{ ...line, label: `${line.label} (Default)` }]} value="default" onValueChange={() => {}} />
         <Select
-          label="Member"
+          label="Patient"
           required
           showInfo
           infoText="Search a patient, or type a phone number."
+          disabled={!!initialPatient}
           searchable
           query={query}
           onQueryChange={setQuery}
           options={options}
           value={to}
-          onChange={setTo}
+          onValueChange={setTo}
           placeholder="Search Member or Type Number"
           searchPlaceholder="Search Member or Type Number"
           emptyText="No patients with a phone number match"
           errorText={touched && !recipient ? 'Choose who to text.' : undefined}
         />
+        {hasRoles && (
+          <SendToPicker
+            showInfo
+            infoText={SEND_TO_INFO}
+            options={people.map(o => ({
+              value: o.value,
+              triggerLabel: sendToChipLabel(o.label, o.type),
+              searchText: `${o.label} ${o.type} ${o.phone || ''}`,
+              disabled: !o.phone,
+              label: <PersonOption name={o.label} initials={o.initials} meta={o.phone ? formatPhone(o.phone) : 'No phone number on record'} tag={o.type} />,
+              badgeTooltip: <PersonTip name={o.label} initials={o.initials} email={o.phone ? formatPhone(o.phone) : ''} tag={o.type} />,
+            }))}
+            value={picked}
+            onValueChange={updatePicked}
+            placeholder={SEND_TO_PLACEHOLDER}
+            errorText={touched && !targets.length ? 'Choose who to text.' : undefined}
+          >
+            {/* Protect links sits under Send To, the choice that calls for it,
+                so it's set before writing and doesn't jump in mid-typing. */}
+            <VerifyIdReveal show={withOthers}>
+              <VerifyIdCard value={verifyId} onChange={setVerifyId} blockers={blockers} hint="Applies to any links in the message" />
+            </VerifyIdReveal>
+          </SendToPicker>
+        )}
+        {sharedNumber && (
+          <Select
+            label="Log this SMS For"
+            required
+            helperText={`${firstName(recipient?.name)}'s number is shared by ${members.length} people. Choose who to log this SMS for.`}
+            options={members.map(memberOption)}
+            value={logFor.id}
+            onValueChange={setLogForId}
+          />
+        )}
         <div className={styles.field}>
           <span className={styles.label}>Message <span className={styles.req} aria-hidden="true" /></span>
           <Textarea
+            highlightLinks
             value={body}
-            onChange={e => setBody(e.target.value.slice(0, SMS_LIMIT))}
+            onChange={e => editBody(e.target.value.slice(0, limit))}
             placeholder="Type message here"
             rows={6}
           />
-          <div className={styles.counter}>{body.length}/{SMS_LIMIT}</div>
+          <div className={styles.counter}>
+            <span>{body.length + (protect ? SECURE_SMS_PREFIX : 0)}/{SMS_LIMIT}</span>
+          </div>
         </div>
       </div>
     </Drawer>
@@ -273,7 +422,7 @@ export function VoiceCallDrawer({ onClose, initialMode = 'members', initialNumbe
   return (
     <Drawer title="Voice Call" onClose={onClose}>
       <div className={styles.form}>
-        <Select label="Call Via Line" required options={[{ value: 'default', label: `${line.label} • Browser (Default)` }]} value="default" onChange={() => {}} />
+        <Select label="Call Via Line" required options={[{ value: 'default', label: `${line.label} • Browser (Default)` }]} value="default" onValueChange={() => {}} />
         <div className={styles.field}>
           <span className={styles.label}>To <span className={styles.req} aria-hidden="true" /></span>
           <div className={styles.radios}>
@@ -292,11 +441,12 @@ export function VoiceCallDrawer({ onClose, initialMode = 'members', initialNumbe
               searchable
               options={patients.map(p => patientOption(p, p.phone ? formatPhone(p.phone) : ''))}
               value={patientId}
-              onChange={setPatientId}
+              onValueChange={setPatientId}
+              disabled={!!initialPatient}
               placeholder="Search Member"
               wrapperClassName={styles.grow}
             />
-            <Button variant="primary" size="L" iconOnly leadingIcon="solar:phone-calling-linear" aria-label="Call" disabled={!patientId} onClick={callMember} />
+            <Button iconOnly leadingIcon="solar:phone-calling-linear" aria-label="Call" disabled={!patientId} onClick={callMember} />
           </div>
         ) : (
           <div className={styles.dial}>
@@ -304,7 +454,7 @@ export function VoiceCallDrawer({ onClose, initialMode = 'members', initialNumbe
               <Select
                 options={DIAL_COUNTRIES.map(c => ({ value: c.iso, label: `${c.flag} +${c.code} ${c.iso}` }))}
                 value={country}
-                onChange={setCountry}
+                onValueChange={setCountry}
                 searchable
                 searchPlaceholder="Search country or code"
                 wrapperClassName={styles.country}
@@ -333,7 +483,7 @@ export function VoiceCallDrawer({ onClose, initialMode = 'members', initialNumbe
                 ))}
               </div>
             )}
-            <Button variant="primary" size="L" leadingIcon="solar:phone-calling-linear" className={styles.callBtn} disabled={!isDialable(number, dialCode)} onClick={callNumber}>
+            <Button leadingIcon="solar:phone-calling-linear" className={styles.callBtn} disabled={!isDialable(number, dialCode)} onClick={callNumber}>
               Call
             </Button>
             <span className={styles.dialHint}>Opens your phone to place the call, and logs it here.</span>

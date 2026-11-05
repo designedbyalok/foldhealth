@@ -1,4 +1,4 @@
-/* Agents-table row — composes from the shared row shell so it reads
+/* Agents-table row: composes from the shared row shell so it reads
    identically to every other worklist (hover tint, sticky columns,
    load-in animation, hairline dividers). */
 
@@ -9,7 +9,7 @@
 .td           { composes: td from '../../../components/WorklistShell/WorklistRow.module.css'; }
 .membersTd    { composes: membersTd from '../../../components/WorklistShell/WorklistRow.module.css'; }
 
-/* Primary identity cell — avatar + name + role stack. */
+/* Primary identity cell: avatar + name + role stack. */
 .nameCell {
   display: flex;
   align-items: center;
@@ -56,7 +56,7 @@
   white-space: nowrap;
 }
 /* A <button> so the updater's name opens their profile from the keyboard. It is
-   inline text inside a flex stack, so it keeps shrink-to-fit sizing — only the
+   inline text inside a flex stack, so it keeps shrink-to-fit sizing, only the
    button chrome and text alignment need neutralising. */
 .userLink {
   display: inline;
@@ -74,7 +74,7 @@
   text-decoration: underline;
 }
 
-/* Last Updated By — name on top, date underneath in the secondary tone. */
+/* Last Updated By: name on top, date underneath in the secondary tone. */
 .updatedStack {
   display: flex;
   flex-direction: column;
@@ -90,7 +90,7 @@
   font-weight: 400;
 }
 
-/* Actions cell — the <td> IS the flex container. Dropping the wrapping
+/* Actions cell: the <td> IS the flex container. Dropping the wrapping
    div lets the cell shrink to its content, so the sticky-right column
    only takes up exactly what the ActionButtons + dividers need.
    Right padding is 0 so the last icon (More) sits flush with the row's
@@ -102,11 +102,11 @@
   gap: 6px;
   white-space: nowrap;
   /* Zero right padding so the "More" icon sits flush with the row's
-     right edge — no dead space between the last button and the border. */
+     right edge: no dead space between the last button and the border. */
   padding-right: 0;
 }
 
-/* Status cell — hugs the Switch (~32px) with tight 8px symmetric padding
+/* Status cell: hugs the Switch (~32px) with tight 8px symmetric padding
    so the column shrinks to just what the Switch needs. */
 .statusTd {
   composes: td from '../../../components/WorklistShell/WorklistRow.module.css';

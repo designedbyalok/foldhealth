@@ -1,4 +1,4 @@
-/* PriorityIcon is pure inline SVG — colors live in the fill attributes
+/* PriorityIcon is pure inline SVG: colors live in the fill attributes
    (gradient defs for high/low, flat #FFAB00 for medium, #6F7A90 for none).
    No class styles needed today; this file exists so the component folder
    follows the same jsx + module.css + stories triad the rest of the design

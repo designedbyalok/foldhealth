@@ -1,7 +1,7 @@
 import { Icon } from '../../../components/Icon/Icon';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Avatar } from '../../../components/Avatar/Avatar';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { ASSIGN_TO_DIMENSIONS } from './teamTypeConfig';
 import { HoverCard } from './HoverCard';
 import hoverStyles from './HoverCard.module.css';
@@ -13,7 +13,7 @@ export function UserCard({ member, teamType, showBillableCheck = false, priorUti
   const dims = ASSIGN_TO_DIMENSIONS[teamType] || [];
   const capacity = Number(member.capacityPct) || 0;
   const totalAssigned = (member.assignTo || []).reduce((sum, r) => sum + (Number(r.pct) || 0), 0);
-  // Allow negative — over-allocation is a real state admins need to see.
+  // Allow negative: over-allocation is a real state admins need to see.
   const remaining = capacity - totalAssigned;
   const isOver = remaining < 0;
   const isGlobalOver = priorUtilization > 100;

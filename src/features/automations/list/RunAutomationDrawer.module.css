@@ -1,0 +1,140 @@
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+
+.subtitle {
+  overflow: hidden;
+  font-size: var(--font-base);
+  font-weight: 400;
+  color: var(--neutral-300);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.headerDivider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fieldLabel {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+
+.radios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.listHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: calc(-1 * var(--space-2));
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+
+.clear {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+  cursor: pointer;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-2);
+  border-bottom: 0.5px solid var(--neutral-100);
+  border-radius: var(--space-1);
+  cursor: pointer;
+}
+
+.row:hover {
+  background: var(--primary-25);
+}
+
+.rowOn {
+  background: var(--primary-50);
+}
+
+.rowDisabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.rowDisabled:hover {
+  background: none;
+}
+
+.groupIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0.5px solid var(--primary-100);
+  border-radius: var(--space-2);
+  background: var(--primary-50);
+  color: var(--primary-300);
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+
+.rowName {
+  overflow: hidden;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rowSub {
+  overflow: hidden;
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.note {
+  padding: var(--space-3) var(--space-2);
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}

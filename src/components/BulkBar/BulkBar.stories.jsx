@@ -28,18 +28,18 @@ export default {
     },
     actions: {
       control: 'object',
-      description: 'Custom action buttons — replaces the default cluster.',
+      description: 'Custom action buttons: replaces the default cluster.',
       table: { type: { summary: '{ label, icon?, variant?, onClick }[]' } },
     },
     moreActions: {
       control: 'object',
-      description: 'Overflow menu items — only rendered when `actions` is also provided.',
+      description: 'Overflow menu items: only rendered when `actions` is also provided.',
       table: { type: { summary: '{ label, icon?, variant?, onClick }[]' } },
     },
   },
 };
 
-// The bar is position: fixed at the bottom of the viewport — wrap in a
+// The bar is position: fixed at the bottom of the viewport, wrap in a
 // spacer so it renders inside the story canvas.
 const Stage = ({ children }) => (
   <div style={{ minHeight: 240, position: 'relative', padding: 24 }}>

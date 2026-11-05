@@ -312,7 +312,7 @@
   border-radius: 3px;
 }
 
-/* Uptime tooltip — fixed position, rendered via portal-like placement */
+/* Uptime tooltip: fixed position, rendered via portal-like placement */
 .uptimeTooltip {
   position: fixed;
   background: var(--neutral-0);

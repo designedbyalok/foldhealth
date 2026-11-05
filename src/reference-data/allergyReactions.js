@@ -1,4 +1,4 @@
-// HL7 IPS "Allergy Reaction SNOMED CT IPS Free Set" — a static list, no API
+// HL7 IPS "Allergy Reaction SNOMED CT IPS Free Set", a static list, no API
 // needed. Stands in until the NLM account is approved and reactions can be
 // looked up against the full terminology the way allergens already are.
 //

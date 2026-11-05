@@ -21,7 +21,7 @@
   background: var(--neutral-25);
 }
 
-/* Selected state (Figma Selection variant 1:33197) — applied when this
+/* Selected state (Figma Selection variant 1:33197), applied when this
    card's Activity Log is open in the left panel. Primary-50 fill +
    primary-300 border so the card reads as the active selection. Wins over
    hover/closed backgrounds. */
@@ -133,7 +133,7 @@
   justify-content: center;
 }
 
-/* Figma: Type tag (Suspect / Recapture / Manual / Added in EHR) — same
+/* Figma: Type tag (Suspect / Recapture / Manual / Added in EHR), same
    padding as the HCC chip, 10px Regular, color and bg per status palette. */
 .typeTag {
   display: inline-flex;
@@ -253,7 +253,7 @@
   gap: 8px;
 }
 
-/* Figma: counts cluster — 8px gap between count chips. Each chip is 16px
+/* Figma: counts cluster, 8px gap between count chips. Each chip is 16px
    tall, vertically centred. */
 .counts {
   display: flex;
@@ -262,7 +262,7 @@
   flex: 1;
 }
 
-/* Figma: count chip — 4px gap between icon and number, 14px Regular number
+/* Figma: count chip, 4px gap between icon and number, 14px Regular number
    in Neutral 300, 4px radius. */
 .countBtn {
   display: inline-flex;
@@ -284,7 +284,7 @@
   background: var(--neutral-50);
   opacity: 0.95;
 }
-/* Active state — shown while a count button (e.g. Notes → MEAT) has its
+/* Active state: shown while a count button (e.g. Notes → MEAT) has its
    expansion panel open. Purple-tinted to match the row's primary accent. */
 .countBtnActive,
 .countBtnActive:hover {
@@ -293,7 +293,7 @@
   opacity: 1;
 }
 
-/* Figma: vertical divider between count chips — 0.5px wide, 16px tall. */
+/* Figma: vertical divider between count chips, 0.5px wide, 16px tall. */
 .countDivider {
   width: 0.5px;
   height: 16px;
@@ -309,7 +309,7 @@
   flex-shrink: 0;
 }
 
-/* Figma: Accept/Dismiss button — 24px tall, min-width 32px, 8px horizontal
+/* Figma: Accept/Dismiss button, 24px tall, min-width 32px, 8px horizontal
    padding, 0.5px border, 4px radius, Inter Medium 14px label, 4px gap
    between icon (16px) and label. */
 .actionBtn {
@@ -413,11 +413,11 @@
   border-color: var(--primary-300);
 }
 
-/* (Older `.meatActions` block — used to live inside the legacy `.meatPanel`
+/* (Older `.meatActions` block: used to live inside the legacy `.meatPanel`
    that was replaced by the unified expansion panel. The active rule for the
    unified panel is defined further down with `justify-content: flex-start`.) */
 
-/* ── Dismiss explanation — small line under the badges when ICD is
+/* ── Dismiss explanation: small line under the badges when ICD is
        dismissed with a reason. Mirrors prototype line 1186. ───────────── */
 
 .dismissExplanation {
@@ -468,7 +468,7 @@
   text-align: left;
 }
 
-/* Section header label ("Confidence Score" / "MEAT Note") — same treatment
+/* Section header label ("Confidence Score" / "MEAT Note"): same treatment
    as Fold card titles: 14px Medium, Neutral 400. */
 .expandTitle,
 .expandTitleLg {
@@ -478,7 +478,7 @@
   color: var(--neutral-400);
 }
 
-/* Inline score pill next to "Confidence Score". Fold floor is 12px — bumped
+/* Inline score pill next to "Confidence Score". Fold floor is 12px, bumped
    both score value and label to 12px. */
 .scorePill {
   display: inline-flex;
@@ -555,7 +555,7 @@
   color: var(--neutral-400);
 }
 
-/* Each bullet row — bullet dot · text · trailing link icon, all vertically
+/* Each bullet row: bullet dot · text · trailing link icon, all vertically
    centred on the first text line. Bullet sits on the text baseline. */
 .evidenceRow {
   display: flex;
@@ -581,7 +581,7 @@
   line-height: 1.5;
 }
 
-/* Trailing link icon — flat ghost button, 20×20, transparent by default;
+/* Trailing link icon: flat ghost button, 20×20, transparent by default;
    primary-50 tint on hover. Aligned to the first text line, not the bottom. */
 .evidenceLink {
   display: inline-flex;
@@ -642,7 +642,7 @@
   border-color: var(--primary-300);
 }
 
-/* Sign & Accept · Save as Draft · Copy — left-aligned per request. */
+/* Sign & Accept · Save as Draft · Copy, left-aligned per request. */
 .meatActions {
   display: flex;
   align-items: center;

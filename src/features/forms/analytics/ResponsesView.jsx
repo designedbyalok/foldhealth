@@ -1,5 +1,5 @@
 /**
- * Responses tab — master/detail. Left: searchable respondent list with a
+ * Responses tab: master/detail. Left: searchable respondent list with a
  * Responded/Pending toggle. Right: the selected response, showing every
  * question with its answer + the cross-response average, plus a section per
  * score group with that response's score + interpretation.
@@ -8,10 +8,11 @@ import { useMemo, useState } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
 import { Input } from '../../../components/Input/Input';
 import { Avatar } from '../../../components/Avatar/Avatar';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { leafFields, answerAverage, responseCompletion } from './aggregate';
 import { fieldIcon, initials, fmtDate, formatAnswerValue, SEV_COLOR } from './formAnalyticsUi';
 import styles from './FormAnalyticsPanel.module.css';
+import { isEmptyDash } from '../../../lib/emptyDash';
 
 function QaRow({ field, response, avg }) {
   const v = response.answers?.[field.linkId];
@@ -26,7 +27,7 @@ function QaRow({ field, response, avg }) {
         </span>
         <span className={styles.qaText}>{field.text}{field.required && <span className={styles.qReq}>*</span>}</span>
         {!isLong && <span className={styles.qaAnswer}>Answer:<strong> {formatAnswerValue(v)}</strong></span>}
-        {!isLong && avg !== '—' && <span className={styles.qaAvg}>Avg.: {avg}</span>}
+        {!isLong && !isEmptyDash(avg) && <span className={styles.qaAvg}>Avg.: {avg}</span>}
       </div>
       {isLong && answered && <div className={styles.longAnswer}>{formatAnswerValue(v)}</div>}
     </>
@@ -75,14 +76,14 @@ export function ResponsesView({ fields, scoring, formName, completed, pending })
           <Input placeholder="Search" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
         <div className={styles.respTabs}>
-          <TabStrip
+          <Tabs
             embedded
             items={[
               { key: 'responded', label: 'Responded', count: completed.length },
               { key: 'pending', label: 'Pending', count: pending.length },
             ]}
-            activeKey={tab}
-            onChange={setTab}
+            value={tab}
+            onValueChange={setTab}
           />
         </div>
         <div className={styles.respItems}>
@@ -153,7 +154,7 @@ export function ResponsesView({ fields, scoring, formName, completed, pending })
                     )}
                   </div>
 
-                  {/* Questions — for an in-progress fill, only the answered ones. */}
+                  {/* Questions: for an in-progress fill, only the answered ones. */}
                   {visibleLeaves.map((f) => (
                       <QaRow key={f.linkId} field={f} response={active} avg={answerAverage(f, avgSource)} />
                     ))}
@@ -186,7 +187,7 @@ export function ResponsesView({ fields, scoring, formName, completed, pending })
                               <strong style={{ color: snap?.band ? SEV_COLOR[snap.band.severity] : 'var(--neutral-400)' }}>
                                 {snap?.band?.label || 'NA'}
                               </strong>
-                              <span style={{ marginLeft: 16 }}>Score:<strong>{snap?.value ?? '—'}</strong></span>
+                              <span style={{ marginLeft: 16 }}>Score:<strong>{snap?.value ?? '-'}</strong></span>
                             </span>
                           </div>
                           {members.map((f) => (

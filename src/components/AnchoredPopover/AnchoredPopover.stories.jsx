@@ -20,7 +20,7 @@ export const Default = {
     return (
       <div style={{ padding: 40 }}>
         <span ref={ref}>
-          <Button variant="secondary" size="M" onClick={() => setRect(ref.current.getBoundingClientRect())}>Open</Button>
+          <Button variant="outline" onClick={() => setRect(ref.current.getBoundingClientRect())}>Open</Button>
         </span>
         {rect && (
           <AnchoredPopover anchorRect={rect} align="left" backdrop title="3 items to review" description="A short line saying what to do here." onClose={() => setRect(null)}>

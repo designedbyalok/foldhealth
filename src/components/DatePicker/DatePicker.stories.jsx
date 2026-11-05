@@ -8,7 +8,7 @@ export default {
   parameters: {
     docs: {
       description: {
-        component: 'Fold-brand date field. Delegates to `<Input type="date">` for single-date usage and opens `DatePickerPopover` — a portal-mounted calendar matching Figma Fold-Pixel-1.0 node 8646:12169. Set `mode="range"` for a two-endpoint range picker.',
+        component: 'Fold-brand date field. Delegates to `<Input type="date">` for single-date usage and opens `DatePickerPopover`, a portal-mounted calendar matching Figma Fold-Pixel-1.0 node 8646:12169. Set `mode="range"` for a two-endpoint range picker.',
       },
     },
   },
@@ -77,7 +77,7 @@ export const DateRange = {
 export const WithError = {
   render: () => <SingleWrapper hasError placeholder="Pick a date" />,
   parameters: {
-    docs: { description: { story: 'Error variant — Input\'s error border + ring tokens.' } },
+    docs: { description: { story: 'Error variant: Input\'s error border + ring tokens.' } },
   },
 };
 

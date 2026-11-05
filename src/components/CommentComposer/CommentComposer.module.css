@@ -1,11 +1,11 @@
-/* Shared comment composer — task drawer + DiagPanel Comments tab. */
+/* Shared comment composer: task drawer + DiagPanel Comments tab. */
 .wrap {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-/* Composer in status-change mode — nests the whole card (pills header +
+/* Composer in status-change mode: nests the whole card (pills header +
    textarea + helper + actions) inside a padded container so it visually
    reads as a single "Status Changed" affordance rather than a stack of
    loose elements. Used when a workflow transition (Coder → Record
@@ -62,7 +62,7 @@
   color: var(--neutral-400);
 }
 
-/* Collapsed default — mirrors the Input primitive
+/* Collapsed default: mirrors the Input primitive
    (Fold-Pixel node 25:21239): 32px control, 0.5px neutral-150 border,
    6px radius, hover → neutral-200, focus → primary-300 + primary glow.
    Kept as a contenteditable div (not <textarea>) so inline @mention
@@ -97,7 +97,7 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-300) 12%, transparent);
 }
 
-/* Expanded — grows into a comment body with the native browser
+/* Expanded: grows into a comment body with the native browser
    resize handle in the bottom-right corner. `resize: vertical` only
    paints the handle when overflow ≠ visible, which the base rule already
    sets. */
@@ -108,7 +108,7 @@
   resize: vertical;
 }
 
-/* Placeholder for the contenteditable — driven by data-empty so it also
+/* Placeholder for the contenteditable: driven by data-empty so it also
    suppresses when the field holds only mention chips (which leave no text
    nodes but should still hide the placeholder). */
 .textarea[data-empty='true']::before {
@@ -117,7 +117,7 @@
   pointer-events: none;
 }
 
-/* Inline mention chip inside the contenteditable — contenteditable="false"
+/* Inline mention chip inside the contenteditable, contenteditable="false"
    so the browser treats it as an atomic node (arrow keys jump over it,
    backspace at the boundary removes the whole chip). */
 .mentionChip {
@@ -135,7 +135,7 @@
   gap: 8px;
 }
 
-/* Portaled @mention picker — anchored below (or above) the textarea. */
+/* Portaled @mention picker: anchored below (or above) the textarea. */
 .mentionMenu {
   position: fixed;
   z-index: 9200;

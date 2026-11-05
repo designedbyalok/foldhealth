@@ -21,10 +21,10 @@ export default {
 };
 
 const ROWS = [
-  { id: 1, title: 'BlueCross Blue Shield', meta: ['Self'], status: 'Insured', variant: 'toc-enrolled' },
-  { id: 2, title: 'American Heritage-Workplace Division', meta: ['Mother'], status: 'Expired', variant: 'status-failed' },
-  { id: 3, title: 'Medicare Part B', meta: ['Self'], status: 'Insured', variant: 'toc-enrolled' },
-  { id: 4, title: 'Aetna Dental', meta: ['Self'], status: 'Insured', variant: 'toc-enrolled' },
+  { id: 1, title: 'BlueCross Blue Shield', meta: ['Self'], status: 'Insured', variant: 'success' },
+  { id: 2, title: 'American Heritage-Workplace Division', meta: ['Mother'], status: 'Expired', variant: 'danger' },
+  { id: 3, title: 'Medicare Part B', meta: ['Self'], status: 'Insured', variant: 'success' },
+  { id: 4, title: 'Aetna Dental', meta: ['Self'], status: 'Insured', variant: 'success' },
 ];
 
 export const Default = {
@@ -38,7 +38,7 @@ export const Default = {
           actions={(
             <>
               <FilterChip size="S" singleSelect noClear label="View by" options={['Active', 'All']} selected={['Active']} onChange={() => {}} />
-              <ActionButton icon="solar:add-circle-linear" size="S" tooltip="Add" />
+              <ActionButton icon="solar:add-circle-linear" size="sm" tooltip="Add" />
             </>
           )}
         >
@@ -48,7 +48,7 @@ export const Default = {
               leading={<Avatar type="icon" variant="patient" iconName="solar:umbrella-linear" size="M" />}
               title={r.title}
               meta={r.meta}
-              trailing={<Badge variant={r.variant} label={r.status} />}
+              trailing={<Badge tone={r.variant} label={r.status} />}
             />
           ))}
           <PanelSectionMore expanded={expanded} hiddenCount={ROWS.length - 3} onToggle={() => setExpanded(v => !v)} />

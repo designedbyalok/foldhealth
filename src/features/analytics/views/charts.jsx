@@ -1,5 +1,5 @@
 /**
- * Analytics Charts — Recharts-based, interactive, themed to Fold Health design system
+ * Analytics Charts: Recharts-based, interactive, themed to Fold Health design system
  *
  * All charts:
  * - Responsive (ResponsiveContainer)
@@ -26,7 +26,7 @@ const COLORS = {
   neutral150: 'var(--neutral-150)',    // --grey-150
   neutral100: 'var(--neutral-100)',    // --grey-100
   neutral50: 'var(--neutral-50)',     // --grey-50
-  white: 'var(--neutral-0)',         // page surface — flips for dark mode
+  white: 'var(--neutral-0)',         // page surface, flips for dark mode
 };
 
 const FONT = { fontFamily: "'Inter', sans-serif" };
@@ -71,7 +71,7 @@ const DEFAULT_READMIT_VALUES = [15.2, 15.8, 16.1, 16.4, 16.8, 17.2, 17.0, 17.6, 
 // ═══════════════════════════════════════════════════
 //  1. TCOC Trend Chart (Executive Dashboard)
 // ═══════════════════════════════════════════════════
-const BENCHMARK_PMPM = 910; // $910 PMPM benchmark — only shown in PMPM mode
+const BENCHMARK_PMPM = 910; // $910 PMPM benchmark, only shown in PMPM mode
 
 function TcocLegend({ isTotal }) {
   return (

@@ -12,7 +12,7 @@ export default {
     docs: {
       description: {
         component:
-          'The shared side-panel used across the entire app — patient details, chart review, HCC diagnosis, call queue, preferences, and every other right-side workflow. Standard shape: 700px wide, 8px inset from the viewport edge, 16px border-radius, with a header (title + close button, and optional action buttons in `headerRight`) and a scrollable body. Renders via a portal so it always sits above sticky headers and z-indexed content. Use the `layout` control to flip between the plain body, the split-pane body with a draggable divider (HCC Diagnosis Gaps layout), and the patient-banner variant.',
+          'The shared side-panel used across the entire app, patient details, chart review, HCC diagnosis, call queue, preferences, and every other right-side workflow. Standard shape: 700px wide, 8px inset from the viewport edge, 16px border-radius, with a header (title + close button, and optional action buttons in `headerRight`) and a scrollable body. Renders via a portal so it always sits above sticky headers and z-indexed content. Use the `layout` control to flip between the plain body, the split-pane body with a draggable divider (HCC Diagnosis Gaps layout), and the patient-banner variant.',
       },
     },
   },
@@ -24,7 +24,7 @@ export default {
     },
     firstCta: {
       control: 'boolean',
-      description: 'Renders a primary CTA (`primaryAction`) just before the close button — the drawer inserts the vertical divider for you.',
+      description: 'Renders a primary CTA (`primaryAction`) just before the close button, the drawer inserts the vertical divider for you.',
     },
     secondCta: {
       control: 'boolean',
@@ -37,14 +37,14 @@ export default {
 
 // Buttons the CTA toggles inject into the drawer header. Kept here (not
 // inside each demo) so every variant shares the same look/labels. Drawer
-// header CTAs always render at size="L" — the shell owns the vertical
+// header CTAs always render at size="L", the shell owns the vertical
 // rhythm and any smaller size would fight the close-button height.
 function CtaButtons({ firstCta, secondCta }) {
   const first = firstCta ? (
-    <Button variant="primary" size="L" onClick={() => {}}>Save</Button>
+    <Button onClick={() => {}}>Save</Button>
   ) : null;
   const second = firstCta && secondCta ? (
-    <Button variant="secondary" size="L" onClick={() => {}}>Cancel</Button>
+    <Button variant="outline" onClick={() => {}}>Cancel</Button>
   ) : null;
   return { primaryAction: first, secondaryAction: second };
 }
@@ -53,7 +53,7 @@ const centerStage = { display: 'flex', alignItems: 'center', justifyContent: 'ce
 
 /**
  * Drawer starts closed; the centered trigger opens it. Close via overlay
- * click or the close button — both play the slideOut + overlay fade before
+ * click or the close button: both play the slideOut + overlay fade before
  * unmounting.
  */
 function DrawerDemo({ title = "Drawer Title", firstCta, secondCta, children }) {
@@ -61,7 +61,7 @@ function DrawerDemo({ title = "Drawer Title", firstCta, secondCta, children }) {
   const { primaryAction, secondaryAction } = CtaButtons({ firstCta, secondCta });
   return (
     <div style={centerStage}>
-      <Button variant="primary" onClick={() => setOpen(true)}>
+      <Button onClick={() => setOpen(true)}>
         Open Drawer
       </Button>
       {open && (
@@ -82,7 +82,7 @@ function DefaultDemo({ firstCta, secondCta }) {
   return (
     <DrawerDemo firstCta={firstCta} secondCta={secondCta}>
       <p style={{ color: "var(--neutral-400)", fontSize: 'var(--font-base)', lineHeight: 1.6, margin: 0 }}>
-        This is the shared Drawer component — 700px wide, 8px inset, 16px
+        This is the shared Drawer component, 700px wide, 8px inset, 16px
         border-radius. Used across the entire app for all side panels (call
         queue, detail view, preferences, HCC diagnosis review, etc.).
       </p>
@@ -94,7 +94,7 @@ function DefaultDemo({ firstCta, secondCta }) {
 }
 
 /**
- * Split two-pane body with a draggable divider — the layout the HCC
+ * Split two-pane body with a draggable divider, the layout the HCC
  * Diagnosis Gaps drawer uses (document workspace on the left, ICD cards on
  * the right). The resize interaction is a faithful copy of production:
  * pointer capture pins the drag to the handle, and the right pane is
@@ -114,7 +114,7 @@ function SplitPanesDemo({ firstCta, secondCta }) {
     if (!row) return;
     const rowRect = row.getBoundingClientRect();
     // Pointer capture pins the pointer stream to the handle for the whole
-    // drag — survives the pointer leaving the window (same rationale as
+    // drag: survives the pointer leaving the window (same rationale as
     // DiagPanel's divider).
     const handle = e.currentTarget;
     const { pointerId } = e;
@@ -144,7 +144,7 @@ function SplitPanesDemo({ firstCta, secondCta }) {
 
   return (
     <div style={centerStage}>
-      <Button variant="primary" onClick={() => setOpen(true)}>
+      <Button onClick={() => setOpen(true)}>
         Open Split Drawer
       </Button>
       {open && (
@@ -173,7 +173,7 @@ function SplitPanesDemo({ firstCta, secondCta }) {
               style={rhsWidth != null ? { flex: `0 0 ${rhsWidth}px` } : undefined}
             >
               {/* Banner pinned at the top of the RHS, outside the scrollable
-                  body — matches the production DiagPanel layout. */}
+                  body: matches the production DiagPanel layout. */}
               <PatientBanner
                 initials="DA"
                 name="Devon Alexander"
@@ -187,7 +187,7 @@ function SplitPanesDemo({ firstCta, secondCta }) {
                 {['E11.65 Type 2 diabetes mellitus', 'N18.3 Chronic kidney disease, stage 3', 'I10 Essential hypertension'].map((title, i) => (
                   <div key={title} className={splitStyles.placeholderCard}>
                     <span className={splitStyles.placeholderTitle}>{title}</span>
-                    <Badge variant={i === 0 ? 'toc-oncall' : 'toc-new'} label={i === 0 ? 'Suspect' : 'HCC Linked'} />
+                    <Badge tone={i === 0 ? 'primary' : 'neutral'} label={i === 0 ? 'Suspect' : 'HCC Linked'} />
                     <span className={splitStyles.placeholderLine} style={{ width: '80%' }} />
                     <span className={splitStyles.placeholderLine} style={{ width: '55%' }} />
                   </div>
@@ -206,7 +206,7 @@ function PatientBannerDemo({ firstCta, secondCta }) {
   const { primaryAction, secondaryAction } = CtaButtons({ firstCta, secondCta });
   return (
     <div style={centerStage}>
-      <Button variant="primary" onClick={() => setOpen(true)}>
+      <Button onClick={() => setOpen(true)}>
         Open Drawer
       </Button>
       {open && (
@@ -230,7 +230,7 @@ function PatientBannerDemo({ firstCta, secondCta }) {
         >
           <p style={{ color: "var(--neutral-400)", fontSize: 'var(--font-base)', lineHeight: 1.6, margin: 0 }}>
             The same Drawer shell with a <strong>PatientBanner</strong>
-            passed via the <code>banner</code> prop — it stacks between the
+            passed via the <code>banner</code> prop: it stacks between the
             header and the body, full-width, hugging the drawer edges. This
             is the canonical layout for patient-context drawers (call queue,
             care-gap review, HCC).
@@ -244,7 +244,7 @@ function PatientBannerDemo({ firstCta, secondCta }) {
 export const Playground = {
   render: ({ layout, firstCta, secondCta }) => {
     // Each layout is its own component, so switching the control swaps the
-    // whole subtree — no shared hook order to preserve.
+    // whole subtree: no shared hook order to preserve.
     if (layout === 'split-panes') return <SplitPanesDemo firstCta={firstCta} secondCta={secondCta} />;
     if (layout === 'patient-banner') return <PatientBannerDemo firstCta={firstCta} secondCta={secondCta} />;
     return <DefaultDemo firstCta={firstCta} secondCta={secondCta} />;

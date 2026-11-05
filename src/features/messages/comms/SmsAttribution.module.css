@@ -1,0 +1,223 @@
+/* Log For chip beside the composer's Internal toggle (3540:64859). */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 16rem;
+  height: 1.25rem;
+  padding: var(--space-1);
+  border: 0.5px solid color-mix(in srgb, var(--neutral-300) 10%, transparent);
+  border-radius: var(--space-1);
+  background: var(--neutral-50);
+  font-size: var(--font-sm);
+  line-height: 1.2;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+.chip:hover { background: var(--neutral-100); }
+
+/* Splits the name from the chevron (Figma "Dropdown"). */
+.chipDivider {
+  flex-shrink: 0;
+  width: 0.5px;
+  height: 0.75rem;
+  background: var(--neutral-100);
+}
+.chipDivider + * { margin-left: calc(var(--space-1) / -4); }
+.chip[aria-expanded='true'] { border-color: var(--primary-300); }
+
+.chipText {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Select Member to log SMS for (3540:64613). */
+.modal {
+  max-width: 350px !important;
+  padding: 0 !important;
+  gap: 0;
+  overflow: hidden;
+  border: 0.5px solid var(--neutral-100) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 12px 60px -15px color-mix(in srgb, var(--neutral-500) 6%, transparent) !important;
+}
+
+.modalTitle {
+  padding: var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+  font-size: var(--font-lg);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-400);
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+
+.modalHelper {
+  font-size: var(--font-base);
+  line-height: 1.2;
+  color: var(--neutral-200);
+}
+
+.memberList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-height: 16.5rem;
+  overflow-y: auto;
+}
+
+.memberRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  flex-shrink: 0;
+  padding: var(--space-2);
+  border: 0.5px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.memberRow:hover { background: var(--neutral-50); }
+.memberRowPicked,
+.memberRowPicked:hover {
+  background: var(--primary-50);
+  border-color: var(--primary-200);
+}
+
+.modalFooter {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+.modalFooter > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.member {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+}
+
+.memberAvatar {
+  background: var(--primary-50) !important;
+  border-color: var(--primary-200) !important;
+}
+
+.memberText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  line-height: 1.2;
+}
+
+.memberArrow { flex-shrink: 0; }
+
+.memberName {
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.memberMeta {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+
+/* Figma: the card, rows and avatars all at 100% corner smoothing. */
+@supports (corner-shape: squircle) {
+  .modal { corner-shape: squircle; border-radius: 1rem !important; }
+  .memberRow { corner-shape: squircle; border-radius: 0.5rem; }
+}
+
+/* Select Member to log SMS for, with Apply to (4620:54956). */
+.assignModal { max-width: 450px !important; }
+
+.applySection {
+  padding: var(--space-1) var(--space-3) var(--space-2);
+}
+
+.applyTo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--neutral-100);
+  border-radius: 0.5rem;
+}
+
+.applyToLabel {
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-400);
+}
+
+.applyToList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.applyRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: 2rem;
+  /* A single line sits centred in the 32px row; longer ones grow evenly. */
+  padding: 0.4375rem var(--space-2);
+  border: 0.5px solid transparent;
+  border-radius: 0.25rem;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.applyRow:hover { background: var(--neutral-50); }
+.applyRowPicked,
+.applyRowPicked:hover {
+  background: var(--primary-50);
+  border-color: var(--primary-200);
+}
+
+.applyRadio {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  /* Centred on the first line of the text (14px at 1.2 line height). */
+  margin-top: calc((var(--font-base) * 1.2 - 1rem) / 2);
+  border: 1px solid var(--neutral-200);
+  border-radius: 50%;
+  background: var(--neutral-0);
+}
+/* Picked: a purple disc with a white centre. */
+.applyRowPicked .applyRadio {
+  border: 0.25rem solid var(--primary-300);
+}
+
+.applyLabel {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  line-height: 1.2;
+  color: var(--neutral-300);
+}
+.applyRowPicked .applyLabel { color: var(--neutral-400); }

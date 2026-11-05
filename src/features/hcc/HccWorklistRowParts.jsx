@@ -4,7 +4,7 @@ import { FoldIdTag } from '../../components/FoldIdTag/FoldIdTag';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { Badge } from '../../components/Badge/Badge';
 import { Button } from '../../components/Button/Button';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Icon } from '../../components/Icon/Icon';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
@@ -45,11 +45,11 @@ import {
 } from './HccWorklistRowParts.constants';
 import styles from './HccWorklistRow.module.css';
 export function LastVisitCell({ dos, visits, fromClaim, onClickDate, onClickVisits }) {
-  if (!dos) return <span className={styles.muted}>—</span>;
+  if (!dos) return <span className={styles.muted}>-</span>;
   // Two click targets in one cell:
   //   - The DATE opens the Claim Preview drawer (only when fromClaim).
   //   - The "X of Y Visits" sub-text always opens the all-DOSs popover for
-  //     the patient — that behaviour is independent of the date's source.
+  //     the patient: that behaviour is independent of the date's source.
   return (
     <span className={styles.lastVisitStack}>
       {fromClaim ? (
@@ -78,7 +78,7 @@ export function LastVisitCell({ dos, visits, fromClaim, onClickDate, onClickVisi
 
 export function CreateDateCell({ member, dosState }) {
   const date = member.date;
-  // Once Support AND Coder are both Completed, the SLA window has closed —
+  // Once Support AND Coder are both Completed, the SLA window has closed,
   // show the verdict (✓ SLA Met within the window, ✗ SLA Breached after).
   const supDone = (dosState?.support?.status || member.supS) === 'Completed';
   const cdrDone = (dosState?.coder?.status || member.cdrS) === 'Completed';
@@ -122,7 +122,7 @@ export function HccEvidenceCell({ charts, onClick, onMouseEnter, onMouseLeave, o
     return (
       <Button
         variant="ghost"
-        size="S"
+        size="sm"
         leadingIcon="solar:upload-linear"
         onClick={(e) => { e.stopPropagation(); onUpload?.(); }}
       >
@@ -130,7 +130,7 @@ export function HccEvidenceCell({ charts, onClick, onMouseEnter, onMouseLeave, o
       </Button>
     );
   }
-  // Status line reads per-doc statuses — same source as the doc popover and
+  // Status line reads per-doc statuses: same source as the doc popover and
   // the Doc Review drawer, so the three surfaces never disagree. Uniform
   // (all passed / all failed / all pending) → single dot + label; mixed →
   // per-status dots with counts (●2 ●1). Doc statuses are seeded in
@@ -155,7 +155,7 @@ export function HccEvidenceCell({ charts, onClick, onMouseEnter, onMouseLeave, o
     >
       <Badge
         tone="primary"
-        size="S"
+        size="sm"
         icon="solar:document-text-linear"
         label={String(count)}
         chevron
@@ -178,7 +178,7 @@ export function HccEvidenceCell({ charts, onClick, onMouseEnter, onMouseLeave, o
   );
 }
 
-// Progress stepper (Figma 4680:138476) — one dot per workflow stage
+// Progress stepper (Figma 4680:138476), one dot per workflow stage
 // (Support → Coder → QA → Compliance), coloured by that stage's status:
 // completed = green, active/in-progress = amber, pending = grey. Dots are
 // joined by short connector lines.
@@ -248,7 +248,7 @@ export function ProgressStepper({ member }) {
     };
   }, [pinned]);
 
-  // Terminal Billed state — render a small "Billed" label under the
+  // Terminal Billed state: render a small "Billed" label under the
   // stepper so a reviewer can scan the column at row height and know
   // the record has been submitted, without hovering to open the
   // popover. Rejected already gets its own row treatment; Billed is
@@ -307,17 +307,17 @@ export function ProgressStepper({ member }) {
  * etc. per STATUS_SPEC). The visible bottom-line text is the *date* the role
  * is expected to complete, computed by offsetting member.date by a fixed
  * number of days per role (Support=+0, Coder=+7, Reviewer=+14, Reviewer 2=+21).
- * The status itself isn't spelled out — the row legend at the bottom of the
+ * The status itself isn't spelled out: the row legend at the bottom of the
  * worklist explains the icon meanings.
  */
 export function RoleStatusCell({ name, status, date, role, memberId, dosDate, priorResolved = true }) {
   // Show the "Assign" pill only when the role genuinely has no assignee.
   // The `priorResolved` gate below suppresses the STATUS icon + date until
-  // the upstream role finishes — but the assignee name itself always
+  // the upstream role finishes: but the assignee name itself always
   // renders once picked. Folding priorResolved into the unassigned check
   // (previous behaviour) made a fresh pick invisible on the worklist
   // because the cell kept rendering the Assign pill until Support/Coder
-  // reached Completed — indistinguishable from "the assignment silently
+  // reached Completed: indistinguishable from "the assignment silently
   // failed".
   const unassigned = !name || !status || status === 'Assign';
   if (unassigned) {
@@ -325,17 +325,17 @@ export function RoleStatusCell({ name, status, date, role, memberId, dosDate, pr
   }
   // A status outside the coding workflow (e.g. AWV outreach states ported into
   // the unified worklist) maps to the role's default pending status so the
-  // glyph always matches the legend — Support reads as "Action Needed"
+  // glyph always matches the legend: Support reads as "Action Needed"
   // (its work, document review, is pending); Coder/QA/Compliance read "New".
   const effectiveStatus = hasStatusSpec(status) ? status : (ROLE_DEFAULT_STATUS[role] || 'New');
   const spec = getStatusSpec(effectiveStatus);
   // Status glyph + expected-completion date live OUTSIDE the AssigneeChange
-  // trigger — the pill owns the name only; the status line stacks beneath it
+  // trigger: the pill owns the name only; the status line stacks beneath it
   // so it stays a data affordance, not part of the reassign click target.
   // The `priorResolved` gate suppresses the glyph while an upstream role is
   // still in flight, EXCEPT when this role is in a records-request cycle
   // (Record Requested / Record Received / Returned). Those states are
-  // stand-alone signals worth showing — otherwise a QA row waiting on
+  // stand-alone signals worth showing: otherwise a QA row waiting on
   // Coder-Returned reads as a plain "M. Almeda" with no indicator that
   // records were requested.
   const RECORDS_LOOP_STATES = new Set(['Record Requested', 'Record Received', 'Returned', 'Rebuttal']);
@@ -402,7 +402,7 @@ export function RolePicker({ role, memberId, dosDate, current }) {
 export function OpenIcdsCell({ member, onOpenWithCode }) {
   // Count is derived from the SAME open-ICD list the popover renders, so the
   // badge number always equals the number of ICDs shown on hover. Mandatory
-  // field — never render an empty ICD count: fall back to the record's stored
+  // field: never render an empty ICD count: fall back to the record's stored
   // open-ICD count when there's no detailed gap list (e.g. AWV rows).
   const gapCount = getOpenIcdsForMember(member?.name).all.length;
   const count = gapCount || member?.open || 0;
@@ -434,7 +434,7 @@ export function OpenIcdsCell({ member, onOpenWithCode }) {
     clearTimeout(closeTimer.current);
   }, []);
 
-  if (!count) return <span className={styles.muted}>—</span>;
+  if (!count) return <span className={styles.muted}>-</span>;
 
   return (
     <>
@@ -444,7 +444,7 @@ export function OpenIcdsCell({ member, onOpenWithCode }) {
         onMouseEnter={gapCount ? onEnter : undefined}
         onMouseLeave={gapCount ? onLeave : undefined}
       >
-        <Badge size="M" variant="status-queued" label={String(count)} />
+        <Badge size="md" tone="warning" label={String(count)} />
       </div>
       {hovered && rect && gapCount > 0 && (
         <OpenIcdsHoverPopover
@@ -460,12 +460,12 @@ export function OpenIcdsCell({ member, onOpenWithCode }) {
 }
 
 export function RafImpactCell({ value, ru }) {
-  if (value == null) return <span className={styles.muted}>—</span>;
+  if (value == null) return <span className={styles.muted}>-</span>;
   const positive = ru !== false; // default to positive/up unless explicitly false
   return (
     <Badge
-      tone={positive ? 'success' : 'error'}
-      size="M"
+      tone={positive ? 'success' : 'danger'}
+      size="md"
       label={String(value)}
       trailingIcon={positive ? 'solar:arrow-up-linear' : 'solar:arrow-down-linear'}
     />
@@ -496,7 +496,7 @@ export function AssigneeCell({ member, dosState }) {
   const a = resolveCurrentAssignee(member, dosState, platformUsers);
 
   if (!a || (a.kind === 'active' && !a.name)) {
-    return <span className={styles.muted}>—</span>;
+    return <span className={styles.muted}>-</span>;
   }
 
   if (a.kind === 'billing') {
@@ -584,7 +584,7 @@ export function DosSourceBadge({ entry, date, hasDoc = true, onClick, claimNumbe
     closeTimer.current = setTimeout(() => setPos(null), 200);
   };
 
-  // Click affordance — when the caller wires a handler (e.g. the worklist
+  // Click affordance: when the caller wires a handler (e.g. the worklist
   // opens the Claims tab for a C badge), swallow bubble/default so the
   // surrounding <td>'s row-open handler doesn't fire.
   const handleClick = onClick ? (e) => {

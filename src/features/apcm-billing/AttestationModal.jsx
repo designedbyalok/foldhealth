@@ -35,7 +35,7 @@ export function AttestationModal({ patients = [], onClose, onSubmit }) {
     if (signatureMode === 'type') {
       if (!signature.trim()) e.signature = 'Required';
     } else {
-      // Draw mode — either drew strokes OR selected a previously saved signature.
+      // Draw mode: either drew strokes OR selected a previously saved signature.
       if (!drawnSignature && !selectedSavedId) e.signature = 'Please draw your signature or pick a saved one';
     }
     if (!consent) e.consent = 'Please select an option';
@@ -68,7 +68,7 @@ export function AttestationModal({ patients = [], onClose, onSubmit }) {
   };
 
   // @uiw/react-signature's onPointer fires on each pointer move while
-  // drawing. The first invocation tells us a stroke was started — flip
+  // drawing. The first invocation tells us a stroke was started, flip
   // drawnSignature truthy so validation + download enable.
   const handlePointer = (points) => {
     if (points && points.length > 0) {
@@ -108,14 +108,14 @@ export function AttestationModal({ patients = [], onClose, onSubmit }) {
       title="APCM Billing Attestation"
       onClose={onClose}
       headerRight={
-        <Button variant="primary" size="L" leadingIcon="solar:pen-linear" onClick={handleSubmit}>
+        <Button leadingIcon="solar:pen-linear" onClick={handleSubmit}>
           Submit Attestation
         </Button>
       }
     >
       <div className={styles.body}>
 
-        {/* Patient summary —
+        {/* Patient summary,
             • 1 patient  → show that patient's banner directly
             • N patients → show a count row that expands to reveal banners */}
         {selectedCount === 1 ? (

@@ -6,7 +6,7 @@
 -- server-side store; localStorage handles the offline / anonymous path.
 --
 -- One row per (user, worklist_key). column_order/hidden_cols are
--- string[] of column keys — order is authoritative (columns not listed
+-- string[] of column keys: order is authoritative (columns not listed
 -- fall back to the default order), hidden_cols is the exclusion set.
 
 CREATE TABLE IF NOT EXISTS public.user_worklist_column_prefs (

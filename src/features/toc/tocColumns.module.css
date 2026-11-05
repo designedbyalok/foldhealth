@@ -46,7 +46,7 @@
   min-width: 0;
 }
 
-/* Badge defaults to align-self: center — keep band cells left-aligned. */
+/* Badge defaults to align-self: center, keep band cells left-aligned. */
 .assessmentBtn > * {
   align-self: flex-start;
 }
@@ -152,7 +152,7 @@
   white-space: nowrap;
 }
 
-/* SNP Outreach cell — phone + status + date + attempt dots */
+/* SNP Outreach cell: phone + status + date + attempt dots */
 .outreachCell { display: inline-flex; align-items: flex-start; gap: 6px; }
 .outreachBtn {
   display: inline-flex;

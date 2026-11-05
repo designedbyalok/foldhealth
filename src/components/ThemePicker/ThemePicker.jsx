@@ -5,10 +5,10 @@ import { useAppStore } from '../../store/useAppStore';
 import styles from './ThemePicker.module.css';
 
 /**
- * ThemePicker — dropdown-based theme selector.
+ * ThemePicker: dropdown-based theme selector.
  *
  * Built as a dropdown (rather than a segmented control) so additional themes
- * can be added later — e.g. high-contrast, custom brand palettes — without the
+ * can be added later, e.g. high-contrast, custom brand palettes, without the
  * row blowing out horizontally inside the profile popover.
  *
  * Reads/writes the current theme via useAppStore. All color transitions are

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Receiver-type guardrail — CHANGED-LINES-ONLY enforcement.
+ * Receiver-type guardrail: CHANGED-LINES-ONLY enforcement.
  *
  * Catches calls to Array-only methods on receivers that are not arrays: Sets,
  * Maps, NodeLists, URLSearchParams, FormData. Nothing else in the toolchain
- * sees this class of bug — it type-checks fine, lints fine, builds fine, and
+ * sees this class of bug: it type-checks fine, lints fine, builds fine, and
  * then throws at runtime.
  *
  * It is here because it already shipped. A perf pass rewrote
@@ -22,12 +22,12 @@
  *   --all               scan every file, ignore git (manual audit)
  *
  * Exit 1 if a violation lands on a line this change ADDED or modified.
- * Pre-existing code never blocks anyone — same philosophy as ds-guardrails.
+ * Pre-existing code never blocks anyone: same philosophy as ds-guardrails.
  *
  * Type resolution: for each `name.method(` call we take the NEAREST
  * `const/let/var name = …` at or above that line and read its right-hand side.
  * Using the nearest declaration rather than any declaration in the file is what
- * makes this usable as a gate — `const errors = []` next to the call and a
+ * makes this usable as a gate, `const errors = []` next to the call and a
  * `const errors = new Set()` 1,300 lines away in another function must not be
  * confused for each other.
  */
@@ -108,7 +108,7 @@ function allJsFiles() {
 /**
  * Nearest `const/let/var <name> = <rhs>` at or above `line`, as a type or null.
  * Returns null when the nearest declaration is not one of the tracked types,
- * which is the common case and means "treat as array — fine".
+ * which is the common case and means "treat as array: fine".
  */
 function typeAt(lines, name, line) {
   const declRe = new RegExp(`^\\s*(?:const|let|var)\\s+${name}\\s*=\\s*(.*)$`);
@@ -190,7 +190,7 @@ function main() {
 
   if (!violations.length) process.exit(0);
 
-  console.error('\n✖ Receiver-type guardrail failed — these methods do not exist on the receiver:\n');
+  console.error('\n✖ Receiver-type guardrail failed: these methods do not exist on the receiver:\n');
   const byFile = new Map();
   for (const v of violations) {
     if (!byFile.has(v.file)) byFile.set(v.file, []);
@@ -209,7 +209,7 @@ function main() {
     }
     console.error('');
   }
-  console.error(`${violations.length} violation(s). This class throws at runtime — build and lint cannot see it.\n`);
+  console.error(`${violations.length} violation(s). This class throws at runtime, build and lint cannot see it.\n`);
   process.exit(1);
 }
 

@@ -1,7 +1,7 @@
 import { Select } from '../../../components/Select/Select';
 import { Input } from '../../../components/Input/Input';
 import { Switch } from '../../../components/Switch/Switch';
-import { Collapse } from '../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../components/Collapsible/Collapsible';
 import { Icon } from '../../../components/Icon/Icon';
 import { RECIPIENT_TYPES, VERIFICATION_METHODS, INVALID_ATTEMPT_POLICIES } from './sendTo';
 import styles from './SendToSection.module.css';
@@ -40,7 +40,7 @@ export function SendToSection({ value, onChange, contact, need, error, labelEnd,
         <Select
           options={RECIPIENT_TYPES.map(t => ({ value: t, label: t }))}
           value={value.type}
-          onChange={(type) => onChange({ ...value, type })}
+          onValueChange={(type) => onChange({ ...value, type })}
         />
         {error ? (
           <span className={styles.error} role="alert">
@@ -66,7 +66,7 @@ export function SendToSection({ value, onChange, contact, need, error, labelEnd,
 
       <Switch checked={p.on} onChange={(on) => setP({ on })} label="Protect Link" />
 
-      <Collapse open={p.on}>
+      <CollapsibleContent open={p.on}>
         <div className={styles.protection}>
           <Select
             label="Verification Methods"
@@ -76,7 +76,7 @@ export function SendToSection({ value, onChange, contact, need, error, labelEnd,
             badges
             options={VERIFICATION_METHODS.map(m => ({ value: m.value, label: m.label }))}
             value={p.methods}
-            onChange={(next) => setP({ methods: next, required: Math.min(p.required, Math.max(1, next.length)) })}
+            onValueChange={(next) => setP({ methods: next, required: Math.min(p.required, Math.max(1, next.length)) })}
             placeholder="Select methods"
           />
           <div className={styles.grid}>
@@ -85,13 +85,13 @@ export function SendToSection({ value, onChange, contact, need, error, labelEnd,
               required
               options={confirmOptions}
               value={String(Math.min(p.required, Math.max(1, p.methods.length)))}
-              onChange={(v) => setP({ required: Number(v) })}
+              onValueChange={(v) => setP({ required: Number(v) })}
             />
             <Select
               label="Invalid Attempt Policy"
               options={INVALID_ATTEMPT_POLICIES.map(v => ({ value: v, label: v }))}
               value={p.policy}
-              onChange={(v) => setP({ policy: v })}
+              onValueChange={(v) => setP({ policy: v })}
             />
           </div>
           <Input
@@ -102,7 +102,7 @@ export function SendToSection({ value, onChange, contact, need, error, labelEnd,
             onChange={(e) => setP({ maxAttempts: Math.max(1, Number(e.target.value) || 1) })}
           />
         </div>
-      </Collapse>
+      </CollapsibleContent>
     </div>
   );
 }

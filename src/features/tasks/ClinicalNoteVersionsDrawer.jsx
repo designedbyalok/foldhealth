@@ -6,27 +6,27 @@ import { Icon } from '../../components/Icon/Icon';
 import styles from './ClinicalNoteVersionsDrawer.module.css';
 
 /**
- * ClinicalNoteVersionsDrawer — P3-1 amend history surface.
+ * ClinicalNoteVersionsDrawer: P3-1 amend history surface.
  *
  * Every UPDATE on `clinical_notes` fires the trigger
  * `clinical_notes_version_snapshot` (see
  * `supabase/clinical_note_versions_migration.sql`) which persists the
  * prior row into `clinical_note_versions`. Until now no UI ever
- * surfaced those rows — the audit trail existed in the DB but a
+ * surfaced those rows: the audit trail existed in the DB but a
  * reviewer had no way to see it.
  *
  * This drawer:
  *   • Fetches `clinical_note_versions.eq('note_id', note.id)` on open.
  *   • Renders a reverse-chronological timeline: version #, status pill,
  *     author / reviewer / signer, when it was captured.
- *   • Each row expands to show the payload as pretty JSON — no diff
+ *   • Each row expands to show the payload as pretty JSON, no diff
  *     algorithm yet, just a snapshot so reviewers can verify what
  *     changed field-by-field. (Diff is a follow-up; the raw payload
  *     is enough for compliance walkthroughs.)
  *
  * Props:
- *   • note    — the current clinical_notes JS row (needs .id at minimum)
- *   • onClose — dismisses the drawer
+ *   • note: the current clinical_notes JS row (needs .id at minimum)
+ *   • onClose: dismisses the drawer
  */
 export function ClinicalNoteVersionsDrawer({ note, onClose }) {
   const fetchClinicalNoteVersions = useAppStore(s => s.fetchClinicalNoteVersions);
@@ -83,7 +83,7 @@ export function ClinicalNoteVersionsDrawer({ note, onClose }) {
         {loaded && versions.length === 0 && (
           <div className={styles.state}>
             <Icon name="solar:notes-linear" size={24} color="var(--neutral-200)" />
-            No prior versions — this note hasn&apos;t been amended.
+            No prior versions: this note hasn&apos;t been amended.
           </div>
         )}
 
@@ -95,7 +95,7 @@ export function ClinicalNoteVersionsDrawer({ note, onClose }) {
               const status = v.status || 'unknown';
               const statusTone = status === 'signed' ? 'success'
                 : status === 'submitted' ? 'warning'
-                : 'grey';
+                : 'neutral';
               return (
                 <li key={key} className={styles.versionRow}>
                   <button
@@ -105,7 +105,7 @@ export function ClinicalNoteVersionsDrawer({ note, onClose }) {
                     aria-expanded={isOpen}
                   >
                     <span className={styles.versionNumber}>v{v.version}</span>
-                    <Badge tone={statusTone} size="S" label={statusLabel(status)} />
+                    <Badge tone={statusTone} size="sm" label={statusLabel(status)} />
                     <span className={styles.versionMeta}>
                       <span className={styles.versionActor}>
                         {v.signedByName || v.reviewerName || v.authorName || 'Unknown'}

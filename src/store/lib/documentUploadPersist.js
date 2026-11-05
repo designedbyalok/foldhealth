@@ -65,6 +65,9 @@ export async function persistProgramDocument(doc, file) {
       file_url:     fileUrl,
       storage_path: storagePath,
       ext:          extOf(file?.name || doc.name),
+      // Only patient Documents tab uploads send it, so program uploads keep
+      // working before program_documents_category_migration.sql runs.
+      ...(doc.category ? { category: doc.category } : {}),
     });
     if (error) reportPersistFailure(`persistProgramDocument.insert(${doc.id})`, error);
   } catch (e) {
@@ -80,6 +83,10 @@ export async function persistProgramDocumentUpdate(id, patch) {
   if ('type' in patch) row.type = patch.type;
   if ('updatedBy' in patch) row.updated_by = patch.updatedBy;
   if ('updatedDate' in patch) row.updated_date = patch.updatedDate;
+  // Patient app visibility (supabase/patient_documents_migration.sql).
+  if ('sharedWithPatient' in patch) row.shared_with_patient = !!patch.sharedWithPatient;
+  if ('sharedBy' in patch) row.shared_by = patch.sharedBy;
+  if ('sharedAt' in patch) row.shared_at = patch.sharedAt;
   if (Object.keys(row).length === 0) return;
   const { error } = await supabase.from('program_documents').update(row).eq('id', id);
   if (error) reportPersistFailure(`persistProgramDocumentUpdate(${id})`, error);

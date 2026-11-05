@@ -24,7 +24,7 @@
   flex-shrink: 0;
 }
 
-/* Leading status icon — sits directly inside the pill, color matches the
+/* Leading status icon: sits directly inside the pill, color matches the
    pill's text color. Replaces the earlier filled-circle "dot" so each
    status reads with its iconographic identity (sparkle / clock / etc.) */
 .iconLeading {

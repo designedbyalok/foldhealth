@@ -33,7 +33,7 @@ export function DiagPanelViewHeader(p) {
       <div className={styles.dosRow}>
         <div className={styles.dosRowLeft}>
           <span className={[styles.createdLabel, styles.hideBelow540].join(' ')}>Created :</span>
-          <span className={styles.createdDate}>{member.date || '—'}</span>
+          <span className={styles.createdDate}>{member.date || '-'}</span>
           {slaVerdict ? (
             <span className={[styles.dueTag, styles.hideBelow460].join(' ')} style={{ color: slaVerdict.colorVar }}>
               <Icon name={slaVerdict.icon} size={12} color={slaVerdict.colorVar} /> {slaVerdict.label}
@@ -44,7 +44,7 @@ export function DiagPanelViewHeader(p) {
             </span>
           )}
           <span className={[styles.dosRowDivider, styles.hideBelow540].join(' ')} />
-          {/* Stage pill — hover opens the Review Progress popover; the ring
+          {/* Stage pill: hover opens the Review Progress popover; the ring
               is a real progress indicator driven by the engine state. */}
           <span
             ref={pillRef}
@@ -54,7 +54,7 @@ export function DiagPanelViewHeader(p) {
             onClick={onPillClick}
             role="button"
             tabIndex={0}
-            aria-label={`${pillLabel} — review ${Math.round(reviewProgress * 100)}% complete. Hover or click for details.`}
+            aria-label={`${pillLabel}: review ${Math.round(reviewProgress * 100)}% complete. Hover or click for details.`}
             aria-expanded={!!pillRect}
           >
             <ProgressRing progress={reviewProgress} size={16} stroke={2} />
@@ -86,11 +86,11 @@ export function DiagPanelViewHeader(p) {
             disabled={stageLocked || isDosRejected || isDosBilled}
             disabledReason={(() => {
               const supStatus = dosState?.support?.status || member?.supS;
-              if (isDosRejected) return 'Record was Rejected upstream — no downstream action';
-              if (isDosBilled) return 'Record has been billed — no further edits allowed';
+              if (isDosRejected) return 'Record was Rejected upstream: no downstream action';
+              if (isDosBilled) return 'Record has been billed: no further edits allowed';
               if (recordsRequestLockReason) return recordsRequestLockReason;
-              if (supStatus === 'Insufficient') return 'Support marked the documents Insufficient — nothing to code yet';
-              if (supStatus === 'Reject' || supStatus === 'Rejected') return 'Support rejected this DOS — no downstream action';
+              if (supStatus === 'Insufficient') return 'Support marked the documents Insufficient: nothing to code yet';
+              if (supStatus === 'Reject' || supStatus === 'Rejected') return 'Support rejected this DOS: no downstream action';
               return 'Support and Coder must complete their work first';
             })()}
           />

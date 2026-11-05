@@ -1,4 +1,4 @@
-/* Story-only styles for the "Split Panes" Drawer variant — mirrors the
+/* Story-only styles for the "Split Panes" Drawer variant: mirrors the
    HCC DiagPanel split layout (LeftWorkspace | resizeHandle | rightPane)
    so the story demonstrates the exact production interaction. */
 
@@ -21,7 +21,7 @@
   font-size: var(--font-md);
 }
 
-/* RHS column — the PatientBanner sits at the top OUTSIDE the scrollable
+/* RHS column: the PatientBanner sits at the top OUTSIDE the scrollable
    body (mirrors the production DiagPanel right pane), so it stays pinned
    while the cards below scroll. */
 .rightPane {
@@ -43,7 +43,7 @@
   overflow-y: auto;
 }
 
-/* Draggable divider — same recipe as DiagPanel.module.css: 1px visible
+/* Draggable divider: same recipe as DiagPanel.module.css: 1px visible
    line, ::before extends the hit area 4px into each pane, ::after is the
    hover grip. */
 .resizeHandle {

@@ -101,7 +101,7 @@ export function GroupDetailDrawer() {
   const ctaLabel = isNew ? 'Create' : 'Update';
 
   const headerRight = (
-    <Button variant="primary" size="L" onClick={async () => {
+    <Button onClick={async () => {
       if (!groupName.trim()) { showToast('Group name is required'); return; }
       const userNames = [];
       for (const u of selectedUsers) {
@@ -160,7 +160,7 @@ export function GroupDetailDrawer() {
               { value: 'phoenix', label: 'Phoenix' },
             ]}
             value={location}
-            onChange={setLocation}
+            onValueChange={setLocation}
             placeholder="Choose the location"
           />
         </div>

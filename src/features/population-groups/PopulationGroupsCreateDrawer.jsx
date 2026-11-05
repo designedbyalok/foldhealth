@@ -35,7 +35,7 @@ export function PopulationGroupsCreateDrawer({ vm, onMemberAdded, onGroupCreated
           }}
           headerRight={(
             <>
-              <Button variant="primary" size="L" disabled={!canSave} onClick={() => { if (canSave) saveGroup(); }}>
+              <Button disabled={!canSave} onClick={() => { if (canSave) saveGroup(); }}>
                 {editGroupId ? 'Save' : 'Create'}
               </Button>
               <span className="pg-header-divider" />
@@ -63,7 +63,7 @@ export function PopulationGroupsCreateDrawer({ vm, onMemberAdded, onGroupCreated
             // Only the fields this drawer actually edits may change. It used
             // to hardcode filterType to 'static-csv' and derive the counts
             // from the chips, so renaming a Dynamic group silently converted
-            // it to a CSV group and zeroed its active/inactive counts — the
+            // it to a CSV group and zeroed its active/inactive counts, the
             // edit persisted, but persisted the wrong row. A Dynamic group's
             // membership comes from its rule, not from this drawer.
             const isStatic = (editingGroup.type || 'Static') === 'Static';
@@ -109,10 +109,10 @@ export function PopulationGroupsCreateDrawer({ vm, onMemberAdded, onGroupCreated
             </div>
             <div style={{ display:'flex', gap:8, width:'100%' }}>
               <div style={{ flex:1, minWidth:0 }}>
-                <Button variant="secondary" size="L" fullWidth onClick={() => setShowCloseConfirm(false)}>Cancel</Button>
+                <Button variant="outline" fullWidth onClick={() => setShowCloseConfirm(false)}>Cancel</Button>
               </div>
               <div style={{ flex:1, minWidth:0 }}>
-                <Button variant="danger" size="L" fullWidth onClick={() => { setShowCloseConfirm(false); closeModal(); }}>Quit Anyway</Button>
+                <Button variant="soft" tone="danger" fullWidth onClick={() => { setShowCloseConfirm(false); closeModal(); }}>Quit Anyway</Button>
               </div>
             </div>
           </div>
@@ -137,10 +137,10 @@ export function PopulationGroupsCreateDrawer({ vm, onMemberAdded, onGroupCreated
             </div>
             <div style={{ display:'flex', gap:8, width:'100%' }}>
               <div style={{ flex:1, minWidth:0 }}>
-                <Button variant="secondary" size="L" fullWidth onClick={() => { setShowSaveConfirm(false); closeModal(); }}>Discard</Button>
+                <Button variant="outline" fullWidth onClick={() => { setShowSaveConfirm(false); closeModal(); }}>Discard</Button>
               </div>
               <div style={{ flex:1, minWidth:0 }}>
-                <Button variant="primary" size="L" fullWidth onClick={() => { setShowSaveConfirm(false); saveGroup(); }}>Save Changes</Button>
+                <Button fullWidth onClick={() => { setShowSaveConfirm(false); saveGroup(); }}>Save Changes</Button>
               </div>
             </div>
           </div>

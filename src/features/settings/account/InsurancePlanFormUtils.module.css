@@ -106,7 +106,7 @@
 .rangeValue { color: var(--neutral-400); }
 .rangePlaceholder { color: var(--neutral-200); }
 
-/* Active date segment — Primary 300 1px underline flush with the field's bottom edge */
+/* Active date segment: Primary 300 1px underline flush with the field's bottom edge */
 .rangeSegActive {
   border-bottom-color: var(--primary-300);
 }

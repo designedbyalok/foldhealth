@@ -16,7 +16,7 @@
 }
 .text strong { font-weight: 600; color: var(--neutral-300); }
 
-/* card-top — first row inside a wrapping card; drop own border/radius
+/* card-top: first row inside a wrapping card; drop own border/radius
    so the card's border owns the outer edge, keep only a bottom divider. */
 .stripCardTop {
   border: none;

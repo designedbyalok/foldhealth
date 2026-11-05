@@ -68,7 +68,7 @@ export function useApcmBillingTable(searchQuery) {
     }
     if (showToast && markedDesc) {
       const verb = newStatus === 'chronic' ? 'marked chronic' : 'unmarked chronic';
-      showToast(`${icdCode} ${verb} in Athena — ${markedDesc}`);
+      showToast(`${icdCode} ${verb} in Athena: ${markedDesc}`);
     }
   };
 
@@ -210,7 +210,7 @@ export function useApcmBillingTable(searchQuery) {
     }));
     setSelectedIds(prev => [...new Set([...prev, ...targetIds])]);
     if (showToast) {
-      showToast(`${code} marked chronic in Athena — ${targetIds.size} patient${targetIds.size === 1 ? '' : 's'}`);
+      showToast(`${code} marked chronic in Athena: ${targetIds.size} patient${targetIds.size === 1 ? '' : 's'}`);
     }
   };
 

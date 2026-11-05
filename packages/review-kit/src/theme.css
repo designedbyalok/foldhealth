@@ -1,0 +1,87 @@
+/* review-kit theme: the only file with raw values. Everything else reads these
+   variables, so a host app restyles the kit by overriding them anywhere above
+   the dock (:root, body, their own theme wrapper). Selectors here all live
+   under :where(...) so they carry zero specificity, any plain rule wins.
+   Dark mode is set either by `colorMode="dark"` on <ReviewDock /> (which puts
+   data-rk-theme="dark" on the layer) or by the OS when colorMode="auto". */
+:where(:root),
+:where([data-rk-theme='light']) {
+  --rk-font: inherit;
+  --rk-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --rk-font-xs: 11px;
+  --rk-font-sm: 12px;
+  --rk-font-md: 14px;
+  --rk-font-weight-medium: 500;
+
+  --rk-space-1: 4px;
+  --rk-space-2: 8px;
+  --rk-space-3: 12px;
+  --rk-space-4: 16px;
+
+  --rk-radius-sm: 8px;
+  --rk-radius: 18px;
+  --rk-radius-pill: 999px;
+
+  --rk-bg: rgba(255, 255, 255, 0.86);
+  --rk-bg-solid: #ffffff;
+  --rk-bg-subtle: rgba(15, 23, 42, 0.04);
+  --rk-border: rgba(15, 23, 42, 0.08);
+  --rk-glass-blur: 32px;
+  --rk-glass-saturate: 180%;
+  --rk-glass-highlight: rgba(255, 255, 255, 0.55);
+  --rk-text: #0f172a;
+  --rk-text-muted: #6b7280;
+  --rk-accent: #7e4cd9;
+  --rk-accent-soft: #f3edff;
+  --rk-accent-text: #ffffff;
+  --rk-danger: #d92d20;
+  --rk-warning: #dc6803;
+  --rk-success: #12805c;
+
+  --rk-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 24px 60px -12px rgba(15, 23, 42, 0.22);
+  --rk-pick-fill: rgba(126, 76, 217, 0.12);
+  --rk-overlay: rgba(15, 23, 42, 0.55);
+
+  --rk-thumb: 56px;
+
+  --rk-z: 2147482000;
+}
+
+/* Dark palette: swap only the surface and ink. Accent and feedback colors
+   stay the same so the host's brand remains consistent across modes. */
+:where([data-rk-theme='dark']) {
+  --rk-bg: rgba(20, 22, 28, 0.78);
+  --rk-bg-solid: #141620;
+  --rk-bg-subtle: rgba(255, 255, 255, 0.06);
+  --rk-border: rgba(255, 255, 255, 0.08);
+  --rk-glass-highlight: rgba(255, 255, 255, 0.08);
+  --rk-text: #e5e7eb;
+  --rk-text-muted: #9ca3af;
+  --rk-accent-soft: rgba(126, 76, 217, 0.22);
+  --rk-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 24px 60px -12px rgba(0, 0, 0, 0.6);
+  --rk-overlay: rgba(0, 0, 0, 0.6);
+}
+
+/* Auto: follow the OS. Light tokens are already set on :root, so we only
+   need the dark overrides when the OS reports dark. */
+@media (prefers-color-scheme: dark) {
+  :where([data-rk-theme='auto']) {
+    --rk-bg: rgba(20, 22, 28, 0.78);
+    --rk-bg-solid: #141620;
+    --rk-bg-subtle: rgba(255, 255, 255, 0.06);
+    --rk-border: rgba(255, 255, 255, 0.08);
+    --rk-glass-highlight: rgba(255, 255, 255, 0.08);
+    --rk-text: #e5e7eb;
+    --rk-text-muted: #9ca3af;
+    --rk-accent-soft: rgba(126, 76, 217, 0.22);
+    --rk-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.4),
+      0 24px 60px -12px rgba(0, 0, 0, 0.6);
+    --rk-overlay: rgba(0, 0, 0, 0.6);
+  }
+}
+

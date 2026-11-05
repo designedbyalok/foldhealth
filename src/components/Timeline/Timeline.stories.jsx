@@ -26,7 +26,7 @@ export default {
     },
     currentUserName: {
       control: 'text',
-      description: 'Name of the current user — used to render "You" replacements.',
+      description: 'Name of the current user: used to render "You" replacements.',
       table: { type: { summary: 'string' } },
     },
     emptyLabel: {

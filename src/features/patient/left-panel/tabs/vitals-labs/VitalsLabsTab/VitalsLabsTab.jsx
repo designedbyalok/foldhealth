@@ -1,9 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  ComposedChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, ResponsiveContainer,
+  ComposedChart, Bar, Line,
+  XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as ChartTooltip,
 } from '../../../../../../components/LazyRecharts/LazyRecharts';
-import { Toggle } from '../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../components/SegmentedControl/SegmentedControl';
+import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
+import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
+import { ProfileTable } from '../../../../../../components/ProfileTable/ProfileTable';
+import { profileRowClass, profileCellClass } from '../../../../../../components/ProfileTable/profileTableClasses';
+import { useAppStore } from '../../../../../../store/useAppStore';
+import { VITALS, TABLE_SECTIONS, formatVital, vitalsHistory } from '../vitalsConfig';
+import { RecordVitalsDrawer } from '../RecordVitalsDrawer/RecordVitalsDrawer';
 import styles from './VitalsLabsTab.module.css';
 
 function GraphIcon() {
@@ -44,244 +51,208 @@ function cssVar(name) {
 
 // ── Table data ──────────────────────────────────────────────────────────────
 
-const TABLE_SECTIONS = [
-  {
+// Pinned until the patient has pins saved (patient_vital_pins).
+const DEFAULT_PINS = ['bp', 'spo2', 'bg'];
+const shortDate = (iso) => { const [y, m, d] = iso.split('-'); return `${+m}/${+d}/${y.slice(2)}`; };
+
+// Vitals table section from recorded readings: latest three per vital,
+// vitals with no readings at all left out.
+function vitalsSection(history) {
+  return {
     id: 'vitals', title: 'Vitals',
-    rows: [
-      { id: 'bp',   name: 'Blood Pressure',    unit: 'mmHg',        hasPin: true,
-        values: [{ v: '145/90', date: '3/9/25' }, { v: '130/80', date: '3/1/25' }, { v: '120/80', date: '2/24/25' }] },
-      { id: 'spo2', name: 'Blood Oxygen',       unit: '%',           hasPin: true,
-        values: [{ v: '98%', date: '3/9/25' }, { v: '95%', date: '3/1/25', flag: true }, { v: '97%', date: '2/24/25', flag: true }] },
-      { id: 'rr',   name: 'Respiration Rate',   unit: 'breaths/min', hasPin: false,
-        values: [{ v: '22', date: '3/9/25' }, { v: '18', date: '3/1/25' }, { v: '20', date: '2/24/25' }] },
-      { id: 'ht',   name: 'Height',             unit: 'ft',          hasPin: false,
-        values: [{ v: '5\'8"', date: '3/9/25' }, { v: '5\'8"', date: '3/1/25' }, { v: '5\'8"', date: '2/24/25' }] },
-      { id: 'wt',   name: 'Weight',             unit: 'lbs',         hasPin: false,
-        values: [{ v: '150', date: '3/9/25' }, { v: '175', date: '3/1/25', flag: true }, { v: '200', date: '2/24/25', flag: true }] },
-      { id: 'bmi',  name: 'BMI',                unit: 'BMI',         hasPin: false,
-        values: [{ v: '22.5', date: '3/9/25' }, { v: '27.3', date: '3/1/25', flag: true }, { v: '24.1', date: '2/24/25', flag: true }] },
-      { id: 'bt',   name: 'Body Temperature',   unit: '°F',          hasPin: false,
-        values: [{ v: '98.6', date: '3/9/25' }, { v: '99.1', date: '3/1/25' }, { v: '97.8', date: '2/24/25' }] },
-      { id: 'hc',   name: 'Head Circumference', unit: 'cm',          hasPin: false,
-        values: [{ v: '48', date: '3/9/25', flag: true }, { v: '45', date: '3/1/25' }, { v: '44', date: '2/24/25' }] },
-    ],
-  },
-  {
-    id: 'biomarkers', title: 'Biomarkers',
-    rows: [
-      { id: 'bg',  name: 'Blood Glucose',      unit: 'mg/dL', hasPin: true,
-        values: [{ v: '85', date: '3/9/25' }, { v: '92', date: '3/1/25' }, { v: '78', date: '2/24/25' }] },
-      { id: 'rhr', name: 'Resting Heart Rate', unit: 'bpm',   hasPin: false,
-        values: [{ v: '72', date: '3/9/25' }, { v: '68', date: '3/1/25' }, { v: '75', date: '2/24/25', flag: true }] },
-    ],
-  },
-  {
-    id: 'activity', title: 'Activity',
-    rows: [
-      { id: 'steps', name: 'Steps', unit: 'steps', hasPin: false,
-        values: [{ v: '5,675', date: '3/9/25' }, { v: '4,321', date: '3/1/25', flag: true }, { v: '7,890', date: '2/24/25' }] },
-    ],
-  },
-  {
-    id: 'lab', title: 'Lab Monitoring',
-    rows: [
-      { id: 'hba1c', name: 'HbA1c',             unit: '%',     hasPin: false,
-        values: [{ v: '6.8', date: '3/9/25' }, { v: '7.2', date: '3/1/25', flag: true }, { v: '6.5', date: '2/24/25' }] },
-      { id: 'chol',  name: 'Total Cholesterol',  unit: 'mg/dL', hasPin: false,
-        values: [{ v: '185', date: '3/9/25' }, { v: '210', date: '3/1/25', flag: true }, { v: '195', date: '2/24/25' }] },
-      { id: 'ldl',   name: 'LDL',               unit: 'mg/dL', hasPin: false,
-        values: [{ v: '112', date: '3/9/25' }, { v: '130', date: '3/1/25', flag: true }, { v: '118', date: '2/24/25' }] },
-    ],
-  },
-];
+    rows: VITALS.filter(v => history[v.key]?.length).map(v => ({
+      id: v.key, name: v.name, unit: v.unit,
+      values: history[v.key].slice(0, 3).map(r => ({
+        v: formatVital(v.key, r.value, r.value2), date: shortDate(r.recorded_on), flag: r.flag,
+      })),
+    })),
+  };
+}
 
 // ── Graph data ──────────────────────────────────────────────────────────────
+// The graphs draw the same rows as the table: one card per row, in the
+// table's order. Vitals plot every recorded reading; the other sections plot
+// the readings their row lists.
 
-const GRAPH_SECTIONS = [
-  {
-    id: 'vitals', title: 'Vitals', showRangeToggle: true,
-    metrics: [
-      {
-        id: 'bp', title: 'Blood Pressure', unit: 'mmHg',
-        lastRecorded: '03/05/2024 • Apple Watch', type: 'range', shapeStyle: 'bp',
-        yDomain: [0, 160], yTicks: [0, 40, 80, 120, 160], xLabel: 'Days',
-        legend: ['Sys', 'Dia'],
-        stats: [
-          { val: '120/80', unit: 'mmHg', label: 'Weekly Avg' },
-          { val: '105–140', unit: 'mmHg', label: 'Range' },
-          { val: '65–95', unit: 'mmHg', label: 'Diastolic' },
-        ],
-        data: {
-          '1D': [
-            { t: '9am',  dia: 78, range: 44 }, { t: '11am', dia: 80, range: 42 },
-            { t: '1pm',  dia: 82, range: 38 }, { t: '3pm',  dia: 79, range: 43 },
-            { t: '5pm',  dia: 81, range: 39 }, { t: '7pm',  dia: 77, range: 45 },
-          ],
-          '1W': [
-            { t: '12 Mar', dia: 80, range: 40 }, { t: '13 Mar', dia: 85, range: 45 },
-            { t: '14 Mar', dia: 75, range: 40 }, { t: '15 Mar', dia: 80, range: 45 },
-            { t: '16 Mar', dia: 78, range: 40 }, { t: '17 Mar', dia: 76, range: 46 },
-          ],
-          '3W': [
-            { t: 'Feb 26', dia: 78, range: 42 }, { t: 'Mar 5',  dia: 80, range: 40 },
-            { t: 'Mar 12', dia: 82, range: 38 }, { t: 'Mar 17', dia: 76, range: 46 },
-          ],
-        },
-      },
-      {
-        id: 'spo2', title: 'Blood Oxygen', unit: '%',
-        lastRecorded: '03/05/2024 • Apple Watch', type: 'line',
-        yDomain: [85, 100], yTicks: [85, 90, 95, 100], xLabel: 'Days',
-        stats: [
-          { val: '94', unit: '%', label: 'Weekly Avg' },
-          { val: '93–99', unit: '%', label: 'Range' },
-        ],
-        data: {
-          '1D': [
-            { t: '9am',  v: 97 }, { t: '11am', v: 96 },
-            { t: '1pm',  v: 98 }, { t: '3pm',  v: 95 },
-            { t: '5pm',  v: 97 }, { t: '7pm',  v: 96 },
-          ],
-          '1W': [
-            { t: '12 Mar', v: 97 }, { t: '13 Mar', v: 95 },
-            { t: '14 Mar', v: 98 }, { t: '15 Mar', v: 96 },
-            { t: '16 Mar', v: 97 }, { t: '17 Mar', v: 95 },
-          ],
-          '3W': [
-            { t: 'Feb 26', v: 96 }, { t: 'Mar 5',  v: 97 },
-            { t: 'Mar 12', v: 95 }, { t: 'Mar 17', v: 98 },
-          ],
-        },
-      },
-    ],
-  },
-  {
-    id: 'biomarkers', title: 'Biomarkers', showRangeToggle: false,
-    metrics: [
-      {
-        id: 'bg', title: 'Blood Glucose (Daily Average)', unit: 'mg/dL',
-        lastRecorded: '03/05/2024 9:30 AM • Libre',
-        subtitle: 'Data available for 5/7 Days',
-        type: 'line',
-        yDomain: [0, 300], yTicks: [0, 100, 200, 300], xLabel: 'Hours',
-        stats: [
-          { val: '112', unit: 'mg/dL', label: 'Weekly Avg' },
-          { val: '66–217', unit: 'mg/dL', label: 'Range' },
-        ],
-        data: {
-          '1D': [
-            { t: '12am', v: 130 }, { t: '3am', v: 108 }, { t: '6am',  v: 115 },
-            { t: '9am',  v: 185 }, { t: '12pm', v: 245 }, { t: '3pm', v: 175 },
-            { t: '6pm',  v: 130 }, { t: '9pm',  v: 150 },
-          ],
-          '1W': [
-            { t: 'Mon', v: 112 }, { t: 'Tue', v: 135 }, { t: 'Wed', v: 108 },
-            { t: 'Thu', v: 155 }, { t: 'Fri', v: 125 }, { t: 'Sat', v: 148 }, { t: 'Sun', v: 118 },
-          ],
-          '3W': [
-            { t: 'W1', v: 120 }, { t: 'W2', v: 138 }, { t: 'W3', v: 112 },
-          ],
-        },
-      },
-    ],
-  },
-  {
-    id: 'activity', title: 'Activity', showRangeToggle: false,
-    metrics: [
-      {
-        id: 'steps', title: 'Steps', unit: 'steps',
-        lastRecorded: '03/05/2024 • Fitbit',
-        type: 'line',
-        yDomain: [0, 12000], yTicks: [0, 4000, 8000, 12000], xLabel: 'Days',
-        stats: [
-          { val: '5,962', unit: 'steps', label: 'Weekly Avg' },
-          { val: '4,321–7,890', unit: 'steps', label: 'Range' },
-        ],
-        data: {
-          '1D': [
-            { t: '6am', v: 450 }, { t: '9am', v: 2100 }, { t: '12pm', v: 4200 },
-            { t: '3pm', v: 5800 }, { t: '6pm', v: 7200 }, { t: '9pm', v: 7890 },
-          ],
-          '1W': [
-            { t: 'Mon', v: 5675 }, { t: 'Tue', v: 4321 }, { t: 'Wed', v: 7890 },
-            { t: 'Thu', v: 6200 }, { t: 'Fri', v: 5400 }, { t: 'Sat', v: 8100 }, { t: 'Sun', v: 4800 },
-          ],
-          '3W': [
-            { t: 'W1', v: 5200 }, { t: 'W2', v: 6100 }, { t: 'W3', v: 5962 },
-          ],
-        },
-      },
-    ],
-  },
-];
+const DAY_MS = 24 * 60 * 60 * 1000;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/**
+ * The ranges the graphs offer, counted back from a row's latest reading.
+ * Day ranges tick every `tickDays`; month ranges tick on every month, from
+ * the first of the month `months - 1` before the latest one.
+ */
+const dayTick = d => `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+const monthTick = d => MONTHS[d.getUTCMonth()];
+const RANGES = {
+  '1W': { days: 7, tickDays: 1, tick: dayTick },
+  '1M': { days: 30, tickDays: 7, tick: dayTick },
+  '6M': { months: 6, tick: monthTick },
+  '1Y': { months: 12, tick: monthTick },
+};
+const RANGE_KEYS = Object.keys(RANGES);
+const toNum = (v) => Number(String(v ?? '').replace(/,/g, ''));
+// '3/9/25' (the static rows' dates) to '2025-03-09'.
+const mdyToIso = (d) => { const [m, day, y] = d.split('/'); return `20${y}-${m.padStart(2, '0')}-${day.padStart(2, '0')}`; };
+const isoToMdy = (iso) => { const [y, m, d] = iso.split('-'); return `${m}/${d}/${y}`; };
+
+/** A row's readings as chart points, oldest first: { date, t, v, sys?, dia?, flag }. */
+function rowPoints(row, history) {
+  const readings = history[row.id]
+    ? history[row.id].map(r => ({ date: r.recorded_on, value: r.value, value2: r.value2, flag: r.flag }))
+    : row.values.map(val => ({ date: mdyToIso(val.date), value: val.v, flag: val.flag }));
+  return readings
+    .filter(r => r.date)
+    .map((r) => {
+      const point = { date: r.date, ts: Date.parse(r.date), flag: !!r.flag };
+      if (row.id === 'bp') {
+        const sys = toNum(r.value);
+        const dia = toNum(r.value2);
+        return { ...point, sys, dia, range: Math.max(sys - dia, 0), v: sys };
+      }
+      // Height plots in inches so feet and inches share one scale.
+      if (row.id === 'ht') return { ...point, v: toNum(r.value) * 12 + toNum(r.value2) };
+      return { ...point, v: toNum(r.value) };
+    })
+    .filter(p => Number.isFinite(p.v))
+    .reverse();
+}
+
+/**
+ * The range's window, counted back from the row's latest reading, with its
+ * x-axis ticks; and the points inside it.
+ */
+function inRange(points, range) {
+  const { days, tickDays, months } = RANGES[range];
+  if (!points.length) return { points, domain: [0, 1], ticks: [] };
+  const to = points[points.length - 1].ts;
+  const ticks = [];
+  let from;
+  let pad;
+  if (months) {
+    const last = new Date(to);
+    for (let i = months - 1; i >= 0; i -= 1) ticks.push(Date.UTC(last.getUTCFullYear(), last.getUTCMonth() - i, 1));
+    from = ticks[0];
+    pad = 15 * DAY_MS;
+  } else {
+    from = to - days * DAY_MS;
+    for (let t = to; t >= from; t -= tickDays * DAY_MS) ticks.unshift(t);
+    pad = (tickDays * DAY_MS) / 2;
+  }
+  // Room each side, so the first and last readings aren't on the edge.
+  return { points: points.filter(p => p.ts >= from), domain: [from - pad, to + pad], ticks };
+}
+
+const fmt = (n) => (Number.isInteger(n) ? n.toLocaleString() : n.toFixed(1));
+
+/** Latest, average and range of what the chart shows. */
+function rowStats(row, points) {
+  if (!points.length) return [];
+  const last = points[points.length - 1];
+  if (row.id === 'bp') {
+    const avg = (k) => Math.round(points.reduce((sum, p) => sum + p[k], 0) / points.length);
+    return [
+      { val: `${last.sys}/${last.dia}`, label: 'Latest' },
+      { val: `${avg('sys')}/${avg('dia')}`, label: 'Average' },
+      { val: `${Math.min(...points.map(p => p.sys))}–${Math.max(...points.map(p => p.sys))}`, label: 'Systolic Range' },
+      { val: `${Math.min(...points.map(p => p.dia))}–${Math.max(...points.map(p => p.dia))}`, label: 'Diastolic Range' },
+    ];
+  }
+  const values = points.map(p => p.v);
+  const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
+  const show = (v) => (row.id === 'ht' ? `${Math.floor(v / 12)}'${Math.round(v % 12)}"` : fmt(v));
+  return [
+    { val: show(last.v), label: 'Latest' },
+    { val: show(Math.round(avg * 10) / 10), label: 'Average' },
+    { val: `${show(Math.min(...values))}–${show(Math.max(...values))}`, label: 'Range' },
+  ];
+}
 
 // ── Custom range bar shapes ───────────────────────────────────────────────────
 
-function makeRangeShape(topColor, botColor, shapeStyle) {
-  return function RangeShape({ x, y, width, height }) {
-    if (!height || height <= 0 || width == null) return null;
-    const cx = x + width / 2;
+// Blood Pressure: a line from diastolic up to systolic, a circle on top and a
+// diamond at the bottom. Recharts passes the bar's box; colors come as props.
+function RangeShape({ x, y, width, height, topColor, botColor }) {
+  if (!height || height <= 0 || width == null) return null;
+  const cx = x + width / 2;
+  const ds = 3.5;
+  return (
+    <g>
+      <line x1={cx} y1={y} x2={cx} y2={y + height} stroke={topColor} strokeWidth={1.5} />
+      <circle cx={cx} cy={y} r={3.5} fill={topColor} />
+      <path
+        d={`M${cx},${y + height - ds} L${cx + ds},${y + height} L${cx},${y + height + ds} L${cx - ds},${y + height} Z`}
+        fill={botColor}
+      />
+    </g>
+  );
+}
 
-    if (shapeStyle === 'bar') {
-      // Thin filled capsule bar (Blood Oxygen style)
-      const bw = 4;
-      return <rect x={cx - bw / 2} y={y} width={bw} height={Math.max(height, 1)} fill={topColor} rx={2} />;
-    }
-
-    // 'bp' style: line + circle top + diamond bottom
-    const ds = 3.5;
-    return (
-      <g>
-        <line x1={cx} y1={y} x2={cx} y2={y + height} stroke={topColor} strokeWidth={1.5} />
-        <circle cx={cx} cy={y} r={3.5} fill={topColor} />
-        <path
-          d={`M${cx},${y + height - ds} L${cx + ds},${y + height} L${cx},${y + height + ds} L${cx - ds},${y + height} Z`}
-          fill={botColor}
-        />
-      </g>
-    );
-  };
+// A reading's dot, red when the table flags it.
+function LineDot({ cx, cy, payload, color, flagColor }) {
+  if (cx == null || cy == null) return null;
+  return <circle cx={cx} cy={cy} r={payload?.flag ? 3.5 : 2.5} fill={payload?.flag ? flagColor : color} />;
 }
 
 // ── Metric Chart ─────────────────────────────────────────────────────────────
 
-function MetricChart({ metric, range, colors }) {
-  const { topColor, botColor, lineColor, gridColor, axisColor } = colors;
-  const data = metric.data[range] || metric.data['1W'];
-  const RangeShape = makeRangeShape(topColor, botColor, metric.shapeStyle || 'bp');
+function MetricChart({ row, points, domain, ticks, range, colors }) {
+  const { topColor, botColor, lineColor, gridColor, axisColor, flagColor } = colors;
+  const unit = row.id === 'ht' ? 'in' : row.unit;
 
   const axisProps = {
     tick: { fontSize: 'var(--font-xs)', fill: axisColor, fontFamily: 'Inter, sans-serif' },
     axisLine: false,
     tickLine: false,
   };
+  const xAxis = (
+    <XAxis
+      dataKey="ts"
+      type="number"
+      scale="time"
+      domain={domain}
+      ticks={ticks}
+      tickFormatter={ts => RANGES[range].tick(new Date(ts))}
+      interval={0}
+      {...axisProps}
+    />
+  );
+  const tooltip = (
+    <ChartTooltip
+      cursor={{ stroke: gridColor }}
+      formatter={(value, name, item) => (row.id === 'bp' && name === 'range'
+        ? [`${item.payload.sys}/${item.payload.dia} ${unit}`, row.name]
+        : [`${value} ${unit}`, row.name])}
+      labelFormatter={(_, payload) => (payload?.[0] ? isoToMdy(payload[0].payload.date) : '')}
+    />
+  );
 
-  const innerChart = metric.type === 'range' ? (
+  const innerChart = row.id === 'bp' ? (
     <ResponsiveContainer width="100%" height={180}>
-      <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
+      <ComposedChart data={points} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
         <CartesianGrid vertical={false} stroke={gridColor} strokeDasharray="none" />
-        <XAxis dataKey="t" {...axisProps} />
-        <YAxis domain={metric.yDomain} ticks={metric.yTicks} width={40} {...axisProps} tick={{ ...axisProps.tick, dy: 0 }} />
-        <Bar dataKey="dia" stackId="r" fill="transparent" stroke="none" isAnimationActive={false} barSize={24} />
-        <Bar dataKey="range" stackId="r" shape={<RangeShape />} fill="transparent" stroke="none" isAnimationActive={false} barSize={24} />
+        {xAxis}
+        <YAxis domain={[0, 'auto']} width={40} {...axisProps} />
+        {tooltip}
+        <Bar dataKey="dia" stackId="r" fill="transparent" stroke="none" isAnimationActive={false} barSize={8} />
+        <Bar dataKey="range" stackId="r" shape={<RangeShape topColor={topColor} botColor={botColor} />} fill="transparent" stroke="none" isAnimationActive={false} barSize={8} />
       </ComposedChart>
     </ResponsiveContainer>
   ) : (
     <ResponsiveContainer width="100%" height={180}>
-      <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
+      <ComposedChart data={points} margin={{ top: 8, right: 16, bottom: 4, left: 0 }}>
         <CartesianGrid vertical={false} stroke={gridColor} strokeDasharray="none" />
-        <XAxis dataKey="t" {...axisProps} />
-        <YAxis domain={metric.yDomain} ticks={metric.yTicks} width={40} {...axisProps} />
-        <Bar dataKey="__dummy" fill="transparent" stroke="none" isAnimationActive={false} barSize={1} />
+        {xAxis}
+        <YAxis domain={['auto', 'auto']} width={40} {...axisProps} />
+        {tooltip}
         <Line type="monotone" dataKey="v" stroke={lineColor} strokeWidth={1.5}
-          dot={{ r: 2.5, fill: lineColor, strokeWidth: 0 }} activeDot={{ r: 4, fill: lineColor }} />
+          dot={<LineDot color={lineColor} flagColor={flagColor} />} activeDot={{ r: 4, fill: lineColor }} isAnimationActive={false} />
       </ComposedChart>
     </ResponsiveContainer>
   );
 
   return (
     <div className={styles.chartArea}>
-      <span className={styles.yLabel}>{metric.unit}</span>
+      <span className={styles.yLabel}>{unit}</span>
       <div className={styles.chartAreaInner}>{innerChart}</div>
     </div>
   );
@@ -294,141 +265,210 @@ const pick = (sections, keys) => {
   return keys.map(k => byId.get(k)).filter(Boolean);
 };
 
-function TableView({ onOpenGraph, widgets }) {
+const TABLE_COLUMNS = [
+  { key: 'name', label: 'Name', width: 180 },
+  { key: 'values', label: 'Values' },
+];
+
+/**
+ * One table per section (ProfileTable, the app's WorklistShell). Pinned rows sit at the
+ * top of their section; every row can be pinned (its pin shows on hover) or
+ * unpinned (the pinned mark stays visible).
+ */
+function TableView({ sections, onOpenGraph, onAdd, widgets, pinned, onTogglePin }) {
   return (
     <div className={styles.tableView}>
-      {pick(TABLE_SECTIONS, widgets).map(section => (
-        <div key={section.id} className={styles.tableSection}>
-          <div className={styles.tableSectionHeader}>
-            <span className={styles.tableSectionTitle}>{section.title}</span>
-            <div className={styles.tableSectionActions}>
-              <button className={styles.graphIconBtn} onClick={() => onOpenGraph(section.id)} title="View graphs">
-                <GraphIcon />
-              </button>
-              <span className={styles.sectionActionDivider} />
-              <button className={styles.addIconBtn} title="Add">
-                <AddIcon />
-              </button>
-            </div>
-          </div>
-
-          <div className={styles.colHeader}>
-            <span className={styles.colNameLabel}>Name</span>
-            <span className={styles.colValuesLabel}>Values</span>
-          </div>
-
-          {section.rows.map(row => (
-            <div key={row.id} className={styles.row}>
-              <div className={styles.nameCell}>
-                <div className={styles.nameRow}>
-                  <span className={styles.rowName}>{row.name}</span>
-                  {row.hasPin && <TrendIcon />}
-                </div>
-                <span className={styles.rowUnit}>{row.unit}</span>
-              </div>
-              <div className={styles.valuesCell}>
-                {row.values.map((val, i) => (
-                  <div key={i} className={styles.valueItem}>
-                    <span className={`${styles.val} ${val.flag ? styles.valFlag : ''}`}>{val.v}</span>
-                    <span className={styles.valDate}>{val.date}</span>
-                  </div>
-                ))}
+      {pick(sections, widgets).map(section => {
+        const rows = [...section.rows].sort((a, b) => pinned.includes(b.id) - pinned.includes(a.id));
+        return (
+          <div key={section.id} className={styles.tableSection}>
+            <div className={styles.tableSectionHeader}>
+              <span className={styles.tableSectionTitle}>{section.title}</span>
+              <div className={styles.tableSectionActions}>
+                <button className={styles.graphIconBtn} onClick={() => onOpenGraph(section.id)} title="View graphs">
+                  <GraphIcon />
+                </button>
+                <span className={styles.sectionActionDivider} />
+                <button className={styles.addIconBtn} title="Add" onClick={section.id === 'vitals' ? onAdd : undefined}>
+                  <AddIcon />
+                </button>
               </div>
             </div>
-          ))}
-        </div>
-      ))}
+
+            <ProfileTable
+                firstColumnDivider
+                columns={TABLE_COLUMNS}
+                rows={rows}
+                renderRow={(row) => {
+                  const isPinned = pinned.includes(row.id);
+                  return (
+                    <tr key={row.id} className={profileRowClass}>
+                      <td className={`${profileCellClass} ${styles.nameTd}`}>
+                        <div className={styles.nameCell}>
+                          <div className={styles.nameRow}>
+                            <span className={styles.rowName}>{row.name}</span>
+                            <span className={`${styles.pinBtn} ${isPinned ? styles.pinBtnOn : ''}`}>
+                              <ActionButton
+                                size="sm"
+                                tooltip={isPinned ? 'Unpin' : 'Pin to top'}
+                                aria-label={`${isPinned ? 'Unpin' : 'Pin'} ${row.name}`}
+                                active={isPinned}
+                                icon={isPinned ? undefined : 'solar:pin-linear'}
+                                onClick={() => onTogglePin(row.id)}
+                              >
+                                {isPinned ? <TrendIcon /> : undefined}
+                              </ActionButton>
+                            </span>
+                          </div>
+                          <span className={styles.rowUnit}>{row.unit}</span>
+                        </div>
+                      </td>
+                      <td className={profileCellClass}>
+                        <div className={styles.valuesCell}>
+                          {row.values.map((val, i) => (
+                            <div key={i} className={styles.valueItem}>
+                              <span className={`${styles.val} ${val.flag ? styles.valFlag : ''}`}>{val.v}</span>
+                              <span className={styles.valDate}>{val.date}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                }}
+              />
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 // ── Graph View ───────────────────────────────────────────────────────────────
 
-function GraphView({ onClose, widgets }) {
-  const [range, setRange] = useState('1W');
+/** The table's sections as charts: one card per row, pinned rows first. */
+function GraphView({ sections, history, pinned, onClose, onAdd, widgets }) {
+  const [range, setRange] = useState('1M');
 
   const topColor  = cssVar('--chart-1');
   const botColor  = cssVar('--chart-2');
   const lineColor = cssVar('--chart-1');
   const gridColor = cssVar('--neutral-100');
   const axisColor = cssVar('--neutral-300');
-  const colors = { topColor, botColor, lineColor, gridColor, axisColor };
+  const flagColor = cssVar('--status-error');
+  const colors = { topColor, botColor, lineColor, gridColor, axisColor, flagColor };
 
   return (
     <div className={styles.graphView}>
-      {pick(GRAPH_SECTIONS, widgets).map((section, i) => (
-        <div key={section.id}>
-          <div className={styles.graphSectionHeader}>
-            <span className={styles.graphSectionTitle}>{section.title}</span>
-            {section.showRangeToggle && (
-              <Toggle items={['1D', '1W', '3W']} active={range} onChange={setRange} size="S" />
-            )}
-            {i === 0 && (
-              <button className={styles.listIconBtn} onClick={onClose} title="Back to list">
-                <ListIcon />
+      {pick(sections, widgets).map((section, i) => {
+        const rows = [...section.rows].sort((a, b) => pinned.includes(b.id) - pinned.includes(a.id));
+        return (
+          <div key={section.id}>
+            <div className={styles.graphSectionHeader}>
+              <span className={styles.graphSectionTitle}>{section.title}</span>
+              {i === 0 && (
+                <>
+                  <SegmentedControl items={RANGE_KEYS} value={range} onValueChange={setRange} size="sm" />
+                  <button className={styles.listIconBtn} onClick={onClose} title="Back to list">
+                    <ListIcon />
+                  </button>
+                </>
+              )}
+              <button className={styles.addIconBtn} title="Add" onClick={section.id === 'vitals' ? onAdd : undefined}>
+                <AddIcon />
               </button>
-            )}
-            <button className={styles.addIconBtn} title="Add">
-              <AddIcon />
-            </button>
-          </div>
-
-          {section.metrics.map(metric => (
-            <div key={metric.id} className={styles.metricCard}>
-              <div className={styles.metricHeader}>
-                <div className={styles.metricTitleGroup}>
-                  <span className={styles.metricTitle}>{metric.title}</span>
-                  <span className={styles.metricSub}>Last Recorded on {metric.lastRecorded}</span>
-                  {metric.subtitle && <span className={styles.metricSub}>{metric.subtitle}</span>}
-                </div>
-                {metric.legend && (
-                  <div className={styles.legend}>
-                    <span className={styles.legendCircle} style={{ background: topColor }} />
-                    <span className={styles.legendLabel}>{metric.legend[0]}</span>
-                    <span className={styles.legendDiamond} style={{ background: botColor }} />
-                    <span className={styles.legendLabel}>{metric.legend[1]}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className={styles.chartWrap}>
-                <MetricChart metric={metric} range={range} colors={colors} />
-                <div className={styles.xAxisLabel}>{metric.xLabel}</div>
-              </div>
-
-              <div className={styles.statsBar}>
-                {metric.stats.flatMap((stat, i) => [
-                  i > 0 ? <span key={`d${i}`} className={styles.statDivider} /> : null,
-                  <div key={`s${i}`} className={styles.statItem}>
-                    <span className={styles.statLine}>
-                      <span className={styles.statValue}>{stat.val}</span>
-                      {stat.unit && <span className={styles.statUnit}> {stat.unit}</span>}
-                    </span>
-                    <span className={styles.statLabel}>{stat.label}</span>
-                  </div>,
-                ])}
-              </div>
             </div>
-          ))}
-        </div>
-      ))}
+
+            {rows.map((row) => {
+              const all = rowPoints(row, history);
+              const { points, domain, ticks } = inRange(all, range);
+              const stats = rowStats(row, points);
+              const unit = row.id === 'ht' ? '' : row.unit;
+              return (
+                <div key={row.id} className={styles.metricCard}>
+                  <div className={styles.metricHeader}>
+                    <div className={styles.metricTitleGroup}>
+                      <span className={styles.metricTitle}>{row.name}</span>
+                      {all.length > 0 && (
+                        <span className={styles.metricSub}>Last Recorded on {isoToMdy(all[all.length - 1].date)}</span>
+                      )}
+                    </div>
+                    {row.id === 'bp' && (
+                      <div className={styles.legend}>
+                        <span className={styles.legendCircle} style={{ background: topColor }} />
+                        <span className={styles.legendLabel}>Sys</span>
+                        <span className={styles.legendDiamond} style={{ background: botColor }} />
+                        <span className={styles.legendLabel}>Dia</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={styles.chartWrap}>
+                    <MetricChart row={row} points={points} domain={domain} ticks={ticks} range={range} colors={colors} />
+                  </div>
+
+                  {stats.length > 0 && (
+                    <div className={styles.statsBar}>
+                      {stats.flatMap((stat, j) => [
+                        j > 0 ? <span key={`d${j}`} className={styles.statDivider} /> : null,
+                        <div key={`s${j}`} className={styles.statItem}>
+                          <span className={styles.statLine}>
+                            <span className={styles.statValue}>{stat.val}</span>
+                            {unit && <span className={styles.statUnit}> {unit}</span>}
+                          </span>
+                          <span className={styles.statLabel}>{stat.label}</span>
+                        </div>,
+                      ])}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-const VITALS_WIDGETS = TABLE_SECTIONS.map(sec => sec.id);
+// Vitals is built from the patient's readings (vitalsSection), the rest are static.
+const VITALS_WIDGETS = ['vitals', ...TABLE_SECTIONS.map(sec => sec.id)];
 
 /** `widgets`: the section ids to show, in order (More > Customize); all by default. */
-export function VitalsLabsTab({ widgets = VITALS_WIDGETS }) {
+export function VitalsLabsTab({ patientId, widgets = VITALS_WIDGETS }) {
   const [graphOpen, setGraphOpen] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const rows = useAppStore(s => s.patientVitals[patientId]);
+  const loading = useAppStore(s => s.patientVitalsLoading);
+  const fetchPatientVitals = useAppStore(s => s.fetchPatientVitals);
+  const savedPins = useAppStore(s => s.patientVitalPins[patientId]);
+  const fetchPatientVitalPins = useAppStore(s => s.fetchPatientVitalPins);
+  const setPatientVitalPins = useAppStore(s => s.setPatientVitalPins);
+
+  useEffect(() => { fetchPatientVitals(patientId); }, [patientId, fetchPatientVitals]);
+  useEffect(() => { fetchPatientVitalPins(patientId); }, [patientId, fetchPatientVitalPins]);
+
+  const pinned = savedPins ?? DEFAULT_PINS;
+  const togglePin = (id) => setPatientVitalPins(patientId, pinned.includes(id) ? pinned.filter(p => p !== id) : [...pinned, id]);
+
+  const history = useMemo(() => vitalsHistory(rows), [rows]);
+  const sections = useMemo(() => [vitalsSection(history), ...TABLE_SECTIONS], [history]);
+  const openRecord = () => setRecording(true);
+
   return (
     <div className={styles.wrapper}>
-      {graphOpen
-        ? <GraphView onClose={() => setGraphOpen(false)} widgets={widgets} />
-        : <TableView onOpenGraph={() => setGraphOpen(true)} widgets={widgets} />
+      {/* Skeleton only on the first load for this patient, not on refetches. */}
+      {loading && !rows
+        ? <CardSkeleton count={3} />
+        : graphOpen
+          ? <GraphView sections={sections} history={history} pinned={pinned} onClose={() => setGraphOpen(false)} onAdd={openRecord} widgets={widgets} />
+          : <TableView sections={sections} onOpenGraph={() => setGraphOpen(true)} onAdd={openRecord} widgets={widgets} pinned={pinned} onTogglePin={togglePin} />
       }
+      {recording && (
+        <RecordVitalsDrawer patientId={patientId} history={history} onClose={() => setRecording(false)} />
+      )}
     </div>
   );
 }

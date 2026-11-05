@@ -3,6 +3,7 @@ import { useNativeDialog } from '../../hooks/useNativeDialog';
 import { Icon } from '../Icon/Icon';
 import { FilePreview } from '../FilePreview/FilePreview';
 import { resolveFileKind } from '../FilePreview/FilePreview.utils';
+import { parseStorageUrl, signStorageUrl } from '../../lib/storageUrl';
 import styles from './ImagePreviewOverlay.module.css';
 
 const ZOOM_MIN = 0.5;
@@ -10,7 +11,7 @@ const ZOOM_MAX = 3;
 const ZOOM_STEP = 0.25;
 
 /**
- * Full-bleed lightbox for a document — dark toolbar (filename, zoom,
+ * Full-bleed lightbox for a document: dark toolbar (filename, zoom,
  * download, close) over an 80% black scrim. Zoom applies to images only
  * (a PDF/docx/fallback render fills the frame on its own via FilePreview).
  *
@@ -28,9 +29,20 @@ export function ImagePreviewOverlay({ doc, onClose }) {
   const zoomOut = () => setZoom(z => Math.max(ZOOM_MIN, z - ZOOM_STEP));
   const zoomIn = () => setZoom(z => Math.min(ZOOM_MAX, z + ZOOM_STEP));
 
-  const handleDownload = () => {
-    const href = fileUrl || (file ? URL.createObjectURL(file) : null);
+  const handleDownload = async () => {
+    let href = fileUrl || (file ? URL.createObjectURL(file) : null);
     if (!href) return;
+    // A private patient file downloads through a signed URL. `download` on
+    // the link is ignored cross-origin, so Storage's own download param
+    // sets the attachment filename instead.
+    if (parseStorageUrl(fileUrl)) {
+      try {
+        href = `${await signStorageUrl(fileUrl)}&download=${encodeURIComponent(name || 'document')}`;
+      } catch (err) {
+        console.warn('[ImagePreviewOverlay] could not sign the file URL:', err?.message || err);
+        return;
+      }
+    }
     const a = document.createElement('a');
     a.href = href;
     a.download = name || 'document';

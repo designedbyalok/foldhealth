@@ -17,7 +17,7 @@
 /* The nested TabStrip carries its own 16px inline padding for the
    standalone case; zero it out here so tabs align with the drawer
    content column instead of adding a second 16px indent. Also opt
-   out of the strip's overflow-x scroll — the two tabs always fit,
+   out of the strip's overflow-x scroll: the two tabs always fit,
    and leaving it on let the trailing spacer nudge the tabs a few
    px left of the drawer content column on first render. */
 .activityBlock :global([class*="_tabBar_"]) {

@@ -1,15 +1,18 @@
 /* Fold-Pixel 1.0 "Chat Bubble Web" (1288:19893). */
 
-/* Hugs its content up to the max width, then the text wraps. */
+/* Hugs its content between 275px and 500px (Figma min/max), then the text
+   wraps. A call is a narrower card: 200px minimum. */
 .wrap {
   display: flex;
   align-items: stretch;
   gap: var(--space-1);
   align-self: flex-start;
   width: fit-content;
+  min-width: min(17.1875rem, 100%);
   max-width: min(31.25rem, 80%);
 }
 
+.wrapCall { min-width: min(12.5rem, 100%); }
 .wrapRight { align-self: flex-end; }
 .wrapInternal { flex-direction: column; align-self: flex-end; }
 
@@ -19,7 +22,7 @@
   align-items: flex-end;
   padding-bottom: 1.5rem;
   flex-shrink: 0;
-  width: 1.5rem;
+  width: 1.25rem;
 }
 
 .col {
@@ -27,14 +30,8 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
 }
-
-/* The bubble keeps to its own width even when the name row is wider. */
-.wrapRight .col { align-items: flex-end; }
-
-.nameRow,
-.timeRow { align-self: stretch; }
 
 .nameRow {
   display: flex;
@@ -42,6 +39,17 @@
   gap: var(--space-1);
   height: 1.5rem;
   padding: 0 var(--space-1);
+}
+
+.wrapRight .nameRow { gap: var(--space-2); }
+
+/* The ••• menu (Figma "Links", secondary sm): outlined dots at a true 1px
+   (Solar's 24-unit stroke would thin to ~0.67px at 16px). */
+/* Solar sets the stroke on a wrapping <g>, and vector-effect does not
+   inherit, so it goes on the shapes themselves. */
+.menuBtn svg:global(.iconify) :is(path, circle, ellipse, line, polyline, polygon, rect) {
+  stroke-width: 1px !important;
+  vector-effect: non-scaling-stroke;
 }
 
 .name {
@@ -87,6 +95,15 @@
 .bubbleFlush { padding: 0; gap: 0; overflow: hidden; }
 
 .text { white-space: pre-wrap; }
+/* Links inside the text: underlined, info blue; white on the sender's
+   purple bubble. */
+.inlineLink {
+  color: var(--status-info-dark, var(--status-info));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+.bubbleRight .inlineLink { color: var(--neutral-0); }
 
 .timeRow {
   display: flex;
@@ -331,4 +348,24 @@
   line-height: 1.2;
   color: var(--neutral-400);
   white-space: nowrap;
+}
+
+/* Figma draws every bubble surface with 8px corners at 100% corner
+   smoothing: the curve eases in over twice the radius (16px) instead of a
+   circular arc. A squircle over 16px is the CSS match; browsers without
+   corner-shape keep the plain 8px arcs above. */
+@supports (corner-shape: squircle) {
+  .bubbleLeft,
+  .bubbleRight,
+  .internal,
+  .quote,
+  .attachment,
+  .link { corner-shape: squircle; }
+
+  .bubbleLeft { border-radius: var(--space-4) var(--space-4) var(--space-4) 0; }
+  .bubbleRight { border-radius: var(--space-4) var(--space-4) 0 var(--space-4); }
+  .internal,
+  .quote,
+  .attachment,
+  .link { border-radius: var(--space-4); }
 }

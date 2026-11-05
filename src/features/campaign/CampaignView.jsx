@@ -6,7 +6,7 @@ import { Switch } from '../../components/Switch/Switch';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { TopBar } from '../../components/TopBar/TopBar';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
-import { FilterBar } from '../../components/FilterBar/FilterBar';
+import { FilterBar } from '../worklists/FilterBar';
 import { Pagination } from '../../components/Pagination/Pagination';
 import { HeaderCell } from '../../components/HeaderCell/HeaderCell';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
@@ -160,9 +160,9 @@ const CHANNEL_ICONS = {
 };
 
 const HEALTH_VARIANT = {
-  Good:     'health-ok',
-  Moderate: 'health-degraded',
-  Poor:     'status-review',
+  Good:     'success',
+  Moderate: 'warning',
+  Poor:     'warning',
 };
 
 // `primary: true` → chip renders by default in the shared FilterBar.
@@ -257,7 +257,7 @@ function CampaignRow({ campaign, onToggle }) {
 
   return (
     <tr className={styles.row}>
-      {/* 1. S — status */}
+      {/* 1. S: status */}
       <td className={styles.tdS}>
         <StatusIcon section={campaign.section} />
       </td>
@@ -306,19 +306,19 @@ function CampaignRow({ campaign, onToggle }) {
       {/* 7. Health (derived from delivered/opened gap) */}
       <td className={styles.tdHealth}>
         {health
-          ? <Badge variant={HEALTH_VARIANT[health]} label={health} />
+          ? <Badge tone={HEALTH_VARIANT[health]} label={health} />
           : <span className={styles.dash}>-</span>
         }
       </td>
 
       {/* 8. Start Date */}
       <td className={styles.tdDate}>
-        <span className={styles.cellText}>{campaign.startDate || '—'}</span>
+        <span className={styles.cellText}>{campaign.startDate || '-'}</span>
       </td>
 
       {/* 9. Duration */}
       <td className={styles.tdDuration}>
-        <span className={styles.cellText}>{campaign.duration != null ? `${campaign.duration} Days` : '—'}</span>
+        <span className={styles.cellText}>{campaign.duration != null ? `${campaign.duration} Days` : '-'}</span>
       </td>
 
       {/* 10. Action */}
@@ -336,21 +336,21 @@ function CampaignRow({ campaign, onToggle }) {
           )}
           <ActionButton
             icon="solar:pen-linear"
-            size="S"
+            size="sm"
             tooltip="Edit"
             onClick={() => openCampaignBuilder(campaign)}
           />
           <div className={styles.vDivider} />
           <ActionButton
             icon="solar:chart-linear"
-            size="S"
+            size="sm"
             tooltip="Analytics"
             onClick={() => showToast('Analytics – coming soon')}
           />
           <div className={styles.vDivider} />
           <ActionButton
             icon="solar:menu-dots-linear"
-            size="S"
+            size="sm"
             tooltip="More"
             onClick={() => showToast('More – coming soon')}
           />
@@ -388,7 +388,7 @@ export function CampaignView() {
     setLocalData(prev => prev.map(c => c.id === id ? { ...c, enabled: !c.enabled } : c));
   };
 
-  // Live tick — gradually advance progress/delivered/opened on running, enabled campaigns.
+  // Live tick: gradually advance progress/delivered/opened on running, enabled campaigns.
   useEffect(() => {
     if (usingSupa) return;
     const id = setInterval(() => {

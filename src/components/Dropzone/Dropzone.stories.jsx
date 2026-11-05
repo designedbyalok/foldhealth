@@ -6,7 +6,7 @@ export default {
   tags: ['autodocs'],
   parameters: {
     docs: {
-      description: { component: 'Static drop area — accepts a single file (or many) via drop or click-to-browse, validates against `acceptMime`, and calls `onPick` / `onReject`.' },
+      description: { component: 'Static drop area: accepts a single file (or many) via drop or click-to-browse, validates against `acceptMime`, and calls `onPick` / `onReject`.' },
     },
   },
   argTypes: {

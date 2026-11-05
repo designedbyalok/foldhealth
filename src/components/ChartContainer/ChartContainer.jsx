@@ -3,7 +3,7 @@ import { ActionButton } from '../ActionButton/ActionButton';
 import { MenuPopover } from '../MenuPopover/MenuPopover';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
-import { RingEmptyState } from '../RingEmptyState/RingEmptyState';
+import { EmptyState } from '../EmptyState/EmptyState';
 import styles from './ChartContainer.module.css';
 
 /**
@@ -50,15 +50,15 @@ export function ChartContainer({
   const hasMenu = menuItems?.length > 0;
   // Hairline dividers sit between actions, so build the list first.
   const actions = [
-    onExpand && { key: 'expand', node: <ActionButton icon="solar:maximize-square-linear" size="S" tooltip="Expand" aria-label={`Expand ${title}`} state={empty ? 'disabled' : 'active'} onClick={onExpand} /> },
-    onDownload && { key: 'download', node: <ActionButton icon="solar:download-minimalistic-linear" size="S" tooltip="Download" aria-label={`Download ${title}`} state={empty ? 'disabled' : 'active'} onClick={onDownload} /> },
+    onExpand && { key: 'expand', node: <ActionButton icon="solar:maximize-square-linear" size="sm" tooltip="Expand" aria-label={`Expand ${title}`} disabled={empty} onClick={onExpand} /> },
+    onDownload && { key: 'download', node: <ActionButton icon="solar:download-minimalistic-linear" size="sm" tooltip="Download" aria-label={`Download ${title}`} disabled={empty} onClick={onDownload} /> },
     hasMenu && {
       key: 'more',
       node: (
         <span ref={moreRef} className={styles.menuAnchor}>
           <ActionButton
             icon="solar:menu-dots-linear"
-            size="S"
+            size="sm"
             tooltip="More"
             aria-label={`More actions for ${title}`}
             onClick={() => setMenuRect(moreRef.current?.getBoundingClientRect() || null)}
@@ -106,7 +106,7 @@ export function ChartContainer({
       >
         {empty ? (
           <div className={styles.empty}>
-            <RingEmptyState icon="solar:chart-2-linear" label={emptyLabel} iconSize={31} />
+            <EmptyState icon="solar:chart-2-linear" title={emptyLabel} iconSize={31} />
           </div>
         ) : children}
       </div>

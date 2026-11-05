@@ -1,9 +1,9 @@
 /**
- * Custom check icon — use for save, accept, allow, confirm, and pass/success indicators.
+ * Custom check icon: use for save, accept, allow, confirm, and pass/success indicators.
  *
  * @param {object}  props
- * @param {number}  [props.size=24]    — Width & height in px
- * @param {string}  [props.color='#6F7A90'] — Stroke color
+ * @param {number}  [props.size=24], Width & height in px
+ * @param {string}  [props.color='#6F7A90']: Stroke color
  * @param {string}  [props.className]
  */
 export function CheckIcon({ size = 24, color = '#6F7A90', className, ...rest }) {

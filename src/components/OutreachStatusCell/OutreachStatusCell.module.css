@@ -4,10 +4,12 @@
 .dash { font-size: var(--font-base); color: var(--neutral-200); }
 .body { display: inline-flex; flex-direction: column; gap: 0.125rem; }
 .statusOk { font-size: var(--font-md); font-weight: 500; color: var(--status-success); }
+.statusNote { font-size: var(--font-md); font-weight: 500; color: var(--status-warning); }
 .statusFailed { font-size: var(--font-md); font-weight: 500; color: var(--status-error); }
 .date { font-size: var(--font-sm); color: var(--neutral-300); }
 .dots { display: inline-flex; align-items: center; gap: var(--space-1); margin-top: 0.125rem; }
 .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .dotFailed { background: var(--status-error); }
-.dotSuccess { background: var(--status-info); }
+.dotSuccess { background: var(--status-success); }
+.dotNote { background: var(--status-warning); }
 .dotPending { background: var(--neutral-200); }

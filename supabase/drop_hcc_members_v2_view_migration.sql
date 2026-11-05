@@ -17,13 +17,13 @@ BEGIN;
 -- missed, this fails loudly rather than leaving a second source of truth.
 --
 -- ORDER MATTERS: worklist_badge_counts depends on hcc_members_v2, so the
--- dependent badge view is dropped FIRST — dropping hcc_members_v2 first
+-- dependent badge view is dropped FIRST, dropping hcc_members_v2 first
 -- fails with 2BP01 (dependent objects).
 
 -- ── 1) Drop the dependent badge view ───────────────────────────────────────
 -- worklist_badge_counts (SubNav badge integers) selected from
 -- hcc_members_v2. Its only use of the view was `id, member_id` for key
--- normalization — both exist on the base table — so repoint it there and
+-- normalization, both exist on the base table, so repoint it there and
 -- recreate below. Same definition otherwise (security_invoker preserved so
 -- RLS on underlying tables still applies).
 DROP VIEW IF EXISTS public.worklist_badge_counts;

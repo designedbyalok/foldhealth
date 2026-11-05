@@ -1,7 +1,7 @@
 /**
  * Clinical review trail. These tests assert the encoded cutoffs and critical
  * triggers for each validated instrument against its published scoring. A
- * failure here means the clinical content drifted — treat as a patient-safety
+ * failure here means the clinical content drifted, treat as a patient-safety
  * regression, not a flaky test.
  */
 import { describe, it, expect } from 'vitest';
@@ -27,7 +27,7 @@ function answerAll(field, pickValue) {
 
 const byKey = Object.fromEntries(INSTRUMENTS.map((i) => [i.key, i]));
 
-describe('validated instruments — structure', () => {
+describe('validated instruments: structure', () => {
   it.each(INSTRUMENTS.map((i) => [i.key, i]))('%s passes author-time validation (bands tile range)', (_key, inst) => {
     const { form } = formOf(inst);
     const errors = validateForm(form).filter((d) => d.level === 'error');

@@ -6,8 +6,8 @@ import { Textarea } from '../../../../components/Textarea/Textarea';
 import { Switch } from '../../../../components/Switch/Switch';
 import { Select } from '../../../../components/Select/Select';
 import { Input } from '../../../../components/Input/Input';
-import { Toggle } from '../../../../components/Toggle/Toggle';
-import { TabStrip } from '../../../../components/TabStrip/TabStrip';
+import { SegmentedControl } from '../../../../components/SegmentedControl/SegmentedControl';
+import { Tabs } from '../../../../components/Tabs/Tabs';
 import { EditableText } from '../../../../components/EditableText/EditableText';
 import { useAppStore } from '../../../../store/useAppStore';
 import { ImageTileGallery } from '../../../../components/ImageTileGallery/ImageTileGallery';
@@ -33,7 +33,7 @@ import { useComponentImage, loadPng, loadInter } from '../../../email-builder/re
 import clientLogoUrl from '../../../../assets/trailhead-clinics-logo.png';
 import clientLogoWhiteUrl from '../../../../assets/trailhead-clinics-logo-white.png';
 import { EMPLOYER_LOGOS, EMPLOYER_LOGO_HEIGHT, LOGO_ROOM, employerLogoUrl, logoForEmployer } from './employerLogos';
-import { SortableItem, SortableList } from './SortableParts';
+import { SortableItem, SortableList } from '../../../../components/SortableList/SortableList';
 import { PRESET_COVERS, loadCoverImage } from './reportCovers';
 import styles from './PrintReportDrawer.module.css';
 
@@ -85,7 +85,7 @@ const IMAGE_MAX_MB = 5;
 const COVER_ACCEPT = '.png,.jpg,.jpeg,.svg';
 const COVER_MIME = ['image/png', 'image/jpeg', 'image/svg+xml'];
 const DEFAULT_COVER = { kind: 'preset', id: PRESET_COVERS[0].id };
-const TRAILHEAD_SIZE = { width: 190, height: 150, format: 'PNG' };
+const TRAILHEAD_SIZE = { width: 170, height: 150, format: 'PNG' };
 // Send Report menu (hidden for now; kept for when it returns).
 const SEND_OPTIONS = [
   { key: 'email', label: 'Send via Email', icon: 'solar:letter-linear' },
@@ -287,8 +287,8 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
   useEffect(() => {
     let live = true;
     Promise.all([
-      loadPng(clientLogoUrl, 190, 150),
-      loadPng(clientLogoWhiteUrl, 190, 150),
+      loadPng(clientLogoUrl, 510, 450),
+      loadPng(clientLogoWhiteUrl, 510, 450),
       loadInter(),
       // Each employer logo in dark (headers, light covers) and white (dark covers).
       // Trimmed to their visible pixels so the cover centres what shows.
@@ -666,16 +666,13 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
       */}
       <span ref={downloadRef} className={styles.menuAnchor}>
         <Button
-          variant="primary"
-          size="L"
           leadingIcon="solar:download-minimalistic-linear"
           trailingIcon="solar:alt-arrow-down-linear"
-          disabled={savingPage}
           aria-haspopup="menu"
           aria-expanded={downloadOpen}
-          onClick={() => setDownloadOpen(v => !v)}
+          onClick={() => setDownloadOpen(v => !v)} loading={savingPage}
         >
-          {savingPage ? 'Preparing…' : 'Download'}
+          Download
         </Button>
       </span>
       {downloadOpen && (
@@ -702,12 +699,11 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
       <span className={styles.headerDivider} aria-hidden="true" />
       <ActionButton
         icon="solar:printer-minimalistic-linear"
-        size="L"
         tooltip="Print"
         // Below: above the drawer's top edge it would be clipped.
         tooltipBelow
         aria-label="Print report"
-        state={nothingSelected ? 'disabled' : 'active'}
+        disabled={nothingSelected}
         onClick={() => { printBlob(generate().blob); onExport?.('print', `${filename}.pdf`); }}
       />
       <span className={styles.headerDivider} aria-hidden="true" />
@@ -828,12 +824,12 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
                     <Textarea
                       richText
                       value={notes[section.id]?.html || ''}
-                      onChange={(html, plain) => editNote(section.id, html, plain)}
+                      onValueChange={(html, plain) => editNote(section.id, html, plain)}
                       placeholder="Add a note for this section (optional)"
                       aria-label={`Note for ${sectionTitle}`}
                       rows={2}
                       className={styles.noteField}
-                      bottomButton={{ label: 'Remove Note', variant: 'secondary', onClick: () => removeNote(section.id) }}
+                      bottomButton={{ label: 'Remove Note', variant: 'outline', onClick: () => removeNote(section.id) }}
                     />
                   )}
                 </div>
@@ -866,29 +862,29 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
         {/* The filter button sits over the tab row rather than in TabStrip's
             trailing slot: the row scrolls sideways, which would clip its tooltip. */}
         <div className={styles.tabs}>
-          <TabStrip
+          <Tabs
             items={EDITOR_TABS}
-            activeKey={editorTab}
-            onChange={setEditorTab}
+            value={editorTab}
+            onValueChange={setEditorTab}
             fullWidth={false}
           />
           {editorTab === 'widgets' && (
             <span className={styles.tabFilter}>
               <ActionButton
                 icon="solar:refresh-linear"
-                size="S"
+                size="sm"
                 tooltip="Reset order"
                 tooltipBelow
                 tooltipLeft
                 aria-label="Reset sections and widgets to the dashboard order"
-                state={orderCustomized ? 'active' : 'disabled'}
+                disabled={!orderCustomized}
                 onClick={resetOrder}
               />
               {filters && (<>
               <span className={styles.headerDivider} aria-hidden="true" />
               <ActionButton
                 icon="custom:filter"
-                size="S"
+                size="sm"
                 tooltip={filtersOpen ? 'Hide filters' : 'Filters'}
                 tooltipBelow
                 tooltipLeft
@@ -937,7 +933,7 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
                   <>
                     <ActionButton
                       icon="solar:text-linear"
-                      size="S"
+                      size="sm"
                       tooltip="Typography"
                       tooltipLeft
                       active={!!typographyAt}
@@ -969,7 +965,7 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
                 <Textarea
                   title="Report Introduction"
                   value={coverDescription}
-                  onChange={value => setCoverDescription(value)}
+                  onValueChange={value => setCoverDescription(value)}
                   placeholder="A short introduction for the cover (optional)"
                   maxLength={COVER_DESCRIPTION_MAX}
                   rows={3}
@@ -977,7 +973,7 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
                 <div className={styles.fieldGroup}>
                   <div className={styles.groupHead}>
                     <span className={styles.groupTitle}>Cover Background</span>
-                    <Toggle size="S" items={BACKGROUND_TYPES} active={bgType} onChange={setBgType} />
+                    <SegmentedControl size="sm" items={BACKGROUND_TYPES} value={bgType} onValueChange={setBgType} />
                   </div>
                   {bgType === 'color' && (
                     <CoverSwatches ariaLabel="Cover colour">
@@ -1063,7 +1059,7 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
                     portal
                     options={headerComponents.map(h => ({ value: String(h.id), label: h.label }))}
                     value={String(headerComponent?.id ?? '')}
-                    onChange={setPickedHeaderId}
+                    onValueChange={setPickedHeaderId}
                   />
                 </>
               )}
@@ -1081,7 +1077,7 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
                     portal
                     options={footerComponents.map(f => ({ value: String(f.id), label: f.label }))}
                     value={String(footerComponent?.id ?? '')}
-                    onChange={setPickedFooterId}
+                    onValueChange={setPickedFooterId}
                   />
                 </>
               )}

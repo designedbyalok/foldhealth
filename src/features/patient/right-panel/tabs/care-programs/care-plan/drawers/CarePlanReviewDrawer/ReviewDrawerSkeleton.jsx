@@ -1,4 +1,4 @@
-import bones from '../../../../../../../../components/TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../../../../../../../../components/Skeleton/Skeleton';
 import styles from './CarePlanReviewDrawer.module.css';
 
 // Title and meta widths vary row to row so the list reads like real content.
@@ -7,7 +7,7 @@ const ROWS = [
   [['58%', '36%'], ['66%', '24%'], ['44%', '32%']],
 ];
 
-const Bone = ({ className, style }) => <span className={`${bones.bone} ${className}`} style={style} />;
+const Bone = ({ className, style }) => <Skeleton className={className} style={style} />;
 
 /** Loading state of the Review care plan drawer, shaped like its list. */
 export function ReviewDrawerSkeleton() {

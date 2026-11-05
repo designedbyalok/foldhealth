@@ -2,12 +2,12 @@ import React from 'react';
 import { TableIcon, RetryIcon } from './icons.jsx';
 
 /**
- * FileChipCard — shows the uploaded file name + size with a Reupload button.
+ * FileChipCard: shows the uploaded file name + size with a Reupload button.
  * Used in the File Processing Summary panel after a CSV has been processed.
  *
  * Props:
- *   uploadFile  (File)     — the browser File object
- *   onReupload  (function) — called when the user clicks "Reupload"
+ *   uploadFile  (File): the browser File object
+ *   onReupload  (function): called when the user clicks "Reupload"
  */
 export default function FileChipCard({ uploadFile, onReupload }) {
   if (!uploadFile) return null;
@@ -25,7 +25,7 @@ export default function FileChipCard({ uploadFile, onReupload }) {
             {uploadFile.name}
           </div>
           <div style={{ fontSize: 'var(--font-sm)', fontWeight: 400, color: 'var(--neutral-200)' }}>
-            {uploadFile.size ? (uploadFile.size / (1024 * 1024)).toFixed(1) + ' MB' : '—'}
+            {uploadFile.size ? (uploadFile.size / (1024 * 1024)).toFixed(1) + ' MB' : '-'}
           </div>
         </div>
 

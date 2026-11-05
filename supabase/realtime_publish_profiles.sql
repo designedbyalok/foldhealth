@@ -3,15 +3,15 @@
 -- MessagesView.jsx:78 subscribes to postgres_changes on public.profiles
 -- ('profiles-watch') so the chat contact list refreshes when a teammate is
 -- added or renamed. But the supabase_realtime publication contains exactly one
--- table — direct_messages — so that binding has never matched anything and
+-- table, direct_messages, so that binding has never matched anything and
 -- refreshProfiles has only ever run on mount. The subscription insert in
 -- realtime.subscription filters on pg_publication_tables, so a table missing
 -- from the publication doesn't error the channel; it just silently never
 -- delivers. Dead code that looks alive.
 --
 -- Two ways to fix a dead subscription: make it live (this file) or delete the
--- effect. The code's intent is sound — a new teammate should appear in New
--- Chat without a reload — and the cost of publishing profiles is negligible:
+-- effect. The code's intent is sound: a new teammate should appear in New
+-- Chat without a reload: and the cost of publishing profiles is negligible:
 -- 54 rows, writes are rare (profile edits, signups), and the realtime poller
 -- is already running for direct_messages regardless.
 --

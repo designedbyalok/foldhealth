@@ -1,4 +1,4 @@
-/* Dynamic population group rule builder — full-page takeover.
+/* Dynamic population group rule builder: full-page takeover.
    Layout mirrors the Figma: sub-bar (group name + Cancel/Next) over a
    grey canvas of rule nodes, with a 400px condition editor docked right. */
 
@@ -57,7 +57,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  /* Zero gap — the connector tails on the IF and combinator chips must touch
+  /* Zero gap: the connector tails on the IF and combinator chips must touch
      the node cards above and below; all breathing room comes from the tails
      themselves. */
   gap: 0;
@@ -125,7 +125,7 @@
   font-size: var(--font-base);
   color: var(--neutral-400);
 }
-/* 12px glyph in a 16px box — with the chip's 4px vertical padding that pins
+/* 12px glyph in a 16px box, with the chip's 4px vertical padding that pins
    the whole chip to 24px, matching the summary badges beside it. */
 .fieldChipIcon {
   display: flex;
@@ -151,7 +151,7 @@
   align-self: center;
 }
 
-/* AND | OR | + combo — bordered group of ghost toggles */
+/* AND | OR | + combo, bordered group of ghost toggles */
 .combo {
   display: flex;
   align-items: center;
@@ -498,7 +498,7 @@
   min-height: 0;
 }
 
-/* ── Qualified Members rows — composed from the shared worklist row ── */
+/* ── Qualified Members rows: composed from the shared worklist row ── */
 .qmRow { composes: row from '../../../components/WorklistShell/WorklistRow.module.css'; }
 .qmTd { composes: td from '../../../components/WorklistShell/WorklistRow.module.css'; }
 .qmMembersTd { composes: membersTd from '../../../components/WorklistShell/WorklistRow.module.css'; }
@@ -510,7 +510,7 @@
 .qmPatientMeta { composes: patientMeta from '../../../components/WorklistShell/WorklistRow.module.css'; }
 
 /* Stacked nodes with the static combinator chip between them (view + edit).
-   Zero gap for the same reason as .canvas — tails must touch the cards. */
+   Zero gap for the same reason as .canvas, tails must touch the cards. */
 .nodeStack {
   display: flex;
   flex-direction: column;
@@ -565,7 +565,7 @@
 }
 .railTitleButton:hover { color: var(--neutral-400); }
 
-/* Nested rule group — bracket rail carrying the group combinator, children
+/* Nested rule group: bracket rail carrying the group combinator, children
    indented beside it (the Figma's OR/AND brackets). */
 .groupNode {
   display: flex;
@@ -594,7 +594,7 @@
   min-width: 0;
 }
 
-/* Inline Add Condition card — rendered in flow below the row whose AND/OR
+/* Inline Add Condition card: rendered in flow below the row whose AND/OR
    started the join (Figma 9:73965), same body as the portal popover. */
 .popoverInline {
   background: var(--neutral-0);
@@ -607,7 +607,7 @@
   margin-top: 4px;
 }
 
-/* Bottom-of-canvas AND | OR — appends the next condition joined to the last
+/* Bottom-of-canvas AND | OR: appends the next condition joined to the last
    top-level block. */
 .canvasJoin {
   display: flex;
@@ -936,7 +936,7 @@
   gap: 8px;
 }
 
-/* Collapsed strip — clickable pill at the right edge */
+/* Collapsed strip: clickable pill at the right edge */
 .previewCollapsed {
   display: flex;
   flex-direction: column;

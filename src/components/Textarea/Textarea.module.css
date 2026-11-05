@@ -1,7 +1,7 @@
-/* Fold Health Textarea — multi-line input that matches <Input>'s design
+/* Fold Health Textarea: multi-line input that matches <Input>'s design
    tokens (border, radius, font, focus ring) so they can sit side by side.
    Also carries the enhanced "labeled card" layout from Figma
-   Fold-Pixel 5786:1273 — label row, richText toolbar, counter, and
+   Fold-Pixel 5786:1273, label row, richText toolbar, counter, and
    supporting-text helper. */
 
 /* ── Plain textarea (legacy shape) ──────────────────────────────────── */
@@ -53,6 +53,49 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--status-error) 12%, transparent);
 }
 
+/* ── Link highlighting (plain mode, `highlightLinks`) ───────────────── */
+.linkWrap {
+  position: relative;
+  width: 100%;
+}
+/* Same box and type as the textarea so the drawn text sits under the real one.
+   Scoped under .linkWrap so a caller's own textarea class (e.g. MessageComposer's)
+   can't override these, whichever stylesheet loads last. */
+.linkWrap > .linkBackdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  border-color: transparent;
+  box-shadow: none;
+  pointer-events: none;
+  resize: none;
+  scrollbar-gutter: stable;
+}
+
+.linkWrap > .linkInput {
+  position: relative;
+  display: block;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--neutral-400);
+  scrollbar-gutter: stable;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+/* Styling ::selection drops the browser's own highlight, so give it one. */
+.linkWrap > .linkInput::selection {
+  color: transparent;
+  background: color-mix(in srgb, var(--primary-300) 25%, transparent);
+}
+.link {
+  color: var(--status-info-dark, var(--status-info));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* ── Enhanced labeled card layout (Figma 5786:1273) ─────────────────── */
 
 .enhRoot {
@@ -64,7 +107,7 @@
   width: 100%;
 }
 
-/* Label row — Title + optional info icon + optional red asterisk. */
+/* Label row: Title + optional info icon + optional red asterisk. */
 .enhLabelRow {
   display: inline-flex;
   align-items: center;
@@ -82,7 +125,7 @@
   justify-content: center;
   cursor: help;
 }
-/* Mandatory indicator — Figma uses a 4×4 red dot next to the label, same
+/* Mandatory indicator: Figma uses a 4×4 red dot next to the label, same
    as <Input>'s `required` treatment (Input.module.css `.required`). */
 .enhRequired {
   width: 4px;
@@ -95,8 +138,8 @@
 /* Card that wraps the editor body + optional footer toolbar. Flex column
    so the body fills the drag-resized height and the footer stays fixed
    at its intrinsic height. Vertical resize on the wrap gives the native
-   drag handle in the bottom-right corner and grows the body region only
-   — mirrors the "drag handle" affordance in Figma 5786:1273. */
+   drag handle in the bottom-right corner and grows the body region only,
+   mirrors the "drag handle" affordance in Figma 5786:1273. */
 .enhWrap {
   display: flex;
   flex-direction: column;
@@ -129,7 +172,7 @@
   opacity: 0.7;
 }
 
-/* Body — plain <textarea> in default mode, contentEditable in richText.
+/* Body: plain <textarea> in default mode, contentEditable in richText.
    Fills the resizable card so growing the wrap grows the writable area.
    The character counter is anchored to the body's bottom-right, so with
    `flex: 1` it always sits flush against the footer (or the wrap's own
@@ -195,7 +238,7 @@
   pointer-events: none;
 }
 
-/* Character counter — bottom-right of the body, above the footer divider. */
+/* Character counter: bottom-right of the body, above the footer divider. */
 .enhCounter {
   position: absolute;
   right: var(--space-2);
@@ -205,8 +248,10 @@
   pointer-events: none;
 }
 
-/* Footer — thin top-divider, formatting buttons flow left, primary CTA
+/* Footer: thin top-divider, formatting buttons flow left, primary CTA
    and speech-to-text pin to the right. */
+/* toolbarOnFocus: the footer shows while the box or a toolbar button has focus. */
+.enhToolbarOnFocus:not(:focus-within) .enhFooter { display: none; }
 .enhFooter {
   display: flex;
   align-items: center;
@@ -238,7 +283,7 @@
   gap: var(--space-2);
 }
 
-/* Icon-only toolbar button — neutral idle, primary-tinted hover, primary
+/* Icon-only toolbar button: neutral idle, primary-tinted hover, primary
    filled state via `data-tone='primary'` (used by Speech-to-Text). */
 .enhToolbarBtn {
   display: inline-flex;
@@ -280,7 +325,7 @@
   color: var(--primary-300);
 }
 
-/* Inline mention chip — contenteditable="false" atom the browser jumps
+/* Inline mention chip: contenteditable="false" atom the browser jumps
    over with arrow keys and deletes as a unit. */
 .mentionChip {
   display: inline-flex;
@@ -289,10 +334,11 @@
   user-select: all;
 }
 
-/* Portaled @mention picker — anchored under (or above) the editor. */
+/* Portaled @mention picker: anchored under (or above) the editor, and above
+   a Popover (10000), which can hold a note box. */
 .mentionMenu {
   position: fixed;
-  z-index: 9800;
+  z-index: 10001;
   max-height: 280px;
   overflow-y: auto;
   background: var(--neutral-0);
@@ -322,7 +368,29 @@
 .mentionName { flex: 1; }
 .mentionRole { font-size: var(--font-sm); color: var(--neutral-300); }
 
-/* Supporting text — helper below the card. Error state re-tints it red. */
+/* "/" link chip: a referenced record, read as its label. */
+.linkChip {
+  display: inline;
+  padding: 0 var(--space-1);
+  border-radius: var(--space-1);
+  background: var(--primary-100);
+  color: var(--primary-300);
+  font-weight: 500;
+  user-select: all;
+}
+.linkOption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.linkGroup {
+  padding: var(--space-1) var(--space-2) 0;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-300);
+}
+
+/* Supporting text: helper below the card. Error state re-tints it red. */
 .enhSupporting {
   font-size: var(--font-sm);
   font-weight: 400;

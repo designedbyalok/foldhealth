@@ -7,7 +7,7 @@ const pad = (n) => String(n).padStart(2, '0');
 const to12 = (h) => h % 12 || 12;
 
 /**
- * TimeColumns — the scrolling Hr / Min (/ AM-PM) lists from the date-time
+ * TimeColumns: the scrolling Hr / Min (/ AM-PM) lists from the date-time
  * picker, on their own so DateTimePicker and TimePicker share one set.
  *
  * @param {object}   props

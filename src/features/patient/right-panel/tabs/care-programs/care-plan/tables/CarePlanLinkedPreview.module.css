@@ -61,7 +61,7 @@
   line-height: 1.35;
 }
 
-/* Clickable rows (interventions / barriers / goals) — jump to the
+/* Clickable rows (interventions / barriers / goals): jump to the
    underlying table row on click. Hint clickability with a hover tint
    + underline; keep the resting state visually identical to the
    original non-clickable rows so the popover doesn't read as

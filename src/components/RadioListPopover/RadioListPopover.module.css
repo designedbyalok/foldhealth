@@ -1,26 +1,8 @@
-/* Portaled to body; a modal dialog sets pointer-events: none there, so
-   both layers take clicks back. */
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 8998;
-  pointer-events: auto;
-  background: transparent;
-}
-
 .popover {
-  position: fixed;
-  z-index: 8999;
-  pointer-events: auto;
   padding: 12px;
-  background: var(--neutral-0);
-  border: 0.5px solid var(--neutral-100);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 320px;
 }
 
 .header {
@@ -30,60 +12,19 @@
   flex-shrink: 0;
 }
 
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  overflow-y: auto;
-  min-height: 0;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 32px;
-  padding: 4px 6px;
-  border: none;
-  background: none;
+.search {
+  height: 32px;
+  border: 0.5px solid var(--neutral-200);
   border-radius: 6px;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.12s;
-}
-.row:hover { background: var(--neutral-50); }
-
-.label {
-  flex: 1;
+  padding: 0 var(--space-2);
   font-size: var(--font-base);
-  color: var(--neutral-400);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.radio {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1.5px solid var(--neutral-200);
+  color: var(--neutral-500);
   background: var(--neutral-0);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  outline: none;
   flex-shrink: 0;
-  transition: border-color 0.12s;
 }
-.radioActive {
-  border-color: var(--primary-300);
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--primary-300);
-}
+.search::placeholder { color: var(--neutral-200); }
+.search:focus { border-color: var(--primary-300); }
 
 .clear {
   width: 100%;

@@ -4,7 +4,7 @@ import { UnityIcon } from '../UnityIcon/UnityIcon';
 import styles from './UnityPromptField.module.css';
 
 /**
- * UnityPromptField — a plain-English request to UnityAI: a labelled textarea
+ * UnityPromptField: a plain-English request to UnityAI: a labelled textarea
  * with the Unity mark, a character counter and the action that sends it.
  * The host does the generating; this owns the input, the "Try …" example
  * that fills it, and Cmd/Ctrl+Enter to submit.
@@ -53,11 +53,11 @@ export function UnityPromptField({
           </span>
         )}
         value={value}
-        onChange={e => onChange?.(e.target.value.slice(0, maxLength))}
+        onValueChange={text => onChange?.(text.slice(0, maxLength))}
         placeholder={placeholder}
         rows={rows}
         maxLength={maxLength}
-        variant={error ? 'error' : 'default'}
+        invalid={error}
         supportingText={error || hint}
         disabled={generating}
         onKeyDown={(e) => {
@@ -75,8 +75,8 @@ export function UnityPromptField({
           </button>
         ) : <span />}
         <Button
-          variant="secondary"
-          size="S"
+          variant="outline"
+          size="sm"
           leadingIconElement={<UnityIcon size={14} color="currentColor" />}
           disabled={!ready}
           onClick={submit}

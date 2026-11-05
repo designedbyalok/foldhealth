@@ -69,8 +69,8 @@ export function TimerSettingsTab({ settings, loading }) {
                 <td className={styles.td}>
                   {extra ? (
                     <span className={styles.people}>
-                      {s.userNames.length > 0 && <Badge tone="grey" size="S" label={plural(s.userNames.length, 'user')} />}
-                      {s.roles.length > 0 && <Badge tone="secondary" size="S" label={plural(s.roles.length, 'role')} />}
+                      {s.userNames.length > 0 && <Badge size="sm" label={plural(s.userNames.length, 'user')} />}
+                      {s.roles.length > 0 && <Badge tone="secondary" size="sm" label={plural(s.roles.length, 'role')} />}
                     </span>
                   ) : dash}
                 </td>
@@ -87,11 +87,11 @@ export function TimerSettingsTab({ settings, loading }) {
                   <span className={styles.actions} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                     {/* As in the other settings tables: L buttons, a divider between,
                         and the pen drawn at 16px so it reads the same size as the clock. */}
-                    <ActionButton size="L" tooltip="Edit timer access" tooltipLeft onClick={() => setEditing(r)}>
+                    <ActionButton tooltip="Edit timer access" tooltipLeft onClick={() => setEditing(r)}>
                       <Icon name="solar:pen-linear" size={16} color="var(--neutral-300)" />
                     </ActionButton>
                     <span className={styles.actionDivider} aria-hidden="true" />
-                    <ActionButton icon="solar:history-linear" size="L" tooltip="History" tooltipLeft onClick={() => setHistory(r)} />
+                    <ActionButton icon="solar:history-linear" tooltip="History" tooltipLeft onClick={() => setHistory(r)} />
                   </span>
                 </td>
               </tr>

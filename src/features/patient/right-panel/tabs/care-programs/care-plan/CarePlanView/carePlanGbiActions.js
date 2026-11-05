@@ -1,3 +1,4 @@
+import { confirmStatusChange, statusReasonPatch } from '../lib/confirmStatusChange';
 export function restoreGbi({
   kind,
   item,
@@ -62,8 +63,11 @@ export function saveGbiPatch(kind, item, patch, ctx) {
   else ctx.savePatientCarePlanIntervention(ctx.patientId, ctx.program, merged, item.id);
 }
 
-export function saveGbiStatus({ kind, item, status, patientId, program, savePatientCarePlanGoal, savePatientCarePlanBarrier, savePatientCarePlanIntervention }) {
-  saveGbiPatch(kind, item, { status }, {
+export async function saveGbiStatus({ kind, item, status, patientId, program, savePatientCarePlanGoal, savePatientCarePlanBarrier, savePatientCarePlanIntervention }) {
+  const type = kind === 'intv' ? 'intervention' : kind;
+  const why = await confirmStatusChange([{ type, item }], status);
+  if (!why) return;
+  saveGbiPatch(kind, item, { status, ...statusReasonPatch(item, why) }, {
     patientId,
     program,
     savePatientCarePlanGoal,

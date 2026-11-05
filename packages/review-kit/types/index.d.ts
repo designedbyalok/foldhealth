@@ -1,0 +1,330 @@
+import type { CSSProperties, ReactElement, ReactNode } from 'react';
+
+/** Design tokens. Every key maps to a `--rk-*` CSS variable; any CSS value works. */
+export interface ReviewKitTheme {
+  fontFamily?: string;
+  fontFamilyMono?: string;
+  fontSizeXs?: string;
+  fontSizeSm?: string;
+  fontSizeMd?: string;
+  fontWeightMedium?: string | number;
+  space1?: string;
+  space2?: string;
+  space3?: string;
+  space4?: string;
+  radius?: string;
+  radiusSm?: string;
+  background?: string;
+  backgroundSubtle?: string;
+  border?: string;
+  text?: string;
+  textMuted?: string;
+  accent?: string;
+  accentSoft?: string;
+  accentText?: string;
+  danger?: string;
+  /** Also the annotator's amber marker colour. */
+  warning?: string;
+  success?: string;
+  shadow?: string;
+  pickFill?: string;
+  /** Backdrop behind the image preview and annotator. */
+  overlay?: string;
+  zIndex?: string | number;
+}
+
+/** Every visible string. Pass any subset to `labels`. */
+export interface ReviewKitLabels {
+  select: string;
+  selectHint: string;
+  picking: string;
+  pickHint: string;
+  screenshot: string;
+  screenshotHint: string;
+  capturing: string;
+  upload: string;
+  uploadHint: (maxMb: number) => string;
+  send: string;
+  sendPoints: (count: number) => string;
+  sending: string;
+  moreSendOptions: string;
+  sentTitle: string;
+  sentDetail: (points: number) => string;
+  finishFailed: (message: string) => string;
+  upNext: string;
+  reviewNext: string;
+  notNow: string;
+  inlinePlaceholder: string;
+  inlineHint: string;
+  addPoint: string;
+  sent: (count: number) => string;
+  point: string;
+  pointTitle: (n: number) => string;
+  newPointHint: string;
+  deletePoint: (n: number) => string;
+  placeholder: string;
+  pointPlaceholder: (n: number) => string;
+  dropHint: (n: number) => string;
+  collapse: string;
+  close: string;
+  open: (title: string) => string;
+  screenLabel: string;
+  skipped: (count: number, maxMb: number) => string;
+  captureFailed: (message: string) => string;
+  screenshotFailed: (message: string) => string;
+  sendFailed: (message: string) => string;
+  linkPrompt: string;
+  attachments: string;
+  remove: (name: string) => string;
+  openImage: (name: string) => string;
+  preview: (name: string) => string;
+  closePreview: string;
+  annotate: string;
+  annotateTitle: (name: string) => string;
+  annotateLoading: string;
+  done: string;
+  cancel: string;
+  zoom: string;
+  textPlaceholder: string;
+  /** Annotator toolbar names (also their tooltips). */
+  tools: {
+    select: string; rect: string; highlight: string; ellipse: string;
+    arrow: string; line: string; pen: string; text: string; step: string;
+    redact: string; crop: string; color: string; undo: string; redo: string; remove: string;
+    /** Names for the palette: danger, warning, success, accent, text, background. */
+    colorNames: string[];
+  };
+  formatting: {
+    bold: string;
+    italic: string;
+    underline: string;
+    strike: string;
+    bulletList: string;
+    orderedList: string;
+    link: string;
+    code: string;
+  };
+}
+
+export type ReviewKitLabelOverrides = Partial<Omit<ReviewKitLabels, 'formatting' | 'tools'>> & {
+  formatting?: Partial<ReviewKitLabels['formatting']>;
+  tools?: Partial<ReviewKitLabels['tools']>;
+};
+
+/** Extra class names for styling with your own CSS or utility classes. */
+export interface ReviewKitClassNames {
+  root?: string;
+  panel?: string;
+  header?: string;
+  points?: string;
+  /** The row of attachment thumbnails. */
+  attachments?: string;
+  editor?: string;
+  footer?: string;
+  toolButton?: string;
+  sendButton?: string;
+  tab?: string;
+}
+
+export interface PageContext {
+  url: string;
+  title: string;
+  viewport: { width: number; height: number };
+}
+
+export interface ReviewAttachment {
+  file: Blob;
+  name: string;
+  type: string;
+  /** element: picked from the page; screen: a screenshot of the screen; upload: uploaded, pasted or dropped. */
+  kind: 'element' | 'screen' | 'upload';
+  /** Unique CSS selector of a picked element. */
+  selector?: string | null;
+  /** Readable name of a picked element, e.g. "div.cardBody". */
+  element?: string;
+  /** Picked element's position in page coordinates. */
+  rect?: { x: number; y: number; width: number; height: number };
+  /** True when the reviewer marked the image up in the annotator. */
+  annotated?: boolean;
+}
+
+export interface ReviewPoint {
+  /** Plain text of the comment. */
+  text: string;
+  /** The comment as HTML. Sanitize it before rendering (e.g. DOMPurify). */
+  html: string;
+  attachments: ReviewAttachment[];
+  /** The page the point was made on. */
+  context: PageContext;
+}
+
+export interface ReviewSubmission {
+  points: ReviewPoint[];
+  context: PageContext & { userAgent: string; createdAt: string };
+}
+
+/** Any component that renders an svg glyph at currentColor. The kit's own
+ *  outline icons match this. Host apps can swap any slot by passing their
+ *  own. */
+export type IconComponent = (
+  props: { width?: number | string; height?: number | string; className?: string; [key: string]: unknown },
+) => ReactElement;
+
+export interface ReviewKitIcons {
+  select?: IconComponent;
+  screenshot?: IconComponent;
+  upload?: IconComponent;
+  close?: IconComponent;
+  plus?: IconComponent;
+  collapse?: IconComponent;
+  chevron?: IconComponent;
+  grip?: IconComponent;
+}
+
+export interface ReviewDockProps {
+  /** What is being reviewed. */
+  title: string;
+  subtitle?: string;
+  /** Save the feedback. Resolve truthy (or nothing) to clear the box; resolve false or throw to keep it. */
+  onSubmit: (submission: ReviewSubmission) => Promise<boolean | void> | boolean | void;
+  /** Show a close button. */
+  onClose?: () => void;
+  /** localStorage key for the box's position and size. Default "review-kit:dock". It always opens expanded and fully on screen. */
+  storageKey?: string;
+  /** Per-file upload limit in MB. Default 10. */
+  maxFileSizeMb?: number;
+  theme?: ReviewKitTheme;
+  /** Force a color mode on the kit regardless of what the host does. */
+  colorMode?: 'light' | 'dark' | 'auto';
+  labels?: ReviewKitLabelOverrides;
+  classNames?: ReviewKitClassNames;
+  className?: string;
+  /** Swap any icon slot with your own component. */
+  icons?: ReviewKitIcons;
+  /** Extra icon buttons in the header, before minimize. */
+  headerActions?: ReviewDockHeaderAction[];
+  /** The host's "done" step (e.g. sign off). With nothing written it replaces
+   *  Send; once there is feedback, Send gets a chevron menu offering
+   *  `submitLabel`, which sends and then runs `onFinish`. */
+  finishAction?: ReviewDockFinishAction;
+  /** Offered after a send or finish: the next thing to review. Without it,
+   *  the confirmation fades back to the editor on its own. */
+  nextUp?: ReviewDockNextUp;
+  /** Extra content under the editor. */
+  children?: ReactNode;
+}
+
+export interface ReviewDockFinishAction {
+  /** Button label while nothing is written, e.g. "Sign off". */
+  label: string;
+  /** Menu item that sends, then finishes, e.g. "Send and sign off". */
+  submitLabel: string;
+  /** Confirmation title once it ran, e.g. "Signed off". */
+  doneLabel?: string;
+  /** Return false when it didn't go through (the box then skips the confirmation). */
+  onFinish: () => Promise<unknown> | unknown;
+}
+
+export interface ReviewDockNextUp {
+  title: string;
+  /** Second line, e.g. the section and how many more are waiting. */
+  meta?: string;
+  /** Default "Review next". */
+  label?: string;
+  /** Default "Not now"; returns to the editor. */
+  dismissLabel?: string;
+  onAccept: () => void;
+}
+
+export interface ReviewDockHeaderAction {
+  id?: string;
+  /** Accessible name and tooltip. */
+  label: string;
+  icon: IconComponent;
+  onClick: () => void;
+}
+
+export declare function ReviewDock(props: ReviewDockProps): ReactElement | null;
+
+/** A single row in the Feedback drawer. The host owns the shape, these are
+ *  the fields the drawer renders when present. */
+export interface FeedbackItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  /** Short label for the section this review is for (e.g. "Onboarding"). */
+  target?: string | null;
+  /** Which tab the item belongs to. */
+  status: 'needs-review' | 'in-progress' | 'reviewed' | string;
+  requestedBy?: string | null;
+  /** Thumbnail URLs shown as a mini-strip. */
+  previews?: string[];
+  pointCount?: number;
+  attachmentCount?: number;
+}
+
+export interface FeedbackTab {
+  id: string;
+  label: string;
+}
+
+export interface FeedbackDrawerProps {
+  open: boolean;
+  onClose: () => void;
+  items: FeedbackItem[];
+  /** Clicked a card. Host navigates to the item's target and opens ReviewDock. */
+  onOpenItem?: (item: FeedbackItem) => void;
+  /** Clicked the accent "Start a review" pill in the header. Host opens an
+   *  ad-hoc ReviewDock (not tied to any item). */
+  onStartReview?: () => void;
+  title?: string;
+  tabs?: FeedbackTab[];
+  defaultTab?: string;
+  theme?: ReviewKitTheme;
+  colorMode?: 'light' | 'dark' | 'auto';
+  labels?: ReviewKitLabelOverrides;
+  className?: string;
+  classNames?: { root?: string; panel?: string };
+}
+
+export declare function FeedbackDrawer(props: FeedbackDrawerProps): ReactElement | null;
+
+export interface FeedbackTriggerProps {
+  count?: number;
+  onClick?: () => void;
+  label?: string;
+  className?: string;
+}
+
+export declare function FeedbackTrigger(props: FeedbackTriggerProps): ReactElement;
+
+export interface PickElementOptions {
+  /** Extra elements to skip. */
+  ignore?: (el: Element) => boolean;
+  /** Instruction shown while picking. */
+  hint?: string;
+  /** CSS variables for the overlay, e.g. themeToStyle(theme). */
+  style?: Record<string, string>;
+}
+
+/** Hover-highlight picker. ↑/↓ move to parent/child; click or Enter picks; Esc resolves null. */
+export declare function pickElement(options?: PickElementOptions): Promise<Element | null>;
+/** Readable name, e.g. "div#checkout" or "button.primary". */
+export declare function describeElement(el: Element): string;
+/** Attribute on everything the kit renders; elements carrying it are never picked or captured. */
+export declare const KIT_ATTR: 'data-review-kit';
+
+/** PNG of one element. */
+export declare function captureElement(el: Element): Promise<Blob>;
+/** PNG of what's on screen. */
+export declare function captureViewport(): Promise<Blob>;
+/** Unique CSS selector for an element, or null. Options are passed to @medv/finder. */
+export declare function selectorFor(el: Element, options?: Record<string, unknown>): string | null;
+
+export declare const THEME_TOKENS: Readonly<Record<keyof ReviewKitTheme, string>>;
+/** Theme object → inline style of CSS variables. */
+export declare function themeToStyle(theme?: ReviewKitTheme): CSSProperties | undefined;
+/** A dark preset: spread it and override what you need. */
+export declare const darkTheme: ReviewKitTheme;
+export declare const DEFAULT_LABELS: ReviewKitLabels;
+export declare function mergeLabels(labels?: ReviewKitLabelOverrides): ReviewKitLabels;

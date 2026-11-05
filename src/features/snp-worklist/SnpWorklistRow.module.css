@@ -62,7 +62,7 @@
 }
 .statusDropdown:hover { color: var(--primary-300); }
 
-/* Read-only Care Plan Status text — the column doesn't own an editable
+/* Read-only Care Plan Status text: the column doesn't own an editable
    affordance, so no chevron / hover / button chrome. */
 .statusText {
   font-size: var(--font-base);
@@ -71,7 +71,7 @@
 }
 
 /* Wraps the shared <Badge> so it can act as a click target for the
-   status-change MenuPopover. Chrome-free — the badge already carries
+   status-change MenuPopover. Chrome-free, the badge already carries
    its own border/background. */
 .statusBadgeBtn {
   background: none; border: none; padding: 0; cursor: pointer;
@@ -92,11 +92,11 @@
 .dots { display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; }
 .dot { width: 6px; height: 6px; border-radius: 50%; }
 
-/* Assignee cell — the shared <AssigneeChange> primitive owns its own visuals
+/* Assignee cell: the shared <AssigneeChange> primitive owns its own visuals
    (24px provider avatar + grey name + optional role, hover-fill background,
    chevron on hover/focus). See src/components/AssigneeChange. */
 
-/* Tags — the pills themselves are the shared <Badge> component (see
+/* Tags: the pills themselves are the shared <Badge> component (see
    Badge.module.css `.tag-*`). Only the row container + "+N More" chrome
    live here. */
 .tagCell { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -127,6 +127,7 @@
 }
 .carePlanSigned { color: var(--status-success); }
 .carePlanDraft { color: var(--status-warning); }
+.carePlanOnHold { color: var(--status-info); }
 .carePlanNone { color: var(--neutral-300); }
 .carePlanStatusLink {
   display: inline-flex;

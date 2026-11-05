@@ -22,7 +22,7 @@
   padding: var(--py) var(--px); display: flex; flex-direction: column; gap: 24px;
   overflow: hidden;
 }
-/* Full-bleed header/footer — derived from the sheet padding so it stays in
+/* Full-bleed header/footer: derived from the sheet padding so it stays in
    sync when the padding shrinks on mobile. */
 .headerBleed { margin: calc(-1 * var(--py)) calc(-1 * var(--px)) 0; }
 .footerBleed { margin: 0 calc(-1 * var(--px)) calc(-1 * var(--py)); }

@@ -7,7 +7,7 @@ import { Icon } from '../../../components/Icon/Icon';
  *
  * Floating progress chip mounted globally in AppLayout. Appears bottom-
  * right whenever an HCC upload session is minimized (user closed the
- * drawer mid-extraction). Visual modelled after Figma node 22:41409 —
+ * drawer mid-extraction). Visual modelled after Figma node 22:41409,
  * a 375px card with a soft purple gradient, a 4-step task list, and a
  * Discard link. On completion the card swaps to a green gradient with
  * a "Review and Confirm Extraction" primary CTA.
@@ -28,7 +28,7 @@ export function HccUploadProcessingHost() {
   const expand = useAppStore(s => s.expandHccUpload);
   const cancel = useAppStore(s => s.cancelHccUpload);
 
-  // Step animation — purely visual. The OCR effect in the parent
+  // Step animation: purely visual. The OCR effect in the parent
   // UploadDocumentDrawer populates the real encounters; we just walk
   // through the labels at a natural pace so the chip feels alive.
   const [step, setStep] = useState(0);
@@ -37,7 +37,7 @@ export function HccUploadProcessingHost() {
     if (!session || session.phase !== 'processing') return;
     if (startedAt.current == null) startedAt.current = Date.now();
     // ~8s total: each step takes 2s. The fourth step ("Matching patient")
-    // completes when the session phase flips to 'review' — i.e. when the
+    // completes when the session phase flips to 'review', i.e. when the
     // mockOcr promise resolves (PROCESSING_DELAY_MS = 8000).
     const t = [];
     t.push(setTimeout(() => setStep(1), 2000));

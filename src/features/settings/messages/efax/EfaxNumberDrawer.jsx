@@ -38,8 +38,6 @@ export function EfaxNumberDrawer({ efax, users = [], existing = [], onSave, onCl
       headerRight={(
         <div className={styles.headerRight}>
           <Button
-            variant="primary"
-            size="M"
             disabled={!canSave}
             onClick={() => onSave({ name: name.trim(), number: formatEfaxNumber(number), linkedUserIds })}
           >
@@ -79,7 +77,7 @@ export function EfaxNumberDrawer({ efax, users = [], existing = [], onSave, onCl
           searchPlaceholder="Search users"
           options={users.map(u => ({ value: u.id, label: u.name }))}
           value={linkedUserIds}
-          onChange={setLinkedUserIds}
+          onValueChange={setLinkedUserIds}
           placeholder="Select users"
           helperText="Linked users can send faxes from this number."
         />

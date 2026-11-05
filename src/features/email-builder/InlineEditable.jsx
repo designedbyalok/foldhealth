@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { getFontStack } from './googleFonts';
 import { isGradient } from './colorHelpers';
 import { formatLetterSpacingCss } from './dimUnits';
+import { sanitizeRichText } from '../../lib/sanitizeHtml';
 
 // In-place text editor for Heading/Text blocks. Renders a contentEditable
 // element so users can click-and-type directly on the canvas, **and** select
@@ -11,7 +12,7 @@ import { formatLetterSpacingCss } from './dimUnits';
 //
 // Text storage model: props.text is an HTML string. Inline tags like
 // <strong>/<em>/<u>/<s>/<code>/<a> are preserved across edits so per-range
-// formatting works. Plain text without HTML still works — it's valid HTML.
+// formatting works. Plain text without HTML still works, it's valid HTML.
 // Newlines (\n) and <br> are both supported; we normalize to <br> on save.
 
 function paddingCss(padding) {
@@ -84,15 +85,18 @@ function buildStyle(style, type) {
 // - For lists, split on newline and wrap each non-empty line in <li>.
 // - For non-lists, normalize raw newlines to <br/> so they show as line breaks.
 // Empty content renders one <li><br></li> or nothing so the caret has a home.
+// Stored text can come from a shared template authored by a teammate, so it is
+// sanitized before it reaches the live DOM (the rich-text profile keeps the
+// <b>/<i>/<u>/<s>/<strike>/<code>/<a> tags the SelectionToolbar produces).
 function textToInnerHtml(text, listStyle) {
   const safe = text || '';
   if (listStyle === 'bullet' || listStyle === 'number') {
     const lines = safe.split(/\n/);
     const items = lines.length ? lines : [''];
-    return items.map(l => `<li>${l || '<br>'}</li>`).join('');
+    return sanitizeRichText(items.map(l => `<li>${l || '<br>'}</li>`).join(''));
   }
   // Preserve existing inline HTML; only convert bare newlines.
-  return safe.replace(/\n/g, '<br>');
+  return sanitizeRichText(safe.replace(/\n/g, '<br>'));
 }
 
 // Read the current DOM back into the stored text format. For lists we walk
@@ -125,7 +129,7 @@ export function InlineEditable({ blockId, type, level, text, style, listStyle, o
 
   // Structural rebuild on list-style change. When the user toggles bullet
   // or numbered while the element is focused, the effect above bails out
-  // (to preserve caret) — but we still need to rewrite the HTML so the
+  // (to preserve caret): but we still need to rewrite the HTML so the
   // <p> ↔ <ul>/<ol> change actually takes hold. This runs only on
   // listStyle transitions, never on plain text edits.
   useEffect(() => {

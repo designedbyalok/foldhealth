@@ -9,7 +9,7 @@ import { usePatientCallButton } from '../../hooks/usePatientCallButton';
 import styles from './PatientBanner.module.css';
 
 /**
- * PatientBanner — reusable patient context banner for drawers.
+ * PatientBanner: reusable patient context banner for drawers.
  *
  * Figma: 263:19234
  * Default (263:19235): Compact banner with avatar, name, meta, RAF, call + expand buttons
@@ -85,7 +85,7 @@ export function PatientBanner({
             <div className={styles.name}>
               {name}
               {/* External-tab jump to the patient's P360. Hash-router
-                  path is `#/<list>/patient/<memberId>` — HEDIS is a
+                  path is `#/<list>/patient/<memberId>`, HEDIS is a
                   safe default list since every P360 route just uses
                   it as a URL bucket; the patient page itself is the
                   same regardless of which list opened it. */}
@@ -129,7 +129,7 @@ export function PatientBanner({
                   <span className={styles.rafValue}>{raf}</span>
                   {rafChange && (
                     <Badge
-                      variant={rafUp ? 'compliance-pass' : 'compliance-fail'}
+                      tone={rafUp ? 'success' : 'danger'}
                       label={rafChange}
                       icon={rafUp ? 'solar:arrow-up-linear' : 'solar:arrow-down-linear'}
                     />
@@ -144,7 +144,6 @@ export function PatientBanner({
             <ActionButton
               ref={patientId ? callBtnRef : undefined}
               icon="solar:phone-calling-rounded-linear"
-              size="L"
               tooltip="Call patient"
               onClick={handleCall}
               tooltipBelow
@@ -152,7 +151,6 @@ export function PatientBanner({
           )}
           <span className={styles.divider} />
           <ActionButton
-            size="L"
             tooltip={expanded ? 'Collapse' : 'Expand'}
             onClick={() => setExpanded(v => !v)}
             className={expanded ? styles.chevronOpen : ''}
@@ -220,15 +218,15 @@ export function PatientBanner({
                 <div className={styles.synopsisFooterLeft}>
                   <Icon name="custom:ai" size={14} color="var(--primary-300)" />
                   <span className={styles.poweredBy}>Powered by Unity</span>
-                  <Badge variant="ai-neutral" label="BETA" />
+                  <Badge label="BETA" />
                 </div>
                 <div className={styles.synopsisFooterRight}>
                   <span className={styles.generatedAt}>Generated: {MOCK_SYNOPSIS.generatedAt}</span>
                   <Icon name="solar:refresh-linear" size={14} color="var(--neutral-200)" />
-                  <ActionButton icon="solar:like-linear" size="S" tooltip="Helpful" />
-                  <ActionButton icon="solar:dislike-linear" size="S" tooltip="Not helpful" />
-                  <ActionButton icon="solar:copy-linear" size="S" tooltip="Copy" />
-                  <ActionButton icon="solar:refresh-linear" size="S" tooltip="Regenerate" />
+                  <ActionButton icon="solar:like-linear" size="sm" tooltip="Helpful" />
+                  <ActionButton icon="solar:dislike-linear" size="sm" tooltip="Not helpful" />
+                  <ActionButton icon="solar:copy-linear" size="sm" tooltip="Copy" />
+                  <ActionButton icon="solar:refresh-linear" size="sm" tooltip="Regenerate" />
                 </div>
               </div>
             </div>

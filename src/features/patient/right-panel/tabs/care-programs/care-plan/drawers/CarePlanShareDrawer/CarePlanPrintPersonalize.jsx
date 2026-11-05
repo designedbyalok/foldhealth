@@ -8,9 +8,9 @@ import { Input } from '../../../../../../../../components/Input/Input';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
 import { ConfirmDialog } from '../../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { RadioOptionGroup } from '../../../../../../../../components/RadioOptionGroup/RadioOptionGroup';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { TEMPLATE_SCOPES } from '../../lib/templateScope';
-import { DEMOGRAPHIC_FIELDS, FORMAT_OPTIONS, GROUP_BY_OPTIONS } from '../../lib/carePlanPrintSettings';
+import { CONTENT_TOGGLES, DEMOGRAPHIC_FIELDS, FORMAT_OPTIONS, GROUP_BY_OPTIONS } from '../../lib/carePlanPrintSettings';
 import styles from './CarePlanPrintPersonalize.module.css';
 
 const NO_PRESET = '__none';
@@ -43,8 +43,8 @@ function LogoField({ logo, custom, onPick, onReset }) {
       <div className={styles.logoRow}>
         {shown?.dataUrl && <span className={styles.logoThumb}><img src={shown.dataUrl} alt="" /></span>}
         <span className={styles.logoName}>{custom?.name || 'Clinic logo'}</span>
-        {custom && <Button variant="tertiary" size="S" onClick={() => { setError(''); onReset(); }}>Reset</Button>}
-        <Button variant="secondary" size="S" leadingIcon="solar:upload-minimalistic-linear" onClick={() => inputRef.current?.click()}>
+        {custom && <Button variant="soft" size="sm" onClick={() => { setError(''); onReset(); }}>Reset</Button>}
+        <Button variant="outline" size="sm" leadingIcon="solar:upload-minimalistic-linear" onClick={() => inputRef.current?.click()}>
           Change
         </Button>
         <input
@@ -138,12 +138,11 @@ export function CarePlanPrintPersonalize({
               ...presets.map(p => ({ value: p.id, label: `${p.name}${p.isDefault ? ' (default)' : ''}` })),
             ]}
             value={presetId || NO_PRESET}
-            onChange={v => onPickPreset(v === NO_PRESET ? null : v)}
+            onValueChange={v => onPickPreset(v === NO_PRESET ? null : v)}
           />
-          {preset && <Badge size="S" tone={TEMPLATE_SCOPES[preset.scope].tone} icon={TEMPLATE_SCOPES[preset.scope].icon} label={TEMPLATE_SCOPES[preset.scope].badge} />}
+          {preset && <Badge size="sm" tone={TEMPLATE_SCOPES[preset.scope].tone} icon={TEMPLATE_SCOPES[preset.scope].icon} label={TEMPLATE_SCOPES[preset.scope].badge} />}
           <Button
-            variant="secondary"
-            size="M"
+            variant="outline"
             disabled={!dirty || (preset && !canEditPreset)}
             onClick={() => (preset ? onSavePreset() : setSaveOpen(true))}
           >
@@ -151,7 +150,6 @@ export function CarePlanPrintPersonalize({
           </Button>
           <ActionButton
             icon="solar:menu-dots-linear"
-            size="M"
             tooltip="More preset actions"
             onClick={e => setMenu(e.currentTarget.getBoundingClientRect())}
           />
@@ -190,13 +188,26 @@ export function CarePlanPrintPersonalize({
       </section>
 
       <section className={styles.group}>
-        <h3 className={styles.groupTitle}>Patient demographics</h3>
-        <div className={styles.checks}>
-          {DEMOGRAPHIC_FIELDS.map(f => (
-            <label key={f.key} className={styles.check}>
-              <Checkbox checked={settings.demographics.includes(f.key)} onCheckedChange={() => toggleDemo(f.key)} />
-              {f.label}
-            </label>
+        <h3 className={styles.groupTitle}>Content</h3>
+        <div className={styles.contentList}>
+          {CONTENT_TOGGLES.map(t => (
+            <div key={t.key} className={styles.contentItem}>
+              <div className={styles.contentHead}>
+                <span className={styles.contentLabel}>{t.label}</span>
+                <Switch checked={settings[t.key]} onChange={on => set({ [t.key]: on })} ariaLabel={t.label} />
+              </div>
+              <p className={styles.hint}>{t.hint}</p>
+              {t.key === 'showDemographics' && settings.showDemographics && (
+                <div className={styles.checks}>
+                  {DEMOGRAPHIC_FIELDS.map(f => (
+                    <label key={f.key} className={styles.check}>
+                      <Checkbox checked={settings.demographics.includes(f.key)} onCheckedChange={() => toggleDemo(f.key)} />
+                      {f.label}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </section>
@@ -213,7 +224,7 @@ export function CarePlanPrintPersonalize({
               aria-label="Header"
               options={headerComponents.map(h => ({ value: String(h.id), label: h.label }))}
               value={String(settings.headerId ?? headerComponents[0]?.id ?? '')}
-              onChange={headerId => set({ headerId })}
+              onValueChange={headerId => set({ headerId })}
             />
           )}
         </section>
@@ -231,7 +242,7 @@ export function CarePlanPrintPersonalize({
                 ...footerComponents.map(f => ({ value: String(f.id), label: f.label })),
               ]}
               value={settings.footerId == null ? STANDARD_FOOTER : String(settings.footerId)}
-              onChange={v => set({ footerId: v === STANDARD_FOOTER ? null : v })}
+              onValueChange={v => set({ footerId: v === STANDARD_FOOTER ? null : v })}
             />
           )}
         </section>

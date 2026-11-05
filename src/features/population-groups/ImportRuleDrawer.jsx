@@ -16,7 +16,7 @@ const CATEGORY_ICONS = {
 };
 
 /**
- * Import Rule drawer — shows pre-built rule templates the customer can pick
+ * Import Rule drawer: shows pre-built rule templates the customer can pick
  * to bootstrap a new Dynamic population group. The chosen template's rule
  * tree is handed back to the caller via `onImport(template)`.
  */
@@ -51,8 +51,6 @@ export function ImportRuleDrawer({ onClose, onImport }) {
       onClose={onClose}
       primaryAction={
         <Button
-          variant="primary"
-          size="L"
           disabled={!selected}
           onClick={() => { if (selected) onImport(selected); }}
         >
@@ -92,7 +90,7 @@ export function ImportRuleDrawer({ onClose, onImport }) {
               >
                 <div className={styles.cardHeader}>
                   <span className={styles.cardName}>{t.name}</span>
-                  <Badge tone="grey" size="S" label={`${(t.rule?.rules || []).length} conditions`} />
+                  <Badge size="sm" label={`${(t.rule?.rules || []).length} conditions`} />
                 </div>
                 {t.description && <div className={styles.cardDesc}>{t.description}</div>}
               </button>

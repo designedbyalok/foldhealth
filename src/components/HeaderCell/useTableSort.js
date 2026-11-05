@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
 
 /**
- * useTableSort — generic hook for client-side table sorting.
+ * useTableSort: generic hook for client-side table sorting.
  *
- * @param {Array} data      — array of row objects
- * @param {string} [defaultKey]  — initial sort column key
- * @param {string} [defaultDir='asc'] — 'asc' | 'desc'
+ * @param {Array} data: array of row objects
+ * @param {string} [defaultKey]: initial sort column key
+ * @param {string} [defaultDir='asc']: 'asc' | 'desc'
  * @returns {{ sorted, sortKey, sortDir, requestSort, setSort, clearSort }}
  *
  * Usage:
@@ -25,7 +25,7 @@ export function useTableSort(data, defaultKey = null, defaultDir = 'asc') {
     }
   };
 
-  // Explicit setters — used when the caller drives sort from a SortPopover
+  // Explicit setters: used when the caller drives sort from a SortPopover
   // rather than cycle-click on a header.
   const setSort = (key, dir = 'asc') => {
     setSortKey(key);
@@ -48,7 +48,7 @@ export function useTableSort(data, defaultKey = null, defaultDir = 'asc') {
       if (bVal == null) return -1;
 
       // Detect type and compare
-      // ISO 8601 date strings — parseFloat would happily eat "2026-08-06"
+      // ISO 8601 date strings: parseFloat would happily eat "2026-08-06"
       // and return 2026, so every row in the same year would tie. Detect
       // and use Date parsing before falling through to numbers.
       const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}(T|$)/;

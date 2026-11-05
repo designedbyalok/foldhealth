@@ -5,7 +5,7 @@ import { useAppStore } from '../../../../../../../store/useAppStore';
 import { OutreachTab } from '../../../../../left-panel/tabs/outreach/OutreachTab/OutreachTab.jsx';
 import { CcmBillingReview } from '../billing/CcmBillingReview/CcmBillingReview.jsx';
 import { SendLetterDrawer } from '../letters/SendLetterDrawer/SendLetterDrawer.jsx';
-import { PreVisitStep } from '../steps/PreVisitStep/PreVisitStep.jsx';
+import { PreVisitStep, ProgramSnapshotStep } from '../steps/PreVisitStep/PreVisitStep.jsx';
 import { AssessmentFormView } from '../steps/AssessmentFormView/AssessmentFormView.jsx';
 import { CarePlanView } from '../../care-plan/CarePlanView/CarePlanView.jsx';
 import { AppointmentStep } from '../steps/AppointmentStep/AppointmentStep.jsx';
@@ -24,7 +24,10 @@ import { ConfirmDialog } from '../../../../../../../components/ConfirmDialog/Con
 import { ProgramHistoryDrawer } from '../ProgramHistoryDrawer/ProgramHistoryDrawer.jsx';
 import { useProgramHistory } from '../ProgramHistoryDrawer/useProgramHistory';
 import { toast } from '../../../../../../../components/Toast/sonnerToast';
-import { PROGRAM_STATUS_OPTIONS, statusColorFor } from '../../../../../data/programStatus';
+import { CollapsibleContent } from '../../../../../../../components/Collapsible/Collapsible';
+import { CloseProgramDialog } from '../shared/CloseProgramDialog/CloseProgramDialog.jsx';
+import { PauseCarePlanDialog } from '../../care-plan/drawers/PauseCarePlanDialog/PauseCarePlanDialog';
+import { PROGRAM_STATUS_OPTIONS } from '../../../../../data/programStatus';
 import { PharmacyOutreachStep } from '../../../../../../pharmacy-worklist/program/PharmacyOutreachStep';
 import { PharmacyMedicationReview } from '../../../../../../pharmacy-worklist/program/PharmacyMedicationReview';
 import { PharmacyVerificationStep } from '../../../../../../pharmacy-worklist/program/PharmacyVerificationStep';
@@ -33,6 +36,7 @@ import { PharmacyGapClosureStep } from '../../../../../../pharmacy-worklist/prog
 import { PharmacyActivityLogStep } from '../../../../../../pharmacy-worklist/program/PharmacyActivityLog';
 import { PharmacySnapshotStep } from '../../../../../../pharmacy-worklist/program/PharmacySnapshotStep';
 import { useProgramDetailView } from './useProgramDetailView';
+import { hasPendingRecommendation } from '../../care-plan/lib/carePlanRecommendation';
 import { StepItem, SectionHeader, StepPlaceholder, CarePlanInPanelNotice } from './ProgramDetailViewParts';
 import { useCarePlanPanelOpen } from '../../../../../hooks/useProgramPanelSplitActive';
 import { ProgramDetailViewHeader } from './ProgramDetailViewHeader';
@@ -45,6 +49,9 @@ import styles from './ProgramDetailView.module.css';
 
 export function ProgramDetailView({ program, onClose, startAtFirstStep = false, onSwitchProgram }) {
   const v = useProgramDetailView({ program, onSwitchProgram });
+  // A care plan recommendation awaiting approval marks the Care Plan step.
+  const recommendationPending = useAppStore(s => hasPendingRecommendation(s.patientCarePlans[`${v.patientId}::${program.id}`]));
+  const isRecommended = (step) => recommendationPending && step.name === 'Care Plan';
   const { stepFlags } = v;
   const isPharmacy = program.code === 'PHARM';
   const carePlanInPanel = useCarePlanPanelOpen();
@@ -53,7 +60,10 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
   useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
 
   const [programHistoryOpen, setProgramHistoryOpen] = useState(false);
-  const [endConfirmOpen, setEndConfirmOpen] = useState(false);
+  const [closing, setClosing] = useState(null); // { status } while the Close Program dialog is open
+  const closeCareProgramInstance = useAppStore(s => s.closeCareProgramInstance);
+  const pauseCareProgramInstance = useAppStore(s => s.pauseCareProgramInstance);
+  const [pausing, setPausing] = useState(false); // while the Pause dialog is open
   const [reportOpen, setReportOpen] = useState(false);
   const reportProgram = useMemo(
     () => ({ ...program, ...(v.liveProgram || {}), status: v.status, assignee: v.assignee }),
@@ -65,18 +75,18 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
     if (programHistory.patientId) fetchPatientProgramActivity(programHistory.patientId);
   }, [programHistory.patientId, fetchPatientProgramActivity]);
 
-  const endProgram = () => {
-    const d = new Date();
-    const today = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
-    v.updateCareProgram(v.patientId, program.id, { status: 'Closed', statusColor: statusColorFor('Closed'), endDate: today });
-    setEndConfirmOpen(false);
-    toast.success(`${program.name} ended`);
+  // End Program, or Completed / Discontinued picked as the status: close the
+  // enrollment with a reason.
+  const closeProgram = ({ reason, note, status }) => {
+    closeCareProgramInstance(v.patientId, program.id, { reason, note, status });
+    setClosing(null);
+    toast.success(`${program.name} closed`);
   };
 
   const onMoreAction = (key) => {
     if (key === 'history') setProgramHistoryOpen(true);
     else if (key === 'report') setReportOpen(true);
-    else if (key === 'end') setEndConfirmOpen(true);
+    else if (key === 'end') setClosing({ status: null });
   };
 
   const assigneePicker = (
@@ -120,10 +130,11 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
       );
     }
     if (stepFlags.isPreVisitStep) return <PreVisitStep programCode={program.code} />;
+    if (stepFlags.isSnapshotStep) return <ProgramSnapshotStep programCode={program.code} patientId={v.patientId} programId={program.id} triggerType={program.triggerType} triggerDate={program.triggerDate} />;
     if (stepFlags.isCarePlanStep) {
       return carePlanInPanel ? <CarePlanInPanelNotice /> : <CarePlanView patientId={v.patientId} program={program} />;
     }
-    if (stepFlags.isAppointmentStep) return <AppointmentStep patientId={v.currentPatient?.id} programCode={program.code} stepName={v.stepName} />;
+    if (stepFlags.isAppointmentStep) return <AppointmentStep patientId={v.currentPatient?.id} programCode={program.code} stepName={v.screenName} />;
     if (stepFlags.isOpenCareGapsStep) return <OpenCareGaps />;
     if (stepFlags.isMedReconStep) return <MedicationReconciliation programCode={program.code} />;
     if (stepFlags.isProgramTasksStep) {
@@ -134,7 +145,7 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
     if (v.assessmentCfg) {
       return v.assessmentCfg.checklist
         ? <PostVisitChecklist />
-        : <AssessmentFormView formName={v.assessmentCfg.formName} />;
+        : <AssessmentFormView formId={v.assessmentCfg.formId} formName={v.assessmentCfg.formName} />;
     }
     if (stepFlags.isLettersStep) {
       return (
@@ -204,16 +215,18 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
               return (
                 <div key={step.id}>
                   <SectionHeader name={step.name} expanded={expanded} onToggle={() => v.toggleSection(step.id)} />
-                  {expanded && step.children.map(child => (
-                    <StepItem key={child.id} step={child} isActive={v.activeStep === child.id}
-                      onClick={() => v.setActiveStep(child.id)} isChild />
-                  ))}
+                  <CollapsibleContent open={expanded}>
+                    {step.children.map(child => (
+                      <StepItem key={child.id} step={child} isActive={v.activeStep === child.id}
+                        onClick={() => v.setActiveStep(child.id)} isChild recommended={isRecommended(child)} />
+                    ))}
+                  </CollapsibleContent>
                 </div>
               );
             }
             return (
               <StepItem key={step.id} step={step} isActive={v.activeStep === step.id}
-                onClick={() => v.setActiveStep(step.id)} />
+                onClick={() => v.setActiveStep(step.id)} recommended={isRecommended(step)} />
             );
           })}
         </div>
@@ -337,7 +350,11 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
             key: s,
             label: <span style={{ color: 'var(--neutral-400)' }}>{s}</span>,
           }))}
-          onSelect={(newStatus) => v.changeStatus(newStatus)}
+          onSelect={(newStatus) => {
+            if (newStatus === 'Completed' || newStatus === 'Discontinued') setClosing({ status: newStatus });
+            else if (newStatus === 'Paused') { if (v.status !== 'Paused') setPausing(true); }
+            else v.changeStatus(newStatus);
+          }}
           onClose={() => v.setStatusMenu(null)}
         />
       )}
@@ -356,14 +373,22 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
           onClose={() => setReportOpen(false)}
         />
       )}
-      {endConfirmOpen && (
-        <ConfirmDialog
-          variant="warning"
-          title={`End ${program.name}?`}
-          description="The program will be marked Closed with today as its end date and move to Past Care Programs."
-          confirmLabel="End Program"
-          onConfirm={endProgram}
-          onCancel={() => setEndConfirmOpen(false)}
+      {pausing && (
+        <PauseCarePlanDialog
+          subject="program"
+          onCancel={() => setPausing(false)}
+          onSubmit={async (form) => {
+            setPausing(false);
+            if (await pauseCareProgramInstance(v.patientId, v.liveProgram || program, form)) toast.success(`${program.name} paused`);
+          }}
+        />
+      )}
+      {closing && (
+        <CloseProgramDialog
+          program={program}
+          status={closing.status}
+          onSubmit={closeProgram}
+          onCancel={() => setClosing(null)}
         />
       )}
     </div>

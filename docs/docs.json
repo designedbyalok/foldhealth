@@ -69,6 +69,7 @@
             "group": "Components",
             "pages": [
               "components/design-system",
+              "components/library-contract",
               "components/shared-components"
             ]
           },

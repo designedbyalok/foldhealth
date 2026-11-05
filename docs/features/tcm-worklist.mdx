@@ -1,6 +1,6 @@
 ---
 title: "TCM Worklist"
-description: "Post-discharge Transitional Care Management — grouped by outreach window (48h, 7d) and lifecycle stage."
+description: "Post-discharge Transitional Care Management: grouped by outreach window (48h, 7d) and lifecycle stage."
 ---
 
 The **TCM (Transitional Care Management) Worklist** is the default landing view (`#/population/tcm`). It's the list care managers work through every day: patients who have been discharged and need follow-up within a 48-hour or 7-day window.
@@ -27,10 +27,10 @@ The standalone **[TOC](/features/toc-worklist)** worklist is the agent-queue cop
 
 Toggle **View by** in the toolbar:
 
-- **Outreach Window** (default) — sorted by urgency; 48h patients on top, 7d below.
-- **Outreach Status** — grouped into sections: **Ongoing Call**, **In Queue**, **Scheduled**, **Needs Attention**, **Enrolled**.
+- **Outreach Window** (default): sorted by urgency; 48h patients on top, 7d below.
+- **Outreach Status**: grouped into sections: **Ongoing Call**, **In Queue**, **Scheduled**, **Needs Attention**, **Enrolled**.
 
-## Walkthrough — clear today's 48-hour window
+## Walkthrough: clear today's 48-hour window
 
 <Steps>
   <Step title="Land on the worklist">
@@ -50,7 +50,7 @@ Toggle **View by** in the toolbar:
   </Step>
 </Steps>
 
-## Walkthrough — hand off to an AI agent
+## Walkthrough: hand off to an AI agent
 
 <Steps>
   <Step title="Filter to unassigned rows">
@@ -71,11 +71,11 @@ Toggle **View by** in the toolbar:
 
 The TCM filter bar has 12 filter chips: **Gender**, **Language**, **LACE Acuity**, **TCM Status**, **Status**, **Assigned to**, **Outreach Window**, **Trigger Type**, **Readmission**, **Care Plan**, **Priority**, **Outreach Category**, **Agent**.
 
-Every filter is a `FilterChip` — `Label ⌄` when empty, `Label : Value ✕` when active. Combine them freely; the count updates live.
+Every filter is a `FilterChip`: `Label ⌄` when empty, `Label : Value ✕` when active. Combine them freely; the count updates live.
 
 ## Tips
 
-- **The 48-hour clock respects business hours** — the countdown pauses overnight so 6pm discharges don't page you at midnight.
-- **Bulk moves preserve context** — reassigning 30 rows in one action does not overwrite Next Outreach dates or previously logged notes.
-- **Trigger Type** filters between admissions, ED visits, and readmissions — useful when your work is scoped to a specific trigger.
+- **The 48-hour clock respects business hours**, the countdown pauses overnight so 6pm discharges don't page you at midnight.
+- **Bulk moves preserve context**: reassigning 30 rows in one action does not overwrite Next Outreach dates or previously logged notes.
+- **Trigger Type** filters between admissions, ED visits, and readmissions, useful when your work is scoped to a specific trigger.
 - Legacy URLs `#/population/toc-worklist` and `#/population/toc-queue` still open TCM.

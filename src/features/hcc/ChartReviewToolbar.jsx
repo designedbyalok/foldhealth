@@ -80,7 +80,7 @@ export function ChartReviewToolbar({
           )}
           <ActionButton
             icon="custom:filter"
-            size="S"
+            size="sm"
             tooltip="Filter"
             notification={activeFilterCount > 0}
             count={activeFilterCount > 0 ? String(activeFilterCount) : undefined}
@@ -90,7 +90,7 @@ export function ChartReviewToolbar({
           <span className={diagStyles.divider} />
           <ActionButton
             icon="solar:chat-round-line-linear"
-            size="S"
+            size="sm"
             tooltip={actionsLocked ? actionsLockedTip : 'Comments'}
             count={commentsCount > 0 ? String(commentsCount) : undefined}
             className={[
@@ -99,12 +99,12 @@ export function ChartReviewToolbar({
             ].filter(Boolean).join(' ')}
             onClick={actionsLocked ? undefined : () => toggleLeftPanel('comments')}
             aria-pressed={commentsActive}
-            state={actionsLocked ? 'disabled' : 'active'}
+            disabled={actionsLocked}
           />
           <span className={[diagStyles.divider, diagStyles.hideBelow540].join(' ')} />
           <ActionButton
             icon="solar:history-linear"
-            size="S"
+            size="sm"
             tooltip="Timeline"
             className={[
               diagStyles.hideBelow640,
@@ -117,7 +117,7 @@ export function ChartReviewToolbar({
           <span className={[diagStyles.toolbarMoreWrap, diagStyles.showToolbarMore].join(' ')} ref={moreWrapRef}>
             <ActionButton
               icon="solar:menu-dots-linear"
-              size="S"
+              size="sm"
               tooltip="More"
               onClick={(e) => { e.stopPropagation(); setMoreOpen(v => !v); }}
               className={moreOpen ? diagStyles.activeIcon : ''}

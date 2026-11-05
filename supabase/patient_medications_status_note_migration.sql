@@ -1,4 +1,4 @@
--- Adds Status, Note, and Stop Reason to patient_medications — the
+-- Adds Status, Note, and Stop Reason to patient_medications, the
 -- redesigned "Add New" form (Medication Reconciliation step) now collects
 -- these alongside name/start date/sig. Stop Reason only applies when
 -- status = 'Stopped' (the form only shows it then).

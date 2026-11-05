@@ -1,6 +1,6 @@
 // Fallback Account → Users roster. Lives in its own data module (not in
-// AccountPanel.jsx) so consumers like hcc/systemUsers.js — which needs it at
-// module-eval time — don't form an import cycle through AccountPanel →
+// AccountPanel.jsx) so consumers like hcc/systemUsers.js, which needs it at
+// module-eval time: don't form an import cycle through AccountPanel →
 // useAppStore → systemUsers. That cycle is evaluation-order-fragile and
 // throws "Cannot access 'FALLBACK_USERS' before initialization".
 

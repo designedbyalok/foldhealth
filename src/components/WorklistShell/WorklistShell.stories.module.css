@@ -33,7 +33,7 @@
 }
 /* Zero left-padding + border-right on the members td so the gap between
    the checkbox and the avatar is exactly the checkbox td's right padding
-   (14px) — before this the gap was 14 (checkbox td right) + 14 (members
+   (14px): before this the gap was 14 (checkbox td right) + 14 (members
    td left) = 28px. */
 .memberTd {
   border-right: 1px solid var(--neutral-150);

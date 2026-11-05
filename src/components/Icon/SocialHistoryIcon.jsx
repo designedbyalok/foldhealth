@@ -1,11 +1,11 @@
 /**
- * Social-history icon — a wine glass, for the Social History card and its
+ * Social-history icon: a wine glass, for the Social History card and its
  * empty state. This is Solar's `wineglass-linear` (Solar by 480 Design,
  * CC BY 4.0), kept in the repo so it sits with the other PAMI/Hx history
  * icons and doesn't depend on the Iconify CDN.
  *
  * Solar ships linear icons at a 1.5 stroke, and the app's global rule that
- * thins them to 1px only matches `svg.iconify`, which a local copy isn't — so
+ * thins them to 1px only matches `svg.iconify`, which a local copy isn't: so
  * the 1px stroke is set here directly.
  *
  * @param {object}  props

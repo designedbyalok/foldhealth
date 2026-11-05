@@ -3,10 +3,10 @@ import { Icon } from '../../components/Icon/Icon';
 import { Button } from '../../components/Button/Button';
 import { Input } from '../../components/Input/Input';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
 import { Select } from '../../components/Select/Select';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { SendTestPopover } from './SendTestPopover';
 import { TokenPicker } from './TokenPicker';
 import { ShortcutsHelpButton } from './EmailBuilderShortcuts';
@@ -43,30 +43,28 @@ export function EmailBuilderToolbar({
         />
       </div>
       <div className={styles.topCenter}>
-        <Toggle
+        <SegmentedControl
           items={[
             { key: 'builder', label: 'Builder', icon: 'solar:pen-new-square-linear' },
             { key: 'desktop', label: 'Desktop', icon: 'solar:monitor-linear' },
             { key: 'mobile', label: 'Mobile', icon: 'solar:smartphone-linear' },
           ]}
-          active={viewMode}
-          onChange={setViewMode}
-          size="S"
+          value={viewMode}
+          onValueChange={setViewMode}
+          size="sm"
         />
       </div>
       <div className={styles.topRight} style={{ position: 'relative' }}>
         <ActionButton
           icon="solar:undo-left-linear"
-          size="L"
           tooltip="Undo (⌘Z)"
-          state={canUndo ? 'active' : 'disabled'}
+          disabled={!canUndo}
           onClick={undoEmailEdit}
         />
         <ActionButton
           icon="solar:undo-right-linear"
-          size="L"
           tooltip="Redo (⇧⌘Z)"
-          state={canRedo ? 'active' : 'disabled'}
+          disabled={!canRedo}
           onClick={redoEmailEdit}
         />
         <ShortcutsHelpButton />
@@ -78,7 +76,7 @@ export function EmailBuilderToolbar({
               aria-label="Component type"
               options={COMPONENT_TYPES}
               value={component.role}
-              onChange={(role) => setComponent({ role })}
+              onValueChange={(role) => setComponent({ role })}
               style={{ width: 160 }}
             />
             <label className={styles.defaultToggle}>
@@ -92,8 +90,7 @@ export function EmailBuilderToolbar({
         ) : (
         <>
         <Button
-          variant="secondary"
-          size="L"
+          variant="outline"
           leadingIcon="solar:letter-linear"
           onClick={() => setShowTestEmail(v => !v)}
         >
@@ -120,12 +117,9 @@ export function EmailBuilderToolbar({
           </span>
         )}
         <Button
-          variant="primary"
-          size="L"
-          disabled={saving}
-          onClick={onSave}
+          onClick={onSave} loading={saving}
         >
-          {saving ? 'Saving…' : 'Save'}
+          Save
         </Button>
         <CloseButton
           size={18}

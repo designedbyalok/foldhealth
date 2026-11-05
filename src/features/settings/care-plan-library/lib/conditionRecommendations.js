@@ -1,7 +1,7 @@
 // Recommend library goals from a patient's problem list (PAMI/Hx "Problems").
 // A problem title is mapped to condition keyword groups; a library goal is
 // recommended when its condition tags / title mention any keyword of a matched
-// group. Erring toward inclusion is fine — these are suggestions.
+// group. Erring toward inclusion is fine, these are suggestions.
 
 const CONDITION_KEYWORDS = {
   diabetes: ['diabetes', 'diabetic', 'glucose', 'glycemic', 'a1c', 'hba1c', 'insulin'],
@@ -46,7 +46,7 @@ export function recommendedGoalIds(problems, libraryGoals = []) {
   return out;
 }
 
-// The keyword tokens a single problem implies — the union of every condition
+// The keyword tokens a single problem implies, the union of every condition
 // group whose keywords appear in the problem title.
 const problemTokens = (problem) => {
   const t = (problem?.title || '').toLowerCase();

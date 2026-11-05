@@ -1,4 +1,4 @@
-/* TOC worklist row — composes shared row shell from WorklistShell's
+/* TOC worklist row: composes shared row shell from WorklistShell's
    WorklistRow.module.css (row divider, hover tint, sticky columns,
    .td / .checkTd / .membersTd padding, patient cell layout, outreach
    status cell, actions divider). TOC-specific additions (TOC-status
@@ -7,7 +7,7 @@
 
    IMPORTANT: several other worklist rows (HCC / HCC-archived / CCM /
    SNP / HEDIS / APCM / Queue / AllPatients) import this file directly
-   for its class names — keep those class names exported here (even if
+   for its class names: keep those class names exported here (even if
    the definition is composed from the shared base) or those callers
    break. */
 

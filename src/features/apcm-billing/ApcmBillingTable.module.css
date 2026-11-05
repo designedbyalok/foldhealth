@@ -13,7 +13,7 @@
   overscroll-behavior: none;
 }
 
-/* ── Filter bar — ICD + provider filters. Wraps on narrow viewports. */
+/* ── Filter bar: ICD + provider filters. Wraps on narrow viewports. */
 .filterBar {
   display: flex;
   align-items: center;
@@ -25,7 +25,7 @@
   flex-shrink: 0;
 }
 
-/* Two-line ICD option — code (primary) over description (secondary). */
+/* Two-line ICD option: code (primary) over description (secondary). */
 .icdOption {
   display: flex;
   flex-direction: column;
@@ -125,7 +125,7 @@
 }
 .icdFilterClear:hover { color: var(--neutral-400); }
 
-/* ── CPT column header — inline (i) with a hover popover of the fee rules. */
+/* ── CPT column header: inline (i) with a hover popover of the fee rules. */
 .cptHeader {
   display: inline-flex;
   align-items: center;

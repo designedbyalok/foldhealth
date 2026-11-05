@@ -13,11 +13,11 @@ const PICKUP = 'Pharmacy · Confirmed medication pickup date';
 const APPROVAL = 'Pharmacy · Refill approval received';
 
 describe('Recent Fill outcomes', () => {
-  it('fires on pickup confirmed and refill approval received, with or without the stakeholder prefix', () => {
+  it('fires on a confirmed pickup, with or without the stakeholder prefix; a refill approval sets no fill', () => {
     expect(setsRecentFill(PICKUP)).toBe(true);
     expect(setsRecentFill('Confirmed medication pickup')).toBe(true);
-    expect(setsRecentFill(APPROVAL)).toBe(true);
-    expect(setsRecentFill('Pharmacy · Pending — Refill approval')).toBe(false);
+    expect(setsRecentFill(APPROVAL)).toBe(false);
+    expect(setsRecentFill('Pharmacy · Pending: Refill approval')).toBe(false);
     expect(setsRecentFill('UTC')).toBe(false);
   });
 

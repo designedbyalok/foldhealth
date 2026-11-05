@@ -52,7 +52,7 @@ export function interventionOwner(i, patients) {
     isMemberTask,
     name,
     initials,
-    // A member task is never truly unassigned — the patient owns it.
+    // A member task is never truly unassigned, the patient owns it.
     unassigned: !isMemberTask && (!name || name === 'Unassigned'),
   };
 }

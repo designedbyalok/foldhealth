@@ -1,0 +1,70 @@
+/* Template categories: the Common / category switch and a category's criteria card. */
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.note {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.nameInput { flex: 1; min-width: 0; }
+
+.matchRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.matchLabel {
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+}
+
+.criteria {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.criterion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.typeSelect { flex: 0 0 150px; }
+.labSelect { flex: 1 1 180px; min-width: 0; }
+.opSelect { flex: 0 0 72px; }
+.numberInput { flex: 0 0 88px; }
+.daysInput { flex: 0 0 112px; }
+.conditionInput { flex: 1; min-width: 160px; }
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.hint {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}

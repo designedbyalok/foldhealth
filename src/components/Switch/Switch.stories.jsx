@@ -7,7 +7,7 @@ export default {
   tags: ['autodocs'],
   parameters: {
     docs: {
-      description: { component: 'On/off toggle switch. Controlled — parent owns `checked` and updates it in `onChange`.' },
+      description: { component: 'On/off toggle switch. Controlled, parent owns `checked` and updates it in `onChange`.' },
     },
   },
   argTypes: {
@@ -28,7 +28,7 @@ export default {
     },
     ariaLabel: {
       control: 'text',
-      description: 'Screen-reader label — use when there is no visible `label`.',
+      description: 'Screen-reader label: use when there is no visible `label`.',
       table: { type: { summary: 'string' } },
     },
     disabled: {

@@ -78,7 +78,7 @@ export const PROGRAM_ACTIVITY_BY_MONTH = [
 
 // 'Profile' (was 'Demographics') is the single patient-profile surface on
 // the right panel; it wraps the Demographics/Insurance Toggle inside the
-// ProfileTab component. Tasks is also owned by the right panel now — the
+// ProfileTab component. Tasks is also owned by the right panel now, the
 // left panel dropped both to avoid duplicate nav on the P360 screen.
 // Monitoring is hidden (its view is still in PatientDetailView); Today opens
 // the Comprehensive Care Plan instead.
@@ -150,7 +150,7 @@ export const CARE_PROGRAMS_MOCK = [
 // Missing patients fall back to a "clean" default: no AWV, no APE, LOB
 // pre-filled to Medicaid, IPA pre-filled to CFC.
 export const APCM_PATIENT_SCENARIOS = {
-  // p1 — Active AWV. Triggers AC-9 / AC-14 (AWV blocks APE).
+  // p1: Active AWV. Triggers AC-9 / AC-14 (AWV blocks APE).
   p1: {
     label: 'has active AWV',
     defaults: { ipa: 'CFC', lob: 'medicaid' },
@@ -164,7 +164,7 @@ export const APCM_PATIENT_SCENARIOS = {
     ],
   },
 
-  // p2 — Already has an active APE for MY 2026. Triggers AC-10 / AC-15
+  // p2: Already has an active APE for MY 2026. Triggers AC-10 / AC-15
   // (same-year duplicate block).
   p2: {
     label: 'has existing APE for 2026',
@@ -177,7 +177,7 @@ export const APCM_PATIENT_SCENARIOS = {
     ],
   },
 
-  // p3 — Patient's LOB is Medicare on file. Triggers AC-6 (Medicare-guidance
+  // p3: Patient's LOB is Medicare on file. Triggers AC-6 (Medicare-guidance
   // error). No AWV → the drawer opens cleanly, error surfaces on Create.
   p3: {
     label: 'LOB = Medicare',
@@ -189,9 +189,9 @@ export const APCM_PATIENT_SCENARIOS = {
     ],
   },
 
-  // p4 — Clean positive path (TC-1): no AWV, no APE, Medicaid pre-filled.
+  // p4: Clean positive path (TC-1): no AWV, no APE, Medicaid pre-filled.
   p4: {
-    label: 'clean — Medicaid',
+    label: 'clean: Medicaid',
     defaults: { ipa: 'CFC', lob: 'medicaid' },
     programs: [
       { id: 'cp-p4-tcm', name: 'Transitional Care Management (TCM)', acuity: null, status: 'Enrolled',
@@ -200,16 +200,16 @@ export const APCM_PATIENT_SCENARIOS = {
     ],
   },
 
-  // p5 — Clean positive path (TC-2): no AWV, Commercial LOB, different IPA.
+  // p5: Clean positive path (TC-2): no AWV, Commercial LOB, different IPA.
   p5: {
-    label: 'clean — Commercial',
+    label: 'clean: Commercial',
     defaults: { ipa: 'Astrana', lob: 'commercial' },
     programs: [],
   },
 };
 
 // Default programs shown for any patient NOT in the scenario map above.
-// Intentionally excludes AWV so APE creation is unblocked out of the box —
+// Intentionally excludes AWV so APE creation is unblocked out of the box,
 // AWV-block behavior is still demonstrable via p1. Provides realistic
 // context (SNP + HIU + TCM) without gating the positive path.
 const DEFAULT_PROGRAMS = CARE_PROGRAMS_MOCK.filter(
@@ -245,6 +245,7 @@ export const CP_FILTERS = [
 // Step definitions only: each step's status is worked out per patient in
 // ProgramDetailView/stepStatus.js.
 export const PROGRAM_STEPS_MOCK = [
+  { id: 'step-3s', name: 'Snapshot' },
   { id: 'step-1', name: 'Outreach' },
   { id: 'step-2', name: 'Letters', mandatory: true },
   {
@@ -316,18 +317,19 @@ const AWV_STEPS = [
 ];
 
 const TOC_IP_STEPS = [
+  { id: 'tocip-snapshot', name: 'Snapshot', mandatory: true },
   { id: 'tocip-outreach', name: 'Outreach' },
   { id: 'tocip-docs', name: 'Program Documents' },
   { id: 'tocip-letters', name: 'Letters' },
   {
     id: 'tocip-directives', name: 'Program Directives', type: 'section', expanded: true,
     children: [
-      { id: 'tocip-snapshot', name: 'Snapshot', mandatory: true },
       { id: 'tocip-postip', name: 'Post IP Assessment', mandatory: true },
       { id: 'tocip-postvisit', name: 'Post-Visit', mandatory: true },
     ],
   },
   { id: 'tocip-appt', name: 'Appointment', mandatory: true },
+  { id: 'tocip-careplan', name: 'Care Plan' },
   { id: 'tocip-caregaps', name: 'Open Care Gaps' },
   { id: 'tocip-medreview', name: 'Medication Review' },
   { id: 'tocip-task', name: 'Program Related Task' },
@@ -350,6 +352,17 @@ const TOC_ED_STEPS = [
   { id: 'toced-caregaps', name: 'Open Care Gaps' },
   { id: 'toced-medreview', name: 'Medication Review' },
   { id: 'toced-task', name: 'Program Related Task' },
+];
+
+// Home health runs as an episode (an episodic care plan template) until the
+// agency discharges the patient.
+const HH_STEPS = [
+  { id: 'hh-snapshot', name: 'Snapshot', mandatory: true },
+  { id: 'hh-docs', name: 'Program Documents' },
+  { id: 'hh-outreach', name: 'Outreach', mandatory: true },
+  { id: 'hh-careplan', name: 'Care Plan' },
+  { id: 'hh-medreview', name: 'Medication Review' },
+  { id: 'hh-task', name: 'Program Related Task' },
 ];
 
 const DM_STEPS = [
@@ -465,6 +478,7 @@ export const PROGRAM_STEPS = {
   APE: APE_STEPS,
   CCM: CCM_PROGRAM_STEPS,
   PHARM: PHARM_STEPS,
+  HH: HH_STEPS,
 };
 
 // ─── Pre-visit step content, keyed by program type ─────────────────────────
@@ -586,7 +600,7 @@ export const PRE_VISIT_MOCK = {
       {
         icon: 'solar:danger-circle-linear', title: 'Risk & Acuity',
         rows: [
-          ['Recent LACE Score', '—'],
+          ['Recent LACE Score', '-'],
           ['Recent Acuity Level', 'Low-risk'],
           ['Chronic Conditions', "Hypertension, Parkinson's Disease, Kidney Disease"],
         ],

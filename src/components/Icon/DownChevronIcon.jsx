@@ -1,5 +1,5 @@
 /**
- * Down chevron — used across FilterChip, FilterBar's More Filters trigger,
+ * Down chevron: used across FilterChip, FilterBar's More Filters trigger,
  * SectionTitleBar's Saved Filters button, and any other trigger that opens a
  * popover downward. 1.5px stroke, rounded caps.
  *

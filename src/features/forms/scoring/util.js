@@ -1,5 +1,5 @@
 /**
- * Scoring — pure value helpers shared by the engine and the validator.
+ * Scoring: pure value helpers shared by the engine and the validator.
  * No state, no I/O. See docs/forms-scoring-engine.md.
  */
 

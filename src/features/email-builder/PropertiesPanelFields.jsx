@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Input } from '../../components/Input/Input';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Select as SharedSelect } from '../../components/Select/Select';
@@ -474,7 +474,7 @@ export function SelectInput({ label, value, options, onChange }) {
         id={controlId}
         options={options}
         value={value ?? ''}
-        onChange={onChange}
+        onValueChange={onChange}
       />
     </div>
   );
@@ -545,8 +545,8 @@ export function TableEditor({ columns, rows, onChangeColumns, onChangeRows }) {
         ))}
       </div>
       <div className={styles.tableEditorActions}>
-        <Button variant="ghost" size="S" className={styles.tableEditorAddBtn} onClick={addRow}>+ Row</Button>
-        <Button variant="ghost" size="S" className={styles.tableEditorAddBtn} onClick={addColumn}>+ Column</Button>
+        <Button variant="ghost" size="sm" className={styles.tableEditorAddBtn} onClick={addRow}>+ Row</Button>
+        <Button variant="ghost" size="sm" className={styles.tableEditorAddBtn} onClick={addColumn}>+ Column</Button>
       </div>
     </div>
   );
@@ -653,11 +653,11 @@ export function SocialEditor({ platforms, onChange }) {
       ))}
       <div className={styles.socialPresets}>
         {SOCIAL_PRESETS.filter(sp => !platforms.some(p => p.id === sp.id)).map(sp => (
-          <Button key={sp.id} variant="ghost" size="S" className={styles.tableEditorAddBtn} onClick={() => addPlatform(sp)}>
+          <Button key={sp.id} variant="ghost" size="sm" className={styles.tableEditorAddBtn} onClick={() => addPlatform(sp)}>
             + {sp.label}
           </Button>
         ))}
-        <Button variant="ghost" size="S" className={styles.tableEditorAddBtn} onClick={addCustom}>
+        <Button variant="ghost" size="sm" className={styles.tableEditorAddBtn} onClick={addCustom}>
           + Custom
         </Button>
       </div>
@@ -696,7 +696,7 @@ export function NavLinkEditor({ links, onChange }) {
           <CloseButton size={12} onClick={() => removeLink(i)} className={styles.tableEditorRemoveRowBtn} label="Remove link" />
         </div>
       ))}
-      <Button variant="ghost" size="S" className={styles.tableEditorAddBtn} onClick={addLink}>+ Add link</Button>
+      <Button variant="ghost" size="sm" className={styles.tableEditorAddBtn} onClick={addLink}>+ Add link</Button>
     </div>
   );
 }
@@ -733,12 +733,12 @@ export function TextStyleChips({ block, updateBlock, id }) {
     return byLevel ? byLevel.key : 'heading';
   })();
   return (
-    <Toggle
+    <SegmentedControl
       fullWidth
-      size="S"
+      size="sm"
       items={TEXT_STYLE_PRESETS.map(p => ({ key: p.key, label: p.label }))}
-      active={active || ''}
-      onChange={(key) => {
+      value={active || ''}
+      onValueChange={(key) => {
         const preset = TEXT_STYLE_PRESETS.find(p => p.key === key);
         if (preset) apply(preset);
       }}
@@ -815,15 +815,15 @@ export function PaddingControl({ padding, onChangeSide, onChangeAll }) {
     <>
       <div className={styles.paddingLabelRow}>
         <span className={styles.fieldLabelStrong}>Padding</span>
-        <Toggle
-          size="S"
+        <SegmentedControl
+          size="sm"
           items={[
             { key: 'uniform',   label: '', icon: <PadUniformIcon /> },
             { key: 'symmetric', label: '', icon: <PadSymmetricIcon /> },
             { key: 'per-side',  label: '', icon: <PadPerSideIcon /> },
           ]}
-          active={mode}
-          onChange={(v) => {
+          value={mode}
+          onValueChange={(v) => {
             setMode(v);
             if (v === 'uniform') onChangeAll(padding.top);
             else if (v === 'symmetric') setSymmetric(padding.top, padding.left);
@@ -957,15 +957,15 @@ export function BorderControl({ style, onUpdate }) {
       {open && (
         <>
           <div className={styles.fieldCol}>
-            <Toggle
+            <SegmentedControl
               fullWidth
-              size="S"
+              size="sm"
               items={[
                 { key: 'uniform',  label: 'All sides' },
                 { key: 'per-side', label: 'Per side' },
               ]}
-              active={mode}
-              onChange={switchMode}
+              value={mode}
+              onValueChange={switchMode}
             />
           </div>
           {mode === 'uniform' ? (
@@ -984,22 +984,22 @@ export function BorderControl({ style, onUpdate }) {
               </Row2>
               <div className={styles.fieldCol}>
                 <span className={styles.fieldLabel}>Style</span>
-                <Toggle
+                <SegmentedControl
                   fullWidth
-                  size="S"
+                  size="sm"
                   items={[
                     { key: 'solid',  label: 'Solid' },
                     { key: 'dashed', label: 'Dashed' },
                     { key: 'dotted', label: 'Dotted' },
                   ]}
-                  active={style.borderStyle || 'solid'}
-                  onChange={v => onUpdate('borderStyle', v)}
+                  value={style.borderStyle || 'solid'}
+                  onValueChange={v => onUpdate('borderStyle', v)}
                 />
               </div>
             </>
           ) : (
             <>
-              {/* Side enable toggles — clicking a side enables/disables its
+              {/* Side enable toggles: clicking a side enables/disables its
                   border. Compact icon set top/right/bottom/left. */}
               <div className={styles.fieldCol}>
                 <span className={styles.fieldLabel}>Sides</span>

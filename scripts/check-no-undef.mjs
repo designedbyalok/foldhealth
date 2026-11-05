@@ -4,7 +4,7 @@
  *
  * Why a dedicated check instead of `bun run lint`: the repo carries ~880
  * pre-existing lint problems, so a blanket gate would be red on day one and
- * get ignored. `no-undef` is different in kind — a referenced-but-undefined
+ * get ignored. `no-undef` is different in kind: a referenced-but-undefined
  * identifier is a guaranteed ReferenceError on whatever code path reaches it,
  * which in this app means a white screen (there is no error boundary above
  * AppLayout, so React unmounts to an empty #root).
@@ -31,7 +31,7 @@ try {
   results = await eslint.lintFiles(patterns);
 } catch (err) {
   // An unmatched pattern is normal when this runs over a staged-file list that
-  // contains no lintable files — treat it as nothing to do rather than a fail.
+  // contains no lintable files: treat it as nothing to do rather than a fail.
   if (/All files matched by .* are ignored|No files matching/.test(err.message)) {
     console.log(`✓ ${RULE}: no lintable files in scope`);
     process.exit(0);
@@ -53,12 +53,12 @@ if (findings.length === 0) {
 const cwd = process.cwd();
 const rel = (p) => (p.startsWith(cwd) ? p.slice(cwd.length + 1) : p);
 
-console.error(`\n✗ ${findings.length} ${RULE} error(s) — each is a ReferenceError waiting on a code path:\n`);
+console.error(`\n✗ ${findings.length} ${RULE} error(s): each is a ReferenceError waiting on a code path:\n`);
 for (const f of findings) {
   console.error(`  ${rel(f.file)}:${f.line}:${f.column}  ${f.message}`);
 }
 console.error(
   '\nFix by importing the symbol, threading it as a prop, or deleting the dead reference.\n' +
-    'Do not silence it — this rule is the last line of defence against a blank screen.\n',
+    'Do not silence it: this rule is the last line of defence against a blank screen.\n',
 );
 process.exit(1);

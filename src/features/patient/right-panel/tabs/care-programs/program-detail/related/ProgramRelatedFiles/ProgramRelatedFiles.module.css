@@ -20,10 +20,10 @@
   background: var(--neutral-150);
   flex-shrink: 0;
 }
-/* Tabs — match the Letters step (.contentTab / .contentTabActive). */
+/* Tabs: match the Letters step (.contentTab / .contentTabActive). */
 .spacer { flex: 1; }
 
-/* Filter chips row — toggled by the toolbar's Filter button. */
+/* Filter chips row: toggled by the toolbar's Filter button. */
 .filterBar {
   display: flex;
   align-items: center;
@@ -49,13 +49,13 @@
 /* Expanded search fills the row, keeping the trailing action icons. */
 .searchWrap { flex: 1; min-width: 0; display: flex; align-items: center; }
 
-/* Inline uploader — sits directly below the toolbar (its "Upload File"
+/* Inline uploader: sits directly below the toolbar (its "Upload File"
    touchpoint), above the table. */
 .uploaderWrap {
   padding-bottom: 12px;
 }
 
-/* Empty state — dashed neutral-150 container matching the tasks step. */
+/* Empty state: dashed neutral-150 container matching the tasks step. */
 .empty {
   display: flex;
   flex-direction: column;
@@ -90,7 +90,7 @@
 .updatedBy { font-size: var(--font-base); color: var(--neutral-400); }
 .updatedDate { font-size: var(--font-md); color: var(--neutral-300); }
 
-/* ── Grid view — doc cards mirroring the Add Letter card layout ── */
+/* ── Grid view: doc cards mirroring the Add Letter card layout ── */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));

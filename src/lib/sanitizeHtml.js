@@ -3,15 +3,14 @@ import DOMPurify from 'dompurify';
 /**
  * Central HTML sanitizers.
  *
- * Any HTML that did not originate in this codebase — an uploaded document, a
- * remote-fetched asset, a rich-text field, a row read back from Supabase —
+ * Any HTML that did not originate in this codebase, an uploaded document, a
+ * remote-fetched asset, a rich-text field, a row read back from Supabase,
  * must pass through one of these before it reaches `dangerouslySetInnerHTML`
  * or `innerHTML`. Keeping the policy here means there is one place to review
  * and one place to tighten.
  *
- * These are NOT for the email builder's deliberate HTML-authoring surfaces
- * (InlineEditable, the RawHtml block): there the user is intentionally writing
- * markup for their own email, and sanitizing would break the feature.
+ * The email builder's RawHtml block is the exception: the exported email keeps
+ * the author's original markup (see sanitizeEmailHtml for its preview).
  */
 
 // Rich text: formatting, links, lists, tables and images, but no scripts, no
@@ -56,7 +55,7 @@ export function sanitizeRichText(html) {
  * and presentational attributes, so this profile keeps those and removes only
  * the executable surface. DOMPurify strips `on*` handlers on every profile.
  *
- * Note this is deliberately NOT applied to the exported email — see
+ * Note this is deliberately NOT applied to the exported email, see
  * renderEmailHtml / patchEmailHtml, which still serialize the author's
  * original markup.
  */
@@ -85,8 +84,8 @@ export function sanitizeEmailHtml(html) {
 
 /**
  * SVG markup fetched from a remote URL or uploaded by the user. SVG is a
- * scripting host — `<script>`, `on*` handlers and `<foreignObject>` all
- * execute — so it gets its own profile that permits shapes and nothing else.
+ * scripting host: `<script>`, `on*` handlers and `<foreignObject>` all
+ * execute: so it gets its own profile that permits shapes and nothing else.
  */
 export function sanitizeSvg(svg) {
   if (typeof svg !== 'string' || svg === '') return '';

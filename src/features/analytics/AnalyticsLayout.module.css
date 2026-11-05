@@ -1,16 +1,16 @@
 /* ═══════════════════════════════════════════════════════════════
-   ANALYTICS LAYOUT — Fold Health Design System
+   ANALYTICS LAYOUT: Fold Health Design System
 
    Font scale (Inter):
-     400 = Regular  — body text, table cells, nav items
-     500 = Medium   — all emphasis (titles, headers, KPI labels, hero values)
+     400 = Regular: body text, table cells, nav items
+     500 = Medium: all emphasis (titles, headers, KPI labels, hero values)
    ═══════════════════════════════════════════════════════════════ */
 
 .wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 .body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 
 /* ──────────────────────────────────────────────
-   Slicer Bar — Global filters, sticky at the top of each page.
+   Slicer Bar: Global filters, sticky at the top of each page.
    Negative margins cancel the canvas padding so it spans edge to edge.
    ────────────────────────────────────────────── */
 .slicerBar {
@@ -70,7 +70,7 @@
 .askFoldInput::placeholder { color: var(--neutral-200); }
 
 /* ──────────────────────────────────────────────
-   Page Navigator — matches Settings SubNav
+   Page Navigator: matches Settings SubNav
    180px, 14px regular, 16px outline icons
    ────────────────────────────────────────────── */
 /* The page navigator now uses the shared SideNav component. */
@@ -104,7 +104,7 @@
   display: flex; align-items: center; gap: 8px; flex-shrink: 0;
 }
 /* Sizing wrapper for the shared <Select> (trigger chrome comes from the
-   component itself) — auto width so each slicer sizes to its content. */
+   component itself): auto width so each slicer sizes to its content. */
 .filterSelect { width: auto; min-width: 150px; }
 .filterBtn {
   display: inline-flex; align-items: center; gap: 5px;
@@ -181,7 +181,7 @@
 .g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 14px; }
 
 /* ──────────────────────────────────────────────
-   Tables — matched to Worklist reference
+   Tables: matched to Worklist reference
    th: 12px medium, no uppercase, neutral-300, white bg
    td: 14px regular, neutral-400
    padding: 8px 14px (same as worklist)
@@ -205,7 +205,7 @@
 .tbl tbody tr { transition: background .1s; }
 .tbl tbody tr:hover td { background: var(--neutral-50); }
 .tblWrap { overflow-x: auto; max-height: 400px; overflow-y: auto; }
-/* FIX #6: Primary column — medium (500) not semi-bold (600) */
+/* FIX #6: Primary column, medium (500) not semi-bold (600) */
 .fw600 { font-weight: 500; color: var(--neutral-400); }
 .mono { font-size: var(--font-base); font-weight: 400; }
 .valG { color: var(--status-success); font-weight: 500; }
@@ -247,7 +247,7 @@
 .insightText { font-size: var(--font-base); font-weight: 400; color: var(--neutral-400); line-height: 1.5; }
 .insightBtns { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 
-/* ── Buttons: REMOVED — all analytics buttons now use shared <Button> component ── */
+/* ── Buttons: REMOVED, all analytics buttons now use shared <Button> component ── */
 
 /* ── Progress Bar ── */
 .prRow { margin-bottom: 14px; }
@@ -263,7 +263,7 @@
 .prFill.red { background: var(--status-error); }
 .prSub { font-size: var(--font-sm); font-weight: 400; color: var(--neutral-200); }
 
-/* ── Status Pills — matches Badge component ── */
+/* ── Status Pills: matches Badge component ── */
 .stPill {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: var(--font-sm); font-weight: 500; padding: 3px 8px; border-radius: 4px;
@@ -297,7 +297,7 @@
 .tab:hover { color: var(--neutral-400); }
 .tab.active { color: var(--primary-300); border-bottom-color: var(--primary-300); font-weight: 500; }
 
-/* ── Sub tabs: REMOVED — replaced by shared <Toggle> component ── */
+/* ── Sub tabs: REMOVED, replaced by shared <Toggle> component ── */
 
 /* ── Rule Card ── */
 .ruleCard {
@@ -388,7 +388,7 @@
 .donutLabel { font-size: var(--font-base); font-weight: 400; color: var(--neutral-300); flex: 1; }
 .donutVal { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
 
-/* ── Tags — matches Badge component ── */
+/* ── Tags: matches Badge component ── */
 .tag {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: var(--font-sm); font-weight: 500; padding: 3px 8px;
@@ -404,7 +404,7 @@
 .canvas::-webkit-scrollbar { width: 5px; height: 5px; }
 .canvas::-webkit-scrollbar-thumb { background: var(--neutral-150); border-radius: 4px; }
 
-/* ── Editable dashboard (drag/resize) — mirrors HomeView.module.css pattern.
+/* ── Editable dashboard (drag/resize): mirrors HomeView.module.css pattern.
    The Customize / Reset buttons live in the view header (.filterBar) via
    .filterBtn / .filterBtnActive defined above. */
 .gridContainer {
@@ -413,7 +413,7 @@
 
 /* Dashed editing border. Cells auto-fit to content (EditableGrid measures
    the content-height inner wrapper and snaps the cell to it), so the card
-   hugs its content and the border lays on the content edge — no empty fill
+   hugs its content and the border lays on the content edge, no empty fill
    below. If the user manually grows a panel, the extra space sits below the
    card inside the taller cell. */
 .gridContainer.gridEditing .gridItemInner > * {
@@ -453,7 +453,7 @@
   position: relative;
   height: 100%;
   box-sizing: border-box;
-  /* No overflow rule — let react-resizable-handle render at bottom-right
+  /* No overflow rule: let react-resizable-handle render at bottom-right
      of the grid item. Card content overflow is handled internally by the
      Card component's .cardBody. Cards inside are content-sized; the dashed
      edit-mode border hugs each card's actual content rather than stretching

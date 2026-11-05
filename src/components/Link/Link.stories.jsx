@@ -7,7 +7,7 @@ export default {
   parameters: {
     docs: {
       description: {
-        component: 'Text-styled clickable link — renders as a `<span>` with underline + primary color; use inline in body copy.',
+        component: 'Text-styled clickable link: renders as a `<span>` with underline + primary color; use inline in body copy.',
       },
     },
   },

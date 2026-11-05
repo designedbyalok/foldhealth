@@ -70,7 +70,7 @@ export const POP_GROUPS = [
   { id:22, name:'Patients with osteoporosis and no DEXA scan in 2 years',                     type:'Static',  count:37,   inactive:5,  updated:'04/16/2024', created:'04/16/2024' },
   { id:23, name:'High-cost members with 3+ specialist visits and no care coordination',       type:'Dynamic', count:15,   inactive:1,  updated:'04/18/2024', created:'04/18/2024' },
   { id:24, name:'Patients with tobacco use and no cessation counseling',                       type:'Dynamic', count:88,   inactive:16, updated:'04/22/2024', created:'04/22/2024' },
-  { id:25, name:'Pediatric immunization gap list — missing MMR booster',                       type:'Static',  count:29,   inactive:0,  updated:'04/25/2024', created:'04/25/2024' },
+  { id:25, name:'Pediatric immunization gap list: missing MMR booster',                       type:'Static',  count:29,   inactive:0,  updated:'04/25/2024', created:'04/25/2024' },
   { id:26, name:'Patients with BMI ≥ 35 and no referral to weight management program',        type:'Dynamic', count:54,   inactive:7,  updated:'04/28/2024', created:'04/28/2024' },
   { id:27, name:'Patients awaiting colonoscopy with bowel prep instructions not sent',         type:'Static',  count:6,    inactive:0,  updated:'05/01/2024', created:'05/01/2024' },
   { id:28, name:'Members with lupus and no rheumatology visit in last 12 months',              type:'Dynamic', count:21,   inactive:4,  updated:'05/05/2024', created:'05/05/2024' },
@@ -119,7 +119,7 @@ export function reclassifyDuplicate(prev, removedEntryId) {
 
   if (!sibling) return { ...prev, duplicates: remaining };
 
-  // Sibling is now alone — reclassify
+  // Sibling is now alone: reclassify
   const newDups = remaining.filter(d => d.rawId !== sibling.rawId);
   const dbPat   = FOLD_DB_MAP[(sibling.rawId || '').toUpperCase()];
 

@@ -6,7 +6,7 @@
   /* Workspace sits on the LEFT of the Diagnosis Gaps section (Paper 1UD1);
      the divider is provided by the right pane's border-left. */
   background: var(--neutral-0);
-  /* The workspace has NO width transition of its own — its width follows
+  /* The workspace has NO width transition of its own, its width follows
      the drawer's width transition via flex layout (the right pane is
      fixed-width, so all remaining drawer width flows here). Clip content
      so nothing spills while the pane is narrow during the expansion. */
@@ -53,7 +53,7 @@
 
 .tab {
   /* Prototype style: text-only tab with a 2px primary-300 underline when
-     active. No icon, no count pill — count is baked into the label
+     active. No icon, no count pill, count is baked into the label
      as "Comments(3)". Padding kept tight so all 7 tabs fit within the
      drawer without horizontal scroll. */
   display: inline-flex;
@@ -135,7 +135,7 @@
   display: inline-block;
 }
 
-/* Selected chip — primary-tinted to indicate an active filter. */
+/* Selected chip: primary-tinted to indicate an active filter. */
 .filterChipSelected {
   background: var(--primary-50);
   border-color: var(--primary-200);
@@ -201,7 +201,7 @@
   text-align: left;
 }
 .filterMenuClear:hover { background: var(--primary-50); }
-/* Clear All — sits inline next to the last filter chip. Always rendered;
+/* Clear All: sits inline next to the last filter chip. Always rendered;
    disabled (dimmed + no-cursor) when no filter is active. */
 .filterClearAll {
   display: inline-flex;
@@ -404,7 +404,7 @@
 }
 .empty p { margin: 0; }
 
-/* ── ICD-scope bar — shown when the Activity Log is filtered to one ICD ── */
+/* ── ICD-scope bar: shown when the Activity Log is filtered to one ICD ── */
 .activityScopeBar {
   display: flex;
   align-items: center;
@@ -439,14 +439,14 @@
 }
 .activityScopeClear:hover { color: var(--neutral-400); }
 
-/* ── Activity tab — timeline view ────────────────────────────────────── */
+/* ── Activity tab: timeline view ────────────────────────────────────── */
 
 .timeline {
   display: flex;
   flex-direction: column;
 }
 
-/* Month header — clickable to expand/collapse the group's entries. */
+/* Month header: clickable to expand/collapse the group's entries. */
 .activityGroup {
   display: flex;
   align-items: center;
@@ -507,7 +507,7 @@
   gap: 8px;
 }
 
-/* Left rail — top connector + icon + bottom connector */
+/* Left rail: top connector + icon + bottom connector */
 .tlRail {
   width: 24px;
   flex-shrink: 0;
@@ -534,7 +534,7 @@
   flex-shrink: 0;
 }
 
-/* Bottom connector flows from the icon directly into the next row — no
+/* Bottom connector flows from the icon directly into the next row, no
    top margin so the line reads continuous between entries. */
 .tlConnectorBottom {
   width: 0.5px;
@@ -561,7 +561,7 @@
   justify-content: center;
   flex-shrink: 0;
 }
-/* Body — meta + headline + supporting blocks */
+/* Body: meta + headline + supporting blocks */
 .tlBody {
   flex: 1;
   min-width: 0;
@@ -684,12 +684,12 @@
 }
 .commentComposer::placeholder { color: var(--neutral-300); }
 
-/* Wrapper around the shared CommentComposer primitive in the Comments tab —
+/* Wrapper around the shared CommentComposer primitive in the Comments tab,
    just adds the bottom gap the old single-line input had. */
 .commentComposerWrap { margin-bottom: 12px; }
 
 /* Inline "Edited" badge that follows the author/role in a comment's meta
-   line — outlined chip, no fill. */
+   line: outlined chip, no fill. */
 .commentEditedBadge {
   display: inline-flex;
   align-items: center;
@@ -754,7 +754,7 @@
   color: var(--neutral-400);
 }
 .commentActionBtn:hover { background: var(--neutral-50); color: var(--neutral-500); }
-/* Inline edit form — sits in place of .commentBody while editing. */
+/* Inline edit form: sits in place of .commentBody while editing. */
 .commentEditor { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
 .commentEditorActions { display: flex; justify-content: flex-start; gap: 8px; }
 .commentGhostBtn,
@@ -779,7 +779,7 @@
 .commentSaveBtn:hover:not(:disabled) { background: var(--primary-400, var(--primary-300)); }
 .commentSaveBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Comment body text — full-width, multi-line, sits below the meta line. */
+/* Comment body text: full-width, multi-line, sits below the meta line. */
 .commentBody {
   font-size: var(--font-md);
   font-weight: 400;
@@ -787,7 +787,7 @@
   line-height: 1.5;
 }
 
-/* Status-change context card — appears above the body when a comment was
+/* Status-change context card: appears above the body when a comment was
    authored as part of a workflow transition (Coder → Record Requested).
    Matches the Figma pattern: 'Status Changed' label + from/to pills. */
 .commentStatusChange {
@@ -812,7 +812,7 @@
   gap: 8px;
 }
 
-/* Clickable timeline row (Claims uses it) — strip button defaults so the
+/* Clickable timeline row (Claims uses it): strip button defaults so the
    row matches the static .tlRow but is keyboard-focusable. */
 .tlRowClickable {
   background: transparent;
@@ -844,7 +844,7 @@
 }
 .tlInlineAction:hover { text-decoration: underline; }
 
-/* Documents tab — filename row with file icon + status dot. */
+/* Documents tab: filename row with file icon + status dot. */
 .docHeadline {
   display: flex;
   align-items: center;
@@ -862,7 +862,7 @@
   white-space: nowrap;
 }
 
-/* Claims tab — headline row: claim number + status badge inline. */
+/* Claims tab: headline row: claim number + status badge inline. */
 .claimHeadline {
   display: flex;
   align-items: center;
@@ -880,7 +880,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* History tab — headline row: action Badge + target inline. */
+/* History tab: headline row: action Badge + target inline. */
 .historyHeadline {
   display: flex;
   align-items: center;
@@ -954,7 +954,7 @@
   gap: 10px;
   min-width: 0;
 }
-/* Document avatar — matches the Support "Document Available" drawer's .docThumb. */
+/* Document avatar: matches the Support "Document Available" drawer's .docThumb. */
 .docThumb {
   display: inline-flex;
   align-items: center;
@@ -1076,7 +1076,7 @@
    the scroll container's edges (negative side margins break out of the
    12px padding on `.scroll`), no side/top padding of its own, and a
    0.5px neutral-150 hairline separates it from the sections that follow.
-   Vertical breathing room lives in the bottom margin — not padding —
+   Vertical breathing room lives in the bottom margin, not padding,
    so the border sits flush against the header row itself. */
 .claimDetailHead {
   display: flex;
@@ -1207,7 +1207,7 @@
   font-weight: 400;
   color: var(--neutral-300);
 }
-/* Claims count chip — small purple-tinted button. */
+/* Claims count chip: small purple-tinted button. */
 .historyClaims {
   display: inline-flex;
   align-items: center;
@@ -1276,7 +1276,7 @@
 }
 .filterTrailingBtnActive:hover { text-decoration: none; }
 
-/* Dashed "Upload Document" CTA — the primary way to add a document from
+/* Dashed "Upload Document" CTA: the primary way to add a document from
    the Documents tab, patterned after the "Add Secondary Insurance"
    dashed button in EditPatientDrawer. Sits above the table listing. */
 .uploadCta {
@@ -1298,7 +1298,7 @@
 }
 .uploadCta:hover { background: var(--primary-100); }
 
-/* ── Inline document uploader widget — Figma 278:162482 ─────────────────
+/* ── Inline document uploader widget: Figma 278:162482 ─────────────────
    Grey-tinted card with drop-zone, supported-format hint, Upload/Cancel.
    Renders above the documents table when the toolbar Upload toggle is on. */
 .docUploader {
@@ -1427,7 +1427,7 @@
 }
 .docFileRowIconBtn:hover { background: var(--neutral-50); }
 
-/* Progress bar — green track that fills horizontally during 'uploading'. */
+/* Progress bar: green track that fills horizontally during 'uploading'. */
 .docFileProgressTrack {
   width: 100%;
   height: 4px;
@@ -1446,7 +1446,7 @@
   transition: transform 0.12s linear;
 }
 
-/* 'Ready' form — Document Type / Category dropdowns + Caption input. */
+/* 'Ready' form: Document Type / Category dropdowns + Caption input. */
 .docUploaderForm {
   display: flex;
   flex-direction: column;
@@ -1541,7 +1541,7 @@
   overflow: hidden;
 }
 
-/* ── Shared list shell — used by Comments and Notes ──────────────────── */
+/* ── Shared list shell: used by Comments and Notes ──────────────────── */
 
 .list {
   list-style: none;
@@ -1761,7 +1761,7 @@
   white-space: nowrap;
 }
 
-/* ── Documents-tab browser-style sub-tabs — one tab per doc when a doc is
+/* ── Documents-tab browser-style sub-tabs: one tab per doc when a doc is
    open in the viewer, plus a back-to-listing chevron. ─────────────────── */
 .docsViewer {
   display: flex;
@@ -1852,7 +1852,7 @@
 .dataTableRowClickable { cursor: pointer; }
 .dataTableRowClickable:hover { background: var(--neutral-25); }
 
-/* Left/right arrow buttons flanking the doc-tabs strip — active only when
+/* Left/right arrow buttons flanking the doc-tabs strip, active only when
    the strip is scrollable in that direction. */
 .docsScrollBtn {
   display: inline-flex;
@@ -1874,11 +1874,11 @@
   cursor: default;
   pointer-events: none;
 }
-/* Hide the tab strip's scrollbar — arrows are the primary affordance. */
+/* Hide the tab strip's scrollbar: arrows are the primary affordance. */
 .docsBrowserTabs::-webkit-scrollbar { display: none; }
 .docsBrowserTabs { scrollbar-width: none; }
 
-/* Per-tab "open in new browser tab" arrow — sits inside each doc tab,
+/* Per-tab "open in new browser tab" arrow: sits inside each doc tab,
    right after the filename. Renders as an inline anchor so it doesn't
    nest inside a button (avoids the button-in-button HTML invariant that
    crashed Radix's focus trap earlier). Hover tints the arrow without
@@ -1896,3 +1896,10 @@
   transition: color 0.12s, background 0.12s;
 }
 .docsTabExternalLink:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+
+/* @mention inside a comment body: reads as a link, not a pill, so the
+   tagged name stands out without breaking the sentence. */
+.mention {
+  color: var(--secondary-300);
+  font-weight: 500;
+}

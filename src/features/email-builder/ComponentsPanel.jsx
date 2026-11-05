@@ -4,7 +4,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { Icon } from '../../components/Icon/Icon';
 import { DownChevronIcon } from '../../components/Icon/DownChevronIcon';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
+import { Tabs } from '../../components/Tabs/Tabs';
 import { useAppStore } from '../../store/useAppStore';
 import { HEADER_PRESETS, FOOTER_PRESETS } from './headerFooterLibrary';
 import { buildParentMap, computeDropPosition } from './blockHelpers';
@@ -32,7 +32,7 @@ const COMPONENTS = [
   { type: 'Form',      label: 'Form',     icon: 'solar:document-add-linear', soon: true },
   { type: 'Table',     label: 'Table',    icon: null, customIcon: 'table' },
   { type: 'RawHtml',   label: 'HTML',     icon: 'solar:code-square-linear' },
-  // Row 6 — Header & Footer use a preset picker rather than a single block
+  // Row 6: Header & Footer use a preset picker rather than a single block
   { type: 'Header',    label: 'Header',   icon: null, customIcon: 'header', preset: 'header' },
   { type: 'Footer',    label: 'Footer',   icon: null, customIcon: 'footer', preset: 'footer' },
 ];
@@ -126,7 +126,7 @@ function FooterIcon({ size = 20, color = 'currentColor' }) {
   );
 }
 
-// Custom Heading "H" glyph — two vertical strokes joined by a horizontal bar
+// Custom Heading "H" glyph: two vertical strokes joined by a horizontal bar
 // with serifs at top and bottom of each stroke. Matches the icon supplied
 // by design. Used in both the Components panel tile and the Layers panel.
 function HeadingIcon({ size = 20, color = 'currentColor' }) {
@@ -187,11 +187,11 @@ export function ComponentsPanel() {
   }, [panelWidth]);
 
   // Clicking a Header / Footer tile in the components panel adds a default
-  // preset directly — the picker for browsing/changing presets now lives
+  // preset directly: the picker for browsing/changing presets now lives
   // only in the right-panel Template tab (which is what surfaces when the
   // user actually wants to swap an existing header/footer).
   const handleAdd = (item) => {
-    if (item.soon) { showToast(`${item.label} — coming soon`); return; }
+    if (item.soon) { showToast(`${item.label}, coming soon`); return; }
     if (item.preset === 'header' || item.preset === 'footer') {
       const role = item.preset;
       const list = role === 'header' ? HEADER_PRESETS : FOOTER_PRESETS;
@@ -208,10 +208,10 @@ export function ComponentsPanel() {
   return (
     <div ref={panelRef} className={styles.leftPanel} style={{ width: panelWidth }}>
       <div className={styles.panelTabBar}>
-        <TabStrip
+        <Tabs
           items={LEFT_PANEL_TABS}
-          activeKey={tab}
-          onChange={setTab}
+          value={tab}
+          onValueChange={setTab}
           embedded
           fullWidth={false}
           balanceTabs
@@ -270,7 +270,7 @@ function DraggableTile({ item, onClick }) {
       {...listeners}
       className={[styles.componentTile, isDragging ? styles.componentTileDragging : ''].join(' ')}
       onClick={onClick}
-      title={item.soon ? `${item.label} — coming soon` : `Add ${item.label}`}
+      title={item.soon ? `${item.label}, coming soon` : `Add ${item.label}`}
     >
       {item.customIcon === true && <ColumnIcon size={20} />}
       {item.customIcon === 'table' && <TableIcon size={20} />}

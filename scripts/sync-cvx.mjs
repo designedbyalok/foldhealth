@@ -5,7 +5,7 @@
  * Downloads the CDC's CVX workbook, parses it, and writes
  * `api/_lib/cvxCodes.generated.js`. The lookup route reads only that file, so
  * `/api/reference/immunizations` never touches the network at request time
- * and needs no API key — unlike the allergy substance route, which proxies
+ * and needs no API key: unlike the allergy substance route, which proxies
  * UMLS live.
  *
  * Usage:
@@ -49,7 +49,7 @@ async function load() {
 
 function render(codes) {
   const generatedOn = new Date().toISOString().slice(0, 10);
-  return `// GENERATED FILE — do not edit by hand.
+  return `// GENERATED FILE: do not edit by hand.
 //
 // The CDC CVX code set, cached so /api/reference/immunizations can answer
 // without a network call or an API key. Regenerate with:
@@ -82,7 +82,7 @@ export default CVX_CODES;
 }
 
 const codes = parseCvxFile(await load());
-if (!codes.length) throw new Error('Parsed 0 CVX codes — refusing to write an empty cache');
+if (!codes.length) throw new Error('Parsed 0 CVX codes: refusing to write an empty cache');
 
 const next = render(codes);
 
@@ -104,4 +104,4 @@ if (!changed) {
 
 await writeFile(OUT, next, 'utf8');
 const active = codes.filter(c => c.status === 'Active').length;
-console.log(`[cvx] wrote ${path.relative(ROOT, OUT)} — ${codes.length} codes (${active} active)`);
+console.log(`[cvx] wrote ${path.relative(ROOT, OUT)}, ${codes.length} codes (${active} active)`);

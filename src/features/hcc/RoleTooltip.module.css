@@ -1,11 +1,11 @@
-/* Trigger wrapper — passes through inline layout so it doesn't disturb
+/* Trigger wrapper: passes through inline layout so it doesn't disturb
    surrounding spacing. Inherits the hover/focus events. */
 .triggerWrap {
   display: inline-flex;
   outline: none;
 }
 
-/* Outer tooltip wrapper — sits above the trigger via fixed positioning
+/* Outer tooltip wrapper: sits above the trigger via fixed positioning
    from JS-computed top/left, then translates -100%-Y to flip the anchor
    to the bottom edge and -50% X to centre over the trigger. */
 .tooltip {
@@ -21,7 +21,7 @@
   to   { opacity: 1; transform: translate(-50%, -100%); }
 }
 
-/* The white card itself — drop shadow per Figma:
+/* The white card itself: drop shadow per Figma:
    0 0 6px rgba(0,0,0,0.1) + 0 12px 12px rgba(0,0,0,0.1) */
 .card {
   display: inline-flex;
@@ -36,7 +36,7 @@
   backdrop-filter: blur(4px);
 }
 
-/* Tail — small downward triangle, 12×6, centred under the card. The trick
+/* Tail: small downward triangle, 12×6, centred under the card. The trick
    is a transparent border with a colored top to render the wedge. */
 .tail {
   display: block;
@@ -51,7 +51,7 @@
   filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.06));
 }
 
-/* Initials avatar — Figma: 24×24, 6px radius, 0.5px border. */
+/* Initials avatar: Figma: 24×24, 6px radius, 0.5px border. */
 .avatar {
   display: inline-flex;
   align-items: center;
@@ -66,14 +66,14 @@
   border: 0.5px solid;
 }
 
-/* Provider variant (orange) — Coder / Reviewer / Support assignees. */
+/* Provider variant (orange): Coder / Reviewer / Support assignees. */
 .avatarProvider {
   background: var(--secondary-50);
   border-color: var(--secondary-200);
   color: var(--secondary-300);
 }
 
-/* Patient variant (purple) — kept for completeness even though the
+/* Patient variant (purple): kept for completeness even though the
    AssigneeAvatar always renders providers today. */
 .avatarPatient {
   background: var(--primary-50);
@@ -81,7 +81,7 @@
   color: var(--primary-300);
 }
 
-/* Text column — name + role stacked, 2px gap. */
+/* Text column: name + role stacked, 2px gap. */
 .text {
   display: inline-flex;
   flex-direction: column;

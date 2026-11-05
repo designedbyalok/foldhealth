@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { SearchBar } from '../SearchBar/SearchBar';
 import { Button } from '../Button/Button';
 import { CheckboxTick } from '../CheckboxTick/CheckboxTick';
-import { RingEmptyState } from '../RingEmptyState/RingEmptyState';
+import { EmptyState } from '../EmptyState/EmptyState';
 import { apiFetch } from '../../lib/apiFetch';
 import styles from './PhotoSearch.module.css';
 
@@ -19,7 +19,7 @@ async function searchPexelsPhotos({ query, page = 1, orientation }) {
 }
 
 /**
- * PhotoSearch — search free stock photos (Pexels) and pick one. A search
+ * PhotoSearch: search free stock photos (Pexels) and pick one. A search
  * field, a grid of thumbnails, "Load more", and the Pexels credit their
  * licence asks for. Videos are never searched.
  *
@@ -82,9 +82,9 @@ export function PhotoSearch({
       </div>
     );
   } else if (current?.source === 'error' || current?.source === 'unconfigured') {
-    body = <RingEmptyState icon="solar:gallery-linear" label="Photo search isn't available right now" iconSize={31} />;
+    body = <EmptyState icon="solar:gallery-linear" title="Photo search isn't available right now" iconSize={31} />;
   } else if (current && !current.photos.length) {
-    body = <RingEmptyState icon="solar:gallery-linear" label={`No photos found for "${current.query}"`} iconSize={31} />;
+    body = <EmptyState icon="solar:gallery-linear" title={`No photos found for "${current.query}"`} iconSize={31} />;
   } else if (current) {
     body = (
       <>
@@ -108,8 +108,8 @@ export function PhotoSearch({
         </div>
         {current.nextPage && (
           <div className={styles.more}>
-            <Button variant="secondary" size="S" disabled={loadingMore} onClick={loadMore}>
-              {loadingMore ? 'Loading…' : 'Load more'}
+            <Button variant="outline" size="sm" onClick={loadMore} loading={loadingMore}>
+              Load more
             </Button>
           </div>
         )}

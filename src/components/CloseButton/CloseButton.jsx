@@ -3,7 +3,7 @@ import { CloseIcon } from '../Icon/CloseIcon';
 import styles from './CloseButton.module.css';
 
 /**
- * Fold Health CloseButton — single source of truth for the top-bar dismiss
+ * Fold Health CloseButton: single source of truth for the top-bar dismiss
  * icon used across full-screen takeovers (Agent Builder, Email Builder,
  * Campaign Builder, etc.). Renders the plain cross via CloseIcon (not the
  * circled solar variant) with a neutral hover affordance.
@@ -11,7 +11,7 @@ import styles from './CloseButton.module.css';
  * @param {object}  props
  * @param {() => void}  props.onClick
  * @param {number}  [props.size=18]
- * @param {string}  [props.label='Close']   — aria-label + tooltip
+ * @param {string}  [props.label='Close']: aria-label + tooltip
  * @param {string}  [props.className]
  */
 export const CloseButton = forwardRef(function CloseButton(

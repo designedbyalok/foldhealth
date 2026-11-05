@@ -1,5 +1,5 @@
 /**
- * Form-analytics charts — Recharts, themed with Fold Health tokens.
+ * Form-analytics charts: Recharts, themed with Fold Health tokens.
  * Mirrors the styling conventions in src/features/analytics/views/charts.jsx
  * (FoldTooltip, Inter font, token colors).
  */

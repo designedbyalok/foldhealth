@@ -19,7 +19,7 @@
   border-color: var(--primary-300);
 }
 
-/* The check itself — a rotated two-sided border, same as the native rule. */
+/* The check itself: a rotated two-sided border, same as the native rule. */
 .tickChecked::after {
   content: '';
   position: absolute;

@@ -3,7 +3,7 @@
 -- source of truth. After the identity merges, a patient's rows in different
 -- worklist tables share one id but carried different demographics, so the profile
 -- showed different gender/DOB/age depending on which worklist opened it. Program
--- enrollments and worklist-specific fields are untouched — only the basic profile
+-- enrollments and worklist-specific fields are untouched, only the basic profile
 -- is synced. Idempotent.
 
 BEGIN;

@@ -1,4 +1,4 @@
-// RAF Impact breakdown per member — what conditions add up to the member's
+// RAF Impact breakdown per member: what conditions add up to the member's
 // total RAF score. Used by the RafTooltip that appears on hover over the
 // RAF Score / RAF Impact cells.
 //
@@ -43,7 +43,7 @@ export const RAF_BREAKDOWN = {
 export const getRafBreakdown = (name) => RAF_BREAKDOWN[name] || RAF_BREAKDOWN._default;
 
 /**
- * DB-preferring variant of getRafBreakdown — pass the `hccMemberRaf` store
+ * DB-preferring variant of getRafBreakdown: pass the `hccMemberRaf` store
  * slice ({ memberName: [{ hcc, name, impact }] }) as `dbMap`. Returns the
  * DB rows when the member is seeded, then the DB _default row, then the
  * JS mock. Keeps the RafTooltip working while the seed rolls out.

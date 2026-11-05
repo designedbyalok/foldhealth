@@ -44,7 +44,7 @@ export function DepartmentSelector({ onSelect, onCancel }) {
           )}
         </div>
       ))}
-      <Button variant="secondary" size="L" fullWidth style={{ marginTop: 10 }} onClick={onCancel}>
+      <Button variant="outline" fullWidth style={{ marginTop: 10 }} onClick={onCancel}>
         Cancel
       </Button>
     </div>
@@ -68,7 +68,7 @@ export function TransferringState({ department, onCancel }) {
         <Icon name="solar:music-notes-bold" size={14} color="var(--primary-300)" />
         <span style={{ fontSize: 'var(--font-sm)', color: 'var(--primary-300)' }}>Hold music playing</span>
       </div>
-      <Button variant="dangerFilled" size="L" fullWidth leadingIcon="solar:close-circle-bold" onClick={onCancel}>
+      <Button tone="danger" fullWidth leadingIcon="solar:close-circle-bold" onClick={onCancel}>
         Cancel Transfer
       </Button>
     </div>
@@ -86,10 +86,10 @@ export function TransferFailure({ reason, onRetry, onCallback }) {
         {reason || 'Unable to connect to the department. The line may be busy or unavailable.'}
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <Button variant="primary" size="L" leadingIcon="solar:refresh-linear" style={{ flex: 1 }} onClick={onRetry}>
+        <Button leadingIcon="solar:refresh-linear" style={{ flex: 1 }} onClick={onRetry}>
           Retry
         </Button>
-        <Button variant="secondary" size="L" leadingIcon="solar:clock-circle-bold" style={{ flex: 1 }} onClick={onCallback}>
+        <Button variant="outline" leadingIcon="solar:clock-circle-bold" style={{ flex: 1 }} onClick={onCallback}>
           Offer Callback
         </Button>
       </div>
@@ -108,10 +108,10 @@ export function NoHumanAvailable({ onCallback, onMessage }) {
         All human agents are currently busy. You can offer the patient a callback or leave a message.
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <Button variant="info" size="L" leadingIcon="solar:phone-calling-bold" style={{ flex: 1 }} onClick={onCallback}>
+        <Button tone="info" leadingIcon="solar:phone-calling-bold" style={{ flex: 1 }} onClick={onCallback}>
           Schedule Callback
         </Button>
-        <Button variant="secondary" size="L" leadingIcon="solar:letter-bold" style={{ flex: 1 }} onClick={onMessage}>
+        <Button variant="outline" leadingIcon="solar:letter-bold" style={{ flex: 1 }} onClick={onMessage}>
           Leave Message
         </Button>
       </div>
@@ -137,8 +137,7 @@ export function CallbackOffer({ patientName, onSchedule, onDismiss }) {
         {['15', '30', '60'].map(t => (
           <Button
             key={t}
-            variant={time === t ? 'info' : 'secondary'}
-            size="L"
+            variant={time === t ? 'solid' : 'outline'} tone={time === t ? 'info' : 'neutral'}
             style={{ flex: 1 }}
             onClick={() => setTime(t)}
           >
@@ -147,10 +146,10 @@ export function CallbackOffer({ patientName, onSchedule, onDismiss }) {
         ))}
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <Button variant="info" size="L" style={{ flex: 1 }} onClick={() => onSchedule(time)}>
+        <Button tone="info" style={{ flex: 1 }} onClick={() => onSchedule(time)}>
           Confirm Callback
         </Button>
-        <Button variant="secondary" size="L" onClick={onDismiss}>
+        <Button variant="outline" onClick={onDismiss}>
           Cancel
         </Button>
       </div>
@@ -173,8 +172,7 @@ export function PostTransferFeedback({ onSubmit }) {
         {['resolved', 'escalated', 'callback'].map(o => (
           <Button
             key={o}
-            variant={outcome === o ? 'success' : 'secondary'}
-            size="L"
+            variant={outcome === o ? 'soft' : 'outline'} tone={outcome === o ? 'success' : 'neutral'}
             style={{ flex: 1, textTransform: 'capitalize' }}
             onClick={() => setOutcome(o)}
           >
@@ -186,7 +184,7 @@ export function PostTransferFeedback({ onSubmit }) {
         <Switch checked={sendSurvey} onChange={setSendSurvey} />
         Send SMS satisfaction survey
       </div>
-      <Button variant="success" size="L" fullWidth leadingIcon="solar:check-circle-bold" onClick={() => onSubmit({ outcome, sendSurvey })}>
+      <Button variant="soft" tone="success" fullWidth leadingIcon="solar:check-circle-bold" onClick={() => onSubmit({ outcome, sendSurvey })}>
         Submit Feedback
       </Button>
     </div>

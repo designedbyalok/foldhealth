@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { buildPatientRowMenuItems } from '../../components/MenuPopover/patientRowMenuItems';
 import { FoldIdTag } from '../../components/FoldIdTag/FoldIdTag';
@@ -11,18 +11,19 @@ import { useAppStore } from '../../store/useAppStore';
 import { worklistMemberCallId } from '../../lib/patientCall';
 import { clinicalRolesPickerLabel } from '../../lib/worklistAssignee';
 import { PharmacyActivityDrawer } from './program/PharmacyActivityLog';
-import { MANUAL_GAP_STATUSES, isActiveGap } from './pharmacyWorklist.utils';
+import { MANUAL_GAP_STATUSES, contactCallTarget, isReversalReopen, pharmaciesUsed, prescribersOf } from './pharmacyWorklist.utils';
 import styles from './PharmacyWorklistRow.module.css';
 
 const MAX_INLINE_GAPS = 2;
 
-const AUTO_STATUS = '__auto';
 const HCC_ONLY_ROLES = new Set(['Coder', 'Support', 'QA', 'Compliance']);
 const LANG_MAP = { en: 'English', es: 'Spanish', zh: 'Chinese', yue: 'Cantonese', ko: 'Korean', vi: 'Vietnamese', hi: 'Hindi', pa: 'Punjabi' };
 
 export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, onSelect, onOpenCareGap }) {
   const openQuickView = useAppStore(s => s.openQuickView);
   const openCallPopover = useAppStore(s => s.openCallPopover);
+  const openNumberCallPopover = useAppStore(s => s.openNumberCallPopover);
+  const logPharmacyDial = useAppStore(s => s.logPharmacyDial);
   const requestAddTask = useAppStore(s => s.requestAddTask);
   const runPatientRowAction = useAppStore(s => s.runPatientRowAction);
   const setPharmacyGapStatus = useAppStore(s => s.setPharmacyGapStatus);
@@ -34,15 +35,16 @@ export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, on
   const dobLabel = formatDobDisplay(m.dob) || deriveDob(m.age, m.name);
 
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showCallMenu, setShowCallMenu] = useState(false);
   const [gapStatusMenu, setGapStatusMenu] = useState(null); // { code, rect }
   const [expanded, setExpanded] = useState(false);
 
-  // HEDIS pattern: show 2 gaps, the rest behind "View More N". Gaps still
-  // being worked come first so a collapsed row never hides one behind a
-  // closed gap.
-  const orderedGaps = [...m.gaps].sort((a, b) => isActiveGap(b.status) - isActiveGap(a.status));
-  const visibleGaps = expanded ? orderedGaps : orderedGaps.slice(0, MAX_INLINE_GAPS);
-  const extraCount = Math.max(0, orderedGaps.length - MAX_INLINE_GAPS);
+  // HEDIS pattern: show 2 gaps, the rest behind "View More N", in the same
+  // MAC, MAD, MAH order as everywhere else (m.gaps is already in it). A gap a
+  // claim reversal reopened always shows: the alarm never hides.
+  const collapsedGaps = m.gaps.filter((g, i) => i < MAX_INLINE_GAPS || isReversalReopen(g.status));
+  const visibleGaps = expanded ? m.gaps : collapsedGaps;
+  const extraCount = m.gaps.length - collapsedGaps.length;
   const [showActivity, setShowActivity] = useState(false);
   const dropBtnRef = useRef(null);
   const callBtnRef = useRef(null);
@@ -58,8 +60,9 @@ export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, on
 
   const cellCtx = {
     setPharmacyAssignee,
-    openGap: (code) => openPharmacyGapDrawer(m.id, code),
-    openClaimRework: (code, medId) => openPharmacyGapDrawer(m.id, code, { medId, view: 'claims' }),
+    openGap: (code) => openPharmacyGapDrawer(m.id, code, { focus: true }),
+    openClaimRework: (code, medId) => openPharmacyGapDrawer(m.id, code, { medId, view: 'claims', focus: true }),
+    openOutreach: () => openPharmacyGapDrawer(m.id, null, { view: 'outreach' }),
     openCareGap: onOpenCareGap,
     eligibleUsers,
     openGapStatusMenu: (code, rect) => setGapStatusMenu(cur => (cur?.code === code ? null : { code, rect })),
@@ -69,18 +72,54 @@ export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, on
     toggleExpanded: () => setExpanded(v => !v),
   };
   const menuGap = gapStatusMenu && m.gaps.find(g => g.code === gapStatusMenu.code);
-  const gapStatusItems = menuGap ? [
-    ...MANUAL_GAP_STATUSES.map(s => ({ key: s, label: s, selected: s === menuGap.status.gap })),
-    ...(menuGap.status.manual ? [{ key: AUTO_STATUS, label: 'Use status from data' }] : []),
-  ] : [];
+  const gapStatusItems = menuGap ? MANUAL_GAP_STATUSES.map(s => ({ key: s, label: s, selected: s === menuGap.status.gap })) : [];
 
   const handleNameClick = (e) => {
     e.stopPropagation();
     openQuickView?.({ id: m.patientId || m.id, name: m.name, initials: m.initials, gender: m.gender, age: m.age, memberId: m.memberId, language: m.language });
   };
+  // The call chevron: Call Member, Call Pharmacist or Call Prescriber, each
+  // into the call widget (numbers, Last Used, Switch Number). Several
+  // pharmacies or prescribers ask which one first.
+  const [callPick, setCallPick] = useState(null); // { kind, contacts } while choosing
+  // The menu closes itself after a pick; stepping into "which one?" keeps it.
+  const keepCallMenu = useRef(false);
   const handleCallClick = (e) => {
     e.stopPropagation();
-    openCallPopover(worklistMemberCallId(m), callBtnRef);
+    setCallPick(null);
+    setShowCallMenu(v => !v);
+  };
+  const callable = showCallMenu
+    ? { Pharmacy: pharmaciesUsed(m).filter(c => c.phone), Prescriber: prescribersOf(m).filter(c => c.phone) }
+    : { Pharmacy: [], Prescriber: [] };
+  const whoHint = (list, kind) => (list.length === 1 ? list[0].name : list.length ? `${list.length} ${kind === 'Pharmacy' ? 'pharmacies' : 'prescribers'}` : `No ${kind.toLowerCase()} phone on file`);
+  const callContact = (c, kind) => openNumberCallPopover({ ...contactCallTarget(m, c, kind), onDial: (number, line) => logPharmacyDial?.(m.id, c.name, number, line) }, callBtnRef);
+  const callItems = callPick
+    ? [
+        { section: callPick.kind === 'Pharmacy' ? 'Call which pharmacy?' : 'Call which prescriber?' },
+        ...callPick.contacts.map(c => ({ key: c.name, icon: 'solar:phone-linear', label: c.name, hint: c.phone })),
+      ]
+    : [
+        { key: 'member', icon: 'solar:user-linear', label: 'Call Member' },
+        { key: 'Pharmacy', icon: 'solar:phone-linear', label: 'Call Pharmacist', hint: whoHint(callable.Pharmacy, 'Pharmacy'), disabled: !callable.Pharmacy.length },
+        { key: 'Prescriber', icon: 'solar:stethoscope-linear', label: 'Call Prescriber', hint: whoHint(callable.Prescriber, 'Prescriber'), disabled: !callable.Prescriber.length },
+      ];
+  const handleCallSelect = (key) => {
+    if (callPick) {
+      const c = callPick.contacts.find(x => x.name === key);
+      setShowCallMenu(false);
+      setCallPick(null);
+      if (c) callContact(c, callPick.kind);
+      return;
+    }
+    if (key === 'member') {
+      setShowCallMenu(false);
+      openCallPopover(worklistMemberCallId(m), callBtnRef);
+      return;
+    }
+    const list = callable[key] || [];
+    if (list.length === 1) { setShowCallMenu(false); callContact(list[0], key); return; }
+    if (list.length > 1) { keepCallMenu.current = true; setCallPick({ kind: key, contacts: list }); }
   };
 
   const menuItems = buildPatientRowMenuItems([
@@ -150,13 +189,31 @@ export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, on
 
       <td className={`${styles.td} ${styles.stickyRight}`} onClick={e => e.stopPropagation()}>
         <div className={styles.actionsCell}>
-          <ActionButton ref={callBtnRef} icon="solar:phone-linear" size="L" tooltip="Call patient" onClick={handleCallClick} />
+          <ActionButton
+            icon="solar:eye-linear"
+            tooltip="View all gaps"
+            onClick={(e) => { e.stopPropagation(); openPharmacyGapDrawer(m.id, null); }}
+          />
+          <ActionButton ref={callBtnRef} icon="solar:phone-linear" tooltip="Call" chevron chevronOpen={showCallMenu} onClick={handleCallClick} />
+          {showCallMenu && (
+            <MenuPopover
+              anchorRef={callBtnRef}
+              items={callItems}
+              onSelect={handleCallSelect}
+              onClose={() => {
+                if (keepCallMenu.current) { keepCallMenu.current = false; return; }
+                setShowCallMenu(false);
+                setCallPick(null);
+              }}
+              width={240}
+              ariaLabel="Who to call"
+            />
+          )}
           <span className={styles.actionDivider} />
           <div className={styles.relative}>
             <ActionButton
               ref={dropBtnRef}
               icon="solar:menu-dots-linear"
-              size="L"
               tooltip="More options"
               onClick={(e) => { e.stopPropagation(); setShowDropdown(v => !v); }}
             />
@@ -178,7 +235,7 @@ export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, on
             anchorRect={gapStatusMenu.rect}
             items={gapStatusItems}
             onSelect={(key) => {
-              setPharmacyGapStatus(m.id, menuGap.code, key === AUTO_STATUS ? null : key);
+              setPharmacyGapStatus(m.id, menuGap.code, key);
               setGapStatusMenu(null);
             }}
             onClose={() => setGapStatusMenu(null)}

@@ -10,7 +10,7 @@ function InfoField({ label, value, wide }) {
   return (
     <div className={`${styles.infoField} ${wide ? styles.infoFieldWide : ''}`}>
       <span className={styles.infoLabel}>{label}</span>
-      <span className={styles.infoValue}>{value || '—'}</span>
+      <span className={styles.infoValue}>{value || '-'}</span>
     </div>
   );
 }
@@ -37,7 +37,7 @@ export function InsurancePlanViewDrawer({ plan, onClose, onEdit }) {
       onClose={onClose}
       headerRight={
         <>
-          <Button variant="secondary" size="L" leadingIcon="solar:pen-linear" onClick={() => onEdit?.(plan)}>
+          <Button variant="outline" leadingIcon="solar:pen-linear" onClick={() => onEdit?.(plan)}>
             Edit
           </Button>
           <span className={styles.headerDivider} />

@@ -1,0 +1,231 @@
+.wrapper {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  background: var(--neutral-0);
+}
+
+/* Categories rail (Figma 238:48556) */
+.rail {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 220px;
+  min-height: 0;
+  overflow-y: auto;
+  border-right: 0.5px solid var(--neutral-150);
+}
+
+.railHeader,
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-1) var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--neutral-500);
+}
+
+.categoryList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.category {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-right: var(--space-2);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.category:hover { background: var(--neutral-25); }
+
+.categoryActive,
+.categoryActive:hover {
+  background: var(--primary-100);
+  border-bottom-color: var(--primary-200);
+}
+
+.categoryActive::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--primary-300);
+}
+
+.categoryButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-3);
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+  color: var(--neutral-500);
+}
+
+.categoryActive .categoryButton { color: var(--primary-300); }
+
+.categoryLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Selected folder (Figma 238:48566) */
+.main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Drag-over overlay. Covers the main panel (not the category rail) so the
+   drop target reads clearly. `pointer-events: none` keeps drag events flowing
+   to the underlying `.main` so the enter/leave depth counter stays balanced
+   even though the overlay toggles under the cursor. */
+.dropOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--primary-50) 85%, transparent);
+  border: 2px dashed var(--primary-300);
+  border-radius: 8px;
+}
+
+.dropCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-6);
+  text-align: center;
+}
+
+.dropTitle {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--neutral-500);
+  line-height: var(--leading-tight);
+}
+
+.dropHint {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  line-height: var(--leading-tight);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.searchField { flex: 1; min-width: 0; }
+
+.divider {
+  flex-shrink: 0;
+  width: 0.5px;
+  height: var(--space-4);
+  background: var(--neutral-150);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-3);
+  overflow-y: auto;
+}
+
+/* Empty-state wrapper. flex: 1 so the Ring sits in the vertical centre of the
+   body regardless of whether filters or the FilterBar push it down a bit. */
+.emptyWrap {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.row { cursor: pointer; }
+
+.checkCell { width: 36px; }
+
+.fileName {
+  color: var(--neutral-500);
+  overflow-wrap: anywhere;
+}
+
+.fileNameRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.fileNameText {
+  min-width: 0;
+}
+
+.muted { color: var(--neutral-300); }
+
+.updated {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+}
+
+.updatedDate {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.row:hover .rowActions,
+.rowActions:focus-within { opacity: 1; }
+
+.uploadForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Add Category dialog, laid out like ReasonDialog. */
+.categoryDialog { max-width: 400px; padding: 0; }
+.categoryDialogBody { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-5); }
+.categoryDialogTitle { margin: 0; font-size: var(--font-lg); font-weight: 600; color: var(--neutral-500); }
+.categoryDialogFooter { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }

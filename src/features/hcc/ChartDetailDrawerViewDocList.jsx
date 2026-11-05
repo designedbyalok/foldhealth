@@ -14,7 +14,7 @@ export function ChartDetailDrawerViewDocList(p) {
     updateChartDocMeta, reviewerName, confirmFailDoc, setLeftPanel,
   } = p;
   // Selecting a card should always return the left pane to the PDF
-  // preview — clicking a doc while Comments/Timeline is open is the
+  // preview: clicking a doc while Comments/Timeline is open is the
   // user asking to see that doc again.
   const openDoc = (id) => { setSelectedId(id); setLeftPanel?.('preview'); };
   return (
@@ -32,7 +32,7 @@ export function ChartDetailDrawerViewDocList(p) {
                     tabIndex={0}
                     onClick={() => openDoc(d.id)}
                     onKeyDown={(e) => {
-                      // Only act when the card div itself is focused — otherwise a
+                      // Only act when the card div itself is focused, otherwise a
                       // space typed into the inline Fail form's textarea (or any
                       // nested input) bubbles up and gets preventDefault'd here.
                       if (e.target !== e.currentTarget) return;
@@ -46,7 +46,7 @@ export function ChartDetailDrawerViewDocList(p) {
                       <div className={styles.docCardText}>
                         <span className={styles.docName}>{d.caption || d.n}</span>
                         <span className={styles.docMeta}>
-                          {d.t} • {d.dateAdded || '—'} • {d.addedBy || '—'}
+                          {d.t} • {d.dateAdded || '-'} • {d.addedBy || '-'}
                         </span>
                       </div>
                       <div className={styles.docActions} onClick={(e) => e.stopPropagation()}>

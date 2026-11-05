@@ -12,8 +12,13 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
+/* Space under the header, kept inside the collapsible body so a closed
+   section adds none. */
+.sectionBody {
+  padding-top: var(--space-2);
+}
+.chevron { transition: transform var(--duration-medium) var(--ease-out); }
 .sectionHead {
   display: flex;
   align-items: center;
@@ -154,7 +159,7 @@
 .careProvider {
   color: var(--neutral-500);
 }
-/* Inner flex keeps the avatar + name aligned — `display: flex` on a <td>
+/* Inner flex keeps the avatar + name aligned, `display: flex` on a <td>
    would break table column sizing. */
 .careProviderInner {
   display: inline-flex;

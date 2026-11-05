@@ -1,0 +1,5 @@
+/* review-dock stylesheet: import once, e.g.
+   import 'review-dock/styles.css';
+   Restyle with the `theme` prop or by overriding the --rk-* variables. */
+@import './theme.css';
+@import './review-dock.css';

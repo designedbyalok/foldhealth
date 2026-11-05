@@ -6,23 +6,26 @@ import styles from './RadioOptionGroup.module.css';
  * A labelled group of radios, each with an optional hint line beneath it.
  *
  * @param {string}   props.label     Group label, also the radiogroup's name.
- * @param {Array<{value: string, label: string, hint?: React.ReactNode, disabled?: boolean,
- *   disabledReason?: string}>} props.options
- *   `hint` may be text or a node (e.g. a link); `disabledReason` shows on
+ * @param {Array<{value: string, label: string, hint?: React.ReactNode, content?: React.ReactNode,
+ *   disabled?: boolean, disabledReason?: string}>} props.options
+ *   `hint` may be text or a node (e.g. a link); `content` shows under the
+ *   option while it is picked (a follow-up field); `disabledReason` shows on
  *   hover over a disabled option.
  * @param {string}   props.value     Selected option value.
  * @param {function} props.onChange  Called with the picked value.
  * @param {string}   [props.name]    Shared HTML name for the radios.
  * @param {'plain'|'card'} [props.variant='plain'] – 'card' puts each option in
  *   its own bordered card (the whole card picks it; the picked one is tinted).
+ * @param {'vertical'|'horizontal'} [props.orientation='vertical'] – 'horizontal' lays
+ *   the options out in one row (short labels, no hints).
  * @param {string}   [props.className] Extra class on the root (e.g. to space the options).
  */
-export function RadioOptionGroup({ label, options, value, onChange, name, className, variant = 'plain' }) {
+export function RadioOptionGroup({ label, options, value, onChange, name, className, variant = 'plain', orientation = 'vertical' }) {
   const card = variant === 'card';
   return (
     <div className={[styles.field, className].filter(Boolean).join(' ')}>
       {label && <span className={styles.label}>{label}</span>}
-      <div className={styles.group} role="radiogroup" aria-label={label}>
+      <div className={[styles.group, orientation === 'horizontal' ? styles.groupHorizontal : ''].filter(Boolean).join(' ')} role="radiogroup" aria-label={label}>
         {options.map(o => {
           const checked = value === o.value;
           const radio = (
@@ -70,7 +73,12 @@ export function RadioOptionGroup({ label, options, value, onChange, name, classN
               )}
             </div>
           );
-          return <div key={o.value} className={styles.optionWrap}>{body}</div>;
+          return (
+            <div key={o.value} className={styles.optionWrap}>
+              {body}
+              {checked && o.content && <div className={styles.content}>{o.content}</div>}
+            </div>
+          );
         })}
       </div>
     </div>

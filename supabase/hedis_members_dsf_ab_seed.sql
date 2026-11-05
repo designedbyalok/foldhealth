@@ -1,9 +1,9 @@
 -- Seed 15 additional HEDIS members into public.hedis_members so the
 -- Population > HEDIS worklist has coverage for the two DSF workflows:
---   • 10 DSF-A-only rows (`ap-dsfa-01` … `ap-dsfa-10`) — reviewers
+--   • 10 DSF-A-only rows (`ap-dsfa-01` … `ap-dsfa-10`): reviewers
 --     working the Depression Screening PHQ-2 without a paired
 --     Follow-Up gap yet.
---   • 5 DSF-B-only rows (`ap-dsfb-01` … `ap-dsfb-05`) — reviewers
+--   • 5 DSF-B-only rows (`ap-dsfb-01` … `ap-dsfb-05`): reviewers
 --     who completed the PHQ-2 virtually and skipped creating the
 --     Depression Screening care program, leaving only the follow-up
 --     (PHQ-9) gap on the worklist. These are the rows the "Due in
@@ -12,7 +12,7 @@
 -- WHY
 -- src/features/hedis-worklist/data/mock.js is the source of truth for
 -- scripts/seed.js, but as soon as the hedis_members table has ANY
--- rows the Supabase fetch wins over the client-side mock fallback —
+-- rows the Supabase fetch wins over the client-side mock fallback,
 -- new mock additions never surface unless a seed writes them into
 -- Supabase too. This migration mirrors the mock additions verbatim
 -- so both paths agree.
@@ -36,7 +36,7 @@
 --
 -- SAFETY
 -- Each row is inserted with a WHERE NOT EXISTS guard on the text id
--- so the migration is idempotent and safe to re-run — hand edits in
+-- so the migration is idempotent and safe to re-run, hand edits in
 -- the database survive re-runs.
 
 -- ── DSF-A-only (10 members) ────────────────────────────────────────

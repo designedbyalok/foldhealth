@@ -53,13 +53,13 @@
   background: var(--neutral-150);
   flex-shrink: 0;
 }
-/* Pressed state for a header toggle (care plan Filter) — matches the
+/* Pressed state for a header toggle (care plan Filter): matches the
    worklist toolbar's active filter button. */
 .iconActive {
   background: var(--primary-100);
   color: var(--primary-300);
 }
-/* Assignee chip — mirrors the Care Gaps drawer chip (avatar when assigned,
+/* Assignee chip: mirrors the Care Gaps drawer chip (avatar when assigned,
    dashed "add user" when unassigned). */
 .assigneeChip {
   display: inline-flex;
@@ -131,7 +131,9 @@
   padding: 0;
   cursor: pointer;
 }
+.expandIcon { transition: transform var(--duration-medium) var(--ease-out); }
 .expandIconRotated { transform: rotate(180deg); }
+.expandCollapse { flex-shrink: 0; }
 
 /* ── Expanded program details panel ── */
 .expandPanel {
@@ -271,6 +273,10 @@
   flex-shrink: 0;
   box-sizing: border-box;
 }
+.recommendedMark {
+  display: inline-flex;
+  flex-shrink: 0;
+}
 .mandatoryDot {
   width: 6px;
   height: 6px;
@@ -292,6 +298,7 @@
   cursor: pointer;
 }
 .sectionHeader:hover { background: var(--neutral-50); }
+.chevron { transition: transform var(--duration-medium) var(--ease-out); }
 .sectionName {
   font-size: var(--font-base);
   color: var(--neutral-400);
@@ -345,7 +352,7 @@
 }
 /* Top row: title on the left, actions on the right. The header becomes a
    column so the tasks filter chips can sit on a second row inside the same
-   bar — the bar just grows taller when filters are shown. */
+   bar: the bar just grows taller when filters are shown. */
 .contentHeaderRow {
   display: flex;
   align-items: flex-start;
@@ -353,12 +360,12 @@
   gap: var(--space-3);
   min-width: 0;
 }
-/* Simple single-line title + compact action cluster — vertically center
+/* Simple single-line title + compact action cluster, vertically center
    the two so the title doesn't top-anchor against the taller buttons. */
 .contentHeaderRowCompact {
   align-items: center;
 }
-/* Care Plan header — title + action cluster stay on the SAME top row so
+/* Care Plan header: title + action cluster stay on the SAME top row so
    the actions never wrap to a new line on small widths (they own their
    right-edge slot). The attribution line ([•••] • Signed by …) drops
    just below the title inside .assessmentHeaderText, so the meta reads
@@ -391,7 +398,7 @@
   justify-content: flex-end;
   margin-left: auto;
 }
-/* Attribution row under the title — [•••] chip that holds the "Created
+/* Attribution row under the title: [•••] chip that holds the "Created
    by …" behind a hover tooltip, a bullet separator, and the "Signed
    by …" text (green when signed, grey when draft). Lines up flush left
    under the title, never wraps. */
@@ -424,7 +431,7 @@
   display: inline-flex;
   align-items: center;
 }
-/* Tighter shell for the collapsed dots badge — locks the height to
+/* Tighter shell for the collapsed dots badge, locks the height to
    16px and pulls the vertical padding to zero so the chip sits flush
    with the attribution line's baseline. */
 .carePlanCreatedDotsBadge {
@@ -459,7 +466,7 @@
    32px Button M height so the search bar sits in-line with sibling
    buttons instead of towering over them. */
 .diagGapsSearch { width: 220px; height: 32px; }
-/* Filter chips row — lives inside the header bar (Program Related Tasks). */
+/* Filter chips row: lives inside the header bar (Program Related Tasks). */
 .headerFilterBar {
   display: flex;
   align-items: center;
@@ -538,7 +545,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Right fragment ("• Signed by …") is fixed — it never shrinks past
+/* Right fragment ("• Signed by …") is fixed: it never shrinks past
    its intrinsic width so the sign attribution always reads. */
 .assessmentMetaSignedGroup {
   flex: 0 0 auto;
@@ -553,7 +560,7 @@
   color: var(--status-success);
   font-weight: 500;
 }
-/* Signed attribution — success green per Figma 482:427660 (#009B53 maps to
+/* Signed attribution: success green per Figma 482:427660 (#009B53 maps to
    the closest existing token, --status-success). */
 .assessmentMetaSigned {
   font-size: var(--font-sm);
@@ -599,7 +606,7 @@
 /* ── Floating bulk-action bar (Letters selection) ── */
 .bulkBar {
   position: absolute;
-  /* left/right:0 + margin:auto rather than left:50% + translateX — with only
+  /* left/right:0 + margin:auto rather than left:50% + translateX, with only
      `left` set, shrink-to-fit would cap the bar at half the column's width. */
   left: 0;
   right: 0;
@@ -637,13 +644,15 @@
   flex-shrink: 0;
 }
 
-/* Outreach step — the shared OutreachTab (log form + activity) scrolls
-   within the content column. */
+/* Outreach step: the shared OutreachTab (log form + activity) scrolls
+   within the content column. OutreachTab's own .wrapper already pads
+   12 px on all sides, matching the 12 px horizontal gutter used by
+   .contentHeader above it; no outer padding here, otherwise the
+   composer card sits 28 px in while sibling steps sit at 12 px. */
 .outreachWrap {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--space-4);
 }
 .pharmacyStep {
   flex: 1;
@@ -671,7 +680,7 @@
 /* Expanded letters search fills the row, keeping the trailing action icons. */
 .letterSearchWrap { flex: 1; min-width: 0; display: flex; align-items: center; }
 
-/* Letters filter bar — chips shown when the filter icon is toggled on. */
+/* Letters filter bar: chips shown when the filter icon is toggled on. */
 .letterFilterBar {
   display: flex;
   align-items: center;
@@ -714,16 +723,16 @@
   white-space: nowrap;
   vertical-align: middle;
 }
-/* Select column — narrow; the shared Checkbox aligns to the row middle. */
+/* Select column: narrow; the shared Checkbox aligns to the row middle. */
 .checkCell { width: 36px; padding-left: var(--space-2); padding-right: var(--space-2); vertical-align: middle; }
 .checkCell > * { vertical-align: middle; }
-/* Selected row (bulk-action mode) — Figma 439:612596: primary-100 fill,
+/* Selected row (bulk-action mode): Figma 439:612596: primary-100 fill,
    primary-200 bottom border, 2px primary-300 left accent, primary-300 name. */
 .letterRow.rowSelected,
 .letterRow.rowSelected:hover { background: var(--primary-100); border-bottom-color: var(--primary-200); }
 .letterRow.rowSelected .checkCell { box-shadow: inset 2px 0 0 var(--primary-300); }
 .letterRow.rowSelected .fileNameCell { color: var(--primary-300); }
-/* Per-row actions (send + more) — revealed on row hover when no bulk
+/* Per-row actions (send + more): revealed on row hover when no bulk
    selection is active. Keeps its column width so the layout doesn't shift. */
 .rowActionsCell { width: 72px; text-align: right; white-space: nowrap; }
 .rowActions {
@@ -735,12 +744,12 @@
   transition: opacity 0.1s;
 }
 .table tbody tr:hover .rowActions { opacity: 1; }
-/* File Name — darkest; File Type — muted grey. */
+/* File Name, darkest; File Type, muted grey. */
 .fileNameCell { color: var(--neutral-500); }
 .clickable { cursor: pointer; }
 .clickable:hover { text-decoration: underline; }
 .colMuted { color: var(--neutral-300); }
-/* Sent Via chips (neutral-50 pill, neutral-300 text) — one per channel. */
+/* Sent Via chips (neutral-50 pill, neutral-300 text), one per channel. */
 .viaChips { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .viaChip {
   display: inline-flex;
@@ -789,7 +798,7 @@
 }
 
 /* Secondary program badges in the header (BHI, APCM under CCM). Compact
-   pill w/ progress ring — same visual language as the main program pill. */
+   pill w/ progress ring: same visual language as the main program pill. */
 .secondaryBadge {
   display: inline-flex;
   align-items: center;

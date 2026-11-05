@@ -5,7 +5,7 @@ import { CheckboxTick } from '../CheckboxTick/CheckboxTick';
 import styles from './ImageTileGallery.module.css';
 
 /**
- * Fold Health ImageTileGallery — pick one image from a grid of tiles, or add
+ * Fold Health ImageTileGallery: pick one image from a grid of tiles, or add
  * a new one (like a video call's background picker). The first tile adds an
  * image (click or drop a file); added images can be removed on hover.
  *

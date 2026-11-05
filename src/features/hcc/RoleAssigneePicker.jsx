@@ -17,7 +17,7 @@ const ENGINE_TO_CLINICAL = {
 };
 
 /**
- * Shared searchable role-assignee picker — used by both the HCC worklist role
+ * Shared searchable role-assignee picker: used by both the HCC worklist role
  * cells and the DiagPanel assignee chip so the two surfaces behave identically.
  * Lists platform users from Supabase profiles who carry the column's
  * HCC role in profiles.clinical_roles (Support / Coder / QA / Compliance).
@@ -34,7 +34,7 @@ const ENGINE_TO_CLINICAL = {
  * @param {'left'|'right'} [p.align]      popover edge to anchor to the trigger
  * @param {string} [p.reason]             audit reason recorded on (re)assign
  * @param {(user)=>void} [p.onAssign]     when set, picking a user calls this
- *                                         instead of the HCC reassign flow — lets
+ *                                         instead of the HCC reassign flow, lets
  *                                         non-HCC surfaces (e.g. Care Programs)
  *                                         reuse the picker with their own persistence.
  * @param {string} [p.titleLabel]         override the "Assign <label>" heading
@@ -52,12 +52,12 @@ export function RoleAssigneePicker({
   const [query, setQuery] = useState('');
   const reassign = useAppStore(s => s.hccReassignRole);
   const showToast = useAppStore(s => s.showToast);
-  // Platform users from profiles — one-shot fetch, guarded in the store.
+  // Platform users from profiles: one-shot fetch, guarded in the store.
   const platformUsers = useAppStore(s => s.platformUsers);
   const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
   const requiredRole = ENGINE_TO_CLINICAL[role];
   // Strict role scoping: only users whose profiles.clinical_roles includes
-  // the column's HCC role are eligible. No fallback to the legacy mock —
+  // the column's HCC role are eligible. No fallback to the legacy mock,
   // if nobody has the role, the list stays empty and the picker shows an
   // explanatory hint so the admin knows they need to assign the role first
   // (Settings → Users). Engine roles that don't map to an HCC role (there
@@ -106,7 +106,7 @@ export function RoleAssigneePicker({
   }, [pos]);
 
   const onPick = async (u) => {
-    // Caller-owned persistence (non-HCC surfaces) — skip the HCC reassign flow.
+    // Caller-owned persistence (non-HCC surfaces): skip the HCC reassign flow.
     if (onAssign) {
       close();
       onAssign(u);
@@ -114,14 +114,14 @@ export function RoleAssigneePicker({
       return;
     }
     if (!memberId || !dosDate) {
-      showToast?.('Cannot assign — missing patient or DOS context.');
+      showToast?.('Cannot assign: missing patient or DOS context.');
       close();
       return;
     }
     // Toast follows the reassign outcome. Historically the success toast
     // fired unconditionally, which masked silent no-ops (member missing
-    // from local state, unresolvable staffId) AND silent Supabase failures
-    // — production users saw "assigned" without the row updating, or the
+    // from local state, unresolvable staffId) AND silent Supabase failures,
+    // production users saw "assigned" without the row updating, or the
     // row updated locally but reverted on the next reload. hccReassignRole
     // now returns { ok, reason? } after awaiting the DB write, so we can
     // surface the actual result.
@@ -138,7 +138,7 @@ export function RoleAssigneePicker({
         : outcome?.reason === 'persistence-failed'
           ? 'the database write failed and the change was reverted'
           : 'unexpected error';
-    showToast?.(`Couldn’t assign ${u.name} — ${why}. Try again.`);
+    showToast?.(`Couldn’t assign ${u.name}, ${why}. Try again.`);
   };
 
   return (
