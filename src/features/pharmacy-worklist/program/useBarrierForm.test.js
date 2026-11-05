@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 // The helper is pure; the module's hook pulls in the store, which needs a browser.
 vi.mock('../../../store/useAppStore', () => ({ useAppStore: () => undefined }));
 
-const { recordWithMedAdditions } = await import('./useBarrierForm');
+const { recordWithGapAdditions, recordWithMedAdditions } = await import('./useBarrierForm');
 
 const x = {
   code: 'MAD',
@@ -38,5 +38,19 @@ describe('recordWithMedAdditions', () => {
   it('starts from nothing when the gap has no record yet', () => {
     const rec = recordWithMedAdditions(x, undefined, 'a', { barriers: ['Cost Issue'], interventions: [] });
     expect(rec.medications.map(m => m.barriers)).toEqual([['Cost Issue'], []]);
+  });
+});
+
+describe('recordWithGapAdditions', () => {
+  it('adds to a gap-wide record without dropping what was there', () => {
+    const rec = recordWithGapAdditions(x, { barriers: ['Cost Issue'], interventions: [] }, { barriers: ['Transportation', 'Cost Issue'], interventions: ['Autofill Set-Up'], result: 'Rx Pick Up Pending' });
+    expect(rec).toMatchObject({ barriers: ['Cost Issue', 'Transportation'], interventions: ['Autofill Set-Up'], result: 'Rx Pick Up Pending' });
+    expect(rec.medications).toBeUndefined();
+  });
+
+  it('adds to every active drug of a per-medication record', () => {
+    const before = { barriers: [], interventions: [], medications: [{ id: 'a', barriers: ['Forgetfulness'], interventions: [] }, { id: 'b', barriers: [], interventions: [] }] };
+    const rec = recordWithGapAdditions(x, before, { barriers: ['Cost Issue'], interventions: [] });
+    expect(rec.medications.map(m => [m.id, m.barriers])).toEqual([['a', ['Forgetfulness', 'Cost Issue']], ['b', ['Cost Issue']]]);
   });
 });

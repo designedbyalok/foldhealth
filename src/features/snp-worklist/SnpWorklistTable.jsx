@@ -9,7 +9,8 @@ import { FilterBar } from '../worklists/FilterBar';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { DobFilter } from '../../components/DobFilter/DobFilter';
 import { dobInRange } from '../../components/DateRangePopover/yearSpan';
-import { GENDER_FILTER_OPTIONS, LANGUAGE_FILTER_OPTIONS, memberGenderLabel, memberLanguageLabel } from '../../lib/memberFilters';
+import { GENDER_FILTER_OPTIONS, LANGUAGE_FILTER_OPTIONS, MEMBER_STATUS_FILTER_OPTIONS, memberGenderLabel, memberLanguageLabel } from '../../lib/memberFilters';
+import { DUE_OPTIONS } from '../hcc/dueDateFilter';
 import { Pagination } from '../../components/Pagination/Pagination';
 import { TableSkeleton } from '../../components/TableSkeleton/TableSkeleton';
 import { HeaderCell } from '../../components/HeaderCell/HeaderCell';
@@ -94,9 +95,30 @@ const FILTER_KEYS = [
   { key: 'riskIq', label: 'Risk IQ', primary: false, group: 'Clinical' },
 ];
 
-// Only the six primary keys have live bucket functions today; extended keys
-// return empty option pools so their chips render but don't filter yet.
+// Next Action Due Date in the same buckets as HCC's Due Date filter.
+const NO_DUE_DATE = 'No Due Date';
+const dueBucket = (mdy) => {
+  const due = parseMdy(mdy);
+  if (due == null) return NO_DUE_DATE;
+  const now = new Date();
+  const days = Math.round((due - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+  if (days < 0) return 'Overdue';
+  if (days === 0) return 'Due Today';
+  if (days <= 7) return 'Due This Week';
+  if (days <= 14) return 'Due Next Week';
+  return 'Due More Than 2 Weeks';
+};
+
+// Keys with a bucket function filter; the rest (Zip Code, SNP Type, Program
+// Due Date, ...) have no SNP data yet, so their chips render empty. A bucket
+// may return several values (Tags): a row matches when any is selected.
 const BUCKET_FN = {
+  // SNP rows carry no member status; every member counts as Active (as CCM).
+  memberStatus:     (m) => m.memberStatus || 'Active',
+  nextActionDueDate: (m) => dueBucket(m.nextActionDue),
+  tags:             (m) => (m.tags || []).map(t => (typeof t === 'string' ? t : t?.label)).filter(Boolean),
+  triggerType:      (m) => m.trigger || 'None',
+  lastOutreachOutcome: (m) => m.outreach?.status || 'None',
   programSubStatus: (m) => m.programSubStatus || 'None',
   carePlanStatus:   (m) => m.carePlanStatus || 'None',
   assignee:         (m) => m.assigneeName || 'Unassigned',
@@ -109,7 +131,12 @@ const BUCKET_FN = {
 
 // Member filters show the vocabulary every worklist shares, not the values
 // that happen to be in the rows.
-const STATIC_OPTIONS = { gender: GENDER_FILTER_OPTIONS, language: LANGUAGE_FILTER_OPTIONS };
+const STATIC_OPTIONS = {
+  memberStatus: MEMBER_STATUS_FILTER_OPTIONS,
+  gender: GENDER_FILTER_OPTIONS,
+  language: LANGUAGE_FILTER_OPTIONS,
+  nextActionDueDate: [...DUE_OPTIONS, NO_DUE_DATE],
+};
 
 const MORE_FILTER_ITEMS = FILTER_KEYS.map(f => ({ k: f.key, label: f.label, primary: f.primary, group: f.group }));
 const PRIMARY_FILTER_KEYS = [];
@@ -196,8 +223,7 @@ export function SnpWorklistTable() {
       for (const { key } of FILTER_KEYS) {
         const bucket = BUCKET_FN[key];
         if (!bucket) continue;
-        const val = bucket(m);
-        if (val) sets[key].add(val);
+        for (const val of [].concat(bucket(m))) if (val) sets[key].add(val);
       }
     }
     const opts = {};
@@ -233,7 +259,7 @@ export function SnpWorklistTable() {
       const bucket = BUCKET_FN[key];
       if (!bucket || !vals || !vals.length) continue;
       const valSet = new Set(vals);
-      rows = rows.filter(m => valSet.has(bucket(m)));
+      rows = rows.filter(m => [].concat(bucket(m)).some(v => valSet.has(v)));
     }
     // DOB is a date range (Years or Custom Dates), not a bucket.
     rows = rows.filter(m => dobInRange(m.dob, m.age, filters.dob));

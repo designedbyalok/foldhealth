@@ -458,6 +458,14 @@ function OutreachEntryBody({ entry }) {
               : <DownChevronIcon size={11} color="currentColor" className={expanded ? styles.viewMoreChevronOpen : undefined} />}
           </button>
         )}
+        {/* `extraAction`: { label, onClick }, one more link after View
+            details for something the owner does with this entry. */}
+        {entry.extraAction && (
+          <button type="button" className={styles.viewMoreBtn} onClick={entry.extraAction.onClick}>
+            {(entry.outcome || expandable) && <span className={styles.viewNoteDot} aria-hidden="true">•</span>}
+            {entry.extraAction.label}
+          </button>
+        )}
       </div>
 
       {expanded && (hasCall || hasNote || hasDetails) && (

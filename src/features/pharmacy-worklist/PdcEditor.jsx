@@ -15,7 +15,7 @@ export function PdcEditPopover({ gap: g, memberId, anchor, onClose }) {
   const [draft, setDraft] = useState(g.pdc == null ? '' : String(g.pdc));
   const n = Math.round(Number(draft));
   const valid = draft !== '' && Number.isFinite(n) && n >= 0 && n <= 100;
-  const save = () => { if (valid) { setOverride(memberId, g.code, n); onClose(); } };
+  const save = () => { if (valid) { setOverride(memberId, g.code, n, g.pdc); onClose(); } };
   return (
     <Popover anchor={anchor} onOpenChange={(open) => { if (!open) onClose(); }} placement="bottom-start" width={240} aria-label={`Set ${g.code} PDC`}>
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
@@ -32,7 +32,7 @@ export function PdcEditPopover({ gap: g, memberId, anchor, onClose }) {
         </span>
         <span className={styles.actions}>
           {g.pdcSource === 'Manual' && (
-            <Button size="sm" variant="ghost" onClick={() => { setOverride(memberId, g.code, null); onClose(); }}>Use calculated</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setOverride(memberId, g.code, null, g.pdc); onClose(); }}>Use calculated</Button>
           )}
           <span className={styles.spacer} />
           <Button size="sm" variant="outline" onClick={onClose}>Cancel</Button>
