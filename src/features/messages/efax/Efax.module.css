@@ -115,3 +115,22 @@
   height: var(--space-4);
   background: var(--neutral-150);
 }
+
+/* Patient Context for eFax, split (Figma 523:20659): the left has which fax
+   it is over the fax itself; the right has the form. */
+.contextPdf { flex: 1; min-height: 0; width: 100%; border: none; display: block; background: var(--neutral-75); }
+.contextPane { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: auto; }
+/* The two panes' headers: same padding, height and bottom rule, so they
+   line up across the divider. */
+.contextDoc,
+.contextHead {
+  display: flex; flex-direction: column; justify-content: center; gap: var(--space-1);
+  min-height: 60px; flex-shrink: 0;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.contextDocName { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+.contextDocMeta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); font-size: var(--font-sm); color: var(--neutral-300); }
+.contextDocDot { margin-right: var(--space-1); }
+.contextForm { padding: var(--space-4); }
+.contextHeading { margin: 0; font-size: var(--font-base); font-weight: 500; line-height: 1.2; color: var(--neutral-500); }
