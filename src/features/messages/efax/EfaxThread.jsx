@@ -166,6 +166,8 @@ export function EfaxThread({ fax, reading, patients, me }) {
 
       {picking && (
         <PatientContextDrawer
+          fax={fax}
+          pdf={pdf}
           suggestions={suggestions}
           patients={patients}
           current={linked && { ...linked, when: linkedWhen }}
