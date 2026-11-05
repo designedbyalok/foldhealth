@@ -21,6 +21,10 @@ import styles from './SelectAssigneeModal.module.css';
  * @param {function} props.onConfirm            – (user) => void, user = { id, name, initials, clinicalRoles }
  * @param {string}   [props.title='Select Assignee']
  * @param {string}   [props.confirmLabel='Confirm']
+ * @param {React.ReactNode} [props.children]   – extra choices under the list
+ *                                               (e.g. which sub-programs change)
+ * @param {boolean}  [props.confirmDisabled]     – keep Confirm off while those
+ *                                               choices are incomplete
  */
 export function SelectAssigneeModal({
   open,
@@ -28,6 +32,8 @@ export function SelectAssigneeModal({
   onConfirm,
   title = 'Select Assignee',
   confirmLabel = 'Confirm',
+  children,
+  confirmDisabled = false,
 }) {
   const platformUsers = useAppStore(s => s.platformUsers);
   const platformUsersDidFetch = useAppStore(s => s.platformUsersDidFetch);
@@ -105,11 +111,13 @@ export function SelectAssigneeModal({
             })}
           </div>
 
+          {children}
+
           <div className={styles.footer}>
             <Button variant="outline" fullWidth onClick={close}>Cancel</Button>
             <Button
               fullWidth
-              disabled={!selected}
+              disabled={!selected || confirmDisabled}
               onClick={() => { if (selected) { onConfirm?.(selected); close(); } }}
             >
               {confirmLabel}

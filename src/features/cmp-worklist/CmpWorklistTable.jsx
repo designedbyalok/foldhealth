@@ -1,47 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { WorklistShell } from '../worklists/WorklistShell';
+import { SelectAssigneeModal } from '../../components/SelectAssigneeModal/SelectAssigneeModal';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
+import { clinicalRolesPickerLabel } from '../../lib/worklistAssignee';
+import styles from './CmpWorklistTable.module.css';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
 import { SubnavToggle } from '../../components/SubnavToggle/SubnavToggle';
 import { FilterBar } from '../worklists/FilterBar';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { DobFilter } from '../../components/DobFilter/DobFilter';
-import { dobInRange } from '../../components/DateRangePopover/yearSpan';
+import { DateRangePopover } from '../../components/DateRangePopover/DateRangePopover';
+import { fmtDay } from '../../components/DateRangeFilter/dateRangePresets';
 import { useTableSort } from '../../components/HeaderCell/useTableSort';
-import { GENDER_FILTER_OPTIONS, LANGUAGE_FILTER_OPTIONS, memberGenderLabel, memberLanguageLabel } from '../../lib/memberFilters';
 import { SavedFiltersChip } from '../hcc/SavedFiltersChip';
 import { useSavedFilterActions } from '../hcc/useSavedFilterActions';
-import { CMP_SUB_PROGRAMS } from '../patient/data/cmpSubPrograms';
 import { CmpWorklistRow } from './CmpWorklistRow';
 import { CMP_MIDDLE_COLUMNS } from './cmpColumns';
+import { CMP_FILTER_DEFS, CMP_FILTER_DEF_MAP, cmpFilterOptions, enrollmentMatches } from './cmpFilters';
 
-// Worklist filter spec: the member filters first (DOB, Gender, Language,
-// Assignee), then the program workflow filters (Sub Program first). Risk IQ
-// is secondary, under Clinical in More Filters.
-const CMP_FILTER_DEFS = [
-  { key: 'dob',            label: 'DOB',                primary: true },
-  { key: 'gender',         label: 'Gender',             primary: true },
-  { key: 'language',       label: 'Language',           primary: true },
-  { key: 'assignee',       label: 'Assignee',           primary: true },
-  { key: 'subProgram',     label: 'Sub Program',        primary: true },
-  { key: 'progSubStatus',  label: 'Program Sub Status', primary: true },
-  { key: 'carePlanStatus', label: 'Care Plan Status',   primary: true },
-  { key: 'ri',             label: 'Risk IQ',            primary: false, group: 'Clinical' },
-];
+// Every filter's More Filters entry, grouped (Members, Program, Care Team,
+// Clinical, Tasks); the spec lives in cmpFilters.js.
 const CMP_MORE_FILTER_ITEMS = CMP_FILTER_DEFS.map(fd => ({ k: fd.key, label: fd.label, primary: fd.primary, group: fd.group }));
-
-// The value each multi-select filter compares against, per row.
-const FILTER_VALUE = {
-  gender: (m) => memberGenderLabel(m.g),
-  language: (m) => memberLanguageLabel(m.language),
-  assignee: (m) => m.assignee || 'Unassigned',
-  subProgram: (m) => m.subProgram,
-  progSubStatus: (m) => m.progSubStatus,
-  carePlanStatus: (m) => m.carePlanStatus,
-  ri: (m) => m.ri,
-};
-// Member filters show the vocabulary every worklist shares.
-const STATIC_OPTIONS = { gender: GENDER_FILTER_OPTIONS, language: LANGUAGE_FILTER_OPTIONS, subProgram: CMP_SUB_PROGRAMS };
 
 // MM/DD/YYYY → timestamp, so date columns sort chronologically (the shared
 // sort would compare them as month-first numbers).
@@ -56,6 +36,15 @@ const CMP_SHELL_COLUMNS = [
   ...CMP_MIDDLE_COLUMNS,
   { key: 'actions', label: 'Actions', sticky: 'right', width: 120 },
 ];
+
+const ACUITY_RANK = { Low: 1, Medium: 2, High: 3 };
+
+// HCC-only roles don't own care program members.
+const HCC_ONLY_ROLES = new Set(['Coder', 'Support', 'QA', 'Compliance']);
+
+// One worklist row per member: the key enrollments are grouped by (and the
+// row id the selection holds).
+const memberKey = (e) => String(e.memberId || e.patientId || e.id);
 
 export function CmpWorklistTable() {
   const members = useAppStore(s => s.cmpMembers);
@@ -74,6 +63,22 @@ export function CmpWorklistTable() {
   const navigateToPatient = useAppStore(s => s.navigateToPatient);
   const openHistoryDrawer = useAppStore(s => s.openHccHistoryDrawer);
   const saveSavedFilter = useAppStore(s => s.saveSavedFilter);
+  const setCmpAssignee = useAppStore(s => s.setCmpAssignee);
+  const setCmpCareTeam = useAppStore(s => s.setCmpCareTeam);
+  const platformUsers = useAppStore(s => s.platformUsers);
+  const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
+  useEffect(() => { fetchPlatformUsers(); }, [fetchPlatformUsers]);
+  // Who the cells' assignee pickers offer: care staff, not the HCC-only roles.
+  const assignableUsers = useMemo(() => platformUsers
+    .filter(u => !u.clinicalRoles?.some(r => HCC_ONLY_ROLES.has(r)))
+    .map(u => ({ id: u.id, name: u.name, initials: u.initials, role: clinicalRolesPickerLabel(u) })), [platformUsers]);
+  const setCareTeam = async (rowId, role, user) => {
+    const ok = await setCmpCareTeam([rowId], role, user);
+    if (!ok) showToast('Could not save the change. Try again.');
+  };
+  const [assignOpen, setAssignOpen] = useState(false);
+  // Which sub-programs the bulk assignee goes to; the others keep theirs.
+  const [assignSubPrograms, setAssignSubPrograms] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBarOpen, setFilterBarOpen] = useState(false);
@@ -82,20 +87,15 @@ export function CmpWorklistTable() {
 
   useEffect(() => { fetchMembers(); }, [fetchMembers]);
 
-  const filterOptions = useMemo(() => {
-    const opts = {};
-    for (const [key, valueOf] of Object.entries(FILTER_VALUE)) {
-      opts[key] = STATIC_OPTIONS[key]
-        || [...new Set(members.map(valueOf).filter(Boolean))].toSorted();
-    }
-    return opts;
-  }, [members]);
+  const filterOptions = useMemo(() => cmpFilterOptions(members), [members]);
 
   const enriched = useMemo(() => members.map(m => ({
     ...m,
     nextActionDueSort: mdyTime(m.nextActionDue),
     programStartSort: mdyTime(m.programStartDate),
     programDueSort: mdyTime(m.programDueDate),
+    lastAdmissionSort: mdyTime(m.lastAdmission),
+    caseAcuityRank: ACUITY_RANK[m.caseAcuity] ?? null,
   })), [members]);
 
   const filtered = useMemo(() => {
@@ -104,12 +104,9 @@ export function CmpWorklistTable() {
     if (q) {
       rows = rows.filter(m => (m.name || '').toLowerCase().includes(q) || (m.memberId || '').toLowerCase().includes(q));
     }
-    for (const [key, valueOf] of Object.entries(FILTER_VALUE)) {
-      const vals = filters[key];
-      if (vals?.length) rows = rows.filter(m => vals.includes(valueOf(m)));
-    }
-    // DOB is a date range (Years or Custom Dates), not a value list.
-    return rows.filter(m => dobInRange(m.dob, m.age, filters.dob));
+    // Program filters keep only the matching enrollments; a member shows
+    // when any of theirs is left.
+    return rows.filter(m => enrollmentMatches(m, filters));
   }, [enriched, searchQuery, filters]);
 
   // One row per member: their matching enrollments (one per CMP
@@ -118,7 +115,7 @@ export function CmpWorklistTable() {
   const grouped = useMemo(() => {
     const byMember = new Map();
     for (const e of filtered) {
-      const key = String(e.memberId || e.patientId || e.id);
+      const key = memberKey(e);
       if (!byMember.has(key)) byMember.set(key, []);
       byMember.get(key).push(e);
     }
@@ -169,15 +166,29 @@ export function CmpWorklistTable() {
       moreFilterItems={CMP_MORE_FILTER_ITEMS}
       renderChip={(k) => {
         if (k === 'dob') return <DobFilter value={filters.dob || []} onChange={vals => setFilter('dob', vals)} />;
-        const def = CMP_FILTER_DEFS.find(d => d.key === k);
+        const def = CMP_FILTER_DEF_MAP[k];
         if (!def) return null;
+        const vals = filters[k] || [];
+        if (def.type === 'date') {
+          return (
+            <FilterChip
+              label={def.label}
+              active={vals.length >= 2}
+              activeSummary={vals.length >= 2 ? `${fmtDay(vals[0])} – ${fmtDay(vals[1])}` : undefined}
+              onClear={() => setFilter(k, [])}
+              renderPopover={({ anchorRect, onClose }) => (
+                <DateRangePopover anchorRect={anchorRect} label={def.label} selected={vals} onChange={v => setFilter(k, v)} onClose={onClose} />
+              )}
+            />
+          );
+        }
         return (
           <FilterChip
             label={def.label}
             options={filterOptions[k] || []}
-            selected={filters[k] || []}
-            onChange={vals => setFilter(k, vals)}
-            searchable={k === 'language' || k === 'assignee'}
+            selected={vals}
+            onChange={v => setFilter(k, v)}
+            searchable={def.searchable}
           />
         );
       }}
@@ -206,41 +217,98 @@ export function CmpWorklistTable() {
     />
   );
 
+  // Selection is by member, and a member has one enrollment (with its own
+  // assignee) per CMP sub-program. Change Assignee asks which sub-programs
+  // take the new assignee: those the selected members have, with how many
+  // members each, starting from the Sub Program filter's picks when it's on.
+  const selectedEnrollments = useMemo(() => {
+    const picked = new Set(selectedIds);
+    return members.filter(e => picked.has(memberKey(e)));
+  }, [members, selectedIds]);
+  const subProgramCounts = useMemo(() => {
+    const counts = new Map();
+    for (const e of selectedEnrollments) counts.set(e.subProgram, (counts.get(e.subProgram) || 0) + 1);
+    return [...counts.entries()].toSorted(([a], [b]) => a.localeCompare(b));
+  }, [selectedEnrollments]);
+  const openAssign = () => {
+    const all = subProgramCounts.map(([sp]) => sp);
+    const fromFilter = (filters.subProgram || []).filter(sp => all.includes(sp));
+    setAssignSubPrograms(fromFilter.length ? fromFilter : all);
+    setAssignOpen(true);
+  };
+  const toggleAssignSubProgram = (sp, on) => setAssignSubPrograms(cur => (on ? [...cur, sp] : cur.filter(x => x !== sp)));
+  const assignSelected = async (user) => {
+    setAssignOpen(false);
+    const rows = selectedEnrollments.filter(e => assignSubPrograms.includes(e.subProgram));
+    const memberCount = new Set(rows.map(memberKey)).size;
+    const ok = await setCmpAssignee(rows.map(e => e.id), user);
+    showToast(ok
+      ? `${user.name} assigned to ${memberCount} member${memberCount === 1 ? '' : 's'} (${assignSubPrograms.join(', ')})`
+      : 'Could not save the new assignee. Try again.');
+    if (ok) clearSelected();
+  };
+
   return (
-    <WorklistShell
-      header={header}
-      worklistKey="cmp"
-      // Always passed: when closed, the bar shows just the applied filters.
-      showFilters
-      filters={filterNode}
-      columns={CMP_SHELL_COLUMNS}
-      sortKey={sortKey}
-      sortDir={sortDir}
-      onSort={requestSort}
-      rows={pageRows}
-      renderRow={(m, _i, ctx) => (
-        <CmpWorklistRow
-          key={m.id}
-          member={m}
-          columns={ctx.orderedColumns}
-          hiddenSet={ctx.hiddenSet}
-          selected={selectedIds.includes(m.id)}
-          onToggle={() => selectMember(m.id)}
-          onView={(e) => navigateToPatient(e.patientId || e.id, { profileTab: 'Care Programs', programCode: 'CMP', subProgram: e.subProgram })}
-          showToast={showToast}
-        />
-      )}
-      loading={loading && pageRows.length === 0}
-      emptyState="No members match the current filters."
-      selectedIds={selectedIds}
-      onSelectAll={handleSelectAll}
-      onClearSelection={clearSelected}
-      page={page}
-      perPage={perPage}
-      totalItems={grouped.length}
-      onPageChange={setPage}
-      onPageSizeChange={(p) => { setPerPage(p); setPage(1); }}
-      minTableWidth={1700}
-    />
+    <>
+      <WorklistShell
+        header={header}
+        worklistKey="cmp"
+        // Always passed: when closed, the bar shows just the applied filters.
+        showFilters
+        filters={filterNode}
+        columns={CMP_SHELL_COLUMNS}
+        sortKey={sortKey}
+        sortDir={sortDir}
+        onSort={requestSort}
+        rows={pageRows}
+        renderRow={(m, _i, ctx) => (
+          <CmpWorklistRow
+            key={m.id}
+            member={m}
+            columns={ctx.orderedColumns}
+            hiddenSet={ctx.hiddenSet}
+            selected={selectedIds.includes(m.id)}
+            onToggle={() => selectMember(m.id)}
+            onView={(e) => navigateToPatient(e.patientId || e.id, { profileTab: 'Care Programs', programCode: 'CMP', subProgram: e.subProgram })}
+            showToast={showToast}
+            users={assignableUsers}
+            onSetCareTeam={setCareTeam}
+          />
+        )}
+        loading={loading && pageRows.length === 0}
+        emptyState="No members match the current filters."
+        selectedIds={selectedIds}
+        onSelectAll={handleSelectAll}
+        onClearSelection={clearSelected}
+        page={page}
+        perPage={perPage}
+        totalItems={grouped.length}
+        onPageChange={setPage}
+        onPageSizeChange={(p) => { setPerPage(p); setPage(1); }}
+        minTableWidth={1700}
+        onChangeAssignee={openAssign}
+      />
+      <SelectAssigneeModal
+        open={assignOpen}
+        title={`Assign ${selectedIds.length} member${selectedIds.length === 1 ? '' : 's'}`}
+        confirmLabel="Assign"
+        onClose={() => setAssignOpen(false)}
+        onConfirm={assignSelected}
+        confirmDisabled={!assignSubPrograms.length}
+      >
+        {subProgramCounts.length > 1 && (
+          <fieldset className={styles.subProgramPick}>
+            <legend className={styles.subProgramLegend}>Sub-programs to reassign</legend>
+            {subProgramCounts.map(([sp, n]) => (
+              <label key={sp} className={styles.subProgramRow}>
+                <Checkbox checked={assignSubPrograms.includes(sp)} onCheckedChange={v => toggleAssignSubProgram(sp, !!v)} />
+                <span className={styles.subProgramName}>{sp}</span>
+                <span className={styles.subProgramCount}>{n} member{n === 1 ? '' : 's'}</span>
+              </label>
+            ))}
+          </fieldset>
+        )}
+      </SelectAssigneeModal>
+    </>
   );
 }

@@ -20,7 +20,7 @@ const MAX_INLINE = 2;
  * (`member.enrollments`). Per-enrollment columns stack a line per
  * sub-program; the rest show once. `onView(enrollment)` opens one.
  */
-export function CmpWorklistRow({ member, columns, hiddenSet, selected, onToggle, onView, showToast }) {
+export function CmpWorklistRow({ member, columns, hiddenSet, selected, onToggle, onView, showToast, users, onSetCareTeam }) {
   const updateCmpMemberStatus = useAppStore(s => s.updateCmpMemberStatus);
   const openQuickView = useAppStore(s => s.openQuickView);
   const openCallPopover = useAppStore(s => s.openCallPopover);
@@ -37,7 +37,7 @@ export function CmpWorklistRow({ member, columns, hiddenSet, selected, onToggle,
   const visibleMiddle = hiddenSet ? middleCols.filter(c => !hiddenSet.has(c.key)) : middleCols;
   // "View More N" sits in the first stacked column; the others get a spacer.
   const toggleKey = visibleMiddle.find(c => c.perEnrollment)?.key;
-  const cellCtx = { statusAnchor, setStatusAnchor, updateCmpMemberStatus, showToast, onOpenEnrollment: onView };
+  const cellCtx = { statusAnchor, setStatusAnchor, updateCmpMemberStatus, showToast, onOpenEnrollment: onView, users, setCareTeam: onSetCareTeam };
   const dobLabel = formatDobDisplay(member.dob) || deriveDob(member.age, member.name);
 
   return (
