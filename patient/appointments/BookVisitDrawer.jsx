@@ -216,7 +216,7 @@ export function BookVisitDrawer({ profile, onClose, onBooked }) {
             <Textarea
               title="Reason for visit (optional)"
               value={reason}
-              onChange={(text) => setReason(text)}
+              onValueChange={setReason}
               maxLength={500}
               rows={3}
               placeholder="Tell your care team what you would like to talk about"
