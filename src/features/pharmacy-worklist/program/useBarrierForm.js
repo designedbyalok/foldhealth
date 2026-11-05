@@ -54,6 +54,18 @@ export function recordWithMedAdditions(x, rec, medId, add) {
   return recordFor(x, { ...s, perMed: true, meds });
 }
 
+// A gap's record with barriers / interventions added for the whole gap (an
+// Assessment or outreach finding): added to what each drug or the gap already
+// has, never replacing it. `add.result` becomes the record's result.
+export function recordWithGapAdditions(x, rec, add) {
+  const s = stateFrom(x, rec);
+  const merge = (cur) => ({ barriers: union([cur.barriers, add.barriers || []]), interventions: union([cur.interventions, add.interventions || []]) });
+  const next = s.perMed
+    ? { ...s, meds: Object.fromEntries(activeMeds(x).map(d => [d.id, merge(s.meds[d.id] || EMPTY)])) }
+    : { ...s, gap: merge(s.gap) };
+  return { ...recordFor(x, next), result: add.result ?? rec?.result ?? null };
+}
+
 // The barrier form's state and save, apart from its layout, so a host (the
 // gap drawer) can put Save in its own header, as it does for Outreach.
 export function useBarrierForm(member) {

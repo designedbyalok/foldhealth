@@ -191,4 +191,3 @@
 .chevronUp { transform: rotate(180deg); }
 
 /* PDC in a gap's details: value with its pencil, where it comes from below. */
-.pdcLine { display: inline-flex; align-items: center; gap: var(--space-1); }

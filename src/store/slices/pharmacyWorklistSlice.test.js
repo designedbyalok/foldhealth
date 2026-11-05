@@ -109,17 +109,32 @@ describe('reason for non-adherence on a medication', () => {
 });
 
 describe('pharmacy verification lock', () => {
-  it('logs what was answered for each drug in the activity entry', () => {
+  it('logs the call and what was ticked for each gap in the activity entry', () => {
     const s = storeWith([]);
     s.get().pharmacyWorklistMembers[0] = { id: '1', callHistory: [], activityLog: [], measures: [] };
     s.get().lockPharmacyVerification('1', {
-      kind: 'pharmacy-verification', locked: true, date: '10/27/2026', contact: 'CVS', outcome: 'Med pickup confirmed', result: 'success',
+      kind: 'pharmacy-verification', locked: true, date: '10/27/2026', party: 'Pharmacy', contact: 'CVS', outcome: 'Interventions logged', result: 'failed',
+      action: 'Telephonic', direction: 'Outbound', contactOutcome: 'Reached',
       by: 'Priya', note: 'Spoke with tech', measures: ['MAD'],
-      items: [{ measure: 'MAD', drug: 'Metformin 500 MG', steps: ['Last fill 10/06/2026 confirmed', 'Refilled', 'Picked up'] }],
+      items: [{ measure: 'MAD', drug: 'Medication Adherence for Diabetes', steps: ['New 90/100DS conversion', 'Pending: Pick up'] }],
     }, { pickedUpCodes: [], pendingCodes: [], refillsByMed: {}, status: null });
     const [a] = s.member().activityLog;
-    expect(a.title).toBe('Assessment · Pharmacy: CVS (locked)');
-    expect(a.note.split('\n')).toEqual(['MAD · Metformin 500 MG: Last fill 10/06/2026 confirmed, Refilled, Picked up', 'Spoke with tech']);
+    expect(a.title).toBe('Assessment · Pharmacy: CVS');
+    expect(a.note.split('\n')).toEqual([
+      'Telephonic · Outbound',
+      'MAD · Medication Adherence for Diabetes: New 90/100DS conversion, Pending: Pick up',
+      'Spoke with tech',
+    ]);
+  });
+
+  it('names a contact that was not reached on the activity entry', () => {
+    const s = storeWith([]);
+    s.get().pharmacyWorklistMembers[0] = { id: '1', callHistory: [], activityLog: [], measures: [] };
+    s.get().lockPharmacyVerification('1', {
+      kind: 'pharmacy-verification', locked: true, date: '10/27/2026', party: 'Member', contact: 'Linda', outcome: 'UTC', result: 'failed',
+      action: 'Telephonic', direction: 'Outbound', contactOutcome: 'UTC', by: 'Priya', note: '', measures: ['MAD'], items: [],
+    }, { pickedUpCodes: [], pendingCodes: [], refillsByMed: {}, status: null });
+    expect(s.member().activityLog[0].note).toBe('Telephonic · Outbound · UTC');
   });
 });
 
@@ -239,5 +254,31 @@ describe('intervention outcomes', () => {
     expect(rec.medications.map(d => [d.barriers, d.interventions])).toEqual([[[], []], [[], ['Autofill Set-Up']]]);
     expect(rec).toMatchObject({ barriers: [], interventions: ['Autofill Set-Up'] });
     expect(s.member().interventionLog[0].completed[0]).toMatchObject({ medication: 'Metformin 500 MG' });
+  });
+});
+
+describe('PDC set by hand', () => {
+  it('logs the change with the PDC it changed from', () => {
+    const s = storeWith([]);
+    s.member().measures = [{ code: 'MAD', pdc: 80, medications: [] }];
+    s.get().setPharmacyPdcOverride('1', 'MAD', 85, 80);
+    expect(s.member().measures[0]).toMatchObject({ pdcManual: 85, pdcManualBy: 'Priya' });
+    expect(s.member().activityLog[0]).toMatchObject({ title: 'MAD PDC changed from 80% to 85%', note: 'Set by hand by Priya', actor: 'Priya' });
+  });
+
+  it('logs going back to the calculated PDC', () => {
+    const s = storeWith([]);
+    s.member().measures = [{ code: 'MAD', pdc: 80, pdcManual: 85, medications: [] }];
+    s.get().setPharmacyPdcOverride('1', 'MAD', null, 85);
+    expect(s.member().measures[0].pdcManual).toBeNull();
+    expect(s.member().activityLog[0].title).toBe('MAD PDC changed from 85% to calculated');
+  });
+
+  it('logs nothing when the number did not change', () => {
+    const s = storeWith([]);
+    s.member().measures = [{ code: 'MAD', pdc: 80, medications: [] }];
+    s.get().setPharmacyPdcOverride('1', 'MAD', 80, 80);
+    expect(s.member().activityLog).toEqual([]);
+    expect(s.member().measures[0].pdcManual).toBeUndefined();
   });
 });
