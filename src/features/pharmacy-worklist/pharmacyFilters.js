@@ -231,17 +231,59 @@ function priorYearResults(g) {
   return [`${PRIOR_YEAR} · ${g.priorYearNonCompliant ? 'Non-compliant' : 'Compliant'}`];
 }
 
-// The values one enriched member carries for a filter. A member matches when
-// any of them is picked (multi), in range (range) or in the dates (date).
+// Filters about one gap: a member matches when one of its gaps carries all
+// of them at once, and the row shows only the gaps that do (filter MAH and
+// the MAC / MAD rows go). `g` is an enriched gap, `m` its member.
+const GAP_VALUES = {
+  gap: (g) => [g.code],
+  gapStatus: (g) => [g.status.gap],
+  planStatus: (g) => [g.planStatus],
+  daysLeft: (g) => (isActiveGap(g.status) ? [daysLeftBucket(g.failDate)] : []),
+  claimRecon: (g) => [g.recon?.status].filter(Boolean),
+  subStatus: (g) => [g.status.label].filter(Boolean),
+  startDate: (g) => [g.startDate],
+  savability: (g) => [g.savability].filter(Boolean),
+  safeForYear: (g) => yes(g.status.gap === 'Met for Year' || g.projectedStatus === 'Already adherent'),
+  excluded: (g) => (g.status.gap === 'Excluded' ? [g.exclusionType || 'Excluded'] : []),
+  payerProjectedStatus: (g) => [g.projectedStatus].filter(Boolean),
+  consistentlyNonCompliant: (g) => yes(g.complianceFlag === 'Consistently Non-Compliant'),
+  drugName: (g) => activeMeds(g).map(d => d.name),
+  drugCount: (g) => [g.medications.length],
+  drugClass: (g) => g.medications.map(drugClass).filter(Boolean),
+  medStatus: (g, m) => g.medications.map(d => medicationStatus(d, m.healthPlan)),
+  drugInteraction: (g) => yes(g.drugInteraction),
+  pdc: (g) => nums([g.pdc]),
+  pdcBelow80: (g) => yes(g.pdc != null && g.pdc < 80),
+  pdcAtOrBelow90: (g) => yes(g.pdc != null && g.pdc <= 90),
+  pdcSource: (g) => [sourceLabel(g.pdcSource)].filter(Boolean),
+  pdcProjected: (g) => yes(g.pdcSource === 'Projected'),
+  noRefillPdc: (g) => nums([g.noRefillPdc]),
+  mpr: (g) => nums([g.mpr]),
+  fillsToStay: (g) => nums([fillsToStayCompliant(g)]),
+  priorYearResult: (g) => priorYearResults(g),
+  priorYearPdc: (g) => nums((g.priorYearPdc || []).map(y => y.pdc)),
+  nonCompliantBothYears: (g) => yes(g.priorYearPdc?.length >= 2 && g.priorYearPdc.slice(0, 2).every(y => y.pdc < 80)),
+  failDate: (g) => [g.failDate],
+  failDateSource: (g) => [sourceLabel(g.failDateSource)].filter(Boolean),
+  allowableGapDays: (g) => nums([g.allowableGapDays]),
+  daysMissed: (g) => nums([g.daysMissed]),
+  nextFillDue: (g) => [g.nextFillDue],
+  daysOverdue: (g) => (isActiveGap(g.status) ? nums([-daysFromToday(g.nextFillDue)]).filter(d => d > 0) : []),
+  nextFillSource: (g) => [sourceLabel(g.nextFillDueSource)].filter(Boolean),
+  reworkOpen: (g) => yes(g.recon?.rework && g.claimFollowUpTask?.taskId != null),
+  pickupNoClaim: (g) => yes(g.pickupConfirmed && g.recon?.status === 'Awaiting claim'),
+  pickupClaimDisagree: (g) => yes(g.pickupConfirmed && g.recon?.rework),
+  attempts: (g) => nums([g.attempts]),
+  inQueue: (g) => yes(inOutreachQueue(g)),
+  escalate: (g, m) => yes(escalation(g, m)),
+};
+export const isGapFilter = (k) => k in GAP_VALUES;
+
+// Filters about the member as a whole.
 const VALUES = {
   priority: (m) => [m.priority],
-  gap: (m) => m.measureCodes,
-  gapStatus: (m) => m.gaps.map(g => g.status.gap),
-  planStatus: (m) => m.gaps.map(g => g.planStatus),
   progress: (m) => [m.progress.label],
-  daysLeft: (m) => openGaps(m).map(g => daysLeftBucket(g.failDate)),
   overdue: overdueTags,
-  claimRecon: (m) => m.reconStatuses,
   assignee: (m) => [m.assigneeName || 'Unassigned'],
   member: (m) => [`${m.name} (#${m.memberId || m.id})`],
   sex: (m) => [m.gender],
@@ -249,45 +291,12 @@ const VALUES = {
   language: (m) => [(m.language || 'en').toUpperCase()],
   eligibilityStatus: (m) => [m.eligibilityStatus || 'Active'],
   gapCount: (m) => [String(m.gaps.length)],
-  subStatus: (m) => m.gaps.map(g => g.status.label).filter(Boolean),
-  startDate: (m) => m.gaps.map(g => g.startDate),
-  savability: (m) => m.gaps.map(g => g.savability).filter(Boolean),
-  safeForYear: (m) => yes(m.gaps.some(g => g.status.gap === 'Met for Year' || g.projectedStatus === 'Already adherent')),
-  excluded: (m) => m.gaps.filter(g => g.status.gap === 'Excluded').map(g => g.exclusionType || 'Excluded'),
-  payerProjectedStatus: (m) => m.gaps.map(g => g.projectedStatus).filter(Boolean),
-  consistentlyNonCompliant: (m) => yes(m.gaps.some(g => g.complianceFlag === 'Consistently Non-Compliant')),
-  drugName: (m) => m.gaps.flatMap(g => activeMeds(g).map(d => d.name)),
-  drugCount: (m) => m.gaps.map(g => g.medications.length),
-  drugClass: (m) => m.gaps.flatMap(g => g.medications.map(drugClass)).filter(Boolean),
   // One drug counted under two gaps (a combination product).
   combinationDrug: (m) => {
     const seen = new Map();
     for (const g of m.gaps) for (const d of g.medications) seen.set(d.generic || d.name, (seen.get(d.generic || d.name) || new Set()).add(g.code));
     return yes([...seen.values()].some(codes => codes.size > 1));
   },
-  medStatus: (m) => m.gaps.flatMap(g => g.medications.map(d => medicationStatus(d, m.healthPlan))),
-  drugInteraction: (m) => yes(m.gaps.some(g => g.drugInteraction)),
-  pdc: (m) => nums(m.gaps.map(g => g.pdc)),
-  pdcBelow80: (m) => yes(m.gaps.some(g => g.pdc != null && g.pdc < 80)),
-  pdcAtOrBelow90: (m) => yes(m.gaps.some(g => g.pdc != null && g.pdc <= 90)),
-  pdcSource: (m) => m.gaps.map(g => sourceLabel(g.pdcSource)).filter(Boolean),
-  pdcProjected: (m) => yes(m.gaps.some(g => g.pdcSource === 'Projected')),
-  noRefillPdc: (m) => nums(m.gaps.map(g => g.noRefillPdc)),
-  mpr: (m) => nums(m.gaps.map(g => g.mpr)),
-  fillsToStay: (m) => nums(m.gaps.map(fillsToStayCompliant)),
-  priorYearResult: (m) => m.gaps.flatMap(priorYearResults),
-  priorYearPdc: (m) => nums(m.gaps.flatMap(g => (g.priorYearPdc || []).map(y => y.pdc))),
-  nonCompliantBothYears: (m) => yes(m.gaps.some(g => g.priorYearPdc?.length >= 2 && g.priorYearPdc.slice(0, 2).every(y => y.pdc < 80))),
-  failDate: (m) => m.gaps.map(g => g.failDate),
-  failDateSource: (m) => m.gaps.map(g => sourceLabel(g.failDateSource)).filter(Boolean),
-  allowableGapDays: (m) => nums(m.gaps.map(g => g.allowableGapDays)),
-  daysMissed: (m) => nums(m.gaps.map(g => g.daysMissed)),
-  nextFillDue: (m) => m.gaps.map(g => g.nextFillDue),
-  daysOverdue: (m) => nums(openGaps(m).map(g => -daysFromToday(g.nextFillDue)).filter(d => d > 0)),
-  nextFillSource: (m) => m.gaps.map(g => sourceLabel(g.nextFillDueSource)).filter(Boolean),
-  reworkOpen: (m) => yes(m.gaps.some(g => g.recon?.rework && g.claimFollowUpTask?.taskId != null)),
-  pickupNoClaim: (m) => yes(m.gaps.some(g => g.pickupConfirmed && g.recon?.status === 'Awaiting claim')),
-  pickupClaimDisagree: (m) => yes(m.gaps.some(g => g.pickupConfirmed && g.recon?.rework)),
   gapsClosed: (m) => [`${m.progress.closed} of ${m.progress.total}`],
   otherGapsCount: (m) => [m.otherCareGapsCount],
   otherGap: (m) => m.otherCareGaps.map(g => g.code),
@@ -295,10 +304,7 @@ const VALUES = {
   lastOutreachOutcome: (m) => (m.outreach?.outcome ? [m.outreach.outcome] : []),
   lastOutreachDate: (m) => (m.outreach ? [m.outreach.date] : []),
   contactType: (m) => (m.outreach?.contact ? [m.outreach.contact] : []),
-  attempts: (m) => nums(m.gaps.map(g => g.attempts)),
   noOutreach: (m) => yes(!(m.callHistory || []).length),
-  inQueue: (m) => yes(m.gaps.some(inOutreachQueue)),
-  escalate: (m) => yes(m.gaps.some(g => escalation(g, m))),
   unableToReach: (m) => {
     // A note is not a contact attempt.
     const calls = (m.callHistory || []).filter(c => c.result !== 'note');
@@ -319,7 +325,12 @@ const VALUES = {
   daysInQueue: (m) => nums([m.daysInQueue]),
 };
 
-export const filterValues = (k, m, ctx) => VALUES[k]?.(m, ctx) ?? [];
+const gapFilterValues = (k, g, m, ctx) => GAP_VALUES[k]?.(g, m, ctx) ?? [];
+
+// Every value a member carries for a filter (a gap filter: across its gaps).
+export const filterValues = (k, m, ctx) => (isGapFilter(k)
+  ? m.gaps.flatMap(g => gapFilterValues(k, g, m, ctx))
+  : VALUES[k]?.(m, ctx) ?? []);
 
 function inDates(value, [from, to]) {
   const t = parseLocalDate(value);
@@ -330,23 +341,35 @@ function inDates(value, [from, to]) {
   return t >= start && t <= end;
 }
 
-// True when the member passes every active filter.
-export function memberMatchesFilters(m, filters, ctx) {
-  for (const [k, vals] of Object.entries(filters || {})) {
-    const def = FILTER_DEF_MAP[k];
-    if (!def || !vals?.length) continue;
-    const values = filterValues(k, m, ctx);
-    if (def.type === 'range') {
-      const [lo, hi] = vals.map(Number);
-      if (!values.some(v => v >= lo && v <= hi)) return false;
-    } else if (def.type === 'date') {
-      if (vals.length < 2 || !values.some(v => inDates(v, vals))) return false;
-    } else {
-      const picked = new Set(vals);
-      if (!values.some(v => picked.has(v))) return false;
-    }
+function passes(def, vals, values) {
+  if (def.type === 'range') {
+    const [lo, hi] = vals.map(Number);
+    return values.some(v => v >= lo && v <= hi);
   }
-  return true;
+  if (def.type === 'date') return vals.length >= 2 && values.some(v => inDates(v, vals));
+  const picked = new Set(vals);
+  return values.some(v => picked.has(v));
+}
+
+const activeFilters = (filters) => Object.entries(filters || {}).filter(([k, vals]) => FILTER_DEF_MAP[k] && vals?.length);
+
+// The member's gaps that pass every active gap filter (all of them when none
+// is set).
+export function matchingGaps(m, filters, ctx) {
+  const gapFilters = activeFilters(filters).filter(([k]) => isGapFilter(k));
+  if (!gapFilters.length) return m.gaps;
+  return m.gaps.filter(g => gapFilters.every(([k, vals]) => passes(FILTER_DEF_MAP[k], vals, gapFilterValues(k, g, m, ctx))));
+}
+
+// True when the member passes every member filter and, with gap filters set,
+// at least one of its gaps passes them all.
+export function memberMatchesFilters(m, filters, ctx) {
+  const active = activeFilters(filters);
+  for (const [k, vals] of active) {
+    if (isGapFilter(k)) continue;
+    if (!passes(FILTER_DEF_MAP[k], vals, filterValues(k, m, ctx))) return false;
+  }
+  return !active.some(([k]) => isGapFilter(k)) || matchingGaps(m, filters, ctx).length > 0;
 }
 
 // Options for the `dynamic` filters, from the members on the worklist.

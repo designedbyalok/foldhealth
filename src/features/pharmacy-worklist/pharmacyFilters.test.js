@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FILTER_DEF_MAP, MORE_FILTER_ITEMS, PRIMARY_FILTER_KEYS, dynamicFilterOptions, filterValues, memberMatchesFilters } from './pharmacyFilters.js';
+import { FILTER_DEF_MAP, MORE_FILTER_ITEMS, PRIMARY_FILTER_KEYS, dynamicFilterOptions, filterValues, matchingGaps, memberMatchesFilters } from './pharmacyFilters.js';
 import { addDaysMdy, enrichPharmacyMember, todayMdy } from './pharmacyWorklist.utils.js';
 
 const daysAgo = (n) => addDaysMdy(todayMdy(), -n);
@@ -77,6 +77,31 @@ describe('memberMatchesFilters', () => {
 
   it('keeps unknown or empty filters from hiding anyone', () => {
     expect(matches(member(), { retired: ['x'], pdc: [] })).toBe(true);
+  });
+});
+
+describe('gap filters', () => {
+  const three = () => member({ measures: [measure('MAC', { pdc: 70 }), measure('MAD'), measure('MAH', { excluded: true })] });
+
+  it('keeps only the gaps a gap filter picks', () => {
+    const m = three();
+    expect(matches(m, { gap: ['MAH'] })).toBe(true);
+    expect(matchingGaps(m, { gap: ['MAH'] }).map(g => g.code)).toEqual(['MAH']);
+    expect(matchingGaps(m, { gap: ['MAC', 'MAD'] }).map(g => g.code)).toEqual(['MAC', 'MAD']);
+  });
+
+  it('needs one gap to pass every gap filter at once', () => {
+    const m = three();
+    // MAC has PDC below 80, MAH is the excluded one: no single gap is both.
+    expect(matches(m, { pdcBelow80: ['Yes'], gapStatus: ['Excluded'] })).toBe(false);
+    expect(matchingGaps(m, { gap: ['MAC'], pdcBelow80: ['Yes'] }).map(g => g.code)).toEqual(['MAC']);
+    expect(matches(m, { gap: ['MAD'], pdcBelow80: ['Yes'] })).toBe(false);
+  });
+
+  it('leaves every gap when only member filters are set', () => {
+    const m = three();
+    expect(matchingGaps(m, { sex: ['F'] })).toHaveLength(3);
+    expect(matches(m, { sex: ['M'], gap: ['MAH'] })).toBe(false);
   });
 });
 
