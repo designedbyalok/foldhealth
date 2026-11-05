@@ -4,21 +4,30 @@
     {
       "name": "Foldhealth Demo",
       "runtimeExecutable": "/bin/sh",
-      "runtimeArgs": ["-c", "export PATH=$HOME/.bun/bin:/opt/homebrew/bin:$PATH && bun --bun run dev -- --port $PORT"],
+      "runtimeArgs": [
+        "-c",
+        "export PATH=$HOME/.bun/bin:/opt/homebrew/bin:$PATH && bun --bun run dev -- --port $PORT"
+      ],
       "port": 5173,
       "autoPort": true
     },
     {
-      "name": "Patient App",
+      "name": "Docs",
       "runtimeExecutable": "/bin/sh",
-      "runtimeArgs": ["-c", "export PATH=$HOME/.bun/bin:/opt/homebrew/bin:$PATH && bun --bun run dev:patient -- --port $PORT"],
-      "port": 5175,
+      "runtimeArgs": [
+        "-c",
+        "export PATH=/opt/homebrew/bin:$PATH && cd docs && mint dev --port $PORT"
+      ],
+      "port": 3333,
       "autoPort": true
     },
     {
       "name": "Storybook",
       "runtimeExecutable": "/bin/sh",
-      "runtimeArgs": ["-c", "export PATH=$HOME/.local/node/bin:$HOME/.bun/bin:/opt/homebrew/bin:$PATH && bun run storybook -- --port $PORT --no-open"],
+      "runtimeArgs": [
+        "-c",
+        "export PATH=$HOME/.local/node/bin:$HOME/.bun/bin:/opt/homebrew/bin:$PATH && bun run storybook -- --port $PORT --no-open"
+      ],
       "port": 6006,
       "autoPort": true
     }
