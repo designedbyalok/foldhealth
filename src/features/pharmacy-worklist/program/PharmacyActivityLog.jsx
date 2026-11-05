@@ -39,7 +39,9 @@ function activityType(e) {
 // filters for type, date, who, medication and gap.
 // `onViewVerification(call)`: View details on a saved verification call opens
 // that call's form (read-only) instead of expanding the answers inline.
-export function PharmacyActivityLog({ member, onViewVerification }) {
+// `onAddToOutreach(call)`: an assessment entry's "Add to outreach note" puts
+// its summary in the outreach note.
+export function PharmacyActivityLog({ member, onViewVerification, onAddToOutreach }) {
   const [types, setTypes] = useState([]);
   const [datePreset, setDatePreset] = useState(null);
   const [dateRange, setDateRange] = useState([]);
@@ -55,12 +57,14 @@ export function PharmacyActivityLog({ member, onViewVerification }) {
       .filter(e => !BARRIER_ACTIVITY.test(e.title || ''))
       .map(withVerificationDetails)
       .map(e => {
-        const call = onViewVerification && e.verificationId
-          ? (member.callHistory || []).find(c => c.id === e.verificationId && c.answers)
+        // Every saved assessment, old (answers) and new (picks), has its form.
+        const call = e.verificationId
+          ? (member.callHistory || []).find(c => c.id === e.verificationId && c.kind === 'pharmacy-verification')
           : null;
         return {
           ...e, when: e.at, title: withBullets(e.title), note: withBullets(e.note), outcome: withBullets(e.outcome),
-          ...(call ? { onViewDetails: () => onViewVerification(call) } : {}),
+          ...(call && onViewVerification ? { onViewDetails: () => onViewVerification(call) } : {}),
+          ...(call && onAddToOutreach ? { extraAction: { label: 'Add to outreach note', onClick: () => onAddToOutreach(call) } } : {}),
         };
       });
     const barriers = member ? barrierHistoryEntries(member, member.measures || []) : [];
@@ -74,7 +78,7 @@ export function PharmacyActivityLog({ member, onViewVerification }) {
         : allDrugs.filter(n => text.includes(n));
       return { ...e, type: activityType(e), person: e.actor || e.user || 'System', codes, drugs };
     });
-  }, [member, drugsByGap, onViewVerification]);
+  }, [member, drugsByGap, onViewVerification, onAddToOutreach]);
 
   const options = useMemo(() => ({
     types: [...new Set(all.map(e => e.type))].sort(),
