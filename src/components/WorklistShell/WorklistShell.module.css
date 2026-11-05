@@ -202,3 +202,8 @@
    the hover for the tooltip that says why. */
 .checkBlocked { display: inline-flex; cursor: not-allowed; }
 .checkBlocked > * { pointer-events: none; }
+
+/* The floating bulk bar sits just above the pagination: these worklists have
+   no legend strip under the table, so the bar's default 120px left it
+   floating over the rows. */
+.bulkBar { bottom: 60px; }

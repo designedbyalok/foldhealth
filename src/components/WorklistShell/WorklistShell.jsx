@@ -54,6 +54,8 @@ const EMPTY_SELECTED_IDS = [];
  *                          new boolean checked state.
  *  - bulkActions          Optional custom BulkBar action buttons; when
  *                          omitted BulkBar uses its default set.
+ *  - onChangeAssignee     (ids) => void for the default set's Change
+ *                          Assignee.
  *  - page / perPage / totalItems / onPageChange / onPageSizeChange
  *                          Pagination state. Omit `totalItems` to hide.
  *  - totalCount / filtered Optional: rows before filtering and whether a
@@ -113,6 +115,9 @@ export function WorklistShell({
   onSelectAll: onSelectAllProp,
   onClearSelection: onClearSelectionProp,
   bulkActions: bulkActionsProp,
+  // The default bar's Change Assignee: `(ids) => void` (e.g. open an assignee
+  // picker). Without it the action says it's coming soon.
+  onChangeAssignee,
   selectAll,
   // Opt-in, self-contained bulk-select + bulk-delete. When provided, the shell
   // OWNS the whole interaction: a toggle button (exposed to `header` as
@@ -489,6 +494,8 @@ export function WorklistShell({
             selectedIds={selectedIds}
             onClear={onClearSelection}
             actions={bulkActions}
+            onChangeAssignee={onChangeAssignee}
+            className={styles.bulkBar}
           />
         )}
       </div>

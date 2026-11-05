@@ -25,6 +25,8 @@ import styles from './Pagination.module.css';
  * defaults to the count differing from `totalCount`; `filteredCount`
  * overrides x when `totalItems` also counts rows that aren't records.
  */
+const MIN_PAGE_SIZE = 10;
+
 export function Pagination({
   totalItems = 0,
   currentPage: currentPageProp,
@@ -125,8 +127,10 @@ export function Pagination({
     return pages;
   };
 
-  // Everything that matches already fits on one page: nothing to page through.
-  if (totalItems <= perPage) return null;
+  // Hidden only when the rows fit on one page at the smallest size. Hiding it
+  // whenever they fit the current size also hid the page-size menu, so a table
+  // left on 50 / Page with 19 rows had no way back to 10.
+  if (totalItems <= Math.min(perPage, MIN_PAGE_SIZE)) return null;
 
   const perPageOptions = [
     { key: 'auto', label: autoPageSize ? `Auto (${perPage})` : 'Auto' },

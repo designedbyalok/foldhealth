@@ -1,0 +1,14 @@
+/* Change Assignee: which sub-programs take the new assignee. */
+.subProgramPick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) 0 0;
+  border: none;
+  border-top: 0.5px solid var(--neutral-150);
+}
+.subProgramLegend { padding: 0; margin-bottom: var(--space-2); font-size: var(--font-md); font-weight: 500; color: var(--neutral-400); }
+.subProgramRow { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-md); color: var(--neutral-400); cursor: pointer; }
+.subProgramName { flex: 1; min-width: 0; }
+.subProgramCount { color: var(--neutral-300); }
