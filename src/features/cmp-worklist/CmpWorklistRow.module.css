@@ -49,17 +49,6 @@
   border-radius: var(--space-1);
 }
 
-/* Care Plan Status: coloured text with an icon, as on SNP. */
-.carePlanStatus {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: var(--font-base);
-}
-.carePlanSigned { color: var(--status-success); }
-.carePlanDraft  { color: var(--status-warning); }
-.carePlanNone   { color: var(--neutral-300); }
-
 .dueCell {
   display: flex;
   flex-direction: column;
@@ -147,3 +136,7 @@
   text-align: left;
 }
 .subProgramLink:hover { color: var(--primary-300); text-decoration: underline; }
+
+/* Tags: the first as a badge, the rest behind "+N More". */
+.tags { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.tagsMore { font-size: var(--font-md); color: var(--neutral-300); white-space: nowrap; cursor: default; }

@@ -3,25 +3,24 @@ import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../components/Badge/Badge';
 import { DownChevronIcon } from '../../components/Icon/DownChevronIcon';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
+import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { CmpOutreachCell } from './CmpOutreachCell';
+import { CMP_STATUS_TONE } from './cmpStatuses';
 import styles from './CmpWorklistRow.module.css';
 
-const STATUS_VARIANT = {
-  New: 'info',
-  Open: 'info',
-  Attempted: 'warning',
-  Engaged: 'success',
-  'Engaged - Requires Follow Up': 'warning',
-  'Unable to Reach': 'neutral',
-};
-const STATUS_MENU = Object.keys(STATUS_VARIANT).map(key => ({ key, label: key }));
+const STATUS_MENU = Object.keys(CMP_STATUS_TONE).map(key => ({ key, label: key }));
 
 const RISK_VARIANT = { Low: 'success', Medium: 'warning', High: 'danger' };
 
-const CARE_PLAN_LOOK = {
-  Signed: { className: styles.carePlanSigned, icon: 'solar:check-circle-linear' },
-  Draft: { className: styles.carePlanDraft, icon: 'solar:pen-2-linear' },
-};
+
+// Care team roles on each enrollment, after Assignee.
+const CARE_TEAM_ROLES = [
+  { key: 'nurseHealthCoach', label: 'Nurse/Health Coach', width: 180 },
+  { key: 'coordinator', label: 'Coordinator', width: 160 },
+  { key: 'socialWorker', label: 'Social Worker', width: 160 },
+  { key: 'communityHealthWorker', label: 'Community Health Worker', width: 210 },
+];
+const initialsOf = (name) => name.replace(/\./g, '').split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
 const DAY_MS = 86400000;
 
@@ -43,7 +42,8 @@ function dueInfo(mdy) {
  * enrollment (`renderItem(enrollment, ctx)`, like HEDIS's per-gap columns)
  * and the rest render once for the member (`renderCell(member, ctx)`).
  *
- * ctx shape: { statusAnchor, setStatusAnchor, updateCmpMemberStatus, showToast, onOpenEnrollment }
+ * ctx shape: { statusAnchor, setStatusAnchor, updateCmpMemberStatus, showToast, onOpenEnrollment,
+ *             users (assignee picker list), setCareTeam(enrollmentId, role, user) }
  */
 export const CMP_MIDDLE_COLUMNS = [
   {
@@ -77,7 +77,7 @@ export const CMP_MIDDLE_COLUMNS = [
         >
           <Badge
             size="md"
-            tone={STATUS_VARIANT[e.progSubStatus] || 'info'}
+            tone={CMP_STATUS_TONE[e.progSubStatus] || 'info'}
             label={e.progSubStatus}
             trailingIconElement={<DownChevronIcon size={12} color="currentColor" />}
           />
@@ -93,53 +93,6 @@ export const CMP_MIDDLE_COLUMNS = [
         )}
       </>
     ),
-  },
-  {
-    key: 'carePlanStatus',
-    label: 'Care Plan Status',
-    sortKey: 'carePlanStatus',
-    width: 160,
-    perEnrollment: true,
-    renderItem: (e) => {
-      const look = CARE_PLAN_LOOK[e.carePlanStatus];
-      return (
-        <span className={`${styles.carePlanStatus} ${look?.className || styles.carePlanNone}`}>
-          {look && <Icon name={look.icon} size={14} color="currentColor" />}
-          {e.carePlanStatus || '-'}
-        </span>
-      );
-    },
-  },
-  {
-    key: 'assignee',
-    label: 'Assignee',
-    sortKey: 'assignee',
-    width: 170,
-    perEnrollment: true,
-    renderItem: (e, ctx) => (
-      e.assignee ? (
-        <AssigneeChange
-          name={e.assignee}
-          initials={e.assigneeIn}
-          showRole={false}
-          onClick={() => ctx.showToast(`Changing the assignee for ${e.name} is coming soon`)}
-        />
-      ) : (
-        <AssigneeChange
-          unassigned
-          showRole={false}
-          onClick={() => ctx.showToast(`Assigning an owner for ${e.name} is coming soon`)}
-        />
-      )
-    ),
-  },
-  {
-    key: 'outreach',
-    label: 'Outreach',
-    sortKey: 'outreach',
-    width: 150,
-    perEnrollment: true,
-    renderItem: (e) => <CmpOutreachCell member={e} />,
   },
   {
     key: 'nextActionDue',
@@ -161,6 +114,51 @@ export const CMP_MIDDLE_COLUMNS = [
       );
     },
   },
+  {
+    key: 'outreach',
+    label: 'Outreach',
+    sortKey: 'outreach',
+    width: 150,
+    perEnrollment: true,
+    renderItem: (e) => <CmpOutreachCell member={e} />,
+  },
+  {
+    key: 'assignee',
+    label: 'Assignee',
+    sortKey: 'assignee',
+    width: 170,
+    perEnrollment: true,
+    renderItem: (e, ctx) => (
+      <AssigneeChange
+        name={e.assignee || undefined}
+        initials={e.assigneeIn || undefined}
+        unassigned={!e.assignee}
+        showRole={false}
+        users={ctx.users}
+        pickerTitle={`Assignee · ${e.subProgram}`}
+        onSelect={(u) => ctx.setCareTeam(e.id, 'assignee', u)}
+      />
+    ),
+  },
+  // The care team on the enrollment, one column per role (Assignee owns it).
+  ...CARE_TEAM_ROLES.map(({ key, label, width }) => ({
+    key,
+    label,
+    sortKey: key,
+    width,
+    perEnrollment: true,
+    renderItem: (e, ctx) => (
+      <AssigneeChange
+        name={e[key] || undefined}
+        initials={e[key] ? initialsOf(e[key]) : undefined}
+        unassigned={!e[key]}
+        showRole={false}
+        users={ctx.users}
+        pickerTitle={`${label} · ${e.subProgram}`}
+        onSelect={(u) => ctx.setCareTeam(e.id, key, u)}
+      />
+    ),
+  })),
   {
     key: 'programStartDate',
     label: 'Start Date',
@@ -185,6 +183,48 @@ export const CMP_MIDDLE_COLUMNS = [
     renderCell: (member) => (
       member.ri ? <Badge size="md" tone={RISK_VARIANT[member.ri] || 'success'} label={member.ri} /> : '-'
     ),
+  },
+  {
+    key: 'lastAdmission',
+    label: 'Last Admission',
+    sortKey: 'lastAdmissionSort',
+    width: 140,
+    renderCell: (member) => member.lastAdmission || '-',
+  },
+  {
+    key: 'caseAcuity',
+    label: 'Case Acuity',
+    sortKey: 'caseAcuityRank',
+    width: 120,
+    renderCell: (member) => member.caseAcuity || '-',
+  },
+  {
+    key: 'riskTier',
+    label: 'Risk Level',
+    sortKey: 'riskTier',
+    width: 140,
+    renderCell: (member) => member.riskTier || '-',
+  },
+  {
+    key: 'tags',
+    label: 'Tags',
+    width: 200,
+    // The first tag, then "+N More" with the rest on hover.
+    renderCell: (member) => {
+      const tags = member.tags || [];
+      if (!tags.length) return '-';
+      const rest = tags.slice(1);
+      return (
+        <span className={styles.tags}>
+          <Badge size="sm" tone="info" label={tags[0]} />
+          {rest.length > 0 && (
+            <Tooltip label={rest.join(', ')} placement="bottom">
+              <span className={styles.tagsMore}>+{rest.length} More</span>
+            </Tooltip>
+          )}
+        </span>
+      );
+    },
   },
   {
     key: 'task',

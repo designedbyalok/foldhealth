@@ -4,27 +4,86 @@
 // Dates are MM/DD/YYYY, like the other program worklists. patientId is the
 // member's first row id, so all of a member's enrollments share one patient.
 
-export const CMP_MEMBERS = [
+const ENROLLMENTS = [
   { id: 'cmp-1', patientId: 'cmp-1', subProgram: 'Complex Case Management',  in: 'GR', name: 'Grace Robinson',   memberId: 'M-CMP-1001', g: 'F', age: '72y 4m', dob: '06/12/1954', language: 'en',  progSubStatus: 'Engaged',                      carePlanStatus: 'Signed',       nextActionDue: '10/24/2026', programStartDate: '03/02/2026', programDueDate: '03/02/2027', outreach: 3, lastOutreach: '10/14/2026', assignee: 'C. Adams',  assigneeIn: 'CA', ri: 'High',   task: 2 },
   { id: 'cmp-2', patientId: 'cmp-2', subProgram: 'SPD',  in: 'HC', name: 'Henry Collins',    memberId: 'M-CMP-1002', g: 'M', age: '68y 9m', dob: '01/03/1958', language: 'en',  progSubStatus: 'Attempted',                    carePlanStatus: 'Draft',        nextActionDue: '10/20/2026', programStartDate: '05/18/2026', programDueDate: '05/18/2027', outreach: 2, lastOutreach: '10/08/2026', assignee: 'D. Baker',  assigneeIn: 'DB', ri: 'Medium', task: 1 },
   { id: 'cmp-3', patientId: 'cmp-3', subProgram: 'Coordination of Care',  in: 'RS', name: 'Rosa Sanchez',     memberId: 'M-CMP-1003', g: 'F', age: '66y 1m', dob: '09/08/1960', language: 'es',  progSubStatus: 'New',                          carePlanStatus: 'No Care Plan', nextActionDue: '11/02/2026', programStartDate: '10/15/2026', programDueDate: '10/15/2027', outreach: 0, lastOutreach: null,         assignee: null,        assigneeIn: null, ri: 'Medium', task: 1 },
-  { id: 'cmp-4', patientId: 'cmp-4', subProgram: 'Complex Case Management',  in: 'WT', name: 'Walter Turner',    memberId: 'M-CMP-1004', g: 'M', age: '79y 6m', dob: '04/02/1947', language: 'en',  progSubStatus: 'Engaged - Requires Follow Up', carePlanStatus: 'Signed',       nextActionDue: '10/22/2026', programStartDate: '01/11/2026', programDueDate: '01/11/2027', outreach: 4, lastOutreach: '10/19/2026', assignee: 'E. Clarke', assigneeIn: 'EC', ri: 'High',   task: 3 },
-  { id: 'cmp-5', patientId: 'cmp-5', subProgram: 'Basic Case Management',  in: 'MN', name: 'Mei Nguyen',       memberId: 'M-CMP-1005', g: 'F', age: '70y 2m', dob: '08/17/1956', language: 'vi',  progSubStatus: 'Open',                         carePlanStatus: 'Draft',        nextActionDue: '10/29/2026', programStartDate: '07/06/2026', programDueDate: '07/06/2027', outreach: 1, lastOutreach: '09/30/2026', assignee: 'F. Davies', assigneeIn: 'FD', ri: 'Low',    task: 1 },
+  { id: 'cmp-4', patientId: 'cmp-4', subProgram: 'Complex Case Management',  in: 'WT', name: 'Walter Turner',    memberId: 'M-CMP-1004', g: 'M', age: '79y 6m', dob: '04/02/1947', language: 'en',  progSubStatus: 'Engaged', carePlanStatus: 'Signed',       nextActionDue: '10/22/2026', programStartDate: '01/11/2026', programDueDate: '01/11/2027', outreach: 4, lastOutreach: '10/19/2026', assignee: 'E. Clarke', assigneeIn: 'EC', ri: 'High',   task: 3 },
+  { id: 'cmp-5', patientId: 'cmp-5', subProgram: 'Basic Case Management',  in: 'MN', name: 'Mei Nguyen',       memberId: 'M-CMP-1005', g: 'F', age: '70y 2m', dob: '08/17/1956', language: 'vi',  progSubStatus: 'New',                          carePlanStatus: 'Draft',        nextActionDue: '10/29/2026', programStartDate: '07/06/2026', programDueDate: '07/06/2027', outreach: 1, lastOutreach: '09/30/2026', assignee: 'F. Davies', assigneeIn: 'FD', ri: 'Low',    task: 1 },
   { id: 'cmp-6', patientId: 'cmp-6', subProgram: 'SPD',  in: 'AP', name: 'Arthur Price',     memberId: 'M-CMP-1006', g: 'M', age: '74y 0m', dob: '10/21/1952', language: 'en',  progSubStatus: 'Unable to Reach',              carePlanStatus: 'No Care Plan', nextActionDue: '10/12/2026', programStartDate: '04/27/2026', programDueDate: '04/27/2027', outreach: 6, lastOutreach: '10/11/2026', assignee: 'G. Evans',  assigneeIn: 'GE', ri: 'Medium', task: 0 },
   { id: 'cmp-7', patientId: 'cmp-7', subProgram: 'Complex Case Management',  in: 'LK', name: 'Ling Kwan',        memberId: 'M-CMP-1007', g: 'F', age: '81y 3m', dob: '07/09/1945', language: 'yue', progSubStatus: 'Engaged',                      carePlanStatus: 'Signed',       nextActionDue: '11/05/2026', programStartDate: '02/14/2026', programDueDate: '02/14/2027', outreach: 2, lastOutreach: '10/16/2026', assignee: 'C. Adams',  assigneeIn: 'CA', ri: 'High',   task: 2 },
   { id: 'cmp-8', patientId: 'cmp-8', subProgram: 'Basic Case Management',  in: 'DM', name: 'David Mitchell',   memberId: 'M-CMP-1008', g: 'M', age: '63y 7m', dob: '03/04/1963', language: 'en',  progSubStatus: 'Attempted',                    carePlanStatus: 'No Care Plan', nextActionDue: '10/21/2026', programStartDate: '08/31/2026', programDueDate: '08/31/2027', outreach: 3, lastOutreach: '10/13/2026', assignee: 'H. Foster', assigneeIn: 'HF', ri: 'Low',    task: 1 },
   { id: 'cmp-9', patientId: 'cmp-9', subProgram: 'Coordination of Care',  in: 'EC', name: 'Elena Castillo',   memberId: 'M-CMP-1009', g: 'F', age: '69y 11m', dob: '11/02/1956', language: 'es', progSubStatus: 'Engaged',                      carePlanStatus: 'Draft',        nextActionDue: '10/27/2026', programStartDate: '06/09/2026', programDueDate: '06/09/2027', outreach: 2, lastOutreach: '10/18/2026', assignee: 'I. Garcia', assigneeIn: 'IG', ri: 'Medium', task: 2 },
-  { id: 'cmp-10', patientId: 'cmp-10', subProgram: 'SPD', in: 'FB', name: 'Frank Bennett',    memberId: 'M-CMP-1010', g: 'M', age: '77y 5m', dob: '05/15/1949', language: 'en',  progSubStatus: 'Open',                         carePlanStatus: 'Signed',       nextActionDue: '11/12/2026', programStartDate: '12/01/2025', programDueDate: '12/01/2026', outreach: 1, lastOutreach: '10/02/2026', assignee: 'J. Hughes', assigneeIn: 'JH', ri: 'High',   task: 1 },
+  { id: 'cmp-10', patientId: 'cmp-10', subProgram: 'SPD', in: 'FB', name: 'Frank Bennett',    memberId: 'M-CMP-1010', g: 'M', age: '77y 5m', dob: '05/15/1949', language: 'en',  progSubStatus: 'New',                          carePlanStatus: 'Signed',       nextActionDue: '11/12/2026', programStartDate: '12/01/2025', programDueDate: '12/01/2026', outreach: 1, lastOutreach: '10/02/2026', assignee: 'J. Hughes', assigneeIn: 'JH', ri: 'High',   task: 1 },
   { id: 'cmp-11', patientId: 'cmp-11', subProgram: 'Basic Case Management', in: 'SP', name: 'Sunita Patel',     memberId: 'M-CMP-1011', g: 'F', age: '65y 8m', dob: '02/26/1961', language: 'hi',  progSubStatus: 'New',                          carePlanStatus: 'No Care Plan', nextActionDue: '11/09/2026', programStartDate: '10/19/2026', programDueDate: '10/19/2027', outreach: 0, lastOutreach: null,         assignee: 'D. Baker',  assigneeIn: 'DB', ri: 'Low',    task: 0 },
-  { id: 'cmp-12', patientId: 'cmp-12', subProgram: 'Complex Case Management', in: 'GH', name: 'George Hughes',    memberId: 'M-CMP-1012', g: 'M', age: '83y 1m', dob: '09/13/1943', language: 'en',  progSubStatus: 'Engaged - Requires Follow Up', carePlanStatus: 'Draft',        nextActionDue: '10/19/2026', programStartDate: '03/23/2026', programDueDate: '03/23/2027', outreach: 5, lastOutreach: '10/17/2026', assignee: 'E. Clarke', assigneeIn: 'EC', ri: 'High',   task: 4 },
+  { id: 'cmp-12', patientId: 'cmp-12', subProgram: 'Complex Case Management', in: 'GH', name: 'George Hughes',    memberId: 'M-CMP-1012', g: 'M', age: '83y 1m', dob: '09/13/1943', language: 'en',  progSubStatus: 'Engaged', carePlanStatus: 'Draft',        nextActionDue: '10/19/2026', programStartDate: '03/23/2026', programDueDate: '03/23/2027', outreach: 5, lastOutreach: '10/17/2026', assignee: 'E. Clarke', assigneeIn: 'EC', ri: 'High',   task: 4 },
   { id: 'cmp-13', patientId: 'cmp-13', subProgram: 'Coordination of Care', in: 'JK', name: 'Ji-woo Kim',       memberId: 'M-CMP-1013', g: 'F', age: '71y 6m', dob: '04/20/1955', language: 'ko',  progSubStatus: 'Attempted',                    carePlanStatus: 'No Care Plan', nextActionDue: '10/23/2026', programStartDate: '09/14/2026', programDueDate: '09/14/2027', outreach: 2, lastOutreach: '10/15/2026', assignee: null,        assigneeIn: null, ri: 'Medium', task: 1 },
   { id: 'cmp-14', patientId: 'cmp-14', subProgram: 'Basic Case Management', in: 'RW', name: 'Raymond Ward',     memberId: 'M-CMP-1014', g: 'M', age: '67y 4m', dob: '06/30/1959', language: 'en',  progSubStatus: 'Engaged',                      carePlanStatus: 'Signed',       nextActionDue: '11/18/2026', programStartDate: '01/26/2026', programDueDate: '01/26/2027', outreach: 2, lastOutreach: '10/09/2026', assignee: 'F. Davies', assigneeIn: 'FD', ri: 'Low',    task: 1 },
   { id: 'cmp-15', patientId: 'cmp-15', subProgram: 'SPD', in: 'MO', name: 'Maureen O\'Brien', memberId: 'M-CMP-1015', g: 'F', age: '76y 10m', dob: '12/05/1949', language: 'en', progSubStatus: 'Unable to Reach',              carePlanStatus: 'Draft',        nextActionDue: '10/15/2026', programStartDate: '05/04/2026', programDueDate: '05/04/2027', outreach: 7, lastOutreach: '10/14/2026', assignee: 'G. Evans',  assigneeIn: 'GE', ri: 'High',   task: 2 },
-  { id: 'cmp-16', patientId: 'cmp-16', subProgram: 'Coordination of Care', in: 'TL', name: 'Tomás López',      memberId: 'M-CMP-1016', g: 'M', age: '62y 2m', dob: '08/11/1964', language: 'es',  progSubStatus: 'Open',                         carePlanStatus: 'No Care Plan', nextActionDue: '11/03/2026', programStartDate: '09/28/2026', programDueDate: '09/28/2027', outreach: 1, lastOutreach: '10/06/2026', assignee: 'C. Adams',  assigneeIn: 'CA', ri: 'Medium', task: 1 },
+  { id: 'cmp-16', patientId: 'cmp-16', subProgram: 'Coordination of Care', in: 'TL', name: 'Tomás López',      memberId: 'M-CMP-1016', g: 'M', age: '62y 2m', dob: '08/11/1964', language: 'es',  progSubStatus: 'New',                          carePlanStatus: 'No Care Plan', nextActionDue: '11/03/2026', programStartDate: '09/28/2026', programDueDate: '09/28/2027', outreach: 1, lastOutreach: '10/06/2026', assignee: 'C. Adams',  assigneeIn: 'CA', ri: 'Medium', task: 1 },
   { id: 'cmp-17', patientId: 'cmp-17', subProgram: 'Maternity Program',  in: 'AR', name: 'Aaliyah Reed',     memberId: 'M-CMP-1017', g: 'F', age: '29y 3m', dob: '07/14/1997', language: 'en',  progSubStatus: 'Engaged',                      carePlanStatus: 'Signed',       nextActionDue: '10/26/2026', programStartDate: '06/02/2026', programDueDate: '03/15/2027', outreach: 2, lastOutreach: '10/12/2026', assignee: 'I. Garcia', assigneeIn: 'IG', ri: 'Medium', task: 2 },
   { id: 'cmp-18', patientId: 'cmp-18', subProgram: 'Pediatrics Program', in: 'NO', name: 'Noah Ortiz',       memberId: 'M-CMP-1018', g: 'M', age: '6y 4m',  dob: '06/18/2020', language: 'es',  progSubStatus: 'Attempted',                    carePlanStatus: 'Draft',        nextActionDue: '10/25/2026', programStartDate: '08/10/2026', programDueDate: '08/10/2027', outreach: 2, lastOutreach: '10/16/2026', assignee: 'J. Hughes', assigneeIn: 'JH', ri: 'Low',    task: 1 },
   { id: 'cmp-19', patientId: 'cmp-19', subProgram: 'Whole Child Model',  in: 'ZW', name: 'Zara Williams',    memberId: 'M-CMP-1019', g: 'F', age: '11y 8m', dob: '02/09/2015', language: 'en',  progSubStatus: 'New',                          carePlanStatus: 'No Care Plan', nextActionDue: '11/04/2026', programStartDate: '10/12/2026', programDueDate: '10/12/2027', outreach: 0, lastOutreach: null,         assignee: 'F. Davies', assigneeIn: 'FD', ri: 'High',   task: 1 },
-  { id: 'cmp-20', patientId: 'cmp-1', subProgram: 'Basic Case Management', in: 'GR', name: 'Grace Robinson', memberId: 'M-CMP-1001', g: 'F', age: '72y 4m', dob: '06/12/1954', language: 'en', progSubStatus: 'Open',                        carePlanStatus: 'No Care Plan', nextActionDue: '11/10/2026', programStartDate: '09/21/2026', programDueDate: '09/21/2027', outreach: 1, lastOutreach: '10/05/2026', assignee: 'C. Adams',  assigneeIn: 'CA', ri: 'High',   task: 0 },
+  { id: 'cmp-20', patientId: 'cmp-1', subProgram: 'Basic Case Management', in: 'GR', name: 'Grace Robinson', memberId: 'M-CMP-1001', g: 'F', age: '72y 4m', dob: '06/12/1954', language: 'en', progSubStatus: 'New',                         carePlanStatus: 'No Care Plan', nextActionDue: '11/10/2026', programStartDate: '09/21/2026', programDueDate: '09/21/2027', outreach: 1, lastOutreach: '10/05/2026', assignee: 'C. Adams',  assigneeIn: 'CA', ri: 'High',   task: 0 },
   { id: 'cmp-21', patientId: 'cmp-4', subProgram: 'SPD',                   in: 'WT', name: 'Walter Turner',  memberId: 'M-CMP-1004', g: 'M', age: '79y 6m', dob: '04/02/1947', language: 'en', progSubStatus: 'Attempted',                    carePlanStatus: 'Draft',        nextActionDue: '10/30/2026', programStartDate: '06/15/2026', programDueDate: '06/15/2027', outreach: 2, lastOutreach: '10/12/2026', assignee: 'G. Evans',  assigneeIn: 'GE', ri: 'High',   task: 1 },
   { id: 'cmp-22', patientId: 'cmp-4', subProgram: 'Coordination of Care',  in: 'WT', name: 'Walter Turner',  memberId: 'M-CMP-1004', g: 'M', age: '79y 6m', dob: '04/02/1947', language: 'en', progSubStatus: 'New',                          carePlanStatus: 'No Care Plan', nextActionDue: '11/14/2026', programStartDate: '10/20/2026', programDueDate: '10/20/2027', outreach: 0, lastOutreach: null,         assignee: null,        assigneeIn: null, ri: 'High',   task: 0 },
 ];
+
+// The care team on each enrollment (nurse / health coach, coordinator, social
+// worker, community health worker). Missing roles are unassigned.
+const CARE_TEAM = {
+  'cmp-1':  { nurseHealthCoach: 'K. Patel',  coordinator: 'C. Adams',  socialWorker: 'M. Rivera', communityHealthWorker: 'T. Nguyen' },
+  'cmp-2':  { nurseHealthCoach: 'L. Brooks', coordinator: 'D. Baker' },
+  'cmp-3':  { coordinator: 'I. Garcia' },
+  'cmp-4':  { nurseHealthCoach: 'K. Patel',  coordinator: 'E. Clarke', socialWorker: 'M. Rivera', communityHealthWorker: 'T. Nguyen' },
+  'cmp-5':  { nurseHealthCoach: 'L. Brooks', coordinator: 'F. Davies', socialWorker: 'S. Kim' },
+  'cmp-6':  { nurseHealthCoach: 'R. Shah',   coordinator: 'G. Evans' },
+  'cmp-7':  { nurseHealthCoach: 'K. Patel',  coordinator: 'C. Adams',  socialWorker: 'S. Kim',    communityHealthWorker: 'A. Wong' },
+  'cmp-8':  { coordinator: 'H. Foster' },
+  'cmp-9':  { nurseHealthCoach: 'R. Shah',   coordinator: 'I. Garcia', communityHealthWorker: 'P. Ruiz' },
+  'cmp-10': { nurseHealthCoach: 'L. Brooks', coordinator: 'J. Hughes', socialWorker: 'M. Rivera' },
+  'cmp-11': { coordinator: 'D. Baker' },
+  'cmp-12': { nurseHealthCoach: 'K. Patel',  coordinator: 'E. Clarke', socialWorker: 'S. Kim',    communityHealthWorker: 'T. Nguyen' },
+  'cmp-13': { communityHealthWorker: 'A. Wong' },
+  'cmp-14': { nurseHealthCoach: 'R. Shah',   coordinator: 'F. Davies' },
+  'cmp-15': { nurseHealthCoach: 'L. Brooks', coordinator: 'G. Evans',  socialWorker: 'M. Rivera', communityHealthWorker: 'P. Ruiz' },
+  'cmp-16': { coordinator: 'C. Adams',       communityHealthWorker: 'P. Ruiz' },
+  'cmp-17': { nurseHealthCoach: 'N. Okafor', coordinator: 'I. Garcia', socialWorker: 'S. Kim' },
+  'cmp-18': { nurseHealthCoach: 'N. Okafor', coordinator: 'J. Hughes', communityHealthWorker: 'A. Wong' },
+  'cmp-19': { nurseHealthCoach: 'N. Okafor', socialWorker: 'M. Rivera' },
+  'cmp-20': { nurseHealthCoach: 'L. Brooks', coordinator: 'C. Adams' },
+  'cmp-21': { nurseHealthCoach: 'R. Shah',   coordinator: 'G. Evans',  socialWorker: 'M. Rivera' },
+  'cmp-22': {},
+};
+
+// Per member (all their enrollments): last inpatient admission, case acuity,
+// the plan's risk tier and tags.
+const CLINICAL = {
+  'M-CMP-1001': { lastAdmission: '06/03/2026', caseAcuity: 'High',   riskTier: '1_High Risk', tags: ['1_High Risk', 'CHF'] },
+  'M-CMP-1002': { lastAdmission: null,         caseAcuity: 'Medium', riskTier: '3_Moderate',  tags: ['3_Moderate', 'Diabetes'] },
+  'M-CMP-1003': { lastAdmission: null,         caseAcuity: 'Low',    riskTier: '4_Low Risk',  tags: ['4_Low Risk'] },
+  'M-CMP-1004': { lastAdmission: '06/04/2026', caseAcuity: 'High',   riskTier: '2_Mod-High',  tags: ['2_Mod-High', 'COPD', 'Fall risk'] },
+  'M-CMP-1005': { lastAdmission: null,         caseAcuity: 'Low',    riskTier: '4_Low Risk',  tags: ['4_Low Risk', 'Vietnamese speaker'] },
+  'M-CMP-1006': { lastAdmission: '06/09/2026', caseAcuity: 'Medium', riskTier: '3_Moderate',  tags: ['3_Moderate', 'SDOH'] },
+  'M-CMP-1007': { lastAdmission: '06/02/2026', caseAcuity: 'High',   riskTier: '1_High Risk', tags: ['1_High Risk', 'Dementia'] },
+  'M-CMP-1008': { lastAdmission: null,         caseAcuity: 'Low',    riskTier: null,          tags: [] },
+  'M-CMP-1009': { lastAdmission: null,         caseAcuity: 'Medium', riskTier: '3_Moderate',  tags: ['3_Moderate', 'CKD'] },
+  'M-CMP-1010': { lastAdmission: '06/03/2026', caseAcuity: 'High',   riskTier: '2_Mod-High',  tags: ['2_Mod-High', 'CHF'] },
+  'M-CMP-1011': { lastAdmission: null,         caseAcuity: 'Low',    riskTier: '4_Low Risk',  tags: ['4_Low Risk'] },
+  'M-CMP-1012': { lastAdmission: '06/03/2026', caseAcuity: 'High',   riskTier: '1_High Risk', tags: ['1_High Risk', 'ESRD', 'Dialysis'] },
+  'M-CMP-1013': { lastAdmission: null,         caseAcuity: 'Low',    riskTier: '3_Moderate',  tags: ['3_Moderate', 'Korean speaker'] },
+  'M-CMP-1014': { lastAdmission: null,         caseAcuity: 'Low',    riskTier: '4_Low Risk',  tags: ['4_Low Risk', 'Hypertension'] },
+  'M-CMP-1015': { lastAdmission: '06/09/2026', caseAcuity: 'High',   riskTier: '2_Mod-High',  tags: ['2_Mod-High', 'Lives alone'] },
+  'M-CMP-1016': { lastAdmission: null,         caseAcuity: 'Medium', riskTier: '3_Moderate',  tags: ['3_Moderate', 'Spanish speaker'] },
+  'M-CMP-1017': { lastAdmission: null,         caseAcuity: 'Medium', riskTier: '3_Moderate',  tags: ['3_Moderate', 'High-risk pregnancy'] },
+  'M-CMP-1018': { lastAdmission: null,         caseAcuity: 'Low',    riskTier: '4_Low Risk',  tags: ['4_Low Risk', 'Asthma'] },
+  'M-CMP-1019': { lastAdmission: null,         caseAcuity: 'High',   riskTier: '2_Mod-High',  tags: ['2_Mod-High', 'CCS eligible'] },
+};
+
+export const CMP_MEMBERS = ENROLLMENTS.map(e => ({
+  nurseHealthCoach: null, coordinator: null, socialWorker: null, communityHealthWorker: null,
+  lastAdmission: null, caseAcuity: null, riskTier: null, tags: [],
+  ...e,
+  ...CARE_TEAM[e.id],
+  ...CLINICAL[e.memberId],
+}));

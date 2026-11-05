@@ -460,6 +460,15 @@ function writeLocalTypeWindow(id, windows) {
 // this browser saved, else the windows the migration seeds.
 const withTypeWindows = (t, local) => (WINDOW_FIELD.cancel in t ? t : { ...t, ...(DEFAULT_WINDOWS[t.name] || {}), ...(local[t.id] || {}) });
 
+const CMP_RETIRED_STATUS = { Open: 'New', 'Engaged - Requires Follow Up': 'Engaged' };
+const CMP_CARE_TEAM_COLUMN = {
+  assignee: 'assignee',
+  nurseHealthCoach: 'nurse_health_coach',
+  coordinator: 'coordinator',
+  socialWorker: 'social_worker',
+  communityHealthWorker: 'community_health_worker',
+};
+
 export const useAppStore = create((set, get) => ({
   ...createShellSlice(set, get),
   ...createAutomationsSlice(set, get),
@@ -13356,7 +13365,9 @@ export const useAppStore = create((set, get) => ({
         age: m.age,
         dob: m.dob,
         language: m.language || 'en',
-        progSubStatus: m.program_sub_status,
+        // Retired CMP statuses read as their new names until
+        // cmp_members_status_list_migration.sql renames the saved rows.
+        progSubStatus: CMP_RETIRED_STATUS[m.program_sub_status] || m.program_sub_status,
         carePlanStatus: m.care_plan_status,
         nextActionDue: m.next_action_due,
         programStartDate: m.program_start_date,
@@ -13365,6 +13376,14 @@ export const useAppStore = create((set, get) => ({
         lastOutreach: m.last_outreach,
         assignee: m.assignee,
         assigneeIn: m.assignee_initials,
+        nurseHealthCoach: m.nurse_health_coach ?? null,
+        coordinator: m.coordinator ?? null,
+        socialWorker: m.social_worker ?? null,
+        communityHealthWorker: m.community_health_worker ?? null,
+        lastAdmission: m.last_admission ?? null,
+        caseAcuity: m.case_acuity ?? null,
+        riskTier: m.risk_tier ?? null,
+        tags: m.tags ?? [],
         ri: m.risk_level,
         task: m.tasks ?? 0,
       })),
@@ -13387,6 +13406,28 @@ export const useAppStore = create((set, get) => ({
   })),
   selectAllCmp: (ids) => set({ selectedCmpIds: ids }),
   clearCmpSelected: () => set({ selectedCmpIds: [] }),
+  // Who owns an enrollment: `role` is 'assignee' or a care team role
+  // (nurseHealthCoach, coordinator, socialWorker, communityHealthWorker),
+  // set to `user` on the given enrollment rows (`rowIds`, cmp_members ids).
+  // Used by the row cells and bulk Change Assignee. Returns false when the
+  // save failed.
+  setCmpCareTeam: async (rowIds, role, user) => {
+    const ids = new Set(rowIds);
+    const column = CMP_CARE_TEAM_COLUMN[role];
+    if (!ids.size || !column || !user?.name) return false;
+    const patch = role === 'assignee' ? { assignee: user.name, assigneeIn: user.initials || null } : { [role]: user.name };
+    const before = new Map(get().cmpMembers.filter(m => ids.has(m.id)).map(m => [m.id, m]));
+    set(s => ({ cmpMembers: s.cmpMembers.map(m => (ids.has(m.id) ? { ...m, ...patch } : m)) }));
+    const row = role === 'assignee' ? { assignee: user.name, assignee_initials: user.initials || null } : { [column]: user.name };
+    const { error } = await supabase.from('cmp_members').update(row).in('id', [...ids]);
+    if (error) {
+      console.warn(`Failed to update CMP ${role}:`, error.message);
+      // Put back what was there, so the row doesn't show an unsaved owner.
+      set(s => ({ cmpMembers: s.cmpMembers.map(m => before.get(m.id) || m) }));
+    }
+    return !error;
+  },
+  setCmpAssignee: (rowIds, user) => get().setCmpCareTeam(rowIds, 'assignee', user),
   updateCmpMemberStatus: async (id, newStatus) => {
     set(s => ({ cmpMembers: s.cmpMembers.map(m => (m.id === id ? { ...m, progSubStatus: newStatus } : m)) }));
     const { error } = await supabase
