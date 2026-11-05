@@ -96,15 +96,6 @@ export const PHARMACY_MIDDLE_COLUMNS = [
       )
     )),
   },
-  // The plan's status (Open / Closed) beside Fold's own steps.
-  {
-    key: 'planStatus', label: 'Plan Status', getTdClassName: gapTd(false),
-    renderCell: perGap((g) => (
-      <Tooltip label="From the health plan's gap file" placement="bottom">
-        <span><Badge size="sm" tone={g.planStatus === 'Closed' ? 'success' : 'neutral'} variant="outline" label={g.planStatus} /></span>
-      </Tooltip>
-    )),
-  },
   {
     key: 'nextFillDue', label: 'Next Fill Due', sortKey: 'nextFillDueSort', sortType: 'date', getTdClassName: gapTd(false),
     renderCell: perGap((g) => <NextFillDueValue gap={g} />),
