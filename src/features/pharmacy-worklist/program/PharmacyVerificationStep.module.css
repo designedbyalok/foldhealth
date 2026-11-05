@@ -1,48 +1,74 @@
+/* Stacked cards, like the Consolidated Clinical Note: the call details,
+   one card per gap, then the call note. */
 .wrap {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
   min-width: 0;
 }
 
-/* "Same answer for all gaps" above the form, outside its card. */
-.syncRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
-/* Who the call is with: Pharmacy / Physician / Member, then which one. */
-.partyPick { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; flex-wrap: wrap; }
-.partyPick > :first-child { flex: none; }
-.partyText { font-size: var(--font-md); color: var(--neutral-400); }
-/* The form is a frame-only card: the question table edge to edge, note and
-   lock action in a padded body. */
-.callBody { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3) var(--space-4) var(--space-4); }
+.card {
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-3);
+  background: var(--neutral-0);
+  padding: var(--space-4);
+}
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.cardTitle { font-size: var(--font-base); font-weight: 500; color: var(--neutral-400); }
+.cardBody { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.field { display: flex; flex-direction: column; gap: var(--space-2); }
+.fieldLabel { font-size: var(--font-md); font-weight: 500; color: var(--neutral-400); }
+/* Stakeholder and contact side by side. */
+.pairRow { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); align-items: start; }
+.radioRow { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+
+/* The stakeholder's questions: one row per question, one column per gap. */
+.tableCard {
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-3);
+  background: var(--neutral-0);
+  overflow: hidden;
+}
+.tableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-3) var(--space-4);
+}
+.tableScroll { overflow-x: auto; min-width: 0; }
+.qTable { width: 100%; border-collapse: collapse; font-size: var(--font-md); color: var(--neutral-400); }
+.qTable th, .qTable td {
+  padding: var(--space-2);
+  border-top: 0.5px solid var(--neutral-150);
+  text-align: left;
+  vertical-align: middle;
+}
+.qTable th { font-weight: 500; color: var(--neutral-300); background: var(--neutral-25); }
+.qTable th:first-child, .qTable td:first-child { padding-left: var(--space-4); }
+.qTable th:last-child, .qTable td:last-child { padding-right: var(--space-4); }
+.qTable td:not(.qCol) { width: 120px; }
+.qCol { min-width: 200px; line-height: var(--leading-normal); }
+
+.noteSection { display: flex; flex-direction: column; gap: var(--space-3); }
 .callFoot {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
   flex-wrap: wrap;
-  padding-top: var(--space-3);
-  border-top: 0.5px solid var(--neutral-150);
 }
-
-
-.q { display: flex; flex-direction: column; gap: var(--space-1); }
-.qLabel { font-size: var(--font-md); color: var(--neutral-400); }
-/* Mandatory question: the 4px red dot after the label (as on Input). */
-.requiredDot {
-  display: inline-block;
-  width: 4px;
-  height: 4px;
-  margin-left: var(--space-1);
-  border-radius: 50%;
-  background: var(--status-error);
-  vertical-align: super;
-}
-.radios { display: flex; gap: var(--space-3); flex-wrap: wrap; }
-.dateInput, .numInput { width: 100%; max-width: 140px; }
-
-.history { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2); }
-.historyTitle { margin: 0; font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
-
+/* Fill call details from outreach, under the Action choices. */
+.fillLink { align-self: flex-start; display: inline-flex; align-items: center; gap: var(--space-1); }
+.checkRow { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--font-md); color: var(--neutral-400); cursor: pointer; }
 .muted { font-size: var(--font-md); color: var(--neutral-300); }
 
 .empty {
@@ -56,22 +82,3 @@
   text-align: center;
 }
 .empty p { margin: 0; }
-
-/* Assessment table: questions down the left, one answer column per gap. */
-.assessment { min-width: 0; }
-.tableScroll { overflow-x: auto; min-width: 0; }
-.qTable { width: 100%; border-collapse: collapse; font-size: var(--font-md); color: var(--neutral-400); }
-.qTable th, .qTable td {
-  padding: var(--space-2);
-  border-bottom: 0.5px solid var(--neutral-150);
-  text-align: left;
-  vertical-align: middle;
-  min-width: 150px;
-}
-.qTable th { font-weight: 400; color: var(--neutral-300); background: var(--neutral-25); }
-.qTable th:first-child, .qTable td:first-child { padding-left: var(--space-4); }
-.qTable th:last-child, .qTable td:last-child { padding-right: var(--space-4); }
-.qCol { width: 180px; }
-.cellStack { display: flex; flex-direction: column; gap: var(--space-1); }
-.cellHint { font-size: var(--font-sm); color: var(--neutral-300); }
-.na { color: var(--neutral-200); }

@@ -251,8 +251,10 @@ export function createPharmacyWorklistSlice(set, get) {
     // Click-to-dial on a prescriber or pharmacy number (Snapshot).
     // `line`: the call line it went out on, so the next call can mark it
     // Last Used.
-    logPharmacyDial: (id, who, number, line) => {
-      update(id, m => m, [], { t: 'call', title: `Dialed ${who}`, note: number, ...(line ? { lineId: line.id, lineName: line.name } : {}) });
+    // `kind`: who was called (Pharmacy, Prescriber...), so an Assessment can
+    // fill its call details from the call.
+    logPharmacyDial: (id, who, number, line, kind) => {
+      update(id, m => m, [], { t: 'call', title: `Dialed ${who}`, note: number, ...(line ? { lineId: line.id, lineName: line.name } : {}), ...(kind ? { callKind: kind } : {}) });
     },
 
     // Recent Fill for one drug, edited in Medication Review or Gap Closure.
@@ -308,15 +310,20 @@ export function createPharmacyWorklistSlice(set, get) {
 
     // A PDC typed by the team wins until cleared; Fold keeps calculating it
     // underneath (`value` null goes back to the calculated PDC).
-    setPharmacyPdcOverride: (id, code, value) => {
+    // `from`: the PDC shown before the change, so the activity entry says
+    // what it changed from. Saving the same number changes nothing.
+    setPharmacyPdcOverride: (id, code, value, from = null) => {
+      if (value != null && value === from) return;
       const by = get().currentUserProfile?.name || 'You';
+      const was = from == null ? '' : ` from ${from}%`;
       update(id, m => ({
         ...m,
         measures: m.measures.map(x => (x.code !== code ? x
           : value == null ? { ...x, pdcManual: null, pdcManualOn: null, pdcManualBy: null }
           : { ...x, pdcManual: value, pdcManualOn: todayMdy(), pdcManualBy: by })),
       }), ['measures'], {
-        t: 'note', title: value == null ? `${code} PDC override cleared` : `${code} PDC set to ${value}%`,
+        t: 'note', title: value == null ? `${code} PDC changed${was} to calculated` : `${code} PDC changed${was} to ${value}%`,
+        note: value == null ? 'Manual PDC cleared, back to the calculated one' : `Set by hand by ${by}`,
       });
     },
 
@@ -511,11 +518,12 @@ export function createPharmacyWorklistSlice(set, get) {
         const followUpDue = pendingCodes.length ? withPickupFollowUp(m, entry.date, changes) : m.followUpDue;
         return { ...m, status: status || m.status, measures, followUpDue, callHistory: [entry, ...(m.callHistory || [])], _changes: changes };
       }, ['status', 'call_history', 'measures', 'follow_up_due'], (changes) => ({
-        t: 'call', title: `Assessment · ${entry.party || 'Pharmacy'}: ${entry.contact} (locked)`,
+        t: 'call', title: `Assessment · ${entry.party || 'Pharmacy'}: ${entry.contact}`,
         verificationId: entry.id,
         outcome: entry.outcome, outcomeColor: entry.result === 'failed' ? 'var(--status-warning)' : 'var(--status-success)',
         // What was answered for each drug, then the call note and what changed.
         note: [
+          [entry.action, entry.direction, entry.contactOutcome === 'Reached' ? null : entry.contactOutcome].filter(Boolean).join(' · ') || null,
           ...(entry.items || []).map(it => `${it.measure} · ${it.drug}: ${(it.steps || []).join(', ')}`),
           entry.note, ...changes, status && status !== prevStatus ? `Status ${prevStatus} → ${status}` : null,
         ].filter(Boolean).join('\n'),

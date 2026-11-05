@@ -9,10 +9,10 @@ import { PhoneLink } from '../../../components/PhoneLink/PhoneLink';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import {
-  canSetGapStatus, gapBadge, MANUAL_GAP_STATUSES, MEASURE_NAMES, daysFromToday, isActiveGap, enrichPharmacyMember, contactCallTarget, medicationStatus, pdcSourceText, pdcTone, pharmaciesUsed, prescribersOf,
+  canSetGapStatus, gapBadge, MANUAL_GAP_STATUSES, MEASURE_NAMES, daysFromToday, isActiveGap, enrichPharmacyMember, contactCallTarget, medicationStatus, pharmaciesUsed, prescribersOf,
 } from '../pharmacyWorklist.utils';
 import { Dash, DrugsCount, DueDate, NamesCount, FailDateValue, MeasureCode, NextFillDueValue, PdcValue, PriorYearPdc, SavabilityBadge, SubStatus } from '../PharmacyCells';
-import { PdcEditPopover } from '../PdcEditor';
+import { EditablePdc } from '../PdcEditor';
 import { usePharmacyProgramMember } from './usePharmacyProgramMember';
 import styles from './PharmacySnapshotStep.module.css';
 
@@ -41,30 +41,12 @@ function ContactLines({ contacts, render }) {
 // What a compact gap row opens to: the gap's details the table leaves out,
 // label above value, three to a row (Figma 5693:49946). Its drugs are in
 // Medication Review.
-// The gap's PDC with where it comes from; the pencil opens the same editor
-// as the worklist's PDC column.
-function PdcField({ gap: g, memberId }) {
-  const ref = useRef(null);
-  const [editing, setEditing] = useState(false);
-  return (
-    <span className={styles.detailLines}>
-      <span className={styles.pdcLine}>
-        {g.pdc == null ? '-' : `${g.pdc}%`}
-        <span ref={ref}><ActionButton icon="solar:pen-linear" size="sm" tooltip="Set PDC by hand" onClick={() => setEditing(true)} /></span>
-      </span>
-      <span className={styles.muted}>{pdcSourceText(g)}</span>
-      {editing && <PdcEditPopover gap={g} memberId={memberId} anchor={ref} onClose={() => setEditing(false)} />}
-    </span>
-  );
-}
-
-function GapDetails({ gap: g, memberId }) {
+function GapDetails({ gap: g }) {
   const open = isActiveGap(g.status);
   const prescribers = contactsOf(g.medications, 'prescriber');
   const pharmacies = contactsOf(g.medications, 'pharmacy');
   const phone = (c) => (c.phone ? <PhoneLink number={c.phone} label={c.name} /> : '-');
   const items = [
-    ['PDC', <PdcField key="pdc" gap={g} memberId={memberId} />],
     ['Claim', g.recon ? (
       <Tooltip label={g.recon.detail} placement="bottom">
         <span className={g.recon.rework && open ? styles.toneError : ''}>{g.recon.status}</span>
@@ -110,13 +92,6 @@ function Projected({ on, children }) {
 // Shows a gap's value as needing action even when it is projected (the
 // alert style, not the projected one).
 const alertSources = (g) => ({ ...g, pdcSource: null, failDateSource: null });
-
-function Pdc({ gap: g }) {
-  if (g.pdc == null) return <span className={styles.muted}>Not sent</span>;
-  const open = isActiveGap(g.status);
-  if (open && pdcTone(g.pdc) === 'error') return <PdcValue pdc={g.pdc} open source={null} medications={g.medications} />;
-  return <Projected on={g.pdcSource === 'Projected'}><span>{g.pdc}%</span></Projected>;
-}
 
 function FailDate({ gap: g }) {
   const d = daysFromToday(g.failDate);
@@ -189,11 +164,11 @@ function GapList({ gaps, memberId, title, titleExtra, onSetStatus }) {
                   {/* A reopen names its reason under the badge. */}
                   {g.status.gap === 'Reopened' && <SubStatus label={g.status.reopenReason} />}
                 </span>
-                <span className={styles.listCell} role="cell"><Pdc gap={g} /></span>
+                <span className={styles.listCell} role="cell"><EditablePdc gap={g} memberId={memberId} /></span>
                 <span className={styles.listCell} role="cell"><FailDate gap={g} /></span>
                 <span className={styles.listCell} role="cell"><NextFill gap={g} /></span>
               </div>
-              {isOpen && <GapDetails gap={g} memberId={memberId} />}
+              {isOpen && <GapDetails gap={g} />}
             </div>
           );
         })}

@@ -24,6 +24,7 @@ import { PharmacyBarrierStep } from './program/PharmacyBarrierStep';
 import { useBarrierForm } from './program/useBarrierForm';
 import { PharmacyBarrierLog } from './program/PharmacyBarrierLog';
 import { PharmacyVerificationStep } from './program/PharmacyVerificationStep';
+import { assessmentSummary, callTypeForStakeholder } from './program/assessmentOutreach';
 import { PharmacyActivityLog } from './program/PharmacyActivityLog';
 import { PharmacyCommentsTab } from './program/PharmacyCommentsTab';
 // Same layout system as the HEDIS Care Gap Details drawer, so both read as one.
@@ -44,6 +45,9 @@ const TABS = [
   { key: 'outreach', label: 'Outreaches' },
   { key: 'barriers', label: 'Barriers & Interventions' },
 ];
+
+// An Assessment's Action as the outreach form's Type.
+const OUTREACH_TYPE_FOR_ACTION = { Telephonic: 'Call', Email: 'Email', Text: 'SMS', Mail: 'Letter' };
 
 const WORKSPACE_TITLE = {
   outreach: 'Add Outreach',
@@ -113,7 +117,7 @@ function PharmacyGapDrawerBody({ target, row }) {
   // The call popover and the picker open from whichever button was used.
   const pharmacistBtnRef = useRef(null);
   const prescriberBtnRef = useRef(null);
-  const callContact = (c, kind, anchor = moreBtnRef) => openNumberCallPopover({ ...contactCallTarget(row, c, kind), onDial: (number, line) => logPharmacyDial?.(row.id, c.name, number, line) }, anchor);
+  const callContact = (c, kind, anchor = moreBtnRef) => openNumberCallPopover({ ...contactCallTarget(row, c, kind), onDial: (number, line) => logPharmacyDial?.(row.id, c.name, number, line, kind) }, anchor);
   const callOneOf = (title, kind, contacts, anchor = moreBtnRef) => (contacts.length === 1 ? callContact(contacts[0], kind, anchor) : setCallPick({ title, kind, contacts, anchor }));
   const moreBtnRef = useRef(null);
 
@@ -140,6 +144,35 @@ function PharmacyGapDrawerBody({ target, row }) {
     outreach.setDatetime(outreach.formatNow());
     outreach.setSelectedProgs(picked);
     outreach.setFormOpen(true);
+    setWorkspace('outreach');
+  };
+  // The call an Assessment belongs to: the call outreach being filled in, or
+  // else the last call dialed from this drawer (who, and to whom).
+  const outreachCall = useMemo(() => {
+    if (outreach.formOpen && outreach.type === 'Call') {
+      return { callType: outreach.callType, direction: outreach.callDirection, calledTo: outreach.calledToNumber };
+    }
+    const dial = (row.activityLog || []).find(e => e.t === 'call' && e.callKind && e.title?.startsWith('Dialed '));
+    return dial ? { callType: dial.callKind, direction: 'outgoing', calledTo: dial.title.slice('Dialed '.length) } : null;
+  }, [outreach.formOpen, outreach.type, outreach.callType, outreach.callDirection, outreach.calledToNumber, row.activityLog]);
+  // An Assessment's summary goes into the outreach note, and the outreach
+  // opens so the user picks its outcome and saves it (which logs it). With no
+  // outreach under way, one starts from the Assessment's call details.
+  const addToOutreachNote = (call) => {
+    const summary = assessmentSummary(call);
+    const underWay = outreach.formOpen && (outreach.type !== 'General' || outreach.outcome || outreach.sharedPanel.note.trim());
+    if (!underWay) {
+      outreach.setDatetime(outreach.formatNow());
+      outreach.setSelectedProgs((call.measures || []).filter(c => picked.includes(c)).length ? call.measures.filter(c => picked.includes(c)) : picked);
+      outreach.setType(OUTREACH_TYPE_FOR_ACTION[call.action] || 'General');
+      outreach.setCallDirection(call.direction === 'Inbound' ? 'incoming' : 'outgoing');
+      const callType = callTypeForStakeholder(call.party);
+      if (callType) outreach.setCallType(callType);
+      outreach.setFormOpen(true);
+    }
+    const add = (text) => (text.trim() ? `${text.trimEnd()}\n\n${summary}` : summary);
+    if (outreach.useSeparate) outreach.selectedProgs.forEach(p => outreach.patchPanel(p, { note: add(outreach.getPanel(p).note) }));
+    else outreach.patchShared({ note: add(outreach.sharedPanel.note) });
     setWorkspace('outreach');
   };
   const saveOutreach = () => {
@@ -246,7 +279,7 @@ function PharmacyGapDrawerBody({ target, row }) {
             {workspace === 'outreach' && (
               <OutreachTabView tab={outreach} hideLogForRow hideActivity hideFormFooter flush taskMember={m.name} />
             )}
-            {workspace === 'verify' && <PharmacyVerificationStep member={scoped} program={PHARM_PROGRAM} onLocked={() => setWorkspace(null)} onLockAction={setVerifyAction} />}
+            {workspace === 'verify' && <PharmacyVerificationStep member={scoped} program={PHARM_PROGRAM} onLocked={() => setWorkspace(null)} onLockAction={setVerifyAction} outreachCall={outreachCall} onAddToOutreach={addToOutreachNote} />}
             {workspace === 'barriers' && <PharmacyBarrierStep member={scoped} form={barrierForm} />}
             {workspace?.verification && <PharmacyVerificationStep key={workspace.verification.id} record={workspace.verification} program={PHARM_PROGRAM} />}
             {/* A note click remounts the pane so it scrolls to Notes again, even on the drug already open. */}
@@ -408,7 +441,7 @@ function PharmacyGapDrawerBody({ target, row }) {
               {tab === 'barriers' && <PharmacyBarrierLog member={scoped} onEdit={() => setWorkspace('barriers')} />}
             </>
           )}
-          {tab === 'activity' && <PharmacyActivityLog member={row} onViewVerification={(call) => setWorkspace({ verification: call })} />}
+          {tab === 'activity' && <PharmacyActivityLog member={row} onViewVerification={(call) => setWorkspace({ verification: call })} onAddToOutreach={addToOutreachNote} />}
           {tab === 'comments' && <PharmacyCommentsTab member={row} />}
           {tab === 'contacts' && <div className={local.contacts}><PharmacyContacts member={row} /></div>}
         </div>
