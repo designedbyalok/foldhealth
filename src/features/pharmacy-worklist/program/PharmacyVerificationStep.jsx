@@ -245,6 +245,24 @@ export function PharmacyVerificationStep({ program, member: memberProp, onLocked
           <span className={styles.cardTitle}>Contact Details</span>
           <Badge tone="info" size="sm" label="Common for all gaps" />
         </div>
+        {readOnly ? (
+          // A saved assessment: just what was picked, label above value.
+          <dl className={styles.summary}>
+            {[
+              ['Stakeholder', stakeholder],
+              ['Contact', contact],
+              ['Action', action],
+              ['Type', callType],
+              ['Contact outcome', contactOutcome === REACHED ? `Reached the ${stakeholder.toLowerCase()}` : contactOutcome],
+              ['Saved', `${record.date}${record.by ? ` by ${record.by}` : ''}`],
+            ].map(([label, value]) => (
+              <div key={label} className={styles.summaryItem}>
+                <dt>{label}</dt>
+                <dd>{value || '-'}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
         <div className={styles.cardBody}>
           {/* Who was contacted: the stakeholder, and beside it which one. */}
           <div className={styles.pairRow}>
@@ -298,6 +316,7 @@ export function PharmacyVerificationStep({ program, member: memberProp, onLocked
             />
           )}
         </div>
+        )}
       </div>
 
       {reached && schema.measureOutcomes.length > 0 && (
@@ -334,14 +353,13 @@ export function PharmacyVerificationStep({ program, member: memberProp, onLocked
       )}
 
       {/* The call note sits on the pane, outside the cards. */}
+      {(!readOnly || note) && (
       <div className={styles.noteSection}>
         <div className={styles.field}>
           <span className={styles.fieldLabel}>Call Note</span>
           <Textarea value={note} onChange={e => setNote(e.target.value)} placeholder={readOnly ? 'No note' : 'One note for the whole call'} aria-label="Call note" disabled={readOnly} />
         </div>
-        {readOnly ? (
-          <span className={styles.muted}>Saved {record.date}{record.by ? ` by ${record.by}` : ''} • {record.outcome}</span>
-        ) : (
+        {!readOnly && (
           <div className={styles.callFoot}>
             {onAddToOutreach ? (
               <label className={styles.checkRow}>
@@ -355,6 +373,7 @@ export function PharmacyVerificationStep({ program, member: memberProp, onLocked
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
