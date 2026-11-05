@@ -15,7 +15,6 @@ import commsStyles from '../comms/Comms.module.css';
 import { dayLabel } from '../comms/commsUtils';
 import { patientSnapshot, suggestionsFor } from './efaxData';
 import { PatientContextDrawer } from './PatientContextDrawer';
-import { DocPreviewDrawer } from '../../hcc/DocPreviewDrawer';
 import styles from './Efax.module.css';
 
 const FAX_PDF = '/charts/progress-note.pdf';
@@ -64,6 +63,7 @@ export function EfaxThread({ fax, reading, patients, me }) {
       linked: { patientId: p.id, name: p.name, by: me?.name || 'You', at: new Date().toISOString(), viaOcr, linkReferral },
     });
     setPicking(false);
+    setPreviewing(false);
     toast.success('Patient context added successfully');
   };
 
@@ -156,23 +156,15 @@ export function EfaxThread({ fax, reading, patients, me }) {
         </ChatBubble>
       </div>
 
-      {previewing && (
-        <DocPreviewDrawer
-          charts={[{ id: fax.id, n: fax.documentName, pdf, ext: 'pdf' }]}
-          showStatus={false}
-          onClose={() => setPreviewing(false)}
-        />
-      )}
-
-      {picking && (
+      {(picking || previewing) && (
         <PatientContextDrawer
           fax={fax}
-          pdf={pdf}
+          pdf={previewing ? pdf : undefined}
           suggestions={suggestions}
           patients={patients}
           current={linked && { ...linked, when: linkedWhen }}
           onSave={link}
-          onClose={() => setPicking(false)}
+          onClose={() => { setPicking(false); setPreviewing(false); }}
         />
       )}
     </div>
