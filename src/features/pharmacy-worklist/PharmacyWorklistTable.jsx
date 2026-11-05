@@ -21,7 +21,7 @@ import { FilterNameDialog } from '../../components/FilterBar/FilterNameDialog';
 import { CareGapDetailDrawer } from '../hedis-worklist/CareGapDetailDrawer';
 import { PHARMACY_MIDDLE_COLUMNS, PHARMACY_HIDDEN_BY_DEFAULT } from './pharmacyColumns';
 import { enrichPharmacyMember, measureDrugs, normMemberId } from './pharmacyWorklist.utils';
-import { FILTER_DEF_MAP, MORE_FILTER_ITEMS, PRIMARY_FILTER_KEYS, dynamicFilterOptions, memberMatchesFilters } from './pharmacyFilters';
+import { FILTER_DEF_MAP, MORE_FILTER_ITEMS, PRIMARY_FILTER_KEYS, dynamicFilterOptions, matchingGaps, memberMatchesFilters } from './pharmacyFilters';
 import { MEASURE_NAMES as HEDIS_MEASURE_NAMES } from '../hedis-worklist/CareGapDetailDrawer.utils';
 import styles from './PharmacyWorklistTable.module.css';
 
@@ -114,7 +114,13 @@ export function PharmacyWorklistTable() {
         (m.measures || []).some(x => measureDrugs(x).toLowerCase().includes(q)),
       );
     }
-    return rows.filter(m => memberMatchesFilters(m, filters, filterCtx));
+    // Gap filters also narrow each row to the gaps that pass them.
+    return rows
+      .filter(m => memberMatchesFilters(m, filters, filterCtx))
+      .map(m => {
+        const gaps = matchingGaps(m, filters, filterCtx);
+        return gaps.length === m.gaps.length ? m : { ...m, gaps };
+      });
   }, [enriched, searchQuery, filters, filterCtx]);
 
   const { sorted: bySort, sortKey, sortDir, setSort, clearSort } = useTableSort(filtered);
