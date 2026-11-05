@@ -22,7 +22,7 @@ import { apptPerson, describeRange, initialsOf, OOO_ICON, recordsFor } from '../
 import { apptSpan } from '../../ooo/reassignUtils';
 import { ReassignAppointmentsDrawer } from '../../ooo/ReassignAppointmentsDrawer';
 import {
-  dateLabel, groupByProvider, inPeriod, lockedReason, periodRange, sortAppointments, sessionRows, STATUS_OPTIONS, statusBlockedReason, statusLabel, statusValue, timeRangeLabel,
+  dateLabel, groupByProvider, inPeriod, lockedReason, modeLabel, periodRange, sortAppointments, sessionRows, STATUS_OPTIONS, statusBlockedReason, statusLabel, statusValue, timeRangeLabel,
 } from './appointmentList';
 import { BulkRescheduleDrawer } from './BulkRescheduleDrawer';
 import { BulkEditAppointmentsDrawer } from './BulkEditAppointmentsDrawer';
@@ -34,20 +34,30 @@ const STATUS_TONE = {
   Proposed: 'info', Pending: 'warning', Booked: 'neutral', Cancelled: 'danger', 'No Show': 'neutral', 'Checked In': 'success', 'Checked Out': 'success', Declined: 'danger',
 };
 
+// Each column sized to its usual content: a type or session name ("Group
+// Heart Health Workshop"), a member, a status badge, "In-person", a full
+// location ("AstranaCare Centennial Hills"). Reason for Visit takes what's
+// left, at least MIN_REASON; below that the table scrolls sideways.
+const MIN_REASON = 200;
 const COLUMNS = [
-  { key: 'check', showCheckbox: true, width: 36 },
-  { key: 'type', label: 'Appt Type', width: 240 },
-  { key: 'member', label: 'Member', width: 250 },
+  // The checkbox and Appt Type stay put on the left and the "..." on the
+  // right; the columns between scroll under them.
+  { key: 'check', showCheckbox: true, width: 36, sticky: 'left', left: 0 },
+  { key: 'type', label: 'Appt Type', width: 210, sticky: 'left', left: 36, thStyle: { boxShadow: 'inset -0.5px 0 0 var(--neutral-150)' } },
+  { key: 'member', label: 'Member', width: 200 },
   { key: 'status', label: 'Status', width: 120 },
-  { key: 'department', label: 'Department', width: 160 },
-  { key: 'when', label: 'Date & Time', width: 210, sortKey: 'date', sortType: 'date' },
+  { key: 'mode', label: 'Mode', width: 100 },
+  { key: 'department', label: 'Department', width: 220 },
+  // Wide enough for the longest, "11/16/2026, 11:30 AM–12:00 PM".
+  { key: 'when', label: 'Date & Time', width: 240, sortKey: 'date', sortType: 'date' },
   { key: 'reason', label: 'Reason for Visit' },
-  { key: 'actions', width: 40 },
+  // View, Edit and "..." (Cancel), divided.
+  { key: 'actions', label: 'Actions', width: 132, sticky: 'right', thStyle: { boxShadow: 'inset 0.5px 0 0 var(--neutral-150)' } },
 ];
+const MIN_TABLE_WIDTH = COLUMNS.reduce((sum, c) => sum + (c.width || 0), 0) + MIN_REASON;
 
+// What's left under "..." once View and Edit have their own buttons.
 const ROW_MENU = [
-  { key: 'view', label: 'View Details', icon: 'solar:eye-linear' },
-  { key: 'edit', label: 'Edit Appointment', icon: 'solar:pen-linear' },
   { key: 'cancel', label: 'Cancel Appointment', iconElement: <CalendarCrossIcon size={16} color="var(--status-error)" />, danger: true },
 ];
 
@@ -82,7 +92,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
   // Picks can span providers; Reschedule and Reassign need just one.
   const [selection, setSelection] = useState(() => new Set());
   const [action, setAction] = useState(null); // { kind: 'reschedule'|'reassign'|'edit'|'cancel', appts, provider }
-  const [menu, setMenu] = useState(null); // { appt, anchor }
+  const [menu, setMenu] = useState(null); // { appt } or { session }
   // The group session whose details are open (its row id); members come from the live rows.
   const [openSession, setOpenSession] = useState(null);
   const menuAnchor = useRef(null);
@@ -96,15 +106,15 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
   const updateAppointment = useAppStore(s => s.updateAppointment);
   const setAppointmentsStatus = useAppStore(s => s.setAppointmentsStatus);
 
-  // Marks the ones that have started; the rest are skipped and counted.
+  // All or nothing: if any selected appointment hasn't started, none are marked.
   const markNoShow = async () => {
-    const due = selected.filter(a => !statusBlockedReason(a, 'No Show'));
-    const skipped = selected.length - due.length;
-    const skipNote = `${skipped} ${skipped === 1 ? 'appointment hasn\'t' : 'appointments haven\'t'} started yet, so ${skipped === 1 ? 'it was' : 'they were'} skipped.`;
-    if (!due.length) { toast.error(`No appointments marked as No Show. ${skipNote}`); return; }
-    const ok = await setAppointmentsStatus(due, 'No Show');
+    if (selected.some(a => statusBlockedReason(a, 'No Show'))) {
+      toast.error('Failed to mark as no show. Some appointments have not started.');
+      return;
+    }
+    const ok = await setAppointmentsStatus(selected, 'No Show');
     if (!ok) { toast.error('Appointments could not be updated. Try again.'); return; }
-    toast.success('Status Updated Successfully', skipped ? { description: skipNote } : undefined);
+    toast.success('Status Updated Successfully');
     clear();
   };
 
@@ -182,9 +192,21 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
     open();
   };
 
+  // A row's actions: View, Edit and "..." (Cancel). Off while a bulk
+  // selection is open, as the rest of the row is.
+  const rowActions = ({ onView, onEdit, editTip, onMore }) => (
+    <span className={styles.rowActions}>
+      <ActionButton icon="solar:eye-linear" size="sm" tooltip="View details" disabled={selection.size > 0} onClick={onView} />
+      <span className={styles.headerDivider} aria-hidden="true" />
+      <ActionButton icon="solar:pen-linear" size="sm" tooltip={editTip} disabled={selection.size > 0} onClick={onEdit} />
+      <span className={styles.headerDivider} aria-hidden="true" />
+      <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More actions" tooltipLeft disabled={selection.size > 0} onClick={onMore} />
+    </span>
+  );
+
   // A group session: one row for everyone booked into it. The checkbox picks
   // all its members; the members link (and the row) opens its details.
-  const renderSessionRow = (session) => {
+  const renderSessionRow = (group, session) => {
     const ids = session.members.filter(a => !lockedReason(a)).map(a => a.id);
     const picked = ids.filter(id => selection.has(id)).length;
     const state = picked && picked === ids.length ? true : picked ? 'indeterminate' : false;
@@ -195,7 +217,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
     const open = () => setOpenSession(session.id);
     return (
       <tr key={session.id} className={`${profileRowClass} ${styles.row} ${state === true ? styles.rowPicked : ''}`} onClick={rowClick(open)}>
-        <td className={`${profileCellClass} ${styles.checkCell}`} data-check-cell>
+        <td className={`${profileCellClass} ${styles.checkCell} ${styles.stickyCheck}`} data-check-cell>
           {pick(tip, (
             <Checkbox
               checked={state}
@@ -205,7 +227,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
             />
           ))}
         </td>
-        <td className={profileCellClass}><TruncatedText text={session.appointment_type_name} /></td>
+        <td className={`${profileCellClass} ${styles.stickyType}`}><TruncatedText text={session.appointment_type_name} /></td>
         <td className={profileCellClass}>
           <span className={styles.memberLine}>
             <Link variant="secondary" className={styles.memberLink} role="button" tabIndex={0} onClick={open} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }}>
@@ -215,20 +237,42 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
           </span>
         </td>
         <td className={profileCellClass}>
-          <Tooltip label={status === 'Mixed' ? 'Members have different statuses; open the appointment to see each' : ''} maxWidth={240} align="left">
-            <Badge size="sm" tone={STATUS_TONE[status] || 'neutral'} label={status} />
-          </Tooltip>
+          {/* One status for every member; "Mixed" until one is picked. A status
+              some member can't take yet is greyed out, with why. */}
+          <BadgeSelect
+            value={status}
+            options={STATUS_OPTIONS.map((st) => {
+              const blocked = st === status ? null : session.members.find(a => statusBlockedReason(a, st));
+              return blocked ? { value: st, disabled: true, tooltip: statusBlockedReason(blocked, st) } : st;
+            })}
+            onChange={(next) => changeSessionStatus(session.members, next)}
+            tone={STATUS_TONE[status] || 'neutral'}
+            size="S"
+            align="left"
+            disabled={selection.size > 0}
+          />
         </td>
+        {/* Members share one session, so the first one's mode is the session's. */}
+        <td className={profileCellClass}><TruncatedText text={modeLabel(session.members[0])} /></td>
         <td className={profileCellClass}>{session.location ? <TruncatedText text={session.location} /> : null}</td>
         <td className={profileCellClass}><span className={styles.cellText}>{dateLabel(session.date)}, {timeRangeLabel(session)}</span></td>
         <td className={profileCellClass}>{session.reason_for_visit ? <TruncatedText text={session.reason_for_visit} /> : null}</td>
-        <td className={`${profileCellClass} ${styles.actionCell}`} />
+        <td className={`${profileCellClass} ${styles.actionCell} ${styles.stickyActions}`}>
+          {/* No single edit drawer for a whole session: Edit opens Bulk Edit
+              with its members. */}
+          {rowActions({
+            onView: open,
+            onEdit: () => setAction({ kind: 'edit', appts: session.members, provider: group.person }),
+            editTip: 'Edit appointment',
+            onMore: (e) => { menuAnchor.current = e.currentTarget; setMenu({ session }); },
+          })}
+        </td>
       </tr>
     );
   };
 
   const renderRow = (group, a) => {
-    if (a.isGroup) return renderSessionRow(a);
+    if (a.isGroup) return renderSessionRow(group, a);
     const tip = lockedReason(a);
     const checked = selection.has(a.id);
     const status = statusLabel(a);
@@ -241,7 +285,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
     );
     return (
       <tr key={a.id} className={`${profileRowClass} ${styles.row} ${checked ? styles.rowPicked : ''} ${highlightIds?.has(a.id) ? styles.rowHighlight : ''}`} onClick={rowClick(() => onViewDetails?.(a))}>
-        <td className={`${profileCellClass} ${styles.checkCell}`} data-check-cell>
+        <td className={`${profileCellClass} ${styles.checkCell} ${styles.stickyCheck}`} data-check-cell>
           {pick(tip, (
             <Checkbox
               checked={checked}
@@ -251,7 +295,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
             />
           ))}
         </td>
-        {cell(a.appointment_type_name)}
+        {cell(a.appointment_type_name, styles.stickyType)}
         <td className={profileCellClass}>
           {/* The member as a link (user icon + name) that opens their quick view. */}
           <span className={styles.memberLine}>
@@ -285,6 +329,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
             disabled={selection.size > 0}
           />
         </td>
+        {cell(modeLabel(a))}
         {cell(a.location)}
         <td className={profileCellClass}>
           <span className={styles.twoLine}>
@@ -301,14 +346,14 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
           </span>
         </td>
         {cell(a.reason_for_visit)}
-        <td className={`${profileCellClass} ${styles.actionCell}`}>
-          <ActionButton
-            icon="solar:menu-dots-linear"
-            size="sm"
-            tooltip="More actions"
-            disabled={selection.size > 0}
-            onClick={(e) => { menuAnchor.current = e.currentTarget; setMenu({ appt: a }); }}
-          />
+        <td className={`${profileCellClass} ${styles.actionCell} ${styles.stickyActions}`}>
+          {/* The appointment drawer edits in place, so Edit opens it too. */}
+          {rowActions({
+            onView: () => onViewDetails?.(a),
+            onEdit: () => onViewDetails?.(a),
+            editTip: 'Edit appointment',
+            onMore: (e) => { menuAnchor.current = e.currentTarget; setMenu({ appt: a }); },
+          })}
         </td>
       </tr>
     );
@@ -333,27 +378,30 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
           return (
             // Each provider is a section, as Tasks groups by status
             // (Figma Tasks 866:7982), over the standard worklist table.
-            <section key={group.key} className={styles.group}>
+            <section key={group.key} className={styles.group} style={{ minWidth: MIN_TABLE_WIDTH }}>
               <div className={styles.groupRow}>
-                {pick(blocked, (
-                  <Checkbox
-                    checked={allState}
-                    disabled={!!blocked}
-                    onCheckedChange={() => toggle(pickable, picked !== pickable.length)}
-                    aria-label={`Select ${group.person.name}'s appointments`}
-                  />
-                ))}
-                <Avatar variant="provider" size="M" initials={initialsOf(group.person.name)} userName={group.person.name} userId={group.person.id} />
-                <button
-                  type="button"
-                  className={styles.groupToggle}
-                  aria-expanded={open}
-                  onClick={() => setFlipped((c) => { const next = new Set(c); if (next.has(group.key)) next.delete(group.key); else next.add(group.key); return next; })}
-                >
-                  {group.person.name}
-                  <span className={styles.groupCount}><Badge size="sm" label={String(n)} className={styles.countSquare} /></span>
-                  <Icon name="solar:alt-arrow-down-linear" size={12} className={open ? styles.caretOpen : styles.caret} />
-                </button>
+                {/* Stays put while the table scrolls sideways under it. */}
+                <span className={styles.groupLead}>
+                  {pick(blocked, (
+                    <Checkbox
+                      checked={allState}
+                      disabled={!!blocked}
+                      onCheckedChange={() => toggle(pickable, picked !== pickable.length)}
+                      aria-label={`Select ${group.person.name}'s appointments`}
+                    />
+                  ))}
+                  <Avatar variant="provider" size="M" initials={initialsOf(group.person.name)} userName={group.person.name} userId={group.person.id} />
+                  <button
+                    type="button"
+                    className={styles.groupToggle}
+                    aria-expanded={open}
+                    onClick={() => setFlipped((c) => { const next = new Set(c); if (next.has(group.key)) next.delete(group.key); else next.add(group.key); return next; })}
+                  >
+                    {group.person.name}
+                    <span className={styles.groupCount}><Badge size="sm" label={String(n)} className={styles.countSquare} /></span>
+                    <Icon name="solar:alt-arrow-down-linear" size={12} className={open ? styles.caretOpen : styles.caret} />
+                  </button>
+                </span>
               </div>
               {open && (
                 <WorklistShell
@@ -362,7 +410,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
                   header={null}
                   hideBulkBar
                   fixedLayout
-                  minTableWidth={1200}
+                  minTableWidth={MIN_TABLE_WIDTH}
                   columns={COLUMNS}
                   sortKey={sort.key}
                   sortDir={sort.dir}
@@ -410,7 +458,24 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
         ]}
       />
 
-      {menu && (
+      {menu?.session && (() => {
+        // Members already past, cancelled or checked out stay as they are.
+        const cancellable = menu.session.members.filter(a => !lockedReason(a));
+        return (
+          <MenuPopover
+            anchorRef={menuAnchor}
+            items={ROW_MENU.map(i => (i.key === 'cancel' && !cancellable.length ? { ...i, disabled: true, hint: lockedReason(menu.session.members[0]) } : i))}
+            width={200}
+            ariaLabel="Session actions"
+            onSelect={(key) => {
+              setMenu(null);
+              if (key === 'cancel') setAction({ kind: 'cancel', appts: cancellable });
+            }}
+            onClose={() => setMenu(null)}
+          />
+        );
+      })()}
+      {menu?.appt && (
         <MenuPopover
           anchorRef={menuAnchor}
           items={ROW_MENU.map(i => (i.key === 'cancel' && lockedReason(menu.appt) ? { ...i, disabled: true, hint: lockedReason(menu.appt) } : i))}
@@ -419,8 +484,6 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
           onSelect={(key) => {
             const a = menu.appt;
             setMenu(null);
-            // The appointment drawer edits in place, so Edit opens it too.
-            if (key === 'view' || key === 'edit') onViewDetails(a);
             if (key === 'cancel') setAction({ kind: 'cancel', appts: [a] });
           }}
           onClose={() => setMenu(null)}

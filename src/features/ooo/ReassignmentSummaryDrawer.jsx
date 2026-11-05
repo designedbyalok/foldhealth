@@ -61,7 +61,7 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
       ) : (
         <div className={styles.summary}>
           <div className={styles.summaryField}>
-            <span className={styles.summaryLabel}>Reassigned From:</span>
+            <span className={styles.summaryLabel}>Reassigned From</span>
             <div className={styles.summaryCard}>
               <Avatar variant="staff" initials={initialsOf(job.fromUser)} size="M" />
               <span className={styles.summaryCardText}>
@@ -71,7 +71,7 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
             </div>
           </div>
           <div className={styles.summaryField}>
-            <span className={styles.summaryLabel}>Reassignment Type:</span>
+            <span className={styles.summaryLabel}>Reassignment Type</span>
             <div className={styles.summaryCard}>
               <Avatar type="icon" variant="others" iconName="solar:calendar-linear" size="M" />
               <span className={styles.summaryCardText}>

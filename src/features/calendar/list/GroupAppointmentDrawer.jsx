@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
+import { ActivityLog } from '../../../components/ActivityLog/ActivityLog';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Badge } from '../../../components/Badge/Badge';
 import { Icon } from '../../../components/Icon/Icon';
@@ -8,18 +9,21 @@ import { Link } from '../../../components/Link/Link';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { SearchBar } from '../../../components/SearchBar/SearchBar';
 import { Select } from '../../../components/Select/Select';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { toast } from '../../../components/Toast/sonnerToast';
 import { TruncatedText } from '../../../components/TruncatedText/TruncatedText';
 import { useAppStore } from '../../../store/useAppStore';
 import { initialsOf } from '../../ooo/oooUtils';
+import { toActivityLogEntries } from '../../hedis-worklist/CareGapDetailDrawer.utils';
 import { dateLabel, STATUS_OPTIONS, statusBlockedReason, statusLabel, timeRangeLabel } from './appointmentList';
 import styles from './AppointmentListView.module.css';
 
 /**
  * Group appointment details (after the legacy Appointment Details for a group
  * session), in two panels. Left: the session (its name, Copy Event ID, total
- * members, type, date and time, providers, description, department) and its
- * status, set for every member at once. Right: Tracking, its members,
+ * members, type, date and time, providers, description, department), its
+ * status, set for every member at once, and its Activity (each member's
+ * appointment changes) and Automation (none yet). Right: Tracking, its members,
  * searchable, each with sex, DOB, email and phone from their patient record,
  * their status, and actions: open their quick view, check them in, or set any
  * status from "...".
@@ -39,6 +43,25 @@ export function GroupAppointmentDrawer({ session, members, statusTone, onStatusC
   // A member's patient record (by id, else by name) for their contact lines.
   const recordOf = (a) => (patients || []).find(p => (a.patient_id && String(p.id) === String(a.patient_id))
     || String(p.name || '').toLowerCase() === String(a.patient_name || '').toLowerCase());
+  // Activity: every member's appointment changes, newest first; refetched
+  // when a member's status changes.
+  const fetchAuditLogs = useAppStore(s => s.fetchAuditLogs);
+  const [tab, setTab] = useState('activity');
+  const [activity, setActivity] = useState([]);
+  const memberKey = members.map(a => `${a.id}:${a.status || ''}`).join('|');
+  useEffect(() => {
+    let live = true;
+    Promise.all(members.map(a => fetchAuditLogs('Appointment', a.id))).then((lists) => {
+      if (!live) return;
+      setActivity(lists.flat().map(l => ({
+        when: l.createdAt,
+        actor: l.user,
+        t: 'note',
+        title: [l.entityName, l.details].filter(Boolean).join(': '),
+      })));
+    });
+    return () => { live = false; };
+  }, [memberKey, fetchAuditLogs]); // eslint-disable-line react-hooks/exhaustive-deps
   const [menu, setMenu] = useState(null); // the member whose "..." is open
   const menuAnchor = useRef(null);
   const [query, setQuery] = useState('');
@@ -62,6 +85,7 @@ export function GroupAppointmentDrawer({ session, members, statusTone, onStatusC
     const blocked = s === sessionStatus ? [] : members.filter(a => statusBlockedReason(a, s));
     if (!blocked.length) return { value: s, label: s };
     const count = blocked.length === members.length ? 'No member qualifies yet' : `${blocked.length} of ${members.length} members don't qualify yet`;
+    if (s === 'No Show') return { value: s, label: s, disabled: true, tooltip: "Appointments that haven't started can't be marked as no show" };
     return { value: s, label: s, disabled: true, tooltip: `${statusBlockedReason(blocked[0], s)}. ${count}.` };
   });
 
@@ -79,7 +103,7 @@ export function GroupAppointmentDrawer({ session, members, statusTone, onStatusC
       <div className={styles.groupDrawer}>
         <div className={styles.sessionMeta}>
           <div className={styles.sessionHead}>
-            <Avatar variant="patient" size="L" initials={initialsOf(session.appointment_type_name)} />
+            <Avatar type="icon" iconName="solar:users-group-rounded-linear" variant="patient" size="L" />
             <span className={styles.sessionTitle}>
               <span className={styles.sessionName}>{session.appointment_type_name || 'Group Appointment'}</span>
               <Link variant="primary" className={styles.copyLink} onClick={copyEventId}>
@@ -109,6 +133,17 @@ export function GroupAppointmentDrawer({ session, members, statusTone, onStatusC
               leadingIcon="solar:history-linear"
               portal
             />
+          </div>
+          <div className={styles.sessionActivity}>
+            <Tabs
+              variant="pill"
+              items={[{ key: 'activity', label: 'Activity' }, { key: 'automation', label: 'Automation' }]}
+              value={tab}
+              onValueChange={setTab}
+            />
+            {tab === 'activity'
+              ? <ActivityLog entries={toActivityLogEntries(activity)} emptyLabel="No activity recorded yet." />
+              : <ActivityLog entries={[]} emptyLabel="No automations have run for this appointment yet." />}
           </div>
         </div>
 

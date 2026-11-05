@@ -67,6 +67,7 @@ export function NotificationsPopover({ onClose, anchorRef }) {
   const openPendingUsersFromNotification = useAppStore(s => s.openPendingUsersFromNotification);
   const openReassignmentSummary = useAppStore(s => s.openReassignmentSummary);
   const openAssignedAppointments = useAppStore(s => s.openAssignedAppointments);
+  const openBulkSummary = useAppStore(s => s.openBulkSummary);
 
   // Refetch on open. The realtime subscription is the fast path, not the
   // source of truth: a binding created before the table was published, or
@@ -119,6 +120,8 @@ export function NotificationsPopover({ onClose, anchorRef }) {
       openPendingUsersFromNotification?.(['Locked']);
     } else if (n.action === 'openReassignmentSummary' && n.reassignmentJobId) {
       openReassignmentSummary?.(n.reassignmentJobId);
+    } else if (n.action === 'openBulkSummary' && n.bulkJobId) {
+      openBulkSummary?.(n.bulkJobId);
     } else if (n.action === 'viewAssignedAppointments' && n.reassignmentJobId) {
       openAssignedAppointments?.(n.reassignmentJobId);
     }
@@ -211,13 +214,15 @@ export function NotificationsPopover({ onClose, anchorRef }) {
                       <Icon name="solar:alt-arrow-right-linear" size={14} />
                     </span>
                   </span>
-                ) : n.body && n.type === 'reassignment.summary' ? (
+                ) : n.body && (n.type === 'reassignment.summary' || n.type === 'bulk.summary') ? (
                   <span className={styles.summaryCard}>
                     <span className={styles.summaryIcon}>
                       <Icon name="solar:calendar-linear" size={20} color="var(--neutral-400)" />
                     </span>
                     <span className={styles.summaryText}>
-                      <span className={styles.summaryTitle}>Appointment Reassignment Summary</span>
+                      <span className={styles.summaryTitle}>{n.type === 'bulk.summary'
+                        ? (n.kind === 'cancel' ? 'Appointment Cancellation Summary' : 'Appointment Rescheduling Summary')
+                        : 'Appointment Reassignment Summary'}</span>
                       <span className={styles.entrySub}>{n.body}</span>
                     </span>
                   </span>
@@ -242,6 +247,7 @@ function iconForType(type) {
   if (type === 'task.mentioned') return 'solar:mention-square-linear';
   if (type === 'appointment.assigned') return 'solar:calendar-linear';
   if (type === 'reassignment.summary') return 'solar:users-group-rounded-linear';
+  if (type === 'bulk.summary') return 'solar:calendar-mark-linear';
   if (type === 'appointment.reassigned') return 'solar:calendar-linear';
   if (type === 'message.received') return 'solar:chat-round-linear';
   if (type === 'referral.received') return 'solar:square-share-line-linear';

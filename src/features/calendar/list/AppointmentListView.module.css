@@ -27,9 +27,9 @@
 
 /* ── A section per provider (Figma Tasks 866:7982), each over the
    standard worklist table ── */
-/* The fixed columns plus room for Reason for Visit; at or above this
-   width the list doesn't scroll sideways. */
-.group { min-width: 1200px; }
+/* Its min-width (inline) is the table's: the fixed columns plus room for
+   Reason for Visit. Narrower, the list scrolls sideways. */
+.group { min-width: 0; }
 
 /* The provider's label row, over a darker rule like a Tasks status group. */
 .groupRow {
@@ -38,6 +38,9 @@
   padding: var(--space-4) var(--space-2) var(--space-2);
   border-bottom: 0.5px solid var(--neutral-200);
 }
+/* The checkbox, avatar and name stay at the left edge while the table
+   scrolls sideways, lined up with the sticky checkbox column under them. */
+.groupLead { position: sticky; left: var(--space-2); display: inline-flex; align-items: center; }
 
 .groupToggle {
   display: inline-flex;
@@ -73,6 +76,19 @@
 }
 
 .actionCell { text-align: center; }
+.rowActions { display: inline-flex; align-items: center; gap: var(--space-2); }
+
+/* Sticky columns (left offsets match COLUMNS): the checkbox and Appt Type on
+   the left, "..." on the right. Their row backgrounds are solid, so the
+   columns between scroll under them; a hairline marks each edge. Raised
+   above the row, they'd hide its divider, so they take the same border,
+   which the table collapses into the row's one line. */
+.stickyCheck,
+.stickyType,
+.stickyActions { position: sticky; z-index: 2; border-bottom: 0.5px solid var(--neutral-150); }
+.stickyCheck { left: 0; }
+.stickyType { left: 36px; box-shadow: inset -0.5px 0 0 var(--neutral-150); }
+.stickyActions { right: 0; box-shadow: inset 0.5px 0 0 var(--neutral-150); }
 /* Disabled while a selection is open: the dots in neutral-150 as they are,
    without the button's extra dimming (doubled to outrank it). */
 .actionCell.actionCell button:disabled > svg { opacity: 1; }
@@ -84,6 +100,10 @@
 /* An open provider's appointments sit on a light tint under the white
    provider row; picked and highlighted rows below override it. */
 .row td { background: var(--primary-25); transition: background-color var(--duration-base) var(--ease-out); }
+/* Every column's text in neutral-300, the member link included (status
+   badges and the Provider OOO tag keep their own colours). */
+.row td,
+.row td .memberLink { color: var(--neutral-300); }
 /* Just reassigned to me (from the notification), for 3 seconds. */
 .rowHighlight td { background: var(--primary-50); }
 
@@ -98,6 +118,9 @@
   gap: var(--space-1);
   min-width: 0;
 }
+/* Lines start at their own width; capped at the cell so "…" kicks in
+   instead of running into the next column. */
+.twoLine > .cellText { max-width: 100%; }
 
 /* The member's name, cut short with an ellipsis when the column is narrow. */
 .memberLine {
@@ -271,11 +294,6 @@
   flex-direction: column;
   gap: var(--space-6);
 }
-.fieldRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
-}
 
 /* Bulk Update Preview: Fields / Change To, in a bordered card. */
 .changeTable {
@@ -374,6 +392,62 @@
   border-radius: var(--space-1);
 }
 .appliesBody .applyRow:last-child { border-bottom: 0; }
+/* Bulk Edit's Action Needed (Figma Tasks 1413:40970): a red tray of
+   conflict cards; each a header, then a Fields / Initial / Updated table. */
+.conflicts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--status-error-light);
+  border-radius: var(--space-2);
+}
+.conflictsHead { display: flex; align-items: center; justify-content: space-between; padding: var(--space-1) var(--space-2); }
+/* An Action Needed card's Autofill Slots and Hide Details, split by a divider. */
+.conflictsTools { display: inline-flex; align-items: center; gap: var(--space-3); }
+.conflictsTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-300);
+}
+.conflictCard { background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: var(--space-2); overflow: hidden; }
+.conflictHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.conflictBody { padding: var(--space-2); background: var(--neutral-50); }
+.conflictTable { background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: var(--space-2); overflow: hidden; }
+.conflictTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+  font-size: var(--font-base);
+}
+.conflictErrors { font-weight: 500; color: var(--status-error); }
+.conflictOk { font-weight: 500; color: var(--status-success); }
+.conflictGrid {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  column-gap: var(--space-3);
+  row-gap: var(--space-2);
+  align-items: start;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+}
+.conflictTh { font-size: var(--font-base); font-weight: 500; color: var(--neutral-300); padding-bottom: var(--space-1); }
+.conflictField { font-size: var(--font-base); color: var(--neutral-400); padding-top: var(--space-2); }
+/* Date, then that day's slots, side by side. */
+.conflictPick { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2); min-width: 0; align-items: start; }
+/* The pick's error runs under both the date and the slot. */
+.conflictError { grid-column: 1 / -1; font-size: var(--font-sm); line-height: 1.2; color: var(--status-error); }
 
 /* ── Group appointment: the session row and its drawer ── */
 .row { cursor: pointer; }
@@ -418,6 +492,7 @@
 .sessionTitle { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 .sessionName { font-size: var(--font-xl); font-weight: 500; line-height: 1.2; color: var(--neutral-500); }
 .copyLink { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-sm); }
+.sessionActivity { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-2); }
 .totalMembers {
   padding: var(--space-3);
   border: 0.5px solid var(--neutral-150);
@@ -438,3 +513,86 @@
 }
 .memberActions { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
 .membersEmpty { padding: var(--space-3); font-size: var(--font-sm); color: var(--neutral-300); }
+
+/* ── Bulk Edit Confirmation (Figma Tasks 1424:13811) ── */
+.confirm { display: flex; flex-direction: column; gap: var(--space-6); }
+.confirmHero { display: flex; justify-content: center; padding: var(--space-12) 0 var(--space-4); }
+.confirmMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  /* Mint greens from the Figma success green, no grey in the mix. */
+  background: color-mix(in srgb, var(--status-success-dark) 16%, var(--neutral-0));
+  color: var(--status-success-dark);
+  box-shadow: 0 0 0 12px color-mix(in srgb, var(--status-success-dark) 7%, var(--neutral-0));
+  animation: confirmPop 420ms var(--ease-out) both;
+}
+.confirmMarkFailed {
+  background: color-mix(in srgb, var(--status-error) 14%, var(--neutral-0));
+  color: var(--status-error);
+  box-shadow: 0 0 0 12px color-mix(in srgb, var(--status-error) 6%, var(--neutral-0));
+}
+@keyframes confirmPop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.confirmCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  text-align: center;
+  animation: confirmRise 320ms var(--ease-out) 120ms both;
+}
+@keyframes confirmRise {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.confirmTitle { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+.confirmCounts { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--font-base); }
+.confirmOk { color: var(--status-success); }
+.confirmDot { color: var(--neutral-200); }
+.confirmFailed {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--status-error);
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .confirmMark, .confirmCard { animation: none; }
+}
+
+/* Bulk Edit: Location and its note fold away for virtual. The 24px between
+   fields moves inside each fold (and out of the flex gap), so a shut fold
+   takes no space at all. */
+.foldAbove { margin-bottom: calc(-1 * var(--space-6)); }
+.foldAbove > * > * { margin-bottom: var(--space-6); }
+.foldBelow { margin-top: calc(-1 * var(--space-6)); }
+.foldBelow > * > * { margin-top: var(--space-6); }
+
+
+/* Bulk Cancel / Reschedule review: appointments inside their type's
+   window, flagged in amber (staff can still go ahead). */
+.windowReview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--status-warning-light);
+  border-radius: var(--space-2);
+}
+.windowReview > .conflictsTitle { padding: var(--space-1) var(--space-2) 0; }
+.windowReviewNote { padding: 0 var(--space-2); font-size: var(--font-sm); color: var(--neutral-400); }
+.windowReview .applyRow:last-child { border-bottom: 0; }
+.windowReviewTrail { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+.windowReviewLimit { font-size: var(--font-sm); color: var(--neutral-300); white-space: nowrap; }
