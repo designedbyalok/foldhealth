@@ -24,7 +24,8 @@ import styles from './SegmentedControl.module.css';
  *  - onValueChange (function)   Called with the key of the clicked segment
  *                               (`active` / `onChange` are the old names)
  *  - className     (string)     Extra class on the outer container
- *  - size          ('sm'|'md')  sm=28px height/13px font, md=32px height/14px font
+ *  - size          ('sm'|'md'|'lg') sm=28px height/13px font, md=32px height/14px font,
+ *                               lg=touch size (8px padding, 16px font) for the mobile app
  *  - variant       ('soft'|'ghost') soft (default) sits the segments on a grey
  *                               track; ghost drops the track (for a toggle on a
  *                               grey surface): 28px segments, 14px text, only
@@ -83,7 +84,8 @@ export function SegmentedControl({
     return () => ro.disconnect();
   }, [items.length, updateSlider]);
 
-  const sizeClass = resolveSize('SegmentedControl', size) === 'sm' ? styles.sizeS : styles.sizeM;
+  const resolvedSize = resolveSize('SegmentedControl', size);
+  const sizeClass = resolvedSize === 'sm' ? styles.sizeS : resolvedSize === 'lg' ? styles.sizeL : styles.sizeM;
 
   return (
     <div

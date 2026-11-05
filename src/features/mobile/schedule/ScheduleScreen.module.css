@@ -1,0 +1,118 @@
+/* Schedule (Figma 759:22910) */
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 0 var(--space-3) var(--space-3);
+  border-bottom: 0.5px solid var(--placeholder-text);
+  touch-action: pan-y;
+}
+.monthRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-5) var(--space-2);
+  font-size: var(--font-lg);
+  color: var(--neutral-400);
+}
+.today {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary-300);
+  font-size: var(--font-lg);
+  cursor: pointer;
+}
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.dow {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.date {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: var(--font-xl);
+  color: var(--neutral-400);
+}
+.dateToday { color: var(--primary-300); font-weight: 500; }
+.dateActive {
+  background: var(--primary-300);
+  color: var(--on-color);
+}
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary-300);
+}
+.dotEmpty { background: transparent; }
+
+/* Agenda: hour label, then that hour's visits */
+.agenda {
+  display: flex;
+  flex-direction: column;
+  background: var(--neutral-0);
+  min-height: 100%;
+}
+.hour {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+.hourLabel {
+  padding: var(--space-2) var(--space-2) 0 var(--space-4);
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3) var(--space-1) 0;
+  min-height: 56px;
+  border-left: 0.5px solid var(--neutral-100);
+}
+.appt {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  padding: var(--space-2) var(--space-3);
+  margin: 0;
+  border: 0;
+  border-left: 3px solid var(--accent-light-green);
+  border-radius: 0 6px 6px 0;
+  background: var(--accent-light-light-green);
+  text-align: left;
+  cursor: pointer;
+}
+.appt.blue { border-left-color: var(--accent-blue); background: var(--accent-light-blue); }
+.appt.amber { border-left-color: var(--accent-amber); background: var(--accent-light-amber); }
+.appt.green { border-left-color: var(--accent-light-green); background: var(--accent-light-light-green); }
+.appt.cancelled { opacity: 0.6; }
+.apptName {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-lg);
+  color: var(--neutral-400);
+}
+.apptLine {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

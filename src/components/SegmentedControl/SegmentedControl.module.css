@@ -88,6 +88,27 @@
   font-size: var(--font-base);
 }
 
+/* ── Size: L (touch, provider mobile app, Figma 759:18989) ── */
+.sizeL {
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: 12px;
+}
+.sizeL .slider {
+  top: var(--space-2);
+  bottom: var(--space-2);
+  border-radius: 8px;
+}
+.sizeL .btn {
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-radius: 8px;
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--placeholder-text);
+}
+.sizeL .btnActive { color: var(--neutral-400); }
+
 /* ── Leading icon + label ── */
 .withIcon {
   display: inline-flex;
@@ -136,6 +157,15 @@
 .ghost .btnActive { color: var(--neutral-400); }
 .ghost .leadIcon { color: var(--placeholder-text); }
 .ghost .btnActive .leadIcon { color: var(--neutral-300); }
+/* Ghost at touch size (mobile channel filter, Figma 1177:26267) */
+.ghost.sizeL { gap: calc(var(--space-1) * 1.5); padding: 0; border-radius: 12px; }
+.ghost.sizeL .slider { top: 0; bottom: 0; }
+.ghost.sizeL .btn {
+  height: auto;
+  padding: var(--space-2);
+  font-size: var(--font-lg);
+}
+.sizeL .leadIcon :global(svg) { width: 24px; height: 24px; }
 
 /* ── Icon-only mode: tighter padding so 4+ icon buttons fit narrow columns.
    Triggered automatically when every item has an icon and no text label. ── */

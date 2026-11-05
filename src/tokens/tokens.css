@@ -73,6 +73,8 @@
   --shadow-chart:   0 12px 60px -15px rgba(0, 0, 0, 0.06);
   --shadow-drawer:  -2px 0 24px rgba(0, 0, 0, 0.04);
   --shadow-card:    0 1px 3px rgba(0, 0, 0, 0.04);
+  /* Floating action button on the provider mobile app (Figma 1115:25988) */
+  --shadow-fab:     0 8px 8px rgba(0, 0, 0, 0.30);
   --shadow-bulk-bar: 4px 15px 60px 24px rgba(0, 0, 0, 0.15);
   /* Fold Pixel tooltip shadow (e.g. Figma 2941:74217): tight halo + soft drop. */
   --shadow-tooltip: 0 0 6px rgba(0, 0, 0, 0.1), 0 12px 12px rgba(0, 0, 0, 0.1);
@@ -88,6 +90,8 @@
   --surface-overlay-subtle: rgba(0, 0, 0, 0.05);
   /* Heavier scrim for full-bleed media viewers (image/PDF preview) */
   --surface-overlay-heavy: rgba(0, 0, 0, 0.80);
+  /* Active tab tint on a filled brand surface (mobile bottom tab bar) */
+  --surface-on-color-active: rgba(255, 255, 255, 0.10);
   /* Media viewer chrome: deliberately NOT theme-relative (unlike --neutral-*,
      which inverts under dark theme). A lightbox-style toolbar stays dark
      regardless of app theme, the way it does in most media viewers. Not
@@ -206,6 +210,8 @@
   --font-2xl:  1.25rem;    /* 20px */
   --font-3xl:  1.5rem;     /* 24px */
   --font-4xl:  2rem;       /* 32px */
+  /* Provider mobile app screen titles (Figma Text/H2/(30)/Bold) */
+  --font-mobile-title: 1.875rem; /* 30px */
 
   --leading-tight:  1.2;   /* headings, display text */
   --leading-normal: 1.4;   /* body text, table cells */
