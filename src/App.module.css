@@ -1,0 +1,13 @@
+.bootLogo {
+  display: flex;
+  justify-content: center;
+  animation: bootSpin 1.2s linear infinite;
+}
+
+@keyframes bootSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bootLogo { animation: none; }
+}
