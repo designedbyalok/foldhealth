@@ -68,11 +68,13 @@ export function ScheduleScreen() {
       </div>
       <div
         className={styles.week}
-        onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
+        onTouchStart={(e) => { touchX.current = e.touches[0]?.clientX ?? null; }}
         onTouchEnd={(e) => {
-          if (touchX.current == null) return;
-          const dx = e.changedTouches[0].clientX - touchX.current;
+          const endX = e.changedTouches[0]?.clientX;
+          const startX = touchX.current;
           touchX.current = null;
+          if (startX == null || endX == null) return;
+          const dx = endX - startX;
           if (Math.abs(dx) > 50) shiftWeek(dx < 0 ? 1 : -1);
         }}
       >
