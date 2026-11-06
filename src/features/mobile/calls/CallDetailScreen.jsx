@@ -28,7 +28,7 @@ function CallCard({ message }) {
 
 /** One caller: who they are, quick actions and their call history (Figma 759:19880). */
 export function CallDetailScreen({ conversation }) {
-  const { push } = useMobileNav();
+  const { openMember } = useMobileNav();
   const { patients } = useCommsPeople();
   const patient = patientFor(conversation, patients);
   const pid = patient?.id ?? conversation.patient_id;
@@ -41,7 +41,7 @@ export function CallDetailScreen({ conversation }) {
     phone: conversation.patient_phone, email: conversation.patient_email,
   };
   const { actions, callPhone, phone } = useContactActions(contact, {
-    more: { onClick: () => push('member', { patientId: patient?.id }), disabled: !patient },
+    more: { onClick: () => openMember({ id: patient?.id }), disabled: !patient },
   });
 
   const { messages, loading } = useCommsMessages(conversation.id);

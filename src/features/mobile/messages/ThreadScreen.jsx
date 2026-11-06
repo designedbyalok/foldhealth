@@ -19,7 +19,7 @@ const PLACEHOLDER = { chat: 'Type message here', sms: 'Type SMS here', email: 'A
 
 /** One member conversation with a composer (Figma 759:20517 / 759:21008). */
 export function ThreadScreen({ conversation }) {
-  const { pop, push } = useMobileNav();
+  const { pop, openMember } = useMobileNav();
   const { patients, me } = useCommsPeople();
   const { messages, loading } = useCommsMessages(conversation.id);
   const patient = patientFor(conversation, patients);
@@ -71,7 +71,7 @@ export function ThreadScreen({ conversation }) {
         <button
           type="button"
           className={styles.who}
-          onClick={patient ? () => push('member', { patientId: patient.id }) : undefined}
+          onClick={patient ? () => openMember({ id: patient.id }) : undefined}
           disabled={!patient}
         >
           <Avatar variant="patient" size="L" initials={initialsOf(conversationTitle(conversation))} />

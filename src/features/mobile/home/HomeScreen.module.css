@@ -1,0 +1,221 @@
+/* Mobile Home: P360-style stacked sections on the grey body */
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5) 0;
+}
+.date {
+  margin: 0;
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 52px;
+  padding: 0 var(--space-3);
+  border: 0.5px solid var(--placeholder-text);
+  border-radius: 8px;
+  background: var(--neutral-0);
+  color: var(--placeholder-text);
+  font-size: var(--font-xl);
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Up next (Figma "Appointment due · Join Call", 759:19971) */
+.upNext {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) var(--space-5) 0;
+  padding: var(--space-3);
+  border-radius: 12px;
+  background: var(--neutral-0);
+  color: var(--neutral-300);
+}
+.upNextText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+}
+.upNextTitle {
+  font-size: var(--font-lg);
+  color: var(--neutral-400);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.upNextMeta {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+/* Today at a glance */
+.glance {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5) 0;
+}
+.tile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-3);
+  margin: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--neutral-0);
+  text-align: left;
+  cursor: pointer;
+}
+.tile:active { background: var(--neutral-25); }
+.tileIcon {
+  grid-row: 1;
+  display: inline-flex;
+  color: var(--primary-300);
+}
+.tileAlert { color: var(--status-error-dark); }
+.tileValue {
+  grid-row: 1;
+  font-size: var(--font-3xl);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.tileValueAlert { color: var(--status-error-dark); }
+.tileLabel {
+  grid-column: 1 / -1;
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+/* Sections */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-5) 0;
+}
+.section:last-child { padding-bottom: calc(var(--space-16) + var(--space-4)); }
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+}
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--font-lg);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--neutral-300);
+}
+.sectionCount {
+  font-size: var(--font-base);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--placeholder-text);
+}
+.sectionAction {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary-300);
+  font-size: var(--font-lg);
+  cursor: pointer;
+}
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.empty {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: 12px;
+  background: var(--neutral-0);
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+
+/* Schedule rows */
+.appt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  margin: 0;
+  border: 0;
+  border-left: 3px solid var(--primary-300);
+  border-radius: 0 12px 12px 0;
+  background: var(--neutral-0);
+  text-align: left;
+  cursor: pointer;
+}
+.apptTime {
+  flex-shrink: 0;
+  width: 72px;
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+/* Team program code chip */
+.code {
+  flex-shrink: 0;
+  min-width: 48px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: 6px;
+  background: var(--primary-100);
+  color: var(--primary-300);
+  font-size: var(--font-base);
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Quick notes */
+.note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  margin: 0;
+  border: 0;
+  border-left: 3px solid var(--accent-amber);
+  border-radius: 8px;
+  background: var(--accent-light-amber);
+  text-align: left;
+  cursor: pointer;
+}
+.noteText {
+  font-size: var(--font-lg);
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.noteMeta {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.sheetActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}

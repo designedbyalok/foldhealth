@@ -6,6 +6,7 @@ import { usePatientCareTeam } from '../../patient/care-team/usePatientCareTeam';
 import { ContactHero } from '../ContactHero';
 import { MobileEmpty } from '../MobileParts';
 import { useContactActions } from '../useContactActions';
+import { resolveAllPatient } from './resolvePatient';
 import { appointmentStart } from '../schedule/appointmentTime';
 import { initialsOf, patientLine } from '../mobileFormat';
 import styles from '../mobile.module.css';
@@ -13,33 +14,37 @@ import profile from './MemberProfileScreen.module.css';
 
 /** A member's summary: identity, quick actions, notes, visits, care team (Figma 759:19971). */
 export function MemberProfileScreen({ patientId }) {
-  const patient = useAppStore(s => s.allPatients.find(p => String(p.id) === String(patientId)));
-  const p360 = useAppStore(s => s.p360ProfilesById?.[patientId]);
+  // Links may carry another id space (TOC patient id, member id).
+  const patient = useAppStore(s => resolveAllPatient(s, { id: patientId }));
+  const pid = patient?.id ?? patientId;
+  const p360 = useAppStore(s => s.p360ProfilesById?.[pid]);
   const notes = useAppStore(s => s.stickyNotes);
   const appointments = useAppStore(s => s.appointments);
   const fetchP360Profile = useAppStore(s => s.fetchP360Profile);
   const fetchStickyNotes = useAppStore(s => s.fetchStickyNotes);
   const fetchAppointments = useAppStore(s => s.fetchAppointments);
-  const { team } = usePatientCareTeam(patientId);
+  const fetchAllPatients = useAppStore(s => s.fetchAllPatients);
+  useEffect(() => { fetchAllPatients(); }, [fetchAllPatients]);
+  const { team } = usePatientCareTeam(pid);
   const { actions, callPhone, phone } = useContactActions(patient);
 
   useEffect(() => {
-    if (patientId == null) return;
-    fetchP360Profile?.(patientId);
-    fetchStickyNotes?.(patientId);
+    if (pid == null) return;
+    fetchP360Profile?.(pid);
+    fetchStickyNotes?.(pid);
     fetchAppointments?.();
-  }, [patientId, fetchP360Profile, fetchStickyNotes, fetchAppointments]);
+  }, [pid, fetchP360Profile, fetchStickyNotes, fetchAppointments]);
 
-  const myNotes = (notes || []).filter(n => String(n.patient_id) === String(patientId));
+  const myNotes = (notes || []).filter(n => String(n.patient_id) === String(pid));
   const [now] = useState(() => Date.now());
   const upcoming = useMemo(() => {
     return (appointments || [])
-      .filter(a => String(a.patient_id) === String(patientId))
+      .filter(a => String(a.patient_id) === String(pid))
       .map(a => ({ ...a, start: appointmentStart(a) }))
       .filter(a => a.start && a.start.getTime() >= now && !/cancel/i.test(a.status || ''))
       .sort((a, b) => a.start - b.start)
       .slice(0, 3);
-  }, [appointments, patientId, now]);
+  }, [appointments, pid, now]);
 
   if (!patient) {
     return (

@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
+import { toast } from '../../components/Toast/sonnerToast';
 import { useAppStore } from '../../store/useAppStore';
+import { useCan } from '../../lib/useCan';
 import { MobileNavContext } from './MobileNavContext';
-import { MobileRootHeader } from './MobileHeader';
+import { HomeScreen } from './home/HomeScreen';
+import { MyWorklistScreen } from './home/MyWorklistScreen';
+import { WorklistsScreen, WorklistComingScreen } from './worklists/WorklistsScreen';
 import { CallsScreen } from './calls/CallsScreen';
 import { CallDetailScreen } from './calls/CallDetailScreen';
 import { DialerScreen } from './calls/DialerScreen';
@@ -12,28 +16,30 @@ import { ThreadScreen } from './messages/ThreadScreen';
 import { ScheduleScreen } from './schedule/ScheduleScreen';
 import { MembersScreen, PickMemberScreen } from './members/MembersScreen';
 import { MemberProfileScreen } from './members/MemberProfileScreen';
+import { resolveAllPatient } from './members/resolvePatient';
+import { TasksScreen } from './tasks/TasksScreen';
 import { ProfileScreen } from './profile/ProfileScreen';
 import { AlertsScreen } from './profile/AlertsScreen';
 import shell from './MobileShell.module.css';
 import styles from './mobile.module.css';
 
-// Bottom tabs, in Figma order (Nav Menu Provider 759:19104). `page` is the
-// desktop activePage the tab mirrors, so the URL and a resize to desktop
-// land on the same place.
+// Bottom tabs. `page` is the desktop activePage the tab mirrors (so the URL
+// and a resize to desktop land on the same place); `perm` is the same nav
+// permission the desktop sidebar checks.
 const TABS = [
-  { key: 'calls', icon: 'solar:phone-linear', label: 'Calls', page: 'calls' },
-  { key: 'messages', icon: 'solar:chat-round-linear', label: 'Messages', page: 'messages' },
-  { key: 'tasks', icon: 'solar:checklist-minimalistic-linear', label: 'Tasks', page: 'tasks' },
-  { key: 'calendar', icon: 'solar:calendar-minimalistic-linear', label: 'Schedule', page: 'calendar' },
-  { key: 'members', icon: 'solar:users-group-rounded-linear', label: 'Members', page: null },
+  { key: 'home', icon: 'solar:home-2-linear', label: 'Home', page: 'home', perm: 'nav:home' },
+  { key: 'worklists', icon: 'solar:clipboard-list-linear', label: 'Worklists', page: 'population', perm: 'nav:population' },
+  { key: 'messages', icon: 'solar:chat-round-linear', label: 'Messages', page: 'messages', perm: 'nav:messages' },
+  { key: 'calls', icon: 'solar:phone-linear', label: 'Calls', page: 'calls', perm: 'nav:calls' },
+  { key: 'calendar', icon: 'solar:calendar-minimalistic-linear', label: 'Schedule', page: 'calendar', perm: 'nav:calendar' },
 ];
 
 const ROOTS = {
-  calls: CallsScreen,
+  home: HomeScreen,
+  worklists: WorklistsScreen,
   messages: MessagesScreen,
-  tasks: TasksComingSoon,
+  calls: CallsScreen,
   calendar: ScheduleScreen,
-  members: MembersScreen,
 };
 
 const SCREENS = {
@@ -42,6 +48,10 @@ const SCREENS = {
   thread: ThreadScreen,
   member: MemberProfileScreen,
   pickMember: PickMemberScreen,
+  allPatients: MembersScreen,
+  myWorklist: MyWorklistScreen,
+  worklist: WorklistComingScreen,
+  tasks: TasksScreen,
   profile: ProfileScreen,
   alerts: AlertsScreen,
 };
@@ -49,9 +59,9 @@ const SCREENS = {
 // Sub-screens that need the whole height (a composer or keypad at the bottom).
 const FULL_SCREEN = new Set(['thread', 'dialer']);
 
-function initialTab(activePage) {
-  if (activePage === 'population') return 'members';
-  return TABS.some(t => t.page === activePage) ? activePage : 'calls';
+function initialTab(activePage, allowed) {
+  const byPage = TABS.find(t => t.page === activePage && allowed.includes(t.key));
+  return byPage?.key || allowed[0] || null;
 }
 
 /** The provider mobile app: one tab at a time, sub-screens stacked over it. */
@@ -59,7 +69,11 @@ export function MobileShell() {
   const activePage = useAppStore(s => s.activePage);
   const setActivePage = useAppStore(s => s.setActivePage);
   const unreadMessages = useAppStore(s => s.messagesUnreadCount);
-  const [tab, setTabState] = useState(() => initialTab(activePage));
+  const selectedPatientId = useAppStore(s => s.selectedPatientId);
+  const can = useCan();
+  const allowed = useMemo(() => TABS.filter(t => can(t.perm)).map(t => t.key), [can]);
+  const [tabState, setTabState] = useState(() => initialTab(activePage, allowed));
+  const tab = allowed.includes(tabState) ? tabState : allowed[0] || null;
   const [stack, setStack] = useState([]);
   const stackRef = useRef(stack);
   useEffect(() => { stackRef.current = stack; }, [stack]);
@@ -90,11 +104,36 @@ export function MobileShell() {
     if (page) setActivePage(page);
   }, [setActivePage]);
 
-  const nav = useMemo(() => ({ push, pop, setTab }), [push, pop, setTab]);
+  // Open a patient from any id space (worklist rows, tasks, links), checking
+  // the same Patient Details permission as desktop.
+  const openMember = useCallback(async ({ id, memberId, name } = {}) => {
+    if (!can('patient:details')) {
+      toast.error("You don't have access to patient details.");
+      return;
+    }
+    await useAppStore.getState().fetchAllPatients();
+    const hit = resolveAllPatient(useAppStore.getState(), { id, memberId, name });
+    if (!hit && id == null) {
+      toast.error(`Couldn't find ${name || 'this patient'}.`);
+      return;
+    }
+    push('member', { patientId: hit?.id ?? id });
+  }, [can, push]);
+
+  // A patient link (navigateToPatient, a notification, or the URL on load)
+  // opens that patient's mobile profile.
+  const consumed = useRef(null);
+  useEffect(() => {
+    if (selectedPatientId == null || consumed.current === selectedPatientId) return;
+    consumed.current = selectedPatientId;
+    openMember({ id: selectedPatientId });
+  }, [selectedPatientId, openMember]);
+
+  const nav = useMemo(() => ({ push, pop, setTab, openMember }), [push, pop, setTab, openMember]);
   const top = stack[stack.length - 1];
-  const Root = ROOTS[tab];
+  const Root = tab ? ROOTS[tab] : NoAccess;
   const Sub = top ? SCREENS[top.screen] : null;
-  const showNav = !top || !FULL_SCREEN.has(top.screen);
+  const showNav = allowed.length > 0 && (!top || !FULL_SCREEN.has(top.screen));
 
   return (
     <MobileNavContext.Provider value={nav}>
@@ -104,7 +143,7 @@ export function MobileShell() {
         </main>
         {showNav && (
           <nav className={shell.nav} aria-label="Main">
-            {TABS.map(t => {
+            {TABS.filter(t => allowed.includes(t.key)).map(t => {
               const active = t.key === tab;
               const badge = t.key === 'messages' && unreadMessages > 0 ? unreadMessages : 0;
               return (
@@ -130,18 +169,11 @@ export function MobileShell() {
   );
 }
 
-function TasksComingSoon() {
+function NoAccess() {
   return (
     <div className={styles.screen}>
-      <MobileRootHeader title="Tasks" />
-      <div className={styles.body}>
-        <div className={styles.center}>
-          <EmptyState
-            icon="solar:checklist-minimalistic-linear"
-            title="Tasks are coming to mobile"
-            description="Open Fold Health on a computer to work your task list for now."
-          />
-        </div>
+      <div className={styles.center}>
+        <EmptyState icon="solar:lock-keyhole-linear" title="Nothing to show yet" description="Ask your admin for access to Fold Health's pages." />
       </div>
     </div>
   );

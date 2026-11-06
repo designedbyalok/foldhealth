@@ -260,3 +260,4 @@
   font-size: var(--font-lg);
   cursor: pointer;
 }
+.toolbarTop { padding-top: var(--space-3); overflow-x: auto; }
