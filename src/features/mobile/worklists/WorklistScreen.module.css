@@ -1,0 +1,13 @@
+.count {
+  margin: 0;
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+  background: var(--neutral-0);
+}

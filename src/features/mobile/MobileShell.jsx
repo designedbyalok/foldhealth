@@ -18,7 +18,12 @@ import { ScheduleScreen } from './schedule/ScheduleScreen';
 import { MembersScreen, PickMemberScreen } from './members/MembersScreen';
 import { MemberProfileScreen } from './members/MemberProfileScreen';
 import { resolveAllPatient } from './members/resolvePatient';
+import { ensureAllPatients } from './members/ensureAllPatients';
 import { TasksScreen } from './tasks/TasksScreen';
+import { AddTaskScreen } from './tasks/AddTaskScreen';
+import { AppointmentScreen } from './schedule/AppointmentScreen';
+import { ProgramScreen } from './care/ProgramScreen';
+import { CarePlanScreen } from './care/CarePlanScreen';
 import { ProfileScreen } from './profile/ProfileScreen';
 import { AlertsScreen } from './profile/AlertsScreen';
 import shell from './MobileShell.module.css';
@@ -53,24 +58,16 @@ const SCREENS = {
   myWorklist: MyWorklistScreen,
   worklist: WorklistComingScreen,
   tasks: TasksScreen,
+  addTask: AddTaskScreen,
+  appointment: AppointmentScreen,
+  program: ProgramScreen,
+  carePlan: CarePlanScreen,
   profile: ProfileScreen,
   alerts: AlertsScreen,
 };
 
 // Sub-screens that need the whole height (a composer or keypad at the bottom).
-const FULL_SCREEN = new Set(['thread', 'dialer']);
-
-// fetchAllPatients returns at once while an earlier call is still loading;
-// wait for that load so a lookup by name doesn't run against an empty list.
-async function ensureAllPatients() {
-  await useAppStore.getState().fetchAllPatients();
-  if (!useAppStore.getState().allPatientsLoading) return;
-  await new Promise((resolve) => {
-    const off = useAppStore.subscribe((s) => {
-      if (!s.allPatientsLoading) { off(); resolve(); }
-    });
-  });
-}
+const FULL_SCREEN = new Set(['thread', 'dialer', 'addTask']);
 
 function initialTab(activePage, allowed) {
   const byPage = TABS.find(t => t.page === activePage && allowed.includes(t.key));
@@ -125,7 +122,7 @@ export function MobileShell() {
 
   // Open a patient from any id space (worklist rows, tasks, links), checking
   // the same Patient Details permission as desktop.
-  const openMember = useCallback(async ({ id, memberId, name } = {}) => {
+  const openMember = useCallback(async ({ id, memberId, name, tab } = {}) => {
     if (!can('patient:details')) {
       toast.error("You don't have access to patient details.");
       return;
@@ -137,7 +134,7 @@ export function MobileShell() {
       return;
     }
     // `exact`: already resolved to this all_patients row, so don't re-match.
-    push('member', hit ? { patientId: hit.id, exact: true } : { patientId: id });
+    push('member', hit ? { patientId: hit.id, exact: true, tab } : { patientId: id, tab });
   }, [can, push]);
 
   // A patient link (navigateToPatient, a notification, or the URL on load)

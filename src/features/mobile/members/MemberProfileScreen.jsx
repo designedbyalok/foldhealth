@@ -1,19 +1,37 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Avatar } from '../../../components/Avatar/Avatar';
+import { Button } from '../../../components/Button/Button';
 import { Icon } from '../../../components/Icon/Icon';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { useAppStore } from '../../../store/useAppStore';
-import { usePatientCareTeam } from '../../patient/care-team/usePatientCareTeam';
 import { ContactHero } from '../ContactHero';
 import { MobileEmpty } from '../MobileParts';
+import { useMobileNav } from '../MobileNavContext';
 import { useContactActions } from '../useContactActions';
+import { ProgramsTab } from '../care/ProgramsTab';
 import { resolveAllPatient } from './resolvePatient';
 import { appointmentStart } from '../schedule/appointmentTime';
-import { initialsOf, patientLine } from '../mobileFormat';
+import { patientLine } from '../mobileFormat';
+import { SummaryTab } from './profile/SummaryTab';
+import { PamiTab } from './profile/PamiTab';
+import { PatientTasksTab } from './profile/PatientTasksTab';
+import { DemographicsTab } from './profile/DemographicsTab';
 import styles from '../mobile.module.css';
 import profile from './MemberProfileScreen.module.css';
 
-/** A member's summary: identity, quick actions, notes, visits, care team (Figma 759:19971). */
-export function MemberProfileScreen({ patientId, exact = false }) {
+// Figma P360 tab strip (759:26451: Summary, PAMI, Task, Demographics), with
+// care programs and plans as their own tab.
+const TABS = [
+  { key: 'summary', label: 'Summary' },
+  { key: 'programs', label: 'Programs' },
+  { key: 'pami', label: 'PAMI' },
+  { key: 'tasks', label: 'Tasks' },
+  { key: 'profile', label: 'Profile' },
+];
+const SOON_MS = 30 * 60000;
+
+/** A member's full mobile profile (Figma P360 759:26451 / 759:27431). */
+export function MemberProfileScreen({ patientId, exact = false, tab: initialTab = 'summary' }) {
+  const { push } = useMobileNav();
   // Links may carry another id space (TOC patient id, member id). Resolved
   // only when the patient lists change, not on every store update.
   const allPatients = useAppStore(s => s.allPatients);
@@ -26,33 +44,33 @@ export function MemberProfileScreen({ patientId, exact = false }) {
   );
   const pid = patient?.id ?? patientId;
   const p360 = useAppStore(s => s.p360ProfilesById?.[pid]);
-  const notes = useAppStore(s => s.stickyNotes);
   const appointments = useAppStore(s => s.appointments);
   const fetchP360Profile = useAppStore(s => s.fetchP360Profile);
-  const fetchStickyNotes = useAppStore(s => s.fetchStickyNotes);
   const fetchAppointments = useAppStore(s => s.fetchAppointments);
   const fetchAllPatients = useAppStore(s => s.fetchAllPatients);
-  useEffect(() => { fetchAllPatients(); }, [fetchAllPatients]);
-  const { team } = usePatientCareTeam(pid);
   const { actions, callPhone, phone } = useContactActions(patient);
+  const [tab, setTab] = useState(TABS.some(t => t.key === initialTab) ? initialTab : 'summary');
+  // Ticks each minute so the due card's countdown and window stay current.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(t);
+  }, []);
 
+  useEffect(() => { fetchAllPatients(); }, [fetchAllPatients]);
   useEffect(() => {
     if (pid == null) return;
     fetchP360Profile?.(pid);
-    fetchStickyNotes?.(pid);
     fetchAppointments?.();
-  }, [pid, fetchP360Profile, fetchStickyNotes, fetchAppointments]);
+  }, [pid, fetchP360Profile, fetchAppointments]);
 
-  const myNotes = (notes || []).filter(n => String(n.patient_id) === String(pid));
-  const [now] = useState(() => Date.now());
-  const upcoming = useMemo(() => {
-    return (appointments || [])
-      .filter(a => String(a.patient_id) === String(pid))
-      .map(a => ({ ...a, start: appointmentStart(a) }))
-      .filter(a => a.start && a.start.getTime() >= now && !/cancel/i.test(a.status || ''))
-      .sort((a, b) => a.start - b.start)
-      .slice(0, 3);
-  }, [appointments, pid, now]);
+  // Figma "Appointment due · Join Call": a visit for this patient starting
+  // within 30 minutes (or started in the last 30).
+  const due = useMemo(() => (appointments || [])
+    .filter(a => String(a.patient_id) === String(pid) && !/cancel/i.test(a.status || ''))
+    .map(a => ({ ...a, start: appointmentStart(a) }))
+    .filter(a => a.start && Math.abs(a.start.getTime() - now) <= SOON_MS)
+    .sort((a, b) => Math.abs(a.start.getTime() - now) - Math.abs(b.start.getTime() - now))[0], [appointments, pid, now]);
 
   if (!patient) {
     return (
@@ -64,10 +82,11 @@ export function MemberProfileScreen({ patientId, exact = false }) {
   }
 
   const pcpLine = [patient.pcp ? `PCP : ${patient.pcp}` : '', patient.activeCareProgram || ''].filter(Boolean).join(' • ');
+  const minutes = due ? Math.round((due.start.getTime() - now) / 60000) : 0;
 
   return (
     <div className={styles.screen}>
-      <div className={styles.body}>
+      <div className={`${styles.body} ${profile.scroll}`}>
         <ContactHero
           name={p360?.chosen_name ? `${patient.name} (${p360.chosen_name})` : patient.name}
           pronoun={p360?.pronoun}
@@ -78,58 +97,29 @@ export function MemberProfileScreen({ patientId, exact = false }) {
           actions={actions}
         />
 
-        <Section title="Sticky Notes">
-          {myNotes.length === 0 ? <p className={profile.empty}>No sticky notes</p> : myNotes.map(n => (
-            <div key={n.id} className={profile.note}>
-              <p className={profile.noteText}>{n.text}</p>
-              <p className={profile.noteMeta}>{[n.author_name, n.author_date].filter(Boolean).join(' • ')}</p>
-            </div>
-          ))}
-        </Section>
+        {due && (
+          <div className={profile.due}>
+            <Icon name={/virtual|tele/i.test(due.mode || '') ? 'solar:videocamera-record-linear' : 'solar:calendar-minimalistic-linear'} size={24} />
+            <span className={profile.dueText}>
+              <span className={profile.dueTitle}>Appointment due</span>
+              <span className={profile.dueMeta}>{minutes > 0 ? `Starts in ${minutes} min` : minutes === 0 ? 'Starting now' : `Started ${-minutes} min ago`}</span>
+            </span>
+            <Button variant="solid" onClick={() => push('appointment', { appointmentId: due.id })}>View</Button>
+          </div>
+        )}
 
-        <Section title="Upcoming Appointments">
-          {upcoming.length === 0 ? <p className={profile.empty}>No upcoming appointments</p> : upcoming.map(a => (
-            <div key={a.id} className={styles.card}>
-              <Avatar variant="provider" size="L" initials={initialsOf(a.primary_user)} />
-              <span className={styles.cardText}>
-                <span className={styles.primaryText}>{a.appointment_type_name || 'Appointment'}</span>
-                <span className={styles.secondaryText}>{[`${a.date}, ${a.time_start}${a.time_end ? ` - ${a.time_end}` : ''}`].join('')}</span>
-                {(a.primary_user || a.location) && (
-                  <span className={styles.secondaryText}>{[a.primary_user, a.location].filter(Boolean).join(' • ')}</span>
-                )}
-              </span>
-            </div>
-          ))}
-        </Section>
+        <div className={profile.tabs}>
+          <SegmentedControl size="lg" aria-label="Profile sections" value={tab} onValueChange={setTab} items={TABS} />
+        </div>
 
-        <Section title="Primary Care Team">
-          {team.length === 0 ? <p className={profile.empty}>No care team yet</p> : (
-            <div className={profile.team}>
-              {team.map(m => (
-                <div key={m.id || m.userId} className={profile.member}>
-                  <Avatar variant="staff" size="L" initials={m.initials || initialsOf(m.name)} />
-                  <span className={styles.cardText}>
-                    <span className={styles.primaryText}>{m.name}</span>
-                    <span className={styles.secondaryText}>{m.title || m.role}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Section>
+        <div className={profile.tabBody}>
+          {tab === 'summary' && <SummaryTab patientId={pid} />}
+          {tab === 'programs' && <ProgramsTab patientId={pid} />}
+          {tab === 'pami' && <PamiTab patientId={pid} />}
+          {tab === 'tasks' && <PatientTasksTab patient={patient} />}
+          {tab === 'profile' && <DemographicsTab patient={patient} p360={p360} />}
+        </div>
       </div>
     </div>
-  );
-}
-
-function Section({ title, children }) {
-  return (
-    <section className={profile.section}>
-      <h2 className={profile.sectionTitle}>
-        {title}
-        <Icon name="solar:alt-arrow-down-linear" size={16} />
-      </h2>
-      <div className={profile.sectionBody}>{children}</div>
-    </section>
   );
 }

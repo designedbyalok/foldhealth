@@ -31,6 +31,10 @@ export function dueLabel(task) {
 
 const BUCKET_ORDER = { overdue: 0, today: 1, upcoming: 2, none: 3, done: 4 };
 
+/** Most urgent bucket first, then by due date. Tasks need `bucket` set. */
+export const compareTasks = (a, b) => BUCKET_ORDER[a.bucket] - BUCKET_ORDER[b.bucket]
+  || (parseTaskDate(a.due_date) || 0) - (parseTaskDate(b.due_date) || 0);
+
 /** The signed-in user's tasks, most urgent first. */
 export function useMyTasks() {
   const tasks = useAppStore(s => s.tasks);
@@ -43,8 +47,7 @@ export function useMyTasks() {
   const mine = useMemo(() => (tasks || [])
     .filter(t => matchTaskAssignee(t, me?.id, me?.name))
     .map(t => ({ ...t, bucket: taskBucket(t) }))
-    .sort((a, b) => BUCKET_ORDER[a.bucket] - BUCKET_ORDER[b.bucket]
-      || (parseTaskDate(a.due_date) || 0) - (parseTaskDate(b.due_date) || 0)), [tasks, me]);
+    .sort(compareTasks), [tasks, me]);
 
   return { tasks: mine, loading };
 }

@@ -110,11 +110,7 @@ export function HomeScreen() {
                   {[upNext.appointment_type_name, `${upNext.time_start} (${minutesUntil(upNext.start, now)})`].filter(Boolean).join(' • ')}
                 </span>
               </div>
-              <Button
-                variant="solid"
-                onClick={() => openMember({ id: upNext.patient_id, name: upNext.patient_name })}
-                disabled={!upNext.patient_id && !upNext.patient_name}
-              >
+              <Button variant="solid" onClick={() => push('appointment', { appointmentId: upNext.id })}>
                 Open
               </Button>
             </div>
@@ -149,7 +145,7 @@ export function HomeScreen() {
             {laterToday.length === 0 ? (
               <p className={styles.empty}>{todays.length ? 'Nothing else today' : 'No appointments today'}</p>
             ) : laterToday.map(a => (
-              <button key={a.id} type="button" className={styles.appt} onClick={() => openMember({ id: a.patient_id, name: a.patient_name })}>
+              <button key={a.id} type="button" className={styles.appt} onClick={() => push('appointment', { appointmentId: a.id })}>
                 <span className={styles.apptTime}>{a.time_start}</span>
                 <span className={common.cardText}>
                   <span className={common.primaryText}>{a.patient_name || 'Appointment'}</span>
@@ -180,6 +176,7 @@ export function HomeScreen() {
         <BottomSheet title="Quick Actions" onClose={() => setActionsOpen(false)}>
           <BottomSheetItem icon="solar:chat-round-line-linear" label="New Message" onClick={() => { setActionsOpen(false); push('pickMember', { purpose: 'message' }); }} />
           <BottomSheetItem icon="solar:phone-calling-linear" label="Make a Call" onClick={() => { setActionsOpen(false); push('dialer'); }} />
+          <BottomSheetItem icon="solar:checklist-minimalistic-linear" label="New Task" onClick={() => { setActionsOpen(false); push('addTask'); }} />
           <BottomSheetItem icon="solar:notes-linear" label="Add Quick Note" onClick={() => { setActionsOpen(false); setNoteOpen(true); }} />
         </BottomSheet>
       )}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
+import { Icon } from '../../../components/Icon/Icon';
 import { MobileSubHeader } from '../MobileHeader';
 import { MobileEmpty, MobileListSkeleton, CountBadge } from '../MobileParts';
 import { useMobileNav } from '../MobileNavContext';
@@ -16,7 +17,7 @@ const FILTERS = [
 
 /** My tasks by when they're due (Figma Tasks 759:22072). */
 export function TasksScreen({ filter: initial = 'overdue' }) {
-  const { openMember } = useMobileNav();
+  const { openMember, push } = useMobileNav();
   const { tasks, loading } = useMyTasks();
   const [filter, setFilter] = useState(initial);
   const current = FILTERS.find(f => f.key === filter) || FILTERS[0];
@@ -37,14 +38,19 @@ export function TasksScreen({ filter: initial = 'overdue' }) {
           })}
         />
       </div>
-      <div className={styles.body}>
-        {loading && !tasks.length ? <MobileListSkeleton height={96} /> : shown.length === 0 ? (
-          <MobileEmpty icon="solar:checklist-minimalistic-linear" title={`No ${current.label.toLowerCase()} tasks`} />
-        ) : (
-          <div className={styles.list}>
-            {shown.map(t => <TaskRow key={t.id} task={t} onOpenMember={(task) => openMember({ name: task.member })} />)}
-          </div>
-        )}
+      <div className={styles.bodyWrap}>
+        <div className={styles.body}>
+          {loading && !tasks.length ? <MobileListSkeleton height={96} /> : shown.length === 0 ? (
+            <MobileEmpty icon="solar:checklist-minimalistic-linear" title={`No ${current.label.toLowerCase()} tasks`} />
+          ) : (
+            <div className={styles.list}>
+              {shown.map(t => <TaskRow key={t.id} task={t} onOpenMember={(task) => openMember({ name: task.member })} />)}
+            </div>
+          )}
+        </div>
+        <button type="button" className={styles.fab} aria-label="Add task" onClick={() => push('addTask')}>
+          <Icon name="solar:add-circle-linear" size={32} color="currentColor" />
+        </button>
       </div>
     </div>
   );

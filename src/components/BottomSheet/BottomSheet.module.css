@@ -34,7 +34,7 @@
   gap: var(--space-2);
   max-height: 88dvh;
   overflow-y: auto;
-  padding: var(--space-6) var(--space-5) calc(var(--space-8) + env(safe-area-inset-bottom));
+  padding: var(--space-6) var(--space-5) max(var(--space-8), env(safe-area-inset-bottom));
   border-radius: 24px 24px 0 0;
   background: var(--neutral-0);
   box-shadow: var(--shadow-popover);

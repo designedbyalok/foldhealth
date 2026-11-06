@@ -1,23 +1,99 @@
-/* Member summary sections (Figma 759:19971, grey body) */
+/* Mobile P360 profile (Figma 759:26451 / 759:27431) */
+.scroll { padding-bottom: var(--space-8); }
+
+/* "Appointment due · Join Call" (Figma 759:27431, top card) */
+.due {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) var(--space-5) 0;
+  padding: var(--space-3);
+  border-radius: 12px;
+  background: var(--neutral-0);
+  color: var(--neutral-300);
+}
+.dueText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+}
+.dueTitle {
+  font-size: var(--font-lg);
+  color: var(--neutral-400);
+}
+.dueMeta {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+/* Tab strip: stays at the top while the tab scrolls; scrolls sideways when
+   five tabs don't fit a narrow phone. */
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  overflow-x: auto;
+  padding: var(--space-3) var(--space-5);
+  background: var(--neutral-100);
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tabBody { display: flex; flex-direction: column; }
+
+.tabAction { padding: var(--space-4) var(--space-5) 0; }
+
+/* Sections */
 .section {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-5) 0;
 }
-.section:last-child { padding-bottom: var(--space-6); }
-.sectionTitle {
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.sectionToggle {
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  margin: 0;
   padding: 0 var(--space-3);
+  margin: 0;
+  border: 0;
+  background: none;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
   font-size: var(--font-lg);
   font-weight: 500;
   line-height: var(--leading-tight);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--neutral-300);
+}
+.sectionCount {
+  font-size: var(--font-base);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--placeholder-text);
+}
+.sectionAdd {
+  display: inline-flex;
+  padding: var(--space-1);
+  margin: 0;
+  border: 0;
+  background: none;
+  color: var(--primary-300);
+  cursor: pointer;
 }
 .sectionBody {
   display: flex;
@@ -32,41 +108,120 @@
   font-size: var(--font-lg);
   color: var(--neutral-300);
 }
+.footnote {
+  margin: 0;
+  padding: 0 var(--space-3);
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
 
-/* Sticky note: amber card with a left rule (Figma 759:19971) */
+/* Sticky note: amber card with a left rule */
 .note {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-3);
+  margin: 0;
+  border: 0;
   border-left: 3px solid var(--accent-amber);
   border-radius: 8px;
   background: var(--accent-light-amber);
+  text-align: left;
+  cursor: pointer;
 }
 .noteText {
-  margin: 0;
   font-size: var(--font-lg);
   line-height: var(--leading-normal);
   color: var(--neutral-400);
   white-space: pre-wrap;
 }
 .noteMeta {
-  margin: 0;
   font-size: var(--font-base);
   color: var(--neutral-300);
 }
+.sheetActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
 
-.team {
+/* Grouped rows on one white card (Figma PAMI lists) */
+.group {
   display: flex;
   flex-direction: column;
   border-radius: 12px;
   background: var(--neutral-0);
   overflow: hidden;
 }
-.member {
+.groupRow {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3);
 }
-.member + .member { border-top: 0.5px solid var(--neutral-100); }
+.groupRow + .groupRow { border-top: 0.5px solid var(--neutral-100); }
+
+/* Vitals tiles */
+.vitals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+.vital {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3);
+  border-radius: 12px;
+  background: var(--neutral-0);
+}
+.vitalName {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vitalValue {
+  font-size: var(--font-2xl);
+  color: var(--neutral-400);
+}
+.vitalUnit {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.vitalDate {
+  font-size: var(--font-sm);
+  color: var(--placeholder-text);
+}
+
+/* Label / value rows (Demographics) */
+.infoCard {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 12px;
+  background: var(--neutral-0);
+}
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+}
+.infoRow + .infoRow { border-top: 0.5px solid var(--neutral-100); }
+.infoLabel {
+  flex-shrink: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.infoValue {
+  min-width: 0;
+  font-size: var(--font-lg);
+  color: var(--neutral-400);
+  text-align: right;
+  overflow-wrap: anywhere;
+}

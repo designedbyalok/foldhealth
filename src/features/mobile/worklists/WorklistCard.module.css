@@ -1,0 +1,169 @@
+/* Worklist row as a mobile card (P360 card language, Figma 759:19398) */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: 12px;
+  background: var(--neutral-0);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: 0;
+  padding-right: calc(var(--space-16) + var(--space-8));
+  margin: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+}
+.name,
+.meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: var(--leading-tight);
+}
+.name {
+  font-size: var(--font-xl);
+  color: var(--neutral-400);
+}
+.meta {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.headStatus {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  max-width: 45%;
+}
+
+.statusBtn {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* Key fields: label left, value right */
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: 0.5px solid var(--neutral-100);
+}
+.field {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.label {
+  flex-shrink: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.value {
+  min-width: 0;
+  margin: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.danger { color: var(--status-error-dark); }
+
+/* Stacked enrollments / gaps */
+.subs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 8px;
+  background: var(--neutral-50);
+}
+.subText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+}
+.subTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.subDetail {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.more {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary-300);
+  font-size: var(--font-base);
+  cursor: pointer;
+}
+
+.note {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.action {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2);
+  margin: 0;
+  border: 0;
+  border-radius: 8px;
+  background: var(--neutral-50);
+  color: var(--neutral-400);
+  font-size: var(--font-lg);
+  cursor: pointer;
+}
+.action:active { background: var(--neutral-75); }
