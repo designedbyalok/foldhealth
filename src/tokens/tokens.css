@@ -59,6 +59,7 @@
   --status-success-dark:  #12B76A; /* Figma Colors/Status Dark/Success */
   --status-success:       #007A42;
   --status-success-light: #F5FFFA;
+  --status-success-surface: #E8FDF3; /* Figma Colors/Status Light/Success (completed banner) */
   --status-info:          #145ECC;
   --status-info-light:    #F4F8FE;
 
@@ -75,6 +76,7 @@
   --shadow-card:    0 1px 3px rgba(0, 0, 0, 0.04);
   /* Floating action button on the provider mobile app (Figma 1115:25988) */
   --shadow-fab:     0 8px 8px rgba(0, 0, 0, 0.30);
+  --shadow-footer:  0 -12px 12px rgba(0, 0, 0, 0.05); /* Figma mobile sticky footer (Task Details 1050:51249) */
   --shadow-bulk-bar: 4px 15px 60px 24px rgba(0, 0, 0, 0.15);
   /* Fold Pixel tooltip shadow (e.g. Figma 2941:74217): tight halo + soft drop. */
   --shadow-tooltip: 0 0 6px rgba(0, 0, 0, 0.1), 0 12px 12px rgba(0, 0, 0, 0.1);
@@ -377,6 +379,7 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
   --status-success-dark:  #12B76A;
   --status-success:       #15D974;
   --status-success-light: #0A2418;
+  --status-success-surface: #0F2A1E;
   --status-info:          #5B8DEF;
   --status-info-light:    #0E1A2D;
 

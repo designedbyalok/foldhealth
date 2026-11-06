@@ -1,15 +1,18 @@
 import { Icon } from '../../../components/Icon/Icon';
 import { PriorityIcon } from '../../../components/PriorityIcon/PriorityIcon';
 import { useAppStore } from '../../../store/useAppStore';
+import { useMobileNav } from '../MobileNavContext';
 import { dueLabel } from './myTasks';
 import styles from './TaskRow.module.css';
 
 /**
  * A task as a mobile card (Figma Task 759:26387): due line, a round check,
- * title and the member it's about. The check completes or reopens it.
+ * title and the member it's about. The check completes or reopens it;
+ * the title opens the task's details.
  */
 export function TaskRow({ task, onOpenMember }) {
   const updateTask = useAppStore(s => s.updateTask);
+  const { push } = useMobileNav();
   const done = task.status === 'completed';
   const late = task.bucket === 'overdue';
   const toggle = () => updateTask(task.id, { status: done ? 'pending' : 'completed' });
@@ -32,7 +35,9 @@ export function TaskRow({ task, onOpenMember }) {
           {done && <Icon name="solar:check-read-linear" size={16} color="currentColor" />}
         </button>
         <div className={styles.text}>
-          <p className={[styles.title, done ? styles.titleDone : ''].join(' ')}>{task.name}</p>
+          <button type="button" className={styles.titleBtn} onClick={() => push('taskDetail', { taskId: task.id })}>
+            <span className={[styles.title, done ? styles.titleDone : ''].join(' ')}>{task.name}</span>
+          </button>
           {task.member && (
             onOpenMember
               ? <button type="button" className={styles.member} onClick={() => onOpenMember(task)}>{task.member}</button>

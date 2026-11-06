@@ -48,6 +48,16 @@
   align-items: flex-start;
   gap: var(--space-1);
 }
+.titleBtn {
+  width: 100%;
+  min-height: 44px;
+  margin: calc(var(--space-3) * -1) 0;
+  padding: var(--space-3) 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
 .title {
   margin: 0;
   font-size: var(--font-lg);
