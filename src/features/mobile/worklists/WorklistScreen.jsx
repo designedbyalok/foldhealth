@@ -84,7 +84,7 @@ function WorklistCards({ label, adapter }) {
       (scope === 'all'
         || (scope === 'mine' && isMine(c, me))
         || (scope === 'overdue' && c.due && c.due < today))
-      && (!q || [c.name, c.ids?.memberId].some(v => norm(v).includes(q)))
+      && (!q || norm(c.name).includes(q) || norm(c.ids?.memberId).includes(q))
     ));
   }, [cards, scope, query, me]);
 

@@ -191,8 +191,8 @@ function PlanNoteSheet({ onSave, onClose }) {
   const save = async () => {
     if (!text.trim()) return;
     setBusy(true);
-    const ok = await onSave(text.trim());
-    setBusy(false);
+    let ok;
+    try { ok = await onSave(text.trim()); } finally { setBusy(false); }
     // addCarePlanNote shows "Note added" itself.
     if (ok) onClose();
   };

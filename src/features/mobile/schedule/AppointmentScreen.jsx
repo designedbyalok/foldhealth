@@ -54,8 +54,8 @@ export function AppointmentScreen({ appointmentId }) {
 
   const setStatus = async (next, done) => {
     setBusy(true);
-    const ok = await updateAppointment(appt.id, { status: statusValue(next) });
-    setBusy(false);
+    let ok;
+    try { ok = await updateAppointment(appt.id, { status: statusValue(next) }); } finally { setBusy(false); }
     if (ok) {
       toast.success(done);
       return true;

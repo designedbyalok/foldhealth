@@ -95,8 +95,8 @@ export function AddTaskScreen({ patientId, patientName }) {
       ...(patientId != null ? { patient_id: String(patientId) } : {}),
     };
     setSaving(true);
-    const result = await createTask(task);
-    setSaving(false);
+    let result;
+    try { result = await createTask(task); } catch { result = null; } finally { setSaving(false); }
     if (!result) {
       toast.error('Could not create the task.');
       return;
