@@ -2,8 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Icon } from '../../../components/Icon/Icon';
 import { useAppStore } from '../../../store/useAppStore';
-import { MobileRootHeader, MobileSubHeader } from '../MobileHeader';
-import { MobileEmpty } from '../MobileParts';
+import { MobileRootHeader } from '../MobileHeader';
 import { useMobileNav } from '../MobileNavContext';
 import styles from '../mobile.module.css';
 
@@ -71,18 +70,5 @@ export function WorklistsScreen() {
   );
 }
 
-/** One worklist. Cards for each list arrive in the next phase. */
-export function WorklistComingScreen({ label }) {
-  return (
-    <div className={styles.screen}>
-      <MobileSubHeader title={label} />
-      <div className={styles.body}>
-        <MobileEmpty
-          icon="solar:clipboard-list-linear"
-          title={`${label} is coming to mobile`}
-          description="Work this list from Fold Health on a computer for now."
-        />
-      </div>
-    </div>
-  );
-}
+// The shell registers the 'worklist' screen under this name.
+export { WorklistScreen as WorklistComingScreen } from './WorklistScreen';
