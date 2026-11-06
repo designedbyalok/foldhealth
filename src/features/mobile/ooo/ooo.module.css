@@ -146,3 +146,9 @@ button.record:active { background: var(--neutral-25); }
   line-height: var(--leading-tight);
   color: var(--neutral-400);
 }
+.forUser {
+  margin: 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}

@@ -93,6 +93,11 @@ export function EditProfileScreen() {
       showToast(`Error: ${error?.message || 'Permission denied'}`);
       return;
     }
+    // Keep the sign-in name in step, as desktop Preferences does (a missing
+    // name raises the "complete your profile" alert that opens this screen).
+    if (updates.first_name !== raw.first_name || updates.last_name !== raw.last_name) {
+      await supabase.auth.updateUser({ data: { first_name: form.first_name, last_name: form.last_name, full_name: updates.full_name } }).catch(() => {});
+    }
     useAppStore.setState(s => ({ currentUserProfile: s.currentUserProfile ? { ...s.currentUserProfile, name: updates.full_name } : s.currentUserProfile }));
     showToast('Profile updated');
     pop();

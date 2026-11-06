@@ -29,6 +29,12 @@ export function SettingsScreen() {
     allowed('calendar') && { key: 'myAvailability', icon: 'solar:calendar-date-linear', label: 'My Availability' },
     allowed('messages') && { key: 'businessHours', icon: 'solar:clock-circle-linear', label: 'Messages business hours' },
   ].filter(Boolean);
+  // Settings > Account on desktop: its Users, Access Control and Locations tabs.
+  const account = allowed('account') ? [
+    { key: 'settingsUsers', icon: 'solar:users-group-rounded-linear', label: 'Users' },
+    { key: 'settingsRoles', icon: 'solar:shield-user-linear', label: 'Access control' },
+    { key: 'settingsLocations', icon: 'solar:map-point-linear', label: 'Locations' },
+  ] : [];
 
   return (
     <div className={common.screen}>
@@ -38,6 +44,11 @@ export function SettingsScreen() {
           {mine.length > 0 && (
             <GroupedSection label="Mine">
               {mine.map(r => <GroupedRow key={r.key} icon={r.icon} label={r.label} onClick={() => push(r.key)} />)}
+            </GroupedSection>
+          )}
+          {account.length > 0 && (
+            <GroupedSection label="Account">
+              {account.map(r => <GroupedRow key={r.key} icon={r.icon} label={r.label} onClick={() => push(r.key)} />)}
             </GroupedSection>
           )}
           <GroupedSection label="Workspace">
@@ -53,7 +64,7 @@ export function SettingsScreen() {
               />
             )))}
           </GroupedSection>
-          <DesktopOnlyNote size="lg" title="Open on a computer" description="Care plans, programs, billing, account and the other workspace settings need a bigger screen." />
+          <DesktopOnlyNote size="lg" title="Open on a computer" description="Care plans, programs, billing, org details and the other workspace settings need a bigger screen." />
         </div>
       </div>
     </div>

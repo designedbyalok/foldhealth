@@ -10,6 +10,7 @@ import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialo
 import { BulkCheckboxCell } from '../../../../components/BulkSelect/BulkCheckboxCell';
 import { useTableSort } from '../../../../components/HeaderCell/useTableSort';
 import { EditLocationDrawer } from './EditLocationDrawer';
+import { saveLocation, deleteLocation } from './locationActions';
 import panelStyles from '../AccountPanel.module.css';
 import styles from './LocationRow.module.css';
 
@@ -81,51 +82,16 @@ export function LocationsTab({ tabsForBar, activeTab, setActiveTab }) {
   );
 
   const handleSubmit = async (location) => {
-    // Optimistic: update the local store immediately, then persist to
-    // Supabase. On error we revert-by-refetch so the UI stays honest.
-    upsertLocation(location);
     setEditing(null);
     setCreating(false);
-
-    const row = {
-      id:              location.id,
-      name:            location.name,
-      ehr_instance:    location.ehrInstance,
-      address_line_1: location.addressLine1,
-      address_line_2: location.addressLine2,
-      city:            location.city,
-      state:           location.state,
-      zip_code:        location.zipCode,
-      timezone:        location.timezone,
-      google_map_link: location.googleMapLink,
-      default_phone:   location.defaultPhone,
-      business_hours:  location.businessHours,
-      updated_at:      new Date().toISOString(),
-    };
-    const { error } = await supabase.from('practice_locations').upsert(row, { onConflict: 'id' });
-    if (error) {
-      showToast?.(`Save failed: ${error.message}`);
-      fetchLocations();
-    } else {
-      showToast?.(`${location.name} saved`);
-    }
+    await saveLocation(location, { upsertLocation, fetchLocations, showToast });
   };
 
   const handleConfirmDelete = async () => {
     if (!deleting) return;
     const target = deleting;
     setDeleting(null);
-    removeLocationStore(target.id);
-    const { error } = await supabase
-      .from('practice_locations')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', target.id);
-    if (error) {
-      showToast?.(`Delete failed: ${error.message}`);
-      fetchLocations();
-    } else {
-      showToast?.(`${target.name} deleted`);
-    }
+    await deleteLocation(target, { removeLocation: removeLocationStore, fetchLocations, showToast });
   };
 
   // Soft-delete, matching the single-row path. The shell owns the toggle,
