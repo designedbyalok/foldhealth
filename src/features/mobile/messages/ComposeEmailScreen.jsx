@@ -70,8 +70,9 @@ export function ComposeEmailScreen({ patient: given, conversation: givenConv, su
   const withOthers = hasRoles && sendToPicked.some(v => v !== 'patient');
   const body = textToHtml(text);
   const protectable = withOthers && (useTemplate || hasLink(text));
-  const blockers = protectable ? verifyBlockers(verifyId, people.filter(o => sendToPicked.includes(o.value))) : [];
-  const to = people.filter(o => sendToPicked.includes(o.value)).map(o => o.email).filter(Boolean);
+  const pickedSet = new Set(sendToPicked);
+  const blockers = protectable ? verifyBlockers(verifyId, people.filter(o => pickedSet.has(o.value))) : [];
+  const to = people.filter(o => pickedSet.has(o.value)).map(o => o.email).filter(Boolean);
 
   const recipientCtx = useMemo(
     () => buildRecipientContext(patient || { name: '' }, { providerName: sender.name, clinicName: 'Fold Health' }),
@@ -118,6 +119,8 @@ export function ComposeEmailScreen({ patient: given, conversation: givenConv, su
     setTouched(true);
     if (blockedReason) return;
     setBusy(true);
+    // Stays busy once sent: the screen is closing and must not be sent twice.
+    let sent = false;
     try {
       const conversation = await conversationFor();
       const secured = protectable && verifyId.on ? protectHtml(currentHtml()) : null;
@@ -135,15 +138,18 @@ export function ComposeEmailScreen({ patient: given, conversation: givenConv, su
       if (result?.status === 'failed') toast.error(`Email not sent: ${result.failure_reason}`);
       else toast.success('Email Sent Successfully');
       pop();
+      sent = true;
     } catch {
       toast.error('Could not send the email.');
-      setBusy(false);
+    } finally {
+      setBusy(sent);
     }
   };
 
   const saveDraft = async () => {
     if (!patient) { toast.error('Pick a patient first.'); return; }
     setBusy(true);
+    let saved = false;
     try {
       const conversation = await conversationFor();
       await addMessage({
@@ -154,9 +160,11 @@ export function ComposeEmailScreen({ patient: given, conversation: givenConv, su
       });
       toast.success('Saved To Drafts Successfully');
       pop();
+      saved = true;
     } catch {
       toast.error('Could not save the draft.');
-      setBusy(false);
+    } finally {
+      setBusy(saved);
     }
   };
 

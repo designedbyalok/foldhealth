@@ -36,8 +36,9 @@ function activeItems(member) {
     const latest = (member.interventionLog || []).find(e => hasBarrierData(e.measures?.[x.code]));
     const current = latest?.measures[x.code];
     const gapLevel = current && !current.medications && !latest.medication && (current.barriers.length > 0 || current.interventions.length > 0);
+    const gapBarriers = gapLevel ? new Set(current.barriers) : null;
     const drugBarriers = x.medications.filter(d => d.status !== 'Discontinued' && d.nonAdherenceReason
-      && !(gapLevel && current.barriers.includes(d.nonAdherenceReason)));
+      && !(gapBarriers && gapBarriers.has(d.nonAdherenceReason)));
     if (current?.medications) {
       for (const d of current.medications) {
         const med = { id: d.id, name: d.name };
@@ -121,7 +122,8 @@ export function PharmacyMemberScreen({ id }) {
     else toast(`${label} marked didn't work on ${where}`);
   };
   const done = (item) => {
-    const addressed = (INTERVENTION_ADDRESSES[item.label] || []).filter(b => item.standing.includes(b));
+    const standing = new Set(item.standing);
+    const addressed = (INTERVENTION_ADDRESSES[item.label] || []).filter(b => standing.has(b));
     if (addressed.length) setSheet({ kind: 'alsoResolve', item, addressed });
     else finish(item, 'Done');
   };

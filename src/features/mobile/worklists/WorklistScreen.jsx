@@ -112,19 +112,23 @@ function WorklistCards({ label, adapter }) {
 
   const statusOptions = useMemo(() => [...new Set(cards.flatMap(cardStatuses))].sort(), [cards]);
   const assigneeOptions = useMemo(() => {
-    const names = [...new Set(cards.flatMap(cardAssignees))].filter(n => n !== 'Unassigned').sort();
-    return cards.some(c => cardAssignees(c).includes('Unassigned')) ? ['Unassigned', ...names] : names;
+    const all = new Set(cards.flatMap(cardAssignees));
+    const names = [...all].filter(n => n !== 'Unassigned').sort();
+    return all.has('Unassigned') ? ['Unassigned', ...names] : names;
   }, [cards]);
 
   const shown = useMemo(() => {
     const q = norm(query);
     const today = startOfToday();
+    const statuses = new Set(statusFilter);
+    const assignees = new Set(assigneeFilter);
+    const dues = new Set(dueFilter);
     return cards.filter(c => (
       (scope === 'all' || (scope === 'mine' && isMine(c, me)))
       && (!q || norm(c.name).includes(q) || norm(c.ids?.memberId).includes(q))
-      && (!statusFilter.length || cardStatuses(c).some(st => statusFilter.includes(st)))
-      && (!assigneeFilter.length || cardAssignees(c).some(n => assigneeFilter.includes(n)))
-      && (!dueFilter.length || dueFilter.includes(dueBucket(c.due, today)))
+      && (!statuses.size || cardStatuses(c).some(st => statuses.has(st)))
+      && (!assignees.size || cardAssignees(c).some(n => assignees.has(n)))
+      && (!dues.size || dues.has(dueBucket(c.due, today)))
     ));
   }, [cards, scope, query, me, statusFilter, assigneeFilter, dueFilter]);
   const filtered = !!(query || scope !== 'all' || statusFilter.length || assigneeFilter.length || dueFilter.length);

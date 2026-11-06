@@ -25,6 +25,7 @@ import { AttachSheet, FileInputs } from './AttachSheet';
 import { ShareLinkSheet } from './ShareLinkSheet';
 import { uploadChatMedia } from './useInternalChats';
 import { useLongPress } from './useLongPress';
+import { useObjectUrls } from './useObjectUrls';
 import common from '../mobile.module.css';
 import form from './messageForm.module.css';
 import styles from './ThreadScreen.module.css';
@@ -64,11 +65,13 @@ export function ThreadScreen({ conversation: opened }) {
   const [internal, setInternal] = useState(false);
   const [sending, setSending] = useState(false);
   const [pending, setPending] = useState([]);
-  const [share, setShare] = useState(null);
+  // The Send Form / Send Article link waiting in the box; only Send reads it.
+  const shareRef = useRef(null);
   const [sheet, setSheet] = useState(null);
   const [messageFor, setMessageFor] = useState(null);
   const inputs = useRef(null);
   const scrollRef = useRef(null);
+  const previews = useObjectUrls();
   const isEmail = channel === 'email';
   const sender = { id: me?.id || null, name: me?.name || 'Care team' };
 
@@ -103,13 +106,16 @@ export function ThreadScreen({ conversation: opened }) {
 
   const editDraft = (v) => {
     setDraft(v);
-    if (!v.trim()) setShare(null);
+    if (!v.trim()) shareRef.current = null;
   };
 
   const send = async () => {
     const files = pending.filter(f => f.url);
+    // Still uploading at Send: dropped from the box either way.
+    const dropped = pending.filter(f => !f.url);
     let body = draft.trim();
     if (!body && !files.length) return;
+    const share = shareRef.current;
     setSending(true);
     setDraft('');
     setPending([]);
@@ -119,12 +125,14 @@ export function ThreadScreen({ conversation: opened }) {
         if (!to.length) throw new Error('This patient has no phone number on file.');
         if (shared && logFor && !share?.forName) body = withForPrefix(body, logFor.name);
         const attribution = shared && logFor ? { id: logFor.id, name: logFor.name } : undefined;
+        // One at a time, in order: each SMS goes through the gateway's rate limit and lands in the thread in order.
         for (const phone of to) await sendSms({ conversation, sender, to: phone, body, meta: share?.meta, loggedFor: attribution });
       } else {
         // One message per file; the text rides with the last one (desktop CommsThread).
         const items = files.length ? files : [null];
         for (let i = 0; i < items.length; i++) {
           const f = items[i];
+          // In order, one at a time: the thread orders by send time and the text must land last.
           await addMessage({
             conversation_id: conversation.id,
             kind: 'message',
@@ -139,40 +147,41 @@ export function ThreadScreen({ conversation: opened }) {
           });
         }
       }
-      files.forEach(f => URL.revokeObjectURL(f.previewUrl));
-      setShare(null);
+      files.forEach(f => previews.revoke(f.id));
+      shareRef.current = null;
     } catch (err) {
       setDraft(body);
       setPending(files);
       toast.error(err.message || 'Could not send the message.');
     } finally {
+      dropped.forEach(f => previews.revoke(f.id));
       setSending(false);
     }
   };
 
   const attach = async (file) => {
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    const previewUrl = URL.createObjectURL(file);
+    const previewUrl = previews.create(id, file);
     setPending(p => [...p, { id, name: file.name, size: file.size, type: file.type, previewUrl, uploading: true }]);
     try {
       const url = await uploadChatMedia(`comms/${conversation.id}/${Date.now()}-${file.name.replace(/[^\w.-]+/g, '_')}`, file);
       setPending(p => p.map(f => (f.id === id ? { ...f, url, uploading: false } : f)));
     } catch {
-      URL.revokeObjectURL(previewUrl);
+      previews.revoke(id);
       setPending(p => p.filter(f => f.id !== id));
       toast.error(`Could not upload ${file.name}.`);
     }
   };
   const removePending = (id) => setPending((p) => {
     const f = p.find(x => x.id === id);
-    if (f) URL.revokeObjectURL(f.previewUrl);
+    if (f) previews.revoke(f.id);
     return p.filter(x => x.id !== id);
   });
 
   // Send Form / Send Article put their line in the box; Send sends it.
   const insertShare = ({ text, meta, targets, forName }) => {
     setDraft(prev => (prev.trim() ? `${prev.trimEnd()}\n${text}` : text));
-    setShare({ meta, targets, forName });
+    shareRef.current = { meta, targets, forName };
   };
 
   const sendPatient = patient || (conversation.patient_id ? {
@@ -399,13 +408,17 @@ function DeleteSheet({ conversation, onClose }) {
             loading={busy}
             onClick={async () => {
               setBusy(true);
+              // Stays busy once deleted: the live row's DELETE closes the thread.
+              let deleted = false;
               try {
                 await deleteConversation(conversation.id);
+                deleted = true;
                 toast.success('Conversation Deleted Successfully');
               } catch (err) {
                 toast.error(err.message || 'Could not delete this conversation.');
-                setBusy(false);
                 onClose();
+              } finally {
+                setBusy(deleted);
               }
             }}
           >

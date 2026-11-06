@@ -50,6 +50,7 @@ export function AutomationRunScreen({ id }) {
   }, [fetchAutomationMembers, fetchPopGroups, popGroups.length]);
 
   const byId = useMemo(() => new Map(pool.map(p => [String(p.id), p])), [pool]);
+  const pickedIds = useMemo(() => new Set(memberIds), [memberIds]);
   const q = query.trim().toLowerCase();
   const members = useMemo(() => (q
     ? pool.filter(p => [p.name, p.memberId, p.email].some(v => (v || '').toLowerCase().includes(q)))
@@ -90,8 +91,12 @@ export function AutomationRunScreen({ id }) {
   const submit = async () => {
     if (!target || !automation) return;
     setSubmitting(true);
-    const run = await runAutomation(automation.id, target);
-    setSubmitting(false);
+    let run;
+    try {
+      run = await runAutomation(automation.id, target);
+    } finally {
+      setSubmitting(false);
+    }
     if (run) {
       // A run with failures already gets the store's failure toast.
       if (!run.failedCount) showToast('Automation executed successfully!');
@@ -123,7 +128,7 @@ export function AutomationRunScreen({ id }) {
                 <ul className={styles.pickList}>
                   {members.slice(0, MEMBER_LIMIT).map(p => {
                     const pid = String(p.id);
-                    const on = memberIds.includes(pid);
+                    const on = pickedIds.has(pid);
                     return (
                       <li key={pid}>
                         <Pick on={on} multi name={p.name} sub={[p.memberId, p.email].filter(Boolean).join(' • ')} onClick={() => toggleMember(pid)} />

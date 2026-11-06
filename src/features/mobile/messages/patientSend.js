@@ -49,6 +49,7 @@ export async function deliver({ recipient, targets, via, me, subject, html, smsB
     const own = recipient.phone ? toE164(recipient.phone) : phones[0];
     const conv = await findOrCreateConversation('sms', { ...recipient, phone: own }, { patient_phone: own });
     const loggedFor = recipient.id != null ? { id: String(recipient.id), name: recipient.name } : undefined;
+    // One at a time, in order: each SMS goes through the gateway's rate limit and lands in the thread in order.
     for (const phone of phones) results.push(['SMS', await sendSms({ conversation: conv, sender, to: phone, body: smsBody, meta, loggedFor })]);
   }
   const failed = results.filter(([, m]) => m?.status === 'failed');

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BottomSheet } from '../../../components/BottomSheet/BottomSheet';
 import { Button } from '../../../components/Button/Button';
 import { Input } from '../../../components/Input/Input';
@@ -29,10 +29,17 @@ export function UploadPhotoSheet({ patient, file, onClose }) {
   const [name, setName] = useState(() => stripExt(file.name) || 'Photo');
   const [type, setType] = useState('');
   const [category, setCategory] = useState('');
-  const preview = useMemo(() => (/^image\//.test(file.type) ? URL.createObjectURL(file) : null), [file]);
+  const isImage = /^image\//.test(file.type);
+  const previewRef = useRef(null);
 
   useEffect(() => { fetchDocumentCategories?.(); }, [fetchDocumentCategories]);
-  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+  useEffect(() => {
+    const img = previewRef.current;
+    if (!isImage || !img) return undefined;
+    const url = URL.createObjectURL(file);
+    img.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [file, isImage]);
 
   const categories = useMemo(
     () => withCustomCategories(customCategories || []).filter(c => c.key !== ALL_CATEGORY).map(c => ({ value: c.key, label: c.label })),
@@ -64,7 +71,7 @@ export function UploadPhotoSheet({ patient, file, onClose }) {
   return (
     <BottomSheet title="Upload Document" onClose={onClose}>
       <div className={styles.sheetForm}>
-        {preview && <img src={preview} alt="Captured document" className={own.preview} />}
+        {isImage && <img ref={previewRef} alt="Captured document" className={own.preview} />}
         <Input label="Name" required size="lg" enterKeyHint="done" value={name} onValueChange={setName} />
         <PickerField label="File Type" required options={TYPE_OPTIONS} value={type} placeholder="Select file type" onChange={setType} />
         <PickerField label="Category" required options={categories} value={category} placeholder="Select category" onChange={setCategory} />

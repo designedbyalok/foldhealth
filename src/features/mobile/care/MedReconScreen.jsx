@@ -61,12 +61,13 @@ export function MedReconScreen({ patientId, programId }) {
   useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
 
   const medications = useMemo(() => meds || EMPTY, [meds]);
+  const viewedIds = useMemo(() => new Set(viewed), [viewed]);
   // Desktop: a discharge import keeps its New badge for the whole first
   // visit and is marked seen on the way out.
   const unseenRef = useRef([]);
   useEffect(() => {
-    unseenRef.current = medications.filter(m => m.source === 'discharge_import' && !viewed.includes(m.id)).map(m => m.id);
-  }, [medications, viewed]);
+    unseenRef.current = medications.filter(m => m.source === 'discharge_import' && !viewedIds.has(m.id)).map(m => m.id);
+  }, [medications, viewedIds]);
   useEffect(() => () => {
     if (unseenRef.current.length) markNewMedsViewed(patientId, unseenRef.current);
   }, [patientId, markNewMedsViewed]);
@@ -152,7 +153,7 @@ export function MedReconScreen({ patientId, programId }) {
                   <span className={styles.checkLabel}>{m.name}</span>
                   <span className={styles.meta}>{[m.sig, m.start ? `Started ${m.start}` : null, m.stop ? `Stopped ${m.stop}` : null].filter(Boolean).join(' • ')}</span>
                 </span>
-                {m.source === 'discharge_import' && !viewed.includes(m.id) && <Badge size="sm" tone="primary" variant="soft" label="New" />}
+                {m.source === 'discharge_import' && !viewedIds.has(m.id) && <Badge size="sm" tone="primary" variant="soft" label="New" />}
                 <Badge size="sm" tone={m.status === 'Stopped' ? 'neutral' : 'success'} variant="soft" label={m.status || 'Active'} />
               </button>
             ))}

@@ -71,7 +71,8 @@ export function ShareLinkSheet({ conversation, kind, forName, onInsert, onClose 
   ];
   const [picked, setPicked] = useState(() => (patient.phone ? ['patient'] : []));
   const hasRoles = sms && (contacts || []).length > 0;
-  const targets = hasRoles ? people.filter(p => picked.includes(p.value) && p.phone)
+  const pickedSet = new Set(picked);
+  const targets = hasRoles ? people.filter(p => pickedSet.has(p.value) && p.phone)
     : sms ? (patient.phone ? [patient] : []) : [patient];
   const pick = (v) => {
     const next = pickOneDecisionMaker(v, picked, x => people.find(p => p.value === x)?.type);

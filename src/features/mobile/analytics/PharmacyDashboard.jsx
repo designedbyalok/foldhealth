@@ -42,7 +42,11 @@ export function PharmacyDashboard() {
   const [period, setPeriod] = useState('Last 30 days');
 
   const options = useMemo(() => ({ healthPlans: uniq(members.map(m => m.healthPlan)), ipas: uniq(members.map(m => m.ipa)) }), [members]);
-  const filtered = useMemo(() => members.filter(m => (!healthPlans.length || healthPlans.includes(m.healthPlan)) && (!ipas.length || ipas.includes(m.ipa))), [members, healthPlans, ipas]);
+  const filtered = useMemo(() => {
+    const plans = new Set(healthPlans);
+    const ipaSet = new Set(ipas);
+    return members.filter(m => (!plans.size || plans.has(m.healthPlan)) && (!ipaSet.size || ipaSet.has(m.ipa)));
+  }, [members, healthPlans, ipas]);
   const enriched = useMemo(() => reportMembers(filtered, { measures }), [filtered, measures]);
   const outcomes = useMemo(() => outcomesReport(enriched, 'measure'), [enriched]);
   const providers = useMemo(() => outcomesReport(enriched, 'ipa'), [enriched]);

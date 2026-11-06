@@ -30,14 +30,20 @@ export function PatientTagsScreen({ patientId }) {
   const [removing, setRemoving] = useState(null);
 
   const q = query.trim().toLowerCase();
-  const rest = all.filter(t => !ids.includes(t.id) && (!q || t.name.toLowerCase().includes(q)));
+  const onPatient = new Set(ids);
+  const rest = all.filter(t => !onPatient.has(t.id) && (!q || t.name.toLowerCase().includes(q)));
+  const pickedSet = new Set(picked);
   const toggle = (id) => setPicked(p => (p.includes(id) ? p.filter(x => x !== id) : [...p, id]));
 
   const add = async () => {
     if (!picked.length || saving) return;
     setSaving(true);
-    const ok = await addPatientTags(patientId, picked);
-    setSaving(false);
+    let ok;
+    try {
+      ok = await addPatientTags(patientId, picked);
+    } finally {
+      setSaving(false);
+    }
     if (!ok) { toast.error('Tags could not be added. Try again.'); return; }
     toast.success(picked.length === 1 ? 'Tag Added Successfully' : 'Tags Added Successfully');
     setPicked([]);
@@ -89,7 +95,7 @@ export function PatientTagsScreen({ patientId }) {
         <div className={own.options}>
           {rest.map(t => (
             <label key={t.id} className={own.option}>
-              <Checkbox checked={picked.includes(t.id)} onCheckedChange={() => toggle(t.id)} aria-label={t.name} />
+              <Checkbox checked={pickedSet.has(t.id)} onCheckedChange={() => toggle(t.id)} aria-label={t.name} />
               <Badge size="md" variant="soft" label={t.name} style={tagBadgeStyle(t.color)} />
             </label>
           ))}

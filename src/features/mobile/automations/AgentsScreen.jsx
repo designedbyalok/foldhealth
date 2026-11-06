@@ -41,9 +41,12 @@ export function AgentsScreen() {
   }), [agents]);
   const shown = useMemo(() => {
     let list = agents;
-    if (status.length) list = list.filter(a => status.includes(a.enabled ? 'Enabled' : 'Disabled'));
-    if (model.length) list = list.filter(a => model.includes(a.model || DEFAULT_MODEL));
-    if (useCase.length) list = list.filter(a => useCase.includes(a.use_case));
+    const statusSet = new Set(status);
+    const modelSet = new Set(model);
+    const useCaseSet = new Set(useCase);
+    if (statusSet.size) list = list.filter(a => statusSet.has(a.enabled ? 'Enabled' : 'Disabled'));
+    if (modelSet.size) list = list.filter(a => modelSet.has(a.model || DEFAULT_MODEL));
+    if (useCaseSet.size) list = list.filter(a => useCaseSet.has(a.use_case));
     const q = search.toLowerCase().trim();
     if (!q) return list;
     return list.filter(a => a.name?.toLowerCase().includes(q) || a.use_case?.toLowerCase().includes(q) || a.last_updated_by?.toLowerCase().includes(q));

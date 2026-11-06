@@ -84,8 +84,12 @@ export function AvailabilitySlotScreen({ blockId }) {
       skipHolidays, allowOverlap: overlapping.has(k),
       ...(b.rolling ? { endDate: '' } : {}),
     }));
-    const ok = await saveUserAvailability(user, clean);
-    setSaving(false);
+    let ok;
+    try {
+      ok = await saveUserAvailability(user, clean);
+    } finally {
+      setSaving(false);
+    }
     if (ok) {
       toast.success(`Availability saved for ${user.name}`);
       pop();

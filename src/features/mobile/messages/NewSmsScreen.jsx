@@ -72,8 +72,9 @@ export function NewSmsScreen({ initialPatient }) {
   const [verifyId, setVerifyId] = useState(DEFAULT_ID_VERIFICATION);
   if (pickedFor !== to) { setPickedFor(to); setPicked(memberPick(to)); setLogForId(null); setAppliedTag(null); setBody(b => withForPrefix(b, null)); }
   const hasRoles = !!patient && (contacts || []).length > 0;
+  const pickedSet = new Set(picked);
   const targets = hasRoles
-    ? people.filter(o => picked.includes(o.value) && o.phone)
+    ? people.filter(o => pickedSet.has(o.value) && o.phone)
     : recipient?.phone ? [{ label: recipient.name, phone: recipient.phone }] : [];
   const updatePicked = (raw) => {
     const next = pickOneDecisionMaker(raw, picked, id => people.find(o => o.value === id)?.type);
@@ -114,9 +115,12 @@ export function NewSmsScreen({ initialPatient }) {
     const secured = protect ? protectSms(body.trim()) : null;
     const text = secured ? secured.text : body.trim();
     const meta = secured ? { verifyId, secureLinks: secured.links } : undefined;
+    // Stays sending once sent: the screen is closing and must not send twice.
+    let done = false;
     try {
       const conv = await findOrCreateConversation('sms', { ...recipient, phone }, { patient_phone: phone });
       const sent = [];
+      // One at a time, in Send To order: each SMS goes through the gateway's rate limit and lands in the thread in order.
       for (const t of targets) {
         sent.push(await sendSms({
           conversation: conv, sender: { id: me?.id, name: me?.name }, to: toE164(t.phone), body: text, meta,
@@ -127,9 +131,11 @@ export function NewSmsScreen({ initialPatient }) {
       if (failed.length) toast.error(`SMS not sent: ${failed[0].failure_reason}`);
       else toast.success('SMS Sent Successfully');
       pop();
+      done = true;
     } catch {
       toast.error('Could not send the SMS.');
-      setSending(false);
+    } finally {
+      setSending(done);
     }
   };
 

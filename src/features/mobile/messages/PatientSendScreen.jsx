@@ -104,7 +104,8 @@ export function PatientSendScreen({ kind = 'education', patient: given, initialF
   const reachable = !!(recipient.email || recipient.phone);
   const shown = reachable ? picked : picked.filter(v => v !== 'patient');
   const hasRoles = (contacts || []).length > 0;
-  const targets = hasRoles ? people.filter(p => shown.includes(p.value)) : (reachable ? [people[0]] : []);
+  const shownSet = new Set(shown);
+  const targets = hasRoles ? people.filter(p => shownSet.has(p.value)) : (reachable ? [people[0]] : []);
   const pick = (v) => {
     const next = pickOneDecisionMaker(v, shown, x => people.find(p => p.value === x)?.type);
     const on = verifyForSendTo(next, shown);
@@ -118,7 +119,8 @@ export function PatientSendScreen({ kind = 'education', patient: given, initialF
   const first = firstNameOf(recipient.name);
   const template = templates.find(t => t.value === templateId) || templates[0];
   const item = content.find(c => c.id === contentId);
-  const pickedForms = forms.filter(f => formIds.includes(String(f.id))).map(f => ({ id: f.id, name: f.name, url: formShareLink(f.id) }));
+  const formIdSet = new Set(formIds);
+  const pickedForms = forms.filter(f => formIdSet.has(String(f.id))).map(f => ({ id: f.id, name: f.name, url: formShareLink(f.id) }));
   const html = composeWithTemplate({
     templateHtml: template?.html,
     introText: education ? `Hi ${first},\n\nYour care team thought this would be helpful.` : `Hi, ${first}\n\nPlease fill below forms to help us provide better care to you!`,
@@ -142,8 +144,10 @@ export function PatientSendScreen({ kind = 'education', patient: given, initialF
     setTouched(true);
     if (blockedReason) return;
     setBusy(true);
+    // Stays busy once sent: the screen is closing and must not send twice.
+    let ok = false;
     try {
-      const ok = education
+      ok = education
         ? await deliver({
           recipient, me, via, targets, subject: subject.trim(), html, smsBody: smsText.trim(),
           meta: { kind: 'education', contentId: item.id, priority, taskTitle: taskTitle.trim() || null },
@@ -166,10 +170,11 @@ export function PatientSendScreen({ kind = 'education', patient: given, initialF
         });
       }
       if (ok) pop();
-      else setBusy(false);
     } catch {
+      ok = false;
       toast.error(education ? 'Could not send the content.' : 'Could not send the forms.');
-      setBusy(false);
+    } finally {
+      setBusy(!!ok);
     }
   };
 

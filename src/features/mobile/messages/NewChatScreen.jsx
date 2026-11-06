@@ -38,22 +38,27 @@ export function NewChatScreen({ initialType = 'patient' }) {
     }
     if (!patient || !groupName.trim()) return;
     setSaving(true);
+    // Stays saving once opened: this screen is being replaced by the thread.
+    let opened = null;
     try {
+      const memberIds = new Set(members);
       const conv = await findOrCreateConversation('chat', patient, {
         group_name: groupName.trim(),
         subject: subject.trim() || null,
-        members: staff.filter(s => members.includes(s.id)).map(s => ({ id: s.id, name: s.name })),
+        members: staff.filter(s => memberIds.has(s.id)).map(s => ({ id: s.id, name: s.name })),
         created_by: me?.id || null,
         created_by_name: me?.name || null,
       });
-      let opened = conv;
+      opened = conv;
       if (conv.group_name !== groupName.trim() || (subject.trim() && conv.subject !== subject.trim())) {
         opened = await updateConversation(conv.id, { group_name: groupName.trim(), subject: subject.trim() || conv.subject }) || conv;
       }
       replace('thread', { conversation: opened });
     } catch {
+      opened = null;
       toast.error('Could not start the chat.');
-      setSaving(false);
+    } finally {
+      setSaving(!!opened);
     }
   };
 

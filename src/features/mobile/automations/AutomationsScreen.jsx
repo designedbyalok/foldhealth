@@ -40,9 +40,13 @@ export function AutomationsScreen() {
 
   const runMap = useMemo(() => runsByAutomation(allRuns), [allRuns]);
   const groupOptions = useMemo(() => [...new Set(automations.map(a => a.populationGroupName || NO_GROUP))].sort(), [automations]);
-  const filtered = useMemo(() => automations.filter(a => matchesSearch(a, search)
-    && (!execFilter.length || execFilter.includes(executionTypeOf(a.schedule)))
-    && (!groupFilter.length || groupFilter.includes(a.populationGroupName || NO_GROUP))), [automations, search, execFilter, groupFilter]);
+  const filtered = useMemo(() => {
+    const execSet = new Set(execFilter);
+    const groupSet = new Set(groupFilter);
+    return automations.filter(a => matchesSearch(a, search)
+      && (!execSet.size || execSet.has(executionTypeOf(a.schedule)))
+      && (!groupSet.size || groupSet.has(a.populationGroupName || NO_GROUP)));
+  }, [automations, search, execFilter, groupFilter]);
   const counts = useMemo(() => Object.fromEntries(STATUS_TABS.map(t => [t.key, filtered.filter(a => inStatusTab(a, t.key)).length])), [filtered]);
   const shown = useMemo(() => filtered.filter(a => inStatusTab(a, statusTab)), [filtered, statusTab]);
   const tab = STATUS_TABS.find(t => t.key === statusTab);

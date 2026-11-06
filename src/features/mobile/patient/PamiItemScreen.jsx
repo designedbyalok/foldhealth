@@ -106,7 +106,8 @@ function PamiSearch({ cfg, taken, onPick }) {
       } catch (err) {
         if (err.name !== 'AbortError') setHits([]);
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        // Aborted means a newer search is queued: keep the spinner on (it was on) until it runs.
+        setLoading(controller.signal.aborted);
       }
     }, 300);
     return () => { clearTimeout(timer); controller.abort(); };

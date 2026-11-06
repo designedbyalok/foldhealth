@@ -81,8 +81,12 @@ export function RecordVitalsScreen({ patientId, focus }) {
   const record = async () => {
     if (!canRecord) return;
     setSaving(true);
-    const { error } = await recordPatientVitals(patientId, readings);
-    setSaving(false);
+    let error;
+    try {
+      ({ error } = await recordPatientVitals(patientId, readings));
+    } finally {
+      setSaving(false);
+    }
     if (error) { toast.error('Vitals could not be recorded'); return; }
     toast.success(readings.length === 1 ? 'Vital recorded' : `${readings.length} vitals recorded`);
     pop();

@@ -13,6 +13,7 @@ import { useMobileNav } from '../MobileNavContext';
 import { dateOf, initialsOf, timeOf } from '../mobileFormat';
 import { AttachSheet, FileInputs } from './AttachSheet';
 import { uploadChatMedia, useInternalThread, useStaffProfiles } from './useInternalChats';
+import { useObjectUrls } from './useObjectUrls';
 import common from '../mobile.module.css';
 import styles from './ThreadScreen.module.css';
 
@@ -29,6 +30,7 @@ export function InternalThreadScreen({ userId, profile: given }) {
   const [attachOpen, setAttachOpen] = useState(false);
   const inputs = useRef(null);
   const scrollRef = useRef(null);
+  const previews = useObjectUrls();
 
   useLayoutEffect(() => {
     const el = scrollRef.current;
@@ -38,21 +40,21 @@ export function InternalThreadScreen({ userId, profile: given }) {
   // Files upload right away and wait in the type box until Send (desktop ChatArea.attach).
   const attach = async (file) => {
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    const previewUrl = URL.createObjectURL(file);
+    const previewUrl = previews.create(id, file);
     setPending(p => [...p, { id, name: file.name, size: file.size, type: file.type, previewUrl, uploading: true }]);
     const ext = file.name.split('.').pop();
     try {
       const url = await uploadChatMedia(`${me?.id}/${Date.now()}-${id}.${ext}`, file);
       setPending(p => p.map(f => (f.id === id ? { ...f, url, uploading: false } : f)));
     } catch (err) {
-      URL.revokeObjectURL(previewUrl);
+      previews.revoke(id);
       setPending(p => p.filter(f => f.id !== id));
       toast.error(`Could not upload ${file.name}: ${err.message}`);
     }
   };
   const removePending = (id) => setPending((p) => {
     const f = p.find(x => x.id === id);
-    if (f) URL.revokeObjectURL(f.previewUrl);
+    if (f) previews.revoke(f.id);
     return p.filter(x => x.id !== id);
   });
 
@@ -67,13 +69,15 @@ export function InternalThreadScreen({ userId, profile: given }) {
     try {
       const items = files.length ? files : [null];
       for (let i = 0; i < items.length; i++) {
+        // In order, one at a time: the thread shows them as sent and the text must land last.
         await send({ content: i === items.length - 1 ? content : '', media: items[i] });
       }
-      files.forEach(f => URL.revokeObjectURL(f.previewUrl));
     } catch (err) {
       setDraft(content);
       toast.error(`Could not send: ${err.message}`);
     } finally {
+      // Every preview left the box at Send (still-uploading ones are dropped).
+      pending.forEach(f => previews.revoke(f.id));
       setSending(false);
     }
   };

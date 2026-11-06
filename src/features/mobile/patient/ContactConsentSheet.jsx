@@ -32,15 +32,17 @@ export function ContactConsentSheet({ patient, onClose }) {
   const run = async () => {
     const accept = confirm.status === 'given';
     setSaving(true);
-    for (const scope of confirm.scopes) {
-      const result = await capturePatientConsent(patient.id, { scopeType: 'channel', scope, status: confirm.status, method: accept ? 'verbal' : null });
-      if (!result.ok) {
-        setSaving(false);
-        toast.error(result.error || 'Consent could not be saved');
-        return;
+    try {
+      for (const scope of confirm.scopes) {
+        const result = await capturePatientConsent(patient.id, { scopeType: 'channel', scope, status: confirm.status, method: accept ? 'verbal' : null });
+        if (!result.ok) {
+          toast.error(result.error || 'Consent could not be saved');
+          return;
+        }
       }
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
     toast.success(accept ? 'Contact consent accepted' : 'Contact consent withdrawn');
     setConfirm(null);
   };

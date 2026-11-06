@@ -82,8 +82,13 @@ export function EditProfileScreen() {
       logAudit('UserProfile', me.id, me.name, 'updated', `Profile updated: ${changes.map(c => c.field).join(', ')}`, 'Configuration', changes);
     }
     setSaving(true);
-    const { data, error } = await supabase.from('profiles').update(updates).eq('id', me.id).select();
-    setSaving(false);
+    let data;
+    let error;
+    try {
+      ({ data, error } = await supabase.from('profiles').update(updates).eq('id', me.id).select());
+    } finally {
+      setSaving(false);
+    }
     if (error || !data || data.length === 0) {
       showToast(`Error: ${error?.message || 'Permission denied'}`);
       return;

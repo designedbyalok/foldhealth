@@ -38,6 +38,7 @@ export function ClinicalNoteScreen({ patientId }) {
   const valid = !!title.trim() && !!body.trim();
 
   const toggleGap = (code) => setGaps(g => (g.includes(code) ? g.filter(c => c !== code) : [...g, code]));
+  const gapSet = new Set(gaps);
 
   const save = async (status) => {
     if (!valid) { showToast?.('Title and note body are required'); return; }
@@ -95,11 +96,11 @@ export function ClinicalNoteScreen({ patientId }) {
               <button
                 key={code}
                 type="button"
-                aria-pressed={gaps.includes(code)}
-                className={`${styles.chip} ${gaps.includes(code) ? styles.chipOn : ''}`}
+                aria-pressed={gapSet.has(code)}
+                className={`${styles.chip} ${gapSet.has(code) ? styles.chipOn : ''}`}
                 onClick={() => toggleGap(code)}
               >
-                {gaps.includes(code) && <Icon name="solar:check-circle-linear" size={20} color="currentColor" />}
+                {gapSet.has(code) && <Icon name="solar:check-circle-linear" size={20} color="currentColor" />}
                 {code}{MEASURE_NAMES[code] ? `: ${MEASURE_NAMES[code]}` : ''}
               </button>
             ))}

@@ -39,6 +39,7 @@ export function Field({ label, required, hint, error, children }) {
  */
 export function SendToList({ people, value, onChange, label = 'Send To' }) {
   const toggle = (v) => onChange(value.includes(v) ? value.filter(x => x !== v) : [...value, v]);
+  const picked = new Set(value);
   return (
     <div className={styles.people} role="group" aria-label={label}>
       {people.map(p => (
@@ -49,7 +50,7 @@ export function SendToList({ people, value, onChange, label = 'Send To' }) {
             {p.type && <span className={styles.tag}>{p.type}</span>}
             <span className={styles.personMeta}>{p.meta}</span>
           </span>
-          <Checkbox checked={value.includes(p.value)} disabled={p.disabled} onCheckedChange={() => toggle(p.value)} aria-label={p.name} />
+          <Checkbox checked={picked.has(p.value)} disabled={p.disabled} onCheckedChange={() => toggle(p.value)} aria-label={p.name} />
         </label>
       ))}
     </div>

@@ -67,6 +67,7 @@ export function LogOutreachScreen({ patientId, programCode, type: initialType = 
   const options = programCode && !base.includes(programCode) ? [programCode, ...base] : base;
   const selected = picked ?? (programCode ? [programCode] : enrolled.length === 1 ? enrolled : []);
   const toggle = (code) => setPicked(selected.includes(code) ? selected.filter(c => c !== code) : [...selected, code]);
+  const selectedSet = new Set(selected);
 
   const channel = OUTREACH_CHANNEL[type];
   const warning = channel && !consentTableMissing
@@ -107,11 +108,11 @@ export function LogOutreachScreen({ patientId, programCode, type: initialType = 
             <button
               key={code}
               type="button"
-              aria-pressed={selected.includes(code)}
-              className={`${styles.chip} ${selected.includes(code) ? styles.chipOn : ''}`}
+              aria-pressed={selectedSet.has(code)}
+              className={`${styles.chip} ${selectedSet.has(code) ? styles.chipOn : ''}`}
               onClick={() => toggle(code)}
             >
-              {selected.includes(code) && <Icon name="solar:check-circle-linear" size={20} color="currentColor" />}
+              {selectedSet.has(code) && <Icon name="solar:check-circle-linear" size={20} color="currentColor" />}
               {code}
             </button>
           ))}

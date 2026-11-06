@@ -65,12 +65,14 @@ export function PharmacyOutreachScreen({ id }) {
 
   const selected = picked ?? measures;
   const toggle = (code) => setPicked(selected.includes(code) ? selected.filter(c => c !== code) : [...selected, code]);
+  const selectedSet = new Set(selected);
   const items = outcome ? schemaOutcomeItems(outcome) : [];
   const future = !!date && isFutureDate(date);
   const canSave = !!member && selected.length > 0 && !!outcome && !!note.trim() && !!date && !future;
 
   const changeOutcome = (next) => { if (next !== outcome) { setOutcome(next); setOutcomes([]); } };
   const toggleOutcome = (key) => setOutcomes(o => (o.includes(key) ? o.filter(k => k !== key) : [...o, key]));
+  const outcomeSet = new Set(outcomes);
 
   const save = () => {
     if (!canSave) return;
@@ -165,12 +167,12 @@ export function PharmacyOutreachScreen({ id }) {
             <button
               key={code}
               type="button"
-              aria-pressed={selected.includes(code)}
+              aria-pressed={selectedSet.has(code)}
               aria-label={`${code} ${MEASURE_NAMES[code] || ''}`}
-              className={`${form.chip} ${selected.includes(code) ? form.chipOn : ''}`}
+              className={`${form.chip} ${selectedSet.has(code) ? form.chipOn : ''}`}
               onClick={() => toggle(code)}
             >
-              {selected.includes(code) && <Icon name="solar:check-circle-linear" size={20} color="currentColor" />}
+              {selectedSet.has(code) && <Icon name="solar:check-circle-linear" size={20} color="currentColor" />}
               {code}
             </button>
           ))}
@@ -209,12 +211,12 @@ export function PharmacyOutreachScreen({ id }) {
                 key={it.key}
                 type="button"
                 role="checkbox"
-                aria-checked={outcomes.includes(it.key)}
+                aria-checked={outcomeSet.has(it.key)}
                 className={form.choice}
                 onClick={() => toggleOutcome(it.key)}
               >
                 <span className={form.choiceText}><span className={form.choiceLabel}>{it.label}</span></span>
-                {outcomes.includes(it.key) && <Icon name="solar:check-circle-linear" size={24} color="var(--primary-300)" />}
+                {outcomeSet.has(it.key) && <Icon name="solar:check-circle-linear" size={24} color="var(--primary-300)" />}
               </button>
             )))}
           </div>

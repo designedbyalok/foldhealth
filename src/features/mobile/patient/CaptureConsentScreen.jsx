@@ -102,7 +102,9 @@ export function CaptureConsentScreen({ patientId, scopeType: presetType, scope: 
   const save = async () => {
     if (problem) return;
     setSaving(true);
-    const result = await capturePatientConsent(patientId, {
+    let result;
+    try {
+      result = await capturePatientConsent(patientId, {
       scopeType,
       scope,
       status,
@@ -111,8 +113,10 @@ export function CaptureConsentScreen({ patientId, scopeType: presetType, scope: 
       artifactKind: activeMethod === 'e_sign' ? 'signature' : 'upload',
       note: note.trim() || null,
       programId: null,
-    });
-    setSaving(false);
+      });
+    } finally {
+      setSaving(false);
+    }
     if (!result.ok) { toast.error(result.error || 'Consent could not be saved'); return; }
     toast.success(given ? 'Consent captured' : status === 'declined' ? 'Decline recorded' : 'Withdrawal recorded');
     pop();
