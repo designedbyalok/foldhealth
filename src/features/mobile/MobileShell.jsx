@@ -21,6 +21,8 @@ import { resolveAllPatient } from './members/resolvePatient';
 import { TasksScreen } from './tasks/TasksScreen';
 import { AddTaskScreen } from './tasks/AddTaskScreen';
 import { AppointmentScreen } from './schedule/AppointmentScreen';
+import { ProgramScreen } from './care/ProgramScreen';
+import { CarePlanScreen } from './care/CarePlanScreen';
 import { ProfileScreen } from './profile/ProfileScreen';
 import { AlertsScreen } from './profile/AlertsScreen';
 import shell from './MobileShell.module.css';
@@ -57,6 +59,8 @@ const SCREENS = {
   tasks: TasksScreen,
   addTask: AddTaskScreen,
   appointment: AppointmentScreen,
+  program: ProgramScreen,
+  carePlan: CarePlanScreen,
   profile: ProfileScreen,
   alerts: AlertsScreen,
 };
@@ -129,7 +133,7 @@ export function MobileShell() {
 
   // Open a patient from any id space (worklist rows, tasks, links), checking
   // the same Patient Details permission as desktop.
-  const openMember = useCallback(async ({ id, memberId, name } = {}) => {
+  const openMember = useCallback(async ({ id, memberId, name, tab } = {}) => {
     if (!can('patient:details')) {
       toast.error("You don't have access to patient details.");
       return;
@@ -141,7 +145,7 @@ export function MobileShell() {
       return;
     }
     // `exact`: already resolved to this all_patients row, so don't re-match.
-    push('member', hit ? { patientId: hit.id, exact: true } : { patientId: id });
+    push('member', hit ? { patientId: hit.id, exact: true, tab } : { patientId: id, tab });
   }, [can, push]);
 
   // A patient link (navigateToPatient, a notification, or the URL on load)

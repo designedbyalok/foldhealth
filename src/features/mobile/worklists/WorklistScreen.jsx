@@ -27,6 +27,9 @@ function isMine(card, me) {
 }
 
 /** One worklist as cards (mobile port of the desktop Population worklists). */
+// Program worklists open the patient on their Programs tab.
+const PROGRAM_LISTS = new Set(['SNP', 'Annual Visit', 'JSA', 'CMP', 'CCM']);
+
 export function WorklistScreen({ label }) {
   const adapter = WORKLIST_ADAPTERS[label];
   if (!adapter) return <ComingSoon label={label} />;
@@ -150,7 +153,7 @@ function WorklistCards({ label, adapter }) {
                 note={adapter.readOnlyNote}
                 onStatus={setPicker}
                 onCall={() => call(card)}
-                onOpen={() => openMember(card.ids)}
+                onOpen={() => openMember({ ...card.ids, tab: PROGRAM_LISTS.has(label) ? 'programs' : undefined })}
               />
             ))}
             {shown.length > limit && (
