@@ -26,12 +26,14 @@ export function useContactActions(contact, { more } = {}) {
 
   const callPhone = () => callFromPhone({ number: phone, patient: contact, sender: me });
 
+  const sendEmail = () => { window.location.href = `mailto:${email}`; };
+
   const actions = [
     { key: 'call', label: 'Call', icon: 'solar:phone-linear', onClick: callPhone, disabled: !phone },
     { key: 'chat', label: 'Chat', icon: 'solar:chat-round-linear', onClick: () => openThread('chat'), disabled: !contact?.patientAppActive },
     { key: 'sms', label: 'SMS', icon: 'solar:chat-square-linear', onClick: () => openThread('sms'), disabled: !phone },
-    { key: 'email', label: 'Email', icon: 'solar:letter-linear', onClick: () => { window.location.href = `mailto:${email}`; }, disabled: !email },
+    { key: 'email', label: 'Email', icon: 'solar:letter-linear', onClick: sendEmail, disabled: !email },
   ];
   if (more) actions.push({ key: 'more', label: 'More', icon: 'solar:menu-dots-linear', ...more });
-  return { actions, callPhone, phone };
+  return { actions, callPhone, phone, email, openThread, sendEmail };
 }

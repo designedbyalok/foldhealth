@@ -86,15 +86,6 @@
   letter-spacing: 0;
   color: var(--placeholder-text);
 }
-.sectionAdd {
-  display: inline-flex;
-  padding: var(--space-1);
-  margin: 0;
-  border: 0;
-  background: none;
-  color: var(--primary-300);
-  cursor: pointer;
-}
 .sectionBody {
   display: flex;
   flex-direction: column;
@@ -228,5 +219,43 @@
 
 /* 44pt touch targets (Apple HIG) */
 .sectionToggle { min-height: 44px; }
-.sectionAdd { position: relative; }
-.sectionAdd::before { content: ''; position: absolute; inset: -10px; }
+
+/* PAMI rows (Figma 759:27080): tap to edit, "⋯" for more. */
+.pamiRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-1) var(--space-2) 0;
+}
+.pamiRow + .pamiRow { border-top: 1px solid var(--neutral-100); }
+.pamiMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: var(--space-2) 0 var(--space-2) var(--space-4);
+  margin: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.pamiMain:active { background: var(--neutral-25); }
+.sheetText {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+button.vital {
+  margin: 0;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Header membership state (Figma 1105:74576: green when active). */
+.active { color: var(--status-success-dark); }
+.inactive { color: var(--status-error); }

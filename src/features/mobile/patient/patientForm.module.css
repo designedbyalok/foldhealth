@@ -1,0 +1,198 @@
+/* Patient workflow forms on the phone (follows Add Task, Figma 759:23660). */
+.body { background: var(--neutral-0); }
+.subtitle {
+  margin: 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5);
+}
+.footer {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5) max(var(--space-5), env(safe-area-inset-bottom));
+  border-top: 0.5px solid var(--neutral-150);
+  background: var(--neutral-0);
+}
+.footer > * { flex: 1 1 0; min-width: 0; }
+
+.group,
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.group { gap: var(--space-3); }
+.groupLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-lg);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--placeholder-text);
+}
+.fieldLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.required {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--status-error);
+}
+.hint {
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.error { color: var(--status-error); }
+
+/* Picker: looks like Input size="lg" (52px), opens a bottom sheet. */
+.picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--space-4);
+  margin: 0;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  background: var(--neutral-0);
+  color: var(--neutral-300);
+  text-align: left;
+  cursor: pointer;
+}
+.picker:active { background: var(--neutral-25); }
+.picker:disabled { background: var(--neutral-50); cursor: default; }
+.pickerValue,
+.pickerPlaceholder {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-lg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pickerValue { color: var(--neutral-400); }
+.pickerPlaceholder { color: var(--placeholder-text); }
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-2) 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.choice + .choice { border-top: 0.5px solid var(--neutral-100); }
+.choiceText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.choiceLabel {
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.choiceDetail {
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+
+/* Two fields side by side (date + time, dose + units). */
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+/* Toggle chips (programs, care gaps, reactions). */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  margin: 0;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  background: var(--neutral-0);
+  font-size: var(--font-lg);
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+.chipOn {
+  border-color: var(--primary-200);
+  background: var(--primary-100);
+  color: var(--primary-300);
+}
+
+/* Read-only notice inside a form. */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: 8px;
+  background: var(--neutral-50);
+  font-size: var(--font-lg);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}
+.notice > :first-child:not(span) { flex-shrink: 0; }
+.noticeError {
+  background: var(--status-error-light);
+  color: var(--status-error);
+}
+
+/* Sheet bodies */
+.sheetForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.sheetText {
+  margin: 0;
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.sheetActions {
+  display: flex;
+  gap: var(--space-3);
+}
+.sheetActions > * { flex: 1 1 0; min-width: 0; }

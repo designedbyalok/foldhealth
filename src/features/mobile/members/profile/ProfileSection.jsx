@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { Icon } from '../../../../components/Icon/Icon';
 import styles from '../MemberProfileScreen.module.css';
 
@@ -18,11 +19,7 @@ export function ProfileSection({ title, count, onAdd, addLabel, defaultOpen = tr
           </h2>
           <Icon name={open ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-down-linear'} size={16} />
         </button>
-        {onAdd && (
-          <button type="button" className={styles.sectionAdd} aria-label={addLabel || `Add ${title}`} onClick={onAdd}>
-            <Icon name="solar:add-circle-linear" size={24} color="currentColor" />
-          </button>
-        )}
+        {onAdd && <ActionButton icon="custom:add" size="lg" aria-label={addLabel || `Add ${title}`} onClick={onAdd} />}
       </div>
       {open && <div className={styles.sectionBody}>{children}</div>}
     </section>

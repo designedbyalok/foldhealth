@@ -117,3 +117,30 @@
 /* 44pt touch target (Apple HIG) */
 .phone { min-height: 44px; }
 .name { letter-spacing: -0.02em; }
+
+/* Patient profile header (Figma 759:19971): the back arrow sits alone at
+   the top, the avatar row 8px under it carries the inbox and menu buttons,
+   and 16px separates the avatar row, names, tags and action tiles. */
+.profile {
+  gap: var(--space-4);
+  padding-top: 0;
+}
+/* The 44pt back button centres a 24px arrow; pull the avatar up so it sits
+   8px under the arrow itself. */
+.profile .top { margin-bottom: calc(var(--space-4) * -1 - var(--space-1) / 2); }
+.profile .avatar {
+  border-radius: 12px;
+  font-size: calc(var(--font-4xl) + var(--space-1));
+}
+.avatarRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.avatarActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-left: auto;
+  margin-right: calc(var(--space-2) * -1);
+}

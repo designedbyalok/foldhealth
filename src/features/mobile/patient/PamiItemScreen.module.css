@@ -1,0 +1,66 @@
+/* PAMI add / edit on the phone. */
+.loading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+.hits {
+  display: flex;
+  flex-direction: column;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.hit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-3) 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.hit + .hit { border-top: 0.5px solid var(--neutral-100); }
+.hitText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.hitTitle {
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.hitDetail {
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+.reaction {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 9rem) auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+.reactionName {
+  min-width: 0;
+  font-size: var(--font-lg);
+  color: var(--neutral-400);
+}
+.reactionRemove {
+  position: relative;
+  display: inline-flex;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+.reactionRemove::before { content: ''; position: absolute; inset: -10px; }

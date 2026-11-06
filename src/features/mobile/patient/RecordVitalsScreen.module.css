@@ -1,0 +1,48 @@
+/* Record Vitals on the phone: one card per vital, its last reading above. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 0.5px solid var(--neutral-100);
+  border-radius: 12px;
+  background: var(--neutral-0);
+  scroll-margin: var(--space-16);
+}
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.name {
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.last {
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.inputs {
+  display: flex;
+  gap: var(--space-2);
+}
+.part {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.num { flex: 1; min-width: 0; }
+.unit {
+  flex-shrink: 0;
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}

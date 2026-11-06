@@ -1,0 +1,70 @@
+/* Bottom sheets on the mobile patient profile. */
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--space-4);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 64px;
+  padding: var(--space-2) 0;
+}
+.row + .row { border-top: 0.5px solid var(--neutral-100); }
+.rowButton {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-top: 0.5px solid var(--neutral-100);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.rowButton:first-child { border-top: 0; }
+.rowButton:active { background: var(--neutral-25); }
+.rowText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+.rowText > * { align-self: flex-start; }
+.rowTitle {
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.rowMeta {
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.divider {
+  height: 0;
+  margin: var(--space-2) 0;
+  border-top: 0.5px solid var(--neutral-150);
+}
+.groupLabel {
+  padding-top: var(--space-2);
+  font-size: var(--font-lg);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--placeholder-text);
+}
+.empty {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
