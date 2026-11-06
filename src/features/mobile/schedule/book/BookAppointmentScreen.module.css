@@ -1,0 +1,217 @@
+/* Book / reschedule an appointment (Figma 1082:58665) */
+.body { background: var(--neutral-100); }
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5);
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: 12px;
+  background: var(--neutral-0);
+}
+.cardTitle {
+  margin: 0;
+  font-size: var(--font-xl);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+
+/* Picker field (Figma "Text Input Mobile") */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.fieldLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-200);
+}
+.required {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--status-error);
+}
+.fieldBox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: 52px;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 0.5px solid var(--neutral-200);
+  border-radius: 8px;
+  background: var(--neutral-0);
+  box-sizing: border-box;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+div.fieldBox { cursor: default; }
+.fieldValue,
+.fieldPlaceholder {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.fieldPlaceholder { color: var(--neutral-200); }
+.fieldSuffix {
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.typeDot {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+/* Pinned primary action (Figma 1089:62824) */
+.footer {
+  padding: var(--space-5) var(--space-5) max(var(--space-8), env(safe-area-inset-bottom));
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-footer);
+}
+
+/* Reschedule: the visit being moved */
+.current {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: 12px;
+  background: var(--neutral-0);
+}
+.notice {
+  margin: 0;
+  padding: var(--space-3);
+  border: 0.5px solid var(--status-warning);
+  border-radius: 8px;
+  background: var(--status-warning-light);
+  font-size: var(--font-lg);
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+}
+
+/* Sheet lists */
+.tallSheet { min-height: 70dvh; }
+.sheetSearch { padding: 0 var(--space-5) var(--space-3); }
+.sheetList {
+  display: flex;
+  flex-direction: column;
+  max-height: 60dvh;
+  overflow-y: auto;
+  padding-bottom: max(var(--space-5), env(safe-area-inset-bottom));
+}
+.sheetEmpty {
+  margin: 0;
+  padding: var(--space-5);
+  text-align: center;
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  margin: 0;
+  padding: var(--space-3) var(--space-5);
+  border: 0;
+  border-bottom: 0.5px solid var(--neutral-100);
+  background: none;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.optionText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+}
+.optionMain {
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.optionSub {
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Booked (Figma 1082:58713) */
+.booked {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  text-align: center;
+}
+.bookedIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: var(--space-4);
+  border-radius: 50%;
+  background: var(--status-success-dark);
+  color: var(--on-color);
+}
+.bookedTitle {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-mobile-title);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.bookedName {
+  font-size: var(--font-2xl);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.bookedMeta {
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.note {
+  width: 100%;
+  min-height: 120px;
+  padding: var(--space-3);
+  border: 0.5px solid var(--neutral-200);
+  border-radius: 8px;
+  background: var(--neutral-0);
+  box-sizing: border-box;
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+  resize: vertical;
+}
+.note::placeholder { color: var(--neutral-200); }

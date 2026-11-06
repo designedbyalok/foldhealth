@@ -47,6 +47,11 @@
 /* Sticky note strip (Figma 759:20517, amber banner) */
 .sticky {
   display: flex;
+  width: 100%;
+  margin: 0;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
@@ -88,3 +93,15 @@
 
 /* 44pt touch target (Apple HIG) */
 .who { min-height: 44px; }
+
+/* Press and hold a message for its actions: no text selection or iOS callout. */
+.hold {
+  display: flex;
+  flex-direction: column;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+.failed {
+  font-size: var(--font-sm);
+  color: var(--status-error);
+}

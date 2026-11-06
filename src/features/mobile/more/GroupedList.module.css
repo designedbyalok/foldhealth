@@ -1,0 +1,93 @@
+/* iOS inset grouped list on the grey mobile body. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.label {
+  margin: 0;
+  padding: 0 var(--space-3);
+  font-size: var(--font-lg);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--placeholder-text);
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: var(--neutral-0);
+  overflow: hidden;
+}
+.footer {
+  margin: 0;
+  padding: 0 var(--space-3);
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-3) var(--space-4);
+  margin: 0;
+  border: 0;
+  background: var(--neutral-0);
+  color: var(--neutral-400);
+  font-size: var(--font-lg);
+  text-align: left;
+  box-sizing: border-box;
+}
+button.row { cursor: pointer; }
+button.row:active { background: var(--neutral-25); }
+button.row:disabled { cursor: default; opacity: 0.5; }
+/* Hairline between rows, inset past the icon like iOS. */
+.row + .row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: calc(var(--space-4) + 24px + var(--space-3));
+  border-top: 0.5px solid var(--neutral-100);
+}
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--primary-300);
+}
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+}
+.rowLabel {
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: inherit;
+}
+.sub {
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}
+.detail {
+  flex-shrink: 1;
+  max-width: 55%;
+  overflow-wrap: anywhere;
+  text-align: right;
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--placeholder-text);
+}
+.danger,
+.danger .icon { color: var(--status-error-dark); }
+.muted { color: var(--neutral-300); }
+.muted .icon { color: var(--neutral-300); }

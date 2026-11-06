@@ -71,3 +71,24 @@ export const matchesSearch = (item, q) => {
 export const startFromTemplate = (openNewAutomation, t) => openNewAutomation({
   name: t.name, description: t.description, graph: t.graph, templateId: t.id, schedule: t.schedule,
 });
+
+/** History Log: what a run did, e.g. "Manual run for 3 members". */
+export function runTitle(e) {
+  switch (e.runKind) {
+    case 'manual': return `Manual run for ${e.targetLabel || plural(e.total, 'member')}`;
+    case 'retry': return `Retry for ${e.targetLabel || 'a member'}`;
+    case 'retrigger': return `Re-triggered for ${e.targetLabel || 'a member'}`;
+    default: return `Triggered for ${plural(e.total, 'member')}`;
+  }
+}
+
+/** History Log: how a run went, e.g. "2 completed, 1 failed." */
+export function runStatus(e) {
+  if (!e.total) return 'No members matched.';
+  if (!e.failed && !e.inProgress) return `Reached all ${plural(e.total, 'member')}.`;
+  return [
+    e.success && `${e.success} completed`,
+    e.inProgress && `${e.inProgress} in progress`,
+    e.failed && `${e.failed} failed`,
+  ].filter(Boolean).join(', ') + '.';
+}

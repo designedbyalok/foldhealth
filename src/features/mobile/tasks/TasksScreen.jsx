@@ -1,12 +1,17 @@
 import { useState } from 'react';
+import { BottomSheet } from '../../../components/BottomSheet/BottomSheet';
 import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { Icon } from '../../../components/Icon/Icon';
+import { toast } from '../../../components/Toast/sonnerToast';
+import { useAppStore } from '../../../store/useAppStore';
 import { MobileSubHeader } from '../MobileHeader';
 import { MobileEmpty, MobileListSkeleton, CountBadge } from '../MobileParts';
 import { useMobileNav } from '../MobileNavContext';
-import { useMyTasks } from './myTasks';
+import { TASK_SCOPES, useMyTasks } from './myTasks';
+import { ChoiceList } from './ChoiceList';
 import { TaskRow } from './TaskRow';
-import styles from '../mobile.module.css';
+import common from '../mobile.module.css';
+import styles from './TasksScreen.module.css';
 
 const FILTERS = [
   { key: 'overdue', label: 'Overdue', match: t => t.bucket === 'overdue' },
@@ -15,18 +20,46 @@ const FILTERS = [
   { key: 'done', label: 'Done', match: t => t.bucket === 'done' },
 ];
 
-/** My tasks by when they're due (Figma Tasks 759:22072). */
-export function TasksScreen({ filter: initial = 'overdue' }) {
+const EMPTY = {
+  assigned: 'tasks',
+  pool: 'pool tasks to claim',
+  mentions: 'tasks mentioning you',
+  created: 'tasks you created',
+};
+
+/**
+ * Tasks by when they're due (Figma Tasks 759:22072), in the desktop tabs:
+ * My Tasks, Task Pool, Mentions, Created by Me (picked from the title).
+ * Pool tasks carry a Claim button (claimTask, as the desktop drawer).
+ */
+export function TasksScreen({ filter: initial = 'overdue', scope: initialScope = 'assigned' }) {
   const { openMember, push } = useMobileNav();
-  const { tasks, loading } = useMyTasks();
+  const [scope, setScope] = useState(initialScope);
+  const [picking, setPicking] = useState(false);
+  const { tasks, loading, counts } = useMyTasks(scope);
+  const claimTask = useAppStore(s => s.claimTask);
   const [filter, setFilter] = useState(initial);
   const current = FILTERS.find(f => f.key === filter) || FILTERS[0];
+  const currentScope = TASK_SCOPES.find(s => s.key === scope) || TASK_SCOPES[0];
   const shown = tasks.filter(current.match);
 
+  const claim = async (task) => {
+    const ok = await claimTask(task.id);
+    if (ok) toast.success('Task claimed');
+    else toast.error('Could not claim the task.');
+  };
+
   return (
-    <div className={styles.screen}>
-      <MobileSubHeader title="My Tasks" />
-      <div className={`${styles.toolbar} ${styles.toolbarTop}`}>
+    <div className={common.screen}>
+      <MobileSubHeader>
+        <h1 className={common.subTitle}>
+          <button type="button" className={styles.scopeBtn} aria-haspopup="dialog" onClick={() => setPicking(true)}>
+            <span className={styles.scopeLabel}>{currentScope.label}</span>
+            <Icon name="solar:alt-arrow-down-linear" size={24} color="currentColor" />
+          </button>
+        </h1>
+      </MobileSubHeader>
+      <div className={`${common.toolbar} ${common.toolbarTop}`}>
         <SegmentedControl
           size="lg"
           aria-label="Which tasks"
@@ -38,20 +71,38 @@ export function TasksScreen({ filter: initial = 'overdue' }) {
           })}
         />
       </div>
-      <div className={styles.bodyWrap}>
-        <div className={styles.body}>
+      <div className={common.bodyWrap}>
+        <div className={common.body}>
           {loading && !tasks.length ? <MobileListSkeleton height={96} /> : shown.length === 0 ? (
-            <MobileEmpty icon="solar:checklist-minimalistic-linear" title={`No ${current.label.toLowerCase()} tasks`} />
+            <MobileEmpty icon="solar:checklist-minimalistic-linear" title={`No ${current.label.toLowerCase()} ${EMPTY[scope]}`} />
           ) : (
-            <div className={styles.list}>
-              {shown.map(t => <TaskRow key={t.id} task={t} onOpenMember={(task) => openMember({ name: task.member })} />)}
+            <div className={common.list}>
+              {shown.map(t => (
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  onOpenMember={(task) => openMember({ name: task.member })}
+                  onClaim={scope === 'pool' ? claim : undefined}
+                />
+              ))}
             </div>
           )}
         </div>
-        <button type="button" className={styles.fab} aria-label="Add task" onClick={() => push('addTask')}>
+        <button type="button" className={common.fab} aria-label="Add task" onClick={() => push('addTask')}>
           <Icon name="solar:add-circle-linear" size={32} color="currentColor" />
         </button>
       </div>
+
+      {picking && (
+        <BottomSheet title="Show" onClose={() => setPicking(false)}>
+          <ChoiceList
+            label="Show"
+            options={TASK_SCOPES.map(s => ({ key: s.key, label: s.label, detail: counts[s.key] || null }))}
+            value={scope}
+            onPick={(key) => { setScope(key); setPicking(false); }}
+          />
+        </BottomSheet>
+      )}
     </div>
   );
 }

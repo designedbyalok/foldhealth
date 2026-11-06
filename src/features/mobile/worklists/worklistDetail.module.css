@@ -1,0 +1,201 @@
+/* Worklist detail screens (gap, pharmacy member, AI tasks): grey body with
+   white grouped sections, caps labels (Figma type scale: 16 medium caps,
+   18 body, 16 secondary). */
+.subtitle {
+  margin: 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5) var(--space-8);
+}
+.sectionLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-2) var(--space-3) 0;
+  font-size: var(--font-lg);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--placeholder-text);
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--space-4);
+  border-radius: 12px;
+  background: var(--neutral-0);
+}
+
+/* One row: label left, value or control right */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding: var(--space-2) 0;
+}
+.row + .row,
+.item + .item { border-top: 0.5px solid var(--neutral-100); }
+.rowLabel {
+  flex-shrink: 0;
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+.rowValue {
+  min-width: 0;
+  font-size: var(--font-lg);
+  color: var(--neutral-400);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  font-size: var(--font-lg);
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+.rowBtn:disabled { cursor: default; }
+
+/* A list item: text on the left, trailing control */
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+}
+.itemText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.itemTitle {
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+  overflow-wrap: anywhere;
+}
+.itemMeta {
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.itemBody {
+  margin: 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.empty {
+  margin: 0;
+  padding: var(--space-4) 0;
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: 12px;
+  background: var(--neutral-50);
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.linkBtn {
+  min-height: 44px;
+  padding: 0;
+  margin: calc(var(--space-3) * -1) 0;
+  border: 0;
+  background: none;
+  font-size: var(--font-lg);
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--primary-300);
+  cursor: pointer;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  margin: calc(var(--space-2) * -1) calc(var(--space-2) * -1) calc(var(--space-2) * -1) 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+.iconBtn:active { background: var(--neutral-50); }
+
+/* Pinned bottom bar (composer / primary action) */
+.footer {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5) max(var(--space-5), env(safe-area-inset-bottom));
+  border-top: 0.5px solid var(--neutral-150);
+  background: var(--neutral-0);
+}
+.footer > :first-child { flex: 1; min-width: 0; }
+
+/* Sheet form */
+.sheetForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-3);
+}
+.hint {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.itemBtn {
+  align-items: flex-start;
+  min-height: 44px;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}

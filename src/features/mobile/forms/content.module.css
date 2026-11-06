@@ -1,0 +1,28 @@
+/* Content library email preview sheet. */
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-bottom: max(var(--space-5), env(safe-area-inset-bottom));
+}
+.subject {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--font-lg);
+  color: var(--neutral-400);
+}
+.subjectLabel {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.frame {
+  display: flex;
+  flex-direction: column;
+  height: 60vh;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.frame > * { flex: 1; min-height: 0; }

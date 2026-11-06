@@ -12,14 +12,17 @@ import { statusReasonPatch } from '../../patient/right-panel/tabs/care-programs/
 import { evaluateReading, goalReadingSpec } from '../../patient/right-panel/tabs/care-programs/care-plan/lib/goalReadings';
 import { RadioOptionGroup } from '../../../components/RadioOptionGroup/RadioOptionGroup';
 import { gbiTone } from './careUtils';
+import { ConfirmSheet } from './CarePlanSheets';
 import styles from './care.module.css';
 
 const NOUN = { goal: 'Goal', intv: 'Intervention', barrier: 'Barrier' };
 const SAVE = { goal: 'savePatientCarePlanGoal', intv: 'savePatientCarePlanIntervention', barrier: 'savePatientCarePlanBarrier' };
+const DELETE = { goal: 'deletePatientCarePlanGoal', intv: 'deletePatientCarePlanIntervention', barrier: 'deletePatientCarePlanBarrier' };
 
 /**
  * A goal, intervention or barrier: its details, Change Status (with the
- * reason the org asks for), and for goals, Record Reading.
+ * reason the org asks for), for goals Record Reading, and Delete (a goal
+ * takes its linked interventions and barriers with it, as desktop does).
  *
  * Status saves go the same way as desktop saveGbiStatus: the reason is
  * recorded first (presetGbiStatusReason, so the gbi_status_history row
@@ -32,7 +35,9 @@ export function GbiSheet({ kind, item, details = [], patientId, program, onClose
   const presetGbiStatusReason = useAppStore(s => s.presetGbiStatusReason);
   const save = useAppStore(s => s[SAVE[kind]]);
   const saveGoalMeasurement = useAppStore(s => s.saveGoalMeasurement);
-  const [mode, setMode] = useState('view'); // 'view' | 'status' | 'reading'
+  const remove = useAppStore(s => s[DELETE[kind]]);
+  const plan = useAppStore(s => s.patientCarePlans[`${patientId}::${program.id}`]);
+  const [mode, setMode] = useState('view'); // 'view' | 'status' | 'reading' | 'delete'
   const [to, setTo] = useState(null);
   const [reason, setReason] = useState(null);
   const [note, setNote] = useState('');
@@ -59,6 +64,49 @@ export function GbiSheet({ kind, item, details = [], patientId, program, onClose
     if (saved) { toast.success(`${NOUN[kind]} set to ${to}`); onClose(); }
   };
 
+  // Desktop confirmDelete / removeGoal(true).
+  const name = item.title || item.description || 'Untitled';
+  const linked = kind === 'goal'
+    ? (plan?.interventions || []).filter(i => i.goalId === item.id).length
+      + (plan?.barriers || []).filter(b => (b.goalIds || []).includes(item.id)).length
+    : 0;
+  const confirmDelete = async () => {
+    setBusy(true);
+    let ok;
+    try {
+      ok = kind === 'goal'
+        ? await remove(patientId, program.id, item.id, { cascade: true })
+        : await remove(patientId, program.id, item.id);
+    } catch {
+      ok = undefined;
+    }
+    if (ok === true) {
+      toast.success(kind === 'goal'
+        ? (linked ? 'Goal & linked items removed successfully' : 'Goal removed successfully')
+        : `"${name}" removed`);
+      onClose();
+      return;
+    }
+    // false: the store rolled back and already showed its own error toast.
+    if (ok !== false) toast.error(`Could not delete the ${NOUN[kind].toLowerCase()}.`);
+    setBusy(false);
+  };
+
+  if (mode === 'delete') {
+    return (
+      <ConfirmSheet
+        title={`Delete ${NOUN[kind]}?`}
+        text={kind === 'goal' && linked
+          ? `"${name}" and its ${linked} linked item${linked === 1 ? '' : 's'} (interventions and barriers) will be removed from this care plan.`
+          : `"${name}" will be removed from this care plan.`}
+        confirmLabel="Delete"
+        busy={busy}
+        onConfirm={confirmDelete}
+        onClose={() => setMode('view')}
+      />
+    );
+  }
+
   return (
     <BottomSheet title={NOUN[kind]} onClose={onClose}>
       <p className={styles.sheetText}>{item.title || item.description || 'Untitled'}</p>
@@ -71,6 +119,7 @@ export function GbiSheet({ kind, item, details = [], patientId, program, onClose
           {details.filter(Boolean).map(d => <p key={d} className={styles.sheetMeta}>{d}</p>)}
           {item.statusReason && <p className={styles.sheetMeta}>Last change: {item.statusReason}</p>}
           <div className={styles.actions}>
+            <Button size="lg" variant="ghost" tone="danger" leadingIcon="solar:trash-bin-minimalistic-linear" onClick={() => setMode('delete')}>Delete</Button>
             {kind === 'goal' && goalReadingSpec(item).kind !== 'assessment' && (
               <Button size="lg" variant="outline" onClick={() => setMode('reading')}>Record Reading</Button>
             )}

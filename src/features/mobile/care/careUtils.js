@@ -4,6 +4,7 @@
 import { GBI_STATUS_META } from '../../patient/right-panel/tabs/care-programs/care-plan/lib/gbiStatus';
 import { isPastDue, fmtCarePlanDate } from '../../patient/right-panel/tabs/care-programs/care-plan/tables/carePlanTableModel';
 import { patientLevelProgram } from '../../patient/right-panel/tabs/care-programs/care-plan/lib/carePlanMode';
+import { ASSESSMENT_STEPS } from '../../patient/right-panel/tabs/care-programs/program-detail/ProgramDetailView/ProgramDetailView.utils';
 
 // Program status → Badge tone (same grouping as programStatus.js colors).
 const PROGRAM_TONE = {
@@ -47,17 +48,34 @@ export function todayMDY() {
   return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
-const STEP_SCREEN_DESKTOP_ONLY = /^(medication reconciliation|medication review|billing review|open diagnosis gaps|letters|letters\/efax|pre-?visit|snapshot|referral review)$/i;
+const STEP_SCREEN_DESKTOP_ONLY = /^(billing review|open diagnosis gaps|letters|letters\/efax|pre-?visit|referral review)$/i;
 
 /**
- * Whether a step's own screen is only on desktop (forms, med rec, billing,
- * letters…). Reviewed / Skip still work on mobile for every step.
+ * What a step opens on the phone, matched the way desktop
+ * useProgramDetailView picks a step's screen (a linked form wins, else its
+ * built-in screen, else the screen its name matches). Null: nothing beyond
+ * Reviewed / Skip.
  */
-export function stepIsDesktopOnly(step) {
-  if (!step) return false;
-  if (step.formId) return true;
+export function stepTarget(step) {
+  if (!step) return null;
+  if (step.formId) return { kind: 'form', formId: step.formId, formName: step.formName || step.name };
   const screen = step.screen || step.name || '';
-  return step.kind === 'billing' || STEP_SCREEN_DESKTOP_ONLY.test(screen);
+  const assessment = ASSESSMENT_STEPS[screen];
+  if (assessment && !assessment.checklist) return { kind: 'form', formName: assessment.formName };
+  if (screen === 'Care Plan') return { kind: 'carePlan' };
+  if (screen === 'Medication Reconciliation' || screen === 'Medication Review') return { kind: 'medRecon' };
+  if (screen === 'Snapshot') return { kind: 'snapshot' };
+  if (/appointment/i.test(screen)) return { kind: 'appointment' };
+  if (screen === 'Outreach') return { kind: 'outreach' };
+  if (['Program Related Files', 'Program Documents', 'Documents'].includes(screen)) return { kind: 'documents' };
+  return null;
+}
+
+/** Whether a step's own screen is only on desktop (billing, letters, pre-visit…). Reviewed / Skip still work. */
+export function stepIsDesktopOnly(step) {
+  if (!step || stepTarget(step)) return false;
+  const screen = step.screen || step.name || '';
+  return step.kind === 'billing' || STEP_SCREEN_DESKTOP_ONLY.test(screen) || !!ASSESSMENT_STEPS[screen]?.checklist;
 }
 
 export const isCarePlanStep = (step) => (step?.screen || step?.name) === 'Care Plan';

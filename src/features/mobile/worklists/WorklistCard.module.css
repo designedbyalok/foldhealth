@@ -96,6 +96,27 @@
 }
 .danger { color: var(--status-error-dark); }
 
+/* A tappable value (assignee, care plan): 44pt target, row height unchanged */
+.fieldBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: var(--space-3) 0;
+  margin: calc(var(--space-3) * -1) 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+  color: var(--primary-300);
+  cursor: pointer;
+}
+.fieldBtnText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Stacked enrollments / gaps */
 .subs {
   display: flex;
@@ -120,7 +141,22 @@
   flex-direction: column;
   gap: calc(var(--space-1) / 2);
 }
+.subBtn {
+  flex: 1;
+  min-height: 44px;
+  justify-content: center;
+  padding: 0;
+  margin: calc(var(--space-2) * -1) 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
 .subTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   font-size: var(--font-base);
   font-weight: 500;
   color: var(--neutral-400);
@@ -165,6 +201,7 @@
   background: var(--neutral-50);
   color: var(--neutral-400);
   font-size: var(--font-lg);
+  white-space: nowrap;
   cursor: pointer;
 }
 .action:active { background: var(--neutral-75); }

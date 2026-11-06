@@ -81,13 +81,13 @@ export function PauseProgramSheet({ busy, onSubmit, onClose }) {
   );
 }
 
-/** Assign the program to a staff member (desktop AssigneeChange). */
-export function AssigneeSheet({ users, current, onPick, onClose }) {
+/** Pick a staff member: the program's assignee (desktop AssigneeChange) or a care plan reviewer. */
+export function AssigneeSheet({ title = 'Assign To', users, current, onPick, onClose }) {
   const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
   const shown = (users || []).filter(u => !q || String(u.name || '').toLowerCase().includes(q)).slice(0, 50);
   return (
-    <BottomSheet title="Assign To" onClose={onClose}>
+    <BottomSheet title={title} onClose={onClose}>
       <Input leadingIcon="solar:magnifer-linear" size="lg" placeholder="Search staff" aria-label="Search staff" value={query} onValueChange={setQuery} />
       {shown.length === 0 && <p className={styles.sheetMeta}>No matching staff</p>}
       {shown.map(u => (

@@ -364,39 +364,41 @@
   overflow-wrap: anywhere;
 }
 
+/* A detail value that opens a picker */
+.editRow {
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.editRow:active { background: var(--neutral-50); }
+.labels.editRow { align-items: center; }
+.chevron {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--neutral-300);
+}
+
 /* Sticky footer (Figma 1050:51249) */
 .footer {
   padding: var(--space-5) var(--space-5) max(var(--space-8), env(safe-area-inset-bottom));
   background: var(--neutral-0);
   box-shadow: var(--shadow-footer);
 }
+.footerRow {
+  display: flex;
+  gap: var(--space-3);
+}
+.footerRow > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
 
 /* Bottom sheet contents */
-.choices {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-.choice {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  width: 100%;
-  min-height: 56px;
-  padding: 0;
-  border: 0;
-  background: none;
-  text-align: left;
-  color: var(--neutral-300);
-  cursor: pointer;
-}
-.choiceLabel {
-  flex: 1;
-  min-width: 0;
-  font-size: var(--font-2xl);
-  line-height: var(--leading-tight);
-  color: var(--neutral-400);
-}
 .sheetForm {
   display: flex;
   flex-direction: column;

@@ -1,0 +1,98 @@
+/* Mobile Analytics hub: dashboards grouped like the desktop side nav. */
+.persona {
+  margin: 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-5) 0;
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5) 0;
+}
+.group:last-child { padding-bottom: max(var(--space-5), env(safe-area-inset-bottom)); }
+.groupTitle {
+  margin: 0;
+  padding: 0 var(--space-3);
+  font-size: var(--font-lg);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--neutral-300);
+}
+.dash {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 72px;
+  padding: var(--space-4);
+  margin: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--neutral-0);
+  color: inherit;
+  text-align: left;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.dash:active { background: var(--neutral-25); }
+.dashIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--primary-100);
+  color: var(--primary-300);
+}
+.locked .dashIcon {
+  background: var(--neutral-50);
+  color: var(--placeholder-text);
+}
+.dashText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.dashTitle {
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.locked .dashTitle { color: var(--neutral-300); }
+.dashSub {
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.kpi {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+}
+.kpiValue {
+  font-size: var(--font-xl);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.kpiLabel {
+  min-width: 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Badge } from '../../../components/Badge/Badge';
 import { BottomSheet } from '../../../components/BottomSheet/BottomSheet';
@@ -23,7 +24,7 @@ const STATUS_TONE = { Booked: 'success', 'Checked In': 'success', 'Checked Out':
  * desktop appointment list.
  */
 export function AppointmentScreen({ appointmentId }) {
-  const { pop, openMember } = useMobileNav();
+  const { pop, push, openMember } = useMobileNav();
   const appt = useAppStore(s => (s.appointments || []).find(a => String(a.id) === String(appointmentId)) || null);
   const loading = useAppStore(s => s.appointmentsLoading);
   const fetchAppointments = useAppStore(s => s.fetchAppointments);
@@ -66,7 +67,17 @@ export function AppointmentScreen({ appointmentId }) {
 
   return (
     <div className={common.screen}>
-      <MobileSubHeader title={appt.appointment_type_name || 'Appointment'} />
+      <MobileSubHeader
+        title={appt.appointment_type_name || 'Appointment'}
+        actions={(
+          <ActionButton
+            size="lg"
+            icon="solar:calendar-add-linear"
+            aria-label="Book another appointment"
+            onClick={() => push('bookAppointment', { patientId: appt.patient_id ?? undefined, patientName: appt.patient_name || undefined })}
+          />
+        )}
+      />
       <div className={common.body}>
         <div className={styles.wrap}>
           <button
@@ -102,6 +113,14 @@ export function AppointmentScreen({ appointmentId }) {
             <div className={styles.block}>
               <span className={styles.blockLabel}>Visit Reason</span>
               <p className={styles.blockText}>{appt.reason_for_visit}</p>
+            </div>
+          )}
+
+          {!locked && (
+            <div className={styles.actions}>
+              <Button size="lg" variant="solid" fullWidth disabled={busy} onClick={() => push('bookAppointment', { appointmentId: appt.id })}>
+                {cancelled ? 'Book Again' : 'Reschedule'}
+              </Button>
             </div>
           )}
 

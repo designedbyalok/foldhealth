@@ -28,6 +28,7 @@
     "DatePicker",
     "DateRangePopover",
     "DateTimePicker",
+    "DesktopOnlyNote",
     "Dialog",
     "Drawer",
     "Dropzone",

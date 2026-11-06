@@ -14,6 +14,7 @@ import { CallDetailScreen } from './calls/CallDetailScreen';
 import { DialerScreen } from './calls/DialerScreen';
 import { MessagesScreen } from './messages/MessagesScreen';
 import { ThreadScreen } from './messages/ThreadScreen';
+import { MESSAGE_SCREENS, MESSAGE_FULL_SCREEN } from './messages/messageScreens';
 import { ScheduleScreen } from './schedule/ScheduleScreen';
 import { MembersScreen, PickMemberScreen } from './members/MembersScreen';
 import { MemberProfileScreen } from './members/MemberProfileScreen';
@@ -23,10 +24,18 @@ import { TasksScreen } from './tasks/TasksScreen';
 import { AddTaskScreen } from './tasks/AddTaskScreen';
 import { TaskDetailScreen } from './tasks/TaskDetailScreen';
 import { AppointmentScreen } from './schedule/AppointmentScreen';
+import { BookAppointmentScreen } from './schedule/book/BookAppointmentScreen';
 import { ProgramScreen } from './care/ProgramScreen';
 import { CarePlanScreen } from './care/CarePlanScreen';
+import { CARE_SCREENS, CARE_FULL_SCREEN } from './care/careScreens';
 import { ProfileScreen } from './profile/ProfileScreen';
 import { AlertsScreen } from './profile/AlertsScreen';
+import { OooScreen } from './ooo/OooScreen';
+import { OooFormScreen } from './ooo/OooFormScreen';
+import { PATIENT_SCREENS, PATIENT_FULL_SCREEN } from './patient/patientScreens';
+import { WORKLIST_SCREENS, WORKLIST_FULL_SCREEN } from './worklists/worklistScreens';
+import { ANALYTICS_SCREENS } from './analytics/analyticsScreens';
+import { MORE_SCREENS, MORE_FULL_SCREEN } from './more/moreScreens';
 import shell from './MobileShell.module.css';
 import styles from './mobile.module.css';
 
@@ -62,14 +71,23 @@ const SCREENS = {
   addTask: AddTaskScreen,
   taskDetail: TaskDetailScreen,
   appointment: AppointmentScreen,
+  bookAppointment: BookAppointmentScreen,
   program: ProgramScreen,
   carePlan: CarePlanScreen,
   profile: ProfileScreen,
   alerts: AlertsScreen,
+  ooo: OooScreen,
+  oooForm: OooFormScreen,
+  ...PATIENT_SCREENS,
+  ...MESSAGE_SCREENS,
+  ...CARE_SCREENS,
+  ...WORKLIST_SCREENS,
+  ...ANALYTICS_SCREENS,
+  ...MORE_SCREENS,
 };
 
 // Sub-screens that need the whole height (a composer or keypad at the bottom).
-const FULL_SCREEN = new Set(['thread', 'dialer', 'addTask', 'taskDetail']);
+const FULL_SCREEN = new Set(['thread', 'dialer', 'addTask', 'taskDetail', 'oooForm', 'bookAppointment', ...PATIENT_FULL_SCREEN, ...MESSAGE_FULL_SCREEN, ...CARE_FULL_SCREEN, ...WORKLIST_FULL_SCREEN, ...MORE_FULL_SCREEN]);
 
 function initialTab(activePage, allowed) {
   const byPage = TABS.find(t => t.page === activePage && allowed.includes(t.key));
@@ -93,37 +111,103 @@ export function MobileShell() {
   const [stack, setStack] = useState([]);
   // 'push' plays the slide-in; going back or switching tabs doesn't.
   const [motion, setMotion] = useState('none');
-  const stackRef = useRef(stack);
-  useEffect(() => { stackRef.current = stack; }, [stack]);
 
-  // Each sub-screen is a browser history entry, so the phone's back gesture
-  // closes it instead of leaving the app.
+  // Each sub-screen is a browser history entry tagged with its depth and a
+  // sequence number, so the phone's back gesture closes it instead of leaving
+  // the app. The router also writes the URL hash (store setters, links), which
+  // adds an entry and fires popstate; that isn't a Back, so the new entry is
+  // tagged with the current depth and nothing closes. Going back onto an entry
+  // at the same depth (one the router added) changes nothing on screen, so the
+  // shell keeps going back until it reaches the depth it was heading for.
+  const depthRef = useRef(0);
+  // Seeded with the time on mount so this load's entries sort after any left
+  // in history by an earlier load.
+  const seqRef = useRef(0);
+  const curSeqRef = useRef(0);
+  const lenRef = useRef(0);
+  const targetRef = useRef(null); // depth a pop / tab switch is unwinding to
+  const afterUnwind = useRef(null);
+  const tag = (state, depth) => {
+    seqRef.current += 1;
+    curSeqRef.current = seqRef.current;
+    return { ...(state || {}), mobileDepth: depth, mobileSeq: seqRef.current };
+  };
   useEffect(() => {
-    const onPop = () => { setMotion('none'); setStack(s => s.slice(0, -1)); };
+    seqRef.current = Date.now();
+    lenRef.current = window.history.length;
+    window.history.replaceState(tag(window.history.state, 0), '');
+    const settle = (depth) => {
+      depthRef.current = Math.min(depthRef.current, depth);
+      setMotion('none');
+      setStack(s => s.slice(0, depthRef.current));
+    };
+    const onPop = (e) => {
+      const st = e.state;
+      const grew = window.history.length > lenRef.current;
+      lenRef.current = window.history.length;
+      if (st?.mobileSeq == null && grew) {
+        // The router added this entry: adopt it at the current depth.
+        window.history.replaceState(tag(st, depthRef.current), '');
+        return;
+      }
+      const depth = st?.mobileDepth ?? 0;
+      const backward = st?.mobileSeq == null || st.mobileSeq < curSeqRef.current;
+      curSeqRef.current = st?.mobileSeq ?? curSeqRef.current;
+      if (backward) {
+        const target = targetRef.current ?? depthRef.current - 1;
+        if (depth > 0 && depth > target) {
+          targetRef.current = target;
+          window.history.back();
+          return;
+        }
+        targetRef.current = null;
+      }
+      settle(depth);
+      const done = afterUnwind.current;
+      afterUnwind.current = null;
+      done?.();
+    };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
   const push = useCallback((screen, props = {}) => {
-    window.history.pushState({ mobileScreen: screen }, '');
+    depthRef.current += 1;
+    window.history.pushState(tag({ mobileScreen: screen }, depthRef.current), '');
+    lenRef.current = window.history.length;
     setMotion('push');
     setStack(s => [...s, { screen, props }]);
   }, []);
   const pop = useCallback(() => {
-    if (stackRef.current.length) window.history.back();
+    if (!depthRef.current) return;
+    targetRef.current = depthRef.current - 1;
+    window.history.back();
   }, []);
+  // Swap the top screen for another (a finished form opening what it made),
+  // so Back from the new screen skips the form.
+  const replace = useCallback((screen, props = {}) => {
+    if (!depthRef.current) { push(screen, props); return; }
+    window.history.replaceState(tag({ mobileScreen: screen }, depthRef.current), '');
+    setMotion('push');
+    setStack(s => [...s.slice(0, -1), { screen, props }]);
+  }, [push]);
   const canTab = useCallback((key) => allowed.includes(key), [allowed]);
   const setTab = useCallback((key) => {
     if (!allowed.includes(key)) return;
-    const depth = stackRef.current.length;
-    if (depth) {
-      setStack([]);
-      window.history.go(-depth);
-    }
     setMotion('none');
     setTabState(key);
     const page = TABS.find(t => t.key === key)?.page;
-    if (page) setActivePage(page);
+    const syncPage = () => { if (page) setActivePage(page); };
+    if (depthRef.current) {
+      // Unwind the sub-screens first; the page (and its URL) follows once
+      // history is back at the tab, so the router's entry lands on top.
+      setStack([]);
+      targetRef.current = 0;
+      afterUnwind.current = syncPage;
+      window.history.back();
+    } else {
+      syncPage();
+    }
   }, [allowed, setActivePage]);
 
   // Open a patient from any id space (worklist rows, tasks, links), checking
@@ -159,7 +243,7 @@ export function MobileShell() {
     });
   }, [selectedPatientId, accessReady, openMember]);
 
-  const nav = useMemo(() => ({ push, pop, setTab, canTab, openMember }), [push, pop, setTab, canTab, openMember]);
+  const nav = useMemo(() => ({ push, pop, replace, setTab, canTab, openMember }), [push, pop, replace, setTab, canTab, openMember]);
   const top = stack[stack.length - 1];
   const Root = tab ? ROOTS[tab] : NoAccess;
   const Sub = top ? SCREENS[top.screen] : null;

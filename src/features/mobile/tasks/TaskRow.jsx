@@ -1,3 +1,4 @@
+import { Button } from '../../../components/Button/Button';
 import { Icon } from '../../../components/Icon/Icon';
 import { PriorityIcon } from '../../../components/PriorityIcon/PriorityIcon';
 import { useAppStore } from '../../../store/useAppStore';
@@ -8,9 +9,10 @@ import styles from './TaskRow.module.css';
 /**
  * A task as a mobile card (Figma Task 759:26387): due line, a round check,
  * title and the member it's about. The check completes or reopens it;
- * the title opens the task's details.
+ * the title opens the task's details. `onClaim` adds the pool footer with
+ * a Claim button (unclaimed pooled tasks).
  */
-export function TaskRow({ task, onOpenMember }) {
+export function TaskRow({ task, onOpenMember, onClaim }) {
   const updateTask = useAppStore(s => s.updateTask);
   const { push } = useMobileNav();
   const done = task.status === 'completed';
@@ -45,6 +47,15 @@ export function TaskRow({ task, onOpenMember }) {
           )}
         </div>
       </div>
+      {onClaim && (
+        <div className={styles.pool}>
+          <span className={styles.poolName}>
+            <Icon name="solar:users-group-rounded-linear" size={16} color="currentColor" />
+            {task.pool}
+          </span>
+          <Button size="lg" variant="soft" onClick={() => onClaim(task)}>Claim</Button>
+        </div>
+      )}
     </div>
   );
 }

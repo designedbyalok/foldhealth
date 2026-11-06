@@ -1,0 +1,14 @@
+/* Messages list (Figma 759:22704): search, Members / Internal, filters. */
+
+/* Press and hold opens actions: no text selection or iOS callout. */
+.row {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+.pin { color: var(--neutral-300); }
+.filters {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

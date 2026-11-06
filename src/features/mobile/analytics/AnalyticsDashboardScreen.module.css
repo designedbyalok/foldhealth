@@ -1,0 +1,13 @@
+/* One dashboard: grey body, 20px gutters, sections stacked (Figma 1133:26559). */
+.sub {
+  margin: 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-5) max(var(--space-6), env(safe-area-inset-bottom));
+}

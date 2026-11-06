@@ -11,15 +11,33 @@ import { Textarea } from '../../../components/Textarea/Textarea';
 import { toast } from '../../../components/Toast/sonnerToast';
 import { sanitizeRichText } from '../../../lib/sanitizeHtml';
 import { useAppStore } from '../../../store/useAppStore';
-import { AUDIT_LOG_VERB_MAP, PRIORITY_LABELS, PRIORITY_OPTIONS, TITLE_MAX, parseTaskDate, todayMMDDYYYY } from '../../tasks/TasksView.utils';
+import {
+  AUDIT_LOG_VERB_MAP, LABEL_OPTIONS, PRIORITY_LABELS, PRIORITY_OPTIONS, STATUS_LABELS, STATUS_ORDER, TITLE_MAX, parseTaskDate, todayMMDDYYYY,
+} from '../../tasks/TasksView.utils';
 import { MobileEmpty, MobileListSkeleton } from '../MobileParts';
 import { useMobileNav } from '../MobileNavContext';
 import { initialsOf, listStamp, patientLine, timeOf } from '../mobileFormat';
+import { ChoiceList } from './ChoiceList';
+import { isPoolTask } from './myTasks';
 import common from '../mobile.module.css';
 import styles from './TaskDetailScreen.module.css';
 
 const ACTIVITY_VIEWS = ['All', 'Comments', 'History'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const STATUS_ICONS = {
+  pending: 'solar:clock-circle-linear',
+  missed: 'solar:danger-circle-linear',
+  completed: 'solar:check-circle-linear',
+};
+const NO_POOL = '__none__';
+const pad2 = (n) => String(n).padStart(2, '0');
+// The date field speaks ISO (YYYY-MM-DD); tasks store MM-DD-YYYY.
+const toIso = (d) => (d ? `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}` : '');
+const isoToTaskDate = (iso) => {
+  const [y, m, d] = String(iso || '').split('-');
+  return y && m && d ? `${m}-${d}-${y}` : '';
+};
 
 const shortDate = (d) => (d ? `${d.getDate()} ${MONTHS[d.getMonth()]}` : '');
 const longDate = (d) => (d ? d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : '');
@@ -46,8 +64,14 @@ export function TaskDetailScreen({ taskId }) {
   const allPatients = useAppStore(s => s.allPatients);
   const platformUsers = useAppStore(s => s.platformUsers);
   const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
+  const taskProfiles = useAppStore(s => s.taskProfiles);
+  const fetchTaskProfiles = useAppStore(s => s.fetchTaskProfiles);
+  const taskPools = useAppStore(s => s.taskPools);
+  const fetchTaskPools = useAppStore(s => s.fetchTaskPools);
+  const claimTask = useAppStore(s => s.claimTask);
 
-  const [sheet, setSheet] = useState(null); // 'priority' | 'activity' | 'subtask' | 'edit' | 'delete'
+  // 'priority' | 'activity' | 'subtask' | 'edit' | 'delete' | 'assignee' | 'due' | 'pool' | 'status' | 'labels'
+  const [sheet, setSheet] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [activityView, setActivityView] = useState('Comments');
   const [busy, setBusy] = useState(false);
@@ -57,6 +81,7 @@ export function TaskDetailScreen({ taskId }) {
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
   useEffect(() => { if (taskId != null) fetchTaskAuditLog(taskId); }, [taskId, fetchTaskAuditLog]);
   useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
+  useEffect(() => { fetchTaskProfiles?.(); fetchTaskPools?.(); }, [fetchTaskProfiles, fetchTaskPools]);
 
   const subtasks = useMemo(
     () => (allTasks || []).filter(t => task && t.parent_task_id === task.id),
@@ -67,6 +92,15 @@ export function TaskDetailScreen({ taskId }) {
     activityView === 'All'
     || (activityView === 'Comments' ? l.action_type === 'comment_added' : l.action_type !== 'comment_added')
   )), [log, activityView]);
+  // Who a task can go to: you first, then everyone in taskProfiles (as the
+  // desktop drawer's Assigned To list).
+  const assigneeNames = useMemo(() => {
+    const seen = new Set();
+    const list = [];
+    if (me?.name) { list.push(me.name); seen.add(me.name); }
+    (taskProfiles || []).forEach(p => { if (p.name && !seen.has(p.name)) { list.push(p.name); seen.add(p.name); } });
+    return list;
+  }, [me, taskProfiles]);
   const mentionUsers = useMemo(() => (platformUsers || []).map(u => ({
     ...u, realProfile: true, initials: u.initials || initialsOf(u.name),
   })), [platformUsers]);
@@ -100,6 +134,70 @@ export function TaskDetailScreen({ taskId }) {
     try { ok = await updateTask(task.id, { status: 'completed' }); } finally { setBusy(false); }
     if (ok) toast.success('Task completed');
     else toast.error('Could not complete the task.');
+  };
+
+  // The edits below send the same patches and toasts as the desktop
+  // TaskDetailDrawer; updateTask writes the matching task_audit_log rows.
+  // It resolves false when the write fails, so success toasts wait for it.
+  const save = async (patch, onSaved) => {
+    if (await updateTask(task.id, patch)) onSaved();
+    else toast.error('Could not save the change.');
+  };
+
+  const setAssignee = (name) => {
+    setSheet(null);
+    if (name === task.assigned_to) return;
+    const picked = (taskProfiles || []).find(p => p.name === name);
+    // An owner and a pool are mutually exclusive (desktop claim semantics).
+    save({ assigned_to: name, assigned_to_id: picked?.id || (name === me?.name ? me?.id || null : null), pool: null },
+      () => toast.success(`Assigned to ${name}`));
+  };
+
+  const setDue = (iso) => {
+    setSheet(null);
+    const next = isoToTaskDate(iso);
+    if (!next || next === task.due_date) return;
+    save({ due_date: next }, () => toast.success('Due date updated'));
+  };
+
+  const setPool = (key) => {
+    setSheet(null);
+    const next = key === NO_POOL ? null : key;
+    if (next === (task.pool || null)) return;
+    // A pooled task is unclaimed by definition, so pooling drops the assignee.
+    save(next ? { pool: next, assigned_to: null, assigned_to_id: null } : { pool: null },
+      () => toast.success(next ? `Pool set to ${next}` : 'Removed from pool'));
+  };
+
+  const setStatus = (status) => {
+    setSheet(null);
+    if (status === task.status) return;
+    if (status === 'completed' && openSubs > 0) {
+      toast.error(`Cannot complete: ${openSubs} subtask(s) still open`);
+      return;
+    }
+    save({ status }, () => {
+      const msg = `Status changed to ${STATUS_LABELS[status]}`;
+      if (status === 'completed') toast.success(msg);
+      else if (status === 'missed') toast.error(msg);
+      else toast.info(msg);
+    });
+  };
+
+  const toggleLabel = (label) => {
+    if (labels.includes(label)) {
+      save({ labels: labels.filter(x => x !== label) }, () => toast.success(`Label "${label}" removed`));
+    } else {
+      save({ labels: [...labels, label] }, () => toast.success(`Label "${label}" added`));
+    }
+  };
+
+  const claim = async () => {
+    setBusy(true);
+    let ok;
+    try { ok = await claimTask(task.id); } finally { setBusy(false); }
+    if (ok) toast.success('Task claimed');
+    else toast.error('Could not claim the task.');
   };
 
   const setPriority = (priority) => {
@@ -272,17 +370,19 @@ export function TaskDetailScreen({ taskId }) {
                     />
                   </div>
                 )}
-                <Detail label="Due date" icon="solar:calendar-minimalistic-linear">{due ? longDate(due) : 'No due date'}</Detail>
-                <Detail label="Assignee">{task.assigned_to || 'Unassigned'}</Detail>
-                {task.pool && <Detail label="Task pool">{task.pool}</Detail>}
-                {labels.length > 0 && (
-                  <div className={styles.detail}>
-                    <h3 className={styles.caps}>Labels</h3>
-                    <div className={styles.labels}>
-                      {labels.map(l => <Badge key={l} tone="neutral" variant="soft" size="lg" label={l} />)}
-                    </div>
-                  </div>
-                )}
+                <Detail label="Due date" icon="solar:calendar-minimalistic-linear" onEdit={() => setSheet('due')}>{due ? longDate(due) : 'No due date'}</Detail>
+                <Detail label="Assignee" onEdit={() => setSheet('assignee')}>{task.assigned_to || 'Unassigned'}</Detail>
+                <Detail label="Task pool" onEdit={() => setSheet('pool')}>{task.pool || 'None'}</Detail>
+                <Detail label="Status" icon={STATUS_ICONS[task.status]} onEdit={() => setSheet('status')}>{STATUS_LABELS[task.status] || task.status}</Detail>
+                <div className={styles.detail}>
+                  <h3 className={styles.caps}>Labels</h3>
+                  <button type="button" className={`${styles.labels} ${styles.editRow}`} aria-label={`Labels: ${labels.join(', ') || 'none'}. Edit labels`} onClick={() => setSheet('labels')}>
+                    {labels.length
+                      ? labels.map(l => <Badge key={l} tone="neutral" variant="soft" size="lg" label={l} />)
+                      : <span className={styles.detailMain}>Add labels</span>}
+                    <Icon name="solar:alt-arrow-right-linear" size={16} className={styles.chevron} />
+                  </button>
+                </div>
                 {task.created_by && <Detail label="Created by">{task.created_by}</Detail>}
               </>
             )}
@@ -323,15 +423,19 @@ export function TaskDetailScreen({ taskId }) {
         </div>
       </div>
 
-      {!done && (
-        <div className={styles.footer}>
-          <Button size="lg" fullWidth disabled={busy} onClick={complete}>Mark as completed</Button>
+      {(!done || isPoolTask(task)) && (
+        <div className={`${styles.footer} ${styles.footerRow}`}>
+          {isPoolTask(task) && (
+            <Button size="lg" variant={done ? 'solid' : 'outline'} fullWidth disabled={busy} onClick={claim}>Claim Task</Button>
+          )}
+          {!done && <Button size="lg" fullWidth disabled={busy} onClick={complete}>Mark as completed</Button>}
         </div>
       )}
 
       {sheet === 'priority' && (
         <BottomSheet title="Priority" onClose={() => setSheet(null)}>
           <ChoiceList
+            label="Priority"
             options={PRIORITY_OPTIONS.map(p => ({ key: p, label: PRIORITY_LABELS[p], icon: <PriorityIcon priority={p} size={24} /> }))}
             value={task.priority}
             onPick={setPriority}
@@ -341,9 +445,57 @@ export function TaskDetailScreen({ taskId }) {
       {sheet === 'activity' && (
         <BottomSheet title="Activity" onClose={() => setSheet(null)}>
           <ChoiceList
+            label="Activity"
             options={ACTIVITY_VIEWS.map(v => ({ key: v, label: v }))}
             value={activityView}
             onPick={(v) => { setActivityView(v); setSheet(null); }}
+          />
+        </BottomSheet>
+      )}
+      {sheet === 'assignee' && (
+        <BottomSheet title="Assignee" onClose={() => setSheet(null)}>
+          <ChoiceList
+            label="Assignee"
+            options={assigneeNames.map(n => ({
+              key: n,
+              label: n === me?.name ? `${n} (You)` : n,
+              icon: <Avatar variant="staff" size="L" initials={initialsOf(n)} userName={n} />,
+            }))}
+            value={task.assigned_to}
+            onPick={setAssignee}
+          />
+        </BottomSheet>
+      )}
+      {sheet === 'due' && (
+        <DueSheet value={toIso(due)} onClose={() => setSheet(null)} onSave={setDue} />
+      )}
+      {sheet === 'pool' && (
+        <BottomSheet title="Task Pool" onClose={() => setSheet(null)}>
+          <ChoiceList
+            label="Task pool"
+            options={[{ key: NO_POOL, label: 'None' }, ...(taskPools || []).map(p => ({ key: p.name, label: p.name }))]}
+            value={task.pool || NO_POOL}
+            onPick={setPool}
+          />
+        </BottomSheet>
+      )}
+      {sheet === 'status' && (
+        <BottomSheet title="Status" onClose={() => setSheet(null)}>
+          <ChoiceList
+            label="Status"
+            options={STATUS_ORDER.map(st => ({ key: st, label: STATUS_LABELS[st], icon: <Icon name={STATUS_ICONS[st]} size={24} color="currentColor" /> }))}
+            value={task.status}
+            onPick={setStatus}
+          />
+        </BottomSheet>
+      )}
+      {sheet === 'labels' && (
+        <BottomSheet title="Labels" onClose={() => setSheet(null)}>
+          <ChoiceList
+            label="Labels"
+            options={[...new Set([...LABEL_OPTIONS, ...labels])].map(l => ({ key: l, label: l, icon: <Icon name="solar:tag-linear" size={24} color="currentColor" /> }))}
+            value={labels}
+            onPick={toggleLabel}
           />
         </BottomSheet>
       )}
@@ -411,15 +563,38 @@ function SubtaskCard({ sub, onToggle, onOpen }) {
   );
 }
 
-function Detail({ label, icon, children }) {
+/** A detail; with `onEdit` its value is a row that opens a picker. */
+function Detail({ label, icon, onEdit, children }) {
+  const inner = (
+    <>
+      {icon && <Icon name={icon} size={24} />}
+      <span className={styles.detailMain}>{children}</span>
+      {onEdit && <Icon name="solar:alt-arrow-right-linear" size={16} className={styles.chevron} />}
+    </>
+  );
   return (
     <div className={styles.detail}>
       <h3 className={styles.caps}>{label}</h3>
-      <div className={styles.detailValue}>
-        {icon && <Icon name={icon} size={24} />}
-        <span className={styles.detailMain}>{children}</span>
-      </div>
+      {onEdit ? (
+        <button type="button" className={`${styles.detailValue} ${styles.editRow}`} aria-label={`${label}: ${typeof children === 'string' ? children : ''}. Change`} onClick={onEdit}>
+          {inner}
+        </button>
+      ) : (
+        <div className={styles.detailValue}>{inner}</div>
+      )}
     </div>
+  );
+}
+
+function DueSheet({ value, onClose, onSave }) {
+  const [iso, setIso] = useState(value);
+  return (
+    <BottomSheet title="Due Date" onClose={onClose}>
+      <div className={styles.sheetForm}>
+        <Input type="date" size="lg" aria-label="Due date" value={iso} onValueChange={setIso} />
+        <Button size="lg" fullWidth disabled={!iso || iso === value} onClick={() => onSave(iso)}>Save</Button>
+      </div>
+    </BottomSheet>
   );
 }
 
@@ -441,28 +616,6 @@ function ActivityEntry({ entry }) {
         <p className={styles.entryBody}>{comment ? entry.to_value : `${verb[0].toUpperCase()}${verb.slice(1)}${entry.to_value && entry.action_type !== 'created' ? `: ${entry.to_value}` : ''}`}</p>
       </div>
     </li>
-  );
-}
-
-/** Rows with a check on the picked one (Figma Drawer 1050:51230). */
-function ChoiceList({ options, value, onPick }) {
-  return (
-    <div className={styles.choices} role="radiogroup">
-      {options.map(o => (
-        <button
-          key={o.key}
-          type="button"
-          role="radio"
-          aria-checked={o.key === value}
-          className={styles.choice}
-          onClick={() => onPick(o.key)}
-        >
-          {o.icon}
-          <span className={styles.choiceLabel}>{o.label}</span>
-          {o.key === value && <Icon name="solar:unread-linear" size={32} color="currentColor" />}
-        </button>
-      ))}
-    </div>
   );
 }
 

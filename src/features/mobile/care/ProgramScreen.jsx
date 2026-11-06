@@ -12,7 +12,7 @@ import { showsPatientCarePlan } from '../../patient/right-panel/tabs/care-progra
 import { useMobileNav } from '../MobileNavContext';
 import { MobileEmpty, MobileListSkeleton } from '../MobileParts';
 import { listStamp } from '../mobileFormat';
-import { isCarePlanStep, programTone, stepIsDesktopOnly, todayMDY } from './careUtils';
+import { programTone, stepIsDesktopOnly, stepTarget, todayMDY } from './careUtils';
 import { isAssessmentStep, useProgramSteps } from './useProgramSteps';
 import { AssigneeSheet, CloseProgramSheet, PauseProgramSheet, ProgramStatusSheet } from './ProgramSheets';
 import common from '../mobile.module.css';
@@ -28,7 +28,9 @@ const STEP_ICON = {
 
 /**
  * One care program enrollment (mobile port of ProgramDetailView): status,
- * assignee, steps with Reviewed / Skip, and recent activity.
+ * assignee, steps with Reviewed / Skip (and the step's own screen where the
+ * phone has one: care plan, med rec, forms, appointment, outreach,
+ * documents), documents and recent activity.
  */
 export function ProgramScreen({ patientId, programId }) {
   const { pop, push } = useMobileNav();
@@ -80,6 +82,8 @@ function ProgramDetail({ patientId, program, onBack, push }) {
   const activity = useAppStore(s => s.patientProgramActivity?.[activityKey]) || EMPTY;
   const activityLoading = useAppStore(s => !!s.patientProgramActivityLoading?.[activityKey]);
   const { stepList, flat, progress, done } = useProgramSteps(patientId, program);
+  const patientName = useAppStore(s => (s.allPatients || []).find(p => String(p.id) === String(patientId))?.name || '');
+  const docCount = useAppStore(s => (s.programDocuments || []).filter(d => d.programCode === program.code && String(d.patientId) === String(patientId)).length);
 
   const [sheet, setSheet] = useState(null); // 'status' | 'close' | 'pause' | 'assignee' | { step }
   const [closing, setClosing] = useState(null); // status picked for Close (or null)
@@ -170,6 +174,21 @@ function ProgramDetail({ patientId, program, onBack, push }) {
     }
   };
 
+  // A step's own screen on the phone (desktop opens it in the program pane).
+  const openStep = (step) => {
+    const target = stepTarget(step);
+    setSheet(null);
+    if (!target) return;
+    const base = { patientId, programId: program.id };
+    if (target.kind === 'carePlan') push('carePlan', base);
+    else if (target.kind === 'medRecon') push('programMedRecon', base);
+    else if (target.kind === 'snapshot') push('programForm', { ...base, step, snapshot: true });
+    else if (target.kind === 'form') push('programForm', { ...base, step, formId: target.formId || null, formName: target.formName });
+    else if (target.kind === 'appointment') push('bookAppointment', { patientId, patientName });
+    else if (target.kind === 'outreach') push('patientOutreach', { patientId, programCode: program.code });
+    else if (target.kind === 'documents') push('programDocs', { patientId, programCode: program.code });
+  };
+
   const title = program.subProgram ? `${program.name} · ${program.subProgram}` : program.name;
   const stepRow = (step) => {
     const icon = STEP_ICON[step.status] || STEP_ICON.pending;
@@ -214,6 +233,13 @@ function ProgramDetail({ patientId, program, onBack, push }) {
               </span>
             </button>
           )}
+          <button type="button" className={styles.field} onClick={() => push('programDocs', { patientId, programCode: program.code })}>
+            <span className={styles.fieldLabel}>Documents</span>
+            <span className={styles.fieldValue}>
+              {docCount || 'None'}
+              <Icon name="solar:alt-arrow-right-linear" size={16} />
+            </span>
+          </button>
           <div className={styles.progressRow}>
             <span className={styles.bar} aria-hidden="true"><span className={styles.barFill} style={{ width: `${progress}%` }} /></span>
             <span>{done}/{flat.length} steps</span>
@@ -271,7 +297,7 @@ function ProgramDetail({ patientId, program, onBack, push }) {
           step={sheet.step}
           busy={busy}
           onMark={(status) => markStep(sheet.step, status)}
-          onOpenCarePlan={() => { setSheet(null); push('carePlan', { patientId, programId: program.id }); }}
+          onOpen={() => openStep(sheet.step)}
           onClose={() => setSheet(null)}
         />
       )}
@@ -279,7 +305,18 @@ function ProgramDetail({ patientId, program, onBack, push }) {
   );
 }
 
-function StepSheet({ step, busy, onMark, onOpenCarePlan, onClose }) {
+const OPEN_LABEL = {
+  carePlan: ['solar:clipboard-heart-linear', 'Open Care Plan'],
+  medRecon: ['solar:pill-linear', 'Open Medication Reconciliation'],
+  snapshot: ['solar:document-text-linear', 'Fill Snapshot'],
+  form: ['solar:clipboard-text-linear', 'Fill Form'],
+  appointment: ['solar:calendar-add-linear', 'Book Appointment'],
+  outreach: ['solar:phone-calling-linear', 'Log Outreach'],
+  documents: ['solar:folder-with-files-linear', 'View Documents'],
+};
+
+function StepSheet({ step, busy, onMark, onOpen, onClose }) {
+  const target = stepTarget(step);
   const fromRecords = step.source === 'records';
   const manualDone = step.source === 'manual' && (step.status === STEP_STATUS.completed || step.status === STEP_STATUS.skipped);
   const icon = STEP_ICON[step.status] || STEP_ICON.pending;
@@ -290,8 +327,8 @@ function StepSheet({ step, busy, onMark, onOpenCarePlan, onClose }) {
         {fromRecords ? ' from the patient’s records' : ''}
         {step.mandatory ? ' • Required step' : ''}
       </p>
-      {isCarePlanStep(step) && (
-        <BottomSheetItem icon="solar:clipboard-heart-linear" label="Open Care Plan" onClick={onOpenCarePlan} />
+      {target && (
+        <BottomSheetItem icon={OPEN_LABEL[target.kind][0]} label={OPEN_LABEL[target.kind][1]} onClick={onOpen} />
       )}
       {!fromRecords && !manualDone && (
         <>
@@ -307,7 +344,7 @@ function StepSheet({ step, busy, onMark, onOpenCarePlan, onClose }) {
           disabled={busy}
         />
       )}
-      {(stepIsDesktopOnly(step) || isAssessmentStep(step)) && (
+      {stepIsDesktopOnly(step) && (
         <div className={styles.desktopNote}>
           <Icon name="solar:monitor-linear" size={20} />
           <span>This step&rsquo;s details open on a computer. You can still mark it reviewed or skip it here.</span>

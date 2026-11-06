@@ -10,12 +10,15 @@ import common from './mobile.module.css';
 /**
  * Who a screen is about, with quick actions (Figma 759:19891 / 759:19971).
  * `actions` is [{ key, label, icon, onClick, disabled }]. `trailing` sits
- * at the top right, beside the back arrow.
+ * at the top right, beside the back arrow; `avatarActions` sit on the
+ * avatar's row instead (the profile's inbox and menu, Figma 759:19984).
+ * `details` are extra lines under `meta`; a tag is a label or a node.
  */
-export function ContactHero({ name, pronoun, meta, tags = [], phone, onCallPhone, actions = [], trailing, children }) {
+export function ContactHero({ name, pronoun, meta, details = [], tags = [], phone, onCallPhone, actions = [], trailing, avatarActions, children }) {
   const { pop } = useMobileNav();
+  const avatar = <Avatar variant="patient" size="DXL" initials={initialsOf(name)} className={styles.avatar} />;
   return (
-    <section className={styles.hero}>
+    <section className={[styles.hero, avatarActions ? styles.profile : ''].filter(Boolean).join(' ')}>
       <div className={styles.top}>
         <button type="button" className={common.iconBtn} aria-label="Back" onClick={pop}>
           <Icon name="solar:arrow-left-linear" size={24} />
@@ -23,17 +26,23 @@ export function ContactHero({ name, pronoun, meta, tags = [], phone, onCallPhone
         {trailing}
       </div>
       <div className={styles.identity}>
-        <Avatar variant="patient" size="DXL" initials={initialsOf(name)} className={styles.avatar} />
+        {avatarActions ? (
+          <div className={styles.avatarRow}>
+            {avatar}
+            <span className={styles.avatarActions}>{avatarActions}</span>
+          </div>
+        ) : avatar}
         <div className={styles.names}>
           <div className={styles.nameRow}>
             <h1 className={styles.name}>{name}</h1>
           </div>
           {pronoun && <p className={styles.pronoun}>{pronoun}</p>}
           {meta && <p className={styles.meta}>{meta}</p>}
+          {details.filter(Boolean).map((d, i) => <p key={i} className={styles.meta}>{d}</p>)}
         </div>
         {tags.length > 0 && (
           <div className={styles.tags}>
-            {tags.map(t => <Badge key={t} tone="neutral" variant="soft" size="md" label={t} />)}
+            {tags.map(t => (typeof t === 'string' ? <Badge key={t} tone="neutral" variant="soft" size="md" label={t} /> : t))}
           </div>
         )}
       </div>

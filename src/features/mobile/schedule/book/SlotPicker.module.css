@@ -1,0 +1,146 @@
+/* Date + Time cards (Figma 1082:58707 "Appointment") */
+.wrap {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 0.5px solid var(--neutral-100);
+  background: var(--neutral-0);
+}
+.card + .card { border-top: 0; }
+.cardTitle {
+  margin: 0;
+  font-size: var(--font-xl);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.monthRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.month {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-xl);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  justify-items: center;
+}
+.dow {
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--neutral-300);
+}
+
+/* One day: number over a 32×4 availability bar. The ::before widens the tap
+   area to 44pt without moving the layout. */
+.day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.day::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+.day:disabled { cursor: default; }
+.num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.bar {
+  display: flex;
+  width: 32px;
+  height: 4px;
+  overflow: hidden;
+  border: 0.5px solid var(--neutral-100);
+  border-radius: 999px;
+  background: var(--neutral-50);
+  box-sizing: border-box;
+}
+.barFill {
+  width: 18px;
+  height: 100%;
+  border-radius: 999px;
+}
+.open .barFill { background: var(--status-success-dark); }
+.off .num { color: var(--neutral-100); }
+.off .barFill { background: var(--neutral-100); }
+.none .num { color: var(--neutral-200); }
+.none .barFill { background: transparent; }
+.picked .num {
+  background: var(--primary-300);
+  color: var(--on-color);
+}
+.picked .bar {
+  border-color: var(--neutral-200);
+  background: var(--neutral-100);
+}
+
+.timeHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.hint {
+  margin: 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.slots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+.slot {
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: 0.5px solid var(--neutral-200);
+  border-radius: 8px;
+  background: var(--neutral-0);
+  font-size: var(--font-lg);
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+.slotPicked {
+  border-color: var(--primary-300);
+  background: var(--primary-300);
+  color: var(--on-color);
+}

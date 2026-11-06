@@ -3635,9 +3635,10 @@ export const useAppStore = create((set, get) => ({
       patientCarePlans: { ...s.patientCarePlans, [key]: { ...prev, barriers: prev.barriers.filter(b => b.id !== id) } },
     }));
     const { error } = await supabase.from('patient_care_plan_barriers').delete().eq('id', id);
-    if (error) { console.warn('deletePatientCarePlanBarrier:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete barrier'); return; }
+    if (error) { console.warn('deletePatientCarePlanBarrier:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete barrier'); return false; }
     if (removed) get().logCarePlanAudit(patientId, { id: programId, code: prev?.plan?.programCode }, { entityType: 'barrier', entityId: id, action: 'deleted', summary: removed.title });
     get().touchCarePlanModified(patientId, programId);
+    return true;
   },
 
   // A template on a plan should mean its goals, interventions and barriers are
@@ -4018,9 +4019,10 @@ export const useAppStore = create((set, get) => ({
       patientCarePlans: { ...s.patientCarePlans, [key]: { ...afterCascade, goals: (afterCascade.goals || []).filter(g => g.id !== id), barriers: afterCascade.barriers || [], interventions: afterCascade.interventions || [] } },
     }));
     const { error } = await supabase.from('patient_care_plan_goals').delete().eq('id', id);
-    if (error) { console.warn('deletePatientCarePlanGoal:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: afterCascade } })); get().showToast('Could not delete goal'); return; }
+    if (error) { console.warn('deletePatientCarePlanGoal:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: afterCascade } })); get().showToast('Could not delete goal'); return false; }
     if (removed) get().logCarePlanAudit(patientId, { id: programId, code: prev?.plan?.programCode }, { entityType: 'goal', entityId: id, action: 'deleted', summary: removed.title });
     get().touchCarePlanModified(patientId, programId);
+    return true;
   },
 
   // ── Goal Details: measurements (manual "Last N Values") ──────────────────
@@ -4286,7 +4288,7 @@ export const useAppStore = create((set, get) => ({
       patientCarePlans: { ...s.patientCarePlans, [key]: { ...prev, interventions: prev.interventions.filter(x => x.id !== id), barriers: prev.barriers || [], goals: prev.goals || [] } },
     }));
     const { error } = await supabase.from('patient_care_plan_interventions').delete().eq('id', id);
-    if (error) { console.warn('deletePatientCarePlanIntervention:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete intervention'); return; }
+    if (error) { console.warn('deletePatientCarePlanIntervention:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete intervention'); return false; }
     // Cascade delete the paired task so the collapsed intervention↔task
     // record is removed atomically (the FK uses ON DELETE SET NULL from
     // the intervention side, which would leave the task orphaned; the
@@ -4297,6 +4299,7 @@ export const useAppStore = create((set, get) => ({
     }
     if (removed) get().logCarePlanAudit(patientId, { id: programId, code: prev?.plan?.programCode }, { entityType: 'intervention', entityId: id, action: 'deleted', summary: removed.title });
     get().touchCarePlanModified(patientId, programId);
+    return true;
   },
 
   // Save the patient's live plan back into the shared library as a reusable

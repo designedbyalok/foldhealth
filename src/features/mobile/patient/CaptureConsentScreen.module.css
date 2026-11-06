@@ -1,0 +1,102 @@
+/* Capture Consent on the phone (desktop CaptureConsentDrawer, Figma 1:35100). */
+.agreement {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 40vh;
+  padding: var(--space-4);
+  border-radius: 12px;
+  background: var(--neutral-50);
+  overflow-y: auto;
+}
+.agreementTitle {
+  font-size: var(--font-xl);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.text,
+.statement {
+  margin: 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}
+.statement { color: var(--neutral-400); }
+.list {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: var(--font-lg);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+  list-style: disc;
+}
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: 44px;
+  font-size: var(--font-lg);
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+.pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 88px;
+  padding: var(--space-4);
+  border: 1px dashed var(--neutral-150);
+  border-radius: 12px;
+  font-size: var(--font-lg);
+  color: var(--primary-300);
+  cursor: pointer;
+}
+.hiddenInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.file {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  color: var(--neutral-300);
+}
+.fileName {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-lg);
+  color: var(--neutral-400);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fileRemove {
+  position: relative;
+  display: inline-flex;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.fileRemove::before { content: ''; position: absolute; inset: -10px; }
