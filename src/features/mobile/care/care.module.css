@@ -130,8 +130,9 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  padding: 0;
-  margin: 0;
+  /* 44pt touch target without moving the layout (Apple HIG) */
+  padding: var(--space-3) 0;
+  margin: calc(var(--space-3) * -1) 0;
   border: 0;
   background: none;
   cursor: pointer;
@@ -142,6 +143,7 @@
   justify-content: space-between;
   gap: var(--space-3);
   width: 100%;
+  min-height: 44px;
   padding: var(--space-3);
   margin: 0;
   border: 0;
@@ -326,3 +328,5 @@
   font-size: var(--font-base);
   color: var(--status-error-dark);
 }
+
+.heroTitle { letter-spacing: -0.02em; }

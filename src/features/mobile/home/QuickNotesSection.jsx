@@ -58,8 +58,8 @@ export function QuickNoteSheet({ note, onClose }) {
     <BottomSheet title={note.id ? 'Quick Note' : 'Add Quick Note'} onClose={onClose}>
       <Textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder="Write a note for the team" aria-label="Note" />
       <div className={styles.sheetActions}>
-        {note.id && <Button variant="ghost" tone="danger" onClick={remove} disabled={busy}>Delete</Button>}
-        <Button variant="solid" onClick={save} disabled={!text.trim() || busy}>Save</Button>
+        {note.id && <Button size="lg" variant="ghost" tone="danger" onClick={remove} disabled={busy}>Delete</Button>}
+        <Button size="lg" variant="solid" onClick={save} disabled={!text.trim() || busy}>Save</Button>
       </div>
     </BottomSheet>
   );

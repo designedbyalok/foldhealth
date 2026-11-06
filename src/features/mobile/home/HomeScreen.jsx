@@ -110,7 +110,7 @@ export function HomeScreen() {
                   {[upNext.appointment_type_name, `${upNext.time_start} (${minutesUntil(upNext.start, now)})`].filter(Boolean).join(' • ')}
                 </span>
               </div>
-              <Button variant="solid" onClick={() => push('appointment', { appointmentId: upNext.id })}>
+              <Button size="lg" variant="solid" onClick={() => push('appointment', { appointmentId: upNext.id })}>
                 Open
               </Button>
             </div>

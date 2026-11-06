@@ -40,7 +40,7 @@ export function StickyNoteSheet({ patientId, note, onClose }) {
     <BottomSheet title={note?.id ? 'Sticky Note' : 'Add Sticky Note'} onClose={onClose}>
       <Textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder="Add a note about this patient" aria-label="Sticky note" />
       <div className={styles.sheetActions}>
-        <Button variant="solid" onClick={save} disabled={!text.trim() || busy}>Save</Button>
+        <Button size="lg" variant="solid" onClick={save} disabled={!text.trim() || busy}>Save</Button>
       </div>
     </BottomSheet>
   );

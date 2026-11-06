@@ -47,7 +47,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  min-height: 40px;
+  min-height: 44px;
 }
 .subTitle {
   flex: 1;
@@ -62,8 +62,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   margin: 0;
   border: 0;
@@ -270,3 +270,9 @@
   }
   .title { font-size: var(--font-3xl); }
 }
+
+/* Large titles read better slightly tightened (Apple HIG typography). */
+.title,
+.subTitle { letter-spacing: -0.02em; }
+.textBtn { min-height: 44px; }
+.card { min-height: 44px; }

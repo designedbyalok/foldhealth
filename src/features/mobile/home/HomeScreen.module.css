@@ -131,7 +131,9 @@
   color: var(--placeholder-text);
 }
 .sectionAction {
-  padding: 0;
+  /* 44pt touch target without moving the layout (Apple HIG) */
+  padding: var(--space-3) var(--space-2);
+  margin: calc(var(--space-3) * -1) calc(var(--space-2) * -1);
   border: 0;
   background: none;
   color: var(--primary-300);
@@ -219,3 +221,5 @@
   gap: var(--space-2);
   padding-top: var(--space-2);
 }
+
+.sectionAction { min-height: 44px; }

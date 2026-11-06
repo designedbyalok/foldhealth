@@ -108,7 +108,7 @@ export function AppointmentScreen({ appointmentId }) {
           {!cancelled && (
             <div className={styles.actions}>
               {status !== 'Checked In' && status !== 'Checked Out' && (
-                <Button
+                <Button size="lg"
                   variant="outline"
                   fullWidth
                   disabled={busy || !!checkInBlocked}
@@ -120,7 +120,7 @@ export function AppointmentScreen({ appointmentId }) {
               )}
               {checkInBlocked && status !== 'Checked In' && <p className={styles.hint}>{checkInBlocked}</p>}
               {!locked && (
-                <Button variant="soft" tone="danger" fullWidth disabled={busy} onClick={() => setConfirmCancel(true)}>
+                <Button size="lg" variant="soft" tone="danger" fullWidth disabled={busy} onClick={() => setConfirmCancel(true)}>
                   Cancel Appointment
                 </Button>
               )}
@@ -135,7 +135,7 @@ export function AppointmentScreen({ appointmentId }) {
           <p className={styles.confirmText}>
             {appt.patient_name ? `${appt.patient_name}'s ` : ''}{appt.appointment_type_name || 'appointment'} on {dateText} at {appt.time_start} will be cancelled.
           </p>
-          <Button
+          <Button size="lg"
             variant="soft"
             tone="danger"
             fullWidth

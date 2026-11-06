@@ -21,6 +21,7 @@ export function MobileRootHeader({ title, actions }) {
           icon="solar:bell-linear"
           size="lg"
           notification={unread > 0}
+          count={unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined}
           aria-label={unread ? `Alerts, ${unread} unread` : 'Alerts'}
           onClick={() => push('alerts')}
         />

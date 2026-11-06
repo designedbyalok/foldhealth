@@ -225,3 +225,8 @@
   text-align: right;
   overflow-wrap: anywhere;
 }
+
+/* 44pt touch targets (Apple HIG) */
+.sectionToggle { min-height: 44px; }
+.sectionAdd { position: relative; }
+.sectionAdd::before { content: ''; position: absolute; inset: -10px; }

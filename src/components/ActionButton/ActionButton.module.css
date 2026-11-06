@@ -142,13 +142,18 @@
   font-size: var(--font-2xs);
 }
 
+/* Figma "Notification Badge" on the XL (Mob) button: 20px tall, grows for
+   two digits, 4px in from the button's corner (Provider App 759:18986). */
 .sizeXL .badge {
-  top: -8px;
-  right: -8px;
-  width: 17px;
-  height: 17px;
-  padding: 2px 4px;
+  top: var(--space-1);
+  right: var(--space-1);
+  min-width: 20px;
+  height: 20px;
+  padding: calc(var(--space-1) / 2) var(--space-1);
+  box-sizing: border-box;
   font-size: var(--font-base);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
 }
 
 /* ── Status dot (red/green indicator) ── */

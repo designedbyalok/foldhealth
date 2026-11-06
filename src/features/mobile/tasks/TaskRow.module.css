@@ -48,6 +48,16 @@
   align-items: flex-start;
   gap: var(--space-1);
 }
+.titleBtn {
+  width: 100%;
+  min-height: 44px;
+  margin: calc(var(--space-3) * -1) 0;
+  padding: var(--space-3) 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
 .title {
   margin: 0;
   font-size: var(--font-lg);
@@ -74,3 +84,13 @@
   color: var(--primary-300);
   cursor: pointer;
 }
+
+/* 44pt touch targets around the 24px check and the member link (Apple HIG) */
+.check { position: relative; }
+.check::before { content: ''; position: absolute; inset: -10px; }
+.member {
+  padding: var(--space-3) 0;
+  margin: calc(var(--space-3) * -1) 0;
+}
+
+.member { min-height: 44px; }

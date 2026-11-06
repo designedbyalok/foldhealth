@@ -55,7 +55,7 @@ export function CallsScreen() {
       <div className={styles.bodyWrap}>
         <div className={styles.body}>
           {loading ? <MobileListSkeleton /> : failed ? (
-            <MobileEmpty icon="solar:danger-circle-linear" title="Couldn't load calls" action={<Button variant="outline" onClick={retry}>Try again</Button>} />
+            <MobileEmpty icon="solar:danger-circle-linear" title="Couldn't load calls" action={<Button size="lg" variant="outline" onClick={retry}>Try again</Button>} />
           ) : shown.length === 0 ? (
             <MobileEmpty
               icon="solar:phone-linear"

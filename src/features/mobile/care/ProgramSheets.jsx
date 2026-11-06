@@ -35,8 +35,8 @@ export function CloseProgramSheet({ program, status, busy, onSubmit, onClose }) 
       <RadioOptionGroup label="Reason" variant="card" options={CLOSURE_REASONS} value={reason} onChange={setReason} />
       <Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note (optional)" aria-label="Note" />
       <div className={styles.actions}>
-        <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
-        <Button variant="solid" tone="danger" disabled={!reason || busy} onClick={() => onSubmit({ reason, note: note.trim(), status })}>
+        <Button size="lg" variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
+        <Button size="lg" variant="solid" tone="danger" disabled={!reason || busy} onClick={() => onSubmit({ reason, note: note.trim(), status })}>
           Close Program
         </Button>
       </div>
@@ -68,8 +68,8 @@ export function PauseProgramSheet({ busy, onSubmit, onClose }) {
         {problem && <p className={styles.problem}>{problem}</p>}
       </div>
       <div className={styles.actions}>
-        <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
-        <Button
+        <Button size="lg" variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
+        <Button size="lg"
           variant="solid"
           disabled={!reason || needsNote || !!problem || busy}
           onClick={() => onSubmit({ reason, note: note.trim(), pausedOn, resumeOn: resumeOn || null, autoResume })}

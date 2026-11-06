@@ -100,6 +100,8 @@
   border-radius: 8px;
 }
 .sizeL .btn {
+  min-height: 44px;
+  min-width: 44px;
   gap: var(--space-1);
   padding: var(--space-2);
   border-radius: 8px;
@@ -162,6 +164,7 @@
 .ghost.sizeL .slider { top: 0; bottom: 0; }
 .ghost.sizeL .btn {
   height: auto;
+  min-height: 44px;
   padding: var(--space-2);
   font-size: var(--font-lg);
 }
