@@ -23,6 +23,7 @@ import { TasksScreen } from './tasks/TasksScreen';
 import { AddTaskScreen } from './tasks/AddTaskScreen';
 import { TaskDetailScreen } from './tasks/TaskDetailScreen';
 import { AppointmentScreen } from './schedule/AppointmentScreen';
+import { BookAppointmentScreen } from './schedule/book/BookAppointmentScreen';
 import { ProgramScreen } from './care/ProgramScreen';
 import { CarePlanScreen } from './care/CarePlanScreen';
 import { ProfileScreen } from './profile/ProfileScreen';
@@ -62,6 +63,7 @@ const SCREENS = {
   addTask: AddTaskScreen,
   taskDetail: TaskDetailScreen,
   appointment: AppointmentScreen,
+  bookAppointment: BookAppointmentScreen,
   program: ProgramScreen,
   carePlan: CarePlanScreen,
   profile: ProfileScreen,
@@ -69,7 +71,7 @@ const SCREENS = {
 };
 
 // Sub-screens that need the whole height (a composer or keypad at the bottom).
-const FULL_SCREEN = new Set(['thread', 'dialer', 'addTask', 'taskDetail']);
+const FULL_SCREEN = new Set(['thread', 'dialer', 'addTask', 'taskDetail', 'bookAppointment']);
 
 function initialTab(activePage, allowed) {
   const byPage = TABS.find(t => t.page === activePage && allowed.includes(t.key));
