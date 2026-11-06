@@ -1,0 +1,148 @@
+/* Out of Office on the phone: records list and the record form. */
+
+/* ── Records ── */
+.records {
+  margin: 0;
+  list-style: none;
+}
+.record {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-4);
+  margin: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--neutral-0);
+  text-align: left;
+  color: inherit;
+  box-sizing: border-box;
+}
+button.record { cursor: pointer; }
+button.record:active { background: var(--neutral-25); }
+.recordText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  line-height: var(--leading-tight);
+}
+.recordHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+.recordLength {
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+.recordSpan {
+  font-size: var(--font-xl);
+  color: var(--neutral-400);
+}
+.recordReason {
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+  overflow-wrap: anywhere;
+}
+.recordMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+.chevron {
+  flex-shrink: 0;
+  color: var(--neutral-300);
+}
+
+/* ── Form ── */
+.formBody { background: var(--neutral-0); }
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5);
+}
+.rowError {
+  margin: calc(var(--space-3) * -1) 0 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--status-error-dark);
+}
+.optionField .rowError { margin: 0; }
+.optionCard,
+.overlapCard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 12px;
+}
+.optionText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  line-height: var(--leading-tight);
+}
+.optionTitle {
+  font-size: var(--font-xl);
+  color: var(--neutral-400);
+}
+.optionSub,
+.optionNote {
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+.optionNote,
+.optionField {
+  flex-basis: 100%;
+}
+.optionField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.overlapCard {
+  flex-direction: column;
+  align-items: stretch;
+  border-color: var(--status-warning);
+}
+.overlapHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.overlapText {
+  margin: 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.overlapActions {
+  display: flex;
+  gap: var(--space-3);
+}
+.footer {
+  padding: var(--space-5) var(--space-5) max(var(--space-5), env(safe-area-inset-bottom));
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-footer);
+}
+.sheetText {
+  margin: 0 0 var(--space-5);
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}

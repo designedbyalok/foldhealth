@@ -28,6 +28,8 @@ import { ProgramScreen } from './care/ProgramScreen';
 import { CarePlanScreen } from './care/CarePlanScreen';
 import { ProfileScreen } from './profile/ProfileScreen';
 import { AlertsScreen } from './profile/AlertsScreen';
+import { OooScreen } from './ooo/OooScreen';
+import { OooFormScreen } from './ooo/OooFormScreen';
 import shell from './MobileShell.module.css';
 import styles from './mobile.module.css';
 
@@ -68,10 +70,12 @@ const SCREENS = {
   carePlan: CarePlanScreen,
   profile: ProfileScreen,
   alerts: AlertsScreen,
+  ooo: OooScreen,
+  oooForm: OooFormScreen,
 };
 
 // Sub-screens that need the whole height (a composer or keypad at the bottom).
-const FULL_SCREEN = new Set(['thread', 'dialer', 'addTask', 'taskDetail', 'bookAppointment']);
+const FULL_SCREEN = new Set(['thread', 'dialer', 'addTask', 'taskDetail', 'oooForm', 'bookAppointment']);
 
 function initialTab(activePage, allowed) {
   const byPage = TABS.find(t => t.page === activePage && allowed.includes(t.key));

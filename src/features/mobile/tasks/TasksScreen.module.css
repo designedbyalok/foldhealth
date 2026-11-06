@@ -1,0 +1,23 @@
+/* Title doubles as the tab picker (My Tasks / Task Pool / Mentions / Created by Me) */
+.scopeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.scopeBtn > :last-child { flex-shrink: 0; color: var(--neutral-300); }
+.scopeLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

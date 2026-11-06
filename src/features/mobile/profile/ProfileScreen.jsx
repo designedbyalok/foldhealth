@@ -4,6 +4,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { useAppStore } from '../../../store/useAppStore';
 import { supabase } from '../../../lib/supabase';
 import { clearUserStorage } from '../../../lib/clearUserStorage';
+import { OOO_ICON } from '../../ooo/oooUtils';
 import { useMobileNav } from '../MobileNavContext';
 import { initialsOf } from '../mobileFormat';
 import common from '../mobile.module.css';
@@ -64,6 +65,11 @@ export function ProfileScreen() {
           <button type="button" className={`${styles.card} ${styles.row}`} onClick={() => push('alerts')}>
             <Icon name="solar:bell-linear" size={24} />
             <span className={styles.rowLabel}>Alerts</span>
+            <Icon name="solar:alt-arrow-right-linear" size={16} />
+          </button>
+          <button type="button" className={`${styles.card} ${styles.row}`} onClick={() => push('ooo')}>
+            <Icon name={OOO_ICON} size={24} />
+            <span className={styles.rowLabel}>Out of Office</span>
             <Icon name="solar:alt-arrow-right-linear" size={16} />
           </button>
           <button type="button" className={`${styles.card} ${styles.row} ${styles.danger}`} onClick={signOut}>

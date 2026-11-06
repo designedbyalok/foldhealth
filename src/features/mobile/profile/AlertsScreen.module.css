@@ -1,0 +1,75 @@
+/* Alerts (Figma 759:25866): white cards on the grey body. */
+.list {
+  margin: 0;
+  list-style: none;
+}
+.card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-4);
+  margin: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--neutral-0);
+  text-align: left;
+  color: inherit;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.card:active { background: var(--neutral-25); }
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--primary-300);
+}
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  line-height: var(--leading-tight);
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-xl);
+  color: var(--neutral-400);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.unread { font-weight: 500; }
+.time {
+  flex-shrink: 0;
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+  white-space: nowrap;
+}
+.body {
+  display: -webkit-box;
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.dot {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary-300);
+}

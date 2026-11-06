@@ -1,0 +1,37 @@
+/* Bottom sheet picker rows (Figma 759:21744) */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 56px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+.choiceLabel {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-2xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.choiceDetail {
+  flex-shrink: 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
