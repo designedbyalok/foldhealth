@@ -103,30 +103,60 @@ export function MobileShell() {
   const [stack, setStack] = useState([]);
   // 'push' plays the slide-in; going back or switching tabs doesn't.
   const [motion, setMotion] = useState('none');
-  const stackRef = useRef(stack);
-  useEffect(() => { stackRef.current = stack; }, [stack]);
 
-  // Each sub-screen is a browser history entry, so the phone's back gesture
-  // closes it instead of leaving the app.
+  // Each sub-screen is a browser history entry tagged with its depth, so the
+  // phone's back gesture closes it instead of leaving the app. The router
+  // also writes the URL hash (store setters, deep links), and browsers report
+  // that as a popstate too; those entries carry no depth and aren't a Back,
+  // so they must not close the open screen. `rootHash` is the URL under the
+  // first sub-screen: a depthless entry with it is a real Back to the tab.
+  const depthRef = useRef(0);
+  const rootHash = useRef(null);
   useEffect(() => {
-    const onPop = () => { setMotion('none'); setStack(s => s.slice(0, -1)); };
+    const onPop = (e) => {
+      const depth = e.state?.mobileDepth ?? (window.location.hash === rootHash.current ? 0 : null);
+      if (depth == null) return;
+      depthRef.current = Math.min(depthRef.current, depth);
+      setMotion('none');
+      setStack(s => s.slice(0, depth));
+    };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
   const push = useCallback((screen, props = {}) => {
-    window.history.pushState({ mobileScreen: screen }, '');
+    if (depthRef.current === 0) rootHash.current = window.location.hash;
+    depthRef.current += 1;
+    window.history.pushState({ mobileScreen: screen, mobileDepth: depthRef.current }, '');
     setMotion('push');
     setStack(s => [...s, { screen, props }]);
   }, []);
   const pop = useCallback(() => {
-    if (stackRef.current.length) window.history.back();
+    if (!depthRef.current) return;
+    // Our own entry is on top: go back through history like the gesture does.
+    if (window.history.state?.mobileDepth === depthRef.current) {
+      window.history.back();
+      return;
+    }
+    // The router added an entry on top of ours; close the screen directly.
+    depthRef.current -= 1;
+    setMotion('none');
+    setStack(s => s.slice(0, depthRef.current));
   }, []);
+  // Swap the top screen for another (a finished form opening what it made),
+  // so Back from the new screen skips the form.
+  const replace = useCallback((screen, props = {}) => {
+    if (!depthRef.current) { push(screen, props); return; }
+    window.history.replaceState({ mobileScreen: screen, mobileDepth: depthRef.current }, '');
+    setMotion('push');
+    setStack(s => [...s.slice(0, -1), { screen, props }]);
+  }, [push]);
   const canTab = useCallback((key) => allowed.includes(key), [allowed]);
   const setTab = useCallback((key) => {
     if (!allowed.includes(key)) return;
-    const depth = stackRef.current.length;
+    const depth = depthRef.current;
     if (depth) {
+      depthRef.current = 0;
       setStack([]);
       window.history.go(-depth);
     }
@@ -169,7 +199,7 @@ export function MobileShell() {
     });
   }, [selectedPatientId, accessReady, openMember]);
 
-  const nav = useMemo(() => ({ push, pop, setTab, canTab, openMember }), [push, pop, setTab, canTab, openMember]);
+  const nav = useMemo(() => ({ push, pop, replace, setTab, canTab, openMember }), [push, pop, replace, setTab, canTab, openMember]);
   const top = stack[stack.length - 1];
   const Root = tab ? ROOTS[tab] : NoAccess;
   const Sub = top ? SCREENS[top.screen] : null;
