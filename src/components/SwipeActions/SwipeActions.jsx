@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Icon } from '../Icon/Icon';
 import styles from './SwipeActions.module.css';
 
@@ -86,12 +86,20 @@ export function SwipeActions({ leading, trailing = [], children, className }) {
       close();
     }
   };
-  const onClickCapture = (e) => {
-    if (!swallowClick.current) return;
-    swallowClick.current = false;
-    e.preventDefault();
-    e.stopPropagation();
-  };
+  // A drag ends with a click on whatever was under the finger; swallow it so the
+  // row doesn't also open. Native capture listener: the track isn't a control.
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return undefined;
+    const onClick = (e) => {
+      if (!swallowClick.current) return;
+      swallowClick.current = false;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    el.addEventListener('click', onClick, true);
+    return () => el.removeEventListener('click', onClick, true);
+  }, []);
 
   return (
     <div className={[styles.root, className].filter(Boolean).join(' ')}>
@@ -129,7 +137,6 @@ export function SwipeActions({ leading, trailing = [], children, className }) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={() => { drag.current = null; close(); }}
-        onClickCapture={onClickCapture}
       >
         {children}
       </div>

@@ -31,7 +31,8 @@ export function CallMemberScreen() {
     const q = query.trim().toLowerCase();
     const qDigits = digits(q);
     return (patients || []).filter(p => !q
-      || [p.name, p.memberId].some(v => String(v || '').toLowerCase().includes(q))
+      || String(p.name || '').toLowerCase().includes(q)
+      || String(p.memberId || '').toLowerCase().includes(q)
       || (qDigits.length >= 3 && digits(p.phone).includes(qDigits)));
   }, [patients, query]);
 
