@@ -37,7 +37,8 @@ export function WorklistsScreen() {
 
   const ordered = useMemo(() => {
     const saved = (order || []).filter(l => BY_LABEL[l]);
-    return [...saved, ...WORKLISTS.map(w => w.label).filter(l => !saved.includes(l))].map(l => BY_LABEL[l]);
+    const savedSet = new Set(saved);
+    return [...saved, ...WORKLISTS.map(w => w.label).filter(l => !savedSet.has(l))].map(l => BY_LABEL[l]);
   }, [order]);
 
   const row = (label, icon, count, onClick) => (

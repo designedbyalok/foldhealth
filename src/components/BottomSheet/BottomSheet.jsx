@@ -19,14 +19,12 @@ import styles from './BottomSheet.module.css';
 export function BottomSheet({ title, onClose, children, className }) {
   const ref = useNativeDialog();
   return (
-    // The dialog itself is the dimmed backdrop area: a tap that lands on it
-    // (not on the sheet) closes. Escape arrives as the dialog's cancel event.
+    // Escape arrives as the dialog's cancel event.
     <dialog
       ref={ref}
       className={styles.dialog}
       aria-label={title}
       onCancel={(e) => { e.preventDefault(); onClose(); }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className={[styles.sheet, className].filter(Boolean).join(' ')}>
         {title && (
@@ -39,6 +37,10 @@ export function BottomSheet({ title, onClose, children, className }) {
         )}
         {children}
       </div>
+      {/* Tapping the dimmed area closes. Keyboard users have Escape and the
+          close button, so this stays out of the tab order; it comes after
+          the sheet so the dialog's first focus lands in the sheet. */}
+      <button type="button" className={styles.scrim} aria-label="Close" tabIndex={-1} onClick={onClose} />
     </dialog>
   );
 }

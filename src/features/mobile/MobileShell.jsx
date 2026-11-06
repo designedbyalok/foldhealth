@@ -71,7 +71,8 @@ export function MobileShell() {
   const unreadMessages = useAppStore(s => s.messagesUnreadCount);
   const selectedPatientId = useAppStore(s => s.selectedPatientId);
   const can = useCan();
-  const allowed = useMemo(() => TABS.filter(t => can(t.perm)).map(t => t.key), [can]);
+  const visibleTabs = useMemo(() => TABS.filter(t => can(t.perm)), [can]);
+  const allowed = useMemo(() => visibleTabs.map(t => t.key), [visibleTabs]);
   const [tabState, setTabState] = useState(() => initialTab(activePage, allowed));
   const tab = allowed.includes(tabState) ? tabState : allowed[0] || null;
   const [stack, setStack] = useState([]);
@@ -143,7 +144,7 @@ export function MobileShell() {
         </main>
         {showNav && (
           <nav className={shell.nav} aria-label="Main">
-            {TABS.filter(t => allowed.includes(t.key)).map(t => {
+            {visibleTabs.map(t => {
               const active = t.key === tab;
               const badge = t.key === 'messages' && unreadMessages > 0 ? unreadMessages : 0;
               return (

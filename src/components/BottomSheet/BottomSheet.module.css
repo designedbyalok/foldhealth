@@ -16,6 +16,17 @@
 }
 .dialog:not([open]) { display: none; }
 .dialog::backdrop { background: var(--surface-overlay); }
+.scrim {
+  order: -1;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
 
 .sheet {
   display: flex;
@@ -27,6 +38,7 @@
   border-radius: 24px 24px 0 0;
   background: var(--neutral-0);
   box-shadow: var(--shadow-popover);
+  flex-shrink: 0;
   animation: rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 @keyframes rise {
