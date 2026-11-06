@@ -6,6 +6,7 @@ import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { CmpOutreachCell } from './CmpOutreachCell';
 import { CMP_STATUS_TONE } from './cmpStatuses';
+import { CMP_CARE_TEAM_ROLES } from './cmpCareTeam';
 import styles from './CmpWorklistRow.module.css';
 
 const STATUS_MENU = Object.keys(CMP_STATUS_TONE).map(key => ({ key, label: key }));
@@ -14,12 +15,8 @@ const RISK_VARIANT = { Low: 'success', Medium: 'warning', High: 'danger' };
 
 
 // Care team roles on each enrollment, after Assignee.
-const CARE_TEAM_ROLES = [
-  { key: 'nurseHealthCoach', label: 'Nurse/Health Coach', width: 180 },
-  { key: 'coordinator', label: 'Coordinator', width: 160 },
-  { key: 'socialWorker', label: 'Social Worker', width: 160 },
-  { key: 'communityHealthWorker', label: 'Community Health Worker', width: 210 },
-];
+const ROLE_WIDTH = { nurseHealthCoach: 180, coordinator: 160, socialWorker: 160, communityHealthWorker: 210 };
+const CARE_TEAM_ROLES = CMP_CARE_TEAM_ROLES.map(r => ({ ...r, width: ROLE_WIDTH[r.key] }));
 const initialsOf = (name) => name.replace(/\./g, '').split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
 const DAY_MS = 86400000;
