@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Icon } from '../../../components/Icon/Icon';
 import { useCommsPeople } from '../../messages/comms/useCommsPeople';
 import { formatPhone, isDialable, toE164 } from '../../messages/comms/commsUtils';
@@ -15,10 +16,10 @@ const KEYS = [
 ];
 
 /** Dial a number; the call goes out on the provider's phone and is logged. */
-export function DialerScreen() {
+export function DialerScreen({ number: initialNumber = '' }) {
   const { pop } = useMobileNav();
   const { patients, me, line } = useCommsPeople();
-  const [number, setNumber] = useState('');
+  const [number, setNumber] = useState(initialNumber);
   const match = number.length >= 10 ? patients.find(p => p.phone && toE164(p.phone) === toE164(number)) : null;
 
   const call = async () => {
@@ -34,9 +35,12 @@ export function DialerScreen() {
             <Icon name="solar:arrow-left-linear" size={24} />
           </button>
         </div>
+        <div className={styles.center}>
         {line.number && <p className={styles.line}>Calling from {formatPhone(line.number)}</p>}
-        <p className={styles.number} aria-live="polite">{formatPhone(number) || number}</p>
-        <p className={styles.match}>{match?.name || ''}</p>
+        <div className={styles.display}>
+          <p className={styles.number} aria-live="polite">{formatPhone(number) || number}</p>
+          <p className={styles.match}>{match?.name || ''}</p>
+        </div>
         <div className={styles.pad}>
           {KEYS.map(([digit, letters]) => (
             <button
@@ -48,7 +52,7 @@ export function DialerScreen() {
               onContextMenu={digit === '0' ? (e) => { e.preventDefault(); setNumber(n => `${n}+`); } : undefined}
             >
               <span className={styles.digit}>{digit}</span>
-              <span className={styles.letters}>{letters}</span>
+              {letters && <span className={digit === '0' ? styles.plus : styles.letters}>{letters}</span>}
             </button>
           ))}
         </div>
@@ -58,10 +62,9 @@ export function DialerScreen() {
             <Icon name="solar:phone-linear" size={32} color="currentColor" />
           </button>
           {number ? (
-            <button type="button" className={styles.clear} aria-label="Delete digit" onClick={() => setNumber(n => n.slice(0, -1))}>
-              <Icon name="solar:backspace-linear" size={28} />
-            </button>
+            <ActionButton size="lg" icon="solar:backspace-linear" aria-label="Delete digit" onClick={() => setNumber(n => n.slice(0, -1))} />
           ) : <span />}
+        </div>
         </div>
       </div>
     </div>

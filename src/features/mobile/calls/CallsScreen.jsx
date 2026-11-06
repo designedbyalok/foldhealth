@@ -1,22 +1,76 @@
 import { useMemo, useState } from 'react';
 import { Avatar } from '../../../components/Avatar/Avatar';
+import { BottomSheet, BottomSheetItem } from '../../../components/BottomSheet/BottomSheet';
 import { Button } from '../../../components/Button/Button';
 import { Icon } from '../../../components/Icon/Icon';
 import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
+import { SwipeActions } from '../../../components/SwipeActions/SwipeActions';
 import { useCommsConversations, useCommsMessagesFor } from '../../messages/comms/useComms';
 import { useCommsPeople } from '../../messages/comms/useCommsPeople';
-import { formatPhone } from '../../messages/comms/commsUtils';
+import { formatPhone, isDialable, patientFor } from '../../messages/comms/commsUtils';
 import { MobileRootHeader } from '../MobileHeader';
 import { MobileEmpty, MobileListSkeleton, CountBadge } from '../MobileParts';
 import { useMobileNav } from '../MobileNavContext';
+import { useContactActions } from '../useContactActions';
 import { listStamp } from '../mobileFormat';
 import { callRow } from './callLog';
 import styles from '../mobile.module.css';
 
+/**
+ * One call in the log. Swipe right to call back, swipe left for Chat / Task /
+ * More (Figma 759:18999 / 759:19010); tap for the caller's details.
+ */
+function CallRow({ message, conversation, look, patients }) {
+  const { push, openMember } = useMobileNav();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const patient = patientFor(conversation, patients);
+  const contact = patient || {
+    id: conversation.patient_id, name: conversation.patient_name,
+    phone: conversation.patient_phone, email: conversation.patient_email,
+  };
+  const { callPhone, openThread, sendEmail, phone, email } = useContactActions(contact);
+  const name = conversation.patient_name || formatPhone(conversation.patient_phone) || 'Unknown caller';
+  const sheet = (fn) => () => { setMoreOpen(false); fn(); };
+
+  return (
+    <>
+      <SwipeActions
+        leading={{ key: 'call', label: 'Call', icon: 'solar:phone-linear', onAction: callPhone, disabled: !isDialable(phone || '') }}
+        trailing={[
+          { key: 'chat', label: 'Chat', icon: 'solar:chat-round-linear', onAction: () => openThread(patient?.patientAppActive ? 'chat' : 'sms'), disabled: !patient?.patientAppActive && !phone },
+          { key: 'task', label: 'Task', icon: 'solar:checklist-minimalistic-linear', onAction: () => push('addTask', { patientId: patient?.id, patientName: patient?.name }), disabled: !patient },
+          { key: 'more', label: 'More', icon: 'solar:menu-dots-linear', onAction: () => setMoreOpen(true) },
+        ]}
+      >
+        <button type="button" className={styles.card} onClick={() => push('callDetail', { conversation })}>
+          <Avatar type="icon" variant={look.variant} iconName={look.icon} size="XL" />
+          <span className={styles.cardText}>
+            <span className={[styles.primaryText, look.variant === 'error' ? styles.danger : ''].join(' ')}>{name}</span>
+            <span className={styles.secondaryText}>{look.label}</span>
+          </span>
+          <span className={styles.cardEndRow}>
+            <span className={styles.metaText}>{listStamp(message.created_at)}</span>
+            <Icon name="solar:info-circle-linear" size={20} />
+          </span>
+        </button>
+      </SwipeActions>
+      {moreOpen && (
+        <BottomSheet title={name} onClose={() => setMoreOpen(false)}>
+          <BottomSheetItem icon="solar:phone-linear" label="Call" onClick={sheet(callPhone)} disabled={!isDialable(phone || '')} />
+          <BottomSheetItem icon="solar:chat-square-linear" label="Send SMS" onClick={sheet(() => openThread('sms'))} disabled={!phone} />
+          <BottomSheetItem icon="solar:letter-linear" label="Send email" onClick={sheet(sendEmail)} disabled={!email} />
+          <BottomSheetItem icon="solar:user-linear" label="View profile" onClick={sheet(() => openMember({ id: patient?.id }))} disabled={!patient} />
+          <BottomSheetItem icon="solar:info-circle-linear" label="Call details" onClick={sheet(() => push('callDetail', { conversation }))} />
+        </BottomSheet>
+      )}
+    </>
+  );
+}
+
 /** Call log, one card per call, newest first (Figma 759:18970 / 759:19718). */
 export function CallsScreen() {
   const { push } = useMobileNav();
-  const { line } = useCommsPeople();
+  const { line, patients } = useCommsPeople();
   const { conversations, loading, failed, retry } = useCommsConversations();
   const [filter, setFilter] = useState('all');
 
@@ -65,30 +119,13 @@ export function CallsScreen() {
           ) : (
             <div className={styles.list}>
               {shown.map(({ message, conversation, look }) => (
-                <button
-                  key={message.id}
-                  type="button"
-                  className={styles.card}
-                  onClick={() => push('callDetail', { conversation })}
-                >
-                  <Avatar type="icon" variant={look.variant} iconName="solar:phone-linear" size="XL" />
-                  <span className={styles.cardText}>
-                    <span className={[styles.primaryText, look.variant === 'error' ? styles.danger : ''].join(' ')}>
-                      {conversation.patient_name || formatPhone(conversation.patient_phone) || 'Unknown caller'}
-                    </span>
-                    <span className={styles.secondaryText}>{look.label}</span>
-                  </span>
-                  <span className={styles.cardEndRow}>
-                    <span className={styles.metaText}>{listStamp(message.created_at)}</span>
-                    <Icon name="solar:info-circle-linear" size={20} />
-                  </span>
-                </button>
+                <CallRow key={message.id} message={message} conversation={conversation} look={look} patients={patients} />
               ))}
             </div>
           )}
         </div>
-        <button type="button" className={styles.fab} aria-label="Make a call" onClick={() => push('dialer')}>
-          <Icon name="solar:phone-calling-linear" size={32} color="currentColor" />
+        <button type="button" className={styles.fab} aria-label="Call a member" onClick={() => push('callMember')}>
+          <Icon name="custom:add-call" size={32} color="currentColor" />
         </button>
       </div>
     </div>

@@ -175,7 +175,7 @@ export function HomeScreen() {
       {actionsOpen && (
         <BottomSheet title="Quick Actions" onClose={() => setActionsOpen(false)}>
           <BottomSheetItem icon="solar:chat-round-line-linear" label="New Message" onClick={() => { setActionsOpen(false); push('pickMember', { purpose: 'message' }); }} />
-          <BottomSheetItem icon="solar:phone-calling-linear" label="Make a Call" onClick={() => { setActionsOpen(false); push('dialer'); }} />
+          <BottomSheetItem icon="solar:phone-calling-linear" label="Make a Call" onClick={() => { setActionsOpen(false); push('callMember'); }} />
           <BottomSheetItem icon="solar:checklist-minimalistic-linear" label="New Task" onClick={() => { setActionsOpen(false); push('addTask'); }} />
           <BottomSheetItem icon="solar:notes-linear" label="Add Quick Note" onClick={() => { setActionsOpen(false); setNoteOpen(true); }} />
         </BottomSheet>

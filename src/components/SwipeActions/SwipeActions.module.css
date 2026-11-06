@@ -1,0 +1,72 @@
+/* Swipe row (Figma "Swipe Action" 759:18999 / 759:19019) */
+.root {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.track {
+  position: relative;
+  z-index: 1;
+  touch-action: pan-y;
+  will-change: transform;
+}
+
+.leading,
+.trailing {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  visibility: hidden;
+}
+.root[data-side='leading'] .leading,
+.root[data-side='trailing'] .trailing { visibility: visible; }
+
+/* Swipe right: green Call (Figma Action 759:18999, Status Dark/Success) */
+.leading {
+  justify-content: flex-start;
+  padding: var(--space-4) var(--space-8);
+  background: var(--status-success-dark);
+  color: var(--on-color);
+}
+.action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+}
+.leadingLabel {
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+}
+
+/* Swipe left: Chat / Task / More on grey (Figma Action 759:19020) */
+.trailing {
+  justify-content: flex-end;
+  background: var(--neutral-300);
+}
+.trailingActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0 var(--space-10) 0 var(--space-4);
+}
+.trailingAction {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 44px;
+  min-height: 44px;
+  padding: var(--space-2);
+  margin: 0;
+  border: 0;
+  background: none;
+  color: var(--on-color);
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  cursor: pointer;
+}
+.trailingAction:disabled { opacity: 0.5; cursor: default; }

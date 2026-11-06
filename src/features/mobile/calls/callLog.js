@@ -9,10 +9,10 @@ export function callRow(message) {
   const outcome = message?.meta?.outcome;
   const inbound = message?.direction === 'in';
   if (outcome === 'missed') {
-    return { label: inbound ? 'Missed' : 'No Answer', variant: 'error', icon: 'solar:end-call-rounded-linear', missed: inbound };
+    return { label: inbound ? 'Missed' : 'No Answer', variant: 'error', icon: 'solar:call-cancel-rounded-linear', missed: inbound };
   }
   if (outcome === 'declined' || outcome === 'failed') {
-    return { label: outcome === 'declined' ? 'Declined' : 'Abandoned', variant: 'error', icon: 'solar:end-call-rounded-linear', missed: false };
+    return { label: outcome === 'declined' ? 'Declined' : 'Abandoned', variant: 'error', icon: 'solar:call-cancel-rounded-linear', missed: false };
   }
   if (inbound) return { label: 'Incoming', variant: 'success', icon: 'solar:incoming-call-rounded-linear', missed: false };
   return { label: 'Outgoing', variant: 'others', icon: 'solar:outgoing-call-rounded-linear', missed: false };

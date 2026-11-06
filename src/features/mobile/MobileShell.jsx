@@ -12,6 +12,7 @@ import { WorklistsScreen, WorklistComingScreen } from './worklists/WorklistsScre
 import { CallsScreen } from './calls/CallsScreen';
 import { CallDetailScreen } from './calls/CallDetailScreen';
 import { DialerScreen } from './calls/DialerScreen';
+import { CallMemberScreen } from './calls/CallMemberScreen';
 import { MessagesScreen } from './messages/MessagesScreen';
 import { ThreadScreen } from './messages/ThreadScreen';
 import { MESSAGE_SCREENS, MESSAGE_FULL_SCREEN } from './messages/messageScreens';
@@ -62,6 +63,7 @@ const ROOTS = {
 const SCREENS = {
   callDetail: CallDetailScreen,
   dialer: DialerScreen,
+  callMember: CallMemberScreen,
   thread: ThreadScreen,
   member: MemberProfileScreen,
   pickMember: PickMemberScreen,
@@ -89,7 +91,7 @@ const SCREENS = {
 };
 
 // Sub-screens that need the whole height (a composer or keypad at the bottom).
-const FULL_SCREEN = new Set(['thread', 'dialer', 'addTask', 'taskDetail', 'oooForm', 'bookAppointment', ...PATIENT_FULL_SCREEN, ...MESSAGE_FULL_SCREEN, ...CARE_FULL_SCREEN, ...WORKLIST_FULL_SCREEN, ...MORE_FULL_SCREEN, ...USERS_FULL_SCREEN]);
+const FULL_SCREEN = new Set(['thread', 'dialer', 'callMember', 'addTask', 'taskDetail', 'oooForm', 'bookAppointment', ...PATIENT_FULL_SCREEN, ...MESSAGE_FULL_SCREEN, ...CARE_FULL_SCREEN, ...WORKLIST_FULL_SCREEN, ...MORE_FULL_SCREEN, ...USERS_FULL_SCREEN]);
 
 function initialTab(activePage, allowed) {
   const byPage = TABS.find(t => t.page === activePage && allowed.includes(t.key));
