@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Badge } from '../../../components/Badge/Badge';
@@ -499,12 +499,13 @@ function SubtaskSheet({ onClose, onAdd }) {
 
 function EditSheet({ task, onClose, onSave }) {
   const [name, setName] = useState(task.name || '');
-  const [description, setDescription] = useState(task.description || '');
+  // The editor keeps its own text; only Save reads it, so no re-render per keystroke.
+  const description = useRef(task.description || '');
   const [saving, setSaving] = useState(false);
   const submit = async () => {
     setSaving(true);
     let ok;
-    try { ok = await onSave({ name: name.trim(), description }); } finally { setSaving(false); }
+    try { ok = await onSave({ name: name.trim(), description: description.current }); } finally { setSaving(false); }
     if (ok) onClose();
   };
   return (
@@ -516,7 +517,7 @@ function EditSheet({ task, onClose, onSave }) {
           placeholder="Description"
           aria-label="Description"
           defaultValue={task.description || ''}
-          onValueChange={(html) => setDescription(html)}
+          onValueChange={(html) => { description.current = html; }}
         />
         <Button size="lg" fullWidth disabled={!name.trim() || saving} onClick={submit}>Save</Button>
       </div>
