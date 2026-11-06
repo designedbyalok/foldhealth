@@ -81,7 +81,7 @@
   color: var(--neutral-300);
 }
 .composer {
-  padding: var(--space-2) var(--space-3) calc(var(--space-2) + env(safe-area-inset-bottom));
+  padding: var(--space-2) var(--space-3) max(var(--space-2), env(safe-area-inset-bottom));
   background: var(--neutral-0);
   border-top: 0.5px solid var(--neutral-150);
 }

@@ -6,7 +6,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-6);
-  padding: var(--space-4) var(--space-5) calc(var(--space-8) + env(safe-area-inset-bottom));
+  padding: var(--space-4) var(--space-5) max(var(--space-8), env(safe-area-inset-bottom));
   overflow-y: auto;
 }
 .top {

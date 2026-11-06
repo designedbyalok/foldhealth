@@ -20,7 +20,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom));
+  /* Safari on iOS reports its toolbar and the home indicator as the bottom
+     safe area. That space already separates the tabs from the toolbar, so
+     the Figma 12px bottom padding only applies when there is no inset
+     (adding both left a tall empty strip under the tabs). */
+  padding: 0 var(--space-3) max(var(--space-3), env(safe-area-inset-bottom));
   background: var(--primary-300);
 }
 .navItem {
