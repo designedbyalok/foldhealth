@@ -2,13 +2,22 @@
 // where its rows live in the store, how to load them, and how a row maps to
 // a card (name, status, key fields, stacked sub-items, ids to open).
 //
-// Status changes call the same store actions as the desktop menus, so the
-// two layouts write to the same place.
+// Status and assignee changes call the same store actions as the desktop
+// menus and cells, so the two layouts write to the same place.
+//
+// Card extras the screen acts on:
+//   assign       { title, current, users: 'eligible' | 'all' | 'picker', unassign?, set(s, user|null) }
+//   field.action 'assign' (tap opens the assignee picker) or { screen, props } (push)
+//   sub.open     { screen, props } (tap the sub-row)
+//   sub.team     [{ key, label, value, set(s, user) }] (CMP care team per enrollment)
+//   detail       { label, icon, screen, props } (third card action)
 
 import { CMP_STATUSES, CMP_STATUS_TONE } from '../../cmp-worklist/cmpStatuses';
 import {
   MANUAL_GAP_STATUSES, MEASURE_NAMES, canSetGapStatus, enrichPharmacyMember, gapBadge,
 } from '../../pharmacy-worklist/pharmacyWorklist.utils';
+import { MEASURE_NAMES as HEDIS_MEASURE_NAMES } from '../../hedis-worklist/CareGapDetailDrawer.utils';
+import { resolveAiTaskCount } from '../../toc/tocOutcome';
 
 const EMPTY = [];
 
@@ -33,7 +42,39 @@ const outreachText = (o) => {
   return [o.status, o.date].filter(Boolean).join(' • ');
 };
 
-const field = (label, value, danger = false) => (value ? { label, value: String(value), danger } : null);
+const field = (label, value, danger = false, action = null) => (
+  value || action ? { label, value: String(value || '-'), danger, action } : null
+);
+const assigneeField = (name) => field('Assignee', name || 'Unassigned', false, 'assign');
+
+// Open on a phone: a gap still being worked (not completed or closed, not an
+// older instance replaced by a newer one).
+export const isOpenHedisGap = (g) => !g.supersededAt && g.status !== 'Completed' && !String(g.status || '').startsWith('Closed');
+
+// Care plan statuses the desktop SNP row opens in Review care plan.
+const REVIEWABLE_CARE_PLAN = new Set(['Signed', 'Draft', 'On Hold']);
+
+// Who owns a CMP enrollment besides its assignee (desktop cmpColumns).
+const CMP_CARE_TEAM = [
+  { key: 'assignee', label: 'Assignee' },
+  { key: 'nurseHealthCoach', label: 'Nurse/Health Coach' },
+  { key: 'coordinator', label: 'Coordinator' },
+  { key: 'socialWorker', label: 'Social Worker' },
+  { key: 'communityHealthWorker', label: 'Community Health Worker' },
+];
+
+// TOC rows (TCM and TOC IP) share the desktop AssigneeCell write and the
+// AI Tasks drawer.
+const tocAssign = (p) => ({
+  title: p.assignee ? 'Change Assignee' : 'Assign User',
+  current: p.assignee,
+  users: 'picker',
+  set: (s, u) => s.updatePatient(p.id, { assignee: u.name, assigneeInitials: u.initials, assigneeRole: u.role }),
+});
+const tocAiTasks = (p) => {
+  const n = resolveAiTaskCount(p);
+  return n ? { label: `Tasks (${n})`, icon: 'solar:checklist-minimalistic-linear', screen: 'worklistAiTasks', props: { patientId: p.id } } : null;
+};
 
 // Badge tones by status word, for lists that don't carry their own map.
 function toneFor(status) {
@@ -99,18 +140,31 @@ export const WORKLIST_ADAPTERS = {
       },
       fields: [
         field('Next Action Due', m.nextActionDue, isPast(m.nextActionDue)),
-        field('Care Plan', m.carePlanStatus),
+        // Desktop opens a reviewable plan in the Review care plan drawer; the
+        // phone opens the same plan in the care plan screen.
+        field('Care Plan', m.carePlanStatus, false,
+          m.patientId && m.programId && REVIEWABLE_CARE_PLAN.has(m.carePlanStatus)
+            ? { screen: 'carePlan', props: { patientId: m.patientId, programId: m.programId } } : null),
         field('Outreach', outreachText(m.outreach)),
-        field('Assignee', m.assigneeName),
+        assigneeField(m.assigneeName),
       ].filter(Boolean),
       due: parseDue(m.nextActionDue),
       assignee: { id: m.assigneeId, name: m.assigneeName },
+      assign: {
+        title: m.assigneeName ? 'Change Assignee' : 'Assign User',
+        current: m.assigneeName,
+        users: 'eligible',
+        set: (s, u) => s.setSnpAssignee(m.id, u),
+      },
       ids: { id: m.patientId, memberId: m.memberId, name: m.name },
     }),
   },
 
+  // Status and assignee are read-only on desktop too; billing review needs
+  // the desktop drawer.
   CCM: {
     rows: s => s.ccmWorklistMembers || EMPTY,
+    readOnlyNote: 'Open on desktop for billing review.',
     loading: s => s.ccmWorklistLoading,
     fetch: s => s.fetchCcmWorklistMembers,
     hasDue: true,
@@ -124,6 +178,7 @@ export const WORKLIST_ADAPTERS = {
         field('Next Action Due', m.nextActionDue, !!m.nextActionOverdue || isPast(m.nextActionDue)),
         field('Outreach', [m.outreachStatus, m.outreachDate].filter(Boolean).join(' • ')),
         field('Billable', m.billableSeconds ? `${Math.round(m.billableSeconds / 60)} min this month` : ''),
+        // Read-only: the desktop CCM assignee cell is not wired yet.
         field('Assignee', m.assigneeName),
       ].filter(Boolean),
       due: m.nextActionOverdue ? new Date(0) : parseDue(m.nextActionDue),
@@ -151,6 +206,12 @@ export const WORKLIST_ADAPTERS = {
       subItems: enrollments.map(e => ({
         key: e.id,
         title: e.subProgram || 'CMP',
+        team: CMP_CARE_TEAM.map(r => ({
+          key: r.key,
+          label: r.label,
+          value: e[r.key] || null,
+          set: (s, u) => s.setCmpCareTeam([e.id], r.key, u),
+        })),
         detail: [e.nextActionDue ? `Due ${e.nextActionDue}` : '', e.assignee].filter(Boolean).join(' • '),
         danger: isPast(e.nextActionDue),
         status: {
@@ -181,10 +242,12 @@ export const WORKLIST_ADAPTERS = {
         field('LACE', p.lace),
         field('Next Outreach', p.nextOutreach, isPast(p.nextOutreach)),
         field('Outreach', [p.outreachType, p.outreachLeft].filter(Boolean).join(' • ')),
-        field('Assignee', p.assignee),
+        assigneeField(p.assignee),
       ].filter(Boolean),
       due: parseDue(p.nextOutreach),
       assignee: { id: p.assigneeId, name: p.assignee },
+      assign: tocAssign(p),
+      detail: tocAiTasks(p),
       ids: { id: p.id, memberId: p.memberId, name: p.name },
     }),
   },
@@ -203,9 +266,11 @@ export const WORKLIST_ADAPTERS = {
         field('Next Action', p.nextAction),
         field('AI Outcome', p.aiOutcomeStatus),
         field('Agent', p.agentAssigned),
-        field('Assignee', p.assignee),
+        assigneeField(p.assignee),
       ].filter(Boolean),
       assignee: { id: p.assigneeId, name: p.assignee },
+      assign: tocAssign(p),
+      detail: tocAiTasks(p),
       ids: { id: p.id, memberId: p.memberId, name: p.name },
     }),
   },
@@ -215,26 +280,35 @@ export const WORKLIST_ADAPTERS = {
     rows: s => s.hedisMembers || EMPTY,
     loading: s => s.hedisLoading,
     fetch: s => s.fetchHedisMembers,
-    toCard: (m) => ({
+    toCard: (m) => {
+      const live = (m.gaps || []).filter(g => !g.supersededAt);
+      const open = live.filter(isOpenHedisGap);
+      return {
       key: m.id,
       name: m.name,
       initials: m.in,
       meta: metaLine(m.gender, m.age),
       fields: [
+        field('Open Gaps', `${open.length} of ${live.length}`),
         field('Start Date', m.startDate),
         field('Risk', m.riskLevel),
         field('Assignee', m.assignee),
       ].filter(Boolean),
-      subItems: (m.gaps || []).map((g, i) => ({
-        key: `${g.code}-${i}`,
+      // Open gaps only; each opens its gap screen (status, assignee,
+      // reminders, comments).
+      subItems: open.map(g => ({
+        key: g.code,
         title: g.code,
-        detail: g.assignee || '',
+        detail: [HEDIS_MEASURE_NAMES[g.code], g.assignee || m.assignee].filter(Boolean).join(' • '),
         status: { label: g.status || 'Open', tone: toneFor(g.status) },
+        open: { screen: 'worklistGap', props: { memberId: m.id, code: g.code } },
       })),
-      assignee: { name: m.assignee, names: (m.gaps || []).map(g => g.assignee).filter(Boolean) },
+      statuses: live.map(g => g.status || 'Open'),
+      assignee: { name: m.assignee, names: live.map(g => g.assignee).filter(Boolean) },
       phone: m.phone,
       ids: { id: m.patientId, memberId: m.memberId, name: m.name },
-    }),
+      };
+    },
   },
 
   Pharmacy: {
@@ -252,7 +326,7 @@ export const WORKLIST_ADAPTERS = {
         field('Priority', m.priority),
         field('Next Fill Due', m.nextFillDue, isPast(m.nextFillDue)),
         field('PDC', m.pdc != null ? `${Math.round(m.pdc)}%` : ''),
-        field('Assigned To', m.assigneeName),
+        field('Assigned To', m.assigneeName || 'Unassigned', false, 'assign'),
       ].filter(Boolean),
       subItems: (m.gaps || []).map(g => {
         const badge = gapBadge(g.status);
@@ -270,18 +344,25 @@ export const WORKLIST_ADAPTERS = {
       }),
       due: parseDue(m.nextFillDue),
       assignee: { id: m.assigneeId, name: m.assigneeName },
+      assign: {
+        title: m.assigneeName ? 'Change Assignee' : 'Assign User',
+        current: m.assigneeName,
+        users: 'eligible',
+        set: (s, u) => s.setPharmacyAssignee(m.id, u),
+      },
+      detail: { label: 'Gaps', icon: 'solar:pills-linear', screen: 'worklistPharmacy', props: { id: m.id } },
       phone: (m.phones || []).find(ph => !ph.doNotUse)?.number || m.phone,
       ids: { id: m.patientId, memberId: m.memberId, name: m.name },
     }),
   },
 
-  // Read-only: coding needs the desktop diagnosis panel.
+  // Read-only: chart review and coding need the desktop diagnosis panel.
   HCC: {
     rows: s => s.hccMembers || EMPTY,
     loading: s => s.hccMembersLoading,
     fetch: s => s.fetchHccMembers,
     group: m => String(m.memberId || m.id).replace(/^#/, ''),
-    readOnlyNote: 'Open on a computer to review and code diagnoses.',
+    readOnlyNote: 'Open on desktop for chart review.',
     toCard: (m, visits = [m]) => {
       const open = visits.reduce((n, v) => n + (Number(v.open) || 0), 0);
       return {

@@ -10,9 +10,12 @@ const SUB_ITEMS_SHOWN = 2;
 /**
  * One worklist row as a card: who, the program status, the fields a
  * provider acts on, stacked enrollments or gaps, and Call / Open.
- * `onStatus(status)` opens the status picker for a status with options.
+ * `onStatus(status)` opens the status picker for a status with options;
+ * `onAssign()` the card's assignee picker; `onSub(sub)` a sub-row's own
+ * action (open a gap, or a CMP enrollment's care team); `onPush(target)` a
+ * field or the card's detail screen ({ screen, props }).
  */
-export function WorklistCard({ card, onStatus, onCall, onOpen, note }) {
+export function WorklistCard({ card, onStatus, onAssign, onSub, onPush, onCall, onOpen, note }) {
   const [expanded, setExpanded] = useState(false);
   const subs = card.subItems || [];
   const shownSubs = expanded ? subs : subs.slice(0, SUB_ITEMS_SHOWN);
@@ -30,12 +33,22 @@ export function WorklistCard({ card, onStatus, onCall, onOpen, note }) {
 
       {card.fields.length > 0 && (
         <dl className={styles.fields}>
-          {card.fields.map(f => (
-            <div key={f.label} className={styles.field}>
-              <dt className={styles.label}>{f.label}</dt>
-              <dd className={[styles.value, f.danger ? styles.danger : ''].join(' ')}>{f.value}</dd>
-            </div>
-          ))}
+          {card.fields.map(f => {
+            const act = f.action === 'assign' ? (card.assign && onAssign) : f.action && (() => onPush(f.action));
+            return (
+              <div key={f.label} className={styles.field}>
+                <dt className={styles.label}>{f.label}</dt>
+                <dd className={[styles.value, f.danger ? styles.danger : ''].join(' ')}>
+                  {act ? (
+                    <button type="button" className={styles.fieldBtn} aria-label={`${f.label}: ${f.value}. ${f.action === 'assign' ? 'Change' : 'Open'}`} onClick={act}>
+                      <span className={styles.fieldBtnText}>{f.value}</span>
+                      <Icon name={f.action === 'assign' ? 'solar:alt-arrow-down-linear' : 'solar:alt-arrow-right-linear'} size={16} color="currentColor" />
+                    </button>
+                  ) : f.value}
+                </dd>
+              </div>
+            );
+          })}
         </dl>
       )}
 
@@ -43,10 +56,25 @@ export function WorklistCard({ card, onStatus, onCall, onOpen, note }) {
         <ul className={styles.subs}>
           {shownSubs.map(sub => (
             <li key={sub.key} className={styles.sub}>
-              <span className={styles.subText}>
-                <span className={styles.subTitle}>{sub.title}</span>
-                {sub.detail && <span className={[styles.subDetail, sub.danger ? styles.danger : ''].join(' ')}>{sub.detail}</span>}
-              </span>
+              {sub.open || sub.team ? (
+                <button
+                  type="button"
+                  className={`${styles.subText} ${styles.subBtn}`}
+                  aria-label={`${sub.title}${sub.detail ? `, ${sub.detail}` : ''}. ${sub.open ? 'Open' : 'Care team'}`}
+                  onClick={() => onSub(sub)}
+                >
+                  <span className={styles.subTitle}>
+                    {sub.title}
+                    <Icon name={sub.open ? 'solar:alt-arrow-right-linear' : 'solar:users-group-rounded-linear'} size={16} color="var(--neutral-300)" />
+                  </span>
+                  {sub.detail && <span className={[styles.subDetail, sub.danger ? styles.danger : ''].join(' ')}>{sub.detail}</span>}
+                </button>
+              ) : (
+                <span className={styles.subText}>
+                  <span className={styles.subTitle}>{sub.title}</span>
+                  {sub.detail && <span className={[styles.subDetail, sub.danger ? styles.danger : ''].join(' ')}>{sub.detail}</span>}
+                </span>
+              )}
               {sub.status && <StatusBadge status={sub.status} onStatus={onStatus} />}
             </li>
           ))}
@@ -71,6 +99,12 @@ export function WorklistCard({ card, onStatus, onCall, onOpen, note }) {
           <Icon name="solar:user-id-linear" size={20} color="currentColor" />
           Open
         </button>
+        {card.detail && (
+          <button type="button" className={styles.action} onClick={() => onPush(card.detail)}>
+            <Icon name={card.detail.icon} size={20} color="currentColor" />
+            {card.detail.label}
+          </button>
+        )}
       </div>
     </article>
   );
