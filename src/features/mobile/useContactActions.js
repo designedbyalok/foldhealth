@@ -26,7 +26,10 @@ export function useContactActions(contact, { more } = {}) {
 
   const callPhone = () => callFromPhone({ number: phone, patient: contact, sender: me });
 
-  const sendEmail = () => { window.location.href = `mailto:${email}`; };
+  // In-app compose (templates, Send To, drafts) so the email is logged like desktop.
+  const sendEmail = () => push('composeEmail', contact?.id != null
+    ? { patient: { id: contact.id, name: contact.name, email, phone } }
+    : {});
 
   const actions = [
     { key: 'call', label: 'Call', icon: 'solar:phone-linear', onClick: callPhone, disabled: !phone },

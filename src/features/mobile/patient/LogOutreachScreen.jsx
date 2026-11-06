@@ -41,7 +41,7 @@ const nowParts = () => {
  * outcome (or the outcome) as its status. Outcome and note are required.
  * `type` presets the outreach type (Call after a call).
  */
-export function LogOutreachScreen({ patientId, type: initialType = 'Call' }) {
+export function LogOutreachScreen({ patientId, programCode, type: initialType = 'Call' }) {
   const { pop } = useMobileNav();
   const patient = usePatient(patientId);
   const logProgramActivity = useAppStore(s => s.logProgramActivity);
@@ -61,8 +61,11 @@ export function LogOutreachScreen({ patientId, type: initialType = 'Call' }) {
     () => [...new Set((programs || EMPTY).filter(p => !/completed|disenrolled|closed/i.test(p.status || '')).map(p => p.code).filter(Boolean))],
     [programs],
   );
-  const options = enrolled.length ? enrolled : PROGRAMS;
-  const selected = picked ?? (enrolled.length === 1 ? enrolled : []);
+  // Opened from a program's outreach step: that program is preselected and
+  // offered even if it has since closed.
+  const base = enrolled.length ? enrolled : PROGRAMS;
+  const options = programCode && !base.includes(programCode) ? [programCode, ...base] : base;
+  const selected = picked ?? (programCode ? [programCode] : enrolled.length === 1 ? enrolled : []);
   const toggle = (code) => setPicked(selected.includes(code) ? selected.filter(c => c !== code) : [...selected, code]);
 
   const channel = OUTREACH_CHANNEL[type];

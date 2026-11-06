@@ -69,5 +69,5 @@ export function useProgramSteps(patientId, program) {
   return { stepList, flat, progress: programProgressOf(flat), done: flat.filter(s => s.status === 'completed' || s.status === 'skipped').length };
 }
 
-/** Assessment-form steps open a form screen that is desktop only. */
+/** Assessment-form steps: their Reviewed / Skip log as a clipboard activity. */
 export const isAssessmentStep = (step) => !!(step?.formId || ASSESSMENT_STEPS[step?.screen || step?.name]);

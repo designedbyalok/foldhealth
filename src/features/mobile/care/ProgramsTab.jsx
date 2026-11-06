@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Badge } from '../../../components/Badge/Badge';
 import { Icon } from '../../../components/Icon/Icon';
 import { Skeleton } from '../../../components/Skeleton/Skeleton';
@@ -8,6 +9,7 @@ import { patientLevelProgram, showsPatientCarePlan } from '../../patient/right-p
 import { isEmptyDash } from '../../../lib/emptyDash';
 import { useMobileNav } from '../MobileNavContext';
 import { programTone } from './careUtils';
+import { EnrollSheet } from './EnrollSheet';
 import styles from './care.module.css';
 
 const EMPTY = [];
@@ -15,8 +17,9 @@ const isEmptyDate = (v) => !v || v === '-' || isEmptyDash(v);
 
 /**
  * A patient's care programs (Figma P360 "Care Journeys"), Active then Past,
- * plus the patient-level care plan when the org plans per patient. Content
- * only: the profile's Programs tab supplies the scrolling grey body.
+ * plus the patient-level care plan when the org plans per patient, and New
+ * Program (enroll or start an episode). Content only: the profile's
+ * Programs tab supplies the scrolling grey body.
  */
 export function ProgramsTab({ patientId }) {
   const { push } = useMobileNav();
@@ -24,6 +27,7 @@ export function ProgramsTab({ patientId }) {
   const loaded = useAppStore(s => !!(patientId && s.careProgramsLoadedFor[patientId]));
   const fetchCareProgramsForPatient = useAppStore(s => s.fetchCareProgramsForPatient);
   const carePlanMode = useAppStore(s => s.carePlanMode);
+  const [enrolling, setEnrolling] = useState(false);
   useEffect(() => { if (patientId) fetchCareProgramsForPatient?.(patientId); }, [patientId, fetchCareProgramsForPatient]);
 
   const active = useMemo(() => programs.filter(p => !isProgramClosed(p.status)), [programs]);
@@ -58,7 +62,10 @@ export function ProgramsTab({ patientId }) {
       )}
 
       <section className={styles.group}>
-        <h2 className={styles.groupTitle}>Active Programs <span className={styles.groupCount}>{active.length}</span></h2>
+        <div className={styles.groupHead}>
+          <h2 className={styles.groupTitle}>Active Programs <span className={styles.groupCount}>{active.length}</span></h2>
+          <ActionButton icon="solar:add-circle-linear" size="lg" aria-label="New Program" onClick={() => setEnrolling(true)} />
+        </div>
         {active.length === 0
           ? <p className={styles.empty}>No active programs</p>
           : active.map(p => <ProgramCard key={p.id} program={p} onOpen={() => open(p)} />)}
@@ -69,6 +76,14 @@ export function ProgramsTab({ patientId }) {
           <h2 className={styles.groupTitle}>Past Programs <span className={styles.groupCount}>{past.length}</span></h2>
           {past.map(p => <ProgramCard key={p.id} program={p} onOpen={() => open(p)} />)}
         </section>
+      )}
+      {enrolling && (
+        <EnrollSheet
+          patientId={patientId}
+          onClose={() => setEnrolling(false)}
+          onEnrolled={(p) => { setEnrolling(false); open(p); }}
+          onCaptureConsent={(code) => { setEnrolling(false); push('patientConsent', { patientId, scopeType: 'program', scope: code }); }}
+        />
       )}
     </div>
   );

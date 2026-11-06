@@ -27,6 +27,7 @@ import { AppointmentScreen } from './schedule/AppointmentScreen';
 import { BookAppointmentScreen } from './schedule/book/BookAppointmentScreen';
 import { ProgramScreen } from './care/ProgramScreen';
 import { CarePlanScreen } from './care/CarePlanScreen';
+import { CARE_SCREENS, CARE_FULL_SCREEN } from './care/careScreens';
 import { ProfileScreen } from './profile/ProfileScreen';
 import { AlertsScreen } from './profile/AlertsScreen';
 import { OooScreen } from './ooo/OooScreen';
@@ -78,14 +79,15 @@ const SCREENS = {
   ooo: OooScreen,
   oooForm: OooFormScreen,
   ...PATIENT_SCREENS,
+  ...MESSAGE_SCREENS,
+  ...CARE_SCREENS,
   ...WORKLIST_SCREENS,
   ...ANALYTICS_SCREENS,
-  ...MESSAGE_SCREENS,
   ...MORE_SCREENS,
 };
 
 // Sub-screens that need the whole height (a composer or keypad at the bottom).
-const FULL_SCREEN = new Set(['thread', 'dialer', 'addTask', 'taskDetail', 'oooForm', 'bookAppointment', ...PATIENT_FULL_SCREEN, ...WORKLIST_FULL_SCREEN, ...MESSAGE_FULL_SCREEN, ...MORE_FULL_SCREEN]);
+const FULL_SCREEN = new Set(['thread', 'dialer', 'addTask', 'taskDetail', 'oooForm', 'bookAppointment', ...PATIENT_FULL_SCREEN, ...MESSAGE_FULL_SCREEN, ...CARE_FULL_SCREEN, ...WORKLIST_FULL_SCREEN, ...MORE_FULL_SCREEN]);
 
 function initialTab(activePage, allowed) {
   const byPage = TABS.find(t => t.page === activePage && allowed.includes(t.key));

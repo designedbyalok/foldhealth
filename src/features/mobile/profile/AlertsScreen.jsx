@@ -3,6 +3,7 @@ import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Icon } from '../../../components/Icon/Icon';
 import { toast } from '../../../components/Toast/sonnerToast';
 import { useAppStore } from '../../../store/useAppStore';
+import { supabase } from '../../../lib/supabase';
 import { MobileSubHeader } from '../MobileHeader';
 import { MobileEmpty, MobileListSkeleton } from '../MobileParts';
 import { useMobileNav } from '../MobileNavContext';
@@ -52,12 +53,26 @@ export function AlertsScreen() {
     else toast.error("You don't have access to messages.");
   };
 
+  // A staff chat alert names the sender by email (as desktop's
+  // setPendingChatUserEmail does); open that person's internal thread.
+  const openChat = async (email) => {
+    if (!canTab('messages')) { openMessages(); return; }
+    const { data } = await supabase.from('profiles')
+      .select('id, full_name, first_name, last_name, email, avatar_url')
+      .ilike('email', email).limit(1);
+    const profile = data?.[0];
+    if (profile?.id) push('internalThread', { userId: profile.id, profile });
+    else openMessages();
+  };
+
   const open = (n) => {
     markRead?.(n.id);
     if (n.action === 'openTask' && n.taskId != null) {
       push('taskDetail', { taskId: n.taskId });
     } else if (n.action === 'openAppointment' && n.appointmentId != null) {
       push('appointment', { appointmentId: n.appointmentId });
+    } else if (n.action === 'openChat' && n.chatUserEmail) {
+      openChat(n.chatUserEmail);
     } else if (n.action === 'openChat' || n.action === 'openEmail') {
       openMessages();
     } else if (n.action === 'openDiagPanel' && n.hccMemberId) {
@@ -90,7 +105,7 @@ export function AlertsScreen() {
                   <span className={styles.text}>
                     <span className={styles.head}>
                       <span className={[styles.title, n.read ? '' : styles.unread].filter(Boolean).join(' ')}>{n.title}</span>
-                      <span className={styles.time}>{listStamp(new Date(n.ts).toISOString())}</span>
+                      <span className={styles.time}>{listStamp(Number.isFinite(new Date(n.ts).getTime()) ? new Date(n.ts).toISOString() : null)}</span>
                     </span>
                     {n.body && <span className={styles.body}>{n.body}</span>}
                   </span>
