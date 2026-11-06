@@ -260,3 +260,13 @@
   font-size: var(--font-lg);
   cursor: pointer;
 }
+.toolbarTop { padding-top: var(--space-3); overflow-x: auto; }
+
+/* Phone turned sideways: a shorter title bar leaves room for content. */
+@media (max-height: 500px) {
+  .header {
+    min-height: 0;
+    padding: var(--space-2) var(--space-5);
+  }
+  .title { font-size: var(--font-3xl); }
+}

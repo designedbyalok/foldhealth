@@ -6,7 +6,7 @@ import { SegmentedControl } from '../../../components/SegmentedControl/Segmented
 import { toast } from '../../../components/Toast/sonnerToast';
 import { useAppStore } from '../../../store/useAppStore';
 import { findOrCreateConversation } from '../../messages/comms/commsRepo';
-import { MobileRootHeader, MobileSubHeader } from '../MobileHeader';
+import { MobileSubHeader } from '../MobileHeader';
 import { MobileEmpty, MobileListSkeleton } from '../MobileParts';
 import { useMobileNav } from '../MobileNavContext';
 import { initialsOf, patientLine } from '../mobileFormat';
@@ -16,7 +16,7 @@ const PAGE = 50;
 const sameName = (a, b) => !!a && !!b && String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
 
 /** The practice's members, searchable (Figma 759:19398 / 759:19522). */
-function MembersList({ onPick, showScope = true }) {
+function MembersList({ onPick, showScope = true, autoFocus = false }) {
   const patients = useAppStore(s => s.allPatients);
   const loading = useAppStore(s => s.allPatientsLoading);
   const didFetch = useAppStore(s => s.allPatientsDidFetch);
@@ -43,6 +43,7 @@ function MembersList({ onPick, showScope = true }) {
           size="lg"
           type="search"
           placeholder="Search members"
+          autoFocus={autoFocus}
           aria-label="Search members"
           value={query}
           onValueChange={(v) => { setQuery(v); setLimit(PAGE); }}
@@ -91,12 +92,13 @@ function MembersList({ onPick, showScope = true }) {
   );
 }
 
-export function MembersScreen() {
-  const { push } = useMobileNav();
+/** Every patient, searchable (Figma 759:19398). Opened from Worklists and Home search. */
+export function MembersScreen({ autoFocus = false }) {
+  const { openMember } = useMobileNav();
   return (
     <div className={styles.screen}>
-      <MobileRootHeader title="Members" />
-      <MembersList onPick={(p) => push('member', { patientId: p.id })} />
+      <MobileSubHeader title="All Patients" />
+      <MembersList onPick={(p) => openMember({ id: p.id })} autoFocus={autoFocus} />
     </div>
   );
 }

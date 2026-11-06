@@ -1,0 +1,76 @@
+/* Task card (Figma Task 759:26387) */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: 12px;
+  background: var(--neutral-0);
+}
+.due {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.late { color: var(--status-error-dark); }
+.main {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.check {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-top: calc(var(--space-1) / 4);
+  padding: 0;
+  border: 1px solid var(--neutral-200);
+  border-radius: 50%;
+  background: var(--neutral-0);
+  color: var(--on-color);
+  cursor: pointer;
+}
+.checked {
+  border-color: var(--status-success-dark);
+  background: var(--status-success-dark);
+}
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+.title {
+  margin: 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.titleDone {
+  color: var(--neutral-300);
+  text-decoration: line-through;
+}
+.member,
+.memberText {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.member {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary-300);
+  cursor: pointer;
+}

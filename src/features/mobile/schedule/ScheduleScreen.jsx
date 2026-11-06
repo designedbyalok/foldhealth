@@ -20,7 +20,7 @@ const hourLabel = (h) => `${String(h % 12 || 12).padStart(2, '0')} ${h < 12 ? 'a
 
 /** The provider's day, one week at a time (Figma 759:22910). */
 export function ScheduleScreen() {
-  const { push } = useMobileNav();
+  const { openMember } = useMobileNav();
   const appointments = useAppStore(s => s.appointments);
   const loading = useAppStore(s => s.appointmentsLoading);
   const fetchAppointments = useAppStore(s => s.fetchAppointments);
@@ -105,7 +105,7 @@ export function ScheduleScreen() {
                         key={a.id}
                         type="button"
                         className={[styles.appt, styles[toneOf(a.appointment_type_name)], cancelled ? styles.cancelled : ''].join(' ')}
-                        onClick={a.patient_id ? () => push('member', { patientId: a.patient_id }) : undefined}
+                        onClick={a.patient_id || a.patient_name ? () => openMember({ id: a.patient_id, name: a.patient_name }) : undefined}
                       >
                         <span className={styles.apptName}>
                           <Icon name={a.mode && /virtual|tele/i.test(a.mode) ? 'solar:videocamera-record-linear' : 'solar:user-linear'} size={16} />

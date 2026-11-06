@@ -1,0 +1,104 @@
+/* BottomSheet (Figma Provider App "Drawer", 759:21765) */
+.dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.dialog:not([open]) { display: none; }
+.dialog::backdrop { background: var(--surface-overlay); }
+.scrim {
+  order: -1;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 88dvh;
+  overflow-y: auto;
+  padding: var(--space-6) var(--space-5) calc(var(--space-8) + env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0;
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-popover);
+  flex-shrink: 0;
+  animation: rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes rise {
+  from { transform: translateY(24%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet { animation: none; }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-2);
+}
+.title {
+  margin: 0;
+  font-size: var(--font-xl);
+  font-weight: 400;
+  line-height: var(--leading-tight);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--placeholder-text);
+}
+.close {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-2) 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  color: var(--primary-300);
+  text-align: left;
+  cursor: pointer;
+}
+.item:disabled { opacity: 0.5; cursor: default; }
+.itemLabel {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-2xl);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.itemDetail {
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+.danger,
+.danger .itemLabel { color: var(--status-error-dark); }

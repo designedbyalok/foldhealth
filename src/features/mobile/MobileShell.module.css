@@ -52,7 +52,11 @@
   right: 0;
 }
 
-/* iOS Safari zooms into any field under 16px: keep form text at 16px. */
-.shell :global(input),
-.shell :global(textarea),
-.shell :global(select) { font-size: var(--font-lg); }
+/* Phone turned sideways: little height, so a slimmer tab bar. */
+@media (max-height: 500px) {
+  .navItem {
+    min-height: 0;
+    padding: var(--space-1) var(--space-2);
+  }
+  .navIcon { padding: var(--space-2); }
+}

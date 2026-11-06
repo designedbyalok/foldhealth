@@ -107,7 +107,8 @@ function patientSubSegments(state) {
 
 // Given a store row id, look up its memberId (Fold ID) across every slice.
 // Returns null when no row matches, the caller falls back to the raw id.
-function findPatientMemberId(state, id) {
+// Exported for the mobile app, which opens patients by Fold ID.
+export function findPatientMemberId(state, id) {
   if (!id) return null;
   for (const key of PATIENT_SLICES) {
     const row = state[key]?.find?.(m => m?.id === id);

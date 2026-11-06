@@ -1553,10 +1553,12 @@ export const useAppStore = create((set, get) => ({
   },
   updateQuickNote: async (id, text) => {
     track('note.quick_updated', { noteId: id });
-    await supabase.from('sticky_notes').update({ text, author_name: 'You' }).eq('id', id);
+    const { error } = await supabase.from('sticky_notes').update({ text, author_name: 'You' }).eq('id', id);
+    if (error) return false;
     await supabase.from('sticky_note_history').insert({ sticky_note_id: id, patient_id: 'global', author_name: 'You', action: 'Updated a Note', note_text: text, ehr_instance: 'Quick Note' });
     get().fetchQuickNotes({ force: true });
     get().fetchQuickNoteHistory();
+    return true;
   },
   deleteQuickNote: async (id) => {
     track('note.quick_deleted', { noteId: id });
@@ -1564,9 +1566,10 @@ export const useAppStore = create((set, get) => ({
     if (noteData) {
       await supabase.from('sticky_note_history').insert({ sticky_note_id: id, patient_id: 'global', author_name: 'You', action: 'deleted a Note', note_text: noteData.text, ehr_instance: 'Quick Note' });
     }
-    await supabase.from('sticky_notes').delete().eq('id', id);
+    const { error } = await supabase.from('sticky_notes').delete().eq('id', id);
     get().fetchQuickNotes({ force: true });
     get().fetchQuickNoteHistory();
+    return !error;
   },
 
   // P360 Profile data. `p360Profile` is the last fetch (legacy singleton);
