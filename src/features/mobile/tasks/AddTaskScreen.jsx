@@ -154,7 +154,7 @@ export function AddTaskScreen({ patientId, patientName }) {
         </div>
       </div>
       <div className={styles.footer}>
-        <Button variant="solid" fullWidth onClick={save} disabled={!canSave} loading={saving}>Add Task</Button>
+        <Button size="lg" variant="solid" fullWidth onClick={save} disabled={!canSave} loading={saving}>Add Task</Button>
       </div>
     </div>
   );

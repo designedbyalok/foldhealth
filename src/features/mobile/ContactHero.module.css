@@ -113,3 +113,7 @@
   line-height: var(--leading-tight);
   cursor: pointer;
 }
+
+/* 44pt touch target (Apple HIG) */
+.phone { min-height: 44px; }
+.name { letter-spacing: -0.02em; }

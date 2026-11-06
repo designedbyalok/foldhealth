@@ -104,7 +104,7 @@ export function MemberProfileScreen({ patientId, exact = false, tab: initialTab 
               <span className={profile.dueTitle}>Appointment due</span>
               <span className={profile.dueMeta}>{minutes > 0 ? `Starts in ${minutes} min` : minutes === 0 ? 'Starting now' : `Started ${-minutes} min ago`}</span>
             </span>
-            <Button variant="solid" onClick={() => push('appointment', { appointmentId: due.id })}>View</Button>
+            <Button size="lg" variant="solid" onClick={() => push('appointment', { appointmentId: due.id })}>View</Button>
           </div>
         )}
 

@@ -85,3 +85,6 @@
   background: var(--neutral-0);
   border-top: 0.5px solid var(--neutral-150);
 }
+
+/* 44pt touch target (Apple HIG) */
+.who { min-height: 44px; }

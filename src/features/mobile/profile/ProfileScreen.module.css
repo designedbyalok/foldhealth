@@ -85,3 +85,5 @@
   color: var(--neutral-300);
 }
 .location .sub { padding: 0; }
+
+.name { letter-spacing: -0.02em; }

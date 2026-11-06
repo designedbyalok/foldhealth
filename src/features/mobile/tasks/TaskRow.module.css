@@ -74,3 +74,13 @@
   color: var(--primary-300);
   cursor: pointer;
 }
+
+/* 44pt touch targets around the 24px check and the member link (Apple HIG) */
+.check { position: relative; }
+.check::before { content: ''; position: absolute; inset: -10px; }
+.member {
+  padding: var(--space-3) 0;
+  margin: calc(var(--space-3) * -1) 0;
+}
+
+.member { min-height: 44px; }

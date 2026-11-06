@@ -64,3 +64,36 @@
   }
   .navIcon { padding: var(--space-2); }
 }
+
+/* Touch feedback (Apple HIG: respond on press, not on release). No grey
+   iOS tap flash; every button dips slightly the instant it's pressed. */
+.shell { -webkit-tap-highlight-color: transparent; }
+.shell :where(button, [role='button']):active:not(:disabled) { transform: scale(0.98); }
+
+/* A pushed screen slides in from the right edge, the way iOS navigation
+   does; going back uses the browser's own back gesture. */
+.pushed { animation: push-in 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
+@keyframes push-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell :where(button, [role='button']):active:not(:disabled) { transform: none; }
+  .pushed { animation: push-fade 0.15s ease-out; }
+}
+@keyframes push-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--neutral-0);
+}
+
+/* The slide-in starts off the right edge: never let it scroll the page. */
+.content { overflow: clip; }

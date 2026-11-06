@@ -72,9 +72,9 @@ export function GbiSheet({ kind, item, details = [], patientId, program, onClose
           {item.statusReason && <p className={styles.sheetMeta}>Last change: {item.statusReason}</p>}
           <div className={styles.actions}>
             {kind === 'goal' && goalReadingSpec(item).kind !== 'assessment' && (
-              <Button variant="outline" onClick={() => setMode('reading')}>Record Reading</Button>
+              <Button size="lg" variant="outline" onClick={() => setMode('reading')}>Record Reading</Button>
             )}
-            <Button variant="solid" onClick={() => setMode('status')}>Change Status</Button>
+            <Button size="lg" variant="solid" onClick={() => setMode('status')}>Change Status</Button>
           </div>
         </>
       )}
@@ -101,8 +101,8 @@ export function GbiSheet({ kind, item, details = [], patientId, program, onClose
             </>
           )}
           <div className={styles.actions}>
-            <Button variant="ghost" onClick={() => setMode('view')} disabled={busy}>Back</Button>
-            <Button variant="solid" onClick={saveStatus} disabled={!canSaveStatus || busy}>Change Status</Button>
+            <Button size="lg" variant="ghost" onClick={() => setMode('view')} disabled={busy}>Back</Button>
+            <Button size="lg" variant="solid" onClick={saveStatus} disabled={!canSaveStatus || busy}>Change Status</Button>
           </div>
         </>
       )}
@@ -187,8 +187,8 @@ function ReadingForm({ goal, busy, onSave, onCancel }) {
       )}
       {value && computed != null && <p className={styles.sheetMeta}>{computed ? 'In target' : 'Out of target'}</p>}
       <div className={styles.actions}>
-        <Button variant="ghost" onClick={onCancel} disabled={busy}>Back</Button>
-        <Button variant="solid" disabled={!canSave || busy} onClick={() => onSave({ value, unit: spec.unit || '', favorable })}>Save Reading</Button>
+        <Button size="lg" variant="ghost" onClick={onCancel} disabled={busy}>Back</Button>
+        <Button size="lg" variant="solid" disabled={!canSave || busy} onClick={() => onSave({ value, unit: spec.unit || '', favorable })}>Save Reading</Button>
       </div>
     </>
   );

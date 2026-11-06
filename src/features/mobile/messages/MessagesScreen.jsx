@@ -68,7 +68,7 @@ export function MessagesScreen() {
                 <SegmentedControl size="lg" variant="ghost" fullWidth aria-label="Channel" value={channel} onValueChange={setChannel} items={CHANNELS} />
               </div>
               {loading ? <MobileListSkeleton /> : failed ? (
-                <MobileEmpty icon="solar:danger-circle-linear" title="Couldn't load messages" action={<Button variant="outline" onClick={retry}>Try again</Button>} />
+                <MobileEmpty icon="solar:danger-circle-linear" title="Couldn't load messages" action={<Button size="lg" variant="outline" onClick={retry}>Try again</Button>} />
               ) : shown.length === 0 ? (
                 <MobileEmpty icon="solar:chat-round-linear" title="No conversations" description="Start one with the button below." />
               ) : (

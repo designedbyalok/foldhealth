@@ -127,6 +127,7 @@ function WorklistCards({ label, adapter }) {
           size="lg"
           type="search"
           placeholder="Search name or member ID"
+          enterKeyHint="search"
           aria-label={`Search ${label}`}
           value={query}
           onValueChange={(v) => { setQuery(v); setLimit(PAGE); }}

@@ -34,7 +34,7 @@ export function PatientTasksTab({ patient }) {
   return (
     <>
       <div className={styles.tabAction}>
-        <Button variant="soft" leadingIcon="solar:add-circle-linear" onClick={addTask} fullWidth>Add Task</Button>
+        <Button size="lg" variant="soft" leadingIcon="solar:add-circle-linear" onClick={addTask} fullWidth>Add Task</Button>
       </div>
       <ProfileSection title="Open Tasks" count={open.length || null}>
         {open.length === 0 ? <ProfileEmpty>No open tasks for this patient</ProfileEmpty> : open.map(t => <TaskRow key={t.id} task={t} />)}

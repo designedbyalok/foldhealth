@@ -89,19 +89,22 @@ export function MobileShell() {
   const [tabState, setTabState] = useState(() => initialTab(activePage, allowed));
   const tab = allowed.includes(tabState) ? tabState : allowed[0] || null;
   const [stack, setStack] = useState([]);
+  // 'push' plays the slide-in; going back or switching tabs doesn't.
+  const [motion, setMotion] = useState('none');
   const stackRef = useRef(stack);
   useEffect(() => { stackRef.current = stack; }, [stack]);
 
   // Each sub-screen is a browser history entry, so the phone's back gesture
   // closes it instead of leaving the app.
   useEffect(() => {
-    const onPop = () => setStack(s => s.slice(0, -1));
+    const onPop = () => { setMotion('none'); setStack(s => s.slice(0, -1)); };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
   const push = useCallback((screen, props = {}) => {
     window.history.pushState({ mobileScreen: screen }, '');
+    setMotion('push');
     setStack(s => [...s, { screen, props }]);
   }, []);
   const pop = useCallback(() => {
@@ -115,6 +118,7 @@ export function MobileShell() {
       setStack([]);
       window.history.go(-depth);
     }
+    setMotion('none');
     setTabState(key);
     const page = TABS.find(t => t.key === key)?.page;
     if (page) setActivePage(page);
@@ -163,7 +167,11 @@ export function MobileShell() {
     <MobileNavContext.Provider value={nav}>
       <div className={shell.shell}>
         <main className={shell.content}>
-          {Sub ? <Sub key={stack.length} {...top.props} /> : <Root />}
+          {Sub ? (
+            <div key={stack.length} className={[shell.screen, motion === 'push' ? shell.pushed : ''].filter(Boolean).join(' ')}>
+              <Sub {...top.props} />
+            </div>
+          ) : <Root />}
         </main>
         {showNav && (
           <nav className={shell.nav} aria-label="Main">

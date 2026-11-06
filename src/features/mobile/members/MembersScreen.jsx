@@ -43,6 +43,7 @@ function MembersList({ onPick, showScope = true, autoFocus = false }) {
           size="lg"
           type="search"
           placeholder="Search members"
+          enterKeyHint="search"
           autoFocus={autoFocus}
           aria-label="Search members"
           value={query}

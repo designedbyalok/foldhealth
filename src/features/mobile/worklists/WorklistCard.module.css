@@ -55,8 +55,9 @@
 .statusBtn {
   display: inline-flex;
   max-width: 100%;
-  padding: 0;
-  margin: 0;
+  /* 44pt touch target without moving the layout (Apple HIG) */
+  padding: var(--space-3) 0;
+  margin: calc(var(--space-3) * -1) 0;
   border: 0;
   background: none;
   cursor: pointer;
@@ -167,3 +168,6 @@
   cursor: pointer;
 }
 .action:active { background: var(--neutral-75); }
+
+/* 44pt touch target (Apple HIG) */
+.head { min-height: 44px; }

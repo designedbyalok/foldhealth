@@ -116,7 +116,7 @@ export function CarePlanScreen({ patientId, programId }) {
           {plan?.plan?.signedAt && <p className={styles.meta}>Signed {fmtDate(plan.plan.signedAt) || ''}{plan.plan.signedBy ? ` by ${plan.plan.signedBy}` : ''}</p>}
           {program && plan && (
             <div className={styles.heroRow}>
-              <Button variant="outline" leadingIcon="solar:notes-linear" onClick={() => setNoteOpen(true)}>Add Note</Button>
+              <Button size="lg" variant="outline" leadingIcon="solar:notes-linear" onClick={() => setNoteOpen(true)}>Add Note</Button>
             </div>
           )}
         </section>
@@ -200,8 +200,8 @@ function PlanNoteSheet({ onSave, onClose }) {
     <BottomSheet title="Add Note" onClose={onClose}>
       <Textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder="Write a note on this care plan" aria-label="Care plan note" />
       <div className={styles.actions}>
-        <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
-        <Button variant="solid" onClick={save} disabled={!text.trim() || busy}>Save Note</Button>
+        <Button size="lg" variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
+        <Button size="lg" variant="solid" onClick={save} disabled={!text.trim() || busy}>Save Note</Button>
       </div>
     </BottomSheet>
   );
