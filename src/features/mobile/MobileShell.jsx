@@ -32,6 +32,7 @@ import { OooScreen } from './ooo/OooScreen';
 import { OooFormScreen } from './ooo/OooFormScreen';
 import { PATIENT_SCREENS, PATIENT_FULL_SCREEN } from './patient/patientScreens';
 import { WORKLIST_SCREENS, WORKLIST_FULL_SCREEN } from './worklists/worklistScreens';
+import { ANALYTICS_SCREENS } from './analytics/analyticsScreens';
 import shell from './MobileShell.module.css';
 import styles from './mobile.module.css';
 
@@ -76,6 +77,7 @@ const SCREENS = {
   oooForm: OooFormScreen,
   ...PATIENT_SCREENS,
   ...WORKLIST_SCREENS,
+  ...ANALYTICS_SCREENS,
 };
 
 // Sub-screens that need the whole height (a composer or keypad at the bottom).

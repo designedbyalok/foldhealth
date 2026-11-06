@@ -1,0 +1,28 @@
+/* Employer Impact stat widgets (Patients Not Seen, Satisfaction) on a phone. */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--space-3);
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.statLabel {
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.statValue {
+  font-size: var(--font-2xl);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.statSub {
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+  color: var(--placeholder-text);
+}

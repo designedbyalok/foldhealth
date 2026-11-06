@@ -1,0 +1,9 @@
+/* Report filters: one scrolling row of FilterChips. */
+.filters {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filters::-webkit-scrollbar { display: none; }
