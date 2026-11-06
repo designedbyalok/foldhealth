@@ -6,27 +6,8 @@ import { Icon } from '../../../components/Icon/Icon';
 import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { TimelineSkeleton } from '../../../components/TimelineSkeleton/TimelineSkeleton';
 import { historyEntries } from '../lib/analytics';
-import { fmtDate, plural } from './listUtils';
+import { fmtDate, plural, runStatus, runTitle } from './listUtils';
 import styles from './HistoryLogDrawer.module.css';
-
-function runTitle(e) {
-  switch (e.runKind) {
-    case 'manual': return `Manual run for ${e.targetLabel || plural(e.total, 'member')}`;
-    case 'retry': return `Retry for ${e.targetLabel || 'a member'}`;
-    case 'retrigger': return `Re-triggered for ${e.targetLabel || 'a member'}`;
-    default: return `Triggered for ${plural(e.total, 'member')}`;
-  }
-}
-
-function runStatus(e) {
-  if (!e.total) return 'No members matched.';
-  if (!e.failed && !e.inProgress) return `Reached all ${plural(e.total, 'member')}.`;
-  return [
-    e.success && `${e.success} completed`,
-    e.inProgress && `${e.inProgress} in progress`,
-    e.failed && `${e.failed} failed`,
-  ].filter(Boolean).join(', ') + '.';
-}
 
 /**
  * History Log: edits and runs of one automation, newest first, grouped by

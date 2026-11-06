@@ -62,6 +62,14 @@ export function ProfileScreen() {
               </div>
             )))}
           </div>
+          <button type="button" className={`${styles.card} ${styles.row}`} onClick={() => push('more')}>
+            <Icon name="solar:widget-2-linear" size={24} />
+            <span className={styles.rowLabel}>
+              More
+              <span className={styles.rowSub}>Tasks, Analytics, Campaigns, Settings</span>
+            </span>
+            <Icon name="solar:alt-arrow-right-linear" size={16} />
+          </button>
           <button type="button" className={`${styles.card} ${styles.row}`} onClick={() => push('alerts')}>
             <Icon name="solar:bell-linear" size={24} />
             <span className={styles.rowLabel}>Alerts</span>
