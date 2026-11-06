@@ -234,6 +234,9 @@ function App() {
   if (session === undefined && !bypassed) {
     return (
       <div style={{
+        // #root is a row flexbox, so the loader must grow to fill it or it
+        // shrinks to its content and sits at the left edge on phones.
+        flex: 1, width: '100%',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         height: '100vh', fontFamily: "'Inter', sans-serif", color: 'var(--neutral-200)',
       }}>
