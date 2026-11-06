@@ -53,6 +53,11 @@ function MultiPickSheet({ title, options, value, onDone, onClose }) {
     return q ? options.filter(o => o.toLowerCase().includes(q)) : options;
   }, [options, query]);
   const toggle = (o) => setPicked(p => (p.includes(o) ? p.filter(x => x !== o) : [...p, o]));
+  const pickedSet = new Set(picked);
+  const done = () => {
+    const optionSet = new Set(options);
+    onDone(options.filter(o => pickedSet.has(o)).concat(picked.filter(p => !optionSet.has(p))));
+  };
   return (
     <BottomSheet title={title} onClose={onClose}>
       {options.length > 8 && (
@@ -69,14 +74,14 @@ function MultiPickSheet({ title, options, value, onDone, onClose }) {
       )}
       <div className={form.choices} role="group" aria-label={title}>
         {shown.map(o => (
-          <button key={o} type="button" role="checkbox" aria-checked={picked.includes(o)} className={form.choice} onClick={() => toggle(o)}>
+          <button key={o} type="button" role="checkbox" aria-checked={pickedSet.has(o)} className={form.choice} onClick={() => toggle(o)}>
             <span className={form.choiceText}><span className={form.choiceLabel}>{o}</span></span>
-            {picked.includes(o) && <Icon name="solar:check-circle-linear" size={24} color="var(--primary-300)" />}
+            {pickedSet.has(o) && <Icon name="solar:check-circle-linear" size={24} color="var(--primary-300)" />}
           </button>
         ))}
         {shown.length === 0 && <p className={styles.muted}>Nothing matches.</p>}
       </div>
-      <Button size="lg" onClick={() => onDone(options.filter(o => picked.includes(o)).concat(picked.filter(p => !options.includes(p))))}>
+      <Button size="lg" onClick={done}>
         Done{picked.length ? ` (${picked.length})` : ''}
       </Button>
     </BottomSheet>
