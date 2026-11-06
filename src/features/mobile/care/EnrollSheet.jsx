@@ -94,9 +94,12 @@ export function EnrollSheet({ patientId, onEnrolled, onCaptureConsent, onClose }
       setStage({ consent: code });
       return;
     }
+    // addCareProgram returns nothing and leaves state alone when the store
+    // refuses, so the new enrollment is whichever row wasn't there before.
+    const before = new Set((useAppStore.getState().careProgramsByPatient[patientId] || []).map(p => p.id));
     addCareProgram(patientId, details ? { ...entry, ...details } : entry);
     const list = useAppStore.getState().careProgramsByPatient[patientId] || [];
-    const created = [...list].reverse().find(p => p.code === code && (!details?.subProgram || p.subProgram === details.subProgram));
+    const created = list.find(p => !before.has(p.id) && p.code === code);
     if (!created) { toast.error(`Could not enroll the patient in ${code}`); return; }
     toast.success(`Enrolled in ${created.name}`);
     onEnrolled(created);

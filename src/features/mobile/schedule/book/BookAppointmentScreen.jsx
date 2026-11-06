@@ -124,7 +124,9 @@ function BookForm({ patientId, patientName, initialDate }) {
   const [booked, setBooked] = useState(null);
 
   // The signed-in user books for themselves unless they pick someone else.
-  const provider = providerPick || (me?.name ? (users.find(u => samePerson(u, me)) || { id: me.id || null, name: me.name }) : null);
+  // Memoized: a fresh object each render would recompute every day's slots.
+  const meUser = useMemo(() => (me?.name ? (users.find(u => samePerson(u, me)) || { id: me.id || null, name: me.name }) : null), [users, me]);
+  const provider = providerPick || meUser;
   const duration = typeDurationMin(type);
   const { slotsOn, whyNone } = useOpenSlots(provider);
   const slotsFor = useMemo(() => (iso) => slotsOn(iso, duration), [slotsOn, duration]);
@@ -211,7 +213,7 @@ function BookForm({ patientId, patientName, initialDate }) {
       <MobileSubHeader title={shownPatient?.name || 'Book Appointment'} />
       <div className={`${common.body} ${styles.body}`}>
         <div className={styles.form}>
-          {!(patientId != null || patientName) && (
+          {!shownPatient?.name && (
             <PickerField label="Patient" required value={shownPatient?.name} placeholder="Search patient" onClick={() => setSheet('patient')} />
           )}
           <NoteField label="Reason For Visit" rows={4} placeholder="Type reason here" value={reason} onValueChange={setReason} />
@@ -336,6 +338,12 @@ function RescheduleForm({ appt }) {
     if (blocked || saving) return;
     setSaving(true);
     try {
+      // Check the slot first so a stale time doesn't leave a half-saved edit.
+      if (timeChanged && !slotsOn(slot.date, duration, moving).some(s => s.minutes === slot.minutes)) {
+        toast.error('That time is no longer open. Pick another slot.');
+        setSlot(s => ({ ...s, minutes: null }));
+        return;
+      }
       if (detailsChanged) {
         const changes = {};
         if (mode !== currentMode) changes.mode = mode;
@@ -343,11 +351,6 @@ function RescheduleForm({ appt }) {
         if (!await updateAppointment(appt.id, changes)) { toast.error('Could not update the appointment.'); return; }
       }
       if (timeChanged) {
-        if (!slotsOn(slot.date, duration, moving).some(s => s.minutes === slot.minutes)) {
-          toast.error('That time is no longer open. Pick another slot.');
-          setSlot(s => ({ ...s, minutes: null }));
-          return;
-        }
         const failed = await reschedule([{
           appt,
           date: isoToAppt(slot.date),

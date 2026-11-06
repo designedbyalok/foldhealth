@@ -1,8 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { blockStatus } from '../../settings/calendar/availability/availabilityUtils';
-
-const sameName = (a, b) => String(a || '').toLowerCase() === String(b || '').toLowerCase();
+import { sameName } from '../../ooo/oooUtils';
 
 /**
  * The signed-in user's availability slots, matched by name like the desktop

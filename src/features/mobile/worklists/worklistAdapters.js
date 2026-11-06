@@ -303,8 +303,9 @@ export const WORKLIST_ADAPTERS = {
         status: { label: g.status || 'Open', tone: toneFor(g.status) },
         open: { screen: 'worklistGap', props: { memberId: m.id, code: g.code } },
       })),
-      statuses: live.map(g => g.status || 'Open'),
-      assignee: { name: m.assignee, names: live.map(g => g.assignee).filter(Boolean) },
+      // Filters match what the card shows: open gaps only.
+      statuses: open.map(g => g.status || 'Open'),
+      assignee: { name: m.assignee, names: open.map(g => g.assignee).filter(Boolean) },
       phone: m.phone,
       ids: { id: m.patientId, memberId: m.memberId, name: m.name },
       };

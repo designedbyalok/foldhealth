@@ -138,21 +138,26 @@ export function TaskDetailScreen({ taskId }) {
 
   // The edits below send the same patches and toasts as the desktop
   // TaskDetailDrawer; updateTask writes the matching task_audit_log rows.
+  // It resolves false when the write fails, so success toasts wait for it.
+  const save = async (patch, onSaved) => {
+    if (await updateTask(task.id, patch)) onSaved();
+    else toast.error('Could not save the change.');
+  };
+
   const setAssignee = (name) => {
     setSheet(null);
     if (name === task.assigned_to) return;
     const picked = (taskProfiles || []).find(p => p.name === name);
     // An owner and a pool are mutually exclusive (desktop claim semantics).
-    updateTask(task.id, { assigned_to: name, assigned_to_id: picked?.id || (name === me?.name ? me?.id || null : null), pool: null });
-    toast.success(`Assigned to ${name}`);
+    save({ assigned_to: name, assigned_to_id: picked?.id || (name === me?.name ? me?.id || null : null), pool: null },
+      () => toast.success(`Assigned to ${name}`));
   };
 
   const setDue = (iso) => {
     setSheet(null);
     const next = isoToTaskDate(iso);
     if (!next || next === task.due_date) return;
-    updateTask(task.id, { due_date: next });
-    toast.success('Due date updated');
+    save({ due_date: next }, () => toast.success('Due date updated'));
   };
 
   const setPool = (key) => {
@@ -160,8 +165,8 @@ export function TaskDetailScreen({ taskId }) {
     const next = key === NO_POOL ? null : key;
     if (next === (task.pool || null)) return;
     // A pooled task is unclaimed by definition, so pooling drops the assignee.
-    updateTask(task.id, next ? { pool: next, assigned_to: null, assigned_to_id: null } : { pool: null });
-    toast.success(next ? `Pool set to ${next}` : 'Removed from pool');
+    save(next ? { pool: next, assigned_to: null, assigned_to_id: null } : { pool: null },
+      () => toast.success(next ? `Pool set to ${next}` : 'Removed from pool'));
   };
 
   const setStatus = (status) => {
@@ -171,20 +176,19 @@ export function TaskDetailScreen({ taskId }) {
       toast.error(`Cannot complete: ${openSubs} subtask(s) still open`);
       return;
     }
-    updateTask(task.id, { status });
-    const msg = `Status changed to ${STATUS_LABELS[status]}`;
-    if (status === 'completed') toast.success(msg);
-    else if (status === 'missed') toast.error(msg);
-    else toast.info(msg);
+    save({ status }, () => {
+      const msg = `Status changed to ${STATUS_LABELS[status]}`;
+      if (status === 'completed') toast.success(msg);
+      else if (status === 'missed') toast.error(msg);
+      else toast.info(msg);
+    });
   };
 
   const toggleLabel = (label) => {
     if (labels.includes(label)) {
-      updateTask(task.id, { labels: labels.filter(x => x !== label) });
-      toast.success(`Label "${label}" removed`);
+      save({ labels: labels.filter(x => x !== label) }, () => toast.success(`Label "${label}" removed`));
     } else {
-      updateTask(task.id, { labels: [...labels, label] });
-      toast.success(`Label "${label}" added`);
+      save({ labels: [...labels, label] }, () => toast.success(`Label "${label}" added`));
     }
   };
 

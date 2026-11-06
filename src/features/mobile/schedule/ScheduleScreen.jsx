@@ -40,7 +40,7 @@ export function ScheduleScreen() {
   const [viewing, setViewing] = useState(null);
   const touchX = useRef(null);
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
-  const meUser = me?.name ? (users.find(u => samePerson(u, me)) || { id: me.id || null, name: me.name }) : null;
+  const meUser = useMemo(() => (me?.name ? (users.find(u => samePerson(u, me)) || { id: me.id || null, name: me.name }) : null), [users, me]);
   const person = viewing || meUser;
   const viewingMe = !viewing || (meUser && samePerson(viewing, meUser));
   const { slotsOn, whyNone, segments, holidays } = useOpenSlots(person);

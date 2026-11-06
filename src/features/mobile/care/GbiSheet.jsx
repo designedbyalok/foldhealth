@@ -72,17 +72,24 @@ export function GbiSheet({ kind, item, details = [], patientId, program, onClose
     : 0;
   const confirmDelete = async () => {
     setBusy(true);
+    let ok;
     try {
-      if (kind === 'goal') await remove(patientId, program.id, item.id, { cascade: true });
-      else await remove(patientId, program.id, item.id);
+      ok = kind === 'goal'
+        ? await remove(patientId, program.id, item.id, { cascade: true })
+        : await remove(patientId, program.id, item.id);
+    } catch {
+      ok = undefined;
+    }
+    if (ok === true) {
       toast.success(kind === 'goal'
         ? (linked ? 'Goal & linked items removed successfully' : 'Goal removed successfully')
         : `"${name}" removed`);
       onClose();
-    } catch {
-      toast.error(`Could not delete the ${NOUN[kind].toLowerCase()}.`);
-      setBusy(false);
+      return;
     }
+    // false: the store rolled back and already showed its own error toast.
+    if (ok !== false) toast.error(`Could not delete the ${NOUN[kind].toLowerCase()}.`);
+    setBusy(false);
   };
 
   if (mode === 'delete') {
