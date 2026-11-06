@@ -11,6 +11,7 @@ import { CARE_PROGRAM_CATALOG } from '../../patient/data/careProgramCatalog';
 import { isMissedCall } from '../../messages/comms/commsUtils';
 import { useCommsConversations } from '../../messages/comms/useComms';
 import { formatPatientMeta, useMyWorklistPatients } from '../../home/useMyWorklistPatients';
+import { WORKLIST as PROGRAM_WORKLIST, sortProgramHealth } from '../../home/programHealth';
 import { MobileRootHeader } from '../MobileHeader';
 import { useMobileNav } from '../MobileNavContext';
 import { initialsOf } from '../mobileFormat';
@@ -23,8 +24,6 @@ import common from '../mobile.module.css';
 import styles from './HomeScreen.module.css';
 
 const PROGRAM_NAMES = Object.fromEntries(CARE_PROGRAM_CATALOG.map(p => [p.code, p.name]));
-// Program code → its worklist (desktop TeamProgramsCard).
-const PROGRAM_WORKLIST = { SNP: 'SNP', AWV: 'Annual Visit', CCM: 'CCM', 'TOC IP': 'TOC IP', DM: 'DM', CMP: 'CMP', TCM: 'TCM' };
 
 function greeting(d) {
   const h = d.getHours();
@@ -41,7 +40,7 @@ function minutesUntil(date, now) {
 
 /** The provider's day at a glance (mobile port of desktop Home). */
 export function HomeScreen() {
-  const { push, setTab, openMember } = useMobileNav();
+  const { push, setTab, canTab, openMember } = useMobileNav();
   const me = useAppStore(s => s.currentUserProfile);
   const [now] = useState(() => new Date());
   const firstName = (me?.name || '').replace(/^Dr\.?\s+/i, '').split(/\s+/)[0];
@@ -83,9 +82,11 @@ export function HomeScreen() {
   const glance = [
     { key: 'overdue', label: 'Overdue tasks', value: overdue, alert: overdue > 0, icon: 'solar:danger-circle-linear', onClick: () => push('tasks', { filter: 'overdue' }) },
     { key: 'today', label: 'Due today', value: dueToday, icon: 'solar:checklist-minimalistic-linear', onClick: () => push('tasks', { filter: 'today' }) },
-    { key: 'missed', label: 'Missed calls', value: missedCalls, alert: missedCalls > 0, icon: 'solar:end-call-rounded-linear', onClick: () => setTab('calls') },
-    { key: 'unread', label: 'Unread messages', value: unread, icon: 'solar:chat-round-unread-linear', onClick: () => setTab('messages') },
-  ];
+    canTab('calls') && { key: 'missed', label: 'Missed calls', value: missedCalls, alert: missedCalls > 0, icon: 'solar:end-call-rounded-linear', onClick: () => setTab('calls') },
+    canTab('messages') && { key: 'unread', label: 'Unread messages', value: unread, icon: 'solar:chat-round-unread-linear', onClick: () => setTab('messages') },
+  ].filter(Boolean);
+  // "See all" opens the first non-empty bucket of what the section lists.
+  const tasksFilter = overdue ? 'overdue' : dueToday ? 'today' : 'upcoming';
 
   return (
     <div className={common.screen}>
@@ -144,7 +145,7 @@ export function HomeScreen() {
             ))}
           </HomeSection>
 
-          <HomeSection title="Today's Schedule" count={todays.length || null} actionLabel="Schedule" onAction={() => setTab('calendar')}>
+          <HomeSection title="Today's Schedule" count={todays.length || null} actionLabel={canTab('calendar') ? 'Schedule' : undefined} onAction={() => setTab('calendar')}>
             {laterToday.length === 0 ? (
               <p className={styles.empty}>{todays.length ? 'Nothing else today' : 'No appointments today'}</p>
             ) : laterToday.map(a => (
@@ -158,7 +159,7 @@ export function HomeScreen() {
             ))}
           </HomeSection>
 
-          <HomeSection title="My Tasks" count={openTasks.length || null} actionLabel="See all" onAction={() => push('tasks', { filter: overdue ? 'overdue' : 'today' })}>
+          <HomeSection title="My Tasks" count={openTasks.length || null} actionLabel="See all" onAction={() => push('tasks', { filter: tasksFilter })}>
             {tasksLoading && !myTasks.length ? <Skeleton width="100%" height={96} radius={12} /> : openTasks.length === 0 ? (
               <p className={styles.empty}>You're all caught up</p>
             ) : openTasks.slice(0, 3).map(t => (
@@ -194,8 +195,7 @@ function TeamProgramsSection({ codes, onOpen }) {
   const fetchProgramHealth = useAppStore(s => s.fetchProgramHealth);
   useEffect(() => { fetchProgramHealth?.(codes); }, [codes, fetchProgramHealth]);
 
-  const rows = useMemo(() => [...(health || [])].sort((a, b) => (b.attentionMembers > 0) - (a.attentionMembers > 0)
-    || b.attentionMembers - a.attentionMembers || a.code.localeCompare(b.code)), [health]);
+  const rows = useMemo(() => sortProgramHealth(health), [health]);
   if (missing) return null;
 
   return (

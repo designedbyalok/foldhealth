@@ -19,6 +19,8 @@ const WORKLISTS = [
   { label: 'CCM', count: c => c?.ccm },
   { label: 'JSA', count: c => c?.jsa },
   { label: 'CMP' },
+  { label: 'High Utilizers' },
+  { label: 'DM' },
   { label: 'TCM', count: c => c?.tcm },
 ];
 const BY_LABEL = Object.fromEntries(WORKLISTS.map(w => [w.label, w]));

@@ -5,11 +5,10 @@ import { Skeleton } from '../../components/Skeleton/Skeleton';
 import { useAppStore } from '../../store/useAppStore';
 import { CARE_PROGRAM_CATALOG } from '../patient/data/careProgramCatalog';
 import { HomeWidgetEmpty } from './HomeWidgetEmpty';
+import { WORKLIST, sortProgramHealth } from './programHealth';
 import styles from './HomeView.module.css';
 
 const NAMES = Object.fromEntries(CARE_PROGRAM_CATALOG.map(p => [p.code, p.name]));
-// Program code → its Population worklist, for programs that have one.
-const WORKLIST = { SNP: 'SNP', AWV: 'Annual Visit', CCM: 'CCM', 'TOC IP': 'TOC IP', DM: 'DM', CMP: 'CMP', TCM: 'TCM' };
 const SIGNALS = [
   ['carePlanGaps', 'care plan gap', 'care plan gaps'],
   ['overdueOutreach', 'overdue outreach', 'overdue outreach'],
@@ -61,9 +60,7 @@ export function TeamProgramsCard({ dragHandleClassName, codes }) {
 
   useEffect(() => { fetchProgramHealth(codes); }, [codes, fetchProgramHealth]);
 
-  // Needs attention first (most members flagged on top), then on track by code.
-  const rows = useMemo(() => [...(health || [])].sort((a, b) => (b.attentionMembers > 0) - (a.attentionMembers > 0)
-    || b.attentionMembers - a.attentionMembers || a.code.localeCompare(b.code)), [health]);
+  const rows = useMemo(() => sortProgramHealth(health), [health]);
   const flagged = rows.filter(r => r.attentionMembers > 0).length;
 
   const openWorklist = (code) => {

@@ -13,9 +13,17 @@ import styles from '../mobile.module.css';
 import profile from './MemberProfileScreen.module.css';
 
 /** A member's summary: identity, quick actions, notes, visits, care team (Figma 759:19971). */
-export function MemberProfileScreen({ patientId }) {
-  // Links may carry another id space (TOC patient id, member id).
-  const patient = useAppStore(s => resolveAllPatient(s, { id: patientId }));
+export function MemberProfileScreen({ patientId, exact = false }) {
+  // Links may carry another id space (TOC patient id, member id). Resolved
+  // only when the patient lists change, not on every store update.
+  const allPatients = useAppStore(s => s.allPatients);
+  const tocPatients = useAppStore(s => s.patients);
+  const patient = useMemo(
+    () => (exact
+      ? (allPatients || []).find(p => String(p.id) === String(patientId)) || null
+      : resolveAllPatient({ allPatients, patients: tocPatients }, { id: patientId })),
+    [allPatients, tocPatients, patientId, exact],
+  );
   const pid = patient?.id ?? patientId;
   const p360 = useAppStore(s => s.p360ProfilesById?.[pid]);
   const notes = useAppStore(s => s.stickyNotes);

@@ -35,28 +35,31 @@ export function QuickNoteSheet({ note, onClose }) {
   const updateQuickNote = useAppStore(s => s.updateQuickNote);
   const deleteQuickNote = useAppStore(s => s.deleteQuickNote);
   const [text, setText] = useState(note.text || '');
+  const [busy, setBusy] = useState(false);
 
-  const save = async () => {
+  // The store actions resolve falsy when Supabase refused the write; keep
+  // the sheet (and the text) open so nothing is lost.
+  const run = async (action, failure) => {
+    setBusy(true);
+    let ok;
+    try { ok = !!(await action()); } catch { ok = false; }
+    setBusy(false);
+    if (ok) onClose();
+    else toast.error(failure);
+  };
+  const save = () => {
     const body = text.trim();
     if (!body) return;
-    try {
-      if (note.id) await updateQuickNote(note.id, body);
-      else await createQuickNote(body);
-      onClose();
-    } catch {
-      toast.error('Could not save the note.');
-    }
+    run(() => (note.id ? updateQuickNote(note.id, body) : createQuickNote(body)), 'Could not save the note.');
   };
-  const remove = async () => {
-    try { await deleteQuickNote(note.id); onClose(); } catch { toast.error('Could not delete the note.'); }
-  };
+  const remove = () => run(() => deleteQuickNote(note.id), 'Could not delete the note.');
 
   return (
     <BottomSheet title={note.id ? 'Quick Note' : 'Add Quick Note'} onClose={onClose}>
       <Textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder="Write a note for the team" aria-label="Note" />
       <div className={styles.sheetActions}>
-        {note.id && <Button variant="ghost" tone="danger" onClick={remove}>Delete</Button>}
-        <Button variant="solid" onClick={save} disabled={!text.trim()}>Save</Button>
+        {note.id && <Button variant="ghost" tone="danger" onClick={remove} disabled={busy}>Delete</Button>}
+        <Button variant="solid" onClick={save} disabled={!text.trim() || busy}>Save</Button>
       </div>
     </BottomSheet>
   );

@@ -4,6 +4,7 @@ import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { toast } from '../../components/Toast/sonnerToast';
 import { useAppStore } from '../../store/useAppStore';
 import { useCan } from '../../lib/useCan';
+import { findPatientMemberId } from '../../lib/router';
 import { MobileNavContext } from './MobileNavContext';
 import { HomeScreen } from './home/HomeScreen';
 import { MyWorklistScreen } from './home/MyWorklistScreen';
@@ -59,6 +60,18 @@ const SCREENS = {
 // Sub-screens that need the whole height (a composer or keypad at the bottom).
 const FULL_SCREEN = new Set(['thread', 'dialer']);
 
+// fetchAllPatients returns at once while an earlier call is still loading;
+// wait for that load so a lookup by name doesn't run against an empty list.
+async function ensureAllPatients() {
+  await useAppStore.getState().fetchAllPatients();
+  if (!useAppStore.getState().allPatientsLoading) return;
+  await new Promise((resolve) => {
+    const off = useAppStore.subscribe((s) => {
+      if (!s.allPatientsLoading) { off(); resolve(); }
+    });
+  });
+}
+
 function initialTab(activePage, allowed) {
   const byPage = TABS.find(t => t.page === activePage && allowed.includes(t.key));
   return byPage?.key || allowed[0] || null;
@@ -70,6 +83,9 @@ export function MobileShell() {
   const setActivePage = useAppStore(s => s.setActivePage);
   const unreadMessages = useAppStore(s => s.messagesUnreadCount);
   const selectedPatientId = useAppStore(s => s.selectedPatientId);
+  // Until roles and access rules load, canAccess allows everything, so
+  // links wait for them before the Patient Details check.
+  const accessReady = useAppStore(s => !!s.currentUserProfile?.id && s.accessRolesDidFetch && !s.accessRolesLoading);
   const can = useCan();
   const visibleTabs = useMemo(() => TABS.filter(t => can(t.perm)), [can]);
   const allowed = useMemo(() => visibleTabs.map(t => t.key), [visibleTabs]);
@@ -94,7 +110,9 @@ export function MobileShell() {
   const pop = useCallback(() => {
     if (stackRef.current.length) window.history.back();
   }, []);
+  const canTab = useCallback((key) => allowed.includes(key), [allowed]);
   const setTab = useCallback((key) => {
+    if (!allowed.includes(key)) return;
     const depth = stackRef.current.length;
     if (depth) {
       setStack([]);
@@ -103,7 +121,7 @@ export function MobileShell() {
     setTabState(key);
     const page = TABS.find(t => t.key === key)?.page;
     if (page) setActivePage(page);
-  }, [setActivePage]);
+  }, [allowed, setActivePage]);
 
   // Open a patient from any id space (worklist rows, tasks, links), checking
   // the same Patient Details permission as desktop.
@@ -112,25 +130,33 @@ export function MobileShell() {
       toast.error("You don't have access to patient details.");
       return;
     }
-    await useAppStore.getState().fetchAllPatients();
+    await ensureAllPatients();
     const hit = resolveAllPatient(useAppStore.getState(), { id, memberId, name });
     if (!hit && id == null) {
       toast.error(`Couldn't find ${name || 'this patient'}.`);
       return;
     }
-    push('member', { patientId: hit?.id ?? id });
+    // `exact`: already resolved to this all_patients row, so don't re-match.
+    push('member', hit ? { patientId: hit.id, exact: true } : { patientId: id });
   }, [can, push]);
 
   // A patient link (navigateToPatient, a notification, or the URL on load)
-  // opens that patient's mobile profile.
-  const consumed = useRef(null);
+  // opens that patient's mobile profile. The selection is cleared once taken
+  // so the next link to the same patient opens it again.
+  const takingLink = useRef(false);
   useEffect(() => {
-    if (selectedPatientId == null || consumed.current === selectedPatientId) return;
-    consumed.current = selectedPatientId;
-    openMember({ id: selectedPatientId });
-  }, [selectedPatientId, openMember]);
+    if (selectedPatientId == null || !accessReady || takingLink.current) return;
+    takingLink.current = true;
+    // The router stores whichever worklist row matched the link's Fold ID;
+    // map it back to that Fold ID.
+    const memberId = findPatientMemberId(useAppStore.getState(), selectedPatientId);
+    openMember({ id: selectedPatientId, memberId }).finally(() => {
+      useAppStore.setState({ selectedPatientId: null });
+      takingLink.current = false;
+    });
+  }, [selectedPatientId, accessReady, openMember]);
 
-  const nav = useMemo(() => ({ push, pop, setTab, openMember }), [push, pop, setTab, openMember]);
+  const nav = useMemo(() => ({ push, pop, setTab, canTab, openMember }), [push, pop, setTab, canTab, openMember]);
   const top = stack[stack.length - 1];
   const Root = tab ? ROOTS[tab] : NoAccess;
   const Sub = top ? SCREENS[top.screen] : null;
