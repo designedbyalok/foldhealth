@@ -88,12 +88,6 @@ function ProgramDetail({ patientId, program, onBack, push }) {
   useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
   useEffect(() => { if (patientId) fetchPatientProgramActivity?.(patientId); }, [patientId, fetchPatientProgramActivity]);
 
-  // Keep the stored progress in step with the steps, as the desktop view does,
-  // so the program list and badges agree.
-  useEffect(() => {
-    if (!flat.length || program.progress === progress) return;
-    updateCareProgram(patientId, program.id, { progress });
-  }, [flat.length, program.progress, progress, patientId, program.id, updateCareProgram]);
 
   const programActivity = useMemo(
     () => activity.filter(a => a.programCode === program.code).slice(0, 8),
@@ -225,7 +219,7 @@ function ProgramDetail({ patientId, program, onBack, push }) {
             <span>{done}/{flat.length} steps</span>
           </div>
           <p className={styles.meta}>
-            {[!isEmptyDash(program.startDate) && program.startDate !== '-' ? `Started ${program.startDate}` : null,
+            {[program.startDate && !isEmptyDash(program.startDate) && program.startDate !== '-' ? `Started ${program.startDate}` : null,
               program.endDate && !isEmptyDash(program.endDate) && program.endDate !== '-' ? `Ended ${program.endDate}` : null,
               program.pcp && !isEmptyDash(program.pcp) ? `PCP ${program.pcp}` : null].filter(Boolean).join(' • ')}
           </p>

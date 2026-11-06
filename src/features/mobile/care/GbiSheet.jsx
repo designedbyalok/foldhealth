@@ -10,7 +10,7 @@ import { gbiStatusesFor } from '../../patient/right-panel/tabs/care-programs/car
 import { statusReasonRequired, statusReasonsFor } from '../../patient/right-panel/tabs/care-programs/care-plan/lib/gbiStatusReasons';
 import { statusReasonPatch } from '../../patient/right-panel/tabs/care-programs/care-plan/lib/confirmStatusChange';
 import { evaluateReading, goalReadingSpec } from '../../patient/right-panel/tabs/care-programs/care-plan/lib/goalReadings';
-import { Option } from './ProgramSheets';
+import { RadioOptionGroup } from '../../../components/RadioOptionGroup/RadioOptionGroup';
 import { gbiTone } from './careUtils';
 import styles from './care.module.css';
 
@@ -81,20 +81,22 @@ export function GbiSheet({ kind, item, details = [], patientId, program, onClose
 
       {mode === 'status' && (
         <>
-          <p className={styles.sheetLabel}>New status</p>
-          <div className={styles.options} role="radiogroup" aria-label="Status">
-            {statuses.map(s => (
-              <Option key={s} label="" selected={to === s} current={item.status === s} onClick={() => { setTo(s); setReason(null); }}>
-                <Badge size="sm" tone={gbiTone(s)} variant="soft" label={s} />
-              </Option>
-            ))}
-          </div>
+          <RadioOptionGroup
+            label="New status"
+            variant="card"
+            options={statuses.map(s => ({ value: s, label: s, hint: item.status === s ? 'Current' : undefined }))}
+            value={to}
+            onChange={(s) => { setTo(s); setReason(null); }}
+          />
           {askReason && to && to !== item.status && (
             <>
-              <p className={styles.sheetLabel}>Reason{required ? ' (required)' : ' (optional)'}</p>
-              <div className={styles.options} role="radiogroup" aria-label="Reason">
-                {reasons.map(r => <Option key={r} label={r} selected={reason === r} onClick={() => setReason(r)} />)}
-              </div>
+              <RadioOptionGroup
+                label={`Reason${required ? ' (required)' : ' (optional)'}`}
+                variant="card"
+                options={reasons.map(r => ({ value: r, label: r }))}
+                value={reason}
+                onChange={setReason}
+              />
               <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add context an auditor or the next care manager should see" aria-label="Status note" />
             </>
           )}
@@ -153,13 +155,15 @@ function ReadingForm({ goal, busy, onSave, onCancel }) {
           ))}
         </div>
       ) : spec.kind === 'select' ? (
-        <div className={styles.options} role="radiogroup" aria-label="Reading">
-          {(spec.options || []).map(o => {
-            const v = typeof o === 'object' ? String(o.value) : String(o);
-            const label = typeof o === 'object' ? o.label : String(o);
-            return <Option key={v} label={label} selected={single === v} onClick={() => setSingle(v)} />;
-          })}
-        </div>
+        <RadioOptionGroup
+          label="Reading"
+          variant="card"
+          options={(spec.options || []).map(o => (typeof o === 'object'
+            ? { value: String(o.value), label: o.label }
+            : { value: String(o), label: String(o) }))}
+          value={single}
+          onChange={setSingle}
+        />
       ) : (
         <Input
           size="lg"
@@ -172,11 +176,13 @@ function ReadingForm({ goal, busy, onSave, onCancel }) {
       )}
       {value && computed == null && (
         <>
-          <p className={styles.sheetLabel}>Target result</p>
-          <div className={styles.options} role="radiogroup" aria-label="Target result">
-            <Option label="In target" selected={override === true} onClick={() => setOverride(true)} />
-            <Option label="Out of target" selected={override === false} onClick={() => setOverride(false)} />
-          </div>
+          <RadioOptionGroup
+            label="Target result"
+            variant="card"
+            options={[{ value: 'in', label: 'In target' }, { value: 'out', label: 'Out of target' }]}
+            value={override == null ? null : override ? 'in' : 'out'}
+            onChange={(v) => setOverride(v === 'in')}
+          />
         </>
       )}
       {value && computed != null && <p className={styles.sheetMeta}>{computed ? 'In target' : 'Out of target'}</p>}

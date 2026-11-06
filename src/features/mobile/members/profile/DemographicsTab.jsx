@@ -20,7 +20,7 @@ export function DemographicsTab({ patient, p360 }) {
           <InfoRow label="Name" value={patient.name} />
           <InfoRow label="Chosen Name" value={p360?.chosen_name} />
           <InfoRow label="Gender" value={p360?.gender_identity || patient.gender} />
-          <InfoRow label="Sex at Birth" value={p360?.sex_at_birth || patient.gender} />
+          <InfoRow label="Sex at Birth" value={p360?.sex_at_birth} />
           <InfoRow label="Pronoun" value={p360?.pronoun} />
           <InfoRow label="Birth Date" value={patient.dob} />
           <InfoRow label="Age" value={patient.age != null && patient.age !== '' ? String(patient.age) : ''} />

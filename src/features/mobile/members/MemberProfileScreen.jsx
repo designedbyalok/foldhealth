@@ -50,7 +50,12 @@ export function MemberProfileScreen({ patientId, exact = false, tab: initialTab 
   const fetchAllPatients = useAppStore(s => s.fetchAllPatients);
   const { actions, callPhone, phone } = useContactActions(patient);
   const [tab, setTab] = useState(TABS.some(t => t.key === initialTab) ? initialTab : 'summary');
-  const [now] = useState(() => Date.now());
+  // Ticks each minute so the due card's countdown and window stay current.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => { fetchAllPatients(); }, [fetchAllPatients]);
   useEffect(() => {
@@ -64,7 +69,8 @@ export function MemberProfileScreen({ patientId, exact = false, tab: initialTab 
   const due = useMemo(() => (appointments || [])
     .filter(a => String(a.patient_id) === String(pid) && !/cancel/i.test(a.status || ''))
     .map(a => ({ ...a, start: appointmentStart(a) }))
-    .find(a => a.start && Math.abs(a.start.getTime() - now) <= SOON_MS), [appointments, pid, now]);
+    .filter(a => a.start && Math.abs(a.start.getTime() - now) <= SOON_MS)
+    .sort((a, b) => Math.abs(a.start.getTime() - now) - Math.abs(b.start.getTime() - now))[0], [appointments, pid, now]);
 
   if (!patient) {
     return (

@@ -18,6 +18,7 @@ import { ScheduleScreen } from './schedule/ScheduleScreen';
 import { MembersScreen, PickMemberScreen } from './members/MembersScreen';
 import { MemberProfileScreen } from './members/MemberProfileScreen';
 import { resolveAllPatient } from './members/resolvePatient';
+import { ensureAllPatients } from './members/ensureAllPatients';
 import { TasksScreen } from './tasks/TasksScreen';
 import { AddTaskScreen } from './tasks/AddTaskScreen';
 import { AppointmentScreen } from './schedule/AppointmentScreen';
@@ -67,18 +68,6 @@ const SCREENS = {
 
 // Sub-screens that need the whole height (a composer or keypad at the bottom).
 const FULL_SCREEN = new Set(['thread', 'dialer', 'addTask']);
-
-// fetchAllPatients returns at once while an earlier call is still loading;
-// wait for that load so a lookup by name doesn't run against an empty list.
-async function ensureAllPatients() {
-  await useAppStore.getState().fetchAllPatients();
-  if (!useAppStore.getState().allPatientsLoading) return;
-  await new Promise((resolve) => {
-    const off = useAppStore.subscribe((s) => {
-      if (!s.allPatientsLoading) { off(); resolve(); }
-    });
-  });
-}
 
 function initialTab(activePage, allowed) {
   const byPage = TABS.find(t => t.page === activePage && allowed.includes(t.key));

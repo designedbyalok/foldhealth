@@ -1,44 +1,21 @@
 import { useState } from 'react';
-import { Badge } from '../../../components/Badge/Badge';
-import { BottomSheet } from '../../../components/BottomSheet/BottomSheet';
+import { BottomSheet, BottomSheetItem } from '../../../components/BottomSheet/BottomSheet';
 import { Button } from '../../../components/Button/Button';
-import { Icon } from '../../../components/Icon/Icon';
 import { Input } from '../../../components/Input/Input';
+import { RadioOptionGroup } from '../../../components/RadioOptionGroup/RadioOptionGroup';
 import { Switch } from '../../../components/Switch/Switch';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { CLOSURE_REASONS, PROGRAM_STATUS_OPTIONS } from '../../patient/data/programStatus';
 import { PAUSE_REASONS, isoDay, pauseFormProblem } from '../../patient/right-panel/tabs/care-programs/care-plan/lib/carePlanPause';
-import { programTone } from './careUtils';
 import styles from './care.module.css';
-
-/** One choice row in a sheet: radio-style, selected outline. */
-export function Option({ label, selected, current, onClick, children }) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={!!selected}
-      className={[styles.option, selected ? styles.optionSelected : ''].filter(Boolean).join(' ')}
-      onClick={onClick}
-    >
-      {children}
-      {label && <span>{label}</span>}
-      {current && <span className={styles.optionCurrent}>Current</span>}
-    </button>
-  );
-}
 
 /** Pick a program status (same list as the desktop status dropdown). */
 export function ProgramStatusSheet({ current, onPick, onClose }) {
   return (
     <BottomSheet title="Program Status" onClose={onClose}>
-      <div className={styles.options} role="radiogroup" aria-label="Program status">
-        {PROGRAM_STATUS_OPTIONS.map(s => (
-          <Option key={s} label="" selected={s === current} current={s === current} onClick={() => onPick(s)}>
-            <Badge size="sm" tone={programTone(s)} variant="soft" label={s} />
-          </Option>
-        ))}
-      </div>
+      {PROGRAM_STATUS_OPTIONS.map(s => (
+        <BottomSheetItem key={s} label={s} detail={s === current ? 'Current' : undefined} onClick={() => onPick(s)} />
+      ))}
     </BottomSheet>
   );
 }
@@ -55,12 +32,7 @@ export function CloseProgramSheet({ program, status, busy, onSubmit, onClose }) 
   return (
     <BottomSheet title={`Close ${program.code}`} onClose={onClose}>
       <p className={styles.sheetText}>Ends this enrollment today as {ending}. It moves to Past Programs and keeps its history.</p>
-      <p className={styles.sheetLabel}>Reason</p>
-      <div className={styles.options} role="radiogroup" aria-label="Closure reason">
-        {CLOSURE_REASONS.map(r => (
-          <Option key={r.value} label={r.label} selected={reason === r.value} onClick={() => setReason(r.value)} />
-        ))}
-      </div>
+      <RadioOptionGroup label="Reason" variant="card" options={CLOSURE_REASONS} value={reason} onChange={setReason} />
       <Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note (optional)" aria-label="Note" />
       <div className={styles.actions}>
         <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
@@ -87,12 +59,7 @@ export function PauseProgramSheet({ busy, onSubmit, onClose }) {
   return (
     <BottomSheet title="Pause Program" onClose={onClose}>
       <p className={styles.sheetMeta}>The program&rsquo;s care plan pauses with it: no cadence, no overdue flags and no automated outreach.</p>
-      <p className={styles.sheetLabel}>Reason</p>
-      <div className={styles.options} role="radiogroup" aria-label="Pause reason">
-        {PAUSE_REASONS.map(r => (
-          <Option key={r.value} label={r.label} selected={reason === r.value} onClick={() => setReason(r.value)} />
-        ))}
-      </div>
+      <RadioOptionGroup label="Reason" variant="card" options={PAUSE_REASONS} value={reason} onChange={setReason} />
       <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={reason === 'other' ? 'Why is it paused?' : 'Anything the care team should know (optional)'} aria-label="Pause note" />
       <div className={styles.dates}>
         <Input type="date" size="lg" label="Pause start date" required value={pausedOn} onValueChange={setPausedOn} />
@@ -122,14 +89,10 @@ export function AssigneeSheet({ users, current, onPick, onClose }) {
   return (
     <BottomSheet title="Assign To" onClose={onClose}>
       <Input leadingIcon="solar:magnifer-linear" size="lg" placeholder="Search staff" aria-label="Search staff" value={query} onValueChange={setQuery} />
-      <div className={styles.options} role="radiogroup" aria-label="Assignee">
-        {shown.length === 0 && <p className={styles.sheetMeta}>No matching staff</p>}
-        {shown.map(u => (
-          <Option key={u.id || u.name} label={u.name} selected={u.name === current} current={u.name === current} onClick={() => onPick(u)}>
-            <Icon name="solar:user-linear" size={20} />
-          </Option>
-        ))}
-      </div>
+      {shown.length === 0 && <p className={styles.sheetMeta}>No matching staff</p>}
+      {shown.map(u => (
+        <BottomSheetItem key={u.id || u.name} icon="solar:user-linear" label={u.name} detail={u.name === current ? 'Current' : undefined} onClick={() => onPick(u)} />
+      ))}
     </BottomSheet>
   );
 }

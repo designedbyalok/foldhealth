@@ -2,12 +2,11 @@ import { useEffect, useMemo } from 'react';
 import { Button } from '../../../../components/Button/Button';
 import { useAppStore } from '../../../../store/useAppStore';
 import { useMobileNav } from '../../MobileNavContext';
-import { taskBucket } from '../../tasks/myTasks';
+import { compareTasks, taskBucket } from '../../tasks/myTasks';
 import { TaskRow } from '../../tasks/TaskRow';
 import { ProfileEmpty, ProfileSection } from './ProfileSection';
 import styles from '../MemberProfileScreen.module.css';
 
-const ORDER = { overdue: 0, today: 1, upcoming: 2, none: 3, done: 4 };
 
 /**
  * This patient's tasks (Figma P360 Task tab): open first by due date, then
@@ -26,7 +25,7 @@ export function PatientTasksTab({ patient }) {
     const mine = (tasks || [])
       .filter(t => !t.is_subtask && (ids.has(String(t.patient_id)) || (patient.name && t.member === patient.name)))
       .map(t => ({ ...t, bucket: taskBucket(t) }))
-      .sort((a, b) => ORDER[a.bucket] - ORDER[b.bucket]);
+      .sort(compareTasks);
     return { open: mine.filter(t => t.bucket !== 'done'), done: mine.filter(t => t.bucket === 'done') };
   }, [tasks, patient]);
 

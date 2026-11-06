@@ -9,6 +9,7 @@ import { MobileEmpty, MobileListSkeleton } from '../MobileParts';
 import { useMobileNav } from '../MobileNavContext';
 import { callFromPhone } from '../calls/callLog';
 import { resolveAllPatient } from '../members/resolvePatient';
+import { ensureAllPatients } from '../members/ensureAllPatients';
 import { WORKLIST_ADAPTERS } from './worklistAdapters';
 import { WorklistCard } from './WorklistCard';
 import common from '../mobile.module.css';
@@ -94,7 +95,7 @@ function WorklistCards({ label, adapter }) {
   ];
 
   const call = async (card) => {
-    await useAppStore.getState().fetchAllPatients();
+    await ensureAllPatients();
     const patient = resolveAllPatient(useAppStore.getState(), card.ids);
     const number = patient?.phone || card.phone;
     if (!number) {
@@ -104,12 +105,12 @@ function WorklistCards({ label, adapter }) {
     callFromPhone({ number, patient: patient || { id: null, name: card.name, phone: number }, sender: me });
   };
 
-  const pick = (next) => {
+  const pick = async (next) => {
     const target = picker;
     setPicker(null);
     if (!target || next === target.label) return;
     try {
-      target.set(useAppStore.getState(), next);
+      await target.set(useAppStore.getState(), next);
     } catch {
       toast.error('Could not change the status.');
     }
