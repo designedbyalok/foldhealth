@@ -26,6 +26,25 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Phones and other touch screens. iOS Safari zooms in when you tap into a
+   field whose text is under 16px, and stays zoomed after you leave it, so a
+   provider who signed in on the 14px login form landed in the app zoomed in.
+   `!important` because every input primitive sets its own (smaller) size in
+   a class, and this has to win over all of them, portals included. The
+   media query matches hooks/useMediaQuery.js MOBILE_QUERY. */
+@media (max-width: 767px), (pointer: coarse) and (max-height: 500px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
+  textarea,
+  select,
+  [contenteditable='true'] {
+    font-size: max(16px, 1em) !important;
+  }
+}
+
 /* Neutralizes native <button> chrome so a semantic button can carry a
    CSS-module class that fully controls the look, used for clickable
    cards, tabs, checkbox rows, and toggles that previously used <div onClick>. */

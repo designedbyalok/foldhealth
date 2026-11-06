@@ -13,5 +13,10 @@ export function useMediaQuery(query) {
   );
 }
 
-/** Phone-width screens get the provider mobile app instead of the desktop layout. */
-export const MOBILE_QUERY = '(max-width: 767px)';
+/**
+ * Phones get the provider mobile app instead of the desktop layout: narrow
+ * screens, and touch screens that are short (a phone turned sideways is
+ * ~870px wide but only ~400px tall). Keep in sync with the phone block in
+ * src/index.css.
+ */
+export const MOBILE_QUERY = '(max-width: 767px), (pointer: coarse) and (max-height: 500px)';
