@@ -19,6 +19,8 @@ import { MembersScreen, PickMemberScreen } from './members/MembersScreen';
 import { MemberProfileScreen } from './members/MemberProfileScreen';
 import { resolveAllPatient } from './members/resolvePatient';
 import { TasksScreen } from './tasks/TasksScreen';
+import { AddTaskScreen } from './tasks/AddTaskScreen';
+import { AppointmentScreen } from './schedule/AppointmentScreen';
 import { ProfileScreen } from './profile/ProfileScreen';
 import { AlertsScreen } from './profile/AlertsScreen';
 import shell from './MobileShell.module.css';
@@ -53,12 +55,14 @@ const SCREENS = {
   myWorklist: MyWorklistScreen,
   worklist: WorklistComingScreen,
   tasks: TasksScreen,
+  addTask: AddTaskScreen,
+  appointment: AppointmentScreen,
   profile: ProfileScreen,
   alerts: AlertsScreen,
 };
 
 // Sub-screens that need the whole height (a composer or keypad at the bottom).
-const FULL_SCREEN = new Set(['thread', 'dialer']);
+const FULL_SCREEN = new Set(['thread', 'dialer', 'addTask']);
 
 // fetchAllPatients returns at once while an earlier call is still loading;
 // wait for that load so a lookup by name doesn't run against an empty list.
