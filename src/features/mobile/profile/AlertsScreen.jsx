@@ -21,10 +21,10 @@ const ICON_BY_TYPE = [
 ];
 const iconFor = (n) => ICON_BY_TYPE.find(([re]) => re.test(`${n.type || ''} ${n.action || ''}`))?.[1] || 'solar:bell-linear';
 
-// Alerts whose target is a desktop-only workspace (HCC review, user
-// admin, bulk and reassignment summaries).
+// Alerts whose target is a desktop-only workspace (HCC review, bulk and
+// reassignment summaries).
 const DESKTOP_ONLY = new Set([
-  'openHccReview', 'openSftpReview', 'openProfileName', 'openPendingUsers', 'openLockedUsers',
+  'openHccReview', 'openSftpReview',
   'openReassignmentSummary', 'openBulkSummary', 'viewAssignedAppointments',
 ]);
 
@@ -78,6 +78,13 @@ export function AlertsScreen() {
     } else if (n.action === 'openDiagPanel' && n.hccMemberId) {
       const m = (useAppStore.getState().hccMembers || []).find(x => String(x.id) === String(n.hccMemberId));
       openMember({ memberId: m?.memberId, name: m?.name });
+    } else if (n.action === 'openPendingUsers') {
+      push('settingsUsers', { status: ['Pending'] });
+    } else if (n.action === 'openLockedUsers') {
+      push('settingsUsers', { status: ['Locked'] });
+    } else if (n.action === 'openProfileName') {
+      // The form that fixes a missing name (desktop opens Preferences).
+      push('myProfileEdit');
     } else if (DESKTOP_ONLY.has(n.action)) {
       toast.info('Open Fold Health on a computer to review this.');
     }

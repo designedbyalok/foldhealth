@@ -16,33 +16,39 @@ const TONE = { Upcoming: 'success', Ongoing: 'primary', Past: 'neutral' };
 /**
  * The signed-in user's Out of Office records, as desktop Preferences → Out
  * of Office (OooPreferencesSection): ongoing, then upcoming, then past.
- * Past records are read-only; the rest open for editing.
+ * Past records are read-only; the rest open for editing. With `user` (from
+ * Settings > Users, desktop "View OOO Records") it lists that person's
+ * records, read-only.
  */
-export function OooScreen() {
+export function OooScreen({ user }) {
   const { push } = useMobileNav();
-  const me = useAppStore(s => s.currentUserProfile);
+  const signedIn = useAppStore(s => s.currentUserProfile);
+  const me = user || signedIn;
+  const readOnly = !!user;
   const { records, loading } = useOooRecords();
   const mine = useMemo(() => (me ? sortRecords(recordsFor(records, me)) : []), [records, me]);
   const now = new Date();
 
   return (
     <div className={common.screen}>
-      <MobileSubHeader title="Out of Office" />
+      <MobileSubHeader title="Out of Office">
+        {readOnly && <p className={styles.forUser}>{user.name}</p>}
+      </MobileSubHeader>
       <div className={common.bodyWrap}>
         <div className={common.body}>
           {loading || !me ? <MobileListSkeleton count={3} height={96} /> : mine.length === 0 ? (
             <MobileEmpty
               icon={OOO_ICON}
               title="No Out of Office Records"
-              description="Mark the dates you're away so your team knows."
-              action={<Button size="lg" variant="outline" leadingIcon="solar:add-circle-linear" onClick={() => push('oooForm')}>New OOO Record</Button>}
+              description={readOnly ? `${user.name} has no Out of Office records.` : "Mark the dates you're away so your team knows."}
+              action={readOnly ? undefined : <Button size="lg" variant="outline" leadingIcon="solar:add-circle-linear" onClick={() => push('oooForm')}>New OOO Record</Button>}
             />
           ) : (
             <ul className={`${common.list} ${styles.records}`}>
               {mine.map(r => {
                 const status = oooStatus(r, now);
                 const { span, length } = describeRange(r.startAt, r.endAt);
-                const editable = canEdit(r, now);
+                const editable = !readOnly && canEdit(r, now);
                 const body = (
                   <>
                     <span className={styles.recordHead}>
@@ -75,7 +81,7 @@ export function OooScreen() {
             </ul>
           )}
         </div>
-        {!loading && mine.length > 0 && (
+        {!readOnly && !loading && mine.length > 0 && (
           <button type="button" className={common.fab} aria-label="New OOO record" onClick={() => push('oooForm')}>
             <Icon name="solar:add-circle-linear" size={32} color="currentColor" />
           </button>

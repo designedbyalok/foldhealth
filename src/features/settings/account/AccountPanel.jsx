@@ -39,6 +39,7 @@ import { HCC_ROLES, ROLE_COLORS, getInitials } from './AccountPanel.constants';
 import { useLocationNames, AddColumnDropdown } from './AccountPanelParts';
 import { ADMIN_ROLES, GENDER_OPTIONS, LANGUAGE_OPTIONS, isCapitalizedName } from './InviteUserDrawer.utils';
 import { MEDICAL_SPECIALTIES, PHYSICIAN_ROLE } from '../../../data/medicalSpecialties';
+import { EHR_SYSTEMS, US_STATES, editUserInitialForm, buildEditUserUpdates, editUserChanges } from './users/editUserForm';
 import styles from './AccountPanel.module.css';
 
 const ALL_TABS = ['Org', 'Users', 'Teams', 'Access Control', 'Locations', 'Insurance Plans', 'Holiday Configuration', 'Merged Or Delayed', 'Allowed Phone', 'Allowed Emails'];
@@ -494,18 +495,6 @@ function InsurancePlansTab({
 /* ── Edit User Drawer ── */
 
 const DRAWER_TABS = ['User Details', 'Business Hours', 'Assigned Patients'];
-const EHR_SYSTEMS = ['Athena Health', 'Epic', 'Cerner', 'eClinicalWorks', 'Allscripts', 'NextGen', 'Greenway Health', 'DrChrono'];
-// US states + DC: licence states are a fixed set, so a multi-select reads
-// cleaner than free-typed tags.
-const US_STATES = [
-  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware',
-  'District of Columbia', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa',
-  'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota',
-  'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey',
-  'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon',
-  'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah',
-  'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming',
-];
 const toOptions = (arr) => arr.map(v => ({ value: v, label: v }));
 
 export function EditUserDrawer({ user, onClose, onSave }) {
@@ -519,32 +508,7 @@ export function EditUserDrawer({ user, onClose, onSave }) {
 
   // The saved-state baseline: what the form equals when there are no unsaved
   // edits. Both the dirty check and draft recovery measure against it.
-  const initialForm = useMemo(() => ({
-    first_name: raw.first_name || user.name?.split(' ')[0] || '',
-    middle_name: raw.middle_name || '',
-    last_name: raw.last_name || user.name?.split(' ').slice(1).join(' ') || '',
-    date_of_birth: raw.date_of_birth || '',
-    gender: raw.gender || '',
-    admin_role: raw.admin_role || 'Business/Practice Owner',
-    role: raw.role || user.role || 'Viewer',
-    bio: raw.bio || '',
-    mobile: raw.mobile || raw.phone || user.phone || '',
-    email: raw.email || user.email || '',
-    fax: raw.fax || '',
-    zip_code: raw.zip_code || '',
-    address_line1: raw.address_line1 || '',
-    address_line2: raw.address_line2 || '',
-    state: raw.state || '',
-    city: raw.city || '',
-    locations: raw.locations || [],
-    languages: raw.languages || [],
-    credentials: raw.credentials || [],
-    licence_states: raw.licence_states || [],
-    clinical_roles: raw.clinical_roles || [],
-    specialties: raw.specialties || [],
-    ehr_mapping: raw.ehr_mapping || '',
-    ehr_user: raw.ehr_user || '',
-  }), [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  const initialForm = useMemo(() => editUserInitialForm(user), [user]);
 
   // Per-user draft so an accidental close (or a reload) never loses typing.
   // localStorage is per-viewer and best-effort: every access is guarded.
@@ -617,29 +581,9 @@ export function EditUserDrawer({ user, onClose, onSave }) {
       showToast('First and last name must start with a capital letter');
       return;
     }
-    const updates = {
-      full_name: `${form.first_name} ${form.last_name}`.trim(),
-      first_name: form.first_name, middle_name: form.middle_name, last_name: form.last_name,
-      // `date` column: an empty field has to go up as null, not "".
-      date_of_birth: form.date_of_birth || null, gender: form.gender,
-      admin_role: form.admin_role, role: form.clinical_roles.length > 0 ? form.clinical_roles[0] : 'Viewer', bio: form.bio,
-      mobile: form.mobile, fax: form.fax, zip_code: form.zip_code,
-      address_line1: form.address_line1, address_line2: form.address_line2,
-      state: form.state, city: form.city,
-      locations: form.locations, languages: form.languages,
-      credentials: form.credentials, licence_states: form.licence_states,
-      clinical_roles: form.clinical_roles, ehr_mapping: form.ehr_mapping, ehr_user: form.ehr_user,
-      // Only doctors carry a specialty; dropping the role clears it.
-      specialties: form.clinical_roles.includes(PHYSICIAN_ROLE) ? form.specialties : [],
-    };
+    const updates = buildEditUserUpdates(form);
     // Build changes for audit log
-    const changes = [];
-    for (const [key, val] of Object.entries(updates)) {
-      const oldVal = raw[key];
-      const newStr = Array.isArray(val) ? val.join(', ') : String(val || '');
-      const oldStr = Array.isArray(oldVal) ? (oldVal || []).join(', ') : String(oldVal || '');
-      if (newStr !== oldStr) changes.push({ field: key, from: oldStr, to: newStr, type: 'text' });
-    }
+    const changes = editUserChanges(updates, raw);
     if (changes.length > 0) {
       logAudit('UserProfile', user.id, user.name, 'updated', `Profile updated: ${changes.map(c => c.field).join(', ')}`, 'Configuration', changes);
     }

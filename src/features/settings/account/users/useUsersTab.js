@@ -34,7 +34,9 @@ function mapProfileRow(u) {
   };
 }
 
-export function useUsersTab() {
+// `initialStatus`: a status filter to open with (the phone's alert links pass
+// ['Pending'] or ['Locked'] as a screen prop instead of the store signal).
+export function useUsersTab({ initialStatus } = {}) {
   const showToast = useAppStore(s => s.showToast);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,9 +46,9 @@ export function useUsersTab() {
   const [showInvite, setShowInvite] = useState(false);
   // A notification can hand over a status filter ("Pending") either before
   // this tab mounts (seeded here) or while it is already open (subscription).
-  const [filterOpen, setFilterOpen] = useState(() => !!useAppStore.getState().pendingUsersStatusFilter);
+  const [filterOpen, setFilterOpen] = useState(() => !!(initialStatus?.length || useAppStore.getState().pendingUsersStatusFilter));
   const [userFilters, setUserFilters] = useState(() => ({
-    status: useAppStore.getState().pendingUsersStatusFilter || [], roles: [], location: [],
+    status: initialStatus || useAppStore.getState().pendingUsersStatusFilter || [], roles: [], location: [],
   }));
   useEffect(() => {
     useAppStore.getState().clearPendingUsersStatusFilter();
@@ -214,15 +216,17 @@ export function useUsersTab() {
     }
   };
 
-  const deleteUser = async (user) => {
+  // `confirmed`: the caller already asked (the phone confirms in a bottom
+  // sheet). Resolves true once the user is gone.
+  const deleteUser = async (user, { confirmed = false } = {}) => {
     if (!isCurrentUserAdmin) {
       showToast('Only Admin/Practice Manager can delete users');
-      return;
+      return false;
     }
-    if (!confirm(`Delete ${user.name}? This will permanently remove them from the platform.`)) return;
+    if (!confirmed && !confirm(`Delete ${user.name}? This will permanently remove them from the platform.`)) return false;
 
     const removeFromUI = () => setUsers(prev => prev.filter(u => u.id !== user.id));
-    const fail = (msg) => { showToast(msg); fetchUsers(); };
+    const fail = (msg) => { showToast(msg); fetchUsers(); return false; };
 
     try {
       const { error: fnError } = await supabase.functions.invoke('delete-user', {
@@ -232,13 +236,10 @@ export function useUsersTab() {
       if (!fnError) {
         removeFromUI();
         showToast(`${user.name} deleted`);
-        return;
+        return true;
       }
       const fnMessage = await fnError.context?.json?.().then(b => b?.error).catch(() => null);
-      if (fnMessage) {
-        fail(fnMessage);
-        return;
-      }
+      if (fnMessage) return fail(fnMessage);
 
       const { data, error } = await supabase
         .from('profiles')
@@ -246,15 +247,13 @@ export function useUsersTab() {
         .eq('id', user.id)
         .select();
 
-      if (error || !data || data.length === 0) {
-        fail(error?.message || 'Failed to delete user (Check permissions)');
-        return;
-      }
+      if (error || !data || data.length === 0) return fail(error?.message || 'Failed to delete user (Check permissions)');
 
       removeFromUI();
       showToast(`${user.name} deleted`);
+      return true;
     } catch (err) {
-      fail(err?.message || 'Failed to delete user');
+      return fail(err?.message || 'Failed to delete user');
     }
   };
 
@@ -310,7 +309,7 @@ export function useUsersTab() {
     if (!isCurrentUserAdmin) {
       if (!isSelf) {
         showToast('Only Admin/Practice Manager can edit other users');
-        return;
+        return false;
       }
       const stripped = { ...updates };
       for (const f of ROLE_FIELDS) delete stripped[f];
@@ -325,7 +324,7 @@ export function useUsersTab() {
 
     if (error || !data || data.length === 0) {
       showToast(`Error: ${error?.message || 'Permission denied'}`);
-      return;
+      return false;
     }
 
     // Update just this row from the UPDATE's returned record instead of
@@ -334,6 +333,7 @@ export function useUsersTab() {
     setUsers(prev => prev.map(u => (u.id === userId ? mapProfileRow(data[0]) : u)));
     showToast('Profile updated');
     setEditingUser(null);
+    return true;
   };
 
   const filteredUsers = useMemo(() => {
