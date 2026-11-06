@@ -367,3 +367,15 @@
 .sizeSm .inputBorderless {
   font-size: var(--font-md);
 }
+
+/* size="lg": 52px touch field (provider mobile app, Figma 759:22504). */
+.input.sizeLg,
+.shell.sizeLg {
+  height: 52px;
+  border-radius: 8px;
+  padding: 0 var(--space-3);
+  font-size: var(--font-xl);
+}
+.sizeLg .inputBorderless {
+  font-size: var(--font-xl);
+}

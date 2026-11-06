@@ -1,0 +1,98 @@
+/* Dialer (Figma 759:20205) */
+.dialer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-5) calc(var(--space-8) + env(safe-area-inset-bottom));
+  overflow-y: auto;
+}
+.top {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+.line {
+  margin: 0;
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+  color: var(--neutral-300);
+}
+.number {
+  min-height: 1.2em;
+  margin: 0;
+  font-size: var(--font-mobile-title);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+  text-align: center;
+  word-break: break-all;
+}
+.match {
+  margin: 0;
+  min-height: 1.2em;
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+.pad {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  gap: var(--space-4) var(--space-8);
+  margin-top: auto;
+}
+.key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--neutral-50);
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+.key:active { background: var(--neutral-100); }
+.digit {
+  font-size: var(--font-mobile-title);
+  line-height: 1;
+}
+.letters {
+  min-height: 1em;
+  font-size: var(--font-2xs);
+  letter-spacing: 0.1em;
+  color: var(--neutral-300);
+}
+.actions {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  column-gap: var(--space-8);
+  align-items: center;
+  justify-items: center;
+}
+.call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--status-success-dark);
+  color: var(--on-color);
+  cursor: pointer;
+}
+.call:disabled { opacity: 0.4; cursor: default; }
+.clear {
+  display: inline-flex;
+  padding: var(--space-2);
+  border: 0;
+  background: none;
+  color: var(--neutral-300);
+  cursor: pointer;
+}

@@ -67,7 +67,8 @@ const TYPE_DEFAULTS = {
  *                      hover / focus; for inline-editable table cells).
  *     - invalid        Red chrome and `aria-invalid`, without a message.
  *                      `errorText` implies it.
- *     - size           'md' (32px, default) or 'sm' (28px).
+ *     - size           'md' (32px, default), 'sm' (28px) or 'lg' (52px touch
+ *                      field for the provider mobile app, Figma Text Input Mobile).
  *
  *   Value
  *     - onChange       The native change event.
@@ -166,7 +167,7 @@ export const Input = forwardRef(function Input(
   const activeError = errorText != null ? errorText : internalError;
   const isError = look.invalid || Boolean(activeError);
   const isGhost = look.variant === 'ghost' && !isError;
-  const sizeCls = look.size === 'sm' ? styles.sizeSm : '';
+  const sizeCls = look.size === 'sm' ? styles.sizeSm : look.size === 'lg' ? styles.sizeLg : '';
 
   const runValidate = useCallback((el) => {
     if (!el) return;
@@ -410,7 +411,7 @@ export const Input = forwardRef(function Input(
     <>
       {leadingIcon && (
         typeof leadingIcon === 'string'
-          ? <Icon name={leadingIcon} size={16} color="var(--neutral-300)" className={styles.slotIcon} />
+          ? <Icon name={leadingIcon} size={look.size === 'lg' ? 24 : 16} color="var(--neutral-300)" className={styles.slotIcon} />
           : (isValidElement(leadingIcon) ? leadingIcon : null)
       )}
       {showPriority && (

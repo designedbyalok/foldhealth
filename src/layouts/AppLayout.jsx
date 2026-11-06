@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
+import { useMediaQuery, MOBILE_QUERY } from '../hooks/useMediaQuery';
 import { useCan } from '../lib/useCan';
 import { navPermissionKey } from '../lib/accessControl';
 import { EmptyState } from '../components/EmptyState/EmptyState';
@@ -39,6 +40,7 @@ import { GbiStatusReasonHost } from '../features/patient/right-panel/tabs/care-p
 // landing view, so they should not be in the entry chunk.
 const lz = (importer, name) => lazy(() => importer().then(m => ({ default: m[name] })));
 
+const MobileShell = lz(() => import('../features/mobile/MobileShell'), 'MobileShell');
 const PatientDetailView = lz(() => import('../features/patient/PatientDetailView'), 'PatientDetailView');
 const PopGroupRuleBuilder = lz(() => import('../features/population-groups/rule-builder/PopGroupRuleBuilder'), 'PopGroupRuleBuilder');
 const CalendarPageView  = lz(() => import('../features/calendar/CalendarView'),     'CalendarView');
@@ -535,6 +537,7 @@ export function AppLayout() {
   const editingFormId = useAppStore(s => s.editingFormId);
   const formBuilderForm = useAppStore(s => s.formBuilderForm);
   const formViewId = useAppStore(s => s.formViewId);
+  const isMobile = useMediaQuery(MOBILE_QUERY);
 
   // Reload-safe form-builder detection. On a refresh of
   // #/settings/content/forms/{id}/{mode}, `editingFormId` is null until the
@@ -548,6 +551,20 @@ export function AppLayout() {
   const onFormBuilderRoute =
     formRoute.page === 'settings' && formRoute.section === 'content'
     && formRoute.tab === 'forms' && !!formRoute.id;
+
+  // Phones get the provider mobile app (Figma Provider App SST V5). It sits
+  // after every hook and load effect above, so the session, notifications
+  // feed and router keep working the same on both layouts.
+  if (isMobile) {
+    return (
+      <>
+        <Suspense fallback={<LazyFallback />}>
+          <MobileShell />
+        </Suspense>
+        <Toaster />
+      </>
+    );
+  }
 
   // Email Builder is a full-screen takeover when editing a campaign. Wins over
   // the CampaignBuilder so "Edit Template" from inside the campaign builder

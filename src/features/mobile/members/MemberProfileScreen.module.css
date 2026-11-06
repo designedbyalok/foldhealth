@@ -1,0 +1,72 @@
+/* Member summary sections (Figma 759:19971, grey body) */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5) 0;
+}
+.section:last-child { padding-bottom: var(--space-6); }
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0 var(--space-3);
+  font-size: var(--font-lg);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--neutral-300);
+}
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.empty {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: 12px;
+  background: var(--neutral-0);
+  font-size: var(--font-lg);
+  color: var(--neutral-300);
+}
+
+/* Sticky note: amber card with a left rule (Figma 759:19971) */
+.note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-left: 3px solid var(--accent-amber);
+  border-radius: 8px;
+  background: var(--accent-light-amber);
+}
+.noteText {
+  margin: 0;
+  font-size: var(--font-lg);
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+  white-space: pre-wrap;
+}
+.noteMeta {
+  margin: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+.team {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: var(--neutral-0);
+  overflow: hidden;
+}
+.member {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+.member + .member { border-top: 0.5px solid var(--neutral-100); }
