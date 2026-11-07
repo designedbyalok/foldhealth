@@ -4,6 +4,7 @@ import { dobInRange } from '../../components/DateRangePopover/yearSpan';
 import { outreachFromCount } from '../../components/OutreachStatus/outreachStatusModel';
 import { CMP_SUB_PROGRAMS } from '../patient/data/cmpSubPrograms';
 import { CMP_STATUSES } from './cmpStatuses';
+import { CMP_CARE_TEAM_ROLES } from './cmpCareTeam';
 
 // CMP worklist filters: one per column, from the member down to the program.
 // The top bar keeps the member and program basics; the rest sit under More
@@ -15,12 +16,7 @@ import { CMP_STATUSES } from './cmpStatuses';
 // (the shared DOB filter). `opts`: a fixed list; without one the options come
 // from the members on the worklist.
 
-const CARE_TEAM = [
-  { key: 'nurseHealthCoach', label: 'Nurse/Health Coach' },
-  { key: 'coordinator', label: 'Coordinator' },
-  { key: 'socialWorker', label: 'Social Worker' },
-  { key: 'communityHealthWorker', label: 'Community Health Worker' },
-];
+const CARE_TEAM = CMP_CARE_TEAM_ROLES;
 
 export const NEXT_ACTION_BUCKETS = ['Overdue', 'Due today', 'Due in 7 days', 'Due later', 'No date'];
 export const OUTREACH_RESULTS = ['Attended', 'Follow-up', 'Failed', 'No outreach'];

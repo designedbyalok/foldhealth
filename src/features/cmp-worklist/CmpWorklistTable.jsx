@@ -18,6 +18,8 @@ import { useSavedFilterActions } from '../hcc/useSavedFilterActions';
 import { CmpWorklistRow } from './CmpWorklistRow';
 import { CMP_MIDDLE_COLUMNS } from './cmpColumns';
 import { CMP_FILTER_DEFS, CMP_FILTER_DEF_MAP, cmpFilterOptions, enrollmentMatches } from './cmpFilters';
+import { CMP_OWNER_ROLES } from './cmpCareTeam';
+import { Select } from '../../components/Select/Select';
 
 // Every filter's More Filters entry, grouped (Members, Program, Care Team,
 // Clinical, Tasks); the spec lives in cmpFilters.js.
@@ -63,7 +65,6 @@ export function CmpWorklistTable() {
   const navigateToPatient = useAppStore(s => s.navigateToPatient);
   const openHistoryDrawer = useAppStore(s => s.openHccHistoryDrawer);
   const saveSavedFilter = useAppStore(s => s.saveSavedFilter);
-  const setCmpAssignee = useAppStore(s => s.setCmpAssignee);
   const setCmpCareTeam = useAppStore(s => s.setCmpCareTeam);
   const platformUsers = useAppStore(s => s.platformUsers);
   const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
@@ -79,6 +80,8 @@ export function CmpWorklistTable() {
   const [assignOpen, setAssignOpen] = useState(false);
   // Which sub-programs the bulk assignee goes to; the others keep theirs.
   const [assignSubPrograms, setAssignSubPrograms] = useState([]);
+  // Which owner the bulk change sets: Assignee or one care team role.
+  const [assignRole, setAssignRole] = useState('assignee');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBarOpen, setFilterBarOpen] = useState(false);
@@ -234,6 +237,7 @@ export function CmpWorklistTable() {
     const all = subProgramCounts.map(([sp]) => sp);
     const fromFilter = (filters.subProgram || []).filter(sp => all.includes(sp));
     setAssignSubPrograms(fromFilter.length ? fromFilter : all);
+    setAssignRole('assignee');
     setAssignOpen(true);
   };
   const toggleAssignSubProgram = (sp, on) => setAssignSubPrograms(cur => (on ? [...cur, sp] : cur.filter(x => x !== sp)));
@@ -241,10 +245,11 @@ export function CmpWorklistTable() {
     setAssignOpen(false);
     const rows = selectedEnrollments.filter(e => assignSubPrograms.includes(e.subProgram));
     const memberCount = new Set(rows.map(memberKey)).size;
-    const ok = await setCmpAssignee(rows.map(e => e.id), user);
+    const roleLabel = CMP_OWNER_ROLES.find(r => r.key === assignRole)?.label || 'Assignee';
+    const ok = await setCmpCareTeam(rows.map(e => e.id), assignRole, user);
     showToast(ok
-      ? `${user.name} assigned to ${memberCount} member${memberCount === 1 ? '' : 's'} (${assignSubPrograms.join(', ')})`
-      : 'Could not save the new assignee. Try again.');
+      ? `${user.name} set as ${roleLabel} for ${memberCount} member${memberCount === 1 ? '' : 's'} (${assignSubPrograms.join(', ')})`
+      : `Could not save the new ${roleLabel}. Try again.`);
     if (ok) clearSelected();
   };
 
@@ -290,12 +295,22 @@ export function CmpWorklistTable() {
       />
       <SelectAssigneeModal
         open={assignOpen}
-        title={`Assign ${selectedIds.length} member${selectedIds.length === 1 ? '' : 's'}`}
+        title={`Change ${CMP_OWNER_ROLES.find(r => r.key === assignRole)?.label || 'Assignee'} · ${selectedIds.length} member${selectedIds.length === 1 ? '' : 's'}`}
         confirmLabel="Assign"
         onClose={() => setAssignOpen(false)}
         onConfirm={assignSelected}
         confirmDisabled={!assignSubPrograms.length}
       >
+        <div className={styles.rolePick}>
+          <Select
+            label="Role to change"
+            size="sm"
+            portal
+            options={CMP_OWNER_ROLES.map(r => ({ value: r.key, label: r.label }))}
+            value={assignRole}
+            onValueChange={setAssignRole}
+          />
+        </div>
         {subProgramCounts.length > 1 && (
           <fieldset className={styles.subProgramPick}>
             <legend className={styles.subProgramLegend}>Sub-programs to reassign</legend>
