@@ -1,0 +1,56 @@
+/* Search member to call (Figma 1105:74577) */
+
+/* Search field and Close (Figma 1105:74621) */
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-bottom: 0.5px solid var(--placeholder-text);
+  background: var(--neutral-0);
+}
+.search {
+  flex: 1;
+  min-width: 0;
+}
+.close {
+  min-height: 44px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  font-size: var(--font-xl);
+  line-height: var(--leading-tight);
+  color: var(--primary-300);
+  cursor: pointer;
+}
+
+/* Members list (Figma 1105:74625) */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+.caps {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  margin: 0;
+  padding: 0 var(--space-3);
+  font-size: var(--font-lg);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--neutral-300);
+}
+
+/* Sticky Dial a Number (Figma 1105:74840) */
+.footer {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5) var(--space-5) max(var(--space-8), env(safe-area-inset-bottom));
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-footer);
+}

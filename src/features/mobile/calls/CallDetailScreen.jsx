@@ -17,7 +17,7 @@ function CallCard({ message }) {
   const duration = durationLabel(message.meta?.duration);
   return (
     <div className={styles.card}>
-      <Avatar type="icon" variant={look.variant} iconName="solar:phone-linear" size="XL" />
+      <Avatar type="icon" variant={look.variant} iconName={look.icon} size="XL" />
       <span className={styles.cardText}>
         <span className={styles.secondaryText}>{longStamp(message.created_at)}</span>
         <span className={styles.primaryText}>{[look.label, duration].filter(Boolean).join(' • ')}</span>
