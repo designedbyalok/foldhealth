@@ -13433,7 +13433,6 @@ export const useAppStore = create((set, get) => ({
     }
     return !error;
   },
-  setCmpAssignee: (rowIds, user) => get().setCmpCareTeam(rowIds, 'assignee', user),
   updateCmpMemberStatus: async (id, newStatus) => {
     set(s => ({ cmpMembers: s.cmpMembers.map(m => (m.id === id ? { ...m, progSubStatus: newStatus } : m)) }));
     const { error } = await supabase
