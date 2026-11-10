@@ -16,6 +16,9 @@ export function useCarePlanViewFilters({
   carePlanTemplates,
   libraryGoals,
   patientName,
+  // Keys ('goal:<id>', 'intervention:<id>', 'barrier:<id>') of the items
+  // Look at These First flags; the Needs Attention filter keeps only these.
+  attentionKeys,
 }) {
   const filtersOpen = useAppStore(s => s.carePlanFiltersOpen);
   const setFiltersOpen = useAppStore(s => s.setCarePlanFiltersOpen);
@@ -28,11 +31,12 @@ export function useCarePlanViewFilters({
   const matchesSearch = (item) => !q
     || norm(item.title).includes(q)
     || norm(item.subtitle || item.description || '').includes(q);
-  const [filters, setFilters] = useState({ status: [], priority: [], assignee: [] });
+  const [filters, setFilters] = useState({ status: [], priority: [], assignee: [], attention: [] });
 
   const setFilter = (key, vals) => setFilters(f => ({ ...f, [key]: vals }));
-  const clearFilters = () => setFilters({ status: [], priority: [], assignee: [] });
-  const filtersActive = filters.status.length || filters.priority.length || filters.assignee.length;
+  const clearFilters = () => setFilters({ status: [], priority: [], assignee: [], attention: [] });
+  const filtersActive = filters.status.length || filters.priority.length || filters.assignee.length || filters.attention.length;
+  const matchesAttention = (item, kind) => !filters.attention.length || !!attentionKeys?.has(`${kind}:${item.id}`);
 
   // Same owner the intervention rows show: member tasks belong to the patient
   // (labelled as such, so they don't merge with a staff member of the same
@@ -91,21 +95,21 @@ export function useCarePlanViewFilters({
   };
 
   const filteredGoals = useMemo(
-    () => data.goals.filter(g => matchesSearch(g) && matchesSP(g) && matchesTemplate(g, 'goals')),
-    [data.goals, filters, templateScope, q],
+    () => data.goals.filter(g => matchesSearch(g) && matchesSP(g) && matchesTemplate(g, 'goals') && matchesAttention(g, 'goal')),
+    [data.goals, filters, templateScope, q, attentionKeys],
   );
   const filteredBarriers = useMemo(
-    () => (data.barriers || []).filter(b => matchesSearch(b) && matchesSP(b) && matchesTemplate(b, 'barriers')),
-    [data.barriers, filters, templateScope, q],
+    () => (data.barriers || []).filter(b => matchesSearch(b) && matchesSP(b) && matchesTemplate(b, 'barriers') && matchesAttention(b, 'barrier')),
+    [data.barriers, filters, templateScope, q, attentionKeys],
   );
   const filteredInterventions = useMemo(
     () => {
       const assignees = new Set(filters.assignee);
       return data.interventions.filter(i =>
-        matchesSearch(i) && matchesSP(i) && matchesTemplate(i, 'interventions')
+        matchesSearch(i) && matchesSP(i) && matchesTemplate(i, 'interventions') && matchesAttention(i, 'intervention')
         && (!assignees.size || assignees.has(ownerKey(i))));
     },
-    [data.interventions, filters, templateScope, q, patientLabel], // eslint-disable-line react-hooks/exhaustive-deps
+    [data.interventions, filters, templateScope, q, patientLabel, attentionKeys], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const planStats = useMemo(() => {

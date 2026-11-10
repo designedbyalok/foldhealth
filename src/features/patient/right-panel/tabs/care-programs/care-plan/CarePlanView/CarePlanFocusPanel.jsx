@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { useAppStore } from '@/store/useAppStore';
 import { DashboardCard, DashboardCardBody } from '@/components/DashboardCard/DashboardCard';
 import { PanelSectionItem } from '@/components/PanelSection/PanelSection';
 import { Icon } from '@/components/Icon/Icon';
@@ -31,20 +30,17 @@ const EMPTY = [];
 export function CarePlanFocusPanel({ patientId, program, patientName, live, data, canEdit, onOpenItem }) {
   const review = useReviewCadence({ patientId, program, plan: live?.plan, fetch: false });
   const events = useEventUpdates({ patientId, program, live, fetch: false });
-  const tasks = useAppStore(s => s.tasks) || EMPTY;
   const [addTaskOpen, setAddTaskOpen] = useState(false);
 
-  const focus = useMemo(() => {
-    const taskById = new Map(tasks.map(t => [String(t.id), t]));
-    return carePlanFocusItems({
-      goals: data.goals,
-      interventions: data.interventions,
-      barriers: data.barriers,
-      measurements: live?.measurements || EMPTY,
-      dueOf: i => computeDueDate(i, i.taskId ? taskById.get(String(i.taskId)) : null),
-      review,
-    });
-  }, [data, live?.measurements, tasks, review]);
+  // The intervention table's own due date, so a row flagged here reads overdue there too.
+  const focus = useMemo(() => carePlanFocusItems({
+    goals: data.goals,
+    interventions: data.interventions,
+    barriers: data.barriers,
+    measurements: live?.measurements || EMPTY,
+    dueOf: i => computeDueDate(i),
+    review,
+  }), [data, live?.measurements, review]);
 
   const suggestions = events.missing ? EMPTY : events.pending.flatMap(impact => impact.open.map(change => ({ impact, change })));
   const patient = useMemo(() => ({ id: patientId, memberId: patientId, name: patientName }), [patientId, patientName]);

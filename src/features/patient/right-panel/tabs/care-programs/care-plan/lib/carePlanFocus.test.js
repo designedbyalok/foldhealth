@@ -52,6 +52,20 @@ describe('carePlanFocusItems', () => {
     expect(items[1].text).toBe('It is not linked to a goal.');
   });
 
+  it('treats an open referral aimed at a barrier as addressing it', () => {
+    const items = carePlanFocusItems({
+      interventions: [
+        { id: 'r1', kind: 'sdoh-referral', status: 'In Progress', config: { barrierId: 'b1' } },
+        { id: 'r2', kind: 'sdoh-referral', status: 'Met', config: { barrierId: 'b2' } },
+      ],
+      barriers: [
+        { id: 'b1', title: 'Food insecurity', status: 'Not Started' },
+        { id: 'b2', title: 'Housing', status: 'Not Started' },
+      ],
+    });
+    expect(items.map(i => i.key)).toEqual(['barrier:b2']);
+  });
+
   it('puts a due review in and orders danger before warning', () => {
     const items = carePlanFocusItems({
       barriers: [{ id: 'b1', title: 'Cost', status: 'Not Started' }],

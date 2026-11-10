@@ -196,6 +196,8 @@ The header line reads `Care Plan • Ver. {max(1, latest version)}` (`:147, :312
 
 **Focus panel.** With the dock column showing and no item open, it holds `CarePlanFocusPanel`: Look at These First (`lib/carePlanFocus.js`: due or overdue review, open goals whose latest measurement is unfavorable, open interventions past `computeDueDate`, open barriers with no open intervention on any linked goal), Suggested Actions (pending event changes from `useEventUpdates`, Accept or Dismiss) and the Overview `TasksCard`. It reads `useEventUpdates` and `useReviewCadence` with `fetch: false`, relying on `CarePlanOverview` to load them, and stays mounted (hidden by CSS while an item is docked) so closing an item never refetches. Past versions and template runs don't show it.
 
+**Needs Attention.** `CarePlanView` runs `carePlanFocusItems` (without the review) on the live plan. Each section head gets a `flag` badge with its count (barriers split into plain and SDOH), and clicking it sets the `attention` filter in `useCarePlanViewFilters`, which keeps only the flagged keys. The filter shows as a "Show" FilterChip; past versions and template runs have neither.
+
 **Row menus**
 
 | Row | Menu items |

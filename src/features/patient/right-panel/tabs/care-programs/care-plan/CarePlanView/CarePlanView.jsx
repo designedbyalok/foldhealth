@@ -39,7 +39,8 @@ import {
 } from '../lib/carePlanInterventionMenu';
 import { deriveGoalTableFields } from '../lib/goalMetrics';
 import { CarePlanGoalsTable } from '../tables/CarePlanGoalsTable';
-import { CarePlanInterventionsTable } from '../tables/CarePlanInterventionsTable';
+import { CarePlanInterventionsTable, computeDueDate } from '../tables/CarePlanInterventionsTable';
+import { carePlanFocusItems } from '../lib/carePlanFocus';
 import { CarePlanBarriersTable } from '../tables/CarePlanBarriersTable';
 import { SdohSection } from '../sdoh/SdohSection';
 import { SdohReferralDialog } from '../sdoh/SdohReferralDialog';
@@ -73,6 +74,9 @@ import { groupUpdates } from '../../../../../../settings/care-plan-library/lib/t
 import { isRetired, replacementFor } from '../../../../../../settings/care-plan-library/lib/templateRetirement';
 import { useCarePlanNoteRefs, noteDetails } from '../lib/carePlanNoteRefs';
 import styles from './CarePlanView.module.css';
+
+const NEEDS_ATTENTION = 'Needs Attention';
+const ATTENTION_WORD = { goal: 'Off Target', intervention: 'Overdue', barrier: 'Without Intervention' };
 
 // Below this the tables would be too cramped beside the detail panel.
 const DOCK_MIN_WIDTH = 1080;
@@ -342,6 +346,16 @@ export function CarePlanView({ patientId, program }) {
     };
   }, [viewedVersion]);
   const viewData = versionData || (viewedRun ? viewedRun.data : data);
+  // What needs attention on the live plan, by the same rules as the side
+  // panel's Look at These First: section badges and the Needs Attention filter.
+  const attention = useMemo(() => carePlanFocusItems({
+    goals: data.goals,
+    interventions: data.interventions,
+    barriers: data.barriers,
+    measurements,
+    dueOf: i => computeDueDate(i),
+  }), [data, measurements]);
+  const attentionKeys = useMemo(() => new Set(attention.map(a => a.key)), [attention]);
   const {
     noteOpen,
     noteText,
@@ -374,6 +388,7 @@ export function CarePlanView({ patientId, program }) {
     carePlanTemplates,
     libraryGoals,
     patientName,
+    attentionKeys,
   });
   // SDOH needs get their own section; the Barriers table lists the rest.
   const sdohBarriers = useMemo(() => filteredBarriers.filter(isSdohBarrier), [filteredBarriers]);
@@ -801,6 +816,29 @@ export function CarePlanView({ patientId, program }) {
     dismissCarePlanDuplicate(key, flag.flagId);
   };
   const flagsForKind = (kind) => duplicateFlags.filter(f => f.kind === kind);
+  // Section-header count of what needs attention ("2 Off Target"). It turns
+  // the Needs Attention filter on, opening the filter bar so it's clearable,
+  // and off again. Live plan only.
+  const renderAttentionBadge = (kind, keep = () => true) => {
+    const n = attention.filter(a => a.kind === kind && keep(a.item)).length;
+    if (!n || viewedRun || versionData) return null;
+    const label = `${n} ${ATTENTION_WORD[kind]}`;
+    const on = filters.attention.length > 0;
+    return (
+      <button
+        type="button"
+        className={styles.duplicateBadgeBtn}
+        aria-pressed={on}
+        title={on ? 'Show all items' : 'Show only what needs attention'}
+        onClick={() => {
+          setFilter('attention', on ? [] : [NEEDS_ATTENTION]);
+          if (!on) setFiltersOpen(true);
+        }}
+      >
+        <Badge tone={kind === 'barrier' ? 'warning' : 'danger'} size="sm" label={label} />
+      </button>
+    );
+  };
   // Section-header duplicate badge: opens the section's duplicates in a
   // popover. Nothing renders when the kind has no open duplicate flags.
   const renderDuplicateBadge = (kind) => {
@@ -1169,6 +1207,9 @@ export function CarePlanView({ patientId, program }) {
           <div className={styles.filterBar}>
             <FilterChip label="Status" options={ALL_GBI_STATUSES} selected={filters.status} onChange={v => setFilter('status', v)} />
             <FilterChip label="Priority" options={PRIORITY_LABELS} selected={filters.priority} onChange={v => setFilter('priority', v)} />
+            {!viewedRun && !versionData && (
+              <FilterChip label="Show" singleSelect options={[NEEDS_ATTENTION]} selected={filters.attention} onChange={v => setFilter('attention', v)} />
+            )}
             {filtersActive ? (
               <button type="button" className={styles.clearAll} onClick={clearFilters}>
                 <Icon name="solar:backspace-linear" size={16} color="var(--primary-300)" />
@@ -1439,6 +1480,7 @@ export function CarePlanView({ patientId, program }) {
       <div className={styles.section}>
         <GbiSectionHead
           title="Goals"
+          flag={renderAttentionBadge('goal')}
           count={filteredGoals.length}
           open={openSections.goals}
           onToggle={() => toggleSection('goals')}
@@ -1490,6 +1532,7 @@ export function CarePlanView({ patientId, program }) {
       <div className={styles.section}>
         <GbiSectionHead
           title="Interventions"
+          flag={renderAttentionBadge('intervention')}
           count={filteredInterventions.length}
           open={openSections.interventions}
           onToggle={() => toggleSection('interventions')}
@@ -1596,6 +1639,7 @@ export function CarePlanView({ patientId, program }) {
       <div className={styles.section}>
         <GbiSectionHead
           title="Barriers"
+          flag={renderAttentionBadge('barrier', b => !isSdohBarrier(b))}
           count={filteredBarriers.length}
           open={openSections.barriers}
           onToggle={() => toggleSection('barriers')}
@@ -1642,6 +1686,7 @@ export function CarePlanView({ patientId, program }) {
       <div className={styles.section}>
         <GbiSectionHead
           title="Social Needs (SDOH)"
+          flag={renderAttentionBadge('barrier', isSdohBarrier)}
           count={sdohBarriers.length}
           open={openSections.sdoh}
           onToggle={() => toggleSection('sdoh')}
