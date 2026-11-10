@@ -8,11 +8,13 @@ export { GBI_STATUSES } from '../lib/gbiStatus';
 export const PRIORITIES = ['high', 'medium', 'low'];
 export const PRIORITY_LABELS = ['High', 'Medium', 'Low'];
 
-export function GbiSectionHead({ title, count, open, onToggle, addButton, trailingEnd, rightAccessory }) {
+// `flag` sits right after the title and count (e.g. "2 Off Target").
+export function GbiSectionHead({ title, count, open, onToggle, flag, addButton, trailingEnd, rightAccessory }) {
   const hasRight = !!rightAccessory || !!trailingEnd;
   return (
     <div className={`${styles.sectionHead} ${styles.gbiSectionHead}`}>
       <SectionTitle label={title} count={count} open={open} onToggle={onToggle} />
+      {flag}
       <span className={styles.sectionActionDivider} aria-hidden="true" />
       {addButton}
       {hasRight ? (

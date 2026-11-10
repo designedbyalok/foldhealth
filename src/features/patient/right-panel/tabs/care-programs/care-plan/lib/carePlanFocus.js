@@ -12,12 +12,13 @@ const SEVERITY = { danger: 0, warning: 1 };
  * - A review that is due or overdue (from useReviewCadence).
  * - An open goal whose latest reading is unfavorable.
  * - An open intervention past its due date (the same date the table shows).
- * - An open barrier with no open intervention on any of its goals.
- *   Interventions belong to goals, not barriers, so this is the closest
- *   honest reading of "nothing is addressing it".
+ * - An open barrier with no open intervention on any of its goals, and no
+ *   open intervention aimed at it directly (an SDOH referral carries
+ *   config.barrierId). Other interventions belong to goals, not barriers, so
+ *   this is the closest honest reading of "nothing is addressing it".
  *
- * `dueOf(intervention)` returns its due date as `{ iso, formatted }`, the
- * table's computeDueDate with the paired task, so both agree on "overdue".
+ * `dueOf(intervention)` returns its due date as `{ iso, formatted }`: the
+ * table's computeDueDate, so a flagged row reads overdue in the table too.
  *
  * Each entry: { key, kind, item?, severity, title, text }.
  */
@@ -64,9 +65,11 @@ export function carePlanFocusItems({ goals = [], interventions = [], barriers = 
     });
   }
 
-  const openByGoal = new Set(interventions.filter(i => i.goalId && !isClosedStatus(i.status)).map(i => String(i.goalId)));
+  const open = interventions.filter(i => !isClosedStatus(i.status));
+  const openByGoal = new Set(open.filter(i => i.goalId).map(i => String(i.goalId)));
+  const openByBarrier = new Set(open.filter(i => i.config?.barrierId).map(i => String(i.config.barrierId)));
   for (const b of barriers) {
-    if (isClosedStatus(b.status)) continue;
+    if (isClosedStatus(b.status) || openByBarrier.has(String(b.id))) continue;
     const goalIds = barrierGoalIdsOf(b).map(String);
     if (goalIds.some(id => openByGoal.has(id))) continue;
     out.push({
