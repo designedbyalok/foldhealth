@@ -56,3 +56,11 @@ export function interventionOwner(i, patients) {
     unassigned: !isMemberTask && (!name || name === 'Unassigned'),
   };
 }
+
+// Row keyboard access: Enter or Space on the focused row opens it, the same
+// as a click. Keys on controls inside the row stay theirs.
+export const openOnRowKey = (open) => (e) => {
+  if (e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return;
+  e.preventDefault();
+  open();
+};

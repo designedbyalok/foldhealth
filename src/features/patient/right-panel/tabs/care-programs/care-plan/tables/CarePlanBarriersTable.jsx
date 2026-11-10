@@ -14,7 +14,7 @@ import {
 } from './carePlanTableShared';
 import { COMPACT_BARRIER_COLUMNS } from './carePlanTableColumns';
 import { enrichBarrierRows } from './carePlanTableSort';
-import { isCompletedStatus } from './carePlanTableModel';
+import { isCompletedStatus, openOnRowKey } from './carePlanTableModel';
 import { AiSuggestionBadge } from '../ai/AiSuggestionBadge';
 import styles from './carePlanTables.module.css';
 
@@ -33,6 +33,7 @@ function BarrierRow({
   onTitleChange,
   linked,
   template,
+  active,
 }) {
   // Mirrors the table's own gate: a template row keeps its menu when the
   // caller can act on one.
@@ -42,8 +43,11 @@ function BarrierRow({
     <tr
       key={b.id}
       data-cp-row-id={b.id}
-      className={`${styles.row} ${styles.gbiRow} ${onOpenBarrier ? styles.rowClickable : ''}`}
+      className={`${styles.row} ${styles.gbiRow} ${onOpenBarrier ? styles.rowClickable : ''}${active ? ` ${styles.rowActive}` : ''}`}
+      aria-current={active ? 'true' : undefined}
+      tabIndex={onOpenBarrier ? 0 : undefined}
       onClick={() => onOpenBarrier?.(b)}
+      onKeyDown={onOpenBarrier ? openOnRowKey(() => onOpenBarrier(b)) : undefined}
     >
       {bulkMode && (
         <GbiCheckboxCell
@@ -131,6 +135,8 @@ export function CarePlanBarriersTable({
   onPriorityMenu,
   onRowMenu,
   onOpenBarrier,
+  // Id of the barrier open in the docked detail panel, highlighted.
+  activeRowId,
   // Notes icon → open the barrier drawer at its Note section.
   onOpenNotes,
   // (barrier) => boolean: whether it has a current (undeleted) note.
@@ -205,6 +211,7 @@ export function CarePlanBarriersTable({
       onTitleChange={onTitleChange}
       linked={linked}
       template={template}
+      active={activeRowId === b.id}
     />
   );
 

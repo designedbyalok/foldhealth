@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
 import { CloseButton } from '../CloseButton/CloseButton';
+import { DrawerDockContext } from './drawerDock';
 import styles from './Drawer.module.css';
 
 // Falls back to 250ms when the CSS custom property is unreadable (rare: SSR,
@@ -91,6 +92,11 @@ function readDrawerDurationMs(node) {
  *  - dismissed    (boolean)    Close from outside: plays the close animation,
  *                              then calls onClose (e.g. swapping one drawer
  *                              for another)
+ *  - dockable     (boolean)    Render beside the content, in the element a
+ *                              DrawerDockContext provider supplies, when one
+ *                              is present (e.g. the care plan detail panel).
+ *                              Only opted-in drawers dock: drawers opened from
+ *                              a docked one still overlay.
  *
  * Design tokens (DO NOT change without design review):
  *  - Width: 700px
@@ -130,6 +136,7 @@ export function Drawer({
   closeOnOverlayClick = true,
   // False keeps Escape from closing it (✕ and the overlay still do).
   closeOnEscape = true,
+  dockable = false,
 }) {
   // Stacking depth for nested drawers. When a second Drawer mounts on top
   // of an already-open one (e.g. TaskDetailDrawer over CareGapDetailDrawer
@@ -141,11 +148,17 @@ export function Drawer({
   const [stackDepth, setStackDepth] = useState(0);
   const [closing, setClosing] = useState(false);
   const panelRef = useRef(null);
+  // Docked: a `dockable` drawer renders inside the host element a
+  // DrawerDockContext provides, beside the page content, with no overlay and
+  // no focus trap. Without a host it is an ordinary overlay drawer.
+  const dockHost = useContext(DrawerDockContext);
+  const dock = dockable ? dockHost : null;
   useEffect(() => {
     // useEffect fires after commit, so this instance's own panel is
     // already in the DOM: subtract 1 so a solo drawer stays at the
-    // base z-index and only *nested* drawers get bumped.
-    const openPanels = document.querySelectorAll(`.${styles.panel}[data-closing="false"]`).length;
+    // base z-index and only *nested* drawers get bumped. Docked panels
+    // sit in the page, so they never count.
+    const openPanels = document.querySelectorAll(`.${styles.panel}[data-closing="false"]:not([data-docked])`).length;
     const alreadyOpen = Math.max(0, openPanels - 1);
     if (alreadyOpen > 0) setStackDepth(alreadyOpen);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -236,18 +249,19 @@ export function Drawer({
           assistive tech on purpose: the header CloseButton is the keyboard and
           screen-reader path, so the backdrop must not appear as a second,
           unlabelled control. */}
-      <div className={styles.overlay} data-closing={shut ? 'true' : 'false'} onClick={closeOnOverlayClick ? requestClose : undefined} aria-hidden="true" style={overlayStyle} />
+      {!dock && <div className={styles.overlay} data-closing={shut ? 'true' : 'false'} onClick={closeOnOverlayClick ? requestClose : undefined} aria-hidden="true" style={overlayStyle} />}
       <div
         ref={panelRef}
-        role="dialog"
-        aria-modal="true"
+        role={dock ? 'region' : 'dialog'}
+        aria-modal={dock ? undefined : 'true'}
         aria-labelledby={title ? titleId : undefined}
         tabIndex={-1}
-        onKeyDown={trapTab}
+        onKeyDown={dock ? undefined : trapTab}
         data-drawer-panel
-        className={`${styles.panel}${className ? ` ${className}` : ''}`}
+        data-docked={dock ? '' : undefined}
+        className={`${styles.panel}${dock ? ` ${styles.docked}` : ''}${className ? ` ${className}` : ''}`}
         data-closing={shut ? 'true' : 'false'}
-        style={Object.keys(panelStyle).length ? panelStyle : undefined}
+        style={!dock && Object.keys(panelStyle).length ? panelStyle : undefined}
       >
         <div className={styles.header} style={headerStyle}>
           <h2 id={titleId} className={styles.headerTitle} style={titleStyle}>{title}</h2>
@@ -276,6 +290,6 @@ export function Drawer({
         {footer && <div className={`${styles.footer}${footerClassName ? ` ${footerClassName}` : ''}`}>{footer}</div>}
       </div>
     </>,
-    document.body,
+    dock || document.body,
   );
 }

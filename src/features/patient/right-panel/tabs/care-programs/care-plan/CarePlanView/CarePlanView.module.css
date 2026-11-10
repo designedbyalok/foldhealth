@@ -16,6 +16,32 @@
   z-index: 30;
 }
 
+/* Tables on the left, and on wide screens the open item's details docked
+   on the right, each scrolling on its own under the templates bar. */
+.splitRow {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.splitRow > .scrollArea {
+  min-width: 0;
+}
+.dockColumn {
+  flex-shrink: 0;
+  width: clamp(400px, 36%, 480px);
+  display: flex;
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+  box-sizing: border-box;
+}
+.dockColumn:empty {
+  display: none;
+}
+/* One item at a time: if several were open when the view widened, the most
+   recent one (last, as with stacked drawers) shows. */
+.dockColumn > [data-docked]:not(:last-child) {
+  display: none;
+}
+
 /* The actual scroll container. Everything below the templates bar
    scrolls inside this element, so the browser scrollbar starts under
    the pinned bar rather than running the full pane height. */

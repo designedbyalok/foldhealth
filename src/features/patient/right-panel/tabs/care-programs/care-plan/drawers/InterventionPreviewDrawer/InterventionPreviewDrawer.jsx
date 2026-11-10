@@ -309,6 +309,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
       title={KIND_LABELS[live.kind] ? `Intervention - ${KIND_LABELS[live.kind]}` : 'Intervention'}
       onClose={onClose}
       bodyClassName={styles.drawerPad}
+      dockable
     >
       <div className={styles.body}>
         <div className={styles.statusBar}>

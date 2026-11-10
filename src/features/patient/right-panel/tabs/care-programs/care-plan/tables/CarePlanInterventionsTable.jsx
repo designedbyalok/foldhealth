@@ -23,7 +23,7 @@ import {
   GBI_COL_WIDTH,
 } from './carePlanTableShared';
 import { COMPACT_INTERVENTION_COLUMNS } from './carePlanTableColumns';
-import { isCompletedStatus, parseCarePlanDate, toPickerValue, interventionOwner } from './carePlanTableModel';
+import { isCompletedStatus, parseCarePlanDate, toPickerValue, interventionOwner, openOnRowKey } from './carePlanTableModel';
 import { enrichInterventionRows } from './carePlanTableSort';
 import { CARE_PLAN_INTERVENTION_ICONS } from '../lib/carePlanInterventionMenu';
 import { KIND_LABELS } from '../../../../../../settings/care-plan-library/interventions/shared/interventionKinds';
@@ -233,6 +233,7 @@ export function CarePlanInterventionsTable({
   onStatusMenu,
   onRowMenu,
   onOpenIntervention,
+  activeRowId,
   onAssigneeChange,
   // Persist a manual due-date override + the full recurrence config
   // (repeat toggle + count / every / ends fields) from the inline
@@ -358,8 +359,11 @@ export function CarePlanInterventionsTable({
       <tr
         key={i.id}
         data-cp-row-id={i.id}
-        className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}`}
+        className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}${activeRowId === i.id ? ` ${styles.rowActive}` : ''}`}
+        aria-current={activeRowId === i.id ? 'true' : undefined}
+        tabIndex={0}
         onClick={() => onOpenIntervention(i)}
+        onKeyDown={openOnRowKey(() => onOpenIntervention(i))}
       >
         {bulkMode && (
           <GbiCheckboxCell
@@ -448,8 +452,11 @@ export function CarePlanInterventionsTable({
       <tr
         key={i.id}
         data-cp-row-id={i.id}
-        className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}`}
+        className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}${activeRowId === i.id ? ` ${styles.rowActive}` : ''}`}
+        aria-current={activeRowId === i.id ? 'true' : undefined}
+        tabIndex={0}
         onClick={() => onOpenIntervention(i)}
+        onKeyDown={openOnRowKey(() => onOpenIntervention(i))}
       >
         {bulkMode && (
           <GbiCheckboxCell

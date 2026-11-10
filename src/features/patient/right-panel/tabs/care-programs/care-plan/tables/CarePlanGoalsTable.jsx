@@ -20,7 +20,7 @@ import {
   TrendCell,
 } from './carePlanTableShared';
 import { COMPACT_GOAL_COLUMNS } from './carePlanTableColumns';
-import { isCompletedStatus, toPickerValue, fmtCarePlanDate } from './carePlanTableModel';
+import { isCompletedStatus, toPickerValue, fmtCarePlanDate, openOnRowKey } from './carePlanTableModel';
 import { enrichGoalRows } from './carePlanTableSort';
 import {
   normalizeCategory,
@@ -61,6 +61,7 @@ export function CarePlanGoalsTable({
   onSelectAll,
   onToggleSelect,
   onOpenGoal,
+  activeRowId,
   onPriorityMenu,
   onStatusMenu,
   onRowMenu,
@@ -135,8 +136,11 @@ export function CarePlanGoalsTable({
     <tr
       key={g.id}
       data-cp-row-id={g.id}
-      className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}`}
+      className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}${activeRowId === g.id ? ` ${styles.rowActive}` : ''}`}
+      aria-current={activeRowId === g.id ? 'true' : undefined}
+      tabIndex={0}
       onClick={() => onOpenGoal(g)}
+      onKeyDown={openOnRowKey(() => onOpenGoal(g))}
     >
       {bulkMode && (
         <GbiCheckboxCell
@@ -221,8 +225,11 @@ export function CarePlanGoalsTable({
         /* `data-cp-row-id` lets the CarePlan linked-items popover scroll to
            and flash this row on click. */
         data-cp-row-id={g.id}
-        className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}`}
+        className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}${activeRowId === g.id ? ` ${styles.rowActive}` : ''}`}
+        aria-current={activeRowId === g.id ? 'true' : undefined}
+        tabIndex={0}
         onClick={() => onOpenGoal(g)}
+        onKeyDown={openOnRowKey(() => onOpenGoal(g))}
       >
         {bulkMode && (
           <GbiCheckboxCell

@@ -336,6 +336,7 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
         title="Barriers"
         onClose={onClose}
         width={640}
+        dockable
         noCloseDivider={isTerminal && !barrierDirty}
         headerRight={ro || (isTerminal && !barrierDirty) ? null : (
           <Button

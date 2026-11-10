@@ -57,6 +57,30 @@
   transform: translateX(100%);
 }
 
+/* Docked: fills its host column in the page flow. It fades instead of
+   sliding, since the content beside it doesn't move. */
+.panel.docked {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  z-index: auto;
+  box-shadow: none;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 12px;
+  transform: none;
+  opacity: 1;
+  transition: opacity var(--drawer-duration) var(--ease-out);
+  --drawer-duration: 150ms;
+}
+@starting-style {
+  .panel.docked { opacity: 0; transform: none; }
+}
+.panel.docked[data-closing='true'] {
+  opacity: 0;
+  transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .overlay,
   .panel {
