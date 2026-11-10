@@ -848,7 +848,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
   }
 
   return (
-    <Drawer title="Goal Details" onClose={onClose} bodyClassName={styles.drawerPad}>
+    <Drawer title="Goal Details" onClose={onClose} bodyClassName={styles.drawerPad} dockable>
       <div className={styles.body}>
         <div className={styles.statusBar}>
           <Select

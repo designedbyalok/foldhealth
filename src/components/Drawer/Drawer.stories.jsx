@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { Drawer } from "./Drawer";
+import { DrawerDockContext } from "./drawerDock";
 import { PatientBanner } from "../PatientBanner/PatientBanner";
 import { Button } from "../Button/Button";
 import { Badge } from "../Badge/Badge";
@@ -19,8 +20,8 @@ export default {
   argTypes: {
     layout: {
       control: { type: 'select' },
-      options: ['default', 'split-panes', 'patient-banner'],
-      description: 'Body composition: plain content, resizable two-pane split, or PatientBanner between header and body.',
+      options: ['default', 'split-panes', 'patient-banner', 'docked'],
+      description: 'Body composition: plain content, resizable two-pane split, or PatientBanner between header and body. `docked` shows a `dockable` drawer rendered beside the content inside a DrawerDockContext host (the care plan detail panel).',
     },
     firstCta: {
       control: 'boolean',
@@ -241,12 +242,40 @@ function PatientBannerDemo({ firstCta, secondCta }) {
   );
 }
 
+/**
+ * Docked: a `dockable` drawer inside a DrawerDockContext host renders in
+ * the page beside the list, with no overlay. Picking another row swaps it.
+ */
+function DockedDemo({ firstCta, secondCta }) {
+  const [host, setHost] = useState(null);
+  const [open, setOpen] = useState(null);
+  const rows = ['Improve A1C control', 'Lower blood pressure', 'Walk 20 minutes a day'];
+  return (
+    <DrawerDockContext.Provider value={host}>
+      <div className={splitStyles.dockPage}>
+        <div className={splitStyles.dockList}>
+          {rows.map(r => (
+            <Button key={r} variant={open === r ? 'primary' : 'outline'} onClick={() => setOpen(r)}>{r}</Button>
+          ))}
+        </div>
+        <aside ref={setHost} className={splitStyles.dockHost} aria-label="Item details" />
+      </div>
+      {open && (
+        <Drawer key={open} title="Goal Details" onClose={() => setOpen(null)} dockable {...CtaButtons({ firstCta, secondCta })}>
+          <p>{open}</p>
+        </Drawer>
+      )}
+    </DrawerDockContext.Provider>
+  );
+}
+
 export const Playground = {
   render: ({ layout, firstCta, secondCta }) => {
     // Each layout is its own component, so switching the control swaps the
     // whole subtree: no shared hook order to preserve.
     if (layout === 'split-panes') return <SplitPanesDemo firstCta={firstCta} secondCta={secondCta} />;
     if (layout === 'patient-banner') return <PatientBannerDemo firstCta={firstCta} secondCta={secondCta} />;
+    if (layout === 'docked') return <DockedDemo firstCta={firstCta} secondCta={secondCta} />;
     return <DefaultDemo firstCta={firstCta} secondCta={secondCta} />;
   },
 };

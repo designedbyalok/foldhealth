@@ -607,3 +607,13 @@
   color: var(--neutral-300);
   text-align: center;
 }
+
+/* The row whose details are open in the docked panel beside the tables:
+   a step stronger than hover, with a bar on its leading edge. */
+.rowActive,
+.rowActive:hover {
+  background: var(--primary-100);
+}
+.rowActive > td:first-child {
+  box-shadow: inset 2px 0 0 var(--primary-300);
+}

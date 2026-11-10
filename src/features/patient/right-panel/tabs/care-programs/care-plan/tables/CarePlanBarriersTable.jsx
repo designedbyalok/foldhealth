@@ -33,6 +33,7 @@ function BarrierRow({
   onTitleChange,
   linked,
   template,
+  active,
 }) {
   // Mirrors the table's own gate: a template row keeps its menu when the
   // caller can act on one.
@@ -42,7 +43,8 @@ function BarrierRow({
     <tr
       key={b.id}
       data-cp-row-id={b.id}
-      className={`${styles.row} ${styles.gbiRow} ${onOpenBarrier ? styles.rowClickable : ''}`}
+      className={`${styles.row} ${styles.gbiRow} ${onOpenBarrier ? styles.rowClickable : ''}${active ? ` ${styles.rowActive}` : ''}`}
+      aria-current={active ? 'true' : undefined}
       onClick={() => onOpenBarrier?.(b)}
     >
       {bulkMode && (
@@ -131,6 +133,8 @@ export function CarePlanBarriersTable({
   onPriorityMenu,
   onRowMenu,
   onOpenBarrier,
+  // Id of the barrier open in the docked detail panel, highlighted.
+  activeRowId,
   // Notes icon → open the barrier drawer at its Note section.
   onOpenNotes,
   // (barrier) => boolean: whether it has a current (undeleted) note.
@@ -205,6 +209,7 @@ export function CarePlanBarriersTable({
       onTitleChange={onTitleChange}
       linked={linked}
       template={template}
+      active={activeRowId === b.id}
     />
   );
 

@@ -192,6 +192,8 @@ The header line reads `Care Plan • Ver. {max(1, latest version)}` (`:147, :312
 
 \* hidden by default.
 
+**Detail panel.** A row click opens the Goal, Intervention or Barrier preview drawer. When the editor's container is at least `DOCK_MIN_WIDTH` (1080px) wide, those three drawers dock beside the tables instead of overlaying them: `CarePlanView` provides a `DrawerDockContext` host (`aside.dockColumn`) and the drawers pass `dockable`. The panel holds one item (opening another clears the rest), each drawer is keyed by item id so staged edits never carry over, and the open row gets `aria-current` plus `.rowActive`. Drawers opened from inside the panel still overlay.
+
 **Row menus**
 
 | Row | Menu items |

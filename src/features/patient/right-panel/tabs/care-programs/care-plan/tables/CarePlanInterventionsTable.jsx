@@ -233,6 +233,7 @@ export function CarePlanInterventionsTable({
   onStatusMenu,
   onRowMenu,
   onOpenIntervention,
+  activeRowId,
   onAssigneeChange,
   // Persist a manual due-date override + the full recurrence config
   // (repeat toggle + count / every / ends fields) from the inline
@@ -358,7 +359,8 @@ export function CarePlanInterventionsTable({
       <tr
         key={i.id}
         data-cp-row-id={i.id}
-        className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}`}
+        className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}${activeRowId === i.id ? ` ${styles.rowActive}` : ''}`}
+        aria-current={activeRowId === i.id ? 'true' : undefined}
         onClick={() => onOpenIntervention(i)}
       >
         {bulkMode && (
@@ -448,7 +450,8 @@ export function CarePlanInterventionsTable({
       <tr
         key={i.id}
         data-cp-row-id={i.id}
-        className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}`}
+        className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}${activeRowId === i.id ? ` ${styles.rowActive}` : ''}`}
+        aria-current={activeRowId === i.id ? 'true' : undefined}
         onClick={() => onOpenIntervention(i)}
       >
         {bulkMode && (

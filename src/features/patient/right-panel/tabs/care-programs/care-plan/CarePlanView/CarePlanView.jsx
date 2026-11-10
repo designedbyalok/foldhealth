@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { DrawerDockContext } from '@/components/Drawer/drawerDock';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { uniqueById } from '../lib/carePlanDraft';
 import { Icon } from '@/components/Icon/Icon';
@@ -71,6 +72,9 @@ import { groupUpdates } from '../../../../../../settings/care-plan-library/lib/t
 import { isRetired, replacementFor } from '../../../../../../settings/care-plan-library/lib/templateRetirement';
 import { useCarePlanNoteRefs, noteDetails } from '../lib/carePlanNoteRefs';
 import styles from './CarePlanView.module.css';
+
+// Below this the tables would be too cramped beside the detail panel.
+const DOCK_MIN_WIDTH = 1080;
 
 export function CarePlanView({ patientId, program }) {
   const {
@@ -182,8 +186,8 @@ export function CarePlanView({ patientId, program }) {
   const [priorityMenu, setPriorityMenu] = useState(null); // { kind, item, rect }
   const [addGoalsDrawerOpen, setAddGoalsDrawerOpen] = useState(false);
   const [addBarriersDrawerOpen, setAddBarriersDrawerOpen] = useState(false);
-  const [previewGoal, setPreviewGoal] = useState(null);
-  const [previewIntervention, setPreviewIntervention] = useState(null);
+  const [previewGoal, setPreviewGoalState] = useState(null);
+  const [previewIntervention, setPreviewInterventionState] = useState(null);
   const [intvDrawer, setIntvDrawer] = useState(null);  // false | { intervention }
   const [intvTypeMenuOpen, setIntvTypeMenuOpen] = useState(false);
   const [intvSpecialDrawer, setIntvSpecialDrawer] = useState(null); // null | { kind, intervention?, presetGoalId? }
@@ -202,7 +206,35 @@ export function CarePlanView({ patientId, program }) {
   const [barrierDrawer, setBarrierDrawer] = useState(null); // null | { barrier }
   // Barrier preview drawer: shows goals/template linked to this barrier
   // in the current plan version, with delink + add-goal affordances.
-  const [previewBarrier, setPreviewBarrier] = useState(null);
+  const [previewBarrier, setPreviewBarrierState] = useState(null);
+  // Wide enough, the open goal, intervention or barrier docks beside the
+  // tables instead of covering them, so the plan stays in view while you
+  // work through it. Narrower (the patient side panel), it stays a drawer.
+  const containerRef = useRef(null);
+  const [dockWide, setDockWide] = useState(false);
+  const [dockEl, setDockEl] = useState(null);
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return undefined;
+    const measure = () => setDockWide(el.clientWidth >= DOCK_MIN_WIDTH);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const docked = dockWide && !!dockEl;
+  // The docked panel holds one item: opening another replaces it.
+  const showOnly = (keep, item) => {
+    if (docked && item) {
+      if (keep !== 'goal') setPreviewGoalState(null);
+      if (keep !== 'intervention') setPreviewInterventionState(null);
+      if (keep !== 'barrier') setPreviewBarrierState(null);
+    }
+  };
+  const setPreviewGoal = (g) => { showOnly('goal', g); setPreviewGoalState(g); };
+  const setPreviewIntervention = (i) => { showOnly('intervention', i); setPreviewInterventionState(i); };
+  const setPreviewBarrier = (b) => { showOnly('barrier', b); setPreviewBarrierState(b); };
+  const activeRowId = docked ? (previewGoal || previewIntervention || previewBarrier)?.id ?? null : null;
   // Opening an item's drawer shows its notes, so they're no longer new.
   useEffect(() => { if (previewGoal?.id) markCarePlanNoteSeen('goal', previewGoal.id); }, [previewGoal?.id, markCarePlanNoteSeen]);
   useEffect(() => { if (previewIntervention?.id) markCarePlanNoteSeen('intervention', previewIntervention.id); }, [previewIntervention?.id, markCarePlanNoteSeen]);
@@ -1083,7 +1115,8 @@ export function CarePlanView({ patientId, program }) {
   return (
     <AiReviewContext.Provider value={aiReview}>
     <CarePlanPausedContext.Provider value={planPaused}>
-    <div className={styles.container}>
+    <DrawerDockContext.Provider value={docked ? dockEl : null}>
+    <div className={styles.container} ref={containerRef}>
       <div className={styles.stickyTop}>
         {/* pinned templates + problems bar */}
         <AppliedTemplateStrip
@@ -1145,6 +1178,7 @@ export function CarePlanView({ patientId, program }) {
         )}
       </div>
 
+      <div className={styles.splitRow}>
       <div className={styles.scrollArea}>
       <div className={styles.contentBody}>
       {viewedVersion && (
@@ -1430,6 +1464,7 @@ export function CarePlanView({ patientId, program }) {
           />
         ) : (
           <CarePlanGoalsTable
+            activeRowId={activeRowId}
             rows={filteredGoals}
             canEdit={canEdit}
             bulkMode={bulkMode}
@@ -1520,6 +1555,7 @@ export function CarePlanView({ patientId, program }) {
           />
         ) : (
           <CarePlanInterventionsTable
+            activeRowId={activeRowId}
             rows={filteredInterventions}
             canEdit={canEdit}
             bulkMode={bulkMode}
@@ -1579,6 +1615,7 @@ export function CarePlanView({ patientId, program }) {
           />
         ) : (
           <CarePlanBarriersTable
+            activeRowId={activeRowId}
             rows={filteredBarriers}
             canEdit={canEdit}
             bulkMode={bulkMode}
@@ -1628,6 +1665,8 @@ export function CarePlanView({ patientId, program }) {
       {renderDuplicatesPopover()}
       </div>
       </div>
+      {dockWide && <aside ref={setDockEl} className={styles.dockColumn} aria-label="Item details" />}
+      </div>
 
       <CarePlanViewOverlays {...overlayProps} />
       {episodes.dialogs}
@@ -1654,6 +1693,7 @@ export function CarePlanView({ patientId, program }) {
         />
       )}
     </div>
+    </DrawerDockContext.Provider>
     </CarePlanPausedContext.Provider>
     </AiReviewContext.Provider>
   );

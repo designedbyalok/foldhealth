@@ -90,6 +90,7 @@ export function CarePlanViewDrawers(d) {
 
       {previewGoal && (
         <GoalPreviewDrawer
+          key={previewGoal.id}
           goal={previewGoal}
           patientId={patientId}
           program={program}
@@ -104,6 +105,7 @@ export function CarePlanViewDrawers(d) {
 
       {previewBarrier && (
         <BarrierDetailDrawer
+          key={previewBarrier.id}
           barrier={previewBarrier}
           patientId={patientId}
           program={program}
@@ -117,6 +119,7 @@ export function CarePlanViewDrawers(d) {
 
       {previewIntervention && (
         <InterventionPreviewDrawer
+          key={previewIntervention.id}
           intervention={previewIntervention}
           patientId={patientId}
           program={program}
