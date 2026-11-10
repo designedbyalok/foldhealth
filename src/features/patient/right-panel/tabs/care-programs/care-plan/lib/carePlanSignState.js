@@ -34,3 +34,21 @@ export function carePlanSignShareEnabled(carePlan, { usingMock = false, draft = 
   if (draft?.latestVersion) return draft.hasUnsignedChanges;
   return carePlanHasChangesSinceSign(carePlan);
 }
+
+/**
+ * Completed by the care manager and sent to a provider to sign, and not signed
+ * since. Editing a goal, intervention or barrier after completing ends it, so
+ * the plan has to be completed again. (The plan row's own updated_at is left
+ * out: completing writes the row itself.)
+ */
+export function carePlanAwaitingSignature(carePlan) {
+  const plan = carePlan?.plan;
+  if (!plan?.completedAt) return false;
+  const completedMs = new Date(plan.completedAt).getTime();
+  if (plan.signedAt && new Date(plan.signedAt).getTime() >= completedMs) return false;
+  const edited = Math.max(0,
+    ...(carePlan.goals || []).map(itemTimestamp),
+    ...(carePlan.interventions || []).map(itemTimestamp),
+    ...(carePlan.barriers || []).map(itemTimestamp));
+  return edited <= completedMs;
+}

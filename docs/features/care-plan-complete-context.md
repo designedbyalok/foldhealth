@@ -390,6 +390,12 @@ Started from More, then Save as Template. The dialog takes Name (no max) and Con
 
 **Who can sign:** anyone signed in. `signed_by` is the free-text `currentUserProfile.name`; no user id is stored.
 
+### Complete, then the provider signs (`completeCarePlan`)
+
+The header's primary button is **Complete** (`CompleteCarePlanDialog`): provider who signs (required; defaults to the enrollment's `pcp` when it names a platform user), patient agreed (required) with an optional note, and an optional copy request `{ channel, language, largePrint }` (language from the patient's `language_preference` / `languages`). It writes `completed_by`, `completed_at`, `awaiting_signer(_id)`, `patient_agreed_at`, `patient_agreement_note`, `copy_request` on `patient_care_plans` (`care_plan_completion_migration.sql`), a `plan/completed` audit row (History: "Care Plan Completed and Sent to X to Sign"), a "Sign care plan for <member>" task for the provider (label `Care Plan Signature`) and a notification. Nothing sends the copy.
+
+`carePlanAwaitingSignature` (`lib/carePlanSignState.js`) is true while `completed_at` is set, not signed since, and no goal / intervention / barrier changed after it (the plan row's own `updated_at` is ignored). While awaiting, the header reads "Awaiting X's signature" and the button is **Sign** (`signCarePlan`, unchanged). Completed then edited reads "Changed after completing, complete it again". The menu keeps **Sign Now** (sign without the provider step) and Send for Review. There is still no role check on who signs.
+
 ### Sign (`signCarePlan`, S:2895-2965)
 
 1. Requires a plan id; otherwise it toasts "Add a goal before signing."

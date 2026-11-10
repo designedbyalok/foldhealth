@@ -1,0 +1,36 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+.copyRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+}
+.copyRow > :not(.check) {
+  flex: 1;
+  min-width: 0;
+}
+.copyRow > .check {
+  padding-bottom: var(--space-2);
+}
+.hint {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
