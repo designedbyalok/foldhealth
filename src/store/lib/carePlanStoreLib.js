@@ -567,6 +567,14 @@ function mapPatientCarePlanRow(row) {
     updatedAt: row.updated_at || null,
     signedBy: row.signed_by || null,
     signedAt: row.signed_at || null,
+    // Complete, then the provider signs (care_plan_completion migration).
+    completedBy: row.completed_by || null,
+    completedAt: row.completed_at || null,
+    awaitingSigner: row.awaiting_signer || null,
+    awaitingSignerId: row.awaiting_signer_id || null,
+    patientAgreedAt: row.patient_agreed_at || null,
+    patientAgreementNote: row.patient_agreement_note || '',
+    copyRequest: row.copy_request && typeof row.copy_request === 'object' ? row.copy_request : null,
     // Pause (care_plan_pause migration). Rows from before it are active.
     status: row.status === 'paused' ? 'paused' : 'active',
     pause: row.status === 'paused' ? {

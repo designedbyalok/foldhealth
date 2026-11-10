@@ -395,7 +395,7 @@ function signedSliceWithReadings(slice, measurements) {
 // Care plan audit actions the Program Activity Log shows one by one.
 const CARE_PLAN_LOG_ACTIONS = [
   'status_changed', 'priority_changed', 'progress_changed', 'assignee_changed', 'updated',
-  'note', 'note_deleted', 'note_cleared', 'review_requested', 'discarded', 'restored',
+  'note', 'note_deleted', 'note_cleared', 'review_requested', 'completed', 'discarded', 'restored',
 ];
 
 // Patients whose CMP roster rows were already turned into enrollments this session (syncCmpEnrollments).
@@ -6097,6 +6097,89 @@ export const useAppStore = create((set, get) => ({
     });
 
     return task;
+  },
+
+  // Complete the plan and send it to a provider to sign (care_plan_completion
+  // migration). `agreement` is the note on how the patient agreed; `copy` is
+  // { channel, language, largePrint } or null, and is recorded only: nothing is
+  // sent from the app. The provider signs with signCarePlan as usual.
+  completeCarePlan: async (patientId, program, { signer, agreement = '', copy = null }) => {
+    const key = carePlanKey(patientId, program.id);
+    const planId = get().patientCarePlans[key]?.plan?.id;
+    if (!planId || !signer?.name) return false;
+    const me = get().currentUserProfile;
+    const nowIso = new Date().toISOString();
+    const fields = {
+      completed_by: me?.name || null,
+      completed_at: nowIso,
+      awaiting_signer: signer.name,
+      awaiting_signer_id: signer.id ? String(signer.id) : null,
+      patient_agreed_at: nowIso,
+      patient_agreement_note: agreement.trim() || null,
+      copy_request: copy,
+    };
+    const { error } = await supabase.from('patient_care_plans').update(fields).eq('id', planId);
+    if (error) {
+      console.warn('completeCarePlan:', error.message);
+      get().showToast(/completed_at|column/i.test(error.message)
+        ? 'Completing needs the care_plan_completion migration'
+        : 'Could not complete the care plan');
+      return false;
+    }
+    set(s => {
+      const c = s.patientCarePlans[key];
+      return c ? { patientCarePlans: { ...s.patientCarePlans, [key]: { ...c, plan: { ...c.plan,
+        completedBy: fields.completed_by, completedAt: nowIso, awaitingSigner: signer.name, awaitingSignerId: fields.awaiting_signer_id,
+        patientAgreedAt: nowIso, patientAgreementNote: fields.patient_agreement_note || '', copyRequest: copy } } } } : {};
+    });
+
+    const copyText = copy
+      ? `Copy requested by ${copy.channel}${copy.language ? ` in ${copy.language}` : ''}${copy.largePrint ? ', large print' : ''} (not sent yet)`
+      : 'No copy requested';
+    await get().logCarePlanAudit(patientId, program, {
+      entityType: 'plan',
+      action: 'completed',
+      summary: `Care Plan Completed and Sent to ${signer.name} to Sign`,
+      detail: [`Patient agreed${fields.patient_agreement_note ? `: ${fields.patient_agreement_note}` : ''}`, copyText].join(' • '),
+    });
+
+    // Any slice the patient is on, by store id or member id (worklist patients
+    // aren't always in `patients`).
+    const memberName = ['patients', 'allPatients', 'snpWorklistMembers', 'ccmWorklistMembers', 'hccMembers', 'awvMembers', 'hedisMembers', 'pharmacyWorklistMembers']
+      .map(k => (get()[k] || []).find(p => String(p.id) === String(patientId) || String(p.memberId || '') === String(patientId)))
+      .find(p => p?.name)?.name || '';
+    const due = new Date();
+    due.setDate(due.getDate() + 3);
+    const task = await get().createTask({
+      name: `Sign care plan for ${memberName}`,
+      status: 'pending',
+      priority: 'medium',
+      due_date: `${String(due.getMonth() + 1).padStart(2, '0')}/${String(due.getDate()).padStart(2, '0')}/${due.getFullYear()}`,
+      assigned_to: signer.name,
+      assigned_to_id: signer.id || null,
+      member: memberName,
+      labels: ['Care Plan Signature'],
+      meta: program?.name || '',
+      description: `${me?.name || 'A teammate'} completed the care plan for ${memberName}; it is waiting for your signature.`,
+      pool: null,
+      mentions: [signer.name],
+      attachments: 0,
+      comments: 0,
+      is_subtask: false,
+      parent_task: null,
+      parent_task_id: null,
+      created_by: me?.name || null,
+      created_by_id: me?.id || null,
+    });
+    if (task && program?.code) get().addProgramTask?.(program.code, task);
+    get().addNotification?.({
+      type: 'care_plan.signature_requested',
+      title: 'Care plan ready to sign',
+      body: `${me?.name || 'A teammate'} completed the care plan for ${memberName} and sent it to ${signer.name} to sign.`,
+      action: 'openCarePlan',
+      recipientId: signer.id || null,
+    });
+    return true;
   },
 
   // Post-sign maintenance note: recorded without editing the plan (roadmap #36).

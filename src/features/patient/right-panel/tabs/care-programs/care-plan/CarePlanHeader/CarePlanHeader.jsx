@@ -12,7 +12,8 @@ import { MenuPopover } from '../../../../../../../components/MenuPopover/MenuPop
 import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevronIcon';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { parseLocalDate } from '../../../../../../../lib/localDate';
-import { carePlanSignShareEnabled } from '../lib/carePlanSignState';
+import { carePlanAwaitingSignature, carePlanSignShareEnabled } from '../lib/carePlanSignState';
+import { CompleteCarePlanDialog } from '../drawers/CompleteCarePlanDialog/CompleteCarePlanDialog';
 import { useCarePlanDraftState } from '../lib/useCarePlanDraftState';
 import { ConfirmDialog } from '../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { useCarePlanPanelMenu } from '../../../../../hooks/useProgramPanelSplitActive';
@@ -28,13 +29,13 @@ function fmtCarePlanDate(isoOrDisplay) {
   return d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 }
 
-// Care plan sign-menu: split button. The main half signs directly
-// (Sign is the primary action), the chevron opens a menu with the
-// alternate path (send to a reviewer). Same split pattern the med-recon
-// signer uses so the two step surfaces read consistently.
-const CARE_PLAN_SIGN_MENU_ITEMS = [
-  { key: 'review', icon: 'solar:checklist-minimalistic-linear', label: 'Send for Review' },
-];
+// Care plan sign-menu: split button. The main half is Complete (the care
+// manager completes the plan and sends it to a provider to sign) or, once it
+// is awaiting that signature, Sign. The chevron keeps the other paths: sign
+// it now without the provider step, or send it to a reviewer. Same split
+// pattern the med-recon signer uses so the two step surfaces read alike.
+const REVIEW_ITEM = { key: 'review', icon: 'solar:checklist-minimalistic-linear', label: 'Send for Review' };
+const SIGN_NOW_ITEM = { key: 'sign', icon: 'solar:pen-2-linear', label: 'Sign Now' };
 
 /**
  * Care plan header: "Care Plan • Ver. N" (opens version history), who created
@@ -44,6 +45,8 @@ const CARE_PLAN_SIGN_MENU_ITEMS = [
  */
 export function CarePlanHeader({ patientId, program, inPanel = false }) {
   const [carePlanReviewOpen, setCarePlanReviewOpen] = useState(false);
+  const [completeOpen, setCompleteOpen] = useState(false);
+  const completeCarePlan = useAppStore(s => s.completeCarePlan);
   const [carePlanMoreMenu, setCarePlanMoreMenu] = useState(null);
   const requestCarePlanShare = useAppStore(s => s.requestCarePlanShare);
   const carePlanShareRequest = useAppStore(s => s.carePlanShareRequest);
@@ -121,6 +124,13 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
     return { createdBy, createdDate, versionNumber, usingMock, signedBy, signedAt, reviewRequestedTo, reviewRequestedAt };
   }, [liveCarePlan, carePlanVersions, carePlanAudit, carePlanDraft.hasUnsignedChanges]);
 
+  // Completed and waiting for the provider; or completed, then edited, so it
+  // has to be completed again.
+  const plan = liveCarePlan?.plan;
+  const awaitingSignature = !viewedVersion && carePlanAwaitingSignature(liveCarePlan);
+  const completedThenEdited = !viewedVersion && !awaitingSignature && !!plan?.completedAt
+    && !(plan.signedAt && new Date(plan.signedAt) >= new Date(plan.completedAt));
+
   const signShareEnabled = useMemo(
     () => carePlanSignShareEnabled(liveCarePlan, { usingMock: carePlanMeta.usingMock, draft: carePlanDraft }),
     [liveCarePlan, carePlanMeta.usingMock, carePlanDraft],
@@ -179,6 +189,12 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
     const v = await signCarePlan(patientId, program, '');
     if (v) showToast?.('Care plan signed');
   };
+  const submitComplete = async ({ signer, agreement, copy }) => {
+    setCompleteOpen(false);
+    if (!patientId || !program) return;
+    const done = await completeCarePlan(patientId, program, { signer, agreement, copy });
+    if (done) showToast?.(`Care plan sent to ${signer.name} to sign`);
+  };
   const createCarePlanReviewTask = async (user) => {
     if (!patientId || !program) return;
     const created = await requestCarePlanReview(patientId, program, user);
@@ -231,6 +247,15 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
                   const verb = viewedVersion.reason === 'restore' ? 'Restored' : viewedVersion.reason === 'signed' ? 'Signed' : 'Saved';
                   statusText = `${verb}${viewedVersion.createdBy ? ` by ${viewedVersion.createdBy}` : ''}${viewedVersion.createdAt ? ` on ${fmtShort(viewedVersion.createdAt)}` : ''}`;
                   statusColor = 'var(--status-success)';
+                  statusWeight = 500;
+                } else if (awaitingSignature) {
+                  const by = plan.completedBy ? ` • Completed by ${plan.completedBy} on ${fmtShort(plan.completedAt)}` : '';
+                  statusText = `Awaiting ${plan.awaitingSigner || 'provider'}'s signature${by}`;
+                  statusColor = 'var(--status-warning)';
+                  statusWeight = 500;
+                } else if (completedThenEdited) {
+                  statusText = 'Changed after completing, complete it again';
+                  statusColor = 'var(--status-warning)';
                   statusWeight = 500;
                 } else if (carePlanMeta.reviewRequestedTo) {
                   const on = carePlanMeta.reviewRequestedAt ? ` on ${fmtShort(carePlanMeta.reviewRequestedAt)}` : '';
@@ -311,18 +336,27 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
               </Button>
               <span className={styles.headerDivider} aria-hidden="true" />
               <Button
-                leadingIcon="solar:pen-2-linear"
+                leadingIcon={awaitingSignature ? 'solar:pen-2-linear' : 'solar:check-read-linear'}
                 disabled={!signShareEnabled || !!viewedVersion}
-                onClick={signCarePlanDirect}
-                menuItems={CARE_PLAN_SIGN_MENU_ITEMS}
+                onClick={awaitingSignature ? signCarePlanDirect : () => setCompleteOpen(true)}
+                menuItems={awaitingSignature ? [REVIEW_ITEM] : [SIGN_NOW_ITEM, REVIEW_ITEM]}
                 menuWidth={200}
                 menuAriaLabel="Sign care plan options"
                 onMenuSelect={(key) => {
                   if (key === 'review') setCarePlanReviewOpen(true);
+                  if (key === 'sign') signCarePlanDirect();
                 }}
               >
-                Sign
+                {awaitingSignature ? 'Sign' : 'Complete'}
               </Button>
+              {completeOpen && (
+                <CompleteCarePlanDialog
+                  patientId={patientId}
+                  program={program}
+                  onCancel={() => setCompleteOpen(false)}
+                  onSubmit={submitComplete}
+                />
+              )}
               {discardOpen && carePlanDraft.latestVersion && (
                 <ConfirmDialog
                   variant="destructive"
