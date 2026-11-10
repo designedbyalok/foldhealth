@@ -19,7 +19,7 @@ import { MenuPopover } from '@/components/MenuPopover/MenuPopover';
 import { goalCascade, barrierGoalIdsOf } from '../lib/carePlanGoalCascade';
 import { Select } from '@/components/Select/Select';
 import { FilterChip } from '@/components/FilterChip/FilterChip';
-import { ALL_GBI_STATUSES } from '../lib/gbiStatus';
+import { ALL_GBI_STATUSES, isExcludedStatus } from '../lib/gbiStatus';
 import {
   PRIORITY_LABELS,
   GbiSectionHead,
@@ -356,6 +356,17 @@ export function CarePlanView({ patientId, program }) {
     dueOf: i => computeDueDate(i),
   }), [data, measurements]);
   const attentionKeys = useMemo(() => new Set(attention.map(a => a.key)), [attention]);
+  // The whole live plan, unfiltered, for the summary strip. Discontinued /
+  // Not Applicable goals aren't judged, as in the filtered stats.
+  const planTotals = useMemo(() => {
+    const judged = data.goals.filter(g => !isExcludedStatus(g.status));
+    return {
+      goals: data.goals.length,
+      interventions: data.interventions.length,
+      barriers: data.barriers.length,
+      avgProgress: judged.length ? Math.round(judged.reduce((sum, g) => sum + (Number(g.progress) || 0), 0) / judged.length) : 0,
+    };
+  }, [data]);
   const {
     noteOpen,
     noteText,
@@ -819,21 +830,22 @@ export function CarePlanView({ patientId, program }) {
   // Section-header count of what needs attention ("2 Off Target"). It turns
   // the Needs Attention filter on, opening the filter bar so it's clearable,
   // and off again. Live plan only.
+  const attentionOn = filters.attention.length > 0;
+  const toggleAttention = () => {
+    setFilter('attention', attentionOn ? [] : [NEEDS_ATTENTION]);
+    if (!attentionOn) setFiltersOpen(true);
+  };
   const renderAttentionBadge = (kind, keep = () => true) => {
     const n = attention.filter(a => a.kind === kind && keep(a.item)).length;
     if (!n || viewedRun || versionData) return null;
     const label = `${n} ${ATTENTION_WORD[kind]}`;
-    const on = filters.attention.length > 0;
     return (
       <button
         type="button"
         className={styles.duplicateBadgeBtn}
-        aria-pressed={on}
-        title={on ? 'Show all items' : 'Show only what needs attention'}
-        onClick={() => {
-          setFilter('attention', on ? [] : [NEEDS_ATTENTION]);
-          if (!on) setFiltersOpen(true);
-        }}
+        aria-pressed={attentionOn}
+        title={attentionOn ? 'Show all items' : 'Show only what needs attention'}
+        onClick={toggleAttention}
       >
         <Badge tone={kind === 'barrier' ? 'warning' : 'danger'} size="sm" label={label} />
       </button>
@@ -1380,6 +1392,12 @@ export function CarePlanView({ patientId, program }) {
           onOpenNoteHistory={openNoteDrawer}
           onDeleteNote={() => setNoteDeleteOpen(true)}
           onOpenItem={openSummaryItem}
+          summaryStrip={planIsEmpty || viewedVersion || viewedRun ? null : {
+            totals: planTotals,
+            attention,
+            attentionOn,
+            onToggleAttention: toggleAttention,
+          }}
         />
       )}
 

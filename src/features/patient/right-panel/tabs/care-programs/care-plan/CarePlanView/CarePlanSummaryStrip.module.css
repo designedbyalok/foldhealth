@@ -1,0 +1,92 @@
+/* One row of equal tiles that wraps on a narrow plan. */
+.strip {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-2);
+}
+
+.progress,
+.tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  text-align: left;
+}
+.progress {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+}
+/* Beside the ring, the label may take two lines rather than truncate. */
+.progress .label {
+  white-space: normal;
+}
+
+.tileButton {
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out);
+}
+.tileButton:hover {
+  background: var(--primary-25);
+  border-color: var(--primary-200);
+}
+.tileButton:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 1px;
+}
+.tileButton[aria-pressed='true'] {
+  background: var(--primary-100);
+  border-color: var(--primary-300);
+}
+
+.value {
+  font-size: var(--font-lg);
+  font-weight: 500;
+  color: var(--neutral-400);
+  white-space: nowrap;
+}
+.label {
+  font-size: var(--font-sm);
+  font-weight: 400;
+  color: var(--neutral-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.issue,
+.issueWarn,
+.ok {
+  font-size: var(--font-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.issue { color: var(--status-error); }
+.issueWarn { color: var(--status-warning); }
+.ok { color: var(--neutral-300); }
+
+.reviewTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-base);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.neutral { color: var(--neutral-400); }
+.warning { color: var(--status-warning); }
+.danger { color: var(--status-error); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tileButton { transition: none; }
+}
