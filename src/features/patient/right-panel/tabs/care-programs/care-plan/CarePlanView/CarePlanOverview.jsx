@@ -15,6 +15,7 @@ import { fmtCarePlanDate } from '../tables/carePlanTableModel';
 import { EventUpdatesList } from './EventUpdatesList';
 import { useEventUpdates } from './useEventUpdates';
 import { ReviewCadencePanel } from './ReviewCadencePanel';
+import { CarePlanSummaryStrip } from './CarePlanSummaryStrip';
 import { useReviewCadence } from './useReviewCadence';
 import { sanitizeRichText } from '@/lib/sanitizeHtml';
 import styles from './CarePlanOverview.module.css';
@@ -64,6 +65,9 @@ const autoTried = new Set();
 export function CarePlanOverview({
   patientId, program, patientName, live, audit, stats, showSummary = true, showEvents = true, showCadence = true, canEdit,
   latestPlanNote, mentionUsers, linkItems, onOpenNoteHistory, onDeleteNote, onOpenItem,
+  // The summary strip above the tabs: plan totals, what needs attention and
+  // the Needs Attention toggle. Omitted (null) for an empty plan or a past copy.
+  summaryStrip = null,
 }) {
   const programId = program?.id;
   const key = `${patientId}::${programId}`;
@@ -195,6 +199,13 @@ export function CarePlanOverview({
 
   return (
     <section className={styles.card} aria-label="Care plan overview">
+      {summaryStrip && (
+        <CarePlanSummaryStrip
+          {...summaryStrip}
+          review={showCadence ? cadence : null}
+          onOpenCadence={() => setTab('cadence')}
+        />
+      )}
       <SegmentedControl items={tabs} value={active} onValueChange={setTab} variant="ghost" />
 
       {active === 'note' && (
@@ -258,16 +269,22 @@ export function CarePlanOverview({
         <div className={styles.box}>
           {stats && (
             <div className={styles.stats}>
-              <span className={styles.metric}><strong>{stats.goals}</strong> goals</span>
-              <span className={styles.dot} aria-hidden="true" />
-              <span className={styles.metric}><strong>{stats.iv}</strong> interventions</span>
-              <span className={styles.dot} aria-hidden="true" />
-              <span className={styles.metric}><strong>{stats.br}</strong> barriers</span>
-              <span className={styles.dot} aria-hidden="true" />
-              <span className={styles.metric}><strong>{stats.avgProgress}%</strong> avg progress</span>
+              {/* Counts and progress live in the summary strip above the tabs
+                  when it shows; a past copy or empty plan keeps them here. */}
+              {!summaryStrip && (
+                <>
+                  <span className={styles.metric}><strong>{stats.goals}</strong> goals</span>
+                  <span className={styles.dot} aria-hidden="true" />
+                  <span className={styles.metric}><strong>{stats.iv}</strong> interventions</span>
+                  <span className={styles.dot} aria-hidden="true" />
+                  <span className={styles.metric}><strong>{stats.br}</strong> barriers</span>
+                  <span className={styles.dot} aria-hidden="true" />
+                  <span className={styles.metric}><strong>{stats.avgProgress}%</strong> avg progress</span>
+                </>
+              )}
               {stats.nextTouchpoint && (
                 <>
-                  <span className={styles.dot} aria-hidden="true" />
+                  {!summaryStrip && <span className={styles.dot} aria-hidden="true" />}
                   <span className={styles.metric}>Next touchpoint <strong>{fmtCarePlanDate(stats.nextTouchpoint)}</strong></span>
                 </>
               )}

@@ -198,6 +198,8 @@ The header line reads `Care Plan • Ver. {max(1, latest version)}` (`:147, :312
 
 **Needs Attention.** `CarePlanView` runs `carePlanFocusItems` (without the review) on the live plan. Each section head gets a `flag` badge with its count (barriers split into plain and SDOH), and clicking it sets the `attention` filter in `useCarePlanViewFilters`, which keeps only the flagged keys. The filter shows as a "Show" FilterChip; past versions and template runs have neither.
 
+**Summary strip.** `CarePlanOverview` takes a `summaryStrip` prop (`{ totals, attention, attentionOn, onToggleAttention }`, null for an empty plan or a past copy) and renders `CarePlanSummaryStrip` above its tabs: the average goal progress of the unfiltered live plan, one tile per kind with its attention count (clickable when there is one, toggling the same filter as the section badges), and a review tile from the card's own `useReviewCadence` that opens the Review Cadence tab.
+
 **Row menus**
 
 | Row | Menu items |
