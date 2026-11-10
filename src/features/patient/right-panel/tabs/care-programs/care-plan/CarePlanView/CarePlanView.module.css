@@ -28,10 +28,26 @@
 }
 .dockColumn {
   flex-shrink: 0;
-  width: clamp(400px, 36%, 480px);
+  width: clamp(300px, 28%, 380px);
   display: flex;
   padding: var(--space-3) var(--space-3) var(--space-3) 0;
   box-sizing: border-box;
+  transition: width var(--duration-base) var(--ease-out);
+}
+/* An open item gets more room than the focus panel, and replaces it. */
+.dockColumn:has(> [data-docked]) {
+  width: clamp(400px, 36%, 480px);
+}
+.dockColumn:has(> [data-docked]) > .focusSlot {
+  display: none;
+}
+.focusSlot {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dockColumn { transition: none; }
 }
 .dockColumn:empty {
   display: none;
