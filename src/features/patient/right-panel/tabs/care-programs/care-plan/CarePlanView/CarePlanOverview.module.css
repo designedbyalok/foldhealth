@@ -219,3 +219,56 @@
   color: var(--placeholder-text);
   text-decoration: line-through;
 }
+
+/* Recent notes under the note box: where each note sits, its text, who and
+   when. A row opens the item it's on, or the plan note history. */
+.recent {
+  display: flex;
+  flex-direction: column;
+}
+.recentHead {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-300);
+}
+.recentRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: none;
+  border-top: 0.5px solid var(--neutral-100);
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--space-1);
+}
+.recentRow:hover {
+  background: var(--neutral-0);
+}
+.recentRow:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: -2px;
+}
+.recentSource {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-400);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recentText {
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.recentMeta {
+  font-size: var(--font-sm);
+  color: var(--placeholder-text);
+}

@@ -200,6 +200,8 @@ The header line reads `Care Plan • Ver. {max(1, latest version)}` (`:147, :312
 
 **Summary strip.** `CarePlanOverview` takes a `summaryStrip` prop (`{ totals, attention, attentionOn, onToggleAttention }`, null for an empty plan or a past copy) and renders `CarePlanSummaryStrip` above its tabs: the average goal progress of the unfiltered live plan, one tile per kind with its attention count (clickable when there is one, toggling the same filter as the section badges), and a review tile from the card's own `useReviewCadence` that opens the Review Cadence tab.
 
+**Recent notes.** The overview's Care Plan Note tab lists `recentCarePlanNotes(audit, live, { includePlan: false })` (`lib/carePlanRecentNotes.js`): `note` audit rows on goals, interventions and barriers (legacy `note`-typed rows matched to their item), minus those before the item's latest `note_deleted` and those on items no longer in the plan, newest first, three at most. A row opens its item through `onOpenItem`.
+
 **Row menus**
 
 | Row | Menu items |
