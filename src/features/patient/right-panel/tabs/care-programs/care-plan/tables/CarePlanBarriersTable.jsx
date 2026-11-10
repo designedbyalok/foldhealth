@@ -14,7 +14,7 @@ import {
 } from './carePlanTableShared';
 import { COMPACT_BARRIER_COLUMNS } from './carePlanTableColumns';
 import { enrichBarrierRows } from './carePlanTableSort';
-import { isCompletedStatus } from './carePlanTableModel';
+import { isCompletedStatus, openOnRowKey } from './carePlanTableModel';
 import { AiSuggestionBadge } from '../ai/AiSuggestionBadge';
 import styles from './carePlanTables.module.css';
 
@@ -45,7 +45,9 @@ function BarrierRow({
       data-cp-row-id={b.id}
       className={`${styles.row} ${styles.gbiRow} ${onOpenBarrier ? styles.rowClickable : ''}${active ? ` ${styles.rowActive}` : ''}`}
       aria-current={active ? 'true' : undefined}
+      tabIndex={onOpenBarrier ? 0 : undefined}
       onClick={() => onOpenBarrier?.(b)}
+      onKeyDown={onOpenBarrier ? openOnRowKey(() => onOpenBarrier(b)) : undefined}
     >
       {bulkMode && (
         <GbiCheckboxCell

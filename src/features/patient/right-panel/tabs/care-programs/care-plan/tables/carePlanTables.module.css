@@ -617,3 +617,9 @@
 .rowActive > td:first-child {
   box-shadow: inset 2px 0 0 var(--primary-300);
 }
+
+/* Rows open from the keyboard too (Enter or Space), so they show focus. */
+.rowClickable:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: -2px;
+}

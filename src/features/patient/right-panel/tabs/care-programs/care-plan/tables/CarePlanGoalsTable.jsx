@@ -20,7 +20,7 @@ import {
   TrendCell,
 } from './carePlanTableShared';
 import { COMPACT_GOAL_COLUMNS } from './carePlanTableColumns';
-import { isCompletedStatus, toPickerValue, fmtCarePlanDate } from './carePlanTableModel';
+import { isCompletedStatus, toPickerValue, fmtCarePlanDate, openOnRowKey } from './carePlanTableModel';
 import { enrichGoalRows } from './carePlanTableSort';
 import {
   normalizeCategory,
@@ -138,7 +138,9 @@ export function CarePlanGoalsTable({
       data-cp-row-id={g.id}
       className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}${activeRowId === g.id ? ` ${styles.rowActive}` : ''}`}
       aria-current={activeRowId === g.id ? 'true' : undefined}
+      tabIndex={0}
       onClick={() => onOpenGoal(g)}
+      onKeyDown={openOnRowKey(() => onOpenGoal(g))}
     >
       {bulkMode && (
         <GbiCheckboxCell
@@ -225,7 +227,9 @@ export function CarePlanGoalsTable({
         data-cp-row-id={g.id}
         className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}${activeRowId === g.id ? ` ${styles.rowActive}` : ''}`}
         aria-current={activeRowId === g.id ? 'true' : undefined}
+        tabIndex={0}
         onClick={() => onOpenGoal(g)}
+        onKeyDown={openOnRowKey(() => onOpenGoal(g))}
       >
         {bulkMode && (
           <GbiCheckboxCell
