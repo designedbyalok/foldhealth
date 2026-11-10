@@ -5,8 +5,9 @@ import { useAppStore } from '../../../../../../../store/useAppStore';
  * New patient events that touch this care plan (#84) and the changes
  * proposed for each, still to be decided. `visible` is false once nothing is
  * left (or the tables don't exist yet). `run` accepts or dismisses changes.
+ * `fetch: false` only reads what another caller on the plan has loaded.
  */
-export function useEventUpdates({ patientId, program, live }) {
+export function useEventUpdates({ patientId, program, live, fetch = true }) {
   const key = `${patientId}::${program?.id}`;
   const state = useAppStore(s => s.carePlanEventUpdates[key]);
   const fetchUpdates = useAppStore(s => s.fetchCarePlanEventUpdates);
@@ -17,9 +18,9 @@ export function useEventUpdates({ patientId, program, live }) {
 
   // Once per plan visit: evaluates whatever arrived since the last one.
   useEffect(() => {
-    if (loaded && patientId && program?.id) fetchUpdates(patientId, program, live);
+    if (fetch && loaded && patientId && program?.id) fetchUpdates(patientId, program, live);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, patientId, program?.id]);
+  }, [fetch, loaded, patientId, program?.id]);
 
   const pending = (state?.impacts || [])
     .filter(i => i.status === 'pending' && state.events?.[i.eventId])
@@ -43,6 +44,8 @@ export function useEventUpdates({ patientId, program, live }) {
     pending,
     count: pending.reduce((n, i) => n + i.open.length, 0),
     evaluating: !!state?.evaluating,
+    // The first load has finished (whether or not anything is pending).
+    loaded: !!state && !state.loading,
     visible: !state?.missing && (pending.length > 0 || !!state?.evaluating),
     // The event tables aren't there (patient_event_stream_migration.sql not run).
     missing: !!state?.missing,

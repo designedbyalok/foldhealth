@@ -194,6 +194,8 @@ The header line reads `Care Plan • Ver. {max(1, latest version)}` (`:147, :312
 
 **Detail panel.** A row click opens the Goal, Intervention or Barrier preview drawer. When the editor's container is at least `DOCK_MIN_WIDTH` (1080px) wide, those three drawers dock beside the tables instead of overlaying them: `CarePlanView` provides a `DrawerDockContext` host (`aside.dockColumn`) and the drawers pass `dockable`. The panel holds one item (opening another clears the rest), each drawer is keyed by item id so staged edits never carry over, and the open row gets `aria-current` plus `.rowActive`. Drawers opened from inside the panel still overlay.
 
+**Focus panel.** With the dock column showing and no item open, it holds `CarePlanFocusPanel`: Look at These First (`lib/carePlanFocus.js`: due or overdue review, open goals whose latest measurement is unfavorable, open interventions past `computeDueDate`, open barriers with no open intervention on any linked goal), Suggested Actions (pending event changes from `useEventUpdates`, Accept or Dismiss) and the Overview `TasksCard`. It reads `useEventUpdates` and `useReviewCadence` with `fetch: false`, relying on `CarePlanOverview` to load them, and stays mounted (hidden by CSS while an item is docked) so closing an item never refetches. Past versions and template runs don't show it.
+
 **Row menus**
 
 | Row | Menu items |

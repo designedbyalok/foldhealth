@@ -9,7 +9,8 @@ const EMPTY = [];
  * The cadence in force for one patient's plan on one program, the next
  * review date and whether it's due or overdue (care-plan/lib/cadence.js).
  */
-export function useReviewCadence({ patientId, program, plan }) {
+// `fetch: false` only reads what another caller on the plan has loaded.
+export function useReviewCadence({ patientId, program, plan, fetch = true }) {
   const storeId = useAppStore(s => String(resolvePatientStoreId(s, patientId)));
   const types = useAppStore(s => s.careProgramTypes);
   const enrollment = useAppStore(s => (s.careProgramsByPatient[storeId] || s.careProgramsByPatient[patientId] || EMPTY)
@@ -20,12 +21,12 @@ export function useReviewCadence({ patientId, program, plan }) {
   const fetchDischarges = useAppStore(s => s.fetchPatientDischarges);
   const fetchReviews = useAppStore(s => s.fetchCarePlanReviews);
 
-  useEffect(() => { if (!types.length) fetchTypes?.(); }, [types.length, fetchTypes]);
+  useEffect(() => { if (fetch && !types.length) fetchTypes?.(); }, [fetch, types.length, fetchTypes]);
   useEffect(() => {
-    if (!patientId || !program?.id) return;
+    if (!fetch || !patientId || !program?.id) return;
     fetchDischarges(patientId);
     fetchReviews(patientId, program.id);
-  }, [patientId, program?.id, fetchDischarges, fetchReviews]);
+  }, [fetch, patientId, program?.id, fetchDischarges, fetchReviews]);
 
   return useMemo(() => {
     if (!enrollment?.code) return null;

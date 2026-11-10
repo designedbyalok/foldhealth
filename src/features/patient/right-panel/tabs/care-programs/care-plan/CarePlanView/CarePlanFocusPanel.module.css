@@ -1,0 +1,45 @@
+/* Stacked cards filling the docked column, scrolling on their own. */
+.panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-y: auto;
+}
+/* Cards keep their height; the column scrolls instead of squeezing them. */
+.panel > * {
+  flex-shrink: 0;
+}
+
+.listBody {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+.titleButton {
+  all: unset;
+  cursor: pointer;
+  color: var(--neutral-400);
+}
+.titleButton:hover {
+  color: var(--primary-300);
+}
+.titleButton:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}

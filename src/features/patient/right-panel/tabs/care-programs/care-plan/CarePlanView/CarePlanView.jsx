@@ -55,6 +55,7 @@ import { useCarePlanEpisodes } from './useCarePlanEpisodes';
 import { CarePlanLinkageSection } from './CarePlanLinkageSection';
 import { Badge } from '@/components/Badge/Badge';
 import { CarePlanOverview } from './CarePlanOverview';
+import { CarePlanFocusPanel } from './CarePlanFocusPanel';
 import { QuickNotePopover } from './QuickNotePopover';
 import { addGoalsFromPicker, addBarriersFromPicker } from './carePlanPickerHandlers';
 import { formatInstanceDate } from '../lib/templateRenewal';
@@ -1665,7 +1666,25 @@ export function CarePlanView({ patientId, program }) {
       {renderDuplicatesPopover()}
       </div>
       </div>
-      {dockWide && <aside ref={setDockEl} className={styles.dockColumn} aria-label="Item details" />}
+      {dockWide && (
+        <aside ref={setDockEl} className={styles.dockColumn} aria-label="Plan focus and item details">
+          {/* Shown while no item is open; stays mounted so reopening it
+              doesn't refetch. Past versions and runs are read-only views. */}
+          {!viewedVersion && !viewedRun && (
+            <div className={styles.focusSlot}>
+              <CarePlanFocusPanel
+                patientId={patientId}
+                program={program}
+                patientName={patientName}
+                live={live}
+                data={data}
+                canEdit={canEdit}
+                onOpenItem={openSummaryItem}
+              />
+            </div>
+          )}
+        </aside>
+      )}
       </div>
 
       <CarePlanViewOverlays {...overlayProps} />
