@@ -16,6 +16,7 @@ import { EventUpdatesList } from './EventUpdatesList';
 import { useEventUpdates } from './useEventUpdates';
 import { ReviewCadencePanel } from './ReviewCadencePanel';
 import { CarePlanSummaryStrip } from './CarePlanSummaryStrip';
+import { recentCarePlanNotes } from '../lib/carePlanRecentNotes';
 import { useReviewCadence } from './useReviewCadence';
 import { sanitizeRichText } from '@/lib/sanitizeHtml';
 import styles from './CarePlanOverview.module.css';
@@ -134,6 +135,13 @@ export function CarePlanOverview({
       sel?.addRange(range);
     });
   }, []);
+
+  // ── Recent Notes: the latest notes on goals, interventions and barriers,
+  // under the box. Earlier plan notes stay in the note history. ──
+  const recentNotes = useMemo(
+    () => recentCarePlanNotes(audit || [], live, { includePlan: false }),
+    [audit, live],
+  );
 
   // ── Events Updates ──
   const events = useEventUpdates({ patientId, program, live });
@@ -263,6 +271,24 @@ export function CarePlanOverview({
             )}
           </div>
         )
+      )}
+
+      {active === 'note' && !editing && recentNotes.length > 0 && (
+        <div className={styles.recent}>
+          <span className={styles.recentHead}>Recent notes</span>
+          {recentNotes.map(n => (
+            <button
+              key={n.id}
+              type="button"
+              className={styles.recentRow}
+              onClick={() => onOpenItem?.(n.kind, n.item)}
+            >
+              <span className={styles.recentSource}>{n.source}</span>
+              <span className={styles.recentText}>{n.text}</span>
+              <span className={styles.recentMeta}>{n.actor} • {stamp(n.createdAt)}</span>
+            </button>
+          ))}
+        </div>
       )}
 
       {active === 'summary' && (
