@@ -29,6 +29,7 @@ import { sampleFaxes, faxToRow } from '../src/features/messages/efax/efaxData.js
 import { JSA_MEMBERS } from '../src/features/jsa-worklist/data/mock.js';
 import { PHARMACY_WORKLIST_MEMBERS } from '../src/features/pharmacy-worklist/data/mock.js';
 import { CMP_MEMBERS } from '../src/features/cmp-worklist/data/mock.js';
+import { MY_PATIENTS } from '../src/features/my-patients/data/mock.js';
 import { SAMPLE_PROTOCOLS, HARBOR_HYPERTENSION_TEXT_FILE } from '../src/features/settings/clinical-protocols/data/sampleProtocols.js';
 import { protocolToRow } from '../src/features/settings/clinical-protocols/lib/protocolSchema.js';
 import { BUILT_IN_ROLES } from '../src/lib/accessControl.js';
@@ -674,6 +675,36 @@ const clinicalProtocolSeedRow = sourceText => p => ({
   approved_at: p.approvedAt,
 });
 
+function myPatientToRow(r) {
+  return {
+    id: r.id,
+    member_id: r.memberId,
+    name: r.name,
+    initials: r.initials,
+    gender: r.gender,
+    age: r.age,
+    dob: r.dob,
+    language: r.language,
+    payer: r.payer,
+    programs: r.programs,
+    conditions: r.conditions,
+    adherence: r.adherence,
+    adherence_prev: r.adherencePrev,
+    why_points: r.whyPoints,
+    why_summary: r.whySummary,
+    why_generated_at: new Date().toISOString(),
+    last_review: r.lastReview,
+    review_cadence_days: r.reviewCadenceDays,
+    minutes_program: r.minutesProgram,
+    minutes_logged: r.minutesLogged,
+    minutes_target: r.minutesTarget,
+    last_touch_date: r.lastTouchDate,
+    last_touch_channel: r.lastTouchChannel,
+    last_touch_by: r.lastTouchBy,
+    assignee: r.assignee,
+  };
+}
+
 function cmpToRow(m) {
   return {
     id:                 m.id,
@@ -1023,6 +1054,12 @@ async function main() {
     .from('hedis_members')
     .upsert(hedisRows, { onConflict: 'id' });
   if (he) { console.error('  ✗', he.message); } else { console.log(`  ✓ ${hedisRows.length} new members (${HEDIS_MEMBERS.length - hedisRows.length} already present)`); }
+
+  console.log('Seeding my_patients_worklist...');
+  const { error: myPatientsErr } = await supabase
+    .from('my_patients_worklist')
+    .upsert(MY_PATIENTS.map(myPatientToRow), { onConflict: 'id' });
+  if (myPatientsErr) { console.error('  ✗', myPatientsErr.message, '(run supabase/my_patients_worklist_migration.sql first)'); } else { console.log(`  ✓ ${MY_PATIENTS.length} patients`); }
 
   console.log('Seeding cmp_members...');
   const { error: cmpErr } = await supabase

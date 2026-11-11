@@ -1497,7 +1497,7 @@ export function CarePlanView({ patientId, program }) {
           prototype); the same filter the summary counts toggle. */}
       {!planIsEmpty && !viewedVersion && !viewedRun && (
         <div className={styles.gbiHeader}>
-          <h3 className={styles.gbiHeaderTitle}>Goals, Interventions and Barriers</h3>
+          <h3 className={styles.gbiHeaderTitle}><Icon name="solar:checklist-minimalistic-linear" size={20} color="var(--neutral-400)" />Goals, Interventions and Barriers</h3>
           <SegmentedControl
             size="sm"
             items={[{ key: 'all', label: 'All' }, { key: 'attention', label: `Needs Attention (${attention.length})` }]}

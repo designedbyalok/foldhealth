@@ -19,7 +19,6 @@ import { computeDueDate } from '../../care-programs/care-plan/tables/CarePlanInt
 import { SegmentedControl } from '../../../../../../components/SegmentedControl/SegmentedControl';
 import { MenuPopover } from '../../../../../../components/MenuPopover/MenuPopover';
 import toolbarStyles from '../CareManagementToolbar/CareManagementToolbar.module.css';
-import { SummarizeButton } from '../../care-programs/care-plan/summary/CarePlanAiSummary/CarePlanAiSummary';
 import { showsPatientCarePlan } from '../../care-programs/care-plan/lib/carePlanMode';
 import { ProgramActivityDay } from '../ProgramActivityCard/ProgramActivityCard.jsx';
 import { carePlanActivityEntries, filterProgramActivity, groupProgramActivity, activityTypeLabel } from '../programActivity';
@@ -116,11 +115,6 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
   const toComplete = signing.filter(x => x.state === 'open').length;
   const carePlanTemplates = useAppStore(s => s.carePlanTemplates) || [];
   const [addNoteOpen, setAddNoteOpen] = useState(false);
-  // Summarize sits in this toolbar and only runs when clicked; the saved
-  // summary shows in the view, and the button offers Update Summary once the
-  // plans changed after it was written.
-  const [summarizeRequest, setSummarizeRequest] = useState(0);
-  const [summaryState, setSummaryState] = useState({ state: 'idle', stale: false });
   const logCarePlanAudit = useAppStore(s => s.logCarePlanAudit);
   // A care note goes on an open program that has a care plan.
   const notePrograms = useMemo(
@@ -273,13 +267,6 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
              hug the toolbar's right edge like the rest of the app's
              icon actions. */
           <div className={styles.ctaCluster}>
-            <SummarizeButton
-              state={summaryState.state}
-              stale={summaryState.stale}
-              onClick={() => setSummarizeRequest(n => n + 1)}
-              idleLabel="Summarize active programs"
-            />
-            <span className={styles.ctaDivider} aria-hidden="true" />
             <ActionButton
               icon="solar:notes-linear"
               tooltip="Add care note"
@@ -330,8 +317,6 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
           createdDateFilter={createdDateFilter}
           onClose={onClose}
           onOpenProgramStep={(p) => setView(p.id)}
-          summarizeRequest={summarizeRequest}
-          onSummaryState={setSummaryState}
           onAddNote={notePrograms.length ? () => setAddNoteOpen(true) : undefined}
           programsOpen={programsOpen}
           onProgramsClose={() => setProgramsOpen(false)}
