@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import { AvatarGroup } from '../../components/AvatarGroup/AvatarGroup';
@@ -6,12 +6,9 @@ import { BulkBar } from '../../components/BulkBar/BulkBar';
 import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
-import { CollapseAllIcon } from '../../components/Icon/CollapseAllIcon';
-import { ExpandAllIcon } from '../../components/Icon/ExpandAllIcon';
 import { UserPickerPopover } from '../../components/UserPickerPopover/UserPickerPopover';
 import { initialsOf } from './oooUtils';
-import { byDepartment, NO_DEPARTMENT } from './openWork';
-import { DeptGroup } from './ReassignParts';
+import { NO_DEPARTMENT } from './openWork';
 import ooo from './ooo.module.css';
 import styles from './reassign.module.css';
 
@@ -22,8 +19,8 @@ const checkState = (ids, selected) => {
 
 /**
  * Reassign Appointments' planner for any other kind of open work (tasks,
- * care programs): items by department (`location`), a covering provider for
- * a whole department or one item, Select All and bulk Reassign. Nothing
+ * care programs): one flat list (not by department), a covering provider
+ * per item, Select All and bulk Reassign. Nothing
  * changes until the caller saves the plan (item id → { action: 'reassign',
  * to, toId }).
  *
@@ -42,12 +39,10 @@ const checkState = (ids, selected) => {
  * @param {function} props.onPlan      – (updater: plan => plan) => void
  */
 export function ReassignItemsPlanner({ items, renderMain, titleOf, noun, icon, usersFor, plan, onPlan, rowAction }) {
-  const [view, setView] = useState('collapsed');
   const [selected, setSelected] = useState(() => new Set());
   const [picker, setPicker] = useState(null); // { rect, ids, dept? }
   const [menu, setMenu] = useState(null);     // { rect, item }
 
-  const groups = useMemo(() => byDepartment(items), [items]);
   const deptOf = (id) => items.find(i => i.id === id)?.location;
 
   const assign = (ids, u) => onPlan(p => { const n = { ...p }; ids.forEach(id => { n[id] = { action: 'reassign', to: u.name, toId: u.realId || null }; }); return n; });
@@ -116,45 +111,21 @@ export function ReassignItemsPlanner({ items, renderMain, titleOf, noun, icon, u
 
   return (
     <div className={styles.planner}>
-      <div className={styles.plannerHead}>
+      <div className={`${styles.plannerHead} ${styles.plannerHeadFlat}`}>
         <span className={styles.plannerTitle}>Select Covering Providers</span>
-        <span className={styles.plannerTools}>
-          <span className={ooo.viewToggle} role="group" aria-label="View">
-            <ActionButton tooltip="Collapse All" className={view === 'collapsed' ? ooo.viewToggleOn : undefined} aria-pressed={view === 'collapsed'} onClick={() => setView('collapsed')}>
-              <CollapseAllIcon size={20} color="var(--neutral-300)" />
-            </ActionButton>
-            <ActionButton tooltip="Expand All" tooltipLeft className={view === 'expanded' ? ooo.viewToggleOn : undefined} aria-pressed={view === 'expanded'} onClick={() => setView('expanded')}>
-              <ExpandAllIcon size={20} color="var(--neutral-300)" />
-            </ActionButton>
-          </span>
-        </span>
       </div>
       <label className={styles.selectAll}>{box(items.map(i => i.id), 'Select all')}Select All</label>
-      <div className={styles.list}>
-        {groups.map(g => {
-          const ids = g.items.map(i => i.id);
-          return (
-            <DeptGroup
-              key={g.name}
-              noun={noun}
-              defaultOpen={view === 'expanded'}
-              title={g.name}
-              count={ids.length}
-              lead={box(ids, `Select ${g.name}`)}
-              controls={controls(ids, g.name)}
-              items={g.items}
-              renderItem={(it) => (
-                <div key={it.id} className={styles.apptRow}>
-                  <div className={styles.apptMain}>
-                    {box([it.id], `Select ${titleOf(it)}`)}
-                    {renderMain(it)}
-                    <span className={styles.apptTrail}>{controls([it.id], titleOf(it), it)}</span>
-                  </div>
-                </div>
-              )}
-            />
-          );
-        })}
+      {/* Every item in one card, a row each (no department groups). */}
+      <div className={styles.flatList}>
+        {items.map(it => (
+          <div key={it.id} className={`${styles.apptRow} ${styles.flatRow}`}>
+            <div className={styles.apptMain}>
+              {box([it.id], `Select ${titleOf(it)}`)}
+              {renderMain(it)}
+              <span className={styles.apptTrail}>{controls([it.id], titleOf(it), it)}</span>
+            </div>
+          </div>
+        ))}
       </div>
 
       <BulkBar

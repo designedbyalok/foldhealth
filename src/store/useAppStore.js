@@ -17059,6 +17059,29 @@ export const useAppStore = create((set, get) => ({
     set(s => ({ userAvailability: [...s.userAvailability.filter(b => !same(b)), ...next] }));
     return true;
   },
+  /**
+   * Add availability for multiple users: `copies` are new schedules (one per
+   * user per schedule, see bulkAvailability.copiesFor). Existing schedules
+   * aren't touched. One insert, so either every copy lands or none does.
+   */
+  addUserAvailabilityCopies: async (copies) => {
+    const { blockToRow } = await import('../features/settings/calendar/availability/availabilityUtils');
+    if (!get().userAvailabilityLocal && copies.length) {
+      const rows = copies.map(b => ({ ...blockToRow(b), created_by: b.createdBy || null, created_at: b.createdAt }));
+      let { error } = await supabase.from('user_availability').insert(rows);
+      // Before user_availability_created_by_migration.sql runs, save without who added it.
+      if (error && /created_by/.test(error.message || '')) {
+        ({ error } = await supabase.from('user_availability').insert(rows.map(({ created_by: _drop, ...r }) => r)));
+      }
+      if (error) {
+        console.warn('addUserAvailabilityCopies:', error.message);
+        get().showToast?.('Could not add availability. Nothing was changed. Try again.');
+        return false;
+      }
+    }
+    set(s => ({ userAvailability: [...s.userAvailability, ...copies] }));
+    return true;
+  },
 
   // ── Appointment reassignment (Reassign Appointments drawer → Confirm) ──
   // A job carries out a confirmed plan on `appointments` and keeps the

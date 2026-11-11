@@ -28,6 +28,9 @@ import { DateRangePopover } from '../../../../components/DateRangePopover/DateRa
 import { fmtDay } from '../../../../components/DateRangeFilter/dateRangePresets';
 import { SegmentedControl } from '../../../../components/SegmentedControl/SegmentedControl';
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
+import { Checkbox } from '../../../../components/Checkbox/Checkbox';
+import { BulkSelectIcon } from '../../../../components/Icon/BulkSelectIcon';
+import { BulkSelectCloseIcon } from '../../../../components/Icon/BulkSelectCloseIcon';
 import {
   blockStatus, STATUS_LOOK, cadenceText, formatDate, slotText, slotTextTz, ALL_TYPES,
 } from './availabilityUtils';
@@ -81,6 +84,9 @@ function repeatsWidth(lines) {
 const STATUS_FILTER = { Active: 'active', Upcoming: 'upcoming', Past: 'expired' };
 // The List opens on what's current: Active and Upcoming (Past is a pick away).
 const DEFAULT_STATUSES = ['Active', 'Upcoming'];
+const HAS_SCHEDULE = ['Yes', 'No'];
+// The checkbox column: 20px inset (the table's left edge), 16px box, 8px gap.
+const SELECT_W = 44;
 const isDefaultStatus = (v) => v.length === DEFAULT_STATUSES.length && DEFAULT_STATUSES.every(k => v.includes(k));
 
 const ROW_MENU = [
@@ -156,6 +162,15 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
   const [fSpans, setFSpans] = useState([]);
   // [fromISO, toISO]: keeps slots that run on any day in it.
   const [fRange, setFRange] = useState([]);
+  // 'Yes' (has any schedule of their own) / 'No' (none).
+  const [fHas, setFHas] = useState([]);
+  // Bulk select (List view): the toolbar icon shows the checkboxes. Users
+  // picked, by name, are kept across pages and cleared after a successful save.
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selected, setSelected] = useState([]);
+  const exitBulkMode = () => { setBulkMode(false); setSelected([]); };
+  // The Add availability drawer for many users: { users, presetType }.
+  const [bulk, setBulk] = useState(null);
   // { key: 'name' | 'startDate', dir: 'asc' | 'desc' } or null for the default order.
   const [sort, setSort] = useState(null);
   const sortDir = sort?.key === 'startDate' ? sort.dir : null;
@@ -206,6 +221,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
         ...u,
         email: emails[u.name] || u.email,
         role: u.clinicalRoles?.[0] || 'Staff',
+        hasSchedule: (byName.get(u.name.toLowerCase()) || []).length > 0,
         blocks: (byName.get(u.name.toLowerCase()) || [])
           .map(b => ({ ...b, status: blockStatus(b) }))
           .sort((a, b) => sortDir
@@ -215,6 +231,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
       .filter(u => !q || u.name.toLowerCase().includes(q) || String(u.email || '').toLowerCase().includes(q))
       // User narrows people, not slots: everyone picked stays listed.
       .filter(u => !people.length || peopleSet.has(u.name))
+      .filter(u => embedded || !fHas.length || fHas.includes(u.hasSchedule ? 'Yes' : 'No'))
       // Filters narrow each user's blocks; with any on, users left with none drop out.
       .map(u => ({
         ...u,
@@ -238,7 +255,9 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
         : (b.blocks.length > 0) - (a.blocks.length > 0)
           || (sortDir && a.blocks.length && (sortDir === 'asc' ? 1 : -1) * a.blocks[0].startDate.localeCompare(b.blocks[0].startDate))
           || a.name.localeCompare(b.name)));
-  }, [platformUsers, taskProfiles, blocks, query, layout, fLocations, fStatuses, fTypes, fRange, fUsers, fSpans, sort, sortDir, embedded, filterUsers, filterLocations, filterTypes, searchQuery]);
+  }, [platformUsers, taskProfiles, blocks, query, layout, fLocations, fStatuses, fTypes, fRange, fUsers, fSpans, fHas, sort, sortDir, embedded, filterUsers, filterLocations, filterTypes, searchQuery]);
+  // Everyone, unfiltered, for the Add availability drawer's Users field.
+  const allUsers = useMemo(() => (platformUsers || []).map(u => ({ ...u, role: u.clinicalRoles?.[0] || 'Staff' })), [platformUsers]);
   // For the User filter: keyed by name (what fUsers holds), with role for the second line.
   const pickerUsers = useMemo(() => (platformUsers || [])
     .filter(u => u.name)
@@ -246,16 +265,30 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
     .sort((a, b) => a.name.localeCompare(b.name)), [platformUsers]);
   const allLocations = useMemo(() => [...new Set((blocks || []).map(b => b.location).filter(Boolean))].sort(), [blocks]);
   const allTypes = useMemo(() => [...new Set((blocks || []).flatMap(b => (b.slots || []).map(sl => sl.appointmentType || ALL_TYPES)))].sort(), [blocks]);
-  const filtersOn = fLocations.length || !isDefaultStatus(fStatuses) || fTypes.length || fRange.length || fUsers.length || fSpans.length;
+  const filtersOn = fLocations.length || !isDefaultStatus(fStatuses) || fTypes.length || fRange.length || fUsers.length || fSpans.length || fHas.length;
 
   const lastPage = Math.max(1, Math.ceil(users.length / perPage));
   const pageNow = Math.min(page, lastPage);
   const rows = users.slice((pageNow - 1) * perPage, pageNow * perPage);
+  // Select-all works on the page shown (after filters); the rest of the
+  // selection, from other pages, is kept.
+  const selectedSet = new Set(selected);
+  const pageNames = rows.map(u => u.name);
+  const pageAll = pageNames.length > 0 && pageNames.every(n => selectedSet.has(n));
+  const pageSome = pageNames.some(n => selectedSet.has(n));
+  const selectPage = (on) => setSelected(cur => (on
+    ? [...cur, ...pageNames.filter(n => !cur.includes(n))]
+    : cur.filter(n => !pageNames.includes(n))));
+  const toggleUser = (name) => setSelected(cur => (cur.includes(name) ? cur.filter(n => n !== name) : [...cur, name]));
   const columns = useMemo(() => {
     const lines = rows.flatMap(u => (u.blocks || []).flatMap(b => cadenceText(b).split(' • ')));
     const w = repeatsWidth(lines);
-    return COLUMNS.map(c => (c.key === 'repeats' ? { ...c, width: w } : c));
-  }, [rows]);
+    const cols = COLUMNS.map(c => (c.key === 'repeats' ? { ...c, width: w } : c));
+    // Bulk select adds the checkbox column ahead of User, which moves over.
+    return bulkMode
+      ? [{ key: 'select', showCheckbox: true, sticky: 'left', left: 0, width: SELECT_W }, ...cols.map(c => (c.key === 'user' ? { ...c, left: SELECT_W } : c))]
+      : cols;
+  }, [rows, bulkMode]);
 
   // Show more opens at once and eases the rows in; Show less eases them out
   // first, then removes them.
@@ -274,8 +307,23 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
 
   const tools = (
     <>
-      <SegmentedControl size="sm" items={[{ key: 'list', label: 'List' }, { key: 'week', label: 'Week' }]} value={layout} onValueChange={setLayout} />
+      {/* Week has no selection: switching to it leaves bulk select. */}
+      <SegmentedControl size="sm" items={[{ key: 'list', label: 'List' }, { key: 'week', label: 'Week' }]} value={layout} onValueChange={(v) => { setLayout(v); if (v === 'week') exitBulkMode(); }} />
       <span className={styles.toolDivider} aria-hidden="true" />
+      {layout === 'list' && (
+        <>
+          {/* As in Content: shows the checkboxes; the close glyph leaves bulk select. */}
+          <ActionButton
+            tooltip={bulkMode ? 'Exit bulk select' : 'Bulk select'}
+            tooltipBelow
+            iconColor={bulkMode ? 'var(--primary-300)' : 'var(--neutral-300)'}
+            onClick={() => (bulkMode ? exitBulkMode() : setBulkMode(true))}
+          >
+            {bulkMode ? <BulkSelectCloseIcon /> : <BulkSelectIcon />}
+          </ActionButton>
+          <span className={styles.toolDivider} aria-hidden="true" />
+        </>
+      )}
       {searchOpen ? (
         <SearchBar
           placeholder="Search users"
@@ -290,12 +338,21 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
       <span className={styles.toolDivider} aria-hidden="true" />
       <ActionButton icon="custom:filter" tooltip={filtersOpen ? 'Hide filters' : 'Filters'} tooltipBelow active={filtersOpen || !!filtersOn} onClick={() => setFiltersOpen(o => !o)} />
       <span className={styles.toolDivider} aria-hidden="true" />
-      <Button variant="outline" leadingIconElement={<AddIconMinimalist size={16} color="currentColor" />} onClick={() => setEditing({})}>Add new</Button>
+      {/* Add new opens Add availability with no users picked. */}
+      <Button variant="outline" leadingIconElement={<AddIconMinimalist size={16} color="currentColor" />} onClick={() => setBulk({ users: [] })}>Add new</Button>
     </>
   );
 
+  const checkCell = (u, span) => (
+    <td rowSpan={span} className={`${styles.td} ${styles.checkTd} ${styles.stickyLeft}`} style={{ left: 0 }}>
+      {/* As tall as the avatar line, so the box centres on it. */}
+      <span className={styles.checkWrap}>
+        <Checkbox checked={selectedSet.has(u.name)} onCheckedChange={() => toggleUser(u.name)} aria-label={`Select ${u.name}`} />
+      </span>
+    </td>
+  );
   const userCell = (u, span) => (
-    <td rowSpan={span} className={`${styles.td} ${styles.userTd} ${styles.stickyLeft}`} style={{ left: 0 }}>
+    <td rowSpan={span} className={`${styles.td} ${styles.userTd} ${styles.stickyLeft}`} style={{ left: bulkMode ? SELECT_W : 0 }}>
       <span className={styles.user}>
         <Avatar variant="staff" size="M" initials={u.initials} userName={u.name} userId={u.id} />
         <span className={styles.userText}>
@@ -464,6 +521,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
     if (!u.blocks.length) {
       return (
         <tr key={u.id || u.name} className={[styles.row, styles.rowEmpty].join(' ')}>
+          {bulkMode && checkCell(u, 1)}
           {userCell(u, 1)}
           <td colSpan={5} className={`${styles.td} ${styles.inheritedTd}`}>
             <span className={styles.inherited}>
@@ -496,6 +554,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
                 i >= SHOWN_BLOCKS ? (isClosing ? styles.rowHide : styles.rowReveal) : '',
               ].filter(Boolean).join(' ')}
             >
+              {i === 0 && bulkMode && checkCell(u, span)}
               {i === 0 && userCell(u, span)}
               <td className={styles.td}><Badge tone={look.tone} size="sm" label={look.label} /></td>
               <td className={styles.td}><span className={styles.cellText}>{b.location}</span></td>
@@ -566,23 +625,25 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
                 anchorRect={anchorRect}
                 users={pickerUsers}
                 selected={fUsers}
+                pinned={fUsers.length ? { label: 'Selected', keys: fUsers } : null}
                 onSelect={(next) => { setFUsers(next); setPage(1); }}
                 onClose={onClose}
               />
             )}
           />
-          <FilterChip label="Location" searchable options={allLocations} selected={fLocations} onChange={(v) => { setFLocations(v); setPage(1); }} />
+          <FilterChip label="Location" searchable pinSelected options={allLocations} selected={fLocations} onChange={(v) => { setFLocations(v); setPage(1); }} />
           {/* Like Employer Impact's Time Frame: the default reads as a neutral, set value
               (no ✕); once changed it's an active filter, and clearing it goes back to the default. */}
           <FilterChip
             label="Status"
+            pinSelected
             options={Object.keys(STATUS_FILTER)}
             selected={fStatuses}
             noClear={isDefaultStatus(fStatuses)}
             onChange={(v) => { setFStatuses(v.length ? v : DEFAULT_STATUSES); setPage(1); }}
           />
-          <FilterChip label="Appointment Type" searchable options={allTypes} selected={fTypes} onChange={(v) => { setFTypes(v); setPage(1); }} />
-          <FilterChip label="Slot Type" options={['Fixed Slot', 'Rolling Slot']} selected={fSpans} onChange={(v) => { setFSpans(v); setPage(1); }} />
+          <FilterChip label="Appointment Type" searchable pinSelected options={allTypes} selected={fTypes} onChange={(v) => { setFTypes(v); setPage(1); }} />
+          <FilterChip label="Slot Type" pinSelected options={['Fixed Slot', 'Rolling Slot']} selected={fSpans} onChange={(v) => { setFSpans(v); setPage(1); }} />
           {/* Availability looks ahead, so just a custom range (no "Last 7 days" presets). */}
           <FilterChip
             label="Date Range"
@@ -599,7 +660,10 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
               />
             )}
           />
-          {filtersOn ? <Link variant="secondary" onClick={() => { setFLocations([]); setFStatuses(DEFAULT_STATUSES); setFTypes([]); setFRange([]); setFUsers([]); setFSpans([]); }}>Clear all</Link> : null}
+          {!embedded && (
+            <FilterChip label="Has schedule" singleSelect pinSelected options={HAS_SCHEDULE} selected={fHas} onChange={(v) => { setFHas(v); setPage(1); }} />
+          )}
+          {filtersOn ? <Link variant="secondary" onClick={() => { setFLocations([]); setFStatuses(DEFAULT_STATUSES); setFTypes([]); setFRange([]); setFUsers([]); setFSpans([]); setFHas([]); }}>Clear all</Link> : null}
         </div>
       )}
       {layout === 'week' ? (
@@ -618,10 +682,16 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
           )}
         />
       ) : (
-      <div className={styles.tableWrap}>
+      <div className={[styles.tableWrap, bulkMode ? styles.selecting : ''].filter(Boolean).join(' ')}>
         <WorklistShell
           header={null}
           columns={columns}
+          // The floating bulk island: count, Add availability, clear (✕).
+          selectedIds={selected}
+          onClearSelection={() => setSelected([])}
+          bulkActions={[{ label: 'Add availability', icon: 'solar:calendar-linear', variant: 'primary', size: 'md', onClick: () => setBulk({ users: allUsers.filter(u => selectedSet.has(u.name)) }) }]}
+          selectAll={{ checked: pageAll ? true : pageSome ? 'indeterminate' : false }}
+          onSelectAll={selectPage}
           sortKey={sort?.key || null}
           sortDir={sort?.dir || null}
           // asc, then desc, then back to the default order.
@@ -638,7 +708,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
             </div>
           )}
           // Sized to fit a 1440px screen; narrower ones scroll sideways.
-          minTableWidth={1188}
+          minTableWidth={bulkMode ? 1188 + SELECT_W : 1188}
           fixedLayout
           page={pageNow}
           perPage={perPage}
@@ -647,6 +717,16 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
           onPageSizeChange={(n) => { setPerPage(n); setPage(1); }}
         />
       </div>
+      )}
+      {bulk && (
+        <UserAvailabilityDrawer
+          bulk
+          bulkUsers={bulk.users}
+          presetType={bulk.presetType}
+          users={allUsers}
+          onSaved={() => setSelected([])}
+          onClose={() => setBulk(null)}
+        />
       )}
 
       {editing && (

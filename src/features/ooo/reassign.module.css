@@ -187,3 +187,27 @@
 .summaryNote { margin-top: var(--space-2); font-size: var(--font-base); color: var(--neutral-300); }
 /* The reason itself reads first; "Reason:" is the quieter label. */
 .summaryNoteValue { font-weight: 500; color: var(--neutral-400); }
+
+/* Tasks / care programs: one flat card of rows, on white (no department
+   nesting, so no tinted nested background). */
+.flatList {
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150); border-radius: 8px;
+}
+.flatRow { background: var(--neutral-0); }
+/* With no view toggle beside it the title row is just text: 12px from the
+   banner above (the drawer body's 16px, less 4px). */
+.plannerHeadFlat { margin-top: calc(var(--space-1) * -1); }
+/* Flat rows line the checkbox up with the row's first line (a 20px band: the
+   title, or title with its status badge); the trailing controls stay centred
+   on the whole row. */
+.flatRow .apptMain { align-items: flex-start; }
+.flatRow .apptMain > [role='checkbox'] { margin-top: calc(var(--space-1) / 2); }
+.flatRow .apptTrail { align-self: center; }
+.flatRow [class*='itemHead'] { min-height: var(--space-5); }
+/* Task rows: the priority icon and the title sit on the same 20px first line
+   as the checkbox; the due date wraps under. */
+.flatRow [class*='itemMain'] { align-items: flex-start; }
+.flatRow [class*='itemMain'] > svg { margin-top: calc(var(--space-1) / 2); }
+.flatRow [class*='itemTitle'] { display: flex; align-items: center; min-height: var(--space-5); }

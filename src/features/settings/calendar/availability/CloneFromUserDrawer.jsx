@@ -42,8 +42,11 @@ import styles from './UserAvailability.module.css';
  * @param {function} props.onImport – (blocks) => void; each block carries
  *   `importedFrom` (the source user's name)
  * @param {function} props.onClose
+ * @param {boolean}  [props.single] – One source user only (Add availability
+ *   for multiple users): picking another user replaces the first
+ * @param {React.ReactNode} [props.note] – A banner above the picker
  */
-export function CloneFromUserDrawer({ users, exclude, imported = [], target, onImport, onClose }) {
+export function CloneFromUserDrawer({ users, exclude, imported = [], target, onImport, onClose, single = false, note }) {
   const sources = users
     .filter(u => u.name !== exclude)
     .map(u => ({ ...u, blocks: (u.blocks || []).filter(b => blockStatus(b) !== 'expired') }))
@@ -96,13 +99,14 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
       )}
     >
       <div className={styles.cloneBody}>
+        {note && <Banner size="sm">{note}</Banner>}
         <div className={styles.cloneSection}>
           <span className={styles.cloneHeading}>Clone from</span>
           <Select
             searchable
-            multiple
-            checkboxes
-            badges
+            multiple={!single}
+            checkboxes={!single}
+            badges={!single}
             options={sources.map(u => ({
               value: u.name,
               // As in Configure Team's user picker: avatar, name over role, a chip on the right.
@@ -119,9 +123,9 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
               triggerLabel: u.name,
               searchText: [u.name, u.email, u.role].filter(Boolean).join(' '),
             }))}
-            value={names}
-            onValueChange={choose}
-            placeholder="Select users"
+            value={single ? names[0] : names}
+            onValueChange={(v) => choose(single ? (v ? [v] : []) : v)}
+            placeholder={single ? 'Select user' : 'Select users'}
             // Only users with active or upcoming slots are offered; say so when a search finds none.
             emptyText={(q) => (q ? 'No users match searched keyword.' : 'No other users have availability defined.')}
             aria-label="Clone from"

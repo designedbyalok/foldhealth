@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { Button } from '../../../components/Button/Button';
 import { Checkbox } from '../../../components/Checkbox/Checkbox';
@@ -7,6 +7,9 @@ import { NumberUnitInput } from '../../../components/NumberUnitInput/NumberUnitI
 import { RadioOptionGroup } from '../../../components/RadioOptionGroup/RadioOptionGroup';
 import { Switch } from '../../../components/Switch/Switch';
 import { toast } from '../../../components/Toast/sonnerToast';
+import { Link } from '../../../components/Link/Link';
+import { AddIconMinimalist } from '../../../components/Icon/AddIconMinimalist';
+import { UserAvailabilityDrawer } from './availability/UserAvailabilityDrawer';
 import { useAppStore } from '../../../store/useAppStore';
 import { joinWindow, splitWindow, WINDOW_FIELD, WINDOW_UNITS } from '../../calendar/list/typeWindows';
 import styles from './AppointmentTypesTab.module.css';
@@ -37,6 +40,13 @@ export function AppointmentTypeDrawer({ type, onClose }) {
   const [bookable, setBookable] = useState(!!type.patient_bookable);
   const [limits, setLimits] = useState(() => Object.fromEntries(LIMITS.map(l => [l.kind, toForm(type[WINDOW_FIELD[l.kind]])])));
   const [saving, setSaving] = useState(false);
+  // "Add availability for this type": the multi-user drawer, no users picked,
+  // the first appointment type row set to this type.
+  const [addingAvailability, setAddingAvailability] = useState(false);
+  const platformUsers = useAppStore(s => s.platformUsers);
+  const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
+  const fetchUserAvailability = useAppStore(s => s.fetchUserAvailability);
+  useEffect(() => { if (addingAvailability) { fetchPlatformUsers?.(); fetchUserAvailability?.(); } }, [addingAvailability, fetchPlatformUsers, fetchUserAvailability]);
   const setLimit = (kind, next) => setLimits(p => ({ ...p, [kind]: { ...p[kind], ...next } }));
 
   const missingCount = LIMITS.some(l => limits[l.kind].limited && !(Number(limits[l.kind].count) > 0));
@@ -58,6 +68,7 @@ export function AppointmentTypeDrawer({ type, onClose }) {
   };
 
   return (
+    <>
     <Drawer
       title={type.name}
       onClose={onClose}
@@ -87,6 +98,17 @@ export function AppointmentTypeDrawer({ type, onClose }) {
         </div>
 
         <Input label="Duration" placeholder="e.g. 30 min" value={duration} onValueChange={setDuration} />
+
+        <div className={styles.group}>
+          <span className={styles.groupLabel}>Availability</span>
+          <span className={styles.groupHint}>Days, times and locations for this type are set on each user&apos;s schedule.</span>
+          <span>
+            <Link onClick={() => setAddingAvailability(true)}>
+              <AddIconMinimalist size={12} color="currentColor" />
+              Add availability for this type
+            </Link>
+          </span>
+        </div>
 
         <Switch checked={bookable} onChange={setBookable} label="Online booking" />
 
@@ -127,5 +149,14 @@ export function AppointmentTypeDrawer({ type, onClose }) {
         </div>
       </div>
     </Drawer>
+    {addingAvailability && (
+      <UserAvailabilityDrawer
+        bulk
+        presetType={type.name}
+        users={(platformUsers || []).map(u => ({ ...u, role: u.clinicalRoles?.[0] || 'Staff' }))}
+        onClose={() => setAddingAvailability(false)}
+      />
+    )}
+    </>
   );
 }

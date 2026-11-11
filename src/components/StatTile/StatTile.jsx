@@ -13,11 +13,12 @@ const TONES = ['neutral', 'success', 'error', 'warning', 'info'];
  * @param {string} [props.caption]
  * @param {string} [props.icon]  Solar icon name.
  * @param {'neutral'|'success'|'error'|'warning'|'info'} [props.tone]  Icon colour.
+ * @param {string} [props.className]  Extra class on the tile (e.g. a tinted background).
  */
-export function StatTile({ label, value, caption, icon, tone = 'neutral' }) {
+export function StatTile({ label, value, caption, icon, tone = 'neutral', className }) {
   const t = TONES.includes(tone) ? tone : 'neutral';
   return (
-    <div className={styles.tile}>
+    <div className={[styles.tile, className].filter(Boolean).join(' ')}>
       <div className={styles.head}>
         {icon && (
           <span className={`${styles.icon} ${styles[t]}`}>
