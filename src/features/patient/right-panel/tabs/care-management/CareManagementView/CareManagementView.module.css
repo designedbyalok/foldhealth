@@ -113,5 +113,7 @@
   min-width: 0;
   overflow-x: auto;
 }
+/* The program switch on the left; Active Programs and Complete at the right. */
+.planBar > :first-child { margin-right: auto; }
 .signItem { display: flex; flex-direction: column; min-width: 0; line-height: var(--leading-normal); }
 .signItemMeta { font-size: var(--font-sm); color: var(--neutral-300); }

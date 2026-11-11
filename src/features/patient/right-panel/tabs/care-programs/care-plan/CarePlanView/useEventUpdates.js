@@ -5,9 +5,10 @@ import { useAppStore } from '../../../../../../../store/useAppStore';
  * New patient events that touch this care plan (#84) and the changes
  * proposed for each, still to be decided. `visible` is false once nothing is
  * left (or the tables don't exist yet). `run` accepts or dismisses changes.
- * `fetch: false` only reads what another caller on the plan has loaded.
+ * `fetch: false` only reads what another caller on the plan has loaded;
+ * `evaluate: false` loads what's recorded without evaluating new events.
  */
-export function useEventUpdates({ patientId, program, live, fetch = true }) {
+export function useEventUpdates({ patientId, program, live, fetch = true, evaluate = true }) {
   const key = `${patientId}::${program?.id}`;
   const state = useAppStore(s => s.carePlanEventUpdates[key]);
   const fetchUpdates = useAppStore(s => s.fetchCarePlanEventUpdates);
@@ -18,7 +19,7 @@ export function useEventUpdates({ patientId, program, live, fetch = true }) {
 
   // Once per plan visit: evaluates whatever arrived since the last one.
   useEffect(() => {
-    if (fetch && loaded && patientId && program?.id) fetchUpdates(patientId, program, live);
+    if (fetch && loaded && patientId && program?.id) fetchUpdates(patientId, program, live, { evaluate });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetch, loaded, patientId, program?.id]);
 

@@ -75,6 +75,8 @@ export function CarePlanGoalsTable({
   // (goal) => boolean: whether the goal has a current (undeleted) note.
   hasNote,
   linked,
+  // (goal) => node after the title, e.g. the program in All Programs.
+  titleBadge,
   template = false,
   emptyState,
 }) {
@@ -156,7 +158,7 @@ export function CarePlanGoalsTable({
           icon={goalCategoryIcon(g.category)}
           iconTitle={g.category ? normalizeCategory(g.category) : 'Goal'}
           title={g.title}
-          badge={<AiSuggestionBadge kind="goal" item={g} />}
+          badge={<><AiSuggestionBadge kind="goal" item={g} />{titleBadge?.(g)}</>}
           meta={g.subtitle || null}
           layout="stacked"
           linked={linked(g)}
@@ -245,7 +247,7 @@ export function CarePlanGoalsTable({
             icon={goalCategoryIcon(g.category)}
             iconTitle={g.category ? normalizeCategory(g.category) : 'Goal'}
             title={g.title}
-            badge={<AiSuggestionBadge kind="goal" item={g} />}
+            badge={<><AiSuggestionBadge kind="goal" item={g} />{titleBadge?.(g)}</>}
             meta={g.patientTitle ? (
               <>
                 {/* The patient's own words for the goal. */}

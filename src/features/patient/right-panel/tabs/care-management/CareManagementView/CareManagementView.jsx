@@ -103,6 +103,7 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
   // 'all' or a program id.
   const [view, setView] = useState('all');
   const [signMenu, setSignMenu] = useState(null);
+  const [programsOpen, setProgramsOpen] = useState(false);
   const openPrograms = useMemo(() => programs.filter(p => !isProgramClosed(p.status)), [programs]);
   const shownProgram = view === 'all' ? null : openPrograms.find(p => p.id === view) || null;
   const signing = useMemo(
@@ -205,6 +206,11 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
         value={shownProgram ? shownProgram.id : 'all'}
         onValueChange={setView}
       />
+      {!shownProgram && (
+        <Button size="sm" variant="outline" leadingIcon="solar:list-linear" onClick={() => setProgramsOpen(true)}>
+          Active Programs ({openPrograms.length})
+        </Button>
+      )}
       {!shownProgram && signing.length > 0 && (
         <Button
           size="sm"
@@ -324,6 +330,8 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
           summarizeRequest={summarizeRequest}
           onSummaryState={setSummaryState}
           onAddNote={notePrograms.length ? () => setAddNoteOpen(true) : undefined}
+          programsOpen={programsOpen}
+          onProgramsClose={() => setProgramsOpen(false)}
         />
       </div>
       {addNoteOpen && (

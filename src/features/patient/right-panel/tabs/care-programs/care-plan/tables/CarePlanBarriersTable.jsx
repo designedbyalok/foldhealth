@@ -32,6 +32,7 @@ function BarrierRow({
   hasNote,
   onTitleChange,
   linked,
+  titleBadge,
   template,
   active,
 }) {
@@ -79,7 +80,7 @@ function BarrierRow({
         <GbiNameCell
           icon="custom:barrier"
           title={b.title}
-          badge={<AiSuggestionBadge kind="barrier" item={b} />}
+          badge={<><AiSuggestionBadge kind="barrier" item={b} />{titleBadge?.(b)}</>}
           meta={template ? (b.description || null) : null}
           linked={linked(b)}
           showLink={template}
@@ -144,6 +145,8 @@ export function CarePlanBarriersTable({
   // (barrier, title) => void: saves an in-place title edit.
   onTitleChange,
   linked,
+  // (barrier) => node after the title, e.g. the program in All Programs.
+  titleBadge,
   template = false,
   emptyState,
 }) {
@@ -210,6 +213,7 @@ export function CarePlanBarriersTable({
       hasNote={hasNote}
       onTitleChange={onTitleChange}
       linked={linked}
+      titleBadge={titleBadge}
       template={template}
       active={activeRowId === b.id}
     />

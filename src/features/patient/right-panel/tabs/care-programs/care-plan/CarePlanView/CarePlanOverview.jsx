@@ -72,6 +72,10 @@ export function CarePlanOverview({
   // summary and the recent notes go there (CarePlanSummaryPanel) instead of
   // into this card, which keeps the note, events and cadence.
   summaryHost = null,
+  // All Programs: the summary and notes are in its own left column, so the
+  // card keeps only the note, events and cadence; `nav` steps between programs.
+  noSummary = false,
+  nav = null,
 }) {
   const programId = program?.id;
   const key = `${patientId}::${programId}`;
@@ -186,7 +190,7 @@ export function CarePlanOverview({
   // events with changes to decide, a review that's due or overdue.
   const cadence = useReviewCadence({ patientId, program, plan: live?.plan });
   const cadenceDue = ['due', 'overdue'].includes(cadence?.status?.state);
-  const inColumn = !!summaryHost && !!summaryStrip;
+  const inColumn = noSummary || (!!summaryHost && !!summaryStrip);
   const tabs = [
     { key: 'note', label: 'Care Plan Note', leadingIcon: 'solar:notes-linear' },
     showSummary && !inColumn && {
@@ -202,7 +206,7 @@ export function CarePlanOverview({
 
   return (
     <section className={styles.card} aria-label="Care plan overview">
-      {inColumn && createPortal(
+      {inColumn && summaryHost && createPortal(
         <CarePlanSummaryPanel
           {...summaryStrip}
           review={showCadence ? cadence : null}
@@ -237,7 +241,14 @@ export function CarePlanOverview({
           onOpenCadence={() => setTab('cadence')}
         />
       )}
-      <SegmentedControl items={tabs} value={active} onValueChange={setTab} variant="ghost" />
+      {nav ? (
+        <div className={styles.tabsRow}>
+          <SegmentedControl items={tabs} value={active} onValueChange={setTab} variant="ghost" />
+          {nav}
+        </div>
+      ) : (
+        <SegmentedControl items={tabs} value={active} onValueChange={setTab} variant="ghost" />
+      )}
 
       {active === 'note' && (
         editing ? (
@@ -283,7 +294,7 @@ export function CarePlanOverview({
                   {/* Hover tools: clicks here don't open the editor. */}
                   <span className={styles.noteTools} onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
                     <ActionButton icon="solar:history-linear" size="sm" tooltip="Note history" onClick={onOpenNoteHistory} />
-                    {canEdit && <ActionButton icon="solar:trash-bin-trash-linear" size="sm" tooltip="Delete note" onClick={onDeleteNote} />}
+                    {canEdit && onDeleteNote && <ActionButton icon="solar:trash-bin-trash-linear" size="sm" tooltip="Delete note" onClick={onDeleteNote} />}
                   </span>
                 </div>
               </>

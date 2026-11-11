@@ -465,3 +465,29 @@
   font-weight: 500;
   color: var(--neutral-500);
 }
+
+/* All Programs: the attention flag on a section head toggles Needs Attention. */
+.flagBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+/* ◀ CODE · 1 of N ▶ on the program note card. */
+.noteNav {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+.noteNavLabel {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  white-space: nowrap;
+}
+.noteNavLabel strong {
+  font-weight: 600;
+  color: var(--neutral-500);
+}
