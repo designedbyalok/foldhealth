@@ -12,12 +12,13 @@ import { useAppStore } from '../../../../../../store/useAppStore';
 import { CareProgramsTab } from '../../care-programs/CareProgramsTab/CareProgramsTab';
 import { CarePlanSummaryView } from '../../care-programs/care-plan/summary/CarePlanSummaryView/CarePlanSummaryView.jsx';
 import { buildCarePlanSnapshot, filterCarePlanSnapshot, downloadCarePlanCsv, CARE_PLAN_DATE_PRESETS } from '../../care-programs/care-plan/summary/carePlanSnapshot';
-import { useSignedCarePlans } from '../../care-programs/care-plan/lib/useSignedCarePlans';
-import { programUrlKey } from '../../care-programs/CareProgramsTab/CareProgramsTab.utils';
-import { stepsFor, flatSteps } from '../../care-programs/program-detail/ProgramDetailView/ProgramDetailView.utils';
 import { CareManagementToolbar } from '../CareManagementToolbar/CareManagementToolbar';
-import { PatientCarePlanPane } from '../PatientCarePlanPane/PatientCarePlanPane';
-import { RollupSignButton } from '../../care-programs/care-plan/summary/RollupSignButton';
+import { CarePlanCard, PatientCarePlanPane } from '../PatientCarePlanPane/PatientCarePlanPane';
+import { allProgramsPlanState } from '../../care-programs/care-plan/summary/allProgramsPlan';
+import { computeDueDate } from '../../care-programs/care-plan/tables/CarePlanInterventionsTable';
+import { SegmentedControl } from '../../../../../../components/SegmentedControl/SegmentedControl';
+import { MenuPopover } from '../../../../../../components/MenuPopover/MenuPopover';
+import toolbarStyles from '../CareManagementToolbar/CareManagementToolbar.module.css';
 import { SummarizeButton } from '../../care-programs/care-plan/summary/CarePlanAiSummary/CarePlanAiSummary';
 import { showsPatientCarePlan } from '../../care-programs/care-plan/lib/carePlanMode';
 import { ProgramActivityDay } from '../ProgramActivityCard/ProgramActivityCard.jsx';
@@ -87,12 +88,28 @@ function AddCareNoteDrawer({ programs, onClose, onSave }) {
   );
 }
 
-/** Comprehensive Care Plan pane: read-only cross-program snapshot with its own
- *  search + (program) filter and a Download CTA. */
-function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpenProgramStep, editable = false }) {
+const SIGN_ICON = { open: 'solar:pen-new-square-linear', awaiting: 'solar:clock-circle-linear', signed: 'solar:check-circle-linear' };
+const dueOf = i => computeDueDate(i);
+
+/** Comprehensive Care Plan pane: the patient's care plans in one place (care
+ *  plan redesign prototype). All Programs combines every open program's live
+ *  plan, editable item by item (each edit lands on its program's plan), with
+ *  the summary strip, Look at These First, search, filters, Summarize, care
+ *  notes and Download. Picking a program shows that program's own care plan,
+ *  where it is completed and signed. */
+function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
   const showToast = useAppStore(s => s.showToast);
-  // The pane shows plans as last signed, the same copy its table renders.
-  const patientCarePlans = useSignedCarePlans();
+  const patientCarePlans = useAppStore(s => s.patientCarePlans);
+  // 'all' or a program id.
+  const [view, setView] = useState('all');
+  const [signMenu, setSignMenu] = useState(null);
+  const openPrograms = useMemo(() => programs.filter(p => !isProgramClosed(p.status)), [programs]);
+  const shownProgram = view === 'all' ? null : openPrograms.find(p => p.id === view) || null;
+  const signing = useMemo(
+    () => allProgramsPlanState(openPrograms, patientCarePlans, patientId, dueOf).signing,
+    [openPrograms, patientCarePlans, patientId],
+  );
+  const toComplete = signing.filter(x => x.state === 'open').length;
   const carePlanTemplates = useAppStore(s => s.carePlanTemplates) || [];
   const [addNoteOpen, setAddNoteOpen] = useState(false);
   // Summarize sits in this toolbar; the AI Summary section shows once it has run.
@@ -176,6 +193,59 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpe
     showToast?.('Care plan downloaded');
   };
 
+  const programSwitch = (
+    <div className={styles.planBar}>
+      <SegmentedControl
+        size="sm"
+        items={[{ key: 'all', label: 'All Programs' }, ...openPrograms.map(p => ({ key: p.id, label: p.code }))]}
+        value={shownProgram ? shownProgram.id : 'all'}
+        onValueChange={setView}
+      />
+      {!shownProgram && signing.length > 0 && (
+        <Button
+          size="sm"
+          variant={toComplete ? 'solid' : 'outline'}
+          trailingIcon="solar:alt-arrow-down-linear"
+          onClick={(e) => setSignMenu(e.currentTarget.getBoundingClientRect())}
+        >
+          {toComplete ? `Complete (${toComplete})` : 'Complete / Sign'}
+        </Button>
+      )}
+      {signMenu && (
+        <MenuPopover
+          anchorRect={signMenu}
+          width={300}
+          ariaLabel="Complete or sign a program's care plan"
+          items={signing.map(x => ({
+            key: x.program.id,
+            icon: SIGN_ICON[x.state],
+            tall: true,
+            label: (
+              <span className={styles.signItem}>
+                <span>{x.program.code} Care Plan</span>
+                <span className={styles.signItemMeta}>{x.label}</span>
+              </span>
+            ),
+          }))}
+          onSelect={(id) => { setSignMenu(null); setView(id); }}
+          onClose={() => setSignMenu(null)}
+        />
+      )}
+    </div>
+  );
+
+  if (shownProgram) {
+    return (
+      <div className={styles.pane}>
+        <div className={toolbarStyles.subTabBar}>
+          <div className={toolbarStyles.subTabs}>{header}</div>
+        </div>
+        {programSwitch}
+        <CarePlanCard key={shownProgram.id} patientId={patientId} program={shownProgram} />
+      </div>
+    );
+  }
+
   return (
     <div className={styles.pane}>
       <CareManagementToolbar
@@ -211,14 +281,6 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpe
               tooltipLeft
               onClick={handleDownload}
             />
-            {/* Both-level orgs edit every program's plan here, so they sign
-                here too: one Sign covers each plan with unsigned changes. */}
-            {editable && (
-              <>
-                <span className={styles.ctaDivider} aria-hidden="true" />
-                <RollupSignButton patientId={patientId} programs={programs} />
-              </>
-            )}
           </div>
         )}
         filterBar={(
@@ -238,10 +300,11 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpe
           </div>
         )}
       />
+      {programSwitch}
       <div className={styles.paneBody}>
         <CarePlanSummaryView
           embedded
-          editable={editable}
+          editable
           patientId={patientId}
           programs={programs}
           searchText={searchText}
@@ -252,7 +315,7 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpe
           dueDateFilter={dueDateFilter}
           createdDateFilter={createdDateFilter}
           onClose={onClose}
-          onOpenProgramStep={onOpenProgramStep}
+          onOpenProgramStep={(p) => setView(p.id)}
           summarizeRequest={summarizeRequest}
           onSummaryState={setSummaryState}
         />
@@ -516,8 +579,6 @@ export function CareManagementView() {
   const patientId = useAppStore(s => s.selectedPatientId);
   const careProgramsByPatient = useAppStore(s => s.careProgramsByPatient);
   const fetchCareProgramsForPatient = useAppStore(s => s.fetchCareProgramsForPatient);
-  const openCareProgram = useAppStore(s => s.openCareProgram);
-  const setCareProgramStep = useAppStore(s => s.setCareProgramStep);
 
   useEffect(() => {
     if (patientId) fetchCareProgramsForPatient(patientId);
@@ -527,16 +588,6 @@ export function CareManagementView() {
     () => careProgramsByPatient[patientId] || [],
     [careProgramsByPatient, patientId],
   );
-
-  // From the comprehensive view, hand off to the owning program's Care Plan
-  // step: open the program (store) and switch to the Care Programs sub-tab so
-  // CareProgramsTab renders it.
-  const openProgramAtCarePlan = (program) => {
-    const carePlanStep = flatSteps(stepsFor(program.code)).find(s => s.name.toLowerCase().includes('care plan'));
-    openCareProgram(programUrlKey(program));
-    if (carePlanStep) setCareProgramStep(carePlanStep.id);
-    setSubTab('Care Programs');
-  };
 
   // The sub-tab switch is a controlled element owned here, handed to each pane
   // so it renders inline in that pane's shared toolbar row.
@@ -563,11 +614,9 @@ export function CareManagementView() {
       >
         <ComprehensiveCarePlanPane
           header={subTabBar}
-          editable={carePlanMode === 'both'}
           patientId={patientId}
           programs={programs}
           onClose={() => setSubTab('Care Programs')}
-          onOpenProgramStep={openProgramAtCarePlan}
         />
       </div>
       <div className={styles.paneSlot} hidden={subTab !== 'Program Activity Log'}>

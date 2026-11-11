@@ -28,16 +28,22 @@ export function PatientCarePlanPane({ header, patientId, program: programProp, i
           <div className={toolbarStyles.subTabs}>{header}</div>
         </div>
       )}
-      {program && (
-        <div className={styles.card}>
-          <div className={`${pdStyles.contentHeader} ${pdStyles.contentHeaderCarePlan}`}>
-            <div className={`${pdStyles.contentHeaderRow} ${pdStyles.contentHeaderRowCarePlan}`}>
-              <CarePlanHeader patientId={patientId} program={program} inPanel={inPanel} />
-            </div>
-          </div>
-          <CarePlanView patientId={patientId} program={program} />
+      {program && <CarePlanCard patientId={patientId} program={program} inPanel={inPanel} />}
+    </div>
+  );
+}
+
+/** One program's care plan (header and plan) in its framed card, as the
+ *  program Care Plan step shows it. */
+export function CarePlanCard({ patientId, program, inPanel = false }) {
+  return (
+    <div className={styles.card}>
+      <div className={`${pdStyles.contentHeader} ${pdStyles.contentHeaderCarePlan}`}>
+        <div className={`${pdStyles.contentHeaderRow} ${pdStyles.contentHeaderRowCarePlan}`}>
+          <CarePlanHeader patientId={patientId} program={program} inPanel={inPanel} />
         </div>
-      )}
+      </div>
+      <CarePlanView patientId={patientId} program={program} />
     </div>
   );
 }
