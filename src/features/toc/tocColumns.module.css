@@ -171,3 +171,16 @@
 .outreachDate { font-size: var(--font-sm); font-weight: 400; color: var(--neutral-300); }
 .dots { display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; }
 .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* Discharge workflow cells: a value with a quieter detail under it. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+.stackSub {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  white-space: nowrap;
+}
