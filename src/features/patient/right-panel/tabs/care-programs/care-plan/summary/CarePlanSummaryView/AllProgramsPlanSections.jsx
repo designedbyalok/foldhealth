@@ -31,7 +31,7 @@ const programTag = row => <Badge size="sm" label={row.programCode} />;
  * programs, as the prototype's All view does. The summary and recent notes
  * are in the All Programs left column, so the card leaves them out.
  */
-export function ProgramNoteCard({ patientId, patientName, programs, onOpenProgram, onOpenItem }) {
+export function ProgramNoteCard({ patientId, patientName, programs, onOpenProgram, onOpenItem, allSummary = null }) {
   const [index, setIndex] = useState(0);
   const n = programs.length;
   const i = Math.min(index, n - 1);
@@ -59,6 +59,7 @@ export function ProgramNoteCard({ patientId, patientName, programs, onOpenProgra
       canEdit
       noSummary
       nav={nav}
+      allSummary={allSummary}
       latestPlanNote={note}
       mentionUsers={mentionUsers}
       linkItems={links}
