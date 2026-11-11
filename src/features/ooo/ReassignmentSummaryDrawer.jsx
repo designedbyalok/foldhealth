@@ -57,7 +57,13 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
   const jobs = useAppStore(s => s.reassignmentJobs);
   const fetchJobs = useAppStore(s => s.fetchReassignmentJobs);
   useEffect(() => { fetchJobs(); }, [fetchJobs]);
-  const job = jobs.find(j => j.id === jobId);
+  const jobRow = jobs.find(j => j.id === jobId);
+  // A covering provider (not the one who ran it) sees what came to them.
+  const me = useAppStore(s => s.currentUserProfile);
+  const isMine = (r) => r.outcome === 'reassigned'
+    && ((r.toId && me?.id && String(r.toId) === String(me.id)) || (!r.toId && me?.name && r.to === me.name));
+  const coveringView = !!jobRow && !!me?.name && jobRow.createdBy !== me.name && jobRow.results.some(isMine);
+  const job = coveringView ? { ...jobRow, results: jobRow.results.filter(isMine) } : jobRow;
   // Kinds this job has (an appointments-only job shows no kind tabs).
   const kinds = job ? KINDS.filter(k => job.results.some(r => kindOf(r) === k.key)) : [];
   const [kindKey, setKindKey] = useState(null);
@@ -100,6 +106,7 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
           </div>
           <div className={styles.summaryField}>
             <span className={styles.summaryLabel}>{mixed ? 'Summary' : 'Appointments Summary'}</span>
+            {coveringView && <span className={styles.summaryNote}>Showing what was reassigned to you.</span>}
             {/* Modules as underline tabs, flush with the content's left edge;
                 the outcome as a toggle under them. */}
             {mixed && (
