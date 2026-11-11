@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Avatar } from '../Avatar/Avatar';
 import { Icon } from '../Icon/Icon';
@@ -90,7 +90,20 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
   const closeTip = () => {
     if (tipTimer.current) { clearTimeout(tipTimer.current); tipTimer.current = null; }
     setTipRect(null);
+    setTipFit(null);
   };
+  // Keep the tooltip inside the viewport: shift it sideways off an edge
+  // (the tail stays over the avatar) and flip it below when there's no
+  // room above.
+  const tipRef = useRef(null);
+  const [tipFit, setTipFit] = useState(null); // { shift, below }
+  useLayoutEffect(() => {
+    if (!tipRect || tipFit || !tipRef.current) return;
+    const EDGE = 8;
+    const { left, right, height } = tipRef.current.getBoundingClientRect();
+    const shift = right > window.innerWidth - EDGE ? window.innerWidth - EDGE - right : left < EDGE ? EDGE - left : 0;
+    setTipFit({ shift, below: tipRect.top - 8 - height < EDGE });
+  }, [tipRect, tipFit]);
 
   const setRefs = useCallback((el) => {
     btnRef.current = el;
@@ -242,8 +255,15 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
       {trigger}
       {tipRect && canShowTooltip && createPortal(
         <div
-          className={styles.tooltip}
-          style={{ top: tipRect.top - 8, left: tipRect.left + tipRect.width / 2 }}
+          ref={tipRef}
+          className={tipFit?.below ? `${styles.tooltip} ${styles.tooltipBelow}` : styles.tooltip}
+          style={{
+            top: tipFit?.below ? tipRect.bottom + 8 : tipRect.top - 8,
+            left: tipRect.left + tipRect.width / 2 + (tipFit?.shift || 0),
+            // Measured first (hidden), then placed.
+            visibility: tipFit ? 'visible' : 'hidden',
+            '--tail-shift': `${-(tipFit?.shift || 0)}px`,
+          }}
           role="tooltip"
         >
           <div className={styles.tooltipCard}>

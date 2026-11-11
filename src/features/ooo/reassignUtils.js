@@ -86,6 +86,71 @@ export function coveringProviders(dept, users, { awayUser, oooRecords = [], wind
 }
 
 /**
+ * The access a covering provider needs for the away person's work. Shown
+ * only: nothing reads real permissions yet, so `missingAccess` is a stable
+ * mock (about one person in five lacks one or two of these).
+ */
+export const COVER_ACCESS = ['Manage Tasks & Alerts', 'Program Worklists', 'Inbox'];
+export function missingAccess(user) {
+  const key = String(user?.id || user?.name || '');
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  if (h % 5 !== 0) return [];
+  // Most lack one; every third of those lacks two.
+  const first = Math.floor(h / 5) % COVER_ACCESS.length;
+  const count = Math.floor(h / 15) % 3 === 0 ? 2 : 1;
+  return Array.from({ length: count }, (_, i) => COVER_ACCESS[(first + i) % COVER_ACCESS.length]);
+}
+
+/**
+ * Who can cover an Out of Office record, in the drawer's three groups:
+ *  - suggested:   free on those dates with the access the work needs; those
+ *                 sharing a location with the away provider first, then
+ *                 the same role.
+ *  - limited:     free, but lacking access needed for part of the work
+ *                 (`missing`, see missingAccess); picked with a warning.
+ *  - unavailable: out of office themselves for some of those dates (`out`
+ *                 is that record); can't be picked.
+ * The away provider is left out. Without dates nobody is unavailable.
+ * With `location`, Suggested leads with people who work at that location.
+ */
+export function coveringGroups(away, users, { oooRecords = [], from = null, to = null, recordId = null, location = null } = {}) {
+  const list = users || [];
+  const awayUser = list.find(u => samePerson(u, away));
+  // Covering one location: those who work there come first.
+  const awayLocs = location ? [location] : (awayUser?.locations || []);
+  const awayRole = awayUser?.clinicalRoles?.[0];
+  const clashing = from != null && to != null
+    ? (oooRecords || []).filter(r => r.id !== recordId && toMs(r.startAt) < to && toMs(r.endAt) > from)
+    : [];
+  const groups = { suggested: [], limited: [], unavailable: [] };
+  list.forEach((u) => {
+    if (!u?.name || samePerson(u, away)) return;
+    const out = clashing.find(r => samePerson(u, recordPerson(r)));
+    const missing = missingAccess(u);
+    if (out) groups.unavailable.push({ user: u, out });
+    else if (missing.length) groups.limited.push({ user: u, missing });
+    else groups.suggested.push({ user: u });
+  });
+  const sharesLoc = u => ((u.locations || []).some(l => awayLocs.some(a => sameName(a, l))) ? 0 : 1);
+  const sameRole = u => (awayRole && (u.clinicalRoles || []).includes(awayRole) ? 0 : 1);
+  groups.suggested.sort((a, b) => sharesLoc(a.user) - sharesLoc(b.user) || sameRole(a.user) - sameRole(b.user) || a.user.name.localeCompare(b.user.name));
+  groups.limited.sort((a, b) => a.user.name.localeCompare(b.user.name));
+  groups.unavailable.sort((a, b) => a.user.name.localeCompare(b.user.name));
+  return groups;
+}
+
+/**
+ * A record's coverage when one provider covers it: an entry for each of the
+ * away provider's locations (one with no location when they have none).
+ */
+export function coverageFor(coverer, awayLocations) {
+  if (!coverer?.name) return [];
+  const locs = (awayLocations || []).length ? awayLocations : [''];
+  return locs.map(location => ({ userId: coverer.id || null, userName: coverer.name, location }));
+}
+
+/**
  * An appointment already on the covering provider's calendar that overlaps
  * this one, if any: the reassignment still goes ahead, flagged as a conflict.
  */

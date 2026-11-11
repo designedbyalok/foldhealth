@@ -10,6 +10,7 @@ import { ContentSettings } from './content/ContentSettings';
 import { AccountPanel } from './account/AccountPanel';
 import { BillingPanel } from './billing/BillingPanel';
 import { CalendarSettings } from './calendar/CalendarSettings';
+import { CallSettings } from './calls/CallSettings';
 import { MemberLeadsPanel } from './member-leads/MemberLeadsPanel';
 import { CarePlanLibraryPanel } from './care-plan-library/panel/CarePlanLibraryPanel/CarePlanLibraryPanel';
 import { AutomationsPanel } from '../automations/AutomationsPanel';
@@ -46,7 +47,7 @@ function SettingsSubNavSlot({ activeItem, onItemClick }) {
 // queries; a static placeholder costs nothing.
 const IMPLEMENTED = new Set([
   'agents', 'member/leads', 'messages', 'embedded-components',
-  'content', 'care-plan-library', 'care-program-config', 'billing', 'account', 'calendar', 'automations',
+  'content', 'care-plan-library', 'care-program-config', 'billing', 'account', 'calendar', 'calls', 'automations',
 ]);
 
 function ComingSoonPanel({ label }) {
@@ -201,6 +202,8 @@ export function SettingsLayout() {
         <BillingPanel />
       ) : settingsNavItem === 'calendar' ? (
         <CalendarSettings />
+      ) : settingsNavItem === 'calls' ? (
+        <CallSettings />
       ) : settingsNavItem === 'member/leads' ? (
         <MemberLeadsPanel />
       ) : settingsNavItem === 'care-plan-library' ? (

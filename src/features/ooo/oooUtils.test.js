@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fromPickerValue, toPickerValue, activeOooFor, canDelete, canEdit, daySpan, formatDateTime, oooStatus, rangeChange, recordsOnDate, overlapPlan, recordsFor, samePerson, peopleOptions, sortRecords, validateOoo, describeRange, appointmentsToReassign } from './oooUtils';
+import { fromPickerValue, toPickerValue, activeOooFor, canDelete, canEdit, daySpan, formatDateTime, oooStatus, rangeChange, recordsOnDate, overlapPlan, recordsFor, samePerson, peopleOptions, sortRecords, validateOoo, describeRange, appointmentsToReassign, coveringPeople, phoneTreeOnCall } from './oooUtils';
 
 const at = (d, h = 0, m = 0) => new Date(2026, 8, d, h, m).toISOString(); // Sept 2026, local time
 const rec = (id, s, e, userName = 'Richard Willson') => ({ id, userName, startAt: s, endAt: e });
@@ -93,8 +93,8 @@ describe('validateOoo', () => {
     const original = rec('b', at(8), at(12));
     expect(validateOoo({ startAt: original.startAt, endAt: at(14) }, { now, original })).toEqual({});
   });
-  it('needs a message when auto reply is on', () => {
-    expect(validateOoo({ startAt: at(11), endAt: at(12), autoReply: true, autoReplyMessage: ' ' }, { now }).autoReplyMessage).toBeTruthy();
+  it('treats the auto reply message as optional', () => {
+    expect(validateOoo({ startAt: at(11), endAt: at(12), autoReply: true, autoReplyMessage: ' ' }, { now }).autoReplyMessage).toBeUndefined();
   });
 });
 
@@ -180,5 +180,45 @@ describe('people with the same name', () => {
   it('labels shared names with their email', () => {
     expect(peopleOptions([{ ...a, email: 'john1@x.com' }, { ...b, email: 'john2@x.com' }, { id: 'u-3', name: 'Ann Lee' }]).map(o => o.label))
       .toEqual(['John Smith (john1@x.com)', 'John Smith (john2@x.com)', 'Ann Lee']);
+  });
+});
+
+describe('coveringPeople', () => {
+  it('groups a provider covering several locations into one entry', () => {
+    const people = coveringPeople([
+      { userId: 'u1', userName: 'Abhijit Gupta', location: 'Downtown Clinic' },
+      { userId: 'u2', userName: 'Navin Jethwani', location: 'Riverside Clinic' },
+      { userId: 'u1', userName: 'Abhijit Gupta', location: 'SEB Office' },
+    ]);
+    expect(people).toEqual([
+      { id: 'u1', name: 'Abhijit Gupta', locations: ['Downtown Clinic', 'SEB Office'] },
+      { id: 'u2', name: 'Navin Jethwani', locations: ['Riverside Clinic'] },
+    ]);
+  });
+
+  it('is empty for no coverage and skips entries without a name', () => {
+    expect(coveringPeople(undefined)).toEqual([]);
+    expect(coveringPeople([{ userId: 'u1', location: 'SEB Office' }])).toEqual([]);
+  });
+});
+
+describe('phoneTreeOnCall', () => {
+  const sch = (id, userName, fromDate, toDate, extra = {}) => ({ id, userName, phoneTreeType: 'Out of Office', fromDate, toDate, days: [], ...extra });
+  const from = new Date(2026, 8, 14).getTime(), to = new Date(2026, 8, 16).getTime(); // Mon 14, Tue 15
+  it('picks Out of Office schedules on the dates, per location or for every location', () => {
+    const rows = phoneTreeOnCall([
+      sch('a', 'Ann', '2026-09-10', '2026-09-14', { location: 'North' }),
+      sch('b', 'Bob', '2026-09-15', '2026-09-20'),
+      sch('c', 'Cy', '2026-09-16', '2026-09-20', { location: 'North' }),
+      sch('d', 'Dee', '2026-09-14', '2026-09-20', { phoneTreeType: 'Holiday Hours' }),
+    ], ['North', 'South'], { from, to });
+    expect(rows).toEqual([{ location: 'North', people: ['Ann', 'Bob'] }, { location: 'South', people: ['Bob'] }]);
+  });
+  it('honours weekdays and leaves out the away user', () => {
+    const rows = phoneTreeOnCall([
+      sch('a', 'Ann', '2026-09-01', '2026-09-30', { days: [0, 6] }),
+      sch('b', 'Bob', '2026-09-01', '2026-09-30'),
+    ], [], { from, to, away: { name: 'Bob' } });
+    expect(rows).toEqual([{ location: null, people: [] }]);
   });
 });

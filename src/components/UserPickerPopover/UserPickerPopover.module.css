@@ -3,17 +3,12 @@
   padding: var(--space-2);
 }
 .title { padding: var(--space-1) var(--space-1) 0; font-size: var(--font-base); color: var(--neutral-300); }
-.search {
-  display: flex; align-items: center; gap: var(--space-2);
-  height: 32px; padding: 0 var(--space-2);
-  border: 0.5px solid var(--neutral-200); border-radius: 4px;
-}
-.search:focus-within { border-color: var(--primary-300); }
-.searchInput { flex: 1; min-width: 0; border: none; outline: none; background: none; font-size: var(--font-base); color: var(--neutral-400); }
-.searchInput::placeholder { color: var(--neutral-200); }
 .list { display: flex; flex-direction: column; max-height: 260px; overflow-y: auto; }
+/* One scroll for Unassign and the users: the inner list keeps its full height
+   instead of shrinking and scrolling on its own (which pinned Unassign). */
+.list > [role="listbox"] { flex-shrink: 0; overflow: visible; }
 .row {
-  display: flex; align-items: center; gap: var(--space-3);
+  display: flex; align-items: center; gap: var(--space-1);
   padding: var(--space-2); border: none; border-radius: 4px;
   background: none; text-align: left; cursor: pointer;
 }
@@ -37,3 +32,11 @@
 }
 .clearAll:hover:not(:disabled) { text-decoration: underline; }
 .clearAll:disabled { color: var(--neutral-150); cursor: default; }
+
+/* A user with a badge (e.g. Limited Access): name, then the badge at the end. */
+.nameRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); width: 100%; min-width: 0; }
+.nameText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* titleCaseSections: the list's section headers keep their case. */
+.titleSections [role="presentation"] { text-transform: none; letter-spacing: normal; }
+/* 4px between the avatar and the name, in the user rows as in Unassign. */
+.list [role="option"] { gap: var(--space-1); }

@@ -192,7 +192,6 @@ export function validateOoo(values, { now = new Date(), original = null, existin
     // Keyed on its own: it's about the pair of dates, not either field.
     if (clash) errors.overlap = 'An out of office record already exists for this duration';
   }
-  if (values.autoReply && !String(values.autoReplyMessage || '').trim()) errors.autoReplyMessage = 'Add an auto reply message.';
   return errors;
 }
 
@@ -207,6 +206,49 @@ export function sortRecords(records, now = new Date()) {
 }
 
 /** "personal leave" → "Personal leave". */
+/**
+ * A record's covering providers, one entry per person with the locations
+ * they cover, in the order first picked. `coverage` is
+ * `[{ userId, userName, location }]`, one entry per location.
+ */
+export function coveringPeople(coverage) {
+  const byKey = new Map();
+  (coverage || []).forEach((c) => {
+    const name = String(c?.userName || '').trim();
+    if (!name) return;
+    const key = c.userId || name.toLowerCase();
+    if (!byKey.has(key)) byKey.set(key, { id: c.userId || null, name, locations: [] });
+    const loc = String(c.location || '').trim();
+    if (loc && !byKey.get(key).locations.includes(loc)) byKey.get(key).locations.push(loc);
+  });
+  return [...byKey.values()];
+}
+
+/**
+ * Who answers the Out of Office phone tree at each location while `away` is
+ * out (`from`–`to`, ms): on call schedules of that type on any day of the
+ * range (and one of its weekdays), for that location or for every location
+ * (no location). → [{ location, people: [name] }], in `locations` order; with
+ * no locations, one row (location null) for the schedules on every location.
+ */
+export function phoneTreeOnCall(schedules, locations, { away, from, to } = {}) {
+  if (from == null || to == null || to <= from) return [];
+  const days = [];
+  const d = new Date(from); d.setHours(0, 0, 0, 0);
+  for (let i = 0; d.getTime() < to && i < 366; i += 1, d.setDate(d.getDate() + 1)) {
+    days.push({ iso: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, dow: d.getDay() });
+  }
+  const live = (schedules || []).filter(s => s.phoneTreeType === 'Out of Office'
+    && (s.users || [{ id: s.userId, name: s.userName }]).some(u => !(away && samePerson(u, away)))
+    && days.some(x => x.iso >= s.fromDate && x.iso <= s.toDate && (!s.days?.length || s.days.includes(x.dow))));
+  const rows = locations?.length ? locations : [null];
+  return rows.map(location => ({
+    location,
+    people: [...new Set(live.filter(s => !s.location || s.location === location)
+      .flatMap(s => (s.users || [{ id: s.userId, name: s.userName }]).filter(u => !(away && samePerson(u, away))).map(u => u.name)))],
+  }));
+}
+
 export const capFirst = (v) => { const t = String(v || ''); return t ? t[0].toUpperCase() + t.slice(1) : t; };
 
 export const initialsOf = (name) => String(name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();

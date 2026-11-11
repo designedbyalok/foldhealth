@@ -34,7 +34,32 @@
 }
 .clearAll:hover { text-decoration: underline; }
 .clearAll:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; border-radius: 2px; }
-.iconActive { background: var(--primary-50); }
+.iconActive { background: var(--neutral-50); }
+.coverGroup { text-transform: none; letter-spacing: normal; }
+.changedCheck.coverSwitch { font-weight: 500; color: var(--neutral-200); }
+/* Add Covering Provider: heading, the same-for-all toggle, then one picker
+   or a Location / Covering Provider table. */
+/* 24px above each heading: the form's 16px gap plus 8px; the summary's 12px plus 12px. */
+.coverSection { display: flex; flex-direction: column; gap: var(--space-4); margin-top: var(--space-2); }
+.coverHead { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); }
+.coverTitle { font-size: var(--font-base); font-weight: 500; line-height: 1.35; color: var(--neutral-400); }
+.coverSub { font-size: var(--font-sm); line-height: 1.4; color: var(--neutral-200); }
+.coverTable { border: 1px solid var(--neutral-100); border-radius: 6px; overflow: hidden; }
+/* Location takes the row; Covering Provider is a 200px cell at the right end.
+   The header and location text sit at the same inset as the ghost picker's
+   own text (its 8px padding). */
+.coverTableRow { display: grid; grid-template-columns: 1fr 200px; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-2) var(--space-1) var(--space-4); min-height: 40px; }
+.coverTableRow > * { min-width: 0; }
+.coverTableHead > span:last-child { padding: 0 var(--space-2); }
+.coverTableRow + .coverTableRow { border-top: 1px solid var(--neutral-100); }
+.coverTableHead { min-height: 32px; padding-block: var(--space-2); font-size: var(--font-sm); line-height: 1.35; color: var(--neutral-200); background: var(--neutral-50); }
+.coverTableLoc { font-size: var(--font-base); line-height: 1.2; color: var(--neutral-400); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Covering Provider rows, like Create Team With: avatar, name over role,
+   and on the right why the row is in its group. */
+.coverRow { display: flex; align-items: center; gap: var(--space-2); width: 100%; min-width: 0; }
+.coverRowText { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.coverRowName { font-size: var(--font-md); font-weight: 500; color: var(--neutral-500); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coverRowRole { font-size: var(--font-sm); color: var(--neutral-300); }
 .providerCard {
   display: flex; align-items: center; gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
@@ -98,16 +123,7 @@
   border-top: 0.5px solid color-mix(in srgb, var(--status-warning) 30%, transparent);
   font-size: var(--font-sm); line-height: 1.2; color: var(--neutral-400);
 }
-.optionText { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
-.optionTitle { font-size: var(--font-base); color: var(--neutral-500); }
-.optionSub { font-size: var(--font-sm); color: var(--neutral-300); }
 
-.autoReplyCard {
-  display: flex; flex-direction: column; gap: var(--space-3);
-  padding: var(--space-3);
-  border: 0.5px solid var(--neutral-150); border-radius: 8px;
-}
-.autoReplyHead { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
 .autoReplyField { display: flex; flex-direction: column; gap: var(--space-1); }
 
 /* ── Reassignment step ── */
@@ -144,7 +160,7 @@
 .recordOptionSub { font-size: var(--font-sm); color: var(--neutral-300); }
 /* Reassign Appointments drawer (Figma Eventus 17574:114531): 24px between
    sections, 12px inside the reassignment type group. */
-.form.reassignForm { gap: var(--space-6); }
+.form.reassignForm { gap: var(--space-6); min-height: 100%; }
 .fieldGroup.reassignGroup { gap: var(--space-3); }
 /* The picker's menu is portalled, so these key off the option content
    rather than a wrapper class. Hover is a plain neutral tint; the picked
@@ -175,3 +191,62 @@
 /* Each added schedule starts under a rule, with its number and Remove. */
 .scheduleBlockNext { padding-top: var(--space-4); border-top: 0.5px solid var(--neutral-150); }
 .scheduleBlockHead { display: flex; align-items: center; justify-content: space-between; }
+
+/* The auto-reply message as read: a bordered box, its heading with Edit
+   Message on the right, then the message. */
+.awayMessage { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-2); border: 1px solid var(--neutral-100); border-radius: 6px; background: var(--neutral-50); }
+.awayMessageHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.awayMessageTitle { font-size: var(--font-base); font-weight: 500; line-height: 1.15; color: var(--neutral-200); }
+.awayMessageText { font-size: var(--font-base); line-height: 1.2; color: var(--neutral-400); white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
+/* OOO Phone Tree box: location on the left, who is on call on the right. */
+.awayPhoneTree { display: flex; flex-direction: column; gap: var(--space-2); }
+.awayPhoneRow { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); min-width: 0; }
+.awayPhoneLoc { flex: 1; min-width: 0; font-size: var(--font-base); line-height: 1.2; color: var(--neutral-400); overflow-wrap: anywhere; }
+.awayPhonePeople { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); min-width: 0; }
+.awayPhonePerson { display: inline-flex; align-items: center; gap: var(--space-1); min-width: 0; }
+.awayPhoneName { font-size: var(--font-base); line-height: 1.2; color: var(--neutral-400); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.awayPhoneNone { font-size: var(--font-base); line-height: 1.2; color: var(--neutral-200); }
+/* Grey badges: the name shrinks (ellipsis) so "+N" always fits. */
+.awayWarn { display: inline-flex; align-items: flex-start; gap: var(--space-1); font-size: var(--font-sm); color: var(--status-warning-dark); }
+.awayList { display: flex; flex-direction: column; gap: var(--space-1); }
+
+/* Reassign Open Work (step 2): a card per area of the user's work: title
+   with its count, who it goes to and Edit, then what happens to current
+   and new work. */
+.workIntro { margin: 0; font-size: var(--font-base); line-height: 1.2; color: var(--neutral-300); }
+.workList { display: flex; flex-direction: column; gap: var(--space-3); }
+.workCard { background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: 8px; overflow: hidden; }
+.workHead { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); }
+.workText { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); }
+.workTitle { font-size: var(--font-base); font-weight: 500; line-height: 1.2; color: var(--neutral-400); }
+.workTitleMuted { color: var(--neutral-200); }
+.workTools { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+.workAvatars { display: inline-flex; }
+/* The avatar group alone (no picker chrome); clicking opens the module's drawer. */
+.workAvatarsButton { display: inline-flex; padding: 0; border: none; background: none; border-radius: 6px; cursor: pointer; }
+.workAvatarsButton:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; }
+.workLine { font-size: var(--font-sm); line-height: 1.2; color: var(--neutral-300); }
+/* A card's lines read as one block, 4px under the title. */
+.workLine + .workLine { margin-top: calc(var(--space-1) * -1); }
+.workLineMuted { color: var(--neutral-200); }
+.workExtra { padding: 0 var(--space-3) var(--space-2); }
+.workMessageEdit { display: flex; flex-direction: column; gap: var(--space-2); }
+.workMessageActions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+
+/* Task and care program rows in a module's Reassign drawer (Figma Eventus
+   17818:123335). */
+.itemMain { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-2); }
+.itemText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.itemHead { display: flex; align-items: center; gap: var(--space-1); min-width: 0; }
+.itemTitle { font-size: var(--font-base); line-height: 1.2; color: var(--neutral-400); overflow-wrap: anywhere; }
+.itemSub { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--font-base); line-height: 1.2; color: var(--neutral-300); }
+.itemSubMissed { color: var(--status-error); }
+.itemSubSm { font-size: var(--font-sm); line-height: 1.2; color: var(--neutral-300); }
+
+/* The Out of Office record, read-only, on top of Reassign Open Work and the
+   module drawers (Figma Eventus 17834:123336): initials, name over the dates,
+   as a full-width strip under the drawer header. */
+.recordSummary { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); background: var(--secondary-50); border-bottom: 0.5px solid var(--neutral-150); }
+.recordSummaryText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); }
+.recordSummaryMain { font-size: var(--font-base); font-weight: 500; line-height: 1.2; color: var(--neutral-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recordSummarySub { font-size: var(--font-base); line-height: 1.2; color: var(--neutral-200); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

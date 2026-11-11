@@ -13,6 +13,7 @@ import { ScheduleDrawerTimePicker } from './ScheduleDrawerTimePicker';
 import { StaffInstructionIcon } from './ScheduleDrawerScreens';
 import { getInitials, MODE_OPTIONS, APPOINTMENT_STATUSES } from './scheduleDrawerConstants';
 import { useLocationOptions } from './useLocationOptions';
+import { AppointmentActivity } from './AppointmentActivity';
 import { usePatientCallButton } from '../../hooks/usePatientCallButton';
 import styles from './ScheduleDrawer.module.css';
 
@@ -50,6 +51,7 @@ export function ScheduleDrawerViewMode({
   provider,
   setProvider,
   profileUsers,
+  providerOoo,
   setSectionOpen,
   date,
   setDate,
@@ -191,7 +193,7 @@ export function ScheduleDrawerViewMode({
             </div>
             <div className={styles.detailRow}>
               <span className={styles.detailLabel}>Primary User</span>
-              <ProviderPicker value={provider || ea.primary_user} onSelect={(v, p) => { setProvider(v, p); if (ea.id) updateAppointment(ea.id, { primary_user: v, primary_user_id: p?.id || null }); }} profileUsers={profileUsers} onAddSecondary={() => setSectionOpen('secondary', true)} />
+              <ProviderPicker value={provider || ea.primary_user} onSelect={(v, p) => { setProvider(v, p); if (ea.id) updateAppointment(ea.id, { primary_user: v, primary_user_id: p?.id || null }); }} profileUsers={profileUsers} outOfOffice={providerOoo} onAddSecondary={() => setSectionOpen('secondary', true)} />
             </div>
             <div className={styles.detailRow}>
               <span className={styles.detailLabel}>Date</span>
@@ -287,6 +289,8 @@ export function ScheduleDrawerViewMode({
             )}
           </div>
         )}
+
+        {ea?.id && <AppointmentActivity appointmentId={ea.id} />}
       </div>
     </>
   );

@@ -35,6 +35,7 @@ export function useOooRecordActions({ user, users } = {}) {
       {form && (
         <OooRecordDrawer
           record={form.record}
+          initialStep={form.step}
           user={form.record ? undefined : (form.user || user)}
           users={users}
           onClose={() => setForm(null)}
@@ -91,6 +92,8 @@ export function useOooRecordActions({ user, users } = {}) {
     // `forUser` fixes who a new record is for (else `user`, else picked).
     openNew: (forUser) => setForm({ user: forUser }),
     openEdit: (record) => setForm({ record }),
+    // A record straight at its second step, Reassign Open Work.
+    openOpenWork: (record) => setForm({ record, step: 2 }),
     askDelete: setToDelete,
     // Reassign Appointments on its own, optionally for a provider ({ id, name })
     // and one of their records.

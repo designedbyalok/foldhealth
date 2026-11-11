@@ -6,24 +6,30 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Icon } from '../../components/Icon/Icon';
 import { UserSwitchIcon } from '../../components/Icon/UserSwitchIcon';
 import { TruncatedText } from '../../components/TruncatedText/TruncatedText';
+import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { useAppStore } from '../../store/useAppStore';
-import { appointmentsToReassign, canDelete, canEdit, capFirst, formatDateTime, initialsOf, oooStatus, recordsOnDate, STATUS_TONE } from './oooUtils';
+import { useScrollbarOnScroll } from '../../lib/useScrollbarOnScroll';
+import { openTasksByCard } from './openWork';
+import { appointmentsToReassign, canDelete, canEdit, capFirst, coveringPeople, formatDateTime, initialsOf, oooStatus, recordsOnDate, STATUS_TONE } from './oooUtils';
 import styles from './OooRecordsTable.module.css';
 
-// Start and end in their own columns, each on one line. On the full page
-// the user column takes a share of the row; in a drawer it's fixed. Reason
-// takes what's left (the table scrolls sideways below its minimum width).
+// Start and end in their own columns, each on one line. The user column is
+// 300px on the full page, 280px in a drawer. Reason takes what's left (the table scrolls sideways below its minimum width).
 const columnsFor = (wide, showUser) => [
-  ...(showUser ? [{ key: 'user', label: 'User', sticky: 'left', left: 0, width: wide ? '22%' : 280 }] : []),
+  ...(showUser ? [{ key: 'user', label: 'User', sticky: 'left', left: 0, width: wide ? 300 : 280 }] : []),
   { key: 'start', label: 'Start Date & Time', width: 184 },
   { key: 'end', label: 'End Date & Time', width: 184 },
+  { key: 'coveredBy', label: 'Covered By', width: 200 },
   { key: 'reason', label: 'Reason' },
   // Just wide enough for the longest status badge ("Upcoming").
   { key: 'status', label: 'Status', width: 112 },
   // When it was added and last changed, each over who did it.
   { key: 'created', label: 'Created', width: 184 },
   { key: 'updated', label: 'Last Updated', width: 184 },
-  { key: 'actions', label: 'Actions', sticky: 'right', width: 156 },
+  // The edge line is an inset shadow, not a border: with collapsed borders a
+  // border stays at the column's spot in the table and only lines up when
+  // scrolled all the way right.
+  { key: 'actions', label: 'Actions', sticky: 'right', width: 156, thStyle: { boxShadow: 'inset 0.5px 0 0 var(--neutral-150)' } },
 ];
 
 /** A date and time over the person, like Care Plan Library's Last Update. */
@@ -38,12 +44,39 @@ function StampCell({ at, by }) {
 }
 
 /**
- * Out of Office records in the shared WorklistShell table: Start, End, Reason,
+ * Who covers: the first covering provider as a grey badge, the rest as
+ * "+N". Covering is per location, so hovering lists each provider with the
+ * locations they cover.
+ */
+function CoveredByCell({ coverage }) {
+  const people = coveringPeople(coverage);
+  if (!people.length) return '-';
+  const [first, ...rest] = people;
+  const list = (
+    <span className={styles.coverList}>
+      {people.map(p => (
+        <span key={p.name}>{p.name}{p.locations.length > 0 && ` • ${p.locations.join(', ')}`}</span>
+      ))}
+    </span>
+  );
+  return (
+    <Tooltip label={list} placement="bottom" align="start">
+      <span className={styles.coverCell}>
+        <Badge tone="neutral" size="sm" icon="solar:user-linear" className={styles.coverBadge} label={<span className={styles.coverName}>{first.name}</span>} />
+        {rest.length > 0 && <Badge tone="neutral" size="sm" label={`+${rest.length}`} />}
+      </span>
+    </Tooltip>
+  );
+}
+
+/**
+ * Out of Office records in the shared WorklistShell table: Start, End, Covered By, Reason,
  * Status and Actions, with a sticky User column when it lists several
  * users. Past records are read-only; an ongoing one can be edited but not
  * deleted. The Reassign action keeps the scheduler's to-do: it's enabled,
- * with a dot, while the provider still has upcoming appointments in those
- * dates to move, and opens Reassign Appointments for that record.
+ * with a dot, while the provider still has open work in those dates
+ * (upcoming appointments, open tasks), and opens the record at Reassign
+ * Open Work.
  *
  * @param {object}   props
  * @param {object[]} props.records
@@ -68,14 +101,16 @@ export function OooRecordsTable({ records, showUser = false, oneLineDates = fals
     if (!onPage) return;
     document.querySelector(`[data-ooo-record="${highlightId}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }, [onPage, highlightId]);
+  const wrapRef = useRef(null);
+  useScrollbarOnScroll(wrapRef);
   const now = new Date();
-  // Records saved without an email (seeded, or picked by name) take it from
-  // the staff profiles, so every row reads name over email.
-  const taskProfiles = useAppStore(s => s.taskProfiles);
-  const emailOf = useMemo(() => {
-    const byName = new Map((taskProfiles || []).filter(p => p.email).map(p => [String(p.name || '').trim().toLowerCase(), p.email]));
-    return (r) => r.userEmail || byName.get(String(r.userName || '').trim().toLowerCase()) || '';
-  }, [taskProfiles]);
+  // Under the name, the role as User Availability shows it: the user's
+  // first clinical role, or Staff.
+  const platformUsers = useAppStore(s => (s.platformPeople?.length ? s.platformPeople : s.platformUsers));
+  const roleOf = useMemo(() => {
+    const byName = new Map((platformUsers || []).map(u => [String(u.name || '').trim().toLowerCase(), u.clinicalRoles?.[0]]));
+    return (r) => byName.get(String(r.userName || '').trim().toLowerCase()) || 'Staff';
+  }, [platformUsers]);
 
   // Appointments feed the Reassignment column; load them once if this page
   // is the first to need them (e.g. Settings opened before the calendar).
@@ -85,12 +120,19 @@ export function OooRecordsTable({ records, showUser = false, oneLineDates = fals
   useEffect(() => {
     if (!askedRef.current && !(appointments || []).length) { askedRef.current = true; fetchAppointments?.(); }
   }, [appointments, fetchAppointments]);
+  // Open tasks count too: Reassign opens the record's Reassign Open Work.
+  const tasks = useAppStore(s => s.tasks);
+  const fetchTasks = useAppStore(s => s.fetchTasks);
+  useEffect(() => { fetchTasks?.(); }, [fetchTasks]);
 
   const renderRow = (r) => {
     const status = oooStatus(r, now);
     const editable = canEdit(r, now);
     const deletable = canDelete(r, now);
-    const left = status === 'Past' ? 0 : appointmentsToReassign(r, appointments, now).length;
+    // Open work still with the user in these dates: upcoming appointments and
+    // open tasks (care programs load only once Reassign Open Work opens).
+    const left = status === 'Past' ? 0 : appointmentsToReassign(r, appointments, now).length
+      + Object.values(openTasksByCard(tasks, { id: r.userId, name: r.userName }, r.endAt)).reduce((n, l) => n + l.length, 0);
     return (
       <tr key={r.id} data-ooo-record={r.id} className={[styles.row, highlighted.has(r.id) ? styles.rowHighlight : ''].filter(Boolean).join(' ')}>
         {showUser && (
@@ -99,13 +141,14 @@ export function OooRecordsTable({ records, showUser = false, oneLineDates = fals
               <Avatar variant="staff" size="M" initials={initialsOf(r.userName)} ooo={null} />
               <span className={styles.userText}>
                 <span className={styles.userName}>{r.userName}</span>
-                {emailOf(r) && <span className={styles.userSub}>{emailOf(r)}</span>}
+                <span className={styles.userSub}>{roleOf(r)}</span>
               </span>
             </span>
           </td>
         )}
         <td className={styles.td}>{formatDateTime(r.startAt)}</td>
         <td className={styles.td}>{formatDateTime(r.endAt)}</td>
+        <td className={styles.td}><CoveredByCell coverage={r.coverage} /></td>
         <td className={styles.td}><TruncatedText text={capFirst(r.reason) || '–'} /></td>
         <td className={styles.td}><Badge tone={STATUS_TONE[status]} size="sm" label={status} /></td>
         <td className={styles.td}><StampCell at={r.createdAt} by={r.createdBy} /></td>
@@ -117,12 +160,12 @@ export function OooRecordsTable({ records, showUser = false, oneLineDates = fals
             {onReassign && (
               <>
                 <ActionButton
-                  tooltip={left ? `Reassign ${left} Appointment${left === 1 ? '' : 's'}` : status === 'Past' ? 'Past records can\'t be reassigned' : 'No appointments to reassign'}
+                  tooltip={left ? `Reassign ${left} Open Item${left === 1 ? '' : 's'}` : status === 'Past' ? 'Past records can\'t be reassigned' : 'No open work to reassign'}
                   tooltipLeft
                   tooltipBelow
                   disabled={!left}
                   dot={!!left}
-                  aria-label={left ? `Reassign ${left} appointment${left === 1 ? '' : 's'}` : 'Reassign appointments'}
+                  aria-label={left ? `Reassign ${left} open item${left === 1 ? '' : 's'}` : 'Reassign open work'}
                   onClick={() => left && onReassign(r)}
                 >
                   <UserSwitchIcon size={16} color={left ? 'var(--neutral-300)' : 'var(--neutral-150)'} />
@@ -164,7 +207,7 @@ export function OooRecordsTable({ records, showUser = false, oneLineDates = fals
   return (
     // The wrapper only sets the first column's left inset (header and cells).
     // With no records, only the empty state shows (no column headers).
-    <div className={[embedded ? styles.wrapEmbedded : styles.wrap, !loading && !records?.length ? styles.empty : ''].filter(Boolean).join(' ')}>
+    <div ref={wrapRef} className={[embedded ? styles.wrapEmbedded : styles.wrap, 'scrollbar-x-on-scroll', !loading && !records?.length ? styles.empty : ''].filter(Boolean).join(' ')}>
     <WorklistShell
       header={null}
       columns={columns}
@@ -175,7 +218,7 @@ export function OooRecordsTable({ records, showUser = false, oneLineDates = fals
       embedded={embedded}
       // Every fixed column plus at least 160px for Reason before it scrolls
       // sideways (on the full page the User column is 22% of the table).
-      minTableWidth={showUser ? (oneLineDates ? 1492 : 1444) : 1164}
+      minTableWidth={showUser ? (oneLineDates ? 1692 : 1644) : 1364}
       page={pagination?.page}
       perPage={pagination?.perPage}
       totalItems={pagination?.totalItems}

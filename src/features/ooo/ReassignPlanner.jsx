@@ -31,7 +31,7 @@ const checkState = (ids, selected) => {
 const pickerUser = (u) => ({ id: u.id, name: u.name, initials: u.initials, role: u.clinicalRoles?.[0] || u.role || '' });
 
 /**
- * "Select Reassignment Providers" with real appointments (Figma Eventus
+ * "Select Covering Providers" with real appointments (Figma Eventus
  * 16978:129171 and the frames around it). The away provider's appointments
  * in scope, by department:
  *   - departments someone else covers: pick a covering provider for the
@@ -239,7 +239,7 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
   if (!appointments.length) {
     return (
       <div className={styles.planner}>
-        <span className={styles.plannerTitle}>Select Reassignment Providers</span>
+        <span className={styles.plannerTitle}>Select Covering Providers</span>
         <div className={ooo.providersEmpty}>
           <EmptyState size="sm" icon="solar:calendar-linear" title="No upcoming appointments to reassign for these dates" />
         </div>
@@ -255,7 +255,7 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
   return (
     <div className={styles.planner}>
       <div className={styles.plannerHead}>
-        <span className={styles.plannerTitle}>Select Reassignment Providers</span>
+        <span className={styles.plannerTitle}>Select Covering Providers</span>
         <span className={styles.plannerTools}>
           <ActionButton tooltip="Filters" count={filterCount || undefined} active={filtersOpen} onClick={() => setFiltersOpen(o => !o)}>
             <FilterIcon size={20} color="var(--neutral-300)" />

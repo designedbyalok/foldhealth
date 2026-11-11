@@ -280,6 +280,17 @@ html { scroll-behavior: smooth; }
   background: var(--neutral-200);
 }
 
+/* Wide tables (OOO Records, Appointment List): a thin horizontal
+   scrollbar, its space always kept so nothing shifts, with the thumb
+   showing only while the table scrolls (`data-scrolling`, set by
+   useScrollbarOnScroll). Applies to the element and scrollers inside it. */
+.scrollbar-x-on-scroll::-webkit-scrollbar,
+.scrollbar-x-on-scroll ::-webkit-scrollbar { height: 6px; }
+.scrollbar-x-on-scroll::-webkit-scrollbar-thumb,
+.scrollbar-x-on-scroll ::-webkit-scrollbar-thumb { background: transparent; }
+.scrollbar-x-on-scroll[data-scrolling]::-webkit-scrollbar-thumb,
+.scrollbar-x-on-scroll[data-scrolling] ::-webkit-scrollbar-thumb { background: var(--neutral-200); }
+
 @keyframes oncallPulse {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--status-success) 50%, transparent); }
   50% { opacity: .6; box-shadow: 0 0 0 4px color-mix(in srgb, var(--status-success) 0%, transparent); }

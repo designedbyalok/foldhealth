@@ -17,6 +17,32 @@ const isDevBypass = () => {
   try { return sessionStorage.getItem('__auth_bypass') === 'true'; } catch { return false; }
 };
 
+// Covering providers per Out of Office record, kept in this browser until
+// ooo_records_coverage_migration.sql adds the column (record id → coverage).
+const OOO_COVERAGE_KEY = 'oooCoverageLocal';
+function readOooCoverage() {
+  try { return JSON.parse(localStorage.getItem(OOO_COVERAGE_KEY) || '{}') || {}; } catch { return {}; }
+}
+function writeOooCoverage(id, coverage) {
+  try {
+    const all = readOooCoverage();
+    if (coverage) all[id] = coverage; else delete all[id];
+    localStorage.setItem(OOO_COVERAGE_KEY, JSON.stringify(all));
+  } catch { /* private mode: this session only */ }
+}
+
+// Appointment fields whose changes show in its Activity, and how each value
+// renders there (status badge, user avatar, mode icon, plain text).
+const APPOINTMENT_ACTIVITY_FIELDS = [
+  ['status', 'status'],
+  ['primary_user', 'user'],
+  ['mode', 'mode'],
+  ['location', 'text'],
+  ['appointment_type_name', 'text'],
+  ['reason_for_visit', 'text'],
+  ['date', 'text'],
+];
+
 // Selectable audiences before audience_segments is fetched (or if the table
 // isn't migrated yet). Mirrors supabase/audience_segments_migration.sql.
 const FALLBACK_AUDIENCE_SEGMENTS = [
@@ -16660,7 +16686,13 @@ export const useAppStore = create((set, get) => ({
       supabase.from('ooo_records').select('*').order('start_at', { ascending: false }),
     ]);
     if (!error) {
-      set({ oooRecords: (data || []).map(rowToOoo), oooRecordsLoading: false, oooRecordsFetched: true, oooLocal: false });
+      // No coverage column yet: covering providers come from this browser.
+      const local = readOooCoverage();
+      const records = (data || []).map(row => {
+        const r = rowToOoo(row);
+        return 'coverage' in row ? r : { ...r, coverage: local[r.id] || [] };
+      });
+      set({ oooRecords: records, oooRecordsLoading: false, oooRecordsFetched: true, oooLocal: false });
       return;
     }
     console.warn('fetchOooRecords:', error.message);
@@ -16682,13 +16714,24 @@ export const useAppStore = create((set, get) => ({
       updatedBy: get().currentUserProfile?.name || record.updatedBy || null,
     };
     if (!get().oooLocal) {
-      let { error } = await supabase.from('ooo_records').upsert(oooToRow(next), { onConflict: 'id' });
-      // Until ooo_records_updated_by_migration.sql runs there's no updated_by
-      // column; save without it rather than failing.
-      if (error && /updated_by/.test(error.message || '')) {
-        const { updated_by: _skip, ...row } = oooToRow(next);
-        ({ error } = await supabase.from('ooo_records').upsert(row, { onConflict: 'id' }));
+      let row = oooToRow(next);
+      let { error } = await supabase.from('ooo_records').upsert(row, { onConflict: 'id' });
+      // Until ooo_records_updated_by_migration.sql / ooo_records_coverage_migration.sql
+      // run there's no updated_by / coverage column; save without them rather
+      // than failing.
+      let coverageLocal = false;
+      for (const col of ['coverage', 'updated_by']) {
+        if (error && new RegExp(col).test(error.message || '')) {
+          const { [col]: _skip, ...rest } = row;
+          row = rest;
+          if (col === 'coverage') coverageLocal = true;
+          ({ error } = await supabase.from('ooo_records').upsert(row, { onConflict: 'id' }));
+        }
       }
+      // Without the column, covering providers are kept in this browser so
+      // everything that reads them still works; once it exists the row
+      // carries them and the browser copy is dropped.
+      if (!error) writeOooCoverage(next.id, coverageLocal ? (next.coverage || []) : null);
       if (error) {
         console.warn('saveOooRecord:', error.message);
         get().showToast?.('Could Not Save the Out of Office Record. Try Again.');
@@ -16707,6 +16750,7 @@ export const useAppStore = create((set, get) => ({
         return false;
       }
     }
+    writeOooCoverage(id, null);
     set(s => ({ oooRecords: s.oooRecords.filter(r => r.id !== id) }));
     return true;
   },
@@ -17105,11 +17149,27 @@ export const useAppStore = create((set, get) => ({
           { primary_user: to });
       }
       await update(cancelIds, { status: 'Cancelled' }, { reassignment_job_id: job.id }, { status: 'Cancelled' });
+      // Activity on each appointment: who it moved from and to, and why.
+      const why = type === 'ooo' ? 'Out of Office' : type === 'permanent' ? 'Permanent' : 'One-time';
+      const byId = new Map((appointments || []).map(a => [a.id, a]));
+      await Promise.all(job.results.map((r) => {
+        const a = byId.get(r.appointmentId);
+        if (!a) return null;
+        if (r.outcome === 'reassigned') {
+          return get().logAudit('Appointment', a.id, a.patient_name || 'Appointment', 'reassigned', `Reassigned (${why})`, 'Reassignment',
+            [{ field: 'primary_user', from: fromUser, to: r.to, type: 'user' }]);
+        }
+        if (r.outcome === 'cancelled') {
+          return get().logAudit('Appointment', a.id, a.patient_name || 'Appointment', 'cancelled', `Cancelled (${why})`, 'Reassignment',
+            [{ field: 'status', from: a.status || 'Scheduled', to: 'Cancelled', type: 'status' }]);
+        }
+        return null;
+      }));
     } catch (err) {
       console.warn('runReassignmentJob update:', err.message);
       set(st => ({ reassignmentJobs: st.reassignmentJobs.map(j => (j.id === job.id ? { ...job, status: 'failed' } : j)) }));
       get().showToast?.('Reassignment Failed. Try Again.');
-      await get().fetchAppointments?.();
+      await get().fetchAppointments?.({ force: true });
       return null;
     }
     if (!get().reassignmentLocal) {
@@ -17121,7 +17181,7 @@ export const useAppStore = create((set, get) => ({
       if (error) { console.warn('runReassignmentJob save:', error.message); set({ reassignmentLocal: true }); }
     }
     set(st => ({ reassignmentJobs: st.reassignmentJobs.map(j => (j.id === job.id ? job : j)) }));
-    await get().fetchAppointments?.();
+    await get().fetchAppointments?.({ force: true });
     get().addNotification?.({
       type: 'reassignment.summary',
       title: `Appointment reassignment summary is ready for ${fromUser}.`,
@@ -17170,7 +17230,9 @@ export const useAppStore = create((set, get) => ({
     // Before person_ids_migration.sql runs, there are no id columns.
     if (error) ({ error } = await supabase.from('appointments').update({ primary_user: person.name, reassigned_from: null, reassignment_job_id: null }).in('id', ids));
     if (error) { console.warn('restoreReassignedAppointments:', error.message); return 0; }
-    await get().fetchAppointments?.();
+    await Promise.all(back.map(a => get().logAudit('Appointment', a.id, a.patient_name || 'Appointment', 'reassigned', 'Returned (Out of Office shortened)', 'Reassignment',
+      [{ field: 'primary_user', from: a.primary_user || '', to: person.name, type: 'user' }])));
+    await get().fetchAppointments?.({ force: true });
     return back.length;
   },
 
@@ -17207,7 +17269,12 @@ export const useAppStore = create((set, get) => ({
       createdAt: now,
     }));
     if (!get().onCallLocal) {
-      const { error } = await supabase.from('on_call_schedules').insert(next.map(onCallToRow));
+      // `users` / `location` arrive with on_call_schedules_location_migration.sql;
+      // until then the first user (user_name) is saved.
+      let { error } = await supabase.from('on_call_schedules').insert(next.map(onCallToRow));
+      if (error && /column .* does not exist|schema cache/i.test(error.message || '')) {
+        ({ error } = await supabase.from('on_call_schedules').insert(next.map(sc => { const { users: _u, location: _l, ...row } = onCallToRow(sc); return row; })));
+      }
       if (error) {
         console.warn('createOnCallSchedules:', error.message);
         get().showToast?.('Could not create the on call schedule. Try again.');
@@ -17216,6 +17283,83 @@ export const useAppStore = create((set, get) => ({
     }
     set(s => ({ onCallSchedules: [...s.onCallSchedules, ...next] }));
     return next;
+  },
+  // ── Out of Office step 2: a user's open care program enrollments ──
+  // Read on demand (the Reassign Open Work step), not kept in the store.
+  fetchProgramsAssignedTo: async (name) => {
+    const who = String(name || '').trim();
+    if (!who) return [];
+    const { data, error } = await supabase
+      .from('patient_care_programs')
+      // '*': `location` exists only once tasks_location_migration.sql runs.
+      .select('*')
+      .ilike('assignee', who);
+    if (error) { console.warn('fetchProgramsAssignedTo:', error.message); return []; }
+    const ids = [...new Set((data || []).map(r => r.patient_id).filter(Boolean))];
+    const names = new Map();
+    if (ids.length) {
+      const { data: pts } = await supabase.from('patients').select('id, name').in('id', ids);
+      (pts || []).forEach(p => names.set(String(p.id), p.name));
+    }
+    return (data || []).map(r => ({
+      id: r.id,
+      patientId: r.patient_id,
+      patientName: names.get(String(r.patient_id)) || null,
+      code: r.code,
+      name: r.sub_program || r.name || r.code,
+      status: r.status,
+      assignee: r.assignee,
+      location: r.location || null,
+      startDate: r.start_date || null,
+      pcp: r.pcp || null,
+      progress: Number(r.progress) || 0,
+    }));
+  },
+  // plan: enrollment id → { action: 'reassign', to }
+  reassignCarePrograms: async (plan) => {
+    const byTo = new Map();
+    Object.entries(plan || {}).forEach(([id, p]) => {
+      if (p?.action !== 'reassign' || !p.to) return;
+      if (!byTo.has(p.to)) byTo.set(p.to, []);
+      byTo.get(p.to).push(id);
+    });
+    for (const [to, ids] of byTo) {
+      const { error } = await supabase.from('patient_care_programs').update({ assignee: to }).in('id', ids);
+      if (error) { console.warn('reassignCarePrograms:', error.message); return false; }
+    }
+    return true;
+  },
+  updateOnCallSchedule: async (id, patch) => {
+    const { onCallToRow } = await import('../features/ooo/onCallSeed');
+    const current = get().onCallSchedules.find(x => x.id === id);
+    if (!current) return null;
+    const next = { ...current, ...patch };
+    if (!get().onCallLocal) {
+      let { error } = await supabase.from('on_call_schedules').update(onCallToRow(next)).eq('id', id);
+      if (error && /column .* does not exist|schema cache/i.test(error.message || '')) {
+        const { users: _u, location: _l, ...row } = onCallToRow(next);
+        ({ error } = await supabase.from('on_call_schedules').update(row).eq('id', id));
+      }
+      if (error) {
+        console.warn('updateOnCallSchedule:', error.message);
+        get().showToast?.('Could not save the on call schedule. Try again.');
+        return null;
+      }
+    }
+    set(s => ({ onCallSchedules: s.onCallSchedules.map(x => (x.id === id ? next : x)) }));
+    return next;
+  },
+  deleteOnCallSchedule: async (id) => {
+    if (!get().onCallLocal) {
+      const { error } = await supabase.from('on_call_schedules').delete().eq('id', id);
+      if (error) {
+        console.warn('deleteOnCallSchedule:', error.message);
+        get().showToast?.('Could not delete the on call schedule. Try again.');
+        return false;
+      }
+    }
+    set(s => ({ onCallSchedules: s.onCallSchedules.filter(x => x.id !== id) }));
+    return true;
   },
 
   analyticsCache: {},
@@ -17440,6 +17584,8 @@ export const useAppStore = create((set, get) => ({
       ({ data, error } = await supabase.from('appointments').insert(byName).select().single());
     }
     if (error) { console.error('Create appointment error:', error); return null; }
+    // Awaited so the Activity a refetch reads already has it.
+    if (data) await get().logAudit('Appointment', data.id, data.patient_name || 'Appointment', 'created', 'Created the appointment', 'Lifecycle');
     // Refresh list
     get().fetchAppointments({ force: true });
     // Notify me if I'm listed on the appointment: but not when I created
@@ -17471,6 +17617,16 @@ export const useAppStore = create((set, get) => ({
       ({ error } = await supabase.from('appointments').update(byName).eq('id', id));
     }
     if (error) { console.error('Update appointment error:', error); return false; }
+    // Activity: what changed, field by field (see APPOINTMENT_ACTIVITY_FIELDS).
+    if (prev) {
+      const changes = APPOINTMENT_ACTIVITY_FIELDS
+        .filter(([k]) => k in updates && String(prev[k] ?? '') !== String(updates[k] ?? ''))
+        .map(([k, type]) => ({ field: k, from: prev[k] ?? '', to: updates[k] ?? '', type }));
+      if ('time_start' in updates && String(prev.time_start ?? '') !== String(updates.time_start ?? '')) {
+        changes.push({ field: 'time', from: [prev.time_start, prev.time_end].filter(Boolean).join(' - '), to: [updates.time_start, updates.time_end ?? prev.time_end].filter(Boolean).join(' - '), type: 'text' });
+      }
+      if (changes.length) await get().logAudit('Appointment', id, prev.patient_name || 'Appointment', 'updated', 'Updated', 'Lifecycle', changes);
+    }
     get().fetchAppointments({ force: true });
     // Notify me if this update newly puts me on the appointment (name
     // becomes primary_user, or gets added to secondary_users).

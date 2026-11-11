@@ -165,7 +165,7 @@ export function BulkRescheduleDrawer({ provider, appointments: selected, onDone,
         /> */}
 
         {/* A heading with its action on the right, like the Reassign
-            drawer's "Select Reassignment Providers". */}
+            drawer's "Select Covering Providers". */}
         <div className={styles.rescheduleHead}>
           <span className={styles.rescheduleTitle}>Select New Date &amp; Time</span>
           <Button variant="soft" size="sm" leadingIconElement={<Icon name="custom:ai" size={14} />} onClick={autofill}>

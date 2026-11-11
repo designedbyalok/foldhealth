@@ -301,6 +301,17 @@
 }
 .providerItem:last-child { border-bottom: none; }
 .providerItem:hover { background: var(--neutral-50); }
+/* Out of Office providers: listed last under Not Available, not pickable
+   (the badge keeps its tooltip). */
+.providerGroup { padding: var(--space-2) var(--space-3) var(--space-1); font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300); border-bottom: 0.5px solid var(--neutral-100); }
+.providerItemDisabled { cursor: not-allowed; }
+.providerItemDisabled:hover { background: none; }
+/* Unavailable: lighter text instead of opacity, so the Out of Office badge
+   and the covering line keep their colour. */
+.providerMutedName { font-size: var(--font-base); font-weight: 500; color: var(--placeholder-text); }
+.providerMutedSub { font-size: var(--font-sm); color: var(--placeholder-text); }
+/* Stays readable on the muted row: who to book instead. */
+.providerItemDisabled .providerCoveredBy { margin-top: var(--space-1); font-size: var(--font-sm); color: var(--neutral-300); }
 .addSecondaryBtn {
   display: flex; align-items: center; gap: 4px;
   font-size: var(--font-sm); font-weight: 500; color: var(--primary-300);
@@ -374,3 +385,9 @@
   transition: transform .2s; box-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 .switchInput:checked + .switchTrack .switchThumb { transform: translateX(14px); }
+
+/* Appointment Activity: the person's initials sit level with the headline
+   ("Devanshi Sharma reassigned…"), one meta line (date • time) below where
+   the shared rail puts its icon. Shifted visually only, so the rail's
+   connectors keep their lengths. */
+.activityRailAvatar { position: relative; top: var(--space-4); display: inline-flex; z-index: 1; }
