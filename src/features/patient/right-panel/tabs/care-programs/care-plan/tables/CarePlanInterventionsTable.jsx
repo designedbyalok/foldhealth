@@ -23,7 +23,8 @@ import {
   GBI_COL_WIDTH,
 } from './carePlanTableShared';
 import { COMPACT_INTERVENTION_COLUMNS } from './carePlanTableColumns';
-import { isCompletedStatus, parseCarePlanDate, toPickerValue, interventionOwner, openOnRowKey } from './carePlanTableModel';
+import { isCompletedStatus, isPastDue, parseCarePlanDate, toPickerValue, interventionOwner, openOnRowKey } from './carePlanTableModel';
+import { Badge } from '../../../../../../../components/Badge/Badge';
 import { enrichInterventionRows } from './carePlanTableSort';
 import { CARE_PLAN_INTERVENTION_ICONS } from '../lib/carePlanInterventionMenu';
 import { KIND_LABELS } from '../../../../../../settings/care-plan-library/interventions/shared/interventionKinds';
@@ -61,6 +62,15 @@ const NO_DUE_DATE = { iso: null, formatted: null };
 // and this returns nulls: callers show "No due date" rather than a projected
 // one. Returns { iso, formatted } so the calendar can seed itself and the
 // cell has a display string in one call. Table and drawers share it.
+// Whole days an open intervention is past its due date (0 when it isn't).
+function lateDays(iso, status) {
+  if (!iso || !isPastDue(iso, status)) return 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = parseCarePlanDate(iso);
+  return due ? Math.max(1, Math.round((today - due) / 86400000)) : 0;
+}
+
 export function computeDueDate(intv, pairedTask = null) {
   // Stored dates are date-only; parse locally so they don't render a day
   // early west of UTC.
@@ -243,6 +253,8 @@ export function CarePlanInterventionsTable({
   onRecurrenceChange,
   // Notes icon → open the intervention drawer at its Note section.
   onOpenNotes,
+  // (goalId) => the goal's title, for "for <goal>" under the name.
+  goalTitleOf,
   // (intervention, title) => void: saves an in-place title edit.
   onTitleChange,
   // (intervention) => boolean: whether it has a current (undeleted) note.
@@ -422,9 +434,12 @@ export function CarePlanInterventionsTable({
     // A column the user switched on carries the value, so the meta line
     // drops its copy rather than show it twice.
     const ownerLabel = owner.unassigned ? 'Unassigned' : `Assigned to ${owner.name || 'Member'}`;
+    const goalTitle = i.goalId ? goalTitleOf?.(i.goalId) : null;
     const meta = (
       <GbiMetaLine
         segments={[
+          KIND_LABELS[i.kind] && { key: 'kind', node: <span className={styles.metaText}>{KIND_LABELS[i.kind]}</span> },
+          goalTitle && { key: 'goal', node: <span className={styles.metaText}>for {goalTitle}</span> },
           isHidden('dueDate') && { key: 'due', node: dueDate('Due') },
           isHidden('assignee') && {
             key: 'owner',
@@ -472,7 +487,14 @@ export function CarePlanInterventionsTable({
             icon={kindIcon(i)}
             iconTitle={KIND_LABELS[i.kind] || 'Intervention'}
             title={i.title}
-            badge={<AiSuggestionBadge kind="intervention" item={i} />}
+            badge={(
+              <>
+                <AiSuggestionBadge kind="intervention" item={i} />
+                {lateDays(due.iso, i.status) > 0 && (
+                  <Badge size="sm" tone="danger" label={`${lateDays(due.iso, i.status)} ${lateDays(due.iso, i.status) === 1 ? 'Day' : 'Days'} Overdue`} />
+                )}
+              </>
+            )}
             meta={meta}
             layout="stacked"
             showLink={false}
@@ -547,7 +569,7 @@ export function CarePlanInterventionsTable({
         minTableWidth={0}
         emptyState={noActive ? <div className={styles.emptyRow}>No open interventions.</div> : emptyState}
         // v2: the compact grid changed which columns exist and default.
-        worklistKey={template ? undefined : 'carePlan:interventions:v2'}
+        worklistKey={template ? undefined : 'carePlan:interventions:v3'}
         renderRow={renderRow}
         renderTbodyFooter={template ? undefined : (ctx) => (
           <CompletedRowsGroup

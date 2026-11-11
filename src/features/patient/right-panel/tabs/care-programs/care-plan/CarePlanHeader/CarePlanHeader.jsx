@@ -48,7 +48,7 @@ const SIGN_NOW_ITEM = { key: 'sign', icon: 'solar:pen-2-linear', label: 'Sign No
 export function CarePlanHeader({ patientId, program, inPanel = false }) {
   const [carePlanReviewOpen, setCarePlanReviewOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
-  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewOpenHere, setReviewOpen] = useState(false);
   const completeCarePlan = useAppStore(s => s.completeCarePlan);
   const [carePlanMoreMenu, setCarePlanMoreMenu] = useState(null);
   const requestCarePlanShare = useAppStore(s => s.requestCarePlanShare);
@@ -64,6 +64,11 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
   const toggleCarePlanFiltersOpen = useAppStore(s => s.toggleCarePlanFiltersOpen);
   const [carePlanSearchOpen, setCarePlanSearchOpen] = useState(false);
   const carePlanKey = patientId && program?.id ? `${patientId}::${program.id}` : null;
+  // Start Review from Look at These First opens the same drawer.
+  const reviewAsked = useAppStore(s => !!carePlanKey && s.carePlanReviewOpenFor === carePlanKey);
+  const openCarePlanReviewFor = useAppStore(s => s.openCarePlanReviewFor);
+  const reviewOpen = reviewOpenHere || reviewAsked;
+  const closeReview = () => { setReviewOpen(false); if (reviewAsked) openCarePlanReviewFor(null); };
   // A review left open with something saved on it (an item discussed or a
   // call note) is picked up where it stopped, as the review drawer does.
   const reviewInProgress = useAppStore(s => {
@@ -363,7 +368,7 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
                   patientId={patientId}
                   patientName={patientName}
                   program={program}
-                  onClose={() => setReviewOpen(false)}
+                  onClose={closeReview}
                 />
               )}
               <Button

@@ -3,6 +3,7 @@ import { DrawerDockContext } from '@/components/Drawer/drawerDock';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { uniqueById } from '../lib/carePlanDraft';
 import { Icon } from '@/components/Icon/Icon';
+import { SegmentedControl } from '@/components/SegmentedControl/SegmentedControl';
 import { AddIconMinimalist } from '@/components/Icon/AddIconMinimalist';
 import { ActionButton } from '@/components/ActionButton/ActionButton';
 import { Button } from '@/components/Button/Button';
@@ -80,6 +81,8 @@ const ATTENTION_WORD = { goal: 'Off Target', intervention: 'Overdue', barrier: '
 
 // Below this the tables would be too cramped beside the detail panel.
 const DOCK_MIN_WIDTH = 1080;
+// Wider still, the summary, Unity summary and recent notes get a left column.
+const SUMMARY_MIN_WIDTH = 1400;
 
 export function CarePlanView({ patientId, program }) {
   const {
@@ -217,11 +220,16 @@ export function CarePlanView({ patientId, program }) {
   // work through it. Narrower (the patient side panel), it stays a drawer.
   const containerRef = useRef(null);
   const [dockWide, setDockWide] = useState(false);
+  const [summaryWide, setSummaryWide] = useState(false);
   const [dockEl, setDockEl] = useState(null);
+  const [summaryEl, setSummaryEl] = useState(null);
   useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return undefined;
-    const measure = () => setDockWide(el.clientWidth >= DOCK_MIN_WIDTH);
+    const measure = () => {
+      setDockWide(el.clientWidth >= DOCK_MIN_WIDTH);
+      setSummaryWide(el.clientWidth >= SUMMARY_MIN_WIDTH);
+    };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
@@ -939,6 +947,10 @@ export function CarePlanView({ patientId, program }) {
     }
   };
   const planIsEmpty = !live || (live.goals.length + live.interventions.length + (live.barriers || []).length) === 0;
+  // The left column holds the live plan's summary; past copies keep the card.
+  const summaryColumnOn = summaryWide && !planIsEmpty && !viewedVersion && !viewedRun;
+  const goalTitleById = useMemo(() => new Map((viewData.goals || []).map(g => [String(g.id), g.title])), [viewData.goals]);
+  const goalTitleOf = (id) => goalTitleById.get(String(id)) || null;
   // When the record has nothing to plan from, the care manager describes the
   // patient instead (the start card asks up front on an empty plan).
   const loadCarePlanFacts = useAppStore(s => s.loadCarePlanFacts);
@@ -1233,6 +1245,7 @@ export function CarePlanView({ patientId, program }) {
       </div>
 
       <div className={styles.splitRow}>
+      {summaryColumnOn && <aside ref={setSummaryEl} className={styles.summaryColumn} aria-label="Plan summary and notes" />}
       <div className={styles.scrollArea}>
       <div className={styles.contentBody}>
       {viewedVersion && (
@@ -1392,6 +1405,7 @@ export function CarePlanView({ patientId, program }) {
           onOpenNoteHistory={openNoteDrawer}
           onDeleteNote={() => setNoteDeleteOpen(true)}
           onOpenItem={openSummaryItem}
+          summaryHost={summaryColumnOn ? summaryEl : null}
           summaryStrip={planIsEmpty || viewedVersion || viewedRun ? null : {
             totals: planTotals,
             attention,
@@ -1458,6 +1472,20 @@ export function CarePlanView({ patientId, program }) {
             onClick: () => setBulkDeleteOpen(true),
           }]}
         />
+      )}
+
+      {/* All / Needs Attention over the three tables (care plan redesign
+          prototype); the same filter the summary counts toggle. */}
+      {!planIsEmpty && !viewedVersion && !viewedRun && (
+        <div className={styles.gbiHeader}>
+          <h3 className={styles.gbiHeaderTitle}>Goals, Interventions and Barriers</h3>
+          <SegmentedControl
+            size="sm"
+            items={[{ key: 'all', label: 'All' }, { key: 'attention', label: `Needs Attention (${attention.length})` }]}
+            value={attentionOn ? 'attention' : 'all'}
+            onValueChange={(k) => setFilter('attention', k === 'attention' ? [NEEDS_ATTENTION] : [])}
+          />
+        </div>
       )}
 
       {layout === 'linkage' ? (
@@ -1618,6 +1646,7 @@ export function CarePlanView({ patientId, program }) {
         ) : (
           <CarePlanInterventionsTable
             activeRowId={activeRowId}
+            goalTitleOf={goalTitleOf}
             rows={filteredInterventions}
             canEdit={canEdit}
             bulkMode={bulkMode}
