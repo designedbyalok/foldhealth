@@ -55,13 +55,22 @@ describe('nextBestActions', () => {
 });
 
 describe('whyPrioritized', () => {
-  it('names the urgent actions, goals off target and a high acuity', () => {
-    const points = whyPrioritized(nextBestActions([ccmEntry, dmEntry]), { acuity: 'High-Risk' });
-    expect(points.map(p => p.tone)).toEqual(['danger', 'warning', 'warning']);
-    expect(points[0].text).toBe('1 urgent action. CCM Program Related Task: 1 open • 1 overdue.');
-    expect(points[1].text).toBe('1 goal is off target: Improve A1C control.');
-    expect(points[2].text).toBe('High-Risk acuity.');
-    expect(whyPrioritized([], { acuity: 'Low' })).toEqual([]);
+  it('lists takeaways and writes the paragraph from the same records', () => {
+    const actions = nextBestActions([ccmEntry, dmEntry]);
+    const { takeaways, segments } = whyPrioritized(actions, {
+      acuity: 'High-Risk',
+      totals: combinedPlanTotals([ccmEntry, dmEntry]),
+      progress: [programProgress(ccmEntry), programProgress(dmEntry)],
+      firstName: 'Maria',
+    });
+    expect(takeaways).toEqual([
+      { tone: 'danger', text: 'CCM Program Related Task: 1 open • 1 overdue' },
+      { tone: 'warning', text: '1 goal off target' },
+      { tone: 'warning', text: 'High-Risk acuity' },
+    ]);
+    expect(segments[0]).toEqual({ bold: true, text: 'Urgent: CCM Program Related Task (1 open • 1 overdue).' });
+    expect(segments.slice(1).map(s => s.text).join('')).toBe(' Goal progress is 40% across 1 goal, with 1 goal off target, 1 barrier without an intervention. Maria is in 2 programs: CCM 1 of 4 steps done, DM 0 of 1 steps done.');
+    expect(whyPrioritized([], { acuity: 'Low' })).toEqual({ takeaways: [], segments: [] });
   });
 });
 

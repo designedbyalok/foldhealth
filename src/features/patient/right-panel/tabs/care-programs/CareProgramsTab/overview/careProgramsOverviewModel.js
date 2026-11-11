@@ -82,22 +82,39 @@ export function nextBestActions(entries) {
 }
 
 /**
- * Why Prioritized, from the records: the urgent actions, goals off target and
- * a high acuity. Each point: { text, tone: 'danger'|'warning'|'neutral' }.
+ * Why Prioritized, from the records (no AI): a few short takeaways and a
+ * paragraph. Takeaways: { text, tone: 'danger'|'warning' } for the urgent
+ * actions, goals off target and a high acuity. The paragraph is segments
+ * ({ text, bold? }): what's urgent (bold), the care plan's state, and where
+ * each program stands.
  */
-export function whyPrioritized(actions, { acuity } = {}) {
-  const points = [];
+export function whyPrioritized(actions, { acuity, totals, progress = [], firstName } = {}) {
+  const takeaways = [];
   const urgent = actions.filter(a => a.detail.urgent);
+  for (const a of urgent.slice(0, 2)) {
+    takeaways.push({ tone: 'danger', text: `${a.programs.map(p => p.code).join(', ')} ${a.title}: ${a.detail.text.replace(/\.$/, '')}` });
+  }
+  if (urgent.length > 2) takeaways.push({ tone: 'danger', text: `${urgent.length - 2} more urgent` });
+  const offTarget = actions.filter(a => a.kind === 'goal').length;
+  if (offTarget) takeaways.push({ tone: 'warning', text: `${offTarget} ${offTarget === 1 ? 'goal' : 'goals'} off target` });
+  if (/high/i.test(acuity || '')) takeaways.push({ tone: 'warning', text: `${acuity} acuity` });
+
+  const segments = [];
   if (urgent.length) {
-    const named = urgent.slice(0, 2).map(a => `${a.programs.map(p => p.code).join(', ')} ${a.title}: ${a.detail.text.replace(/\.$/, '')}`);
-    points.push({ tone: 'danger', text: `${urgent.length} urgent ${urgent.length === 1 ? 'action' : 'actions'}. ${named.join('; ')}${urgent.length > 2 ? '; and more' : ''}.` });
+    segments.push({ bold: true, text: `Urgent: ${urgent.map(a => `${a.programs.map(p => p.code).join(', ')} ${a.title} (${a.detail.text.replace(/\.$/, '')})`).join(', ')}.` });
   }
-  const offTarget = actions.filter(a => a.kind === 'goal');
-  if (offTarget.length) {
-    points.push({ tone: 'warning', text: `${offTarget.length} ${offTarget.length === 1 ? 'goal is' : 'goals are'} off target: ${offTarget.slice(0, 2).map(a => a.title).join(', ')}${offTarget.length > 2 ? ', and more' : ''}.` });
+  if (totals && totals.goals + totals.interventions + totals.barriers) {
+    const issues = [
+      totals.issues.goal && `${totals.issues.goal} ${totals.issues.goal === 1 ? 'goal' : 'goals'} off target`,
+      totals.issues.intervention && `${totals.issues.intervention} ${totals.issues.intervention === 1 ? 'intervention' : 'interventions'} overdue`,
+      totals.issues.barrier && `${totals.issues.barrier} ${totals.issues.barrier === 1 ? 'barrier' : 'barriers'} without an intervention`,
+    ].filter(Boolean);
+    segments.push({ text: ` Goal progress is ${totals.avgProgress}% across ${totals.goals} ${totals.goals === 1 ? 'goal' : 'goals'}${issues.length ? `, with ${issues.join(', ')}` : ''}.` });
   }
-  if (/high/i.test(acuity || '')) points.push({ tone: 'warning', text: `${acuity} acuity.` });
-  return points;
+  if (progress.length) {
+    segments.push({ text: ` ${firstName || 'The patient'} is in ${progress.length} ${progress.length === 1 ? 'program' : 'programs'}: ${progress.map(p => `${p.program.code} ${p.done} of ${p.total} steps done`).join(', ')}.` });
+  }
+  return { takeaways, segments };
 }
 
 /** Goal / intervention / barrier counts and average goal progress across the plans, with attention per kind. */

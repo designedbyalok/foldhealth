@@ -34,6 +34,7 @@ export function useCareProgramsOverview(patientId, programs) {
   const recordId = useAppStore(s => String(findPatientRecord(s, patientId)?.id || ''));
   const recordMemberId = useAppStore(s => String(findPatientRecord(s, patientId)?.memberId || ''));
   const acuity = useAppStore(s => String(findPatientRecord(s, patientId)?.acuity || ''));
+  const firstName = useAppStore(s => String(findPatientRecord(s, patientId)?.name || '').split(/\s+/)[0]);
   const problems = useAppStore(s => s.patientProblems[patientId]) || EMPTY;
   const problemsLoaded = useAppStore(s => !!s.patientProblemsLoadedFor[patientId]);
   const activityId = useAppStore(s => resolvePatientStoreId(s, patientId));
@@ -79,16 +80,18 @@ export function useCareProgramsOverview(patientId, programs) {
 
   return useMemo(() => {
     const actions = nextBestActions(entries);
+    const progress = entries.map(programProgress);
+    const totals = combinedPlanTotals(entries);
     return {
       ready,
       entries,
-      progress: entries.map(programProgress),
+      progress,
       actions,
-      why: whyPrioritized(actions, { acuity }),
-      totals: combinedPlanTotals(entries),
+      why: whyPrioritized(actions, { acuity, totals, progress, firstName }),
+      totals,
       problems,
       problemsLoaded,
       activity,
     };
-  }, [ready, entries, acuity, problems, problemsLoaded, activity]);
+  }, [ready, entries, acuity, firstName, problems, problemsLoaded, activity]);
 }

@@ -17,16 +17,20 @@ const KIND = {
 };
 const LIMIT = 5;
 
+// A care plan item's short status beside its title; its detail is the why line.
+const ITEM_STATUS = { goal: ['Off target', 'danger'], intervention: ['Overdue', 'danger'], barrier: ['Unaddressed', 'warning'] };
+
 function ActionRow({ row, n, current, onRun, onReview }) {
   const kind = KIND[row.kind];
-  const sub = row.with ? `With ${row.with}` : row.sub;
+  const isStep = row.kind === 'step';
+  const [status, tone] = isStep ? [row.detail.text, row.detail.urgent ? 'danger' : 'neutral'] : ITEM_STATUS[row.kind];
   return (
-    <li className={`${styles.nbaRow} ${current ? styles.nbaRowCurrent : ''} ${row.with ? styles.nbaRowLinked : ''}`}>
+    <li className={`${styles.nbaRow} ${current ? styles.nbaRowCurrent : ''}`}>
       <span className={`${styles.nbaNum} ${current ? styles.nbaNumCurrent : ''}`} aria-hidden="true">{n}</span>
       <div className={styles.nbaBody}>
         <span className={styles.nbaKind}>
           <Icon name={kind.icon} size={12} color="currentColor" />
-          {kind.label}{sub ? ` • ${sub}` : ''}
+          {kind.label}{row.with ? ` · With ${row.with}` : ''}
         </span>
         <span className={styles.nbaTitleLine}>
           <span className={styles.nbaTitle}>{row.title}</span>
@@ -36,8 +40,9 @@ function ActionRow({ row, n, current, onRun, onReview }) {
               <Icon name="solar:danger-triangle-linear" size={12} color="currentColor" />Required
             </span>
           )}
+          <span className={tone === 'danger' ? styles.textDanger : tone === 'warning' ? styles.textWarning : styles.nbaDetail}>{status}</span>
         </span>
-        <span className={row.detail.urgent ? styles.nbaDetailUrgent : styles.nbaDetail}>{row.detail.text}</span>
+        {!isStep && <span className={styles.nbaWhy}>{row.detail.text}</span>}
       </div>
       <div className={styles.nbaActions}>
         <Button size="sm" variant={current ? 'solid' : 'outline'} onClick={() => onRun(row)}>
