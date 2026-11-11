@@ -22,7 +22,7 @@ const time = iso => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric',
 const fmtDate = d => `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
 // Program rows and problems shown before "Show N More".
 const CARD_LIMIT = 4;
-const PROBLEM_LIMIT = 6;
+const PROBLEM_LIMIT = 4;
 
 function MoreButton({ open, hidden, onToggle }) {
   return (
@@ -33,71 +33,76 @@ function MoreButton({ open, hidden, onToggle }) {
   );
 }
 
-/* ── Programs: one row per program, the row opens it ── */
-function ProgramRow({ entry, progress, users, onOpen, onStatusMenu, onRowMenu, onAssign }) {
+/* ── Programs: a card per program; the card opens it ── */
+function ProgramCard({ entry, progress, users, onOpen, onStatusMenu, onRowMenu, onAssign }) {
   const p = entry.program;
   const pct = progress.total ? Math.round((progress.done / progress.total) * 100) : 0;
   const assigned = p.assignee && p.assignee !== 'Unassigned';
   return (
-    <li className={styles.programRow}>
-      <ProgramStatusRing progress={pct} size={20} />
-      <div className={styles.programText}>
-        <span className={styles.programTitleLine}>
-          <button type="button" className={`${styles.programName} ${styles.stretch}`} onClick={() => onOpen(p)}>{p.name}</button>
-          <span className={styles.programCode}>{p.code}</span>
-        </span>
-        <span className={styles.programMeta}>
-          <button type="button" className={styles.programStatus} style={{ color: p.statusColor }} onClick={e => onStatusMenu({ id: p.id, rect: e.currentTarget.getBoundingClientRect() })}>
-            {p.status}
-            <DownChevronIcon size={12} color={p.statusColor} />
-          </button>
-          <span>· {progress.done} of {progress.total} steps · {assigned ? p.assignee : 'Unassigned'}</span>
-        </span>
-        {progress.next && (
-          <span className={styles.programNext}>
-            Next: {progress.next.name}
-            <span className={progress.next.detail.urgent ? styles.textDanger : undefined}> · {progress.next.detail.text}</span>
+    <li className={styles.programCard}>
+      <div className={styles.programTop}>
+        <ProgramStatusRing progress={pct} size={18} />
+        <button type="button" className={`${styles.programName} ${styles.stretch}`} onClick={() => onOpen(p)}>{p.name}</button>
+        <Badge size="sm" label={p.code} />
+        <span className={styles.programActions}>
+          <span data-assign-row={p.id}>
+            <AssigneeChange
+              avatarOnly
+              size="S"
+              name={assigned ? p.assignee : undefined}
+              initials={assigned ? initialsOf(p.assignee) : ''}
+              unassigned={!assigned}
+              showRole={false}
+              users={users}
+              pickerTitle="Assign"
+              onSelect={user => onAssign(p, user)}
+            />
           </span>
-        )}
-      </div>
-      {/* Assign and the row menu show on hover / focus, so the list stays quiet. */}
-      <span className={styles.programTools}>
-        <span data-assign-row={p.id}>
-          <AssigneeChange
-            avatarOnly
-            size="S"
-            name={assigned ? p.assignee : undefined}
-            initials={assigned ? initialsOf(p.assignee) : ''}
-            unassigned={!assigned}
-            showRole={false}
-            users={users}
-            pickerTitle="Assign"
-            onSelect={user => onAssign(p, user)}
-          />
+          <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More actions" aria-label={`${p.name} actions`} onClick={e => onRowMenu({ id: p.id, rect: e.currentTarget.getBoundingClientRect() })} />
         </span>
-        <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More actions" aria-label={`${p.name} actions`} onClick={e => onRowMenu({ id: p.id, rect: e.currentTarget.getBoundingClientRect() })} />
+      </div>
+      <span className={styles.programMeta}>
+        <button type="button" className={styles.programStatus} style={{ color: p.statusColor }} onClick={e => onStatusMenu({ id: p.id, rect: e.currentTarget.getBoundingClientRect() })}>
+          {p.status}
+          <DownChevronIcon size={12} color={p.statusColor} />
+        </button>
+        <span>• {progress.done} of {progress.total} steps • {assigned ? p.assignee : 'Unassigned'}</span>
       </span>
-      <Icon name="solar:alt-arrow-right-linear" size={16} color="var(--neutral-300)" />
+      {progress.next && (
+        <span className={styles.programNext}>
+          Next: {progress.next.name}
+          <span className={progress.next.detail.urgent ? styles.textDanger : undefined}> • {progress.next.detail.text}</span>
+        </span>
+      )}
     </li>
   );
 }
 
-/* ── Active Problems: chips, code then name ── */
+/* ── Active Problems: name over type, onset and code ── */
+// "11/18/23 (1 Year)" → "11/18/23": the date part of the stored onset label.
+const onsetDate = label => (label || '').split(' (')[0].trim();
+const onsetMs = label => { const t = new Date(onsetDate(label)).getTime(); return Number.isFinite(t) ? t : 0; };
+
 function ActiveProblems({ problems, loaded }) {
   const [all, setAll] = useState(false);
-  const active = problems.filter(p => !/resolved|inactive/i.test(p.status || ''));
+  // Chronic before acute (what the programs manage), then the most recent onset.
+  const active = problems
+    .filter(p => !/resolved|inactive/i.test(p.status || ''))
+    .sort((a, b) => (/chronic/i.test(b.type) - /chronic/i.test(a.type)) || onsetMs(b.onsetLabel) - onsetMs(a.onsetLabel) || (a.title || '').localeCompare(b.title || ''));
   const shown = all ? active : active.slice(0, PROBLEM_LIMIT);
   return (
-    <DashboardCard icon="solar:health-linear" title="Active Problems" count={active.length || null}>
+    <DashboardCard size="S" icon="solar:health-linear" title="Active Problems" count={active.length || null}>
       {!loaded ? <p className={styles.empty}>Loading…</p> : active.length === 0 ? (
         <p className={styles.empty}>No active problems on file.</p>
       ) : (
         <>
-          <ul className={styles.chips}>
+          <ul className={styles.problemList}>
             {shown.map(p => (
-              <li key={p.id} className={styles.chip} title={[p.type, p.onsetLabel && `Onset ${p.onsetLabel}`].filter(Boolean).join(' · ')}>
-                {p.code && <span className={styles.chipCode}>{p.code}</span>}
-                {p.title}
+              <li key={p.id} className={styles.problem}>
+                <span className={styles.problemTitle}>{p.title}</span>
+                <span className={styles.problemMeta}>
+                  {[p.type, onsetDate(p.onsetLabel) && `Since ${onsetDate(p.onsetLabel)}`, p.code].filter(Boolean).join(' • ')}
+                </span>
               </li>
             ))}
           </ul>
@@ -111,9 +116,10 @@ function ActiveProblems({ problems, loaded }) {
 /* ── Since Last Visit: a timeline, day on the left ── */
 function SinceLastVisit({ activity, lastVisit, onOpenLog }) {
   const since = lastVisit ? lastVisit.getTime() : null;
-  const rows = (since ? activity.filter(a => new Date(a.occurredAt).getTime() > since) : activity).slice(0, 6);
+  const rows = (since ? activity.filter(a => new Date(a.occurredAt).getTime() > since) : activity).slice(0, 5);
   return (
     <DashboardCard
+      size="S"
       icon="solar:history-linear"
       title={since ? 'Since Last Visit' : 'Recent Activity'}
       count={rows.length || null}
@@ -150,7 +156,8 @@ function SinceLastVisit({ activity, lastVisit, onOpenLog }) {
 
 /* ── Why Prioritized: takeaways, then the paragraph ── */
 function WhyPrioritized({ why }) {
-  const [open, setOpen] = useState(true);
+  // Takeaways always; the paragraph on request, to keep the column short.
+  const [open, setOpen] = useState(false);
   const empty = !why.takeaways.length && !why.segments.length;
   return (
     <DashboardCard
@@ -229,7 +236,7 @@ function ProgramSummary({ data, onOpenPlan, onOpenProgram }) {
   const segs = programSummarySegments(data.progress, data.actions, data.totals);
   const byCode = Object.fromEntries(data.progress.map(p => [p.program.code, p.program]));
   return (
-    <DashboardCard icon="solar:document-text-linear" title="Program Summary" footer={`From the program steps and care plans · ${data.progress.length} ${data.progress.length === 1 ? 'program' : 'programs'}`}>
+    <DashboardCard size="S" icon="solar:document-text-linear" title="Program Summary" footer={`From the program steps and care plans · ${data.progress.length} ${data.progress.length === 1 ? 'program' : 'programs'}`}>
       <p className={styles.sumPara}>
         {segs.map((s, i) => (s.link ? (
           <button key={i} type="button" className={styles.inlineLink} onClick={() => (s.link === 'plan' ? onOpenPlan() : onOpenProgram(byCode[s.link]))}>{s.text}</button>
@@ -240,9 +247,9 @@ function ProgramSummary({ data, onOpenPlan, onOpenProgram }) {
 }
 
 /**
- * The Care Programs tab's overview (care plan redesign prototype): programs,
- * active problems and recent activity on the left; Why Prioritized and Next
- * Best Actions in the middle; the Care Plan Summary and Program Summary on
+ * The Care Programs tab's overview (care plan redesign prototype): programs
+ * and active problems on the left; Why Prioritized, Next Best Actions and
+ * recent activity in the middle; the Care Plan Summary and Program Summary on
  * the right (or on the left when there's no room for three columns).
  * Everything comes from the patient's records; nothing is generated.
  */
@@ -284,10 +291,10 @@ export function CareProgramsOverview({
     <div className={styles.overviewWrap}>
       <div className={styles.overview}>
         <div className={styles.left}>
-          <DashboardCard icon="solar:clipboard-heart-linear" title="Programs" count={programs.length}>
+          <DashboardCard size="S" icon="solar:clipboard-heart-linear" title="Programs" count={programs.length}>
             <ul className={styles.programList}>
               {shownOrder.map(({ index }) => (
-                <ProgramRow
+                <ProgramCard
                   key={data.entries[index].program.id}
                   entry={data.entries[index]}
                   progress={data.progress[index]}
@@ -303,11 +310,12 @@ export function CareProgramsOverview({
           </DashboardCard>
           <div className={styles.sumLeft}>{summaries}</div>
           <ActiveProblems problems={data.problems} loaded={data.problemsLoaded} />
-          <SinceLastVisit activity={data.activity} lastVisit={lastVisit} onOpenLog={onOpenLog} />
         </div>
+        {/* Recent activity sits under the actions so the columns end level. */}
         <div className={styles.main}>
           <WhyPrioritized why={data.why} />
           <NextBestActions actions={data.actions} programs={order.map(o => data.entries[o.index].program)} onRun={onRun} onReview={onReviewStep} />
+          <SinceLastVisit activity={data.activity} lastVisit={lastVisit} onOpenLog={onOpenLog} />
         </div>
         <div className={styles.right}>{summaries}</div>
       </div>
