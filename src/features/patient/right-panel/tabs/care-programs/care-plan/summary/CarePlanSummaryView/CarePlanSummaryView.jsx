@@ -1144,7 +1144,7 @@ export function CarePlanSummaryView({
           )}
           {/* Narrower, the saved summary sits here once Summarize (in the
               toolbar) is generating or has run; wide, it's in the left column. */}
-          {!summaryColumnOn && summary.state !== 'idle' && (
+          {!editable && !summaryColumnOn && summary.state !== 'idle' && (
           <div className={styles.section}>
             {/* AI Summary: the cross-program recap, saved until someone
                 regenerates or dismisses it. Its own section, separate from
@@ -1186,6 +1186,19 @@ export function CarePlanSummaryView({
               programs={allPlans.plans.map(x => x.program)}
               onOpenProgram={onOpenProgramStep}
               onOpenItem={(kind, item) => openFocusItem(kind, item, item?.program)}
+              // Narrower, Unity's cross-program summary is the card's Summarize
+              // tab, as in a program's plan; wide, it's in the left column.
+              allSummary={summaryColumnOn ? null : {
+                summary,
+                data: summaryData,
+                entry: savedSummaryEntry,
+                stale: summaryStale,
+                actions: summaryActions,
+                done: summaryDone,
+                toggleDone: toggleSummaryDone,
+                itemFor: summaryItemFor,
+                isEmpty: goals.length + interventions.length + barriers.length === 0,
+              }}
             />
           )}
 
@@ -1276,7 +1289,7 @@ export function CarePlanSummaryView({
               plan; the same filter the summary counts toggle. */}
           {allPlans && allPlans.plans.length > 0 && (
             <div className={styles.gbiHeader}>
-              <h3 className={styles.gbiHeaderTitle}>Goals, Interventions and Barriers</h3>
+              <h3 className={styles.gbiHeaderTitle}><Icon name="solar:checklist-minimalistic-linear" size={20} color="var(--neutral-400)" />Goals, Interventions and Barriers</h3>
               <SegmentedControl
                 size="sm"
                 items={[{ key: 'all', label: 'All' }, { key: 'attention', label: `Needs Attention (${allPlans.attention.length})` }]}

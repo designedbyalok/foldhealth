@@ -76,6 +76,9 @@ export function CarePlanOverview({
   // card keeps only the note, events and cadence; `nav` steps between programs.
   noSummary = false,
   nav = null,
+  // All Programs, narrow: the cross-program Unity summary, in this card's
+  // Summarize with Unity tab ({ state, generate, ..., data, actions, ... }).
+  allSummary = null,
 }) {
   const programId = program?.id;
   const key = `${patientId}::${programId}`;
@@ -190,12 +193,14 @@ export function CarePlanOverview({
   // events with changes to decide, a review that's due or overdue.
   const cadence = useReviewCadence({ patientId, program, plan: live?.plan });
   const cadenceDue = ['due', 'overdue'].includes(cadence?.status?.state);
+  // The summary the Summarize tab shows: this plan's own, or All Programs'.
+  const ai = allSummary || { summary, data, entry, stale, actions, done, toggleDone, itemFor, isEmpty };
   const inColumn = noSummary || (!!summaryHost && !!summaryStrip);
   const tabs = [
     { key: 'note', label: 'Care Plan Note', leadingIcon: 'solar:notes-linear' },
-    showSummary && !inColumn && {
+    ((showSummary && !inColumn) || allSummary) && {
       key: 'summary', label: 'Summarize with Unity', leadingIcon: 'custom:ai',
-      notif: summary.state === 'ready' && actions.some((_, i) => !done.has(i)),
+      notif: ai.summary.state === 'ready' && ai.actions.some((_, i) => !ai.done.has(i)),
     },
     eventsOn && { key: 'events', label: 'Events Updates', leadingIcon: 'solar:bolt-linear', notif: events.count > 0 },
     showCadence && {
@@ -244,7 +249,8 @@ export function CarePlanOverview({
       {nav ? (
         <div className={styles.tabsRow}>
           <SegmentedControl items={tabs} value={active} onValueChange={setTab} variant="ghost" />
-          {nav}
+          {/* All Programs' summary covers every program, so no program to step through. */}
+          {!(allSummary && active === 'summary') && nav}
         </div>
       ) : (
         <SegmentedControl items={tabs} value={active} onValueChange={setTab} variant="ghost" />
@@ -357,49 +363,49 @@ export function CarePlanOverview({
               )}
             </div>
           )}
-          {summary.state === 'loading' && <AiSummarySkeleton />}
-          {summary.state === 'idle' && (
+          {ai.summary.state === 'loading' && <AiSummarySkeleton />}
+          {ai.summary.state === 'idle' && (
             <TabEmpty
               icon="custom:ai"
-              title={summary.error ? 'Unity couldn\'t write the summary' : 'No summary yet'}
-              text={summary.error || 'Unity reads the goals, interventions and barriers and lists what needs doing next.'}
-              action={canEdit && !isEmpty && (
-                <Button variant="soft" size="sm" leadingIcon="custom:ai" onClick={summary.generate}>
-                  {summary.error ? 'Try Again' : 'Summarize'}
+              title={ai.summary.error ? 'Unity couldn\'t write the summary' : 'No summary yet'}
+              text={ai.summary.error || 'Unity reads the goals, interventions and barriers and lists what needs doing next.'}
+              action={canEdit && !ai.isEmpty && (
+                <Button variant="soft" size="sm" leadingIcon="custom:ai" onClick={ai.summary.generate}>
+                  {ai.summary.error ? 'Try Again' : 'Summarize'}
                 </Button>
               )}
             />
           )}
-          {summary.state === 'ready' && data && (
+          {ai.summary.state === 'ready' && ai.data && (
             <div className={styles.summary}>
               <div className={styles.summaryHead}>
-                {entry?.generatedAt && (
-                  <span className={styles.stamp}>Updated {stamp(entry.generatedAt)}{entry.generatedBy ? ` by ${entry.generatedBy}` : ''}</span>
+                {ai.entry?.generatedAt && (
+                  <span className={styles.stamp}>Updated {stamp(ai.entry.generatedAt)}{ai.entry.generatedBy ? ` by ${ai.entry.generatedBy}` : ''}</span>
                 )}
-                {stale && <Badge size="sm" tone="warning" label="Plan changed since" />}
+                {ai.stale && <Badge size="sm" tone="warning" label="Plan changed since" />}
                 <span className={styles.spacer} />
-                <ActionButton icon="solar:copy-linear" size="sm" tooltip="Copy summary" onClick={summary.copy} />
-                <ActionButton icon="solar:refresh-linear" size="sm" tooltip="Write it again" onClick={summary.regenerate} />
-                <ActionButton icon="solar:trash-bin-trash-linear" size="sm" tooltip="Dismiss summary" onClick={summary.clear} />
+                <ActionButton icon="solar:copy-linear" size="sm" tooltip="Copy summary" onClick={ai.summary.copy} />
+                <ActionButton icon="solar:refresh-linear" size="sm" tooltip="Write it again" onClick={ai.summary.regenerate} />
+                <ActionButton icon="solar:trash-bin-trash-linear" size="sm" tooltip="Dismiss summary" onClick={ai.summary.clear} />
               </div>
-              {data.intro && <p className={styles.intro}>{data.intro}</p>}
-              {data.points?.length > 0 && (
+              {ai.data.intro && <p className={styles.intro}>{ai.data.intro}</p>}
+              {ai.data.points?.length > 0 && (
                 <ul className={styles.points}>
-                  {data.points.map((p, i) => <li key={i}><strong>{p.title}:</strong> {p.body}</li>)}
+                  {ai.data.points.map((p, i) => <li key={i}><strong>{p.title}:</strong> {p.body}</li>)}
                 </ul>
               )}
-              {actions.length > 0 && (
+              {ai.actions.length > 0 && (
                 <div className={styles.actions}>
                   <span className={styles.actionsHead}>Action items</span>
                   <ul className={styles.actionList}>
-                    {actions.map((a, i) => {
-                      const item = itemFor(a);
-                      const isDone = done.has(i);
+                    {ai.actions.map((a, i) => {
+                      const item = ai.itemFor(a);
+                      const isDone = ai.done.has(i);
                       return (
                         <li key={i} className={`${styles.action} ${isDone ? styles.actionDone : ''}`}>
                           <Checkbox
                             checked={isDone}
-                            onCheckedChange={() => toggleDone(i)}
+                            onCheckedChange={() => ai.toggleDone(i)}
                             disabled={!canEdit}
                             aria-label={isDone ? 'Mark not done' : 'Mark done'}
                           />

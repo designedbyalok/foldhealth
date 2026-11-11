@@ -3,7 +3,7 @@ import { Badge } from '@/components/Badge/Badge';
 import { Button } from '@/components/Button/Button';
 import { ActionButton } from '@/components/ActionButton/ActionButton';
 import { Checkbox } from '@/components/Checkbox/Checkbox';
-import { Icon } from '@/components/Icon/Icon';
+import { DashboardCard, DashboardCardBody } from '@/components/DashboardCard/DashboardCard';
 import { AiSummarySkeleton } from '../summary/CarePlanAiSummary/CarePlanAiSummary';
 import { actionText } from '../summary/CarePlanAiSummary/useCarePlanAiSummary';
 import { goalProgressBand, goalProgressTone } from '../lib/goalMetrics';
@@ -53,9 +53,10 @@ export function CarePlanSummaryPanel({
   const [details, setDetails] = useState(false);
   return (
     <div className={styles.panel}>
-      <section className={styles.block} aria-label="Summary">
-        <h3 className={styles.head}>Summary</h3>
-        <div className={styles.card}>
+      {/* Each section is a card with an icon and title, the same as Look at
+          These First, Suggested Actions and Tasks in the right column. */}
+      <DashboardCard icon="solar:chart-square-linear" title="Summary">
+        <DashboardCardBody className={styles.cardBody}>
           <div className={styles.progress}>
             <span className={styles.pct}>{totals.avgProgress}%</span>
             <Badge size="sm" tone={BAND_TONE[goalProgressTone(band)]} label={band} />
@@ -99,21 +100,22 @@ export function CarePlanSummaryPanel({
               <span className={styles.label}>{rv.sub}</span>
             </button>
           )}
-        </div>
-      </section>
+        </DashboardCardBody>
+      </DashboardCard>
 
       {summary.show && (
-        <section className={`${styles.block} ${styles.unity}`} aria-label="Unity Summary">
-          <div className={styles.unityHead}>
-            <Icon name="custom:ai" size={16} color="var(--primary-300)" />
-            <h3 className={styles.unityTitle}>Unity Summary</h3>
-            {state === 'ready' && data && (
-              <span className={styles.unityTools}>
-                <ActionButton icon="solar:copy-linear" size="sm" tooltip="Copy summary" onClick={summary.copy} />
-                <ActionButton icon="solar:refresh-linear" size="sm" tooltip="Write it again" onClick={summary.regenerate} />
-              </span>
-            )}
-          </div>
+        <DashboardCard
+          icon="custom:ai"
+          tone="ai"
+          title="Unity Summary"
+          actions={state === 'ready' && data && (
+            <>
+              <ActionButton icon="solar:copy-linear" size="sm" tooltip="Copy summary" onClick={summary.copy} />
+              <ActionButton icon="solar:refresh-linear" size="sm" tooltip="Write it again" onClick={summary.regenerate} />
+            </>
+          )}
+        >
+          <DashboardCardBody className={styles.cardBody}>
           {state === 'loading' && <AiSummarySkeleton />}
           {state === 'idle' && (
             <div className={styles.unityEmpty}>
@@ -172,14 +174,17 @@ export function CarePlanSummaryPanel({
               )}
             </>
           )}
-        </section>
+          </DashboardCardBody>
+        </DashboardCard>
       )}
 
-      <section className={styles.block} aria-label="Recent Notes">
-        <div className={styles.notesHead}>
-          <h3 className={styles.head}>Recent Notes</h3>
-          {canEdit && <button type="button" className={styles.link} onClick={onAddNote}>Add Note</button>}
-        </div>
+      <DashboardCard
+        icon="solar:notes-linear"
+        title="Recent Notes"
+        count={recentNotes.length || null}
+        actions={canEdit && <Button variant="ghost" size="sm" onClick={onAddNote}>Add Note</Button>}
+      >
+        <DashboardCardBody className={styles.cardBody}>
         {recentNotes.length === 0 ? (
           <p className={styles.empty}>No notes on goals, interventions or barriers yet.</p>
         ) : recentNotes.map(n => (
@@ -189,7 +194,8 @@ export function CarePlanSummaryPanel({
             <span className={styles.meta}>{n.actor} • {stamp(n.createdAt)}</span>
           </button>
         ))}
-      </section>
+        </DashboardCardBody>
+      </DashboardCard>
     </div>
   );
 }
