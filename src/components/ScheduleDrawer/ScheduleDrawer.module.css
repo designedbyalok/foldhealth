@@ -392,3 +392,6 @@
    the shared rail puts its icon. Shifted visually only, so the rail's
    connectors keep their lengths. */
 .activityRailAvatar { position: relative; top: var(--space-4); display: inline-flex; z-index: 1; }
+
+/* An out-of-office provider for the picked date, under Primary User. */
+.detailError { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-2) var(--space-3); font-size: var(--font-sm); color: var(--status-error); background: var(--status-error-light); border-bottom: 0.5px solid var(--neutral-100); }
