@@ -9,7 +9,8 @@
 --
 -- A copy request is only recorded: nothing is sent from the app yet.
 -- Completing writes a care_plan_audit row (entity_type 'plan', action
--- 'completed') and a "Sign care plan" task for the provider.
+-- 'completed') and a "Sign care plan" task for the provider, whose id the
+-- plan keeps in signature_task_id so signing marks that task completed.
 --
 -- Additive and idempotent. No new table, so RLS is unchanged.
 
@@ -21,7 +22,9 @@ ALTER TABLE public.patient_care_plans
   ADD COLUMN IF NOT EXISTS patient_agreed_at      timestamptz,
   ADD COLUMN IF NOT EXISTS patient_agreement_note text,
   -- { channel: 'Portal'|'Mail'|'SMS Link', language: text|null, largePrint: bool }
-  ADD COLUMN IF NOT EXISTS copy_request           jsonb;
+  ADD COLUMN IF NOT EXISTS copy_request           jsonb,
+  -- The provider's "Sign care plan" task, closed when the plan is signed.
+  ADD COLUMN IF NOT EXISTS signature_task_id      text;
 
 COMMENT ON COLUMN public.patient_care_plans.completed_at IS
   'When the care manager completed the plan and sent it to awaiting_signer. Awaiting while signed_at is null or earlier.';

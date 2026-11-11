@@ -102,3 +102,16 @@
   font-size: var(--font-sm);
   font-weight: 500;
 }
+
+/* Comprehensive Care Plan: All Programs or one program's plan, and (on All)
+   the Complete / Sign menu for each program's plan. */
+.planBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+  overflow-x: auto;
+}
+.signItem { display: flex; flex-direction: column; min-width: 0; line-height: var(--leading-normal); }
+.signItemMeta { font-size: var(--font-sm); color: var(--neutral-300); }

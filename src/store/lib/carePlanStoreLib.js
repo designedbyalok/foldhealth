@@ -572,6 +572,7 @@ function mapPatientCarePlanRow(row) {
     completedAt: row.completed_at || null,
     awaitingSigner: row.awaiting_signer || null,
     awaitingSignerId: row.awaiting_signer_id || null,
+    signatureTaskId: row.signature_task_id || null,
     patientAgreedAt: row.patient_agreed_at || null,
     patientAgreementNote: row.patient_agreement_note || '',
     copyRequest: row.copy_request && typeof row.copy_request === 'object' ? row.copy_request : null,
@@ -592,6 +593,15 @@ function mapPatientCarePlanRow(row) {
 // State key for a patient's plan on one program.
 function carePlanKey(patientId, programId) {
   return `${patientId}::${programId}`;
+}
+
+// The patient's name for care plan tasks, from any slice they are on, by
+// store id or member id (worklist patients aren't always in `patients`).
+const MEMBER_SLICES = ['patients', 'allPatients', 'snpWorklistMembers', 'ccmWorklistMembers', 'hccMembers', 'awvMembers', 'hedisMembers', 'pharmacyWorklistMembers'];
+function carePlanMemberName(state, patientId) {
+  return MEMBER_SLICES
+    .map(k => (state[k] || []).find(p => String(p.id) === String(patientId) || String(p.memberId || '') === String(patientId)))
+    .find(p => p?.name)?.name || '';
 }
 
 // `progressBandLabel` / `goalProgressAuditDetail` moved to
@@ -868,6 +878,7 @@ export {
   linkBarrierGoals,
   mapPatientCarePlanRow,
   carePlanKey,
+  carePlanMemberName,
   templateItems,
   templateContents,
   templatesAtLastSignature,

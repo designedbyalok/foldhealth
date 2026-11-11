@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { DrawerDockContext } from '@/components/Drawer/drawerDock';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { CollapsibleContent } from '../../../../../../../../components/Collapsible/Collapsible';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
@@ -46,6 +47,9 @@ import sharedRow from '../../tables/carePlanTables.module.css';
 import styles from './CarePlanSummaryView.module.css';
 import { localDateMs } from '../../../../../../../../lib/localDate';
 import { useSignedCarePlans } from '../../lib/useSignedCarePlans';
+import { CarePlanSummaryStrip } from '../../CarePlanView/CarePlanSummaryStrip';
+import { AllProgramsFocus } from '../AllProgramsFocus/AllProgramsFocus';
+import { allProgramsPlanState } from '../allProgramsPlan';
 import { isProgramClosed } from '../../../../../../data/programStatus';
 import { isEmptyDash } from '../../../../../../../../lib/emptyDash';
 import { latestPlanNote } from '../../lib/carePlanNotes';
@@ -53,6 +57,9 @@ import { SegmentedControl } from '../../../../../../../../components/SegmentedCo
 import { confirmStatusChange, statusReasonPatch } from '../../lib/confirmStatusChange';
 
 const PRIORITIES = ['high', 'medium', 'low'];
+// Wide enough, an open item docks beside the tables (as in a program's plan).
+const DOCK_MIN_WIDTH = 1080;
+const dueOf = i => computeDueDate(i);
 
 // Person cell: shared Avatar primitive + name, so PCM / PCP renders
 // the way every other assignee cell in the app does (matches the
@@ -699,6 +706,20 @@ export function CarePlanSummaryView({
   // care_plan_mode = 'both': the roll-up is the patient-level Care Plan, so
   // its drawers edit in full and each section can add to a chosen program.
   editable = false, summarizeRequest = 0, onSummaryState }) {
+  const containerRef = useRef(null);
+  const [dockWide, setDockWide] = useState(false);
+  const [dockEl, setDockEl] = useState(null);
+  const [attentionOn, setAttentionOn] = useState(false);
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!editable || !el) return undefined;
+    const measure = () => setDockWide(el.clientWidth >= DOCK_MIN_WIDTH);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [editable]);
+  const docked = editable && dockWide && !!dockEl;
   const [rollupAdd, setRollupAdd] = useState(null); // { kind, rect } | null
   // The editable roll-up (care plan level "both") is where the drafts are
   // edited, so it reads them. Read-only, a plan reads as last signed, with
@@ -775,9 +796,21 @@ export function CarePlanSummaryView({
 
   // Show each goal / intervention / barrier once. Overlap maps above are
   // built from the full filtered set, so the "+N" program badge survives.
-  const uniqueGoals         = useMemo(() => dedupeByTitle(filteredGoals),         [filteredGoals]);
-  const uniqueInterventions = useMemo(() => dedupeByTitle(filteredInterventions), [filteredInterventions]);
-  const uniqueBarriers      = useMemo(() => dedupeByTitle(filteredBarriers),      [filteredBarriers]);
+  // The All Programs view (editable): totals, what needs attention across the
+  // plans, and its Needs Attention filter on the tables.
+  const openPrograms = useMemo(() => (programs || []).filter(p => !isProgramClosed(p.status)), [programs]);
+  const allPlans = useMemo(
+    () => (editable ? allProgramsPlanState(openPrograms, patientCarePlans, patientId, dueOf) : null),
+    [editable, openPrograms, patientCarePlans, patientId],
+  );
+  const attentionIds = useMemo(
+    () => (attentionOn && allPlans ? new Set(allPlans.attention.map(a => String(a.item?.id))) : null),
+    [attentionOn, allPlans],
+  );
+  const onlyAttention = rows => (attentionIds ? rows.filter(r => attentionIds.has(String(r.id))) : rows);
+  const uniqueGoals         = useMemo(() => onlyAttention(dedupeByTitle(filteredGoals)),         [filteredGoals, attentionIds]); // eslint-disable-line react-hooks/exhaustive-deps
+  const uniqueInterventions = useMemo(() => onlyAttention(dedupeByTitle(filteredInterventions)), [filteredInterventions, attentionIds]); // eslint-disable-line react-hooks/exhaustive-deps
+  const uniqueBarriers      = useMemo(() => onlyAttention(dedupeByTitle(filteredBarriers)),      [filteredBarriers, attentionIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isEmpty = loadedFor && goals.length === 0 && interventions.length === 0 && barriers.length === 0;
 
@@ -971,12 +1004,26 @@ export function CarePlanSummaryView({
     saveCarePlanLiveField(patientId, intv.program, 'intervention', intv.id, { assignee: { name, initials } });
   };
 
-  const openGoal = (g) => setPreviewGoal({ goal: g, program: g.program });
-  const openIntervention = (i) => setPreviewIntervention({ intervention: i, program: i.program });
-  const openBarrier = (b) => setPreviewBarrier({ barrier: b, program: b.program });
+  // Docked, the panel holds one item: opening another replaces it.
+  const only = (keep) => {
+    if (!docked) return;
+    if (keep !== 'goal') setPreviewGoal(null);
+    if (keep !== 'intervention') setPreviewIntervention(null);
+    if (keep !== 'barrier') setPreviewBarrier(null);
+  };
+  const openGoal = (g, program = g.program) => { only('goal'); setPreviewGoal({ goal: g, program }); };
+  const openIntervention = (i, program = i.program) => { only('intervention'); setPreviewIntervention({ intervention: i, program }); };
+  const openBarrier = (b, program = b.program) => { only('barrier'); setPreviewBarrier({ barrier: b, program }); };
+  const openFocusItem = (kind, item, program) => {
+    if (kind === 'goal') openGoal(item, program);
+    else if (kind === 'intervention') openIntervention(item, program);
+    else if (kind === 'barrier') openBarrier(item, program);
+  };
 
   return (
-    <div className={`${styles.container} ${embedded ? styles.embedded : ''}`}>
+    <DrawerDockContext.Provider value={docked ? dockEl : null}>
+    <div ref={containerRef} className={`${styles.container} ${embedded ? styles.embedded : ''} ${editable ? styles.workspace : ''}`}>
+      <div className={editable ? styles.workspaceMain : styles.plainMain}>
       {!embedded && (
         <div className={styles.header}>
           <div className={styles.headerText}>
@@ -995,9 +1042,25 @@ export function CarePlanSummaryView({
       {loading && !loadedFor ? (
         <TableSkeleton rows={6} />
       ) : isEmpty ? (
-        <EmptyState icon="solar:hand-heart-linear" title="No Signed Care Plans Yet" />
+        <EmptyState icon="solar:hand-heart-linear" title={editable ? 'No Care Plans Yet' : 'No Signed Care Plans Yet'} />
       ) : (
         <div className={styles.body}>
+          {allPlans && allPlans.plans.length > 0 && (
+            <CarePlanSummaryStrip
+              totals={allPlans.totals}
+              attention={allPlans.attention}
+              attentionOn={attentionOn}
+              onToggleAttention={() => setAttentionOn(v => !v)}
+              review={null}
+            />
+          )}
+          {attentionOn && (
+            <div className={styles.attentionBar}>
+              <Icon name="solar:danger-circle-linear" size={16} color="var(--status-error)" />
+              <span>Showing only what needs attention</span>
+              <button type="button" className={styles.clearAttention} onClick={() => setAttentionOn(false)}>Show All</button>
+            </div>
+          )}
           {/* Shown once Summarize (in the toolbar) is generating or has run. */}
           {summary.state !== 'idle' && (
           <div className={styles.section}>
@@ -1173,6 +1236,20 @@ export function CarePlanSummaryView({
         </div>
       )}
 
+      </div>
+      {editable && dockWide && (
+        <aside ref={setDockEl} className={styles.dockColumn} aria-label="Plan focus and item details">
+          <div className={styles.focusSlot}>
+            <AllProgramsFocus
+              patientId={patientId}
+              patientName={currentPatient?.name || ''}
+              attention={allPlans?.attention || []}
+              onOpenItem={openFocusItem}
+            />
+          </div>
+        </aside>
+      )}
+
       {priorityMenu && (
         <MenuPopover
           anchorRect={priorityMenu.rect}
@@ -1207,7 +1284,8 @@ export function CarePlanSummaryView({
           patientId={patientId}
           program={previewGoal.program}
           onClose={() => setPreviewGoal(null)}
-          onOpenBarrier={(b) => setPreviewBarrier({ barrier: b, program: previewGoal.program })}
+          onOpenBarrier={(b) => openBarrier(b, previewGoal.program)}
+          onOpenIntervention={editable ? (i) => openIntervention(i, previewGoal.program) : undefined}
           consolidated={!editable}
           signedView={!editable}
         />
@@ -1218,6 +1296,7 @@ export function CarePlanSummaryView({
           patientId={patientId}
           program={previewIntervention.program}
           onClose={() => setPreviewIntervention(null)}
+          onOpenGoal={editable ? (g) => openGoal(g, previewIntervention.program) : undefined}
           consolidated={!editable}
           signedView={!editable}
         />
@@ -1228,6 +1307,7 @@ export function CarePlanSummaryView({
           patientId={patientId}
           program={previewBarrier.program}
           onClose={() => setPreviewBarrier(null)}
+          onOpenGoal={editable ? (g) => openGoal(g, previewBarrier.program) : undefined}
           consolidated={!editable}
           signedView={!editable}
         />
@@ -1248,5 +1328,6 @@ export function CarePlanSummaryView({
         />
       )}
     </div>
+    </DrawerDockContext.Provider>
   );
 }

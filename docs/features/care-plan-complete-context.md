@@ -396,7 +396,7 @@ Started from More, then Save as Template. The dialog takes Name (no max) and Con
 
 ### Complete, then the provider signs (`completeCarePlan`)
 
-The header's primary button is **Complete** (`CompleteCarePlanDialog`): provider who signs (required; defaults to the enrollment's `pcp` when it names a platform user), patient agreed (required) with an optional note, and an optional copy request `{ channel, language, largePrint }` (language from the patient's `language_preference` / `languages`). It writes `completed_by`, `completed_at`, `awaiting_signer(_id)`, `patient_agreed_at`, `patient_agreement_note`, `copy_request` on `patient_care_plans` (`care_plan_completion_migration.sql`), a `plan/completed` audit row (History: "Care Plan Completed and Sent to X to Sign"), a "Sign care plan for <member>" task for the provider (label `Care Plan Signature`) and a notification. Nothing sends the copy.
+The header's primary button is **Complete** (`CompleteCarePlanDialog`): provider who signs (required; defaults to the enrollment's `pcp` when it names a platform user), patient agreed (required) with an optional note, and an optional copy request `{ channel, language, largePrint }` (language from the patient's `language_preference` / `languages`). It writes `completed_by`, `completed_at`, `awaiting_signer(_id)`, `patient_agreed_at`, `patient_agreement_note`, `copy_request` on `patient_care_plans` (`care_plan_completion_migration.sql`), a `plan/completed` audit row (History: "Care Plan Completed and Sent to X to Sign"), a "Sign care plan for <member>" task for the provider (label `Care Plan Signature`), whose id the plan keeps in `signature_task_id`, and a notification. Nothing sends the copy. Signing (`signCarePlan`) marks that task completed through `closeCarePlanSignatureTasks`; a plan completed before `signature_task_id` existed falls back to an open `Care Plan Signature` task with the same member and program name. The task and Send for Review's "Review care plan" task name the patient through `carePlanMemberName`, which looks across every patient and worklist slice.
 
 `carePlanAwaitingSignature` (`lib/carePlanSignState.js`) is true while `completed_at` is set, not signed since, and no goal / intervention / barrier changed after it (the plan row's own `updated_at` is ignored). While awaiting, the header reads "Awaiting X's signature" and the button is **Sign** (`signCarePlan`, unchanged). Completed then edited reads "Changed after completing, complete it again". The menu keeps **Sign Now** (sign without the provider step) and Send for Review. There is still no role check on who signs.
 
@@ -500,6 +500,15 @@ There is no approve or reject step. Review clears only when someone signs.
 ---
 
 ## 9. Comprehensive Care Plan (`summary/`)
+
+**All Programs and per-program views (care plan redesign prototype).** A switch under the toolbar picks **All Programs** or one open program.
+
+- **One program** renders `CarePlanCard` (exported from `PatientCarePlanPane.jsx`): that program's `CarePlanHeader` and `CarePlanView`, exactly as its Care Plan step shows them, so Complete / Sign, Start Review, templates and versions all work there.
+- **All Programs** renders `CarePlanSummaryView` with `editable` (always, now that care_plan_mode `both` is retired). It reads the live drafts (`fetchAllPatientCarePlans`), and every edit saves to the item's own program plan.
+  - `allProgramsPlanState` (`summary/allProgramsPlan.js`) gives the combined totals, what needs attention (`carePlanFocusItems` per plan without the review, tagged with the program) and each plan's sign state (`open`, `awaiting`, `signed`).
+  - `CarePlanSummaryStrip` sits on top (no review tile: cadence is per program). Its tiles toggle a Needs Attention filter on the three tables.
+  - At 1080px and wider, the right column holds `AllProgramsFocus` (Look at These First across programs, each row with its program badge, and the patient's tasks), and an opened goal, intervention or barrier docks there in its place (`DrawerDockContext`), one at a time.
+  - **Complete (N)** / **Complete / Sign** lists each plan with its sign state; picking one switches to that program's view. "View Plan" in Active Programs Summary does the same.
 
 **Mount and toolbar**
 
