@@ -145,7 +145,9 @@ export function QueueTable({
   return (
     <WorklistShell
       header={<></>}
-      worklistKey={worklistKey}
+      // TOC: a fresh layout key, so saved column choices start from the
+      // discharge workflow set rather than the old Agent Worklist one.
+      worklistKey={isToc ? 'toc:discharge' : worklistKey}
       columns={columns}
       rows={pageRows}
       sortKey={isToc ? sortKey : undefined}
@@ -167,7 +169,7 @@ export function QueueTable({
       selectedIds={selectedIds}
       onSelectAll={handleSelectAll}
       onClearSelection={clearSelected}
-      minTableWidth={middleColumns ? 3330 : 1900}
+      minTableWidth={middleColumns ? 1500 : 1900}
     />
   );
 }

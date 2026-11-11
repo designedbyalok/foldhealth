@@ -10,6 +10,8 @@ import { AiOutcomeCell } from './tocColumnCells/AiOutcomeCell';
 import { AssessmentCell } from './tocColumnCells/AssessmentCell';
 import { assessmentLabel, resolveAssessmentStatus } from './tocAssessment';
 import { OutreachCell } from './tocColumnCells/OutreachCell';
+import { StackCell } from './tocColumnCells/StackCell';
+import { contactState, medRecState, parseMdy as parseDischargeDay, relayState, visitState } from './tocDischarge';
 
 const PROGRAM_SUB_STATUS = {
   enrolled: { variant: 'success', label: 'Enrolled', icon: 'solar:check-circle-bold' },
@@ -133,8 +135,87 @@ export function enrichTocRow(p) {
     radarSort: p.radar || 'Undetermined',
     riskIqSort: RISK_RANK[riskIq(p)] ?? 3,
     carePlanStatusSort: p.carePlanStatus || 'none',
+    facilitySort: p.facility || '',
+    dischargeSort: parseDischargeDay(p.dischargeDate)?.getTime() ?? 0,
+    contactSort: contactState(p).sort,
+    medRecSort: { Pending: 0, 'Not started': 1 }[medRecState(p).label] ?? 2,
   };
 }
+
+/**
+ * The discharge workflow columns (care management redesign prototype),
+ * first and shown by default; the Agent Worklist columns follow, hidden by
+ * default and available in the column picker.
+ */
+const DISCHARGE_COLUMNS = [
+  {
+    key: 'facility',
+    label: 'Facility',
+    sortKey: 'facilitySort',
+    sortType: 'alpha',
+    width: 200,
+    tdClassName: rowStyles.td,
+    renderCell: (p) => <StackCell top={p.facility || '-'} sub={p.admitReason} />,
+  },
+  {
+    key: 'discharged',
+    label: 'Discharged',
+    sortKey: 'dischargeSort',
+    sortType: 'generic',
+    width: 130,
+    tdClassName: rowStyles.td,
+    renderCell: (p) => <StackCell top={p.dischargeDate || '-'} sub={p.dischargeTime} />,
+  },
+  {
+    key: 'contact2d',
+    label: '2-Day Contact',
+    sortKey: 'contactSort',
+    sortType: 'generic',
+    width: 150,
+    tdClassName: rowStyles.td,
+    renderCell: (p) => {
+      const c = contactState(p);
+      return <Badge size="md" tone={c.tone} label={c.label} />;
+    },
+  },
+  {
+    key: 'relay',
+    label: 'Relay',
+    width: 240,
+    tdClassName: rowStyles.td,
+    renderCell: (p) => {
+      const r = relayState(p);
+      return (
+        <span className={styles.stack}>
+          <span><Badge size="md" tone={r.tone} label={r.label} icon={r.tone === 'neutral' ? undefined : 'solar:cpu-bolt-linear'} /></span>
+          {r.sub && <span className={styles.stackSub}>{r.sub}</span>}
+        </span>
+      );
+    },
+  },
+  {
+    key: 'visitWindow',
+    label: 'Visit Window',
+    width: 180,
+    tdClassName: rowStyles.td,
+    renderCell: (p) => {
+      const v = visitState(p);
+      return <Badge size="md" tone={v.tone} label={v.label} />;
+    },
+  },
+  {
+    key: 'medRec',
+    label: 'Med Rec',
+    sortKey: 'medRecSort',
+    sortType: 'generic',
+    width: 130,
+    tdClassName: rowStyles.td,
+    renderCell: (p) => {
+      const m = medRecState(p);
+      return <Badge size="md" tone={m.tone} label={m.label} />;
+    },
+  },
+];
 
 function RoleAssignee({ name, initials, field, patient, ctx, pickerTitle }) {
   const users = (ctx.platformUsers || []).map(u => ({
@@ -212,7 +293,7 @@ function TagCell({ patient }) {
  * TOC worklist middle columns: matches Agent Worklist Figma 3044:70430.
  * Sticky Members / Actions stay in QueueRow.
  */
-export const TOC_MIDDLE_COLUMNS = [
+const AGENT_WORKLIST_COLUMNS = [
   {
     key: 'programSubStatus',
     label: 'Program Sub Status',
@@ -499,4 +580,9 @@ export const TOC_MIDDLE_COLUMNS = [
     thStyle: { minWidth: 320 },
     renderCell: (p) => <TagCell patient={p} />,
   },
+];
+
+export const TOC_MIDDLE_COLUMNS = [
+  ...DISCHARGE_COLUMNS,
+  ...AGENT_WORKLIST_COLUMNS.map(c => ({ ...c, defaultHidden: true })),
 ];
