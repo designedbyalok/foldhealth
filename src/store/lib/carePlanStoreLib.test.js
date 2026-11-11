@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { carePlanMemberName, mapPatientCarePlanRow } from './carePlanStoreLib';
+import { carePlanMemberName, carePlanSignRequestOpen, mapPatientCarePlanRow } from './carePlanStoreLib';
 
 describe('carePlanMemberName', () => {
   it('finds the patient in any slice, by store id or member id', () => {
@@ -18,5 +18,15 @@ describe('mapPatientCarePlanRow', () => {
   it('keeps the signature task id, and null before the column exists', () => {
     expect(mapPatientCarePlanRow({ id: 'p1', signature_task_id: '281' }).signatureTaskId).toBe('281');
     expect(mapPatientCarePlanRow({ id: 'p1' }).signatureTaskId).toBeNull();
+  });
+});
+
+describe('carePlanSignRequestOpen', () => {
+  it('is open from completion until a signature at or after it', () => {
+    expect(carePlanSignRequestOpen(null)).toBe(false);
+    expect(carePlanSignRequestOpen({ signedAt: '2026-11-01T10:00:00Z' })).toBe(false);
+    expect(carePlanSignRequestOpen({ completedAt: '2026-11-02T10:00:00Z' })).toBe(true);
+    expect(carePlanSignRequestOpen({ completedAt: '2026-11-02T10:00:00Z', signedAt: '2026-11-01T10:00:00Z' })).toBe(true);
+    expect(carePlanSignRequestOpen({ completedAt: '2026-11-02T10:00:00Z', signedAt: '2026-11-03T10:00:00Z' })).toBe(false);
   });
 });

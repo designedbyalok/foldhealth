@@ -590,6 +590,13 @@ function mapPatientCarePlanRow(row) {
   };
 }
 
+// Completed and sent to a provider, and not signed since: its "Sign care
+// plan" task is still out, even if the plan was edited after completing.
+function carePlanSignRequestOpen(plan) {
+  if (!plan?.completedAt) return false;
+  return !(plan.signedAt && new Date(plan.signedAt) >= new Date(plan.completedAt));
+}
+
 // State key for a patient's plan on one program.
 function carePlanKey(patientId, programId) {
   return `${patientId}::${programId}`;
@@ -879,6 +886,7 @@ export {
   mapPatientCarePlanRow,
   carePlanKey,
   carePlanMemberName,
+  carePlanSignRequestOpen,
   templateItems,
   templateContents,
   templatesAtLastSignature,
