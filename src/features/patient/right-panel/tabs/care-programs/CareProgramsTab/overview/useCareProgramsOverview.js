@@ -95,6 +95,8 @@ export function useCareProgramsOverview(patientId, programs) {
       problems,
       problemsLoaded,
       activity,
+      firstName,
+      acuity,
     };
   }, [ready, entries, acuity, firstName, problems, problemsLoaded, activity]);
 }

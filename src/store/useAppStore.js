@@ -3076,6 +3076,62 @@ export const useAppStore = create((set, get) => ({
     if (error) reportPersistFailure(`deletePatientCarePlanSummary(${patientId})`, error);
   },
 
+  // Care Programs overview: Unity's Why Prioritized and Program Summary, one
+  // row per patient (patient_care_programs_insights), written only when
+  // someone clicks Summarize. `inputHash` fingerprints the facts it was
+  // written from, so a change in the records shows as stale.
+  careProgramsInsights: {},        // { [patientId]: { insights, inputHash, generatedBy, generatedAt } | null }
+  careProgramsInsightsLoadedFor: {}, // { [patientId]: bool }
+
+  fetchCareProgramsInsights: async (patientId) => {
+    if (!patientId || get().careProgramsInsightsLoadedFor[patientId]) return;
+    const { data, error } = await supabase
+      .from('patient_care_programs_insights')
+      .select('insights, input_hash, generated_by, generated_at')
+      .eq('patient_id', String(patientId))
+      .maybeSingle();
+    if (error) console.warn('fetchCareProgramsInsights:', error.message);
+    set(s => ({
+      careProgramsInsights: {
+        ...s.careProgramsInsights,
+        [patientId]: data
+          ? { insights: data.insights, inputHash: data.input_hash, generatedBy: data.generated_by, generatedAt: data.generated_at }
+          : null,
+      },
+      careProgramsInsightsLoadedFor: { ...s.careProgramsInsightsLoadedFor, [patientId]: true },
+    }));
+  },
+
+  saveCareProgramsInsights: async (patientId, insights, inputHash) => {
+    if (!patientId || !insights) return;
+    const now = new Date().toISOString();
+    const generatedBy = get().currentUserProfile?.name || null;
+    set(s => ({
+      careProgramsInsights: { ...s.careProgramsInsights, [patientId]: { insights, inputHash, generatedBy, generatedAt: now } },
+      careProgramsInsightsLoadedFor: { ...s.careProgramsInsightsLoadedFor, [patientId]: true },
+    }));
+    const { error } = await supabase
+      .from('patient_care_programs_insights')
+      .upsert(
+        { patient_id: String(patientId), insights, input_hash: inputHash, generated_by: generatedBy, generated_at: now, updated_at: now },
+        { onConflict: 'patient_id' },
+      );
+    if (error) reportPersistFailure(`saveCareProgramsInsights(${patientId})`, error);
+  },
+
+  deleteCareProgramsInsights: async (patientId) => {
+    if (!patientId) return;
+    set(s => ({
+      careProgramsInsights: { ...s.careProgramsInsights, [patientId]: null },
+      careProgramsInsightsLoadedFor: { ...s.careProgramsInsightsLoadedFor, [patientId]: true },
+    }));
+    const { error } = await supabase
+      .from('patient_care_programs_insights')
+      .delete()
+      .eq('patient_id', String(patientId));
+    if (error) reportPersistFailure(`deleteCareProgramsInsights(${patientId})`, error);
+  },
+
   // The same AI recap for one program's care plan, one row per patient +
   // program (patient_care_plan_program_summaries), keyed here by carePlanKey.
   // Kept until regenerated (overwrite) or dismissed (delete).

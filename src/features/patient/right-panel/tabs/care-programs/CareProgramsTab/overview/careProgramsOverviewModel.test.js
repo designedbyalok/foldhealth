@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clinicalSummary, combinedPlanTotals, nextBestActions, programOrder, programProgress, whyPrioritized } from './careProgramsOverviewModel';
+import { clinicalSummary, combinedPlanTotals, factsHash, insightFacts, nextBestActions, programOrder, programProgress, whyPrioritized } from './careProgramsOverviewModel';
 
 const ccm = { id: 'p1', code: 'CCM' };
 const dm = { id: 'p2', code: 'DM' };
@@ -140,5 +140,43 @@ describe('clinicalSummary', () => {
       ['Overdue intervention', 'Diabetes education', 'Due 10/01/2026'],
       ['Unaddressed barrier', 'Cost of strips', ''],
     ]);
+  });
+});
+
+describe('insightFacts', () => {
+  const ccmProgram = { id: 'p1', code: 'CCM', name: 'Chronic Care Management', status: 'Enrolled' };
+  const facts = insightFacts({
+    firstName: 'Maria',
+    acuity: 'High',
+    problems: [
+      { title: 'Type 2 diabetes', type: 'Chronic', status: 'Active' },
+      { title: 'Sprained ankle', type: 'Acute', status: 'Active' },
+      { title: 'Hypertension', type: 'Chronic', status: 'Resolved' },
+    ],
+    progress: [{ program: ccmProgram, done: 2, total: 5, next: { name: 'Outreach', detail: { text: 'Overdue by 3 days' } } }],
+    actions: [{ key: 'step:x', kind: 'step', title: 'Outreach', programs: [ccmProgram], detail: { text: 'Overdue by 3 days', urgent: true }, required: true }],
+    totals: { goals: 1, interventions: 0, barriers: 0, avgProgress: 40, issues: { goal: 0, intervention: 0, barrier: 0 } },
+    clinical: {
+      readings: [{ key: 'reading:a1c', title: 'A1C', goal: 'Improve A1C control', value: '8.1 %', target: '< 7 %', met: false, takenAt: '2026-10-01T10:00:00Z', prior: '', programs: [ccmProgram] }],
+      concerns: [{ key: 'barrier:p1:b1', kind: 'barrier', label: 'Unaddressed barrier', title: 'Cost of strips', text: '', programs: [ccmProgram] }],
+    },
+  });
+
+  it('keeps only active chronic conditions', () => {
+    expect(facts.conditions).toEqual(['Type 2 diabetes']);
+  });
+
+  it('names programs by code and keeps the keys the cards open', () => {
+    expect(facts.programs[0]).toMatchObject({ code: 'CCM', stepsDone: 2, stepsTotal: 5, nextStep: 'Outreach: Overdue by 3 days' });
+    expect(facts.actions[0]).toMatchObject({ key: 'step:x', programs: ['CCM'], urgent: true, required: true });
+    expect(facts.readings[0]).toMatchObject({ key: 'reading:a1c', measure: 'A1C', met: false, takenOn: '2026-10-01', prior: null });
+    expect(facts.concerns[0]).toMatchObject({ key: 'barrier:p1:b1', detail: null, programs: ['CCM'] });
+  });
+
+  it('fingerprints the facts: the same facts hash the same, a change does not', () => {
+    const again = JSON.parse(JSON.stringify(facts));
+    expect(factsHash(again)).toBe(factsHash(facts));
+    again.readings[0].value = '7.4 %';
+    expect(factsHash(again)).not.toBe(factsHash(facts));
   });
 });

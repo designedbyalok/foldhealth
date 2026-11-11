@@ -70,6 +70,10 @@
       "destination": "/api/ai?route=care-plan-summary"
     },
     {
+      "source": "/api/care-programs-insights",
+      "destination": "/api/ai?route=care-programs-insights"
+    },
+    {
       "source": "/api/care-plan-template-draft",
       "destination": "/api/ai?route=care-plan-template-draft"
     },

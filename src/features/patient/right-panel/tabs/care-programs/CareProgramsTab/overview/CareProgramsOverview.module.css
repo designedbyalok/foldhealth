@@ -588,3 +588,37 @@
   background: var(--neutral-150);
   flex-shrink: 0;
 }
+
+/* Unity-written insight cards: header trigger, footer tools, linked takeaways. */
+.cardActions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.unityMeta {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.unityTools {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.takeawayLink {
+  all: unset;
+  cursor: pointer;
+  color: inherit;
+}
+.takeawayLink:hover { color: var(--primary-300); }
+.takeawayLink:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; border-radius: 4px; }
+.unityPoints {
+  margin: 0;
+  padding-left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-md);
+  line-height: var(--leading-loose);
+  color: var(--neutral-500);
+}
+.unityPoints strong { font-weight: 600; }
