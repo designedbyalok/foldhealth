@@ -174,7 +174,7 @@ describe('insightFacts', () => {
   });
 
   it('fingerprints the facts: the same facts hash the same, a change does not', () => {
-    const again = JSON.parse(JSON.stringify(facts));
+    const again = structuredClone(facts);
     expect(factsHash(again)).toBe(factsHash(facts));
     again.readings[0].value = '7.4 %';
     expect(factsHash(again)).not.toBe(factsHash(facts));
