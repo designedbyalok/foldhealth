@@ -1307,6 +1307,8 @@ export function CarePlanSummaryView({
               patients={patients}
               platformUsers={platformUsers}
               onOpenProgram={onOpenProgramStep}
+              programs={(allPlans?.plans || []).map(x => x.program)}
+              patientName={currentPatient?.name || ''}
             />
           ) : (
           <>

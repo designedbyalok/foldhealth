@@ -13,6 +13,8 @@ import { CarePlanBarriersTable } from '../../tables/CarePlanBarriersTable';
 import { deriveGoalTableFields } from '../../lib/goalMetrics';
 import { latestPlanNote } from '../../lib/carePlanNotes';
 import { useCarePlanNoteRefs } from '../../lib/carePlanNoteRefs';
+import { inlineAddPayload } from '../../lib/carePlanInlineAdd';
+import { InlineAddRow } from '../../CarePlanView/InlineAddRow';
 import styles from './CarePlanSummaryView.module.css';
 
 const EMPTY = [];
@@ -74,7 +76,7 @@ export function ProgramNoteCard({ patientId, patientName, programs, onOpenProgra
 export function AllProgramsGbiSections({
   patientId, carePlans, goals, interventions, barriers, attention, attentionOn, onToggleAttention,
   openSections, toggleSection, activeRowId, onOpen, onAdd, onPriorityMenu, onStatusMenu, onAssigneeChange,
-  patients, platformUsers, onOpenProgram,
+  patients, platformUsers, onOpenProgram, programs = EMPTY, patientName = '',
 }) {
   const saveGoal = useAppStore(s => s.savePatientCarePlanGoal);
   const saveIntervention = useAppStore(s => s.savePatientCarePlanIntervention);
@@ -83,6 +85,37 @@ export function AllProgramsGbiSections({
   const noteReads = useAppStore(s => s.carePlanNoteReads);
   const me = useAppStore(s => s.currentUserProfile?.name || '');
   const [rowMenu, setRowMenu] = useState(null); // { kind, item, rect }
+  const [inlineAdd, setInlineAdd] = useState(null); // the kind being added as a new row
+  const showToast = useAppStore(s => s.showToast);
+  const refreshDuplicates = useAppStore(s => s.refreshCarePlanDuplicates);
+  const startInlineAdd = (kind, section) => {
+    if (!openSections[section]) toggleSection(section);
+    setInlineAdd(kind);
+  };
+  // Saves to the program picked in the row.
+  const saveInlineAdd = kind => async (values) => {
+    const program = programs.find(p => p.id === values.programId);
+    if (!program) return false;
+    const save = { goal: saveGoal, intervention: saveIntervention, barrier: saveBarrier }[kind];
+    const saved = await save(patientId, program, inlineAddPayload(kind, { ...values, patientName }));
+    if (!saved) return false;
+    showToast(`"${saved.title}" added to ${program.code}`);
+    refreshDuplicates?.(patientId, program);
+    return true;
+  };
+  // Every goal of each program, whatever the tables are filtered to.
+  const allGoals = programs.flatMap(p => (carePlans[`${patientId}::${p.id}`]?.goals || EMPTY).map(g => ({ ...g, program: p })));
+  const inlineRow = (kind, moreLabel) => inlineAdd === kind && (
+    <InlineAddRow
+      kind={kind}
+      goals={allGoals}
+      programs={programs}
+      onSave={saveInlineAdd(kind)}
+      onCancel={() => setInlineAdd(null)}
+      onMore={(rect) => { setInlineAdd(null); onAdd(kind, rect); }}
+      moreLabel={moreLabel}
+    />
+  );
 
   const planOf = row => carePlans[`${patientId}::${row.program?.id}`];
   const goalRows = useMemo(
@@ -114,8 +147,8 @@ export function AllProgramsGbiSections({
       </button>
     );
   };
-  const addButton = (kind, label) => (
-    <ActionButton size="sm" tooltip={`Add ${label}`} onClick={e => onAdd(kind, e.currentTarget.getBoundingClientRect())}>
+  const addButton = (kind, section) => (
+    <ActionButton size="sm" tooltip={`Add ${kind}`} onClick={() => startInlineAdd(kind, section)}>
       <AddIconMinimalist size={16} color="var(--neutral-300)" />
     </ActionButton>
   );
@@ -143,8 +176,9 @@ export function AllProgramsGbiSections({
           count={goals.length}
           open={openSections.goals}
           onToggle={() => toggleSection('goals')}
-          addButton={addButton('goal', 'goal')}
+          addButton={addButton('goal', 'goals')}
         />
+        {openSections.goals && inlineRow('goal', 'Browse Library')}
         {openSections.goals && (
           <CarePlanGoalsTable
             {...shared}
@@ -167,8 +201,9 @@ export function AllProgramsGbiSections({
           count={interventions.length}
           open={openSections.interventions}
           onToggle={() => toggleSection('interventions')}
-          addButton={addButton('intervention', 'intervention')}
+          addButton={addButton('intervention', 'interventions')}
         />
+        {openSections.interventions && inlineRow('intervention', 'More Types')}
         {openSections.interventions && (
           <CarePlanInterventionsTable
             {...shared}
@@ -200,8 +235,9 @@ export function AllProgramsGbiSections({
           count={barriers.length}
           open={openSections.barriers}
           onToggle={() => toggleSection('barriers')}
-          addButton={addButton('barrier', 'barrier')}
+          addButton={addButton('barrier', 'barriers')}
         />
+        {openSections.barriers && inlineRow('barrier', 'Browse Library')}
         {openSections.barriers && (
           <CarePlanBarriersTable
             {...shared}
