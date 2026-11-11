@@ -310,9 +310,7 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
   const [step, setStep] = useState(initialStep);
   const awayPerson = useMemo(() => ({ id: values.userId, name: values.userName }), [values.userId, values.userName]);
   const work = useOpenWork({
-    // Loaded once the user and dates are set, so step 1 already knows
-    // whether there's open work (none: Save right away, no step 2).
-    enabled: !!values.userName && !!values.startAt && !!values.endAt,
+    enabled: step === 2,
     away: awayPerson,
     startAt: values.startAt,
     endAt: values.endAt,
@@ -331,33 +329,19 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
     const st = useAppStore.getState();
     const window = { from: new Date(saved.startAt).getTime(), to: new Date(saved.endAt).getTime() };
     const inScope = (key) => Object.fromEntries(work.items[key].filter(i => work.plans[key][i.id]).map(i => [i.id, work.plans[key][i.id]]));
-    const appts = inScope('appointments');
-    let apptJob = false;
-    if (Object.keys(appts).length) {
-      const fromRole = (people || []).find(u => samePerson(u, awayPerson))?.clinicalRoles?.[0] || null;
-      // A background job; its summary arrives as a notification.
-      st.runReassignmentJob({
-        fromUser: saved.userName, fromUserId: saved.userId, fromUserRole: fromRole, type: 'ooo', window,
-        oooRecordId: saved.id, plan: appts, appointments: work.items.appointments,
-      });
-      apptJob = true;
-    }
-    // Tasks and care programs move right away; once they have, a toast says
-    // so (the drawer has closed by then).
-    const taskMoves = MODULES.filter(m => m.key !== 'appointments' && m.key !== 'programs')
-      .flatMap(m => Object.entries(inScope(m.key)).filter(([, p]) => p.action === 'reassign')
-        .map(([id, p]) => st.updateTask(id, { assigned_to: p.to, assigned_to_id: p.toId })));
-    const programs = inScope('programs');
-    const programMove = Object.keys(programs).length ? st.reassignCarePrograms(programs) : null;
-    if (taskMoves.length || programMove) {
-      Promise.all([Promise.allSettled(taskMoves), programMove]).then(([tasksDone, programsOk]) => {
-        const tasksOk = taskMoves.length > 0 && tasksDone.every(r => r.status === 'fulfilled' && r.value !== false);
-        const progOk = !!programMove && programsOk !== false;
-        const what = tasksOk && progOk ? 'Tasks and Care Programs' : tasksOk ? 'Tasks' : progOk ? 'Care Programs' : null;
-        if (what) toast.success(`${what} Reassigned Successfully`);
-      });
-    }
-    return apptJob;
+    // One job for everything (appointments, tasks, care programs), so one
+    // summary and one notification. It runs in the background.
+    const anyPlanned = MODULES.some(m => Object.values(inScope(m.key)).some(p => p.action === 'reassign' || p.action === 'cancel'));
+    if (!anyPlanned) return false;
+    const fromRole = (people || []).find(u => samePerson(u, awayPerson))?.clinicalRoles?.[0] || null;
+    const taskKeys = MODULES.filter(m => m.key !== 'appointments' && m.key !== 'programs').map(m => m.key);
+    st.runReassignmentJob({
+      fromUser: saved.userName, fromUserId: saved.userId, fromUserRole: fromRole, type: 'ooo', window,
+      oooRecordId: saved.id, plan: inScope('appointments'), appointments: work.items.appointments,
+      tasks: { items: taskKeys.flatMap(k => work.items[k]), plan: Object.assign({}, ...taskKeys.map(inScope)) },
+      programs: { items: work.items.programs, plan: inScope('programs') },
+    });
+    return true;
   };
 
   const save = async () => {
@@ -393,12 +377,9 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
 
   const title = step === 2 ? 'Reassign Open Work' : isEdit ? 'Edit Out of Office Record' : 'New Out of Office Record';
 
-  const noOpenWork = !work.loading && !MODULES.some(m => work.items[m.key].length);
   const headerRight = step === 1 ? (
     <>
-      {noOpenWork && values.userName && values.startAt && values.endAt
-        ? <Button disabled={saving || touched && hasErrors} onClick={() => save()} loading={saving}>Save</Button>
-        : <Button disabled={touched && hasErrors} onClick={next}>Next</Button>}
+      <Button disabled={touched && hasErrors} onClick={next}>Next</Button>
       <span className={styles.headerDivider} aria-hidden="true" />
     </>
   ) : (
@@ -545,9 +526,9 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
             <div className={styles.changedCard}>
               <div className={styles.changedBody}>
                 <span className={styles.changedTitle}>You have updated the Out of Office schedule:</span>
-                <label className={styles.changedCheck}>
+                <label className={`${styles.changedCheck} ${styles.changedCheckTop}`}>
                   <Checkbox checked={restore} onCheckedChange={(v) => setRestore(v === true)} aria-label="Restore reassigned appointments from the removed dates" />
-                  <span>Move reassigned appointments on removed dates back to {isMine ? 'your' : 'this provider\'s'} calendar</span>
+                  <span>Move reassigned items (Appointments, tasks, care programs) on removed dates back to {isMine ? 'your' : 'this provider\'s'} calendar</span>
                 </label>
               </div>
               {startedToday && (

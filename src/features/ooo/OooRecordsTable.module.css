@@ -45,7 +45,7 @@
 .stamp { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 .stampAt { white-space: nowrap; }
 .stampBy { font-size: var(--font-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* Every column but the first (the user, or Start) reads in the secondary grey. */
+/* Every column but the first (the user, or Status) reads in the secondary grey. */
 .row > td:not(:first-child) { color: var(--neutral-300); }
 
 /* Covered By: the name badge shrinks (ellipsis) so "+N" always fits. */

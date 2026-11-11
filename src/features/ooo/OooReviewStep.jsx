@@ -7,10 +7,7 @@ import { Banner } from '../../components/Banner/Banner';
 import { Button } from '../../components/Button/Button';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { Icon } from '../../components/Icon/Icon';
-import { Badge } from '../../components/Badge/Badge';
-import { PriorityIcon } from '../../components/PriorityIcon/PriorityIcon';
 import { Skeleton } from '../../components/Skeleton/Skeleton';
-import { ProgressRing } from '../hcc/DiagPanel/ReviewProgressPopover';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { UserPickerPopover } from '../../components/UserPickerPopover/UserPickerPopover';
@@ -18,50 +15,11 @@ import { toast } from '../../components/Toast/sonnerToast';
 import { initialsOf } from './oooUtils';
 import { NO_DEPARTMENT, planPeople } from './openWork';
 import { MODULES } from './useOpenWork';
+import { PROGRAM_SHAPE, TASK_SHAPE } from './openWorkRows';
 import { ReassignPlanner } from './ReassignPlanner';
 import { ReassignItemsPlanner } from './ReassignItemsPlanner';
 import styles from './ooo.module.css';
 
-const usDate = (d) => String(d || '').replace(/-/g, '/');
-
-// Rows in a module's drawer (Figma Eventus 17818:123335). Every module
-// groups by department (`location`).
-const TASK_SHAPE = {
-  titleOf: t => t.name || 'Task',
-  // Priority, the task, then "Due on" (red, with "(Missed)", when past due).
-  renderMain: t => (
-    <span className={styles.itemMain}>
-      <PriorityIcon priority={String(t.priority || 'none').toLowerCase()} size={16} title={`${t.priority || 'No'} priority`} />
-      <span className={styles.itemText}>
-        <span className={styles.itemTitle}>{t.name || 'Task'}</span>
-        <span className={t.status === 'missed' ? `${styles.itemSub} ${styles.itemSubMissed}` : styles.itemSub}>
-          {t.due_date ? `Due on: ${usDate(t.due_date)}` : 'No due date'}
-          {t.status === 'missed' && ' (Missed)'}
-        </span>
-      </span>
-    </span>
-  ),
-};
-// Status badge tone, as on the patient's care programs.
-const PROGRAM_TONE = { 'In Progress': 'warning', Enrolled: 'primary', Paused: 'neutral', 'On Hold': 'neutral' };
-const PROGRAM_SHAPE = {
-  titleOf: p => p.name || 'Care Program',
-  // Progress ring, code and status, then patient, start date and PCP.
-  renderMain: p => (
-    <span className={styles.itemMain}>
-      <span className={styles.itemText}>
-        <span className={styles.itemHead}>
-          <ProgressRing progress={p.progress > 1 ? p.progress / 100 : p.progress} size={16} stroke={2} />
-          <span className={styles.itemTitle}>{p.code || p.name}</span>
-          {p.status && <Badge tone={PROGRAM_TONE[p.status] || 'primary'} size="sm" label={p.status} />}
-        </span>
-        <span className={styles.itemSubSm}>
-          {[p.patientName, p.startDate && `Start Date: ${usDate(p.startDate)}`, p.pcp && `PCP: ${p.pcp}`].filter(Boolean).join(' • ')}
-        </span>
-      </span>
-    </span>
-  ),
-};
 const shapeOf = (key) => (key === 'programs' ? PROGRAM_SHAPE : TASK_SHAPE);
 
 // The row's "…" action, opened in a new tab so this drawer keeps its place.

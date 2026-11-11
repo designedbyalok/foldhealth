@@ -36,6 +36,7 @@ export const AUDIT_LOG_VERB_MAP = {
   priority_changed: 'changed the Priority',
   due_date_changed: 'changed the Due Date',
   assignee_changed: 'changed the Assignee',
+  ooo_reassigned: 'reassigned the task (Out of Office)',
   label_added: 'added a Label',
   label_removed: 'removed a Label',
   description_changed: 'updated the Description',

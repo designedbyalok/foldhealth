@@ -17107,8 +17107,10 @@ export const useAppStore = create((set, get) => ({
    * @param {{ fromUser, fromUserRole?, type, window: { from, to }, oooRecordId?, plan, appointments }} input
    *   `appointments` are the ones in scope (plan keys are their ids).
    */
-  runReassignmentJob: async ({ fromUser, fromUserId, fromUserRole, type, window, oooRecordId, plan, appointments }) => {
-    const { buildJob, jobToRow } = await import('../features/ooo/reassignJobs');
+  // `tasks` / `programs` ({ items, plan }, from Reassign Open Work) ride in the
+  // same job: one summary for everything an Out of Office record moved.
+  runReassignmentJob: async ({ fromUser, fromUserId, fromUserRole, type, window, oooRecordId, plan, appointments, tasks, programs }) => {
+    const { buildJob, jobToRow, taskSnapshot, programSnapshot, jobCounts } = await import('../features/ooo/reassignJobs');
     await get().fetchReassignmentJobs();
     const job = buildJob({
       fromUser, fromUserId, fromUserRole, type, window, oooRecordId, plan,
@@ -17172,6 +17174,23 @@ export const useAppStore = create((set, get) => ({
       await get().fetchAppointments?.({ force: true });
       return null;
     }
+    // Tasks and care programs: moved one by one, each with its outcome.
+    const moved = [];
+    const taskMoves = (tasks?.items || []).filter(t => tasks.plan[t.id]?.action === 'reassign');
+    await Promise.all(taskMoves.map(async (t) => {
+      const p = tasks.plan[t.id];
+      const ok = await get().updateTask(t.id, { assigned_to: p.to, assigned_to_id: p.toId || null }, { assigneeAudit: 'ooo_reassigned' }).catch(() => false);
+      moved.push({ kind: 'task', taskId: t.id, task: taskSnapshot(t), outcome: ok === false ? 'failed' : 'reassigned', to: p.to, toId: p.toId || null, reason: ok === false ? 'Could not save the task' : null });
+    }));
+    const programMoves = (programs?.items || []).filter(p => programs.plan[p.id]?.action === 'reassign');
+    if (programMoves.length) {
+      const ok = await get().reassignCarePrograms(Object.fromEntries(programMoves.map(p => [p.id, programs.plan[p.id]])));
+      programMoves.forEach((p) => {
+        const to = programs.plan[p.id];
+        moved.push({ kind: 'program', programId: p.id, program: programSnapshot(p), outcome: ok === false ? 'failed' : 'reassigned', to: to.to, toId: to.toId || null, reason: ok === false ? 'Could not save the enrollment' : null });
+      });
+    }
+    if (moved.length) Object.assign(job, { results: [...job.results, ...moved] }, jobCounts([...job.results, ...moved]));
     if (!get().reassignmentLocal) {
       let { error } = await supabase.from('reassignment_jobs').insert(jobToRow(job));
       if (error && /from_user_id/.test(error.message || '')) {
@@ -17184,8 +17203,19 @@ export const useAppStore = create((set, get) => ({
     await get().fetchAppointments?.({ force: true });
     get().addNotification?.({
       type: 'reassignment.summary',
-      title: `Appointment reassignment summary is ready for ${fromUser}.`,
-      body: `${job.results.length} Appointments • ${job.conflictingCount} Conflicting • ${job.failedCount} Failed`,
+      title: moved.length
+        ? `Out of Office reassignment summary is ready for ${fromUser}.`
+        : `Appointment reassignment summary is ready for ${fromUser}.`,
+      body: (() => {
+        const n = (k) => job.results.filter(r => (r.kind || 'appointment') === k).length;
+        return [
+          n('appointment') && `${n('appointment')} Appointments`,
+          n('task') && `${n('task')} Tasks`,
+          n('program') && `${n('program')} Care Programs`,
+          job.conflictingCount && `${job.conflictingCount} Conflicting`,
+          `${job.failedCount} Failed`,
+        ].filter(Boolean).join(' • ');
+      })(),
       action: 'openReassignmentSummary',
       reassignmentJobId: job.id,
     });
@@ -17193,7 +17223,7 @@ export const useAppStore = create((set, get) => ({
     // (reassignment_notifications_migration.sql). When the job couldn't be
     // saved, and I'm one of them, show mine here instead.
     const me = get().currentUserProfile;
-    const toMe = job.results.filter(r => r.outcome === 'reassigned'
+    const toMe = job.results.filter(r => r.outcome === 'reassigned' && (r.kind || 'appointment') === 'appointment'
       && ((r.toId && me?.id && String(r.toId) === String(me.id)) || (!r.toId && r.to === me?.name))).length;
     if (get().reassignmentLocal && toMe) {
       get().addNotification?.({
@@ -19871,7 +19901,9 @@ export const useAppStore = create((set, get) => ({
     return groupAiTocListRows(listRows);
   },
 
-  updateTask: async (id, updates) => {
+  // `opts.assigneeAudit` names the assignee change in the task's history
+  // (e.g. 'ooo_reassigned' for an Out of Office reassignment).
+  updateTask: async (id, updates, opts = {}) => {
     track('task.updated', { taskId: id });
     const prev = get().tasks.find(t => t.id === id);
     const merged = { ...(prev || {}), ...updates };
@@ -20037,7 +20069,7 @@ export const useAppStore = create((set, get) => ({
         } else if (key === 'due_date') {
           get().logTaskAudit(id, 'due_date_changed', { field: 'due_date', from: prev.due_date || '(none)', to: val || '(none)' });
         } else if (key === 'assigned_to') {
-          get().logTaskAudit(id, 'assignee_changed', { field: 'assigned_to', from: prev.assigned_to || '(unassigned)', to: val || '(unassigned)' });
+          get().logTaskAudit(id, opts.assigneeAudit || 'assignee_changed', { field: 'assigned_to', from: prev.assigned_to || '(unassigned)', to: val || '(unassigned)' });
         } else if (key === 'labels') {
           const oldL = prev.labels || []; const newL = val || [];
           const oldSet = new Set(oldL);

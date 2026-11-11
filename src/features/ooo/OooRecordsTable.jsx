@@ -17,12 +17,12 @@ import styles from './OooRecordsTable.module.css';
 // 300px on the full page, 280px in a drawer. Reason takes what's left (the table scrolls sideways below its minimum width).
 const columnsFor = (wide, showUser) => [
   ...(showUser ? [{ key: 'user', label: 'User', sticky: 'left', left: 0, width: wide ? 300 : 280 }] : []),
+  // Just wide enough for the longest status badge ("Upcoming").
+  { key: 'status', label: 'Status', width: 112 },
   { key: 'start', label: 'Start Date & Time', width: 184 },
   { key: 'end', label: 'End Date & Time', width: 184 },
   { key: 'coveredBy', label: 'Covered By', width: 200 },
   { key: 'reason', label: 'Reason' },
-  // Just wide enough for the longest status badge ("Upcoming").
-  { key: 'status', label: 'Status', width: 112 },
   // When it was added and last changed, each over who did it.
   { key: 'created', label: 'Created', width: 184 },
   { key: 'updated', label: 'Last Updated', width: 184 },
@@ -146,11 +146,11 @@ export function OooRecordsTable({ records, showUser = false, oneLineDates = fals
             </span>
           </td>
         )}
+        <td className={styles.td}><Badge tone={STATUS_TONE[status]} size="sm" label={status} /></td>
         <td className={styles.td}>{formatDateTime(r.startAt)}</td>
         <td className={styles.td}>{formatDateTime(r.endAt)}</td>
         <td className={styles.td}><CoveredByCell coverage={r.coverage} /></td>
         <td className={styles.td}><TruncatedText text={capFirst(r.reason) || '–'} /></td>
-        <td className={styles.td}><Badge tone={STATUS_TONE[status]} size="sm" label={status} /></td>
         <td className={styles.td}><StampCell at={r.createdAt} by={r.createdBy} /></td>
         <td className={styles.td}><StampCell at={r.updatedAt || r.createdAt} by={r.updatedBy || r.createdBy} /></td>
         <td className={`${styles.td} ${styles.stickyRight}`}>

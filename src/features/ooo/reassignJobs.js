@@ -16,6 +16,38 @@ export const snapshot = (a) => ({
   location: (a.location || '').trim() || 'No Department',
 });
 
+/** What a reassigned task shows in the summary. */
+export const taskSnapshot = (t) => ({
+  name: t.name || 'Task',
+  priority: t.priority || null,
+  due_date: t.due_date || null,
+  status: t.status || null,
+  member: t.member || null,
+  location: (t.location || '').trim() || 'No Department',
+});
+
+/** What a reassigned care program enrollment shows in the summary. */
+export const programSnapshot = (p) => ({
+  code: p.code || '',
+  name: p.name || '',
+  status: p.status || '',
+  patientName: p.patientName || null,
+  startDate: p.startDate || null,
+  progress: p.progress || 0,
+  location: (p.location || '').trim() || 'No Department',
+});
+
+/** What kind of item a result is (appointment results from before had none). */
+export const kindOf = (r) => r.kind || 'appointment';
+
+/** A job's counts, from all its results. */
+export const jobCounts = (results) => ({
+  reassignedCount: results.filter(r => r.outcome === 'reassigned').length,
+  cancelledCount: results.filter(r => r.outcome === 'cancelled').length,
+  conflictingCount: results.filter(r => r.conflict).length,
+  failedCount: results.filter(r => r.outcome === 'failed').length,
+});
+
 /**
  * The job for a plan. Each planned appointment ends up:
  *   - failed ("Unable to Find Appointment") when the EHR no longer has it;

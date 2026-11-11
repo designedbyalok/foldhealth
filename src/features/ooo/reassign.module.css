@@ -29,7 +29,9 @@
 .apptSub { font-size: var(--font-sm); color: var(--neutral-300); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .apptTrail { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
 .tone_conflict { background: var(--status-warning-light); border-left: 2px solid var(--status-warning); }
-.tone_failed { background: var(--status-error-light); }
+/* Failed: the row stays as it is; the reason runs under it, edge to edge, on a
+   light red strip. */
+.tone_failed .failReason { background: var(--status-error-light); border-top: 0.5px solid var(--neutral-150); padding: var(--space-2) var(--space-3); }
 
 /* ── Controls on cards and rows ── */
 .controls { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
@@ -106,7 +108,7 @@
 .failReason {
   display: flex; align-items: center; gap: var(--space-1);
   padding: var(--space-1) var(--space-3) var(--space-2);
-  font-size: var(--font-sm); color: var(--neutral-400);
+  font-size: var(--font-base); color: var(--neutral-300);
 }
 .movedTo { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-3) var(--space-2); font-size: var(--font-sm); color: var(--status-success); }
 .tagMuted { font-size: var(--font-xs); color: var(--neutral-300); padding: 0 var(--space-1); border-radius: 4px; background: var(--neutral-50); }
@@ -175,6 +177,11 @@
 /* The summary's switch hugs its options, with room under the label. */
 .summaryTabs { gap: var(--space-2); }
 .summarySwitch { align-self: flex-start; }
+/* Underline tabs that start at the content's left edge (no inset). */
+.summaryField .summaryTabsFlush { padding-left: 0; padding-right: 0; }
+/* 12px under the module tabs (the field's 4px gap plus 8px). */
+.summarySwitchUnderTabs { margin-top: var(--space-2); }
+.segLabel { display: inline-flex; align-items: center; gap: var(--space-1); }
 .summaryEmpty { padding-top: var(--space-10); }
 /* 16px from the switch (8px gap + 8px), as from the cards below. */
 .summaryNote { margin-top: var(--space-2); font-size: var(--font-base); color: var(--neutral-300); }

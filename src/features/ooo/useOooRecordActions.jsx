@@ -62,7 +62,7 @@ export function useOooRecordActions({ user, users } = {}) {
         <ConfirmDialog
           variant="destructive"
           title="Delete OOO Record?"
-          description="The Out of Office Record will be deleted and reassigned appointments for these dates will return to original user's calendar."
+          description="The Out of Office Record will be deleted and reassigned items (Appointments, tasks, care programs) for these dates will return to original user's calendar."
           confirmLabel="Delete Record"
           cancelLabel="Cancel"
           loading={deleting}
