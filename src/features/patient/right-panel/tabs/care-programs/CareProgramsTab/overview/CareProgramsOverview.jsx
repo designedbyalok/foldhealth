@@ -91,7 +91,7 @@ function ActiveProblems({ problems, loaded }) {
     .sort((a, b) => (/chronic/i.test(b.type) - /chronic/i.test(a.type)) || onsetMs(b.onsetLabel) - onsetMs(a.onsetLabel) || (a.title || '').localeCompare(b.title || ''));
   const shown = all ? active : active.slice(0, PROBLEM_LIMIT);
   return (
-    <DashboardCard size="S" icon="solar:health-linear" title="Active Problems" count={active.length || null}>
+    <DashboardCard icon="solar:health-linear" title="Active Problems" count={active.length || null}>
       {!loaded ? <p className={styles.empty}>Loading…</p> : active.length === 0 ? (
         <p className={styles.empty}>No active problems on file.</p>
       ) : (
@@ -119,7 +119,6 @@ function SinceLastVisit({ activity, lastVisit, onOpenLog }) {
   const rows = (since ? activity.filter(a => new Date(a.occurredAt).getTime() > since) : activity).slice(0, 5);
   return (
     <DashboardCard
-      size="S"
       icon="solar:history-linear"
       title={since ? 'Since Last Visit' : 'Recent Activity'}
       count={rows.length || null}
@@ -154,22 +153,48 @@ function SinceLastVisit({ activity, lastVisit, onOpenLog }) {
   );
 }
 
-/* ── Why Prioritized: takeaways, then the paragraph ── */
+/* ── Insight cards (Why Prioritized, Program Summary) ──
+   Tinted like the prototype's Unity cards, but not styled as AI: the text is
+   assembled from the records, and the footer says so. */
+function CopyButton({ text }) {
+  const showToast = useAppStore(st => st.showToast);
+  return (
+    <ActionButton
+      icon="solar:copy-linear"
+      size="sm"
+      tooltip="Copy"
+      aria-label="Copy text"
+      onClick={() => navigator.clipboard?.writeText(text).then(() => showToast?.('Copied'), () => {})}
+    />
+  );
+}
+
+function InsightFooter({ text, copy }) {
+  return (
+    <span className={styles.insightFoot}>
+      <span>{text}</span>
+      <CopyButton text={copy} />
+    </span>
+  );
+}
+
 function WhyPrioritized({ why }) {
-  // Takeaways always; the paragraph on request, to keep the column short.
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const empty = !why.takeaways.length && !why.segments.length;
+  const plain = [why.takeaways.map(t => t.text).join('; '), why.segments.map(seg => seg.text).join('')].filter(Boolean).join('\n');
   return (
     <DashboardCard
+      className={styles.insight}
       icon="solar:flag-linear"
       title="Why Prioritized"
-      actions={!empty && (
+      count="From live records"
+      actions={!empty && why.segments.length > 0 && (
         <button type="button" className={styles.linkBtn} aria-expanded={open} onClick={() => setOpen(v => !v)}>
           {open ? 'Show Less' : 'Show More'}
           <DownChevronIcon size={12} color="currentColor" className={open ? styles.chevUp : undefined} />
         </button>
       )}
-      footer={!empty && 'From the program steps, care plans and patient record, updated as they change.'}
+      footer={!empty && <InsightFooter text="Built from the program steps, care plans and patient record" copy={plain} />}
     >
       <div className={styles.whyBody}>
         {empty ? <p className={styles.whyPara}>Nothing urgent across the active programs.</p> : (
@@ -186,7 +211,7 @@ function WhyPrioritized({ why }) {
             )}
             {open && why.segments.length > 0 && (
               <p className={styles.whyPara}>
-                {why.segments.map((s, i) => (s.bold ? <strong key={i}>{s.text}</strong> : <span key={i}>{s.text}</span>))}
+                {why.segments.map((seg, k) => (seg.bold ? <strong key={k}>{seg.text}</strong> : <span key={k}>{seg.text}</span>))}
               </p>
             )}
           </>
@@ -235,8 +260,15 @@ function CarePlanSummary({ data, onOpenPlan }) {
 function ProgramSummary({ data, onOpenPlan, onOpenProgram }) {
   const segs = programSummarySegments(data.progress, data.actions, data.totals);
   const byCode = Object.fromEntries(data.progress.map(p => [p.program.code, p.program]));
+  const n = data.progress.length;
   return (
-    <DashboardCard size="S" icon="solar:document-text-linear" title="Program Summary" footer={`From the program steps and care plans · ${data.progress.length} ${data.progress.length === 1 ? 'program' : 'programs'}`}>
+    <DashboardCard
+      className={styles.insight}
+      icon="solar:document-text-linear"
+      title="Program Summary"
+      count="From live records"
+      footer={<InsightFooter text={`Built from ${n} ${n === 1 ? 'program' : 'programs'}' steps and care plans`} copy={segs.map(seg => seg.text).join('')} />}
+    >
       <p className={styles.sumPara}>
         {segs.map((s, i) => (s.link ? (
           <button key={i} type="button" className={styles.inlineLink} onClick={() => (s.link === 'plan' ? onOpenPlan() : onOpenProgram(byCode[s.link]))}>{s.text}</button>
@@ -291,7 +323,7 @@ export function CareProgramsOverview({
     <div className={styles.overviewWrap}>
       <div className={styles.overview}>
         <div className={styles.left}>
-          <DashboardCard size="S" icon="solar:clipboard-heart-linear" title="Programs" count={programs.length}>
+          <DashboardCard icon="solar:clipboard-heart-linear" title="Programs" count={programs.length}>
             <ul className={styles.programList}>
               {shownOrder.map(({ index }) => (
                 <ProgramCard

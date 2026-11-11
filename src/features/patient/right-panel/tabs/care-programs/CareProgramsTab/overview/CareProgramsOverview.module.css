@@ -234,7 +234,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: 0 var(--space-3) var(--space-3);
+  padding: 0 var(--space-4) var(--space-3);
 }
 .takeaways {
   list-style: none;
@@ -406,9 +406,10 @@
 }
 .sumTitle {
   margin: 0;
-  font-size: var(--font-base);
+  font-size: var(--font-lg);
   font-weight: 500;
-  color: var(--neutral-400);
+  line-height: var(--leading-tight);
+  color: var(--neutral-500);
 }
 .sumCard {
   display: flex;
@@ -478,7 +479,7 @@
 .sumOk { color: var(--neutral-300); }
 .sumPara {
   margin: 0;
-  padding: 0 var(--space-3) var(--space-3);
+  padding: 0 var(--space-4) var(--space-3);
   font-size: var(--font-md);
   line-height: var(--leading-loose);
   color: var(--neutral-400);
@@ -492,6 +493,24 @@
   cursor: pointer;
 }
 .inlineLink:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; border-radius: 2px; }
+
+/* ── Insight cards: a soft primary tint, like the prototype's summary cards ── */
+.insight {
+  background: var(--primary-50);
+  border-color: var(--primary-200);
+  box-shadow: none;
+}
+.insight .whyPara,
+.insight .takeaway { color: var(--neutral-500); }
+.insightFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  padding-top: var(--space-2);
+  border-top: 0.5px solid var(--primary-100);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .programCard { transition: none; }
