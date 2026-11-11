@@ -132,38 +132,6 @@ export function combinedPlanTotals(entries) {
   };
 }
 
-/**
- * The Program Summary, assembled from the same data (no AI): programs and
- * steps done, each program's next step, the urgent count and the care plan's
- * state. Returned as segments; a link names a program code or 'plan'.
- */
-export function programSummarySegments(progress, actions, totals) {
-  const done = progress.reduce((n, p) => n + p.done, 0);
-  const all = progress.reduce((n, p) => n + p.total, 0);
-  const segs = [{ text: `${progress.length} active ${progress.length === 1 ? 'program' : 'programs'}, ${done} of ${all} steps done. ` }];
-  for (const p of progress) {
-    segs.push({ link: p.program.code, text: p.program.code });
-    segs.push({ text: ` is ${p.done} of ${p.total}${p.next ? `; next is ${normName(p.next.name)}` : ''}. ` });
-  }
-  const urgent = actions.filter(a => a.detail.urgent).length;
-  segs.push({ text: urgent ? `${urgent} ${urgent === 1 ? 'action is' : 'actions are'} urgent. ` : 'Nothing is urgent. ' });
-  const bits = [
-    totals.issues.goal && `${totals.issues.goal} ${totals.issues.goal === 1 ? 'goal' : 'goals'} off target`,
-    totals.issues.intervention && `${totals.issues.intervention} ${totals.issues.intervention === 1 ? 'intervention' : 'interventions'} overdue`,
-    totals.issues.barrier && `${totals.issues.barrier} ${totals.issues.barrier === 1 ? 'barrier' : 'barriers'} with nothing addressing it`,
-  ].filter(Boolean);
-  if (bits.length) {
-    segs.push({ text: 'In the ' });
-    segs.push({ link: 'plan', text: 'care plan' });
-    segs.push({ text: `: ${bits.join(', ')}.` });
-  } else {
-    segs.push({ text: 'The ' });
-    segs.push({ link: 'plan', text: 'care plan' });
-    segs.push({ text: ' is on track.' });
-  }
-  return segs;
-}
-
 const updatedMs = p => {
   const v = p.lastUpdated && p.lastUpdated !== '-' ? p.lastUpdated : p.startDate;
   const t = v ? new Date(v).getTime() : NaN;
@@ -194,4 +162,107 @@ export function programOrder(progress, actions) {
       || updatedMs(b.p.program) - updatedMs(a.p.program)
       || (a.p.program.name || '').localeCompare(b.p.program.name || ''))
     .map(({ i, c }) => ({ index: i, ...c }));
+}
+
+const CMP = { '<=': '≤', '>=': '≥', '<': '<', '>': '>', '=': '=' };
+const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+const listOf = xs => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+
+/** "≤ 130/80 mmHg", "6.5–7 %", or '' when the goal has no target. */
+export function goalTargetText(goal, unit = '') {
+  if (!goal || goal.setTarget === false || !goal.targetValue) return '';
+  const a = goal.targetValue;
+  const b = goal.targetValue2;
+  const body = goal.comparator === 'between' && b ? `${a}–${b}` : `${CMP[goal.comparator] || goal.comparator || ''} ${a}${b ? `/${b}` : ''}`;
+  return [body.trim(), unit].filter(Boolean).join(' ');
+}
+
+const readingText = (r, unit) => (unit && !String(r.value).includes(unit) ? `${r.value} ${unit}` : String(r.value));
+
+/**
+ * The clinical Program Summary, from the records only (no AI):
+ *   lead: who the patient is clinically (acuity, active chronic conditions)
+ *         and how the monitored goals stand at their latest reading.
+ *   readings: the latest reading of each open goal that has one, against its
+ *         target; off target first. A goal tracked in several programs is one
+ *         row. `met` is the clinician's call on the reading, else the target
+ *         check, else null.
+ *   concerns: overdue interventions and barriers nothing is addressing.
+ *
+ * `evaluate(goal, value)` judges a reading against the goal's target
+ * (goalReadings.evaluateReading), passed in to keep this module pure.
+ */
+export function clinicalSummary(entries, { problems = [], acuity = '', firstName = '', evaluate = () => null } = {}) {
+  const byGoal = new Map();
+  const goalPrograms = new Map();
+  const unreadKeys = new Set();
+  for (const e of entries) {
+    const plan = e.carePlan;
+    if (!plan) continue;
+    for (const g of plan.goals || []) {
+      if (isExcludedStatus(g.status) || /^(Met|Not Met)$/.test(g.status || '')) continue;
+      const rows = (plan.measurements || []).filter(m => m.goalId === g.id).sort((a, b) => new Date(a.takenAt) - new Date(b.takenAt));
+      const k = (g.title || '').toLowerCase();
+      const progs = goalPrograms.get(k) || [];
+      if (!progs.includes(e.program)) progs.push(e.program);
+      goalPrograms.set(k, progs);
+      if (!rows.length) {
+        unreadKeys.add(k);
+        continue;
+      }
+      const latest = rows[rows.length - 1];
+      const prev = rows[rows.length - 2];
+      const have = byGoal.get(k);
+      if (have && new Date(latest.takenAt) <= new Date(have.takenAt)) continue;
+      const unit = latest.unit || g.customUnit || '';
+      const judged = typeof latest.favorable === 'boolean' ? latest.favorable : evaluate(g, latest.value);
+      byGoal.set(k, {
+        key: `reading:${k}`,
+        title: g.measure && g.measure !== 'Others' ? g.measure : g.title,
+        goal: g.title,
+        value: readingText(latest, unit),
+        prior: prev ? readingText(prev, prev.unit || unit) : '',
+        takenAt: latest.takenAt,
+        target: goalTargetText(g, unit),
+        met: judged ?? null,
+        programs: progs,
+        ref: { program: e.program, item: g },
+      });
+    }
+  }
+  const unread = [...unreadKeys].filter(k => !byGoal.has(k)).length;
+  const readings = [...byGoal.values()].sort((a, b) => (a.met === false ? 0 : 1) - (b.met === false ? 0 : 1) || new Date(b.takenAt) - new Date(a.takenAt));
+
+  const concerns = [];
+  for (const e of entries) {
+    for (const a of e.attention || []) {
+      if (!a.item || (a.kind !== 'intervention' && a.kind !== 'barrier')) continue;
+      const k = `${a.kind}:${(a.item.title || '').toLowerCase()}`;
+      const have = concerns.find(c => c.k === k);
+      if (have) { if (!have.programs.includes(e.program)) have.programs.push(e.program); continue; }
+      concerns.push({
+        k,
+        key: `${a.kind}:${e.program.id}:${a.item.id}`,
+        kind: a.kind,
+        label: a.kind === 'intervention' ? 'Overdue intervention' : 'Unaddressed barrier',
+        title: a.item.title,
+        text: a.kind === 'intervention' ? a.text.replace(/\.$/, '') : '',
+        programs: [e.program],
+        ref: { program: e.program, item: a.item },
+      });
+    }
+  }
+  concerns.sort((a, b) => (a.kind === 'intervention' ? 0 : 1) - (b.kind === 'intervention' ? 0 : 1));
+
+  const chronic = problems.filter(p => /active/i.test(p.status || 'Active') && /chronic/i.test(p.type || '')).map(p => p.title);
+  const who = firstName || 'The patient';
+  const lead = [];
+  lead.push(`${who}${/\S/.test(acuity) ? ` (${acuity} acuity)` : ''} ${chronic.length ? `has ${plural(chronic.length, 'active chronic condition')}: ${listOf(chronic)}.` : 'has no active chronic conditions on record.'}`);
+  if (readings.length) {
+    const off = readings.filter(r => r.met === false).length;
+    const inRange = readings.filter(r => r.met === true).length;
+    lead.push(`At the latest reading, ${inRange} of ${plural(readings.length, 'monitored goal')} ${inRange === 1 ? 'is' : 'are'} in range${off ? ` and ${off} ${off === 1 ? 'is' : 'are'} off target` : ''}.`);
+  }
+  if (unread) lead.push(`${plural(unread, 'open goal')} ${unread === 1 ? 'has' : 'have'} no readings yet.`);
+  return { lead: lead.join(' '), readings, concerns };
 }

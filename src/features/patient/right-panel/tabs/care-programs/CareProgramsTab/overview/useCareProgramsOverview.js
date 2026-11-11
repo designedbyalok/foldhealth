@@ -7,7 +7,8 @@ import { showsProgramCarePlan } from '../../care-plan/lib/carePlanMode';
 import { findPatientRecord } from '../../care-plan/lib/carePlanPrintSettings';
 import { carePlanFocusItems } from '../../care-plan/lib/carePlanFocus';
 import { computeDueDate } from '../../care-plan/tables/CarePlanInterventionsTable';
-import { combinedPlanTotals, nextBestActions, programProgress, whyPrioritized } from './careProgramsOverviewModel';
+import { evaluateReading } from '../../care-plan/lib/goalReadings';
+import { clinicalSummary, combinedPlanTotals, nextBestActions, programProgress, whyPrioritized } from './careProgramsOverviewModel';
 
 const EMPTY = [];
 const dueOf = i => computeDueDate(i);
@@ -15,7 +16,8 @@ const dueOf = i => computeDueDate(i);
 /**
  * Everything the Care Programs overview shows, for the active programs: each
  * program's steps and progress, Next Best Actions, Why Prioritized, the
- * combined care plan totals, active problems and the activity log.
+ * combined care plan totals, the clinical summary, active problems and the
+ * activity log.
  *
  * Loads through the same cached fetches the program view uses (step status
  * and care plan per program, tasks, documents, appointments, problems,
@@ -89,6 +91,7 @@ export function useCareProgramsOverview(patientId, programs) {
       actions,
       why: whyPrioritized(actions, { acuity, totals, progress, firstName }),
       totals,
+      clinical: clinicalSummary(entries, { problems, acuity, firstName, evaluate: evaluateReading }),
       problems,
       problemsLoaded,
       activity,

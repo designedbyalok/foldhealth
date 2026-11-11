@@ -25,7 +25,7 @@ import { isEmptyDash } from '../../../../../../../lib/emptyDash';
 const EMPTY_LIST = [];
 const EMPTY_MAP = {};
 
-export function useProgramDetailView({ program, onSwitchProgram }) {
+export function useProgramDetailView({ program, onSwitchProgram, stepId = null }) {
   const isCcm = program.code === 'CCM';
   const isSnp = program.code === 'SNP';
   // Step definitions only; each step's status is worked out per patient below.
@@ -42,9 +42,14 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
 
   // The active step lives in the store (mirrored into the URL by the hash
   // router) so a refresh restores it. null or an id that doesn't belong to
-  // this program falls back to the program's default step.
-  const storedStep = useAppStore(s => s.careProgramStep);
-  const setActiveStep = useAppStore(s => s.setCareProgramStep);
+  // this program falls back to the program's default step. A step opened on
+  // its own (the overview's step drawer) keeps its step locally instead, so
+  // it leaves the URL and the program view alone.
+  const [ownStep, setOwnStep] = useState(stepId);
+  const globalStep = useAppStore(s => s.careProgramStep);
+  const setGlobalStep = useAppStore(s => s.setCareProgramStep);
+  const storedStep = stepId ? ownStep : globalStep;
+  const setActiveStep = stepId ? setOwnStep : setGlobalStep;
   const defaultStep = isCcm && ALL_STEPS.some(st => st.id === 'ccm-billing') ? 'ccm-billing' : firstStep?.id;
   const activeStep = (storedStep && ALL_STEPS.some(s => s.id === storedStep)) ? storedStep : defaultStep;
   const [expandedSections, setExpandedSections] = useState({});
