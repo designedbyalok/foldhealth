@@ -204,7 +204,7 @@
 .awayMessageText { font-size: var(--font-base); line-height: 1.2; color: var(--neutral-400); white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
 /* OOO Phone Tree box: location on the left, who is on call on the right. */
 .awayPhoneTree { display: flex; flex-direction: column; gap: var(--space-2); }
-.awayPhoneRow { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); min-width: 0; }
+.awayPhoneRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-width: 0; }
 .awayPhoneLoc { flex: 1; min-width: 0; font-size: var(--font-base); line-height: 1.2; color: var(--neutral-400); overflow-wrap: anywhere; }
 .awayPhonePeople { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); min-width: 0; }
 .awayPhonePerson { display: inline-flex; align-items: center; gap: var(--space-1); min-width: 0; }
@@ -255,3 +255,10 @@
 .recordSummaryMain { font-size: var(--font-base); font-weight: 500; line-height: 1.2; color: var(--neutral-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recordSummarySub { font-size: var(--font-base); line-height: 1.2; color: var(--neutral-200); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+
+/* On-call schedule, View: plain label over value. */
+.detailList { display: flex; flex-direction: column; gap: var(--space-4); }
+.detailRow { display: flex; flex-direction: column; gap: var(--space-1); }
+.detailLabel { font-size: var(--font-base); line-height: 1.2; color: var(--neutral-300); }
+.detailValue { font-size: var(--font-base); line-height: 1.2; color: var(--neutral-400); }
+.detailBadges { display: flex; flex-wrap: wrap; gap: var(--space-1); }

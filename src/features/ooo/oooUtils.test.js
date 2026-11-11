@@ -212,13 +212,15 @@ describe('phoneTreeOnCall', () => {
       sch('c', 'Cy', '2026-09-16', '2026-09-20', { location: 'North' }),
       sch('d', 'Dee', '2026-09-14', '2026-09-20', { phoneTreeType: 'Holiday Hours' }),
     ], ['North', 'South'], { from, to });
-    expect(rows).toEqual([{ location: 'North', people: ['Ann', 'Bob'] }, { location: 'South', people: ['Bob'] }]);
+    expect(rows.map(({ location, people }) => ({ location, people }))).toEqual([{ location: 'North', people: ['Ann', 'Bob'] }, { location: 'South', people: ['Bob'] }]);
+    // The location's own schedule first, then the all-locations one.
+    expect(rows[0].schedules.map(s => s.id)).toEqual(['a', 'b']);
   });
   it('honours weekdays and leaves out the away user', () => {
     const rows = phoneTreeOnCall([
       sch('a', 'Ann', '2026-09-01', '2026-09-30', { days: [0, 6] }),
       sch('b', 'Bob', '2026-09-01', '2026-09-30'),
     ], [], { from, to, away: { name: 'Bob' } });
-    expect(rows).toEqual([{ location: null, people: [] }]);
+    expect(rows.map(({ location, people }) => ({ location, people }))).toEqual([{ location: null, people: [] }]);
   });
 });

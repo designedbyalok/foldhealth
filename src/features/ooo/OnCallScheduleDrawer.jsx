@@ -11,7 +11,8 @@ import { Link } from '../../components/Link/Link';
 import { AddIconMinimalist } from '../../components/Icon/AddIconMinimalist';
 import { toast } from '../../components/Toast/sonnerToast';
 import { useAppStore } from '../../store/useAppStore';
-import { PHONE_TREE_TYPES } from './onCallSeed';
+import { Badge } from '../../components/Badge/Badge';
+import { describeDays, PHONE_TREE_TYPES } from './onCallSeed';
 import styles from './ooo.module.css';
 
 const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
@@ -109,6 +110,7 @@ export function OnCallScheduleDrawer({ preset, oooRecordId, excludeUser, schedul
         </>
       )}
     >
+      {readOnly ? <ScheduleDetails schedule={schedule} /> : (
       <div className={styles.form}>
         {!readOnly && (
           <span className={styles.mandatoryNote}>
@@ -193,7 +195,36 @@ export function OnCallScheduleDrawer({ preset, oooRecordId, excludeUser, schedul
           </Link>
         </span>}
       </div>
+      )}
     </Drawer>
+  );
+}
+
+const usDate = (iso) => { const [y, m, d] = String(iso || '').split('-'); return y && m && d ? `${m}/${d}/${y}` : '-'; };
+
+/** View: the schedule as plain text, label over value. */
+function ScheduleDetails({ schedule: s }) {
+  const users = s.users?.length ? s.users : [{ id: s.userId, name: s.userName }];
+  const days = describeDays(s.days);
+  const row = (label, value) => (
+    <div className={styles.detailRow}>
+      <span className={styles.detailLabel}>{label}</span>
+      <span className={styles.detailValue}>{value}</span>
+    </div>
+  );
+  return (
+    <div className={styles.detailList}>
+      {row('Schedule Name', s.name || '-')}
+      {row('Phone Tree Type', s.phoneTreeType || '-')}
+      {row('Dates', `${usDate(s.fromDate)} – ${usDate(s.toDate)}`)}
+      {row('On', days ? days.charAt(0).toUpperCase() + days.slice(1) : '-')}
+      {row('Location', s.location || 'All Locations')}
+      {row('Users', (
+        <span className={styles.detailBadges}>
+          {users.filter(u => u?.name).map(u => <Badge key={u.id || u.name} tone="neutral" size="sm" icon="solar:user-linear" label={u.name} />)}
+        </span>
+      ))}
+    </div>
   );
 }
 

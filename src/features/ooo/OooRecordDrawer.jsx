@@ -429,7 +429,7 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
       ) : (
       <div className={styles.form}>
         {!isEdit && (
-          <Banner tone="info" size="sm">Mark users OOO by selecting date range below. Appointments (if any) will be reassigned next.</Banner>
+          <Banner tone="info" size="sm">Mark users OOO by selecting date range below. Open work (if any) will be reassigned next.</Banner>
         )}
         {isEdit && change.extended && (
           <Banner icon="solar:info-circle-linear" tone="warning" size="sm">Appointments on the newly added dates can be reassigned once you save.</Banner>

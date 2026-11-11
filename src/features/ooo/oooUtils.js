@@ -242,11 +242,16 @@ export function phoneTreeOnCall(schedules, locations, { away, from, to } = {}) {
     && (s.users || [{ id: s.userId, name: s.userName }]).some(u => !(away && samePerson(u, away)))
     && days.some(x => x.iso >= s.fromDate && x.iso <= s.toDate && (!s.days?.length || s.days.includes(x.dow))));
   const rows = locations?.length ? locations : [null];
-  return rows.map(location => ({
-    location,
-    people: [...new Set(live.filter(s => !s.location || s.location === location)
-      .flatMap(s => (s.users || [{ id: s.userId, name: s.userName }]).filter(u => !(away && samePerson(u, away))).map(u => u.name)))],
-  }));
+  return rows.map((location) => {
+    const here = live.filter(s => !s.location || s.location === location);
+    return {
+      location,
+      // The schedules behind it (most specific first), to view them.
+      schedules: [...here].sort((a, b) => (!!b.location) - (!!a.location)),
+      people: [...new Set(here
+        .flatMap(s => (s.users || [{ id: s.userId, name: s.userName }]).filter(u => !(away && samePerson(u, away))).map(u => u.name)))],
+    };
+  });
 }
 
 export const capFirst = (v) => { const t = String(v || ''); return t ? t[0].toUpperCase() + t.slice(1) : t; };
