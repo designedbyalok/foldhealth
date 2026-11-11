@@ -68,6 +68,10 @@ A **care program** is a per-patient enrollment in a structured care workflow (SN
 
 ### Step status (`PD/ProgramDetailView/stepStatus.js`)
 
+`stepContextFor` builds `deriveStepStatus`'s ctx (the enrollment's tasks and documents, the patient's appointments, matched by store id or member id); `useProgramDetailView` and Do Next both use it.
+
+**Overview** (`CPT/CareProgramsTab/overview/`): replaces the active programs table. `useCareProgramsOverview` loads, per active program, step status (`fetchProgramStepStatus`) and, in program care plan mode, the care plan (`fetchPatientCarePlan`), plus tasks, documents, appointments, problems (guarded by `patientProblemsLoadedFor`) and program activity, all cached; it shows skeletons until the per-program data is in. `careProgramsOverviewModel.js` (tested) builds Next Best Actions (`stepDetail` steps merged across programs when they read the same, plus `carePlanFocusItems` items placed after their program's Care Plan step), Why Prioritized, the combined plan totals, the Program Summary segments and `programOrder` (urgent, required, open, most recently updated, name) for the cards (4 shown, Show N More) and the By Program groups. `stepDetail` gives each open step one line from its records: Care Plan, tasks ("N open • M overdue"), appointments ("Scheduled <next upcoming>", "<date> not marked done", "None scheduled"), med recon / documents, else "Required". Go to Step opens the program at the step; Open Care Plan opens the program's Care Plan step; the check marks a step reviewed (`setProgramStepStatus`) in each program it belongs to. Appointments are not program-scoped, so the same appointment shows on several programs' Appointment steps (as step status already does).
+
 Values: `pending`, `in_progress`, `completed`, `skipped`. `fromRecords()` (22-49) derives status from real data, **matching on step name**:
 
 | Step name | Completed when | In progress when |

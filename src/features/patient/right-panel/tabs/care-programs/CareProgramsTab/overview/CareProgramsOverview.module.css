@@ -1,0 +1,421 @@
+/* Three columns when wide (programs | actions | care plan summary), two when
+   there's no room for the summary (it joins the left column), one when
+   narrow (actions first). Measured on the overview itself. */
+.overviewWrap {
+  container-type: inline-size;
+  flex-shrink: 0;
+}
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2) 0 var(--space-3);
+}
+.left,
+.main,
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.main { order: -1; }
+.right { display: none; }
+.sumLeft { display: block; }
+
+@container (min-width: 760px) {
+  .overview { flex-direction: row; align-items: flex-start; }
+  .main { order: 0; flex: 1; }
+  .left { width: clamp(260px, 32%, 340px); flex-shrink: 0; }
+}
+@container (min-width: 1180px) {
+  .left { width: clamp(280px, 25%, 340px); }
+  .right { display: flex; width: clamp(320px, 28%, 400px); flex-shrink: 0; }
+  .sumLeft { display: none; }
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.textDanger { color: var(--status-error); }
+.textWarning { color: var(--status-warning); }
+
+/* ── Programs ── */
+.programList {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.programCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  transition: border-color var(--duration-base) var(--ease-out), background var(--duration-base) var(--ease-out);
+}
+.programCard:hover {
+  border-color: var(--primary-200);
+  background: var(--primary-25);
+}
+.programTop {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.programName {
+  all: unset;
+  flex: 1;
+  min-width: 0;
+  /* Up to two lines: the left column is narrow and names are long. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+/* The name's button covers the card, so a click anywhere opens the program;
+   the controls sit above it. */
+.stretch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.programName:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.programActions,
+.programStatus {
+  position: relative;
+  z-index: 1;
+}
+.programActions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.programMeta,
+.programNext {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.programMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+.programStatus {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 500;
+  cursor: pointer;
+}
+.programStatus:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Next Best Actions ── */
+.nbaHeadRight {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.nbaList {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-2);
+  display: flex;
+  flex-direction: column;
+}
+.nbaRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-2);
+  border-top: 0.5px solid var(--neutral-100);
+}
+.nbaRow:first-child { border-top: none; }
+.nbaRowCurrent {
+  background: var(--primary-25);
+  border-radius: var(--space-2);
+}
+.nbaRowLinked { padding-left: var(--space-8); }
+.nbaNum {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 0.5px solid var(--neutral-150);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  background: var(--neutral-0);
+}
+.nbaNumCurrent {
+  border-color: var(--primary-300);
+  background: var(--primary-300);
+  color: var(--neutral-0);
+}
+.nbaBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.nbaKind {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.nbaTitleLine {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.nbaTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.nbaRequired {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--status-warning);
+}
+.nbaDetail,
+.nbaDetailUrgent {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.nbaDetailUrgent { color: var(--status-error); }
+.nbaActions {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.moreBtn {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0 var(--space-4) var(--space-3);
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+  cursor: pointer;
+}
+.moreBtn:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; border-radius: 4px; }
+.chevUp { transform: rotate(180deg); }
+.chevRight { transform: rotate(-90deg); }
+.nbaGroups {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--space-2) var(--space-2);
+}
+.nbaGroup { border-top: 0.5px solid var(--neutral-100); }
+.nbaGroup:first-child { border-top: none; }
+.nbaGroupHead {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-2);
+  cursor: pointer;
+}
+.nbaGroupHead:focus-visible { outline: 2px solid var(--primary-300); outline-offset: -2px; border-radius: 4px; }
+.nbaGroupName {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.nbaGroupMeta {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+/* ── Care Plan Summary ── */
+.sumBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0 var(--space-3) var(--space-3);
+}
+.sumProgress,
+.sumTile {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+}
+.sumProgress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+}
+.sumTiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.sumTile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  min-width: 0;
+}
+.sumProgress:hover,
+.sumTile:hover { background: var(--primary-25); border-color: var(--primary-200); }
+.sumProgress:focus-visible,
+.sumTile:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; }
+.sumValue {
+  font-size: var(--font-lg);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.sumLabel,
+.sumOk {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.sumTile > :last-child {
+  font-size: var(--font-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sumText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.sumTextHead {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.sumPara {
+  margin: 0;
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+}
+.sumFoot {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+.inlineLink {
+  all: unset;
+  color: var(--primary-300);
+  cursor: pointer;
+}
+.inlineLink:hover { text-decoration: underline; }
+.inlineLink:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; border-radius: 2px; }
+
+/* ── Active Problems, Since Last Visit, Why Prioritized ── */
+.problemList,
+.slvList,
+.whyList {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-3) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.problem {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+}
+.problemCode {
+  flex-shrink: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.slvRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.slvDay {
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--neutral-300);
+  text-transform: uppercase;
+}
+.slvLine {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.slvIcon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.slvText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.slvTitle {
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+}
+.slvMeta {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.whyItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+}
+.whyItem > :first-child { margin-top: calc(var(--space-1) / 2); flex-shrink: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .programCard { transition: none; }
+}

@@ -68,3 +68,21 @@ export function programProgressOf(flatSteps) {
   const done = flatSteps.filter(s => s.status === STEP_STATUS.completed || s.status === STEP_STATUS.skipped).length;
   return Math.round((done / flatSteps.length) * 100);
 }
+
+/**
+ * The records behind one enrollment's steps (deriveStepStatus's ctx): its
+ * tasks, documents and the patient's appointments, matched to the patient by
+ * any of `patientIds` (store id, member id). The program view and the Care
+ * Programs tab's Do Next build it the same way, so they agree on a step.
+ */
+export function stepContextFor({ patientIds, program, carePlan, manual, tasks = [], documents = [], appointments = [] }) {
+  const ids = new Set((patientIds || []).map(String).filter(Boolean));
+  return {
+    manual: manual || {},
+    carePlan,
+    program,
+    tasks: tasks.filter(t => !t.is_subtask && t.program_code === program.code && ids.has(String(t.patient_id))),
+    documents: documents.filter(d => d.programCode === program.code && ids.has(String(d.patientId))),
+    appointments: appointments.filter(a => ids.has(String(a.patient_id))),
+  };
+}

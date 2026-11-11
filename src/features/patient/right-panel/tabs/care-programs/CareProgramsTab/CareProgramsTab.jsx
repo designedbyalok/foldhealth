@@ -32,6 +32,7 @@ import { CreateSnpProgramDrawer } from './CreateSnpProgramDrawer';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
 import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import { CP_FILTERS } from '../../../../data/programActivityMock';
+import { CareProgramsOverview } from './overview/CareProgramsOverview';
 import styles from './CareProgramsTab.module.css';
 import { nextEnrollment } from '../../../../data/programLifecycle';
 import { useConsentedEnrollment } from './useConsentedEnrollment';
@@ -61,7 +62,6 @@ function NoProgramsEmptyState() {
 
 export function CareProgramsTab({ header }) {
   const [searchMode, setSearchMode] = useState(false);
-  const [activeOpen, setActiveOpen] = useState(true);
   const [pastOpen, setPastOpen] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -88,6 +88,8 @@ export function CareProgramsTab({ header }) {
   const addCareProgram = useAppStore(s => s.addCareProgram);
   const updateCareProgram = useAppStore(s => s.updateCareProgram);
   const showToast = useAppStore(s => s.showToast);
+  const setCareManagementTab = useAppStore(s => s.setCareManagementTab);
+  const setProgramStepStatus = useAppStore(s => s.setProgramStepStatus);
   const fetchCareProgramsForPatient = useAppStore(s => s.fetchCareProgramsForPatient);
   const pendingCareProgramCode = useAppStore(s => s.pendingCareProgramCode);
   const clearPendingCareProgramCode = useAppStore(s => s.clearPendingCareProgramCode);
@@ -233,6 +235,17 @@ export function CareProgramsTab({ header }) {
   };
 
   const openProgram = (program) => setPendingProgram({ program, firstStep: false });
+  // Overview: open a program at a step, or at its care plan (no program: the
+  // Comprehensive Care Plan across programs).
+  const openProgramAtStep = (program, stepId) => setPendingProgram({ program, firstStep: false, stepId });
+  const openPlanFromOverview = (program) => {
+    if (program) setPendingProgram({ program, firstStep: false, carePlan: true });
+    else setCareManagementTab('Comprehensive Care Plan');
+  };
+  const reviewStepFromOverview = (row) => {
+    for (const ref of row.refs) setProgramStepStatus(ref.program.id, ref.step, 'completed');
+    showToast?.(`${row.title} marked as reviewed${row.refs.length > 1 ? ` in ${row.programs.map(p => p.code).join(' and ')}` : ''}`);
+  };
 
   // From the comprehensive view, hand off to the owning program's Care Plan
   // step. openCareProgram resets the step to null, so set it right after.
@@ -281,6 +294,7 @@ export function CareProgramsTab({ header }) {
         const carePlanStep = flatSteps(stepsFor(pendingProgram.program.code)).find(s => s.name.toLowerCase().includes('care plan'));
         if (carePlanStep) setCareProgramStep(carePlanStep.id);
       }
+      if (pendingProgram.stepId) setCareProgramStep(pendingProgram.stepId);
       setPendingProgram(null);
     }, 700);
     return () => clearTimeout(t);
@@ -419,27 +433,22 @@ export function CareProgramsTab({ header }) {
         <NoProgramsEmptyState />
       ) : (
         <div className={styles.programSections}>
-          <ProgramSection
-            title="Active Care Programs"
-            open={activeOpen}
-            onToggle={() => setActiveOpen(v => !v)}
-          >
-            {activePrograms.length === 0 ? (
-              <div className={styles.programSectionEmpty}>No active care programs.</div>
-            ) : (
-              <CareProgramsTabTable
-                visible={activePrograms}
-                selectedIdSet={selectedIdSet}
-                toggleAll={toggleAll}
-                toggleOne={toggleOne}
-                openProgram={openProgram}
-                setStatusMenu={setStatusMenu}
-                assignOwner={assignOwner}
-                setRowMenu={setRowMenu}
-                rowMenuId={rowMenu?.id}
-              />
-            )}
-          </ProgramSection>
+          {activePrograms.length === 0 ? (
+            <div className={styles.programSectionEmpty}>No active care programs.</div>
+          ) : (
+            <CareProgramsOverview
+              patientId={patientId}
+              programs={activePrograms}
+              onOpenProgram={openProgram}
+              onOpenStep={openProgramAtStep}
+              onOpenPlan={openPlanFromOverview}
+              onOpenLog={() => setCareManagementTab('Program Activity Log')}
+              onReviewStep={reviewStepFromOverview}
+              onStatusMenu={setStatusMenu}
+              onRowMenu={setRowMenu}
+              onAssign={assignOwner}
+            />
+          )}
 
           {pastPrograms.length > 0 && (
             <ProgramSection

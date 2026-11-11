@@ -1,0 +1,120 @@
+import { useState } from 'react';
+import { DashboardCard } from '@/components/DashboardCard/DashboardCard';
+import { SegmentedControl } from '@/components/SegmentedControl/SegmentedControl';
+import { Badge } from '@/components/Badge/Badge';
+import { Button } from '@/components/Button/Button';
+import { ActionButton } from '@/components/ActionButton/ActionButton';
+import { Icon } from '@/components/Icon/Icon';
+import { DownChevronIcon } from '@/components/Icon/DownChevronIcon';
+import styles from './CareProgramsOverview.module.css';
+
+const VIEWS = [{ key: 'order', label: 'In Order' }, { key: 'program', label: 'By Program' }];
+const KIND = {
+  step: { icon: 'solar:checklist-minimalistic-linear', label: 'Program Step' },
+  goal: { icon: 'solar:target-linear', label: 'Goal' },
+  intervention: { icon: 'solar:checklist-minimalistic-linear', label: 'Intervention' },
+  barrier: { icon: 'solar:flag-linear', label: 'Barrier' },
+};
+const LIMIT = 5;
+
+function ActionRow({ row, n, current, onRun, onReview }) {
+  const kind = KIND[row.kind];
+  const sub = row.with ? `With ${row.with}` : row.sub;
+  return (
+    <li className={`${styles.nbaRow} ${current ? styles.nbaRowCurrent : ''} ${row.with ? styles.nbaRowLinked : ''}`}>
+      <span className={`${styles.nbaNum} ${current ? styles.nbaNumCurrent : ''}`} aria-hidden="true">{n}</span>
+      <div className={styles.nbaBody}>
+        <span className={styles.nbaKind}>
+          <Icon name={kind.icon} size={12} color="currentColor" />
+          {kind.label}{sub ? ` • ${sub}` : ''}
+        </span>
+        <span className={styles.nbaTitleLine}>
+          <span className={styles.nbaTitle}>{row.title}</span>
+          {row.programs.map(p => <Badge key={p.id} size="sm" label={p.code} />)}
+          {row.required && (
+            <span className={styles.nbaRequired}>
+              <Icon name="solar:danger-triangle-linear" size={12} color="currentColor" />Required
+            </span>
+          )}
+        </span>
+        <span className={row.detail.urgent ? styles.nbaDetailUrgent : styles.nbaDetail}>{row.detail.text}</span>
+      </div>
+      <div className={styles.nbaActions}>
+        <Button size="sm" variant={current ? 'solid' : 'outline'} onClick={() => onRun(row)}>
+          {row.kind === 'step' ? 'Go to Step' : 'Open Care Plan'}
+        </Button>
+        {row.kind === 'step' && (
+          <ActionButton icon="solar:check-circle-linear" size="sm" tooltip="Mark as Reviewed" aria-label={`Mark ${row.title} as reviewed`} onClick={() => onReview(row)} />
+        )}
+      </div>
+    </li>
+  );
+}
+
+/**
+ * Next Best Actions (care plan redesign prototype): program steps and care
+ * plan items that need doing, from nextBestActions. In Order shows the
+ * sequence (the first is the one to do now); By Program groups them per
+ * program. A step opens its program at that step and can be marked reviewed;
+ * an item opens the program's care plan.
+ */
+export function NextBestActions({ actions, programs, onRun, onReview }) {
+  const [view, setView] = useState('order');
+  const [all, setAll] = useState(false);
+  const [collapsed, setCollapsed] = useState({});
+  const required = actions.filter(a => a.required).length;
+  const shown = all ? actions : actions.slice(0, LIMIT);
+
+  return (
+    <DashboardCard
+      icon="solar:checklist-minimalistic-linear"
+      title="Next Best Actions"
+      count={actions.length || null}
+      actions={(
+        <span className={styles.nbaHeadRight}>
+          {required > 0 && <Badge size="sm" tone="danger" label={`${required} required`} />}
+          <SegmentedControl size="sm" items={VIEWS} value={view} onValueChange={setView} />
+        </span>
+      )}
+    >
+      {actions.length === 0 ? (
+        <p className={styles.empty}>Nothing to do right now.</p>
+      ) : view === 'order' ? (
+        <>
+          <ol className={styles.nbaList}>
+            {shown.map((row, i) => <ActionRow key={row.key} row={row} n={i + 1} current={i === 0} onRun={onRun} onReview={onReview} />)}
+          </ol>
+          {actions.length > LIMIT && (
+            <button type="button" className={styles.moreBtn} onClick={() => setAll(v => !v)}>
+              {all ? 'Show Less' : `Show All ${actions.length}`}
+              <DownChevronIcon size={12} color="currentColor" className={all ? styles.chevUp : undefined} />
+            </button>
+          )}
+        </>
+      ) : (
+        <div className={styles.nbaGroups}>
+          {programs.map(p => {
+            const rows = actions.filter(a => a.programs.some(x => x.id === p.id));
+            const req = rows.filter(a => a.required).length;
+            const open = !collapsed[p.id];
+            return (
+              <section key={p.id} className={styles.nbaGroup}>
+                <button type="button" className={styles.nbaGroupHead} aria-expanded={open} onClick={() => setCollapsed(c => ({ ...c, [p.id]: open }))}>
+                  <DownChevronIcon size={14} color="var(--neutral-300)" className={open ? undefined : styles.chevRight} />
+                  <span className={styles.nbaGroupName}>{p.name}</span>
+                  <span className={styles.nbaGroupMeta}>{p.code} • {rows.length} {rows.length === 1 ? 'action' : 'actions'}</span>
+                  {req > 0 && <Badge size="sm" tone="danger" label={`${req} required`} />}
+                </button>
+                {open && (rows.length ? (
+                  <ol className={styles.nbaList}>
+                    {rows.map((row, i) => <ActionRow key={row.key} row={row} n={i + 1} current={i === 0} onRun={onRun} onReview={onReview} />)}
+                  </ol>
+                ) : <p className={styles.empty}>Nothing open in this program.</p>)}
+              </section>
+            );
+          })}
+        </div>
+      )}
+    </DashboardCard>
+  );
+}
