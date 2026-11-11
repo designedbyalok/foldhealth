@@ -266,3 +266,71 @@ export function clinicalSummary(entries, { problems = [], acuity = '', firstName
   if (unread) lead.push(`${plural(unread, 'open goal')} ${unread === 1 ? 'has' : 'have'} no readings yet.`);
   return { lead: lead.join(' '), readings, concerns };
 }
+
+const dateOnly = iso => {
+  const d = iso ? new Date(iso) : null;
+  return d && Number.isFinite(d.getTime()) ? d.toISOString().slice(0, 10) : null;
+};
+const codesOf = ps => (ps || []).map(p => p.code);
+
+/**
+ * The facts Unity writes Why Prioritized and Program Summary from
+ * (POST /api/care-programs-insights): what the overview already shows,
+ * nothing more. Each action, reading and concern carries the `key` the
+ * overview uses, so a takeaway can point back at it.
+ */
+export function insightFacts({ firstName = '', acuity = '', problems = [], progress = [], actions = [], totals = null, clinical = null } = {}) {
+  return {
+    firstName: firstName || null,
+    acuity: acuity || null,
+    conditions: problems
+      .filter(p => !/resolved|inactive/i.test(p.status || '') && /chronic/i.test(p.type || ''))
+      .map(p => p.title)
+      .filter(Boolean),
+    programs: progress.map(p => ({
+      code: p.program.code,
+      name: p.program.name,
+      status: p.program.status,
+      stepsDone: p.done,
+      stepsTotal: p.total,
+      nextStep: p.next ? `${p.next.name}: ${p.next.detail.text}` : null,
+    })),
+    totals,
+    actions: actions.slice(0, 20).map(a => ({
+      key: a.key,
+      kind: a.kind,
+      title: a.title,
+      programs: codesOf(a.programs),
+      detail: a.detail.text,
+      urgent: !!a.detail.urgent,
+      required: !!a.required,
+    })),
+    readings: (clinical?.readings || []).map(r => ({
+      key: r.key,
+      measure: r.title,
+      goal: r.goal,
+      value: r.value,
+      target: r.target || null,
+      met: r.met,
+      takenOn: dateOnly(r.takenAt),
+      prior: r.prior || null,
+      programs: codesOf(r.programs),
+    })),
+    concerns: (clinical?.concerns || []).map(c => ({
+      key: c.key,
+      kind: c.kind,
+      label: c.label,
+      title: c.title,
+      detail: c.text || null,
+      programs: codesOf(c.programs),
+    })),
+  };
+}
+
+/** A short, stable fingerprint of the facts: the saved cards are stale once it changes. */
+export function factsHash(facts) {
+  const text = JSON.stringify(facts);
+  let h = 5381;
+  for (let i = 0; i < text.length; i += 1) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}

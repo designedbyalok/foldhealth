@@ -119,6 +119,7 @@ Migrations that rewrite enrollment rows: `snp_worklist_care_program_sync_migrati
 | `patient_care_plan_automations` | plan CASCADE, goal SET NULL. |
 | `patient_care_plan_versions` | snapshot jsonb, reason, note. UNIQUE(plan_id, version_number). |
 | `patient_care_plan_summaries` | PK patient_id. AI recap jsonb. |
+| `patient_care_programs_insights` | PK patient_id. Unity's Why Prioritized and Program Summary (`insights` jsonb), `input_hash` of the facts it was written from (stale when it differs), generated_by / generated_at. |
 | `care_plan_audit` | Append-only: entity_type, entity_id, action, summary, detail, actor. Notes are rows with `action='note'`. |
 | `care_plan_links` | Links plan items to tasks/appointments. UNIQUE(owner_id, entity_type, entity_id). |
 | `care_plan_shares` | target (EHR/Patient/POA), format, goal_ids, intervention_ids. |

@@ -2,7 +2,8 @@
 // /api/pop-group-rule-from-nl, /api/care-plan-summary,
 // /api/care-plan-template-draft, /api/care-plan-individualized,
 // /api/patient-recap-summary, /api/clinical-protocol-parse,
-// /api/template-optimization, /api/care-plan-event-update.
+// /api/template-optimization, /api/care-plan-event-update,
+// /api/care-programs-insights.
 import { dispatch } from './_lib/dispatch.js';
 import popGroupRuleFromNl from './_handlers/pop-group-rule-from-nl.js';
 import carePlanSummary from './_handlers/care-plan-summary.js';
@@ -12,6 +13,7 @@ import patientRecapSummary from './_handlers/patient-recap-summary.js';
 import clinicalProtocolParse from './_handlers/clinical-protocol-parse.js';
 import templateOptimization from './_handlers/template-optimization.js';
 import carePlanEventUpdate from './_handlers/care-plan-event-update.js';
+import careProgramsInsights from './_handlers/care-programs-insights.js';
 
 export default dispatch(
   {
@@ -23,6 +25,7 @@ export default dispatch(
     'clinical-protocol-parse': clinicalProtocolParse,
     'template-optimization': templateOptimization,
     'care-plan-event-update': carePlanEventUpdate,
+    'care-programs-insights': careProgramsInsights,
   },
   {
     '/api/pop-group-rule-from-nl': 'pop-group-rule-from-nl',
@@ -33,5 +36,6 @@ export default dispatch(
     '/api/clinical-protocol-parse': 'clinical-protocol-parse',
     '/api/template-optimization': 'template-optimization',
     '/api/care-plan-event-update': 'care-plan-event-update',
+    '/api/care-programs-insights': 'care-programs-insights',
   },
 );

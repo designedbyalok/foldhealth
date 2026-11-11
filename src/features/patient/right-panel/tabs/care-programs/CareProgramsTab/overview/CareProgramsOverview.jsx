@@ -16,6 +16,8 @@ import { NextBestActions } from './NextBestActions';
 import { CarePlanItemDrawer } from './CarePlanItemDrawer';
 import { ProgramStepDrawer } from './ProgramStepDrawer';
 import { useCareProgramsOverview } from './useCareProgramsOverview';
+import { useCareProgramsInsights } from './useCareProgramsInsights';
+import { AiSummarySkeleton } from '../../care-plan/summary/CarePlanAiSummary/CarePlanAiSummary';
 import styles from './CareProgramsOverview.module.css';
 
 const initialsOf = n => (n || '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -157,8 +159,9 @@ function SinceLastVisit({ activity, lastVisit, onOpenLog }) {
 }
 
 /* ── Insight cards (Why Prioritized, Program Summary) ──
-   Tinted like the prototype's Unity cards, but not styled as AI: the text is
-   assembled from the records, and the footer says so. */
+   Assembled from the records until someone asks Unity to write them
+   (Summarize): then they take the AI tone and Unity's text, saved per
+   patient, with the footer saying who wrote it and when. */
 function CopyButton({ text }) {
   const showToast = useAppStore(st => st.showToast);
   return (
@@ -181,39 +184,93 @@ function InsightFooter({ text, copy }) {
   );
 }
 
-function WhyPrioritized({ why }) {
+const stamp = iso => (iso
+  ? new Date(iso).toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+  : '');
+
+// The manual trigger in the card header: one run writes both cards.
+function SummarizeAction({ unity }) {
+  if (unity.state === 'ready') return null;
+  return (
+    <Button size="sm" variant="ghost" leadingIcon="custom:ai" disabled={unity.state === 'loading'} onClick={unity.generate}>
+      {unity.state === 'loading' ? 'Writing…' : unity.error ? 'Try Again' : 'Summarize'}
+    </Button>
+  );
+}
+
+// Footer of a card Unity wrote: when, whether the records moved on since
+// (with Update), and copy / write again / back to the records' version.
+function UnityFooter({ unity, copy }) {
+  return (
+    <span className={styles.insightFoot}>
+      <span className={styles.unityMeta}>
+        {`Written by Unity${unity.generatedAt ? ` • ${stamp(unity.generatedAt)}` : ''}`}
+        {unity.stale && <span className={styles.textWarning}> • Records changed since</span>}
+      </span>
+      <span className={styles.unityTools}>
+        {unity.stale && <button type="button" className={styles.linkBtn} onClick={unity.generate}>Update</button>}
+        <CopyButton text={copy} />
+        {!unity.stale && <ActionButton icon="solar:refresh-linear" size="sm" tooltip="Write it again" onClick={unity.generate} />}
+        <ActionButton icon="solar:trash-bin-trash-linear" size="sm" tooltip="Dismiss, show the records' version" onClick={unity.dismiss} />
+      </span>
+    </span>
+  );
+}
+
+// A takeaway Unity tied to an action, reading or concern opens it.
+function Takeaway({ t, onOpenRef }) {
+  const dot = <span className={t.tone === 'danger' ? styles.dotDanger : styles.dotWarning} aria-hidden="true" />;
+  return (
+    <li className={styles.takeaway}>
+      {dot}
+      {t.ref && onOpenRef ? (
+        <button type="button" className={styles.takeawayLink} onClick={() => onOpenRef(t.ref)}>{t.text}</button>
+      ) : t.text}
+    </li>
+  );
+}
+
+function WhyPrioritized({ why, unity, onOpenRef }) {
   const [open, setOpen] = useState(true);
-  const empty = !why.takeaways.length && !why.segments.length;
-  const plain = [why.takeaways.map(t => t.text).join('; '), why.segments.map(seg => seg.text).join('')].filter(Boolean).join('\n');
+  const ai = unity.state === 'ready' ? unity.insights.why : null;
+  const takeaways = ai ? ai.takeaways : why.takeaways;
+  const hasParagraph = ai ? !!ai.paragraph : why.segments.length > 0;
+  const empty = !takeaways.length && !hasParagraph;
+  const plain = ai
+    ? [ai.takeaways.map(t => t.text).join('; '), ai.paragraph].filter(Boolean).join('\n')
+    : [why.takeaways.map(t => t.text).join('; '), why.segments.map(seg => seg.text).join('')].filter(Boolean).join('\n');
   return (
     <DashboardCard
-      className={styles.insight}
-      icon="solar:flag-linear"
+      className={ai ? undefined : styles.insight}
+      tone={ai ? 'ai' : undefined}
+      icon={ai ? 'custom:ai' : 'solar:flag-linear'}
       title="Why Prioritized"
-      actions={!empty && why.segments.length > 0 && (
-        <button type="button" className={styles.linkBtn} aria-expanded={open} onClick={() => setOpen(v => !v)}>
-          {open ? 'Show Less' : 'Show More'}
-          <DownChevronIcon size={12} color="currentColor" className={open ? styles.chevUp : undefined} />
-        </button>
+      actions={(
+        <span className={styles.cardActions}>
+          <SummarizeAction unity={unity} />
+          {!empty && hasParagraph && (
+            <button type="button" className={styles.linkBtn} aria-expanded={open} onClick={() => setOpen(v => !v)}>
+              {open ? 'Show Less' : 'Show More'}
+              <DownChevronIcon size={12} color="currentColor" className={open ? styles.chevUp : undefined} />
+            </button>
+          )}
+        </span>
       )}
-      footer={!empty && <InsightFooter text="From live records: program steps, care plans and the patient record" copy={plain} />}
+      footer={ai
+        ? <UnityFooter unity={unity} copy={plain} />
+        : !empty && <InsightFooter text="From live records: program steps, care plans and the patient record" copy={plain} />}
     >
       <div className={styles.whyBody}>
-        {empty ? <p className={styles.whyPara}>Nothing urgent across the active programs.</p> : (
+        {unity.state === 'loading' ? <AiSummarySkeleton /> : empty ? <p className={styles.whyPara}>Nothing urgent across the active programs.</p> : (
           <>
-            {why.takeaways.length > 0 && (
+            {takeaways.length > 0 && (
               <ul className={styles.takeaways}>
-                {why.takeaways.map(t => (
-                  <li key={t.text} className={styles.takeaway}>
-                    <span className={t.tone === 'danger' ? styles.dotDanger : styles.dotWarning} aria-hidden="true" />
-                    {t.text}
-                  </li>
-                ))}
+                {takeaways.map(t => <Takeaway key={t.text} t={t} onOpenRef={ai ? onOpenRef : null} />)}
               </ul>
             )}
-            {open && why.segments.length > 0 && (
+            {open && hasParagraph && (
               <p className={styles.whyPara}>
-                {why.segments.map((seg, k) => (seg.bold ? <strong key={k}>{seg.text}</strong> : <span key={k}>{seg.text}</span>))}
+                {ai ? ai.paragraph : why.segments.map((seg, k) => (seg.bold ? <strong key={k}>{seg.text}</strong> : <span key={k}>{seg.text}</span>))}
               </p>
             )}
           </>
@@ -268,33 +325,51 @@ const shortDay = iso => new Date(iso).toLocaleDateString('en-US', { month: 'shor
  * target, then overdue interventions and barriers nothing is addressing.
  * Rows open the goal, intervention or barrier in its drawer.
  */
-function ProgramSummary({ clinical, onOpenItem }) {
+function ProgramSummary({ clinical, unity, onOpenItem }) {
   const [all, setAll] = useState(false);
-  const { lead, readings, concerns } = clinical;
+  const { readings, concerns } = clinical;
+  // Unity writes the lead and the points; the readings and concerns below
+  // stay the records' own rows, so they keep opening their items.
+  const ai = unity.state === 'ready' ? unity.insights.summary : null;
+  const lead = ai ? ai.lead : clinical.lead;
   const hidden = Math.max(0, readings.length - SUMMARY_LIMIT) + Math.max(0, concerns.length - SUMMARY_LIMIT);
   const shownReadings = all ? readings : readings.slice(0, SUMMARY_LIMIT);
   const shownConcerns = all ? concerns : concerns.slice(0, SUMMARY_LIMIT);
   const copy = [
     lead,
+    ...(ai ? ai.points.map(p => `${p.title}: ${p.body}`) : []),
     ...readings.map(r => `${r.title}: ${r.value}${r.target ? ` (target ${r.target})` : ''}`),
     ...concerns.map(c => `${c.label}: ${c.title}${c.text ? ` (${c.text})` : ''}`),
   ].join('\n');
   const codes = ps => ps.map(p => <Badge key={p.id} size="sm" label={p.code} />);
   return (
     <DashboardCard
-      className={styles.insight}
-      icon="solar:document-text-linear"
+      className={ai ? undefined : styles.insight}
+      tone={ai ? 'ai' : undefined}
+      icon={ai ? 'custom:ai' : 'solar:document-text-linear'}
       title="Program Summary"
-      actions={hidden > 0 && (
-        <button type="button" className={styles.linkBtn} aria-expanded={all} onClick={() => setAll(v => !v)}>
-          {all ? 'Show Less' : `Show ${hidden} More`}
-          <DownChevronIcon size={12} color="currentColor" className={all ? styles.chevUp : undefined} />
-        </button>
+      actions={(
+        <span className={styles.cardActions}>
+          <SummarizeAction unity={unity} />
+          {hidden > 0 && (
+            <button type="button" className={styles.linkBtn} aria-expanded={all} onClick={() => setAll(v => !v)}>
+              {all ? 'Show Less' : `Show ${hidden} More`}
+              <DownChevronIcon size={12} color="currentColor" className={all ? styles.chevUp : undefined} />
+            </button>
+          )}
+        </span>
       )}
-      footer={<InsightFooter text="From live records: problems, goal readings and care plans" copy={copy} />}
+      footer={ai
+        ? <UnityFooter unity={unity} copy={copy} />
+        : <InsightFooter text="From live records: problems, goal readings and care plans" copy={copy} />}
     >
       <div className={styles.clinBody}>
-        <p className={styles.clinLead}>{lead}</p>
+        {unity.state === 'loading' ? <AiSummarySkeleton /> : <p className={styles.clinLead}>{lead}</p>}
+        {ai && ai.points.length > 0 && unity.state !== 'loading' && (
+          <ul className={styles.unityPoints}>
+            {ai.points.map(p => <li key={p.title}><strong>{p.title}:</strong> {p.body}</li>)}
+          </ul>
+        )}
         {shownReadings.length > 0 && (
           <div className={styles.clinGroup}>
             <h4 className={styles.clinLabel}>Latest Readings</h4>
@@ -345,13 +420,15 @@ function ProgramSummary({ clinical, onOpenItem }) {
  * and active problems on the left; Why Prioritized, Next Best Actions and
  * recent activity in the middle; the Care Plan Summary and Program Summary on
  * the right (or on the left when there's no room for three columns).
- * Everything comes from the patient's records; nothing is generated.
+ * Everything comes from the patient's records; Why Prioritized and Program
+ * Summary can also be written by Unity on request (useCareProgramsInsights).
  */
 export function CareProgramsOverview({
   patientId, programs, onOpenProgram, onOpenStep, onOpenPlan, onOpenLog, onReviewStep,
   onStatusMenu, onRowMenu, onAssign,
 }) {
   const data = useCareProgramsOverview(patientId, programs);
+  const unity = useCareProgramsInsights(patientId, data);
   const [allCards, setAllCards] = useState(false);
   const [openItem, setOpenItem] = useState(null);
   const [openStep, setOpenStep] = useState(null);
@@ -376,10 +453,19 @@ export function CareProgramsOverview({
   const order = programOrder(data.progress, data.actions);
   const shownOrder = allCards ? order : order.slice(0, CARD_LIMIT);
   const onRun = row => (row.kind === 'step' ? setOpenStep({ program: row.refs[0].program, stepId: row.refs[0].step.id }) : setOpenItem({ kind: row.kind, ...row.ref }));
+  // A Unity takeaway names the action, reading or concern it is about by key.
+  const openRef = (key) => {
+    const action = data.actions.find(a => a.key === key);
+    if (action) { onRun(action); return; }
+    const reading = data.clinical.readings.find(r => r.key === key);
+    if (reading) { setOpenItem({ kind: 'goal', ...reading.ref }); return; }
+    const concern = data.clinical.concerns.find(c => c.key === key);
+    if (concern) setOpenItem({ kind: concern.kind, ...concern.ref });
+  };
   const summaries = (
     <>
       <CarePlanSummary data={data} onOpenPlan={() => onOpenPlan(null)} />
-      <ProgramSummary clinical={data.clinical} onOpenItem={setOpenItem} />
+      <ProgramSummary clinical={data.clinical} unity={unity} onOpenItem={setOpenItem} />
     </>
   );
 
@@ -413,7 +499,7 @@ export function CareProgramsOverview({
         </div>
         {/* Recent activity sits under the actions so the columns end level. */}
         <div className={styles.main}>
-          <WhyPrioritized why={data.why} />
+          <WhyPrioritized why={data.why} unity={unity} onOpenRef={openRef} />
           <NextBestActions actions={data.actions} programs={order.map(o => data.entries[o.index].program)} onRun={onRun} onReview={onReviewStep} />
           <SinceLastVisit activity={data.activity} lastVisit={lastVisit} onOpenLog={onOpenLog} />
         </div>
