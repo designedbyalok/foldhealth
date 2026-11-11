@@ -15,6 +15,7 @@ import { toast } from '../../components/Toast/sonnerToast';
 import { initialsOf } from './oooUtils';
 import { NO_DEPARTMENT, planPeople } from './openWork';
 import { MODULES } from './useOpenWork';
+import { OnCallScheduleDrawer } from './OnCallScheduleDrawer';
 import { PROGRAM_SHAPE, TASK_SHAPE } from './openWorkRows';
 import { ReassignPlanner } from './ReassignPlanner';
 import { ReassignItemsPlanner } from './ReassignItemsPlanner';
@@ -90,6 +91,7 @@ function linesFor(key, covered, autoReply) {
 export function OooReviewStep({ summary, away, timeWindow, work, coverers, missingByName, phoneTree, autoReply, message, onMessageChange }) {
   const { items, plans, defaults, setPlan, pickUsers, loading } = work;
   const [editing, setEditing] = useState(null); // module key whose drawer is open
+  const [viewSchedule, setViewSchedule] = useState(null); // an on-call schedule, read-only
   const [picker, setPicker] = useState(null);   // { rect, key } assigning a whole module
   // The auto-reply message is edited as a draft: Save keeps it, Discard or
   // a click outside the field goes back to the saved message.
@@ -206,25 +208,23 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
       })}
       {extraBlock(!covered && (
         <span className={styles.awayMessage}>
-          <span className={styles.awayMessageHead}>
-            <span className={styles.awayMessageTitle}>OOO Phone Tree</span>
-            {/* A new tab, so this drawer keeps what's been entered. */}
-            <ActionButton icon="solar:eye-linear" size="sm" tooltip="View On Call Schedule" tooltipLeft aria-label="View on call schedule" onClick={() => window.open('#/settings/calls', '_blank', 'noopener')} />
-          </span>
+          <span className={styles.awayMessageTitle}>OOO Phone Tree</span>
+          {/* Each location, with its on-call schedule one click away (the
+              View drawer, over this one). */}
           <span className={styles.awayPhoneTree}>
             {phoneTree.map(r => (
               <span key={r.location || 'all'} className={styles.awayPhoneRow}>
-                {r.location && <span className={styles.awayPhoneLoc}>{r.location}</span>}
-                {r.people.length ? (
-                  <span className={styles.awayPhonePeople}>
-                    {r.people.map(name => (
-                      <span key={name} className={styles.awayPhonePerson}>
-                        <Avatar variant="assignee" size="S" userName={name} initials={initialsOf(name)} />
-                        <span className={styles.awayPhoneName}>{name}</span>
-                      </span>
-                    ))}
-                  </span>
-                ) : <span className={styles.awayPhoneNone}>No one on call. Calls go to voicemail.</span>}
+                <span className={styles.awayPhoneLoc}>{r.location || 'All Locations'}</span>
+                {!r.people.length && <span className={styles.awayPhoneNone}>No one on call. Calls go to voicemail.</span>}
+                <ActionButton
+                  icon="solar:eye-linear"
+                  size="sm"
+                  tooltip={r.schedules.length ? 'View On Call Schedule' : 'No on call schedule for these dates'}
+                  tooltipLeft
+                  disabled={!r.schedules.length}
+                  aria-label={`View on call schedule for ${r.location || 'all locations'}`}
+                  onClick={() => r.schedules[0] && setViewSchedule(r.schedules[0])}
+                />
               </span>
             ))}
           </span>
@@ -318,6 +318,9 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
           />
         );
       })()}
+      {viewSchedule && (
+        <OnCallScheduleDrawer schedule={viewSchedule} readOnly onClose={() => setViewSchedule(null)} />
+      )}
       {editingModule && (
         <ModuleReassignDrawer
           module={editingModule}

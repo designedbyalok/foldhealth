@@ -179,11 +179,12 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
     const header = (key, label) => ({ type: 'header', value: `h-${key}`, label: <span className={styles.coverGroup}>{label}</span> });
     // Each row says why it's in its group: Limited Access rows carry a
     // warning badge, Not Available rows an Out of Office one.
+    // Not Available rows (disabled) don't say whom they cover.
     const row = ({ user }, trail, extra) => ({
       value: personKey(user),
       // Also found by the name of anyone out whom they cover, so searching
       // for someone who's out shows their covering provider above them.
-      searchText: [user.name, user.email, user.clinicalRoles?.[0] || 'Staff', ...(covers.get(user.name) || [])].filter(Boolean).join(' '),
+      searchText: [user.name, user.email, user.clinicalRoles?.[0] || 'Staff', ...(extra?.disabled ? [] : covers.get(user.name) || [])].filter(Boolean).join(' '),
       triggerLabel: user.name,
       // Like Create Team With: avatar, name over role, and the note on the right.
       label: (
@@ -192,7 +193,7 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
           <span className={styles.coverRowText}>
             <span className={styles.coverRowName}>{user.name}</span>
             <span className={styles.coverRowRole}>{user.clinicalRoles?.[0] || 'Staff'}</span>
-            {covers.has(user.name) && <span className={styles.coverRowCovering}>Covering for {covers.get(user.name).join(', ')}</span>}
+            {!extra?.disabled && covers.has(user.name) && <span className={styles.coverRowCovering}>Covering for {covers.get(user.name).join(', ')}</span>}
           </span>
           {trail}
         </span>
@@ -235,12 +236,16 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
       location: locPicker.loc,
     });
     const covers = coversFor(g);
-    const asUser = ({ user }, section, extra) => ({
-      id: personKey(user), name: user.name, initials: user.initials, section,
-      role: [user.clinicalRoles?.[0] || 'Staff', covers.has(user.name) && `Covering for ${covers.get(user.name).join(', ')}`].filter(Boolean).join(' • '),
-      searchText: [user.name, ...(covers.get(user.name) || [])].join(' '),
-      ...extra,
-    });
+    // "Covering for" only on people who can be picked (not Not Available).
+    const asUser = ({ user }, section, extra) => {
+      const cover = section !== 'Not Available' && covers.has(user.name);
+      return {
+        id: personKey(user), name: user.name, initials: user.initials, section,
+        role: [user.clinicalRoles?.[0] || 'Staff', cover && `Covering for ${covers.get(user.name).join(', ')}`].filter(Boolean).join(' • '),
+        searchText: [user.name, ...(cover ? covers.get(user.name) : [])].join(' '),
+        ...extra,
+      };
+    };
     return [
       ...g.suggested.map(x => asUser(x, 'Suggested')),
       ...g.limited.map(x => asUser(x, 'Limited Access', { badge: limitedBadge(x.missing) })),
@@ -429,7 +434,7 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
       ) : (
       <div className={styles.form}>
         {!isEdit && (
-          <Banner tone="info" size="sm">Mark users OOO by selecting date range below. Appointments (if any) will be reassigned next.</Banner>
+          <Banner tone="info" size="sm">Mark users OOO by selecting date range below. Open work (if any) will be reassigned next.</Banner>
         )}
         {isEdit && change.extended && (
           <Banner icon="solar:info-circle-linear" tone="warning" size="sm">Appointments on the newly added dates can be reassigned once you save.</Banner>

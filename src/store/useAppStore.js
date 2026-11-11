@@ -17223,9 +17223,22 @@ export const useAppStore = create((set, get) => ({
     // (reassignment_notifications_migration.sql). When the job couldn't be
     // saved, and I'm one of them, show mine here instead.
     const me = get().currentUserProfile;
-    const toMe = job.results.filter(r => r.outcome === 'reassigned' && (r.kind || 'appointment') === 'appointment'
-      && ((r.toId && me?.id && String(r.toId) === String(me.id)) || (!r.toId && r.to === me?.name))).length;
-    if (get().reassignmentLocal && toMe) {
+    const mineAll = job.results.filter(r => r.outcome === 'reassigned'
+      && ((r.toId && me?.id && String(r.toId) === String(me.id)) || (!r.toId && r.to === me?.name)));
+    const toMe = mineAll.filter(r => (r.kind || 'appointment') === 'appointment').length;
+    // An Out of Office job (with tasks or care programs): the covering
+    // provider gets the summary of what came to them, as the trigger sends.
+    if (get().reassignmentLocal && moved.length && mineAll.length) {
+      const k = (kind) => mineAll.filter(r => (r.kind || 'appointment') === kind).length;
+      const part = (n, one, many) => n && `${n} ${n === 1 ? one : many}`;
+      get().addNotification?.({
+        type: 'reassignment.summary',
+        title: `Out of Office reassignment summary: you're covering for ${fromUser}.`,
+        body: [part(k('appointment'), 'Appointment', 'Appointments'), part(k('task'), 'Task', 'Tasks'), part(k('program'), 'Care Program', 'Care Programs')].filter(Boolean).join(' • '),
+        action: 'openReassignmentSummary',
+        reassignmentJobId: job.id,
+      });
+    } else if (get().reassignmentLocal && toMe) {
       get().addNotification?.({
         type: 'appointment.reassigned',
         title: `${toMe} new ${toMe === 1 ? 'appointment' : 'appointments'} assigned to you.`,

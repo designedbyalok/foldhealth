@@ -52,15 +52,18 @@ function CoveredByCell({ coverage }) {
   const people = coveringPeople(coverage);
   if (!people.length) return '-';
   const [first, ...rest] = people;
+  // Someone covering every location of the record reads "All Departments".
+  const allLocations = new Set((coverage || []).map(c => String(c?.location || '').trim()).filter(Boolean));
+  const where = (p) => (allLocations.size > 1 && p.locations.length >= allLocations.size ? 'All Departments' : p.locations.join(', '));
   const list = (
     <span className={styles.coverList}>
       {people.map(p => (
-        <span key={p.name}>{p.name}{p.locations.length > 0 && ` • ${p.locations.join(', ')}`}</span>
+        <span key={p.name}>{p.name}{p.locations.length > 0 && ` • ${where(p)}`}</span>
       ))}
     </span>
   );
   return (
-    <Tooltip label={list} placement="bottom" align="start">
+    <Tooltip label={list} placement="bottom" align="start" maxWidth={320}>
       <span className={styles.coverCell}>
         <Badge tone="neutral" size="sm" icon="solar:user-linear" className={styles.coverBadge} label={<span className={styles.coverName}>{first.name}</span>} />
         {rest.length > 0 && <Badge tone="neutral" size="sm" label={`+${rest.length}`} />}

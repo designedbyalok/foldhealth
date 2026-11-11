@@ -23,6 +23,7 @@ export function ScheduleDrawerAppointmentDetails({
   setProvider,
   profileUsers,
   providerOoo,
+  providerOooError,
   secondaryUsers,
   setSecondaryUsers,
   date,
@@ -87,6 +88,14 @@ export function ScheduleDrawerAppointmentDetails({
           <span className={styles.detailLabel}>Primary User</span>
           <ProviderPicker value={provider} onSelect={setProvider} profileUsers={profileUsers} outOfOffice={providerOoo} onAddSecondary={() => setSectionOpen('secondary', true)} />
         </div>
+        {/* The picked provider is out on the picked date: say so, and
+            Schedule stays off until the provider or date changes. */}
+        {providerOooError && (
+          <div className={styles.detailError} role="alert">
+            <Icon name="solar:danger-circle-linear" size={14} color="var(--status-error)" />
+            {providerOooError}
+          </div>
+        )}
 
         {isSectionOpen('secondary') && (
           <div className={styles.detailRow}>
