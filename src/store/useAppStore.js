@@ -3048,6 +3048,20 @@ export const useAppStore = create((set, get) => ({
     if (error) reportPersistFailure(`savePatientCarePlanSummary(${patientId})`, error);
   },
 
+  // Tick or untick the recap's action items (`done`: their indexes), kept in
+  // the summary like the per-program one so generated_at still dates the recap.
+  setPatientCarePlanSummaryDone: async (patientId, done) => {
+    const entry = get().patientCarePlanSummaries[patientId];
+    if (!entry?.summary) return;
+    const summary = { ...entry.summary, done };
+    set(s => ({ patientCarePlanSummaries: { ...s.patientCarePlanSummaries, [patientId]: { ...entry, summary } } }));
+    const { error } = await supabase
+      .from('patient_care_plan_summaries')
+      .update({ summary, updated_at: new Date().toISOString() })
+      .eq('patient_id', patientId);
+    if (error) reportPersistFailure(`setPatientCarePlanSummaryDone(${patientId})`, error);
+  },
+
   // Dismissing the card removes the saved recap so it doesn't return on reload.
   deletePatientCarePlanSummary: async (patientId) => {
     if (!patientId) return;

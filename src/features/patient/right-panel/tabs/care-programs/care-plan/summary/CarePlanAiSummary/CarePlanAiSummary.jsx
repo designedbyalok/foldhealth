@@ -6,19 +6,22 @@ import styles from './CarePlanAiSummary.module.css';
    Logic lives in useCarePlanAiSummary.js. */
 
 // State-aware trigger: Summarize (idle) → AI is writing… (loading) →
-// Generated Summary (ready). Loading and ready don't re-trigger; the card's
-// refresh button regenerates.
-export function SummarizeButton({ state, onClick, idleLabel = 'Summarize' }) {
+// Generated Summary (ready). A ready summary the plan has moved past
+// (`stale`) reads Update Summary and writes it again; otherwise loading and
+// ready don't re-trigger, and the card's refresh button regenerates.
+export function SummarizeButton({ state, stale = false, onClick, idleLabel = 'Summarize' }) {
+  const canUpdate = state === 'ready' && stale;
+  const label = state === 'loading' ? 'AI is writing…' : canUpdate ? 'Update Summary' : state === 'ready' ? 'Generated Summary' : 'Summarize';
   return (
     <button
       type="button"
       className={`${styles.summarizeBtn} ${state === 'loading' ? styles.summarizeBtnBusy : ''}`}
       onClick={onClick}
-      disabled={state !== 'idle'}
-      aria-label={state === 'loading' ? 'Summary is generating' : state === 'ready' ? 'Summary generated' : idleLabel}
+      disabled={state !== 'idle' && !canUpdate}
+      aria-label={state === 'loading' ? 'Summary is generating' : canUpdate ? 'Update the summary, the plan changed since' : state === 'ready' ? 'Summary generated' : idleLabel}
     >
       <Icon name="custom:ai" size={14} color="var(--primary-300)" />
-      <span>{state === 'loading' ? 'AI is writing…' : state === 'ready' ? 'Generated Summary' : 'Summarize'}</span>
+      <span>{label}</span>
     </button>
   );
 }

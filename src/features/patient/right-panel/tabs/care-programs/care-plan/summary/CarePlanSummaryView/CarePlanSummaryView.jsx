@@ -48,6 +48,9 @@ import styles from './CarePlanSummaryView.module.css';
 import { localDateMs } from '../../../../../../../../lib/localDate';
 import { useSignedCarePlans } from '../../lib/useSignedCarePlans';
 import { CarePlanSummaryStrip } from '../../CarePlanView/CarePlanSummaryStrip';
+import { CarePlanSummaryPanel } from '../../CarePlanView/CarePlanSummaryPanel';
+import { recentCarePlanNotes } from '../../lib/carePlanRecentNotes';
+import { NOTE_ACTIONS } from '../../lib/carePlanVersions';
 import { AllProgramsFocus } from '../AllProgramsFocus/AllProgramsFocus';
 import { allProgramsPlanState } from '../allProgramsPlan';
 import { isProgramClosed } from '../../../../../../data/programStatus';
@@ -59,6 +62,11 @@ import { confirmStatusChange, statusReasonPatch } from '../../lib/confirmStatusC
 const PRIORITIES = ['high', 'medium', 'low'];
 // Wide enough, an open item docks beside the tables (as in a program's plan).
 const DOCK_MIN_WIDTH = 1080;
+// Wider still, the summary, Unity summary and recent notes get a left column,
+// the same three columns as a program's own plan.
+const SUMMARY_MIN_WIDTH = 1400;
+// An item is unique within its program's plan, not across plans.
+const itemKey = (programId, id) => `${programId}:${id}`;
 const dueOf = i => computeDueDate(i);
 
 // Person cell: shared Avatar primitive + name, so PCM / PCP renders
@@ -705,15 +713,19 @@ export function CarePlanSummaryView({
   embedded = false,
   // care_plan_mode = 'both': the roll-up is the patient-level Care Plan, so
   // its drawers edit in full and each section can add to a chosen program.
-  editable = false, summarizeRequest = 0, onSummaryState }) {
+  editable = false, summarizeRequest = 0, onSummaryState, onAddNote }) {
   const containerRef = useRef(null);
   const [dockWide, setDockWide] = useState(false);
+  const [summaryWide, setSummaryWide] = useState(false);
   const [dockEl, setDockEl] = useState(null);
   const [attentionOn, setAttentionOn] = useState(false);
   useLayoutEffect(() => {
     const el = containerRef.current;
     if (!editable || !el) return undefined;
-    const measure = () => setDockWide(el.clientWidth >= DOCK_MIN_WIDTH);
+    const measure = () => {
+      setDockWide(el.clientWidth >= DOCK_MIN_WIDTH);
+      setSummaryWide(el.clientWidth >= SUMMARY_MIN_WIDTH);
+    };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
@@ -803,14 +815,20 @@ export function CarePlanSummaryView({
     () => (editable ? allProgramsPlanState(openPrograms, patientCarePlans, patientId, dueOf) : null),
     [editable, openPrograms, patientCarePlans, patientId],
   );
-  const attentionIds = useMemo(
-    () => (attentionOn && allPlans ? new Set(allPlans.attention.map(a => String(a.item?.id))) : null),
+  const attentionKeys = useMemo(
+    () => (attentionOn && allPlans ? new Set(allPlans.attention.map(a => itemKey(a.program.id, a.item?.id))) : null),
     [attentionOn, allPlans],
   );
-  const onlyAttention = rows => (attentionIds ? rows.filter(r => attentionIds.has(String(r.id))) : rows);
-  const uniqueGoals         = useMemo(() => onlyAttention(dedupeByTitle(filteredGoals)),         [filteredGoals, attentionIds]); // eslint-disable-line react-hooks/exhaustive-deps
-  const uniqueInterventions = useMemo(() => onlyAttention(dedupeByTitle(filteredInterventions)), [filteredInterventions, attentionIds]); // eslint-disable-line react-hooks/exhaustive-deps
-  const uniqueBarriers      = useMemo(() => onlyAttention(dedupeByTitle(filteredBarriers)),      [filteredBarriers, attentionIds]); // eslint-disable-line react-hooks/exhaustive-deps
+  const onlyAttention = rows => (attentionKeys ? rows.filter(r => attentionKeys.has(itemKey(r.program?.id, r.id))) : rows);
+  // All Programs edits each program's item in place, so every item is its own
+  // row (the totals count them all); the read-only roll-up shows a title once.
+  // Needs Attention filters first, so a flagged item is never the duplicate
+  // that got collapsed away.
+  const rowsFor = rows => (editable ? onlyAttention(rows) : dedupeByTitle(rows));
+  const uniqueGoals         = useMemo(() => rowsFor(filteredGoals),         [filteredGoals, attentionKeys, editable]); // eslint-disable-line react-hooks/exhaustive-deps
+  const uniqueInterventions = useMemo(() => rowsFor(filteredInterventions), [filteredInterventions, attentionKeys, editable]); // eslint-disable-line react-hooks/exhaustive-deps
+  const uniqueBarriers      = useMemo(() => rowsFor(filteredBarriers),      [filteredBarriers, attentionKeys, editable]); // eslint-disable-line react-hooks/exhaustive-deps
+  const summaryColumnOn = editable && summaryWide && (allPlans?.plans.length || 0) > 0;
 
   const isEmpty = loadedFor && goals.length === 0 && interventions.length === 0 && barriers.length === 0;
 
@@ -931,13 +949,15 @@ export function CarePlanSummaryView({
   }, [programs, patientCarePlans, patientCarePlanAudit, patientId, currentPatient?.pcp]);
 
   // Summarize: the cross-program recap (via the /api/care-plan-summary proxy,
-  // which keeps the Gemini key server-side). It is persisted one row per patient
+  // which keeps the AI key server-side). It is persisted one row per patient
   // in patient_care_plan_summaries, so the card renders straight from the store:
-  // a generated summary survives reload, and regenerating overwrites it.
+  // a generated summary survives reload, and only a click writes a new one
+  // (Summarize, or Update Summary once a plan changed after it was written).
   const savedSummaryEntry = useAppStore(s => s.patientCarePlanSummaries[patientId]);
   const fetchPatientCarePlanSummary = useAppStore(s => s.fetchPatientCarePlanSummary);
   const savePatientCarePlanSummary = useAppStore(s => s.savePatientCarePlanSummary);
   const deletePatientCarePlanSummary = useAppStore(s => s.deletePatientCarePlanSummary);
+  const setPatientCarePlanSummaryDone = useAppStore(s => s.setPatientCarePlanSummaryDone);
 
   useEffect(() => {
     if (patientId) fetchPatientCarePlanSummary(patientId);
@@ -950,6 +970,38 @@ export function CarePlanSummaryView({
     buildPayload: () => buildSummaryPayload({ patientName: currentPatient?.name, programs, conditions, goals, interventions, barriers }),
     isEmpty: goals.length + interventions.length + barriers.length === 0,
   });
+  // The plans' last change across programs, notes aside (they don't change
+  // what needs doing): a summary written before it is out of date.
+  const changedAt = useMemo(() => (programs || []).reduce((max, p) => {
+    for (const a of patientCarePlanAudit[`${patientId}::${p.id}`] || []) {
+      if (NOTE_ACTIONS.has(a.action) || a.action === 'note_linked' || !a.createdAt) continue;
+      max = Math.max(max, new Date(a.createdAt).getTime());
+    }
+    return max;
+  }, 0), [programs, patientCarePlanAudit, patientId]);
+  const summaryStale = !!savedSummaryEntry?.generatedAt && changedAt > new Date(savedSummaryEntry.generatedAt).getTime();
+  const summaryData = savedSummaryEntry?.summary || null;
+  const summaryActions = summaryData?.actions || [];
+  const summaryDone = new Set(summaryData?.done || []);
+  const toggleSummaryDone = (i) => {
+    const next = new Set(summaryDone);
+    if (next.has(i)) next.delete(i); else next.add(i);
+    setPatientCarePlanSummaryDone(patientId, [...next].sort((a, b) => a - b));
+  };
+  const summaryItemFor = (a) => {
+    const list = { goal: goals, intervention: interventions, barrier: barriers }[a?.refType];
+    return list?.find(it => String(it.id) === String(a.refId)) || null;
+  };
+
+  // Recent Notes for the left column: the latest notes on goals,
+  // interventions and barriers across the open plans, each named with its
+  // program. Plan notes stay in Care Notes.
+  const recentNotes = useMemo(() => (allPlans?.plans || [])
+    .flatMap(({ program, carePlan }) => recentCarePlanNotes(
+      patientCarePlanAudit[`${patientId}::${program.id}`] || [], carePlan, { includePlan: false },
+    ).map(n => ({ ...n, id: `${program.id}:${n.id}`, item: { ...n.item, program }, source: `${program.code} • ${n.source}` })))
+    .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))
+    .slice(0, 3), [allPlans, patientCarePlanAudit, patientId]);
 
   // Summarize lives in the pane's toolbar: it bumps `summarizeRequest`, and
   // the state goes back up so its button reads "AI is writing…" / "Generated".
@@ -958,7 +1010,7 @@ export function CarePlanSummaryView({
     summary.generate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [summarizeRequest]);
-  useEffect(() => { onSummaryState?.(summary.state); }, [summary.state, onSummaryState]);
+  useEffect(() => { onSummaryState?.({ state: summary.state, stale: summaryStale }); }, [summary.state, summaryStale, onSummaryState]);
 
   // "Activity Since Review" drawer target: the row the user clicked;
   // null when the drawer is closed.
@@ -1023,6 +1075,39 @@ export function CarePlanSummaryView({
   return (
     <DrawerDockContext.Provider value={docked ? dockEl : null}>
     <div ref={containerRef} className={`${styles.container} ${embedded ? styles.embedded : ''} ${editable ? styles.workspace : ''}`}>
+      {/* Wide screens: Summary, Unity Summary and Recent Notes on the left,
+          as in a program's own plan (care plan redesign prototype). */}
+      {summaryColumnOn && (
+        <aside className={styles.summaryColumn} aria-label="Plan summary and notes">
+          <CarePlanSummaryPanel
+              totals={allPlans.totals}
+              attention={allPlans.attention}
+              attentionOn={attentionOn}
+              onToggleAttention={() => setAttentionOn(v => !v)}
+              review={null}
+              canEdit
+              onOpenItem={(kind, item) => openFocusItem(kind, item, item?.program)}
+              recentNotes={recentNotes}
+              onAddNote={onAddNote}
+              summary={{
+                show: true,
+                state: summary.state,
+                error: summary.error,
+                generate: summary.generate,
+                regenerate: summary.regenerate,
+                copy: summary.copy,
+                data: summaryData,
+                entry: savedSummaryEntry,
+                stale: summaryStale,
+                actions: summaryActions,
+                done: summaryDone,
+                toggleDone: toggleSummaryDone,
+                itemFor: summaryItemFor,
+                isEmpty: goals.length + interventions.length + barriers.length === 0,
+              }}
+            />
+        </aside>
+      )}
       <div className={editable ? styles.workspaceMain : styles.plainMain}>
       {!embedded && (
         <div className={styles.header}>
@@ -1045,7 +1130,7 @@ export function CarePlanSummaryView({
         <EmptyState icon="solar:hand-heart-linear" title={editable ? 'No Care Plans Yet' : 'No Signed Care Plans Yet'} />
       ) : (
         <div className={styles.body}>
-          {allPlans && allPlans.plans.length > 0 && (
+          {allPlans && allPlans.plans.length > 0 && !summaryColumnOn && (
             <CarePlanSummaryStrip
               totals={allPlans.totals}
               attention={allPlans.attention}
@@ -1054,15 +1139,9 @@ export function CarePlanSummaryView({
               review={null}
             />
           )}
-          {attentionOn && (
-            <div className={styles.attentionBar}>
-              <Icon name="solar:danger-circle-linear" size={16} color="var(--status-error)" />
-              <span>Showing only what needs attention</span>
-              <button type="button" className={styles.clearAttention} onClick={() => setAttentionOn(false)}>Show All</button>
-            </div>
-          )}
-          {/* Shown once Summarize (in the toolbar) is generating or has run. */}
-          {summary.state !== 'idle' && (
+          {/* Narrower, the saved summary sits here once Summarize (in the
+              toolbar) is generating or has run; wide, it's in the left column. */}
+          {!summaryColumnOn && summary.state !== 'idle' && (
           <div className={styles.section}>
             {/* AI Summary: the cross-program recap, saved until someone
                 regenerates or dismisses it. Its own section, separate from
@@ -1174,6 +1253,20 @@ export function CarePlanSummaryView({
               </div>
             );
           })()}
+
+          {/* All / Needs Attention over the three tables, as in a program's
+              plan; the same filter the summary counts toggle. */}
+          {allPlans && allPlans.plans.length > 0 && (
+            <div className={styles.gbiHeader}>
+              <h3 className={styles.gbiHeaderTitle}>Goals, Interventions and Barriers</h3>
+              <SegmentedControl
+                size="sm"
+                items={[{ key: 'all', label: 'All' }, { key: 'attention', label: `Needs Attention (${allPlans.attention.length})` }]}
+                value={attentionOn ? 'attention' : 'all'}
+                onValueChange={(k) => setAttentionOn(k === 'attention')}
+              />
+            </div>
+          )}
 
           <div className={styles.section}>
             <SectionHead

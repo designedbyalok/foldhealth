@@ -56,27 +56,26 @@ export function useCarePlanAiSummary({ saved, onSave, onDelete, buildPayload, is
   const showToast = useAppStore(s => s.showToast);
   // In flight while the model writes; everything else derives from `saved`.
   const [generating, setGenerating] = useState(false);
-  // The last failure, for a caller that shows it inline (an automatic run
-  // doesn't toast).
+  // The last failure, for a caller that also shows it inline.
   const [error, setError] = useState(null);
   const state = generating ? 'loading' : (saved ? 'ready' : 'idle');
 
-  const generate = async ({ regenerate = false, silent = false } = {}) => {
+  const generate = async ({ regenerate = false } = {}) => {
     if (generating) return false;
     if (isEmpty) {
-      if (!silent) showToast?.('No care plan content to summarize yet');
+      showToast?.('No care plan content to summarize yet');
       return false;
     }
     setGenerating(true);
     setError(null);
-    if (regenerate && !silent) showToast?.('Regenerating summary…');
+    if (regenerate) showToast?.('Regenerating summary…');
     try {
       await onSave(await fetchCarePlanSummary(buildPayload()));
       return true;
     } catch (err) {
       const message = err.message || (regenerate ? 'Could not regenerate the summary' : 'Could not generate the summary');
       setError(message);
-      if (!silent) showToast?.(message);
+      showToast?.(message);
       return false;
     } finally {
       setGenerating(false);
@@ -100,9 +99,6 @@ export function useCarePlanAiSummary({ saved, onSave, onDelete, buildPayload, is
     state,
     error,
     generate: () => generate(),
-    // Written without being asked (the care plan screen opening): no toasts.
-    // Resolves true once a summary is saved.
-    autoGenerate: () => generate({ regenerate: !!saved, silent: true }),
     regenerate: () => { if (saved) generate({ regenerate: true }); },
     copy,
     clear: onDelete,

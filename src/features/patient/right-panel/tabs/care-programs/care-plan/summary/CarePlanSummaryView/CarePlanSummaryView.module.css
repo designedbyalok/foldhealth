@@ -444,17 +444,24 @@
 @media (prefers-reduced-motion: reduce) {
   .dockColumn { transition: none; }
 }
-.attentionBar {
+/* Wide screens: Summary, Unity Summary and Recent Notes on the left, the
+   same column a program's own plan has (CarePlanView .summaryColumn). */
+.summaryColumn {
+  flex-shrink: 0;
+  width: clamp(260px, 20%, 320px);
+  display: flex;
+  padding: var(--space-4) 0 var(--space-4) var(--space-4);
+  box-sizing: border-box;
+}
+.gbiHeader {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-2);
-  font-size: var(--font-md);
-  color: var(--neutral-400);
 }
-.clearAttention {
-  all: unset;
-  cursor: pointer;
-  font-size: var(--font-md);
-  color: var(--primary-300);
+.gbiHeaderTitle {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
 }
-.clearAttention:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; border-radius: 4px; }
