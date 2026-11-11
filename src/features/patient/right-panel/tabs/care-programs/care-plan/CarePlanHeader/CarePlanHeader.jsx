@@ -14,6 +14,8 @@ import { useAppStore } from '../../../../../../../store/useAppStore';
 import { parseLocalDate } from '../../../../../../../lib/localDate';
 import { carePlanAwaitingSignature, carePlanSignShareEnabled } from '../lib/carePlanSignState';
 import { CompleteCarePlanDialog } from '../drawers/CompleteCarePlanDialog/CompleteCarePlanDialog';
+import { CarePlanReviewDrawer } from '../drawers/CarePlanReviewDrawer/CarePlanReviewDrawer';
+import { findPatientRecord } from '../lib/carePlanPrintSettings';
 import { useCarePlanDraftState } from '../lib/useCarePlanDraftState';
 import { ConfirmDialog } from '../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { useCarePlanPanelMenu } from '../../../../../hooks/useProgramPanelSplitActive';
@@ -46,6 +48,7 @@ const SIGN_NOW_ITEM = { key: 'sign', icon: 'solar:pen-2-linear', label: 'Sign No
 export function CarePlanHeader({ patientId, program, inPanel = false }) {
   const [carePlanReviewOpen, setCarePlanReviewOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const completeCarePlan = useAppStore(s => s.completeCarePlan);
   const [carePlanMoreMenu, setCarePlanMoreMenu] = useState(null);
   const requestCarePlanShare = useAppStore(s => s.requestCarePlanShare);
@@ -61,6 +64,13 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
   const toggleCarePlanFiltersOpen = useAppStore(s => s.toggleCarePlanFiltersOpen);
   const [carePlanSearchOpen, setCarePlanSearchOpen] = useState(false);
   const carePlanKey = patientId && program?.id ? `${patientId}::${program.id}` : null;
+  // A review left open with something saved on it (an item discussed or a
+  // call note) is picked up where it stopped, as the review drawer does.
+  const reviewInProgress = useAppStore(s => {
+    const open = carePlanKey ? s.carePlanReviews[carePlanKey]?.open : null;
+    return !!open && (Object.keys(open.discussed || {}).length > 0 || !!(open.callNote || '').replace(/<[^>]*>/g, '').trim());
+  });
+  const patientName = useAppStore(s => (reviewOpen ? findPatientRecord(s, patientId)?.name || '' : ''));
   const liveCarePlan = useAppStore(s => (carePlanKey ? s.patientCarePlans[carePlanKey] : null));
   const carePlanVersions = useAppStore(s => (carePlanKey ? s.patientCarePlanVersions[carePlanKey] : null));
   const fetchCarePlanVersions = useAppStore(s => s.fetchCarePlanVersions);
@@ -326,6 +336,36 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
               <span className={styles.headerDivider} aria-hidden="true" />
               {/* Templates moved to the plan's chip row, next to the
                   applied templates it manages. */}
+              {/* Start / Resume Review: labelled where there's room, an icon
+                  with a tooltip in a narrow plan (container query). */}
+              <span className={styles.carePlanReviewFull}>
+                <Button
+                  variant="outline"
+                  leadingIcon="solar:clipboard-check-linear"
+                  disabled={!liveCarePlan?.plan?.id || !!viewedVersion}
+                  onClick={() => setReviewOpen(true)}
+                >
+                  {reviewInProgress ? 'Resume Review' : 'Start Review'}
+                </Button>
+              </span>
+              <span className={styles.carePlanReviewIcon}>
+                <ActionButton
+                  icon="solar:clipboard-check-linear"
+                  tooltip={reviewInProgress ? 'Resume Review' : 'Start Review'}
+                  aria-label={reviewInProgress ? 'Resume Review' : 'Start Review'}
+                  disabled={!liveCarePlan?.plan?.id || !!viewedVersion}
+                  onClick={() => setReviewOpen(true)}
+                />
+              </span>
+              {reviewOpen && program && (
+                <CarePlanReviewDrawer
+                  key={carePlanKey}
+                  patientId={patientId}
+                  patientName={patientName}
+                  program={program}
+                  onClose={() => setReviewOpen(false)}
+                />
+              )}
               <Button
                 variant="outline"
                 leadingIcon="solar:eye-linear"

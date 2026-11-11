@@ -451,6 +451,14 @@
   .carePlanCreatedCollapsed { display: none; }
   .carePlanCreatedFull { display: inline; }
 }
+/* Start / Resume Review in the care plan header: the labelled button only
+   where it doesn't squeeze the title and status line. */
+.carePlanReviewFull { display: none; }
+.carePlanReviewIcon { display: inline-flex; }
+@container (min-width: 880px) {
+  .carePlanReviewFull { display: inline-flex; }
+  .carePlanReviewIcon { display: none; }
+}
 @container (max-width: 520px) {
   .carePlanActionSecondaryGroup,
   .carePlanBtnSaveTemplate {

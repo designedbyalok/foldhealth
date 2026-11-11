@@ -390,6 +390,10 @@ Started from More, then Save as Template. The dialog takes Name (no max) and Con
 
 **Who can sign:** anyone signed in. `signed_by` is the free-text `currentUserProfile.name`; no user id is stored.
 
+### Start / Resume Review
+
+`CarePlanHeader` opens `CarePlanReviewDrawer` (the SNP worklist's review drawer) for the current plan. The label is Resume Review while `carePlanReviews[key].open` has a discussed item or a call note, else Start Review. Below an 880px header (container query) it shows as an icon button with the same tooltip.
+
 ### Complete, then the provider signs (`completeCarePlan`)
 
 The header's primary button is **Complete** (`CompleteCarePlanDialog`): provider who signs (required; defaults to the enrollment's `pcp` when it names a platform user), patient agreed (required) with an optional note, and an optional copy request `{ channel, language, largePrint }` (language from the patient's `language_preference` / `languages`). It writes `completed_by`, `completed_at`, `awaiting_signer(_id)`, `patient_agreed_at`, `patient_agreement_note`, `copy_request` on `patient_care_plans` (`care_plan_completion_migration.sql`), a `plan/completed` audit row (History: "Care Plan Completed and Sent to X to Sign"), a "Sign care plan for <member>" task for the provider (label `Care Plan Signature`) and a notification. Nothing sends the copy.
