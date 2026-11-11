@@ -74,6 +74,8 @@ import { categorySuggestions, hasCategories } from '../../../../../../settings/c
 import { groupUpdates } from '../../../../../../settings/care-plan-library/lib/templateGroups';
 import { isRetired, replacementFor } from '../../../../../../settings/care-plan-library/lib/templateRetirement';
 import { useCarePlanNoteRefs, noteDetails } from '../lib/carePlanNoteRefs';
+import { inlineAddPayload } from '../lib/carePlanInlineAdd';
+import { InlineAddRow } from './InlineAddRow';
 import styles from './CarePlanView.module.css';
 
 const NEEDS_ATTENTION = 'Needs Attention';
@@ -178,6 +180,13 @@ export function CarePlanView({ patientId, program }) {
   const [problemText, setProblemText] = useState('');
   const [trendsOpen, setTrendsOpen] = useState(false);
   const { openSections, toggleSection } = useCarePlanOpenSections();
+  // The kind being added as a new row in its table (prototype), or null.
+  const [inlineAdd, setInlineAdd] = useState(null);
+  const startInlineAdd = (kind, section) => {
+    if (!canEdit) return;
+    if (!openSections[section]) toggleSection(section);
+    setInlineAdd(kind);
+  };
   // An AI summary action opens the goal, intervention or barrier it names.
   const openSummaryItem = (kind, item) => {
     const list = { goal: data.goals, intervention: data.interventions, barrier: data.barriers }[kind] || [];
@@ -703,6 +712,16 @@ export function CarePlanView({ patientId, program }) {
       showToast(`"${saved.title}" ${editingId ? 'updated' : 'added'}`);
       if (!editingId) refreshCarePlanDuplicates(patientId, program);
     }
+  };
+
+  // Inline add: saves the new row's record to this plan, as the drawers do.
+  const saveInlineAdd = kind => async (values) => {
+    const save = { goal: savePatientCarePlanGoal, intervention: savePatientCarePlanIntervention, barrier: savePatientCarePlanBarrier }[kind];
+    const saved = await save(patientId, program, inlineAddPayload(kind, { ...values, patientName }));
+    if (!saved) return false;
+    showToast(`"${saved.title}" added`);
+    refreshCarePlanDuplicates(patientId, program);
+    return true;
   };
 
   const openInterventionTypeMenu = () => {
@@ -1538,18 +1557,27 @@ export function CarePlanView({ patientId, program }) {
             </button>
           )}
           addButton={(
-            <ActionButton size="sm" tooltip="Add goal" onClick={() => setAddGoalsDrawerOpen(true)} disabled={!canEdit}>
+            <ActionButton size="sm" tooltip="Add goal" onClick={() => startInlineAdd('goal', 'goals')} disabled={!canEdit}>
               <AddIconMinimalist size={16} color="var(--neutral-300)" />
             </ActionButton>
           )}
         />
+        {inlineAdd === 'goal' && openSections.goals && (
+          <InlineAddRow
+            kind="goal"
+            onSave={saveInlineAdd('goal')}
+            onCancel={() => setInlineAdd(null)}
+            onMore={() => { setInlineAdd(null); setAddGoalsDrawerOpen(true); }}
+            moreLabel="Browse Library"
+          />
+        )}
         {openSections.goals && (carePlanLoading ? (
           <SimpleTableSkeleton rows={3} cols={6} />
         ) : filteredGoals.length === 0 && viewData.goals.length === 0 ? (
           <SectionEmptyState
             icon="solar:heart-pulse-linear"
             label="No Goals Added for Selected Problem"
-            onAdd={() => setAddGoalsDrawerOpen(true)}
+            onAdd={() => startInlineAdd('goal', 'goals')}
           />
         ) : (
           <CarePlanGoalsTable
@@ -1606,7 +1634,7 @@ export function CarePlanView({ patientId, program }) {
               tooltip="Add intervention"
               aria-haspopup="menu"
               aria-expanded={intvTypeMenuOpen}
-              onClick={openInterventionTypeMenu}
+              onClick={() => startInlineAdd('intervention', 'interventions')}
               disabled={!canEdit}
             >
               <AddIconMinimalist size={16} color="var(--neutral-300)" />
@@ -1635,13 +1663,23 @@ export function CarePlanView({ patientId, program }) {
             onClose={() => setIntvTypeMenuOpen(false)}
           />
         )}
+        {inlineAdd === 'intervention' && openSections.interventions && (
+          <InlineAddRow
+            kind="intervention"
+            goals={viewData.goals}
+            onSave={saveInlineAdd('intervention')}
+            onCancel={() => setInlineAdd(null)}
+            onMore={() => { setInlineAdd(null); openInterventionTypeMenu(); }}
+            moreLabel="More Types"
+          />
+        )}
         {openSections.interventions && (carePlanLoading ? (
           <SimpleTableSkeleton rows={3} cols={6} />
         ) : filteredInterventions.length === 0 && viewData.interventions.length === 0 ? (
           <SectionEmptyState
             icon="solar:checklist-minimalistic-linear"
             label="No Interventions Created for Selected Problem"
-            onAdd={openInterventionTypeMenu}
+            onAdd={() => startInlineAdd('intervention', 'interventions')}
           />
         ) : (
           <CarePlanInterventionsTable
@@ -1692,18 +1730,28 @@ export function CarePlanView({ patientId, program }) {
           onToggle={() => toggleSection('barriers')}
           rightAccessory={renderDuplicateBadge('barrier')}
           addButton={(
-            <ActionButton size="sm" tooltip="Add barrier" onClick={() => setAddBarriersDrawerOpen(true)} disabled={!canEdit}>
+            <ActionButton size="sm" tooltip="Add barrier" onClick={() => startInlineAdd('barrier', 'barriers')} disabled={!canEdit}>
               <AddIconMinimalist size={16} color="var(--neutral-300)" />
             </ActionButton>
           )}
         />
+        {inlineAdd === 'barrier' && openSections.barriers && (
+          <InlineAddRow
+            kind="barrier"
+            goals={viewData.goals}
+            onSave={saveInlineAdd('barrier')}
+            onCancel={() => setInlineAdd(null)}
+            onMore={() => { setInlineAdd(null); setAddBarriersDrawerOpen(true); }}
+            moreLabel="Browse Library"
+          />
+        )}
         {openSections.barriers && (carePlanLoading ? (
           <SimpleTableSkeleton rows={3} cols={3} />
         ) : filteredBarriers.length === 0 && (viewData.barriers || []).length === 0 ? (
           <SectionEmptyState
             icon="solar:signpost-2-linear"
             label="No Barriers Created for Selected Problem"
-            onAdd={() => setAddBarriersDrawerOpen(true)}
+            onAdd={() => startInlineAdd('barrier', 'barriers')}
           />
         ) : (
           <CarePlanBarriersTable
