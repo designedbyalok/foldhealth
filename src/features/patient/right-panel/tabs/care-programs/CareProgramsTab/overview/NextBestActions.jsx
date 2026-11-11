@@ -8,6 +8,8 @@ import { Icon } from '@/components/Icon/Icon';
 import { DownChevronIcon } from '@/components/Icon/DownChevronIcon';
 import styles from './CareProgramsOverview.module.css';
 
+const ITEM_LABEL = { goal: 'Goal', intervention: 'Intervention', barrier: 'Barrier' };
+
 const VIEWS = [{ key: 'order', label: 'In Order' }, { key: 'program', label: 'By Program' }];
 const KIND = {
   step: { icon: 'solar:checklist-minimalistic-linear', label: 'Program Step' },
@@ -46,7 +48,7 @@ function ActionRow({ row, n, current, onRun, onReview }) {
       </div>
       <div className={styles.nbaActions}>
         <Button size="sm" variant={current ? 'solid' : 'outline'} onClick={() => onRun(row)}>
-          {row.kind === 'step' ? 'Go to Step' : 'Open Care Plan'}
+          {row.kind === 'step' ? 'Open Step' : `Open ${ITEM_LABEL[row.kind]}`}
         </Button>
         {row.kind === 'step' && (
           <ActionButton icon="solar:check-circle-linear" size="sm" tooltip="Mark as Reviewed" aria-label={`Mark ${row.title} as reviewed`} onClick={() => onReview(row)} />
@@ -60,8 +62,8 @@ function ActionRow({ row, n, current, onRun, onReview }) {
  * Next Best Actions (care plan redesign prototype): program steps and care
  * plan items that need doing, from nextBestActions. In Order shows the
  * sequence (the first is the one to do now); By Program groups them per
- * program. A step opens its program at that step and can be marked reviewed;
- * an item opens the program's care plan.
+ * program. A step opens in a drawer and can be marked reviewed;
+ * a goal, intervention or barrier opens in its drawer.
  */
 export function NextBestActions({ actions, programs, onRun, onReview }) {
   const [view, setView] = useState('order');

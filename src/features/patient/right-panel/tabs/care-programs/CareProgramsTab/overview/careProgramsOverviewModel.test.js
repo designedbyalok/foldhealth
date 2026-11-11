@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { combinedPlanTotals, nextBestActions, programOrder, programProgress, programSummarySegments, whyPrioritized } from './careProgramsOverviewModel';
+import { clinicalSummary, combinedPlanTotals, nextBestActions, programOrder, programProgress, whyPrioritized } from './careProgramsOverviewModel';
 
 const ccm = { id: 'p1', code: 'CCM' };
 const dm = { id: 'p2', code: 'DM' };
@@ -75,13 +75,11 @@ describe('whyPrioritized', () => {
 });
 
 describe('summary', () => {
-  it('totals the plans and writes the program summary from the same numbers', () => {
+  it('totals the plans and finds each program\'s next step', () => {
     const totals = combinedPlanTotals([ccmEntry, dmEntry]);
     expect(totals).toEqual({ goals: 1, interventions: 0, barriers: 1, avgProgress: 40, issues: { goal: 1, intervention: 0, barrier: 1 } });
     const progress = [programProgress(ccmEntry), programProgress(dmEntry)];
     expect(progress.map(p => [p.done, p.total, p.next?.name])).toEqual([[1, 4, 'Program Related Task'], [0, 1, 'Outreach']]);
-    const text = programSummarySegments(progress, nextBestActions([ccmEntry, dmEntry]), totals).map(s => s.text).join('');
-    expect(text).toBe('2 active programs, 1 of 5 steps done. CCM is 1 of 4; next is Program Related Task. DM is 0 of 1; next is Outreach. 1 action is urgent. In the care plan: 1 goal off target, 1 barrier with nothing addressing it.');
   });
 });
 
@@ -108,5 +106,39 @@ describe('programOrder', () => {
     // b has the urgent one; a and d tie on required, d has more open (3 vs 2);
     // c, e, f have none, so the most recently updated (c) leads, then by name.
     expect(programOrder(progress, actions).map(o => progress[o.index].program.id)).toEqual(['b', 'd', 'a', 'c', 'e', 'f']);
+  });
+});
+
+describe('clinicalSummary', () => {
+  const bp = { id: 'g-bp', title: 'Improve blood pressure control', measure: 'Blood Pressure', status: 'In Progress', comparator: '<=', targetValue: '130', targetValue2: '80' };
+  const a1c = { id: 'g-a1c', title: 'Lower A1C', measure: 'HbA1c', status: 'In Progress', comparator: '<', targetValue: '7', customUnit: '%' };
+  const walk = { id: 'g-walk', title: 'Walk daily', status: 'Not Started' };
+  const entry = (program, goals, measurements, attention = []) => ({ program, steps: [], ctx: {}, carePlan: { goals, interventions: [], barriers: [], measurements }, attention });
+
+  it('reads the latest reading per goal against its target, off target first, and lists concerns', () => {
+    const entries = [
+      entry(ccm, [bp, a1c, walk], [
+        { goalId: 'g-bp', value: '146/90', unit: 'mmHg', favorable: false, takenAt: '2026-09-15' },
+        { goalId: 'g-bp', value: '128/78', unit: 'mmHg', takenAt: '2026-10-01' },
+        { goalId: 'g-a1c', value: '8.1', takenAt: '2026-09-20' },
+      ], [{ kind: 'intervention', item: { id: 'i1', title: 'Diabetes education' }, text: 'Due 10/01/2026.' }]),
+      entry(dm, [{ ...bp, id: 'g-bp2' }], [], [{ kind: 'barrier', item: { id: 'b1', title: 'Cost of strips' }, text: '' }]),
+    ];
+    const evaluate = (g, v) => (g.id === 'g-bp' ? Number(String(v).split('/')[0]) <= 130 : Number(v) < 7);
+    const out = clinicalSummary(entries, {
+      problems: [{ title: 'Hypertension', type: 'Chronic', status: 'Active' }, { title: 'Type 2 diabetes', type: 'Chronic', status: 'Active' }, { title: 'Bronchitis', type: 'Acute', status: 'Active' }],
+      acuity: 'High-Risk',
+      firstName: 'Maria',
+      evaluate,
+    });
+    expect(out.lead).toBe('Maria (High-Risk acuity) has 2 active chronic conditions: Hypertension and Type 2 diabetes. At the latest reading, 1 of 2 monitored goals is in range and 1 is off target. 1 open goal has no readings yet.');
+    expect(out.readings.map(r => [r.title, r.value, r.prior, r.target, r.met, r.programs.map(p => p.code).join('+')])).toEqual([
+      ['HbA1c', '8.1 %', '', '< 7 %', false, 'CCM'],
+      ['Blood Pressure', '128/78 mmHg', '146/90 mmHg', '≤ 130/80 mmHg', true, 'CCM+DM'],
+    ]);
+    expect(out.concerns.map(c => [c.label, c.title, c.text])).toEqual([
+      ['Overdue intervention', 'Diabetes education', 'Due 10/01/2026'],
+      ['Unaddressed barrier', 'Cost of strips', ''],
+    ]);
   });
 });

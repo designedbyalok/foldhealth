@@ -47,8 +47,10 @@ import { mmddyy } from './ProgramDetailView.utils';
 import { ProgramReportDrawer } from '../report/ProgramReportDrawer';
 import styles from './ProgramDetailView.module.css';
 
-export function ProgramDetailView({ program, onClose, startAtFirstStep = false, onSwitchProgram }) {
-  const v = useProgramDetailView({ program, onSwitchProgram });
+export function ProgramDetailView({ program, onClose, onSwitchProgram, stepId = null }) {
+  const v = useProgramDetailView({ program, onSwitchProgram, stepId });
+  // One step on its own, without the program header and step list.
+  const stepOnly = !!stepId;
   // A care plan recommendation awaiting approval marks the Care Plan step.
   const recommendationPending = useAppStore(s => hasPendingRecommendation(s.patientCarePlans[`${v.patientId}::${program.id}`]));
   const isRecommended = (step) => recommendationPending && step.name === 'Care Plan';
@@ -187,7 +189,7 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
 
   return (
     <div className={styles.container}>
-      <ProgramDetailViewHeader
+      {!stepOnly && <ProgramDetailViewHeader
         program={program}
         programProgress={v.programProgress}
         status={v.status}
@@ -205,10 +207,10 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
         progressFor={v.progressForCode}
         onMoreAction={onMoreAction}
         onClose={onClose}
-      />
+      />}
 
       <div className={styles.body}>
-        <div className={styles.stepList}>
+        {!stepOnly && <div className={styles.stepList}>
           {v.stepList.map(step => {
             if (step.type === 'section') {
               const expanded = v.expandedSections[step.id] ?? step.expanded;
@@ -229,7 +231,7 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
                 onClick={() => v.setActiveStep(step.id)} recommended={isRecommended(step)} />
             );
           })}
-        </div>
+        </div>}
 
         <div className={styles.content}>
           <ProgramDetailViewContentHeader

@@ -477,22 +477,81 @@
 }
 .sumRowLabel { flex: 1; font-size: var(--font-md); color: var(--neutral-400); }
 .sumOk { color: var(--neutral-300); }
-.sumPara {
-  margin: 0;
+/* ── Program Summary (clinical) ── */
+.clinBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   padding: 0 var(--space-4) var(--space-3);
+}
+.clinLead {
+  margin: 0;
   font-size: var(--font-md);
   line-height: var(--leading-loose);
-  color: var(--neutral-400);
+  color: var(--neutral-500);
 }
-.inlineLink {
+.clinGroup { display: flex; flex-direction: column; gap: var(--space-1); }
+.clinLabel {
+  margin: 0;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-300);
+}
+.clinList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 0.5px solid var(--primary-100);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+}
+.clinList > li + li { border-top: 0.5px solid var(--neutral-100); }
+.clinRow {
   all: unset;
-  color: var(--primary-300);
-  text-decoration: underline;
-  text-decoration-color: var(--primary-200);
-  text-underline-offset: 2px;
+  box-sizing: border-box;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: var(--space-2);
+  row-gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
   cursor: pointer;
 }
-.inlineLink:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; border-radius: 2px; }
+.clinRow:hover { background: var(--primary-25); }
+.clinRow:focus-visible { outline: 2px solid var(--primary-300); outline-offset: -2px; border-radius: 4px; }
+.clinTop {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.clinName {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.clinValue,
+.clinValueOk,
+.clinValueOff {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--neutral-500);
+  white-space: nowrap;
+}
+.clinValueOk { color: var(--status-success); }
+.clinValueOff { color: var(--status-error); }
+.clinMeta {
+  min-width: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.clinCodes { display: flex; gap: var(--space-1); align-self: start; }
 
 /* ── Insight cards: a soft primary tint, like the prototype's summary cards ── */
 .insight {
@@ -514,4 +573,18 @@
 
 @media (prefers-reduced-motion: reduce) {
   .programCard { transition: none; }
+}
+
+/* ── Step drawer: the step scrolls itself, edge to edge ── */
+.stepDrawerBody.stepDrawerBody {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+.headerDivider {
+  width: 0.5px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
 }

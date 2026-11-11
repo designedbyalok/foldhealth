@@ -11,8 +11,10 @@ import { ProgramStatusRing } from '../../program-detail/shared/ProgramStatusRing
 import { findPatientRecord } from '../../care-plan/lib/carePlanPrintSettings';
 import { parseLocalDate } from '@/lib/localDate';
 import { activityIcon } from '../../../care-management/programActivity';
-import { programOrder, programSummarySegments } from './careProgramsOverviewModel';
+import { programOrder } from './careProgramsOverviewModel';
 import { NextBestActions } from './NextBestActions';
+import { CarePlanItemDrawer } from './CarePlanItemDrawer';
+import { ProgramStepDrawer } from './ProgramStepDrawer';
 import { useCareProgramsOverview } from './useCareProgramsOverview';
 import styles from './CareProgramsOverview.module.css';
 
@@ -23,6 +25,7 @@ const fmtDate = d => `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.ge
 // Program rows and problems shown before "Show N More".
 const CARD_LIMIT = 4;
 const PROBLEM_LIMIT = 4;
+const KIND_LIST = { goal: 'goals', intervention: 'interventions', barrier: 'barriers' };
 
 function MoreButton({ open, hidden, onToggle }) {
   return (
@@ -187,14 +190,13 @@ function WhyPrioritized({ why }) {
       className={styles.insight}
       icon="solar:flag-linear"
       title="Why Prioritized"
-      count="From live records"
       actions={!empty && why.segments.length > 0 && (
         <button type="button" className={styles.linkBtn} aria-expanded={open} onClick={() => setOpen(v => !v)}>
           {open ? 'Show Less' : 'Show More'}
           <DownChevronIcon size={12} color="currentColor" className={open ? styles.chevUp : undefined} />
         </button>
       )}
-      footer={!empty && <InsightFooter text="Built from the program steps, care plans and patient record" copy={plain} />}
+      footer={!empty && <InsightFooter text="From live records: program steps, care plans and the patient record" copy={plain} />}
     >
       <div className={styles.whyBody}>
         {empty ? <p className={styles.whyPara}>Nothing urgent across the active programs.</p> : (
@@ -257,23 +259,83 @@ function CarePlanSummary({ data, onOpenPlan }) {
   );
 }
 
-function ProgramSummary({ data, onOpenPlan, onOpenProgram }) {
-  const segs = programSummarySegments(data.progress, data.actions, data.totals);
-  const byCode = Object.fromEntries(data.progress.map(p => [p.program.code, p.program]));
-  const n = data.progress.length;
+const SUMMARY_LIMIT = 3;
+const shortDay = iso => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+/**
+ * Program Summary: the clinical picture across the programs. Conditions and
+ * how the monitored goals stand, each goal's latest reading against its
+ * target, then overdue interventions and barriers nothing is addressing.
+ * Rows open the goal, intervention or barrier in its drawer.
+ */
+function ProgramSummary({ clinical, onOpenItem }) {
+  const [all, setAll] = useState(false);
+  const { lead, readings, concerns } = clinical;
+  const hidden = Math.max(0, readings.length - SUMMARY_LIMIT) + Math.max(0, concerns.length - SUMMARY_LIMIT);
+  const shownReadings = all ? readings : readings.slice(0, SUMMARY_LIMIT);
+  const shownConcerns = all ? concerns : concerns.slice(0, SUMMARY_LIMIT);
+  const copy = [
+    lead,
+    ...readings.map(r => `${r.title}: ${r.value}${r.target ? ` (target ${r.target})` : ''}`),
+    ...concerns.map(c => `${c.label}: ${c.title}${c.text ? ` (${c.text})` : ''}`),
+  ].join('\n');
+  const codes = ps => ps.map(p => <Badge key={p.id} size="sm" label={p.code} />);
   return (
     <DashboardCard
       className={styles.insight}
       icon="solar:document-text-linear"
       title="Program Summary"
-      count="From live records"
-      footer={<InsightFooter text={`Built from ${n} ${n === 1 ? 'program' : 'programs'}' steps and care plans`} copy={segs.map(seg => seg.text).join('')} />}
+      actions={hidden > 0 && (
+        <button type="button" className={styles.linkBtn} aria-expanded={all} onClick={() => setAll(v => !v)}>
+          {all ? 'Show Less' : `Show ${hidden} More`}
+          <DownChevronIcon size={12} color="currentColor" className={all ? styles.chevUp : undefined} />
+        </button>
+      )}
+      footer={<InsightFooter text="From live records: problems, goal readings and care plans" copy={copy} />}
     >
-      <p className={styles.sumPara}>
-        {segs.map((s, i) => (s.link ? (
-          <button key={i} type="button" className={styles.inlineLink} onClick={() => (s.link === 'plan' ? onOpenPlan() : onOpenProgram(byCode[s.link]))}>{s.text}</button>
-        ) : <span key={i}>{s.text}</span>))}
-      </p>
+      <div className={styles.clinBody}>
+        <p className={styles.clinLead}>{lead}</p>
+        {shownReadings.length > 0 && (
+          <div className={styles.clinGroup}>
+            <h4 className={styles.clinLabel}>Latest Readings</h4>
+            <ul className={styles.clinList}>
+              {shownReadings.map(r => (
+                <li key={r.key}>
+                  <button type="button" className={styles.clinRow} onClick={() => onOpenItem({ kind: 'goal', ...r.ref })} title={r.goal}>
+                    <span className={styles.clinTop}>
+                      <span className={styles.clinName}>{r.title}</span>
+                      <span className={r.met === false ? styles.clinValueOff : r.met === true ? styles.clinValueOk : styles.clinValue}>{r.value}</span>
+                    </span>
+                    <span className={styles.clinMeta}>
+                      {[r.target && `Target ${r.target}`, r.met === false ? 'Off target' : r.met === true ? 'In range' : '', shortDay(r.takenAt), r.prior && `Prior ${r.prior}`].filter(Boolean).join(' • ')}
+                    </span>
+                    <span className={styles.clinCodes}>{codes(r.programs)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {shownConcerns.length > 0 && (
+          <div className={styles.clinGroup}>
+            <h4 className={styles.clinLabel}>Open Concerns</h4>
+            <ul className={styles.clinList}>
+              {shownConcerns.map(c => (
+                <li key={c.key}>
+                  <button type="button" className={styles.clinRow} onClick={() => onOpenItem({ kind: c.kind, ...c.ref })}>
+                    <span className={styles.clinTop}>
+                      <span className={c.kind === 'intervention' ? styles.dotDanger : styles.dotWarning} aria-hidden="true" />
+                      <span className={styles.clinName}>{c.title}</span>
+                    </span>
+                    <span className={styles.clinMeta}>{[c.label, c.text].filter(Boolean).join(' • ')}</span>
+                    <span className={styles.clinCodes}>{codes(c.programs)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </DashboardCard>
   );
 }
@@ -291,6 +353,8 @@ export function CareProgramsOverview({
 }) {
   const data = useCareProgramsOverview(patientId, programs);
   const [allCards, setAllCards] = useState(false);
+  const [openItem, setOpenItem] = useState(null);
+  const [openStep, setOpenStep] = useState(null);
   const users = useAppStore(s => s.platformUsers);
   const lastVisitRaw = useAppStore(s => {
     const r = findPatientRecord(s, patientId);
@@ -311,13 +375,17 @@ export function CareProgramsOverview({
 
   const order = programOrder(data.progress, data.actions);
   const shownOrder = allCards ? order : order.slice(0, CARD_LIMIT);
-  const onRun = row => (row.kind === 'step' ? onOpenStep(row.refs[0].program, row.refs[0].step.id) : onOpenPlan(row.ref.program));
+  const onRun = row => (row.kind === 'step' ? setOpenStep({ program: row.refs[0].program, stepId: row.refs[0].step.id }) : setOpenItem({ kind: row.kind, ...row.ref }));
   const summaries = (
     <>
       <CarePlanSummary data={data} onOpenPlan={() => onOpenPlan(null)} />
-      <ProgramSummary data={data} onOpenPlan={() => onOpenPlan(null)} onOpenProgram={onOpenProgram} />
+      <ProgramSummary clinical={data.clinical} onOpenItem={setOpenItem} />
     </>
   );
+
+  // The drawer reads the item from the live plan so its edits show at once.
+  const livePlan = openItem && data.entries.find(e => e.program.id === openItem.program?.id)?.carePlan;
+  const liveItem = openItem && { ...openItem, item: livePlan?.[KIND_LIST[openItem.kind]]?.find(x => x.id === openItem.item.id) || openItem.item };
 
   return (
     <div className={styles.overviewWrap}>
@@ -351,6 +419,8 @@ export function CareProgramsOverview({
         </div>
         <div className={styles.right}>{summaries}</div>
       </div>
+      <ProgramStepDrawer open={openStep} onOpenProgram={onOpenStep} onClose={() => setOpenStep(null)} />
+      <CarePlanItemDrawer open={liveItem} patientId={patientId} onOpen={setOpenItem} onClose={() => setOpenItem(null)} />
     </div>
   );
 }
