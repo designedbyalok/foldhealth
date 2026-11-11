@@ -265,6 +265,8 @@ export function CarePlanInterventionsTable({
   // to an intervention from the row as well, matches the picker in the
   // Intervention drawer (Figma 8629:178).
   patients,
+  // (intervention) => node after the title, e.g. the program in All Programs.
+  titleBadge,
   template = false,
   emptyState,
 }) {
@@ -391,7 +393,7 @@ export function CarePlanInterventionsTable({
             icon={kindIcon(i)}
             iconTitle={KIND_LABELS[i.kind] || 'Intervention'}
             title={i.title}
-            badge={<AiSuggestionBadge kind="intervention" item={i} />}
+            badge={<><AiSuggestionBadge kind="intervention" item={i} />{titleBadge?.(i)}</>}
             meta={bits.length ? <span className={styles.intvSubMeta}>{bits.join(' · ')}</span> : null}
             layout="stacked"
             linked={linked(i)}
@@ -490,6 +492,7 @@ export function CarePlanInterventionsTable({
             badge={(
               <>
                 <AiSuggestionBadge kind="intervention" item={i} />
+                {titleBadge?.(i)}
                 {lateDays(due.iso, i.status) > 0 && (
                   <Badge size="sm" tone="danger" label={`${lateDays(due.iso, i.status)} ${lateDays(due.iso, i.status) === 1 ? 'Day' : 'Days'} Overdue`} />
                 )}

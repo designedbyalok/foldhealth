@@ -58,6 +58,7 @@ import { isEmptyDash } from '../../../../../../../../lib/emptyDash';
 import { latestPlanNote } from '../../lib/carePlanNotes';
 import { SegmentedControl } from '../../../../../../../../components/SegmentedControl/SegmentedControl';
 import { confirmStatusChange, statusReasonPatch } from '../../lib/confirmStatusChange';
+import { AllProgramsGbiSections, ProgramNoteCard } from './AllProgramsPlanSections';
 
 const PRIORITIES = ['high', 'medium', 'low'];
 // Wide enough, an open item docks beside the tables (as in a program's plan).
@@ -713,7 +714,9 @@ export function CarePlanSummaryView({
   embedded = false,
   // care_plan_mode = 'both': the roll-up is the patient-level Care Plan, so
   // its drawers edit in full and each section can add to a chosen program.
-  editable = false, summarizeRequest = 0, onSummaryState, onAddNote }) {
+  editable = false, summarizeRequest = 0, onSummaryState, onAddNote,
+  // All Programs: the Active Programs Summary opens in a drawer from the header.
+  programsOpen = false, onProgramsClose }) {
   const containerRef = useRef(null);
   const [dockWide, setDockWide] = useState(false);
   const [summaryWide, setSummaryWide] = useState(false);
@@ -1173,6 +1176,20 @@ export function CarePlanSummaryView({
           </div>
           )}
 
+          {/* All Programs: the program note card, stepping through the programs
+              (care plan redesign prototype); the Active Programs Summary is in
+              a drawer from the header. */}
+          {editable && allPlans && allPlans.plans.length > 0 && (
+            <ProgramNoteCard
+              patientId={patientId}
+              patientName={currentPatient?.name || ''}
+              programs={allPlans.plans.map(x => x.program)}
+              onOpenProgram={onOpenProgramStep}
+              onOpenItem={(kind, item) => openFocusItem(kind, item, item?.program)}
+            />
+          )}
+
+          {!editable && (
           <div className={styles.section}>
             {/* Active Programs Summary: one row per enrolled program.
                 Sits above the GBI sections so the reader gets a quick
@@ -1204,11 +1221,12 @@ export function CarePlanSummaryView({
               )
             )}
           </div>
+          )}
 
           {/* Care Notes (#80): one program's note at a time, with a tab per
               program that has one. Hidden until some program has a note;
               the toolbar's note action adds one. */}
-          {(() => {
+          {!editable && (() => {
             const withNotes = activeProgramRows.filter(r => r.planNote);
             if (!withNotes.length) return null;
             const shown = withNotes.find(r => r.id === noteProgramId) || withNotes[0];
@@ -1268,64 +1286,90 @@ export function CarePlanSummaryView({
             </div>
           )}
 
-          <div className={styles.section}>
-            <SectionHead
-              title="Goals"
-              onAdd={editable ? (rect) => setRollupAdd({ kind: 'goal', rect }) : undefined}
-              count={uniqueGoals.length}
-              open={openSections.goals}
-              onToggle={() => toggleSection('goals')}
+          {editable ? (
+            <AllProgramsGbiSections
+              patientId={patientId}
+              carePlans={patientCarePlans}
+              goals={uniqueGoals}
+              interventions={uniqueInterventions}
+              barriers={uniqueBarriers}
+              attention={allPlans?.attention || []}
+              attentionOn={attentionOn}
+              onToggleAttention={() => setAttentionOn(v => !v)}
+              openSections={openSections}
+              toggleSection={toggleSection}
+              activeRowId={docked ? (previewGoal?.goal.id || previewIntervention?.intervention.id || previewBarrier?.barrier.id) : null}
+              onOpen={(kind, item) => openFocusItem(kind, item, item.program)}
+              onAdd={(kind, rect) => setRollupAdd({ kind, rect })}
+              onPriorityMenu={setPriorityMenu}
+              onStatusMenu={setStatusMenu}
+              onAssigneeChange={handleInterventionAssignee}
+              patients={patients}
+              platformUsers={platformUsers}
+              onOpenProgram={onOpenProgramStep}
             />
-            {openSections.goals && (
-              <GoalsTable
-                rows={uniqueGoals}
-                onOpen={openGoal}
-                onPriorityMenu={setPriorityMenu}
-                onStatusMenu={setStatusMenu}
-                programOverlap={goalProgramOverlap}
-              />
-            )}
-          </div>
-
+          ) : (
+          <>
           <div className={styles.section}>
-            <SectionHead
-              title="Interventions"
-              onAdd={editable ? (rect) => setRollupAdd({ kind: 'intervention', rect }) : undefined}
-              count={uniqueInterventions.length}
-              open={openSections.interventions}
-              onToggle={() => toggleSection('interventions')}
-            />
-            {openSections.interventions && (
-              <InterventionsTable
-                rows={uniqueInterventions}
-                onOpen={openIntervention}
-                onPriorityMenu={setPriorityMenu}
-                onStatusMenu={setStatusMenu}
-                onAssigneeChange={handleInterventionAssignee}
-                patients={patients}
-                platformUsers={platformUsers}
-                programOverlap={interventionProgramOverlap}
+              <SectionHead
+                title="Goals"
+                onAdd={editable ? (rect) => setRollupAdd({ kind: 'goal', rect }) : undefined}
+                count={uniqueGoals.length}
+                open={openSections.goals}
+                onToggle={() => toggleSection('goals')}
               />
-            )}
-          </div>
-
-          <div className={styles.section}>
-            <SectionHead
-              title="Barriers"
-              onAdd={editable ? (rect) => setRollupAdd({ kind: 'barrier', rect }) : undefined}
-              count={uniqueBarriers.length}
-              open={openSections.barriers}
-              onToggle={() => toggleSection('barriers')}
-            />
-            {openSections.barriers && (
-              <BarriersTable
-                rows={uniqueBarriers}
-                onOpen={openBarrier}
-                onStatusMenu={setStatusMenu}
-                programOverlap={barrierProgramOverlap}
+              {openSections.goals && (
+                <GoalsTable
+                  rows={uniqueGoals}
+                  onOpen={openGoal}
+                  onPriorityMenu={setPriorityMenu}
+                  onStatusMenu={setStatusMenu}
+                  programOverlap={goalProgramOverlap}
+                />
+              )}
+            </div>
+  
+            <div className={styles.section}>
+              <SectionHead
+                title="Interventions"
+                onAdd={editable ? (rect) => setRollupAdd({ kind: 'intervention', rect }) : undefined}
+                count={uniqueInterventions.length}
+                open={openSections.interventions}
+                onToggle={() => toggleSection('interventions')}
               />
-            )}
-          </div>
+              {openSections.interventions && (
+                <InterventionsTable
+                  rows={uniqueInterventions}
+                  onOpen={openIntervention}
+                  onPriorityMenu={setPriorityMenu}
+                  onStatusMenu={setStatusMenu}
+                  onAssigneeChange={handleInterventionAssignee}
+                  patients={patients}
+                  platformUsers={platformUsers}
+                  programOverlap={interventionProgramOverlap}
+                />
+              )}
+            </div>
+  
+            <div className={styles.section}>
+              <SectionHead
+                title="Barriers"
+                onAdd={editable ? (rect) => setRollupAdd({ kind: 'barrier', rect }) : undefined}
+                count={uniqueBarriers.length}
+                open={openSections.barriers}
+                onToggle={() => toggleSection('barriers')}
+              />
+              {openSections.barriers && (
+                <BarriersTable
+                  rows={uniqueBarriers}
+                  onOpen={openBarrier}
+                  onStatusMenu={setStatusMenu}
+                  programOverlap={barrierProgramOverlap}
+                />
+              )}
+            </div>
+          </>
+          )}
         </div>
       )}
 
@@ -1337,6 +1381,7 @@ export function CarePlanSummaryView({
               patientId={patientId}
               patientName={currentPatient?.name || ''}
               attention={allPlans?.attention || []}
+              plans={allPlans?.plans || []}
               onOpenItem={openFocusItem}
             />
           </div>
@@ -1413,6 +1458,19 @@ export function CarePlanSummaryView({
           programs={programs}
           onDone={() => setRollupAdd(null)}
         />
+      )}
+      {editable && programsOpen && (
+        <Drawer title="Active Programs Summary" onClose={onProgramsClose}>
+          {activeProgramRows.length === 0 ? (
+            <div className={styles.programsEmpty}>No active programs.</div>
+          ) : (
+            <ActiveProgramsTable
+              rows={activeProgramRows}
+              onView={onOpenProgramStep ? (p) => { onProgramsClose?.(); onOpenProgramStep(p); } : undefined}
+              onOpenActivity={setActivityReviewOpen}
+            />
+          )}
+        </Drawer>
       )}
       {activityReviewOpen && (
         <ActivityReviewDrawer

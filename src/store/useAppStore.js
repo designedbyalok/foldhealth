@@ -4784,7 +4784,9 @@ export const useAppStore = create((set, get) => ({
   // rules in care-plan/lib/eventImpact.js and, when they match, drafted by
   // /api/care-plan-event-update. The result is a care_plan_event_impacts row.
   carePlanEventUpdates: {},
-  fetchCarePlanEventUpdates: async (patientId, program, plan) => {
+  // `evaluate: false` only reads what's recorded (All Programs): new events are
+  // evaluated, and AI-drafted, when the program's own plan is opened.
+  fetchCarePlanEventUpdates: async (patientId, program, plan, { evaluate = true } = {}) => {
     if (!patientId || !program?.id || !plan) return;
     const key = carePlanKey(patientId, program.id);
     const cur = get().carePlanEventUpdates[key];
@@ -4809,6 +4811,7 @@ export const useAppStore = create((set, get) => ({
     let impacts = (im.data || []).map(mapEventImpactRow);
     patch({ loading: false, missing: false, events: Object.fromEntries(events.map(e => [e.id, e])), impacts });
 
+    if (!evaluate) return;
     const todo = eventsToEvaluate(events, impacts, { planCreatedAt: plan.plan?.createdDate });
     if (!todo.length) return;
     patch({ evaluating: true });
