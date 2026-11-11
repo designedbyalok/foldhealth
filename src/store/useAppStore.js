@@ -144,6 +144,7 @@ import {
   linkBarrierGoals,
   mapPatientCarePlanRow,
   carePlanKey,
+  carePlanMemberName,
   templateItems,
   templateContents,
   templatesAtLastSignature,
@@ -5967,6 +5968,8 @@ export const useAppStore = create((set, get) => ({
       const c = s.patientCarePlans[key];
       return c ? { patientCarePlans: { ...s.patientCarePlans, [key]: { ...c, plan: { ...c.plan, signedBy: name, signedAt, updatedAt: signedAt } } } } : {};
     });
+    // The provider's "Sign care plan" task is done once the plan is signed.
+    await get().closeCarePlanSignatureTasks(patientId, program, cur.plan);
     // "Care Plan Signed" is the default task creation trigger.
     get().spawnCarePlanTasks(patientId, program);
     // Care Plan Status on the SNP worklist is derived from the plan's signed
@@ -6031,6 +6034,35 @@ export const useAppStore = create((set, get) => ({
     return versionNumber;
   },
 
+  // Mark the open "Sign care plan" task(s) for this plan completed: the one
+  // whose id the plan saved at completion, or, for plans completed before
+  // signature_task_id existed, an open Care Plan Signature task for this
+  // patient and program.
+  closeCarePlanSignatureTasks: async (patientId, program, plan) => {
+    const memberName = carePlanMemberName(get(), patientId);
+    const isOpen = t => t && t.status !== 'completed';
+    const ids = new Set();
+    if (plan?.signatureTaskId) ids.add(String(plan.signatureTaskId));
+    else {
+      for (const t of [...(get().tasks || []), ...(get().programAddedTasks?.[program?.code] || [])]) {
+        if (isOpen(t) && (t.labels || []).includes('Care Plan Signature') && memberName && t.member === memberName && (t.meta || '') === (program?.name || '')) ids.add(String(t.id));
+      }
+    }
+    await Promise.all([...ids].map(id => {
+      const known = (get().tasks || []).find(t => String(t.id) === id);
+      if (known && !isOpen(known)) return null;
+      return get().updateTask(known ? known.id : id, { status: 'completed' });
+    }));
+    if (ids.size && program?.code) {
+      set(s => ({
+        programAddedTasks: {
+          ...s.programAddedTasks,
+          [program.code]: (s.programAddedTasks[program.code] || []).map(t => (ids.has(String(t.id)) ? { ...t, status: 'completed' } : t)),
+        },
+      }));
+    }
+  },
+
   // "Send for Review" from the care-plan Sign menu. Fans out to three
   // side-effects so the request is visible everywhere a reviewer looks:
   //   1. Persist a `plan/review_requested` audit entry: this is the
@@ -6042,7 +6074,7 @@ export const useAppStore = create((set, get) => ({
   //      open their session.
   requestCarePlanReview: async (patientId, program, user) => {
     if (!user?.name) return null;
-    const memberName = get().patients.find(p => p.id === patientId)?.name || '';
+    const memberName = carePlanMemberName(get(), patientId);
     const me = get().currentUserProfile;
     const nowIso = new Date().toISOString();
     const dueMMDDYYYY = (() => {
@@ -6143,11 +6175,7 @@ export const useAppStore = create((set, get) => ({
       detail: [`Patient agreed${fields.patient_agreement_note ? `: ${fields.patient_agreement_note}` : ''}`, copyText].join(' • '),
     });
 
-    // Any slice the patient is on, by store id or member id (worklist patients
-    // aren't always in `patients`).
-    const memberName = ['patients', 'allPatients', 'snpWorklistMembers', 'ccmWorklistMembers', 'hccMembers', 'awvMembers', 'hedisMembers', 'pharmacyWorklistMembers']
-      .map(k => (get()[k] || []).find(p => String(p.id) === String(patientId) || String(p.memberId || '') === String(patientId)))
-      .find(p => p?.name)?.name || '';
+    const memberName = carePlanMemberName(get(), patientId);
     const due = new Date();
     due.setDate(due.getDate() + 3);
     const task = await get().createTask({
@@ -6172,6 +6200,17 @@ export const useAppStore = create((set, get) => ({
       created_by_id: me?.id || null,
     });
     if (task && program?.code) get().addProgramTask?.(program.code, task);
+    // Signing closes this task, so the plan keeps its id.
+    if (task?.id) {
+      const { error: taskIdError } = await supabase.from('patient_care_plans').update({ signature_task_id: String(task.id) }).eq('id', planId);
+      if (taskIdError) console.warn('completeCarePlan signature_task_id:', taskIdError.message);
+      else {
+        set(s => {
+          const c = s.patientCarePlans[key];
+          return c ? { patientCarePlans: { ...s.patientCarePlans, [key]: { ...c, plan: { ...c.plan, signatureTaskId: String(task.id) } } } } : {};
+        });
+      }
+    }
     get().addNotification?.({
       type: 'care_plan.signature_requested',
       title: 'Care plan ready to sign',
