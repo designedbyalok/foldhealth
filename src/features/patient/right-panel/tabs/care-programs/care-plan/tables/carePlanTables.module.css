@@ -623,3 +623,34 @@
   outline: 2px solid var(--primary-300);
   outline-offset: -2px;
 }
+
+/* Latest Reading (goals): the value, green in range, red off target, then the target. */
+.readingTd {
+  vertical-align: top;
+}
+.readingTd > span { display: block; }
+.readingValue,
+.readingOk,
+.readingOff {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+.readingOk { color: var(--status-success); }
+.readingOff { color: var(--status-error); }
+.readingNone {
+  font-size: var(--font-md);
+  color: var(--neutral-300);
+}
+.readingTarget {
+  margin-top: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+/* The patient's own words for a goal, under its title. */
+.patientWords {
+  display: block;
+  font-size: var(--font-sm);
+  font-style: italic;
+  color: var(--neutral-300);
+}

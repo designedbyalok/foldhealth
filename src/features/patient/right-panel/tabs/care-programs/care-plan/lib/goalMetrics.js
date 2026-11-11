@@ -1,4 +1,5 @@
 import { isClosedStatus } from './gbiStatus';
+import { evaluateReading } from './goalReadings';
 
 /**
  * Goal progress band (5-band, Figma 2632:81504), used by the Goal Details
@@ -106,9 +107,15 @@ export function deriveGoalTableFields(goal, measurements = []) {
   const rows = goalMeasurements(goal?.id, measurements);
   let currentValue = 'No Data';
   let trend = '-';
+  // Whether the latest reading meets the target: the clinician's call on it,
+  // else the target check, else null (can't tell).
+  let readingMet = null;
+  let readingAt = null;
 
   if (rows.length) {
     const latest = rows[rows.length - 1];
+    readingMet = typeof latest.favorable === 'boolean' ? latest.favorable : evaluateReading(goal, latest.value);
+    readingAt = latest.takenAt || null;
     const unit = latest.unit || goal?.customUnit || '';
     currentValue = unit && !String(latest.value).includes(unit)
       ? `${latest.value} ${unit}`.trim()
@@ -128,6 +135,8 @@ export function deriveGoalTableFields(goal, measurements = []) {
   return {
     currentValue,
     trend,
+    readingMet,
+    readingAt,
     progress: Number.isFinite(goal?.progress) ? goal.progress : 0,
     status: goal?.status || 'Not Started',
   };

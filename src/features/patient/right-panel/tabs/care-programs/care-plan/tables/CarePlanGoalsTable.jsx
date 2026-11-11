@@ -208,11 +208,11 @@ export function CarePlanGoalsTable({
             node: <span className={styles.metaDate}>Start {start}</span>,
           },
           isHidden('targetDate') && { key: 'target', node: targetDate('Target date') },
-          hasTarget && { key: 'goal', node: <GoalTargetValue goal={g} /> },
+          hasTarget && isHidden('reading') && { key: 'goal', node: <GoalTargetValue goal={g} /> },
           // Frequency is its own segment: glued to the unit, "< 160 lbs
           // weekly" would read as a rate when it means "checked weekly".
           hasTarget && frequency && { key: 'freq', node: <span className={styles.metaText}>{frequency}</span> },
-          hasReading && {
+          hasReading && isHidden('reading') && {
             key: 'current',
             node: <span className={styles.metaText}>Current {g.currentValue}</span>,
           },
@@ -246,13 +246,31 @@ export function CarePlanGoalsTable({
             iconTitle={g.category ? normalizeCategory(g.category) : 'Goal'}
             title={g.title}
             badge={<AiSuggestionBadge kind="goal" item={g} />}
-            meta={meta}
+            meta={g.patientTitle ? (
+              <>
+                {/* The patient's own words for the goal. */}
+                <span className={styles.patientWords}>“{g.patientTitle}”</span>
+                {meta}
+              </>
+            ) : meta}
             layout="stacked"
             showLink={false}
             onTitleCommit={canEdit && onTitleChange ? (t) => onTitleChange(g, t) : undefined}
             titleLabel="Goal title"
           />
         </td>
+        {!isHidden('reading') && (
+          <td className={styles.readingTd}>
+            {hasReading ? (
+              <span className={g.readingMet === false ? styles.readingOff : g.readingMet === true ? styles.readingOk : styles.readingValue}>
+                {g.currentValue}
+              </span>
+            ) : (
+              <span className={styles.readingNone}>{normalizeCategory(g.category) === 'Assessment' ? '-' : 'No readings yet'}</span>
+            )}
+            {hasTarget && <span className={styles.readingTarget}>Target {formatGoalTarget(g)}</span>}
+          </td>
+        )}
         {!isHidden('createdDate') && (
           <td className={styles.dateTd} onClick={e => e.stopPropagation()}>
             <span className={styles.dueDateText}>{start || '-'}</span>
@@ -313,7 +331,8 @@ export function CarePlanGoalsTable({
         emptyState={noActive ? <div className={styles.emptyRow}>No open goals.</div> : emptyState}
         // Column prefs (Show/Hide Columns in the Actions header) persist per
         // user. v2: the compact grid changed which columns exist and default.
-        worklistKey={template ? undefined : 'carePlan:goals:v2'}
+        // v3: Latest Reading joined the defaults.
+        worklistKey={template ? undefined : 'carePlan:goals:v3'}
         renderRow={renderRow}
         renderTbodyFooter={template ? undefined : (ctx) => (
           <CompletedRowsGroup

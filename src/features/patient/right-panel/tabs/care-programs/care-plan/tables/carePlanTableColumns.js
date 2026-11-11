@@ -24,6 +24,8 @@ const COMPACT_ACTIONS_COLUMN = {
 export const COMPACT_GOAL_COLUMNS = [
   colOf(GOAL_COLUMNS, 'priority'),
   { ...colOf(GOAL_COLUMNS, 'title'), label: 'Name' },
+  // The latest reading against the target (care plan redesign prototype).
+  { key: 'reading', label: 'Latest Reading', popoverLabel: 'Latest Reading', width: 180, thStyle: HEADER_COMPACT },
   hiddenByDefault(colOf(GOAL_COLUMNS, 'createdDate')),
   hiddenByDefault(colOf(GOAL_COLUMNS, 'targetDate')),
   colOf(GOAL_COLUMNS, 'progress'),
@@ -37,7 +39,7 @@ export const COMPACT_INTERVENTION_COLUMNS = [
   colOf(INTERVENTION_COLUMNS, 'title'),
   {
     key: 'dueDate', label: 'Due Date', popoverLabel: 'Due Date', width: GBI_COL_DATE_WIDTH,
-    sortKey: '_sortDueDate', sortType: 'date', defaultHidden: true, thStyle: HEADER_COMPACT,
+    sortKey: '_sortDueDate', sortType: 'date', thStyle: HEADER_COMPACT,
   },
   hiddenByDefault(colOf(INTERVENTION_COLUMNS, 'assignee')),
   colOf(INTERVENTION_COLUMNS, 'adherence'),

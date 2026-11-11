@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAppStore } from '@/store/useAppStore';
 import { Icon } from '@/components/Icon/Icon';
 import { Badge } from '@/components/Badge/Badge';
@@ -16,6 +17,7 @@ import { EventUpdatesList } from './EventUpdatesList';
 import { useEventUpdates } from './useEventUpdates';
 import { ReviewCadencePanel } from './ReviewCadencePanel';
 import { CarePlanSummaryStrip } from './CarePlanSummaryStrip';
+import { CarePlanSummaryPanel } from './CarePlanSummaryPanel';
 import { recentCarePlanNotes } from '../lib/carePlanRecentNotes';
 import { useReviewCadence } from './useReviewCadence';
 import { sanitizeRichText } from '@/lib/sanitizeHtml';
@@ -69,6 +71,10 @@ export function CarePlanOverview({
   // The summary strip above the tabs: plan totals, what needs attention and
   // the Needs Attention toggle. Omitted (null) for an empty plan or a past copy.
   summaryStrip = null,
+  // Wide screens: the element of the left column. The summary, the Unity
+  // summary and the recent notes go there (CarePlanSummaryPanel) instead of
+  // into this card, which keeps the note, events and cadence.
+  summaryHost = null,
 }) {
   const programId = program?.id;
   const key = `${patientId}::${programId}`;
@@ -192,9 +198,10 @@ export function CarePlanOverview({
   // events with changes to decide, a review that's due or overdue.
   const cadence = useReviewCadence({ patientId, program, plan: live?.plan });
   const cadenceDue = ['due', 'overdue'].includes(cadence?.status?.state);
+  const inColumn = !!summaryHost && !!summaryStrip;
   const tabs = [
     { key: 'note', label: 'Care Plan Note', leadingIcon: 'solar:notes-linear' },
-    showSummary && {
+    showSummary && !inColumn && {
       key: 'summary', label: 'Summarize with Unity', leadingIcon: 'custom:ai',
       notif: summary.state === 'ready' && actions.some((_, i) => !done.has(i)),
     },
@@ -207,7 +214,35 @@ export function CarePlanOverview({
 
   return (
     <section className={styles.card} aria-label="Care plan overview">
-      {summaryStrip && (
+      {inColumn && createPortal(
+        <CarePlanSummaryPanel
+          {...summaryStrip}
+          review={showCadence ? cadence : null}
+          onOpenCadence={() => setTab('cadence')}
+          canEdit={canEdit}
+          onOpenItem={onOpenItem}
+          recentNotes={recentNotes}
+          onAddNote={() => { setTab('note'); startEditing(); }}
+          summary={{
+            show: showSummary,
+            state: summary.state,
+            error: summary.error,
+            generate: summary.generate,
+            regenerate: summary.regenerate,
+            copy: summary.copy,
+            data,
+            entry,
+            stale,
+            actions,
+            done,
+            toggleDone,
+            itemFor,
+            isEmpty,
+          }}
+        />,
+        summaryHost,
+      )}
+      {summaryStrip && !inColumn && (
         <CarePlanSummaryStrip
           {...summaryStrip}
           review={showCadence ? cadence : null}
@@ -273,7 +308,7 @@ export function CarePlanOverview({
         )
       )}
 
-      {active === 'note' && !editing && recentNotes.length > 0 && (
+      {active === 'note' && !editing && !inColumn && recentNotes.length > 0 && (
         <div className={styles.recent}>
           <span className={styles.recentHead}>Recent notes</span>
           {recentNotes.map(n => (

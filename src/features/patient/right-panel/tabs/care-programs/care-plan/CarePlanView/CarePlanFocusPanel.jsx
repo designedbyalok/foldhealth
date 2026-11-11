@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useAppStore } from '@/store/useAppStore';
 import { DashboardCard, DashboardCardBody } from '@/components/DashboardCard/DashboardCard';
 import { PanelSectionItem } from '@/components/PanelSection/PanelSection';
 import { Icon } from '@/components/Icon/Icon';
@@ -31,6 +32,9 @@ export function CarePlanFocusPanel({ patientId, program, patientName, live, data
   const review = useReviewCadence({ patientId, program, plan: live?.plan, fetch: false });
   const events = useEventUpdates({ patientId, program, live, fetch: false });
   const [addTaskOpen, setAddTaskOpen] = useState(false);
+  const openCarePlanReviewFor = useAppStore(s => s.openCarePlanReviewFor);
+  // A goal off target, or a review that's due, is taken up in the review.
+  const startReview = () => openCarePlanReviewFor(`${patientId}::${program?.id}`);
 
   // The intervention table's own due date, so a row flagged here reads overdue there too.
   const focus = useMemo(() => carePlanFocusItems({
@@ -69,7 +73,18 @@ export function CarePlanFocusPanel({ patientId, program, patientName, live, data
                       <button type="button" className={styles.titleButton} onClick={() => onOpenItem(f.kind, f.item)}>{f.title}</button>
                     ) : f.title}
                     meta={f.text}
-                  />
+                  >
+                    {canEdit && (
+                      <span className={styles.actions}>
+                        {(f.kind === 'goal' || f.kind === 'review') && live?.plan?.id && (
+                          <Button variant="outline" size="sm" onClick={startReview}>Start Review</Button>
+                        )}
+                        {f.item && (
+                          <Button variant="ghost" size="sm" onClick={() => onOpenItem(f.kind, f.item)}>View Details</Button>
+                        )}
+                      </span>
+                    )}
+                  </PanelSectionItem>
                 );
               }}
             />

@@ -5650,6 +5650,10 @@ export const useAppStore = create((set, get) => ({
   })),
   requestCarePlanPanel: (panel) => set({ carePlanPanelRequest: panel }),
   clearCarePlanPanelRequest: () => set({ carePlanPanelRequest: null }),
+  // Start Review asked for from outside the plan header (Look at These
+  // First): the plan key whose review drawer the header should open.
+  carePlanReviewOpenFor: null,
+  openCarePlanReviewFor: (key) => set({ carePlanReviewOpenFor: key }),
 
   // Bulk-select mode for the care plan GBI tables. The toggle lives in the
   // program-detail content header; CarePlanView reads this to show the row

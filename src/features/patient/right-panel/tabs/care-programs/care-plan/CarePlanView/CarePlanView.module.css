@@ -857,3 +857,26 @@
   font-size: var(--font-xs);
   color: var(--status-warning-dark);
 }
+
+/* Wide screens: Summary, Unity Summary and Recent Notes on the left
+   (CarePlanSummaryPanel renders into it from the overview card). */
+.summaryColumn {
+  flex-shrink: 0;
+  width: clamp(260px, 20%, 320px);
+  display: flex;
+  padding: var(--space-3) 0 var(--space-3) var(--space-3);
+  box-sizing: border-box;
+}
+.summaryColumn:empty { display: none; }
+.gbiHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.gbiHeaderTitle {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
