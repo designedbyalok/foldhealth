@@ -5007,6 +5007,17 @@ export const useAppStore = create((set, get) => ({
     discussed[itemKey] = { ...(discussed[itemKey] || { at: new Date().toISOString() }), tags };
     return get().patchCarePlanReview(patientId, program, { discussed });
   },
+  // The guided review's picks: `patch` maps `${kind}:${id}` to fields merged
+  // into that item's entry ({ decision, dueDate, confirmed, tags }).
+  updateCarePlanReviewItems: (patientId, program, patch) => {
+    const key = carePlanKey(patientId, program.id);
+    const discussed = { ...(get().carePlanReviews[key]?.open?.discussed || {}) };
+    const at = new Date().toISOString();
+    for (const [itemKey, fields] of Object.entries(patch)) {
+      discussed[itemKey] = { ...(discussed[itemKey] || { at, tags: [] }), ...fields };
+    }
+    return get().patchCarePlanReview(patientId, program, { discussed });
+  },
   // The call note and the finished review are also logged to the plan's
   // activity (care_plan_audit), so the Activity Log shows them.
   // `details` (noteDetails): the note's "@" tags and "/" links.

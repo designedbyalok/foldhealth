@@ -1,0 +1,399 @@
+/* Guided care plan review (care plan redesign prototype, item 7): the
+   agenda on the left, the step being reviewed on the right. */
+.body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+.headerDivider {
+  width: 1px;
+  height: var(--space-4);
+  background: var(--neutral-150);
+}
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.titleMeta {
+  font-size: var(--font-sm);
+  font-weight: 400;
+  color: var(--neutral-300);
+}
+.muted {
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}
+.spacer { flex: 1; }
+
+.clock {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 28px;
+  padding: 0 var(--space-2);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-1);
+}
+.clockTime {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--status-success);
+}
+
+.layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+/* Agenda */
+.agenda {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 0.5px solid var(--neutral-150);
+  overflow-y: auto;
+}
+.agendaHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.progressBar {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--neutral-100);
+  overflow: hidden;
+}
+.progressBar > span {
+  display: block;
+  height: 100%;
+  background: var(--primary-300);
+  transition: width 200ms ease;
+}
+.agendaList {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) 0;
+}
+.agendaItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+.agendaItem:hover { background: var(--neutral-25); }
+.agendaOn,
+.agendaOn:hover { background: var(--primary-50); }
+.mark {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 999px;
+  background: var(--neutral-0);
+  font-size: var(--font-xs);
+  font-weight: 600;
+  color: var(--neutral-300);
+}
+.markOn {
+  border-color: var(--primary-300);
+  background: var(--primary-300);
+  color: var(--neutral-0);
+}
+.markDone {
+  border-color: var(--status-success);
+  background: var(--status-success);
+  color: var(--neutral-0);
+}
+.agendaText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+.agendaLabel {
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+  color: var(--neutral-500);
+}
+.agendaOn .agendaLabel { font-weight: 500; }
+/* Badges center themselves; agenda badges sit under their label. */
+.agendaText > * { align-self: flex-start; }
+.howTo {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border-top: 0.5px solid var(--neutral-150);
+}
+
+/* Step */
+.main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  background: var(--neutral-25);
+}
+.stepBody {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-6) var(--space-10);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.stepHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.eyebrow {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.titleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.stepTitle {
+  margin: 0;
+  font-size: var(--font-xl);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  color: var(--neutral-500);
+}
+.patientWords {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+}
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.cardTitle {
+  flex: 1;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--neutral-500);
+}
+.cardEmpty {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+.lookCard {
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-color: var(--primary-200);
+  background: var(--primary-50);
+}
+.lookHead {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--primary-300);
+}
+.facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.facts li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+}
+.facts li > :first-child { margin-top: var(--space-1); flex-shrink: 0; }
+
+.readingCard {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  padding: var(--space-3) var(--space-4);
+}
+.reading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.readingValue {
+  font-size: var(--font-base);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--neutral-500);
+}
+.past { font-weight: 400; color: var(--neutral-400); }
+.on { color: var(--status-success); }
+.off { color: var(--status-error); }
+
+.itemList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.itemList > li + li { border-top: 0.5px solid var(--neutral-150); }
+.itemRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+.itemMain {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.itemText {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+.itemTitle {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+.itemTitle:hover { color: var(--primary-300); }
+.itemMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.subRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.suggestion {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+}
+
+.decisionCard {
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+.decisionRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.tagRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-3);
+  background: var(--neutral-0);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.tag:hover {
+  border-color: var(--primary-200);
+  color: var(--primary-300);
+}
+.tagOn {
+  border-color: var(--primary-200);
+  background: var(--primary-50);
+  color: var(--primary-300);
+}
+
+.changeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+}
+.changeText {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+}
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+.option > :first-child { margin-top: var(--space-1); }
+.optionText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}

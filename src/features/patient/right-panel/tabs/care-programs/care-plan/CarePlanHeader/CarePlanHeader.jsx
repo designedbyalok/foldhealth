@@ -14,8 +14,7 @@ import { useAppStore } from '../../../../../../../store/useAppStore';
 import { parseLocalDate } from '../../../../../../../lib/localDate';
 import { carePlanAwaitingSignature, carePlanSignShareEnabled } from '../lib/carePlanSignState';
 import { CompleteCarePlanDialog } from '../drawers/CompleteCarePlanDialog/CompleteCarePlanDialog';
-import { CarePlanReviewDrawer } from '../drawers/CarePlanReviewDrawer/CarePlanReviewDrawer';
-import { findPatientRecord } from '../lib/carePlanPrintSettings';
+import { GuidedReviewDrawer } from '../drawers/GuidedReviewDrawer/GuidedReviewDrawer';
 import { useCarePlanDraftState } from '../lib/useCarePlanDraftState';
 import { ConfirmDialog } from '../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { useCarePlanPanelMenu } from '../../../../../hooks/useProgramPanelSplitActive';
@@ -75,7 +74,6 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
     const open = carePlanKey ? s.carePlanReviews[carePlanKey]?.open : null;
     return !!open && (Object.keys(open.discussed || {}).length > 0 || !!(open.callNote || '').replace(/<[^>]*>/g, '').trim());
   });
-  const patientName = useAppStore(s => (reviewOpen ? findPatientRecord(s, patientId)?.name || '' : ''));
   const liveCarePlan = useAppStore(s => (carePlanKey ? s.patientCarePlans[carePlanKey] : null));
   const carePlanVersions = useAppStore(s => (carePlanKey ? s.patientCarePlanVersions[carePlanKey] : null));
   const fetchCarePlanVersions = useAppStore(s => s.fetchCarePlanVersions);
@@ -363,12 +361,13 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
                 />
               </span>
               {reviewOpen && program && (
-                <CarePlanReviewDrawer
+                <GuidedReviewDrawer
                   key={carePlanKey}
                   patientId={patientId}
-                  patientName={patientName}
                   program={program}
-                  onClose={closeReview}
+                  signable={signShareEnabled}
+                  awaitingSignature={awaitingSignature}
+                  onClose={(result) => { closeReview(); if (result?.sendToSign) setCompleteOpen(true); }}
                 />
               )}
               <Button
