@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Checkbox } from '../../../components/Checkbox/Checkbox';
+import { useScrollbarOnScroll } from '../../../lib/useScrollbarOnScroll';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Link } from '../../../components/Link/Link';
 import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
@@ -96,6 +97,8 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
   // The group session whose details are open (its row id); members come from the live rows.
   const [openSession, setOpenSession] = useState(null);
   const menuAnchor = useRef(null);
+  const scrollerRef = useRef(null);
+  useScrollbarOnScroll(scrollerRef);
   const openQuickView = useAppStore(s => s.openQuickView);
   const oooRecords = useAppStore(s => s.oooRecords);
   // The provider's out of office record covering this appointment, if any.
@@ -361,7 +364,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
 
   return (
     <div className={styles.root}>
-      <div className={styles.scroller}>
+      <div ref={scrollerRef} className={`${styles.scroller} scrollbar-x-on-scroll`}>
         {!rows.length && (
           <div className={styles.empty}>
             <EmptyState icon="solar:calendar-mark-linear" title="No appointments match this period and these filters" />

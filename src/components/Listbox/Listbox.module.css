@@ -47,7 +47,7 @@
 
 .rowDisabled { cursor: not-allowed; }
 .rowDisabled:hover { background: none; }
-.rowDisabled .label { color: var(--neutral-200); }
+.rowDisabled .label, .rowDisabled .description { color: var(--placeholder-text); }
 .rowDisabled .radio { border-color: var(--neutral-100); background: var(--neutral-100); }
 
 .text {
@@ -129,8 +129,11 @@
   color: var(--primary-400);
   box-shadow: inset 0 0 0 0.5px var(--primary-200);
 }
-.menu .rowDisabled { opacity: 0.5; }
-.menu .rowDisabled:hover { background: transparent; color: var(--neutral-400); }
+/* Disabled rows read as unavailable through lighter text, not opacity, so
+   a badge on the row (e.g. Out of Office) keeps its own colour. */
+.menu .rowDisabled { color: var(--placeholder-text); }
+.menu .rowDisabled .label { color: var(--placeholder-text); }
+.menu .rowDisabled:hover { background: transparent; color: var(--placeholder-text); }
 .menu .section {
   padding: var(--space-2) 0.625rem var(--space-1);
   font-weight: 500;

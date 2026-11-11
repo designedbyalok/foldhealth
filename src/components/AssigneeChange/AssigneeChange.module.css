@@ -297,6 +297,15 @@
   border-right: 6px solid transparent;
   border-top: 6px solid var(--neutral-0);
   margin: 0 auto;
+  /* Stays over the avatar when the card is shifted off a viewport edge. */
+  transform: translateX(var(--tail-shift, 0px));
+}
+/* No room above: the card opens below, tail on top. */
+.tooltipBelow { transform: translate(-50%, 0); animation-name: assigneeTooltipInBelow; display: flex; flex-direction: column-reverse; align-items: center; }
+.tooltipBelow .tooltipTail { border-top: none; border-bottom: 6px solid var(--neutral-0); }
+@keyframes assigneeTooltipInBelow {
+  from { opacity: 0; transform: translate(-50%, -4px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
 }
 .tooltipAvatar {
   width: 24px;

@@ -18,7 +18,18 @@ const PLAN = [
 
 export function sampleOooRecords(users, now = new Date()) {
   const at = (days, hour) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, hour, 0).toISOString();
-  return (users || []).slice(0, PLAN.length).map((u, i) => {
+  const list = users || [];
+  // The next user covers each record; the ongoing one has a second covering
+  // provider for another location, so "+1" shows too. The last has none.
+  const cover = (i, location) => {
+    const c = list[(i + 1) % list.length];
+    return c && c !== list[i] ? [{ userId: c.id || null, userName: c.name, location }] : [];
+  };
+  const coverageFor = i => (i === PLAN.length - 1 ? [] : [
+    ...cover(i, 'Downtown Clinic'),
+    ...(i === 0 ? cover(i + 1, 'Riverside Clinic') : []),
+  ]);
+  return list.slice(0, PLAN.length).map((u, i) => {
     const [offset, hour, len] = PLAN[i];
     return {
       id: `ooo-sample-${i + 1}`,
@@ -35,6 +46,7 @@ export function sampleOooRecords(users, now = new Date()) {
       createdAt: at(offset - 7, 10),
       updatedAt: at(offset - 7, 10),
       updatedBy: u.name,
+      coverage: coverageFor(i),
     };
   });
 }
@@ -55,6 +67,7 @@ export const oooToRow = (r) => ({
   created_at: r.createdAt || new Date().toISOString(),
   updated_at: r.updatedAt || new Date().toISOString(),
   updated_by: r.updatedBy || r.createdBy || null,
+  coverage: r.coverage || [],
 });
 
 export const rowToOoo = (row) => ({
@@ -72,6 +85,7 @@ export const rowToOoo = (row) => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   updatedBy: row.updated_by || row.created_by,
+  coverage: Array.isArray(row.coverage) ? row.coverage : [],
 });
 
 /**

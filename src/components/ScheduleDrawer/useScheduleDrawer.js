@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { supabase } from '../../lib/supabase';
 import { trackFunnel } from '../../lib/tracking';
@@ -75,6 +75,11 @@ export function useScheduleDrawer({ onClose, selectedSlot, onSave, existingAppoi
   const [requireRsvp, setRequireRsvp] = useState(false);
   const [secondaryUsers, setSecondaryUsers] = useState([]);
   const [profileUsers, setProfileUsers] = useState([]);
+  // Out of Office: providers out at the picked date (and time, else any part
+  // of that day) show as Not Available in the provider picker.
+  const oooRecords = useAppStore(s => s.oooRecords);
+  const fetchOooRecords = useAppStore(s => s.fetchOooRecords);
+  useEffect(() => { fetchOooRecords?.(); }, [fetchOooRecords]);
   const memberInstructionRef = useRef('');
   const staffInstructionRef = useRef('');
   const [bookingSuccess, setBookingSuccess] = useState(false);
@@ -271,7 +276,34 @@ export function useScheduleDrawer({ onClose, selectedSlot, onSave, existingAppoi
     return apptDate < today;
   })();
 
+  const providerOoo = useMemo(() => {
+    const d = /^(\d{2})-(\d{2})-(\d{4})$/.exec(date || '');
+    if (!d) return () => null;
+    const day = new Date(+d[3], +d[1] - 1, +d[2]);
+    const t = /^(\d{1,2}):(\d{2})\s*(am|pm)$/i.exec(String(time || '').trim());
+    let from = day.getTime();
+    let to = new Date(+d[3], +d[1] - 1, +d[2] + 1).getTime();
+    if (t) {
+      day.setHours((Number(t[1]) % 12) + (t[3].toLowerCase() === 'pm' ? 12 : 0), Number(t[2]));
+      from = day.getTime();
+      to = from + 30 * 60000;
+    }
+    const out = (oooRecords || []).filter(r => new Date(r.startAt).getTime() < to && new Date(r.endAt).getTime() > from);
+    // Who covers them: the covering provider for the picked location, else
+    // everyone covering them.
+    const coveredBy = (r) => {
+      const cov = (r.coverage || []).filter(c => c?.userName);
+      const here = location ? cov.filter(c => String(c.location || '').trim().toLowerCase() === String(location).trim().toLowerCase()) : [];
+      return [...new Set((here.length ? here : cov).map(c => c.userName.trim()))];
+    };
+    return (p) => {
+      const r = out.find(x => (p?.id && x.userId ? String(x.userId) === String(p.id) : String(x.userName || '').trim().toLowerCase() === String(p?.name || '').trim().toLowerCase()));
+      return r ? { ...r, coveredBy: coveredBy(r) } : null;
+    };
+  }, [oooRecords, date, time, location]);
+
   return {
+    providerOoo,
     isViewMode,
     patients,
     showToast,

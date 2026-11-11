@@ -222,7 +222,8 @@ export function NotificationsPopover({ onClose, anchorRef }) {
                     <span className={styles.summaryText}>
                       <span className={styles.summaryTitle}>{n.type === 'bulk.summary'
                         ? (n.kind === 'cancel' ? 'Appointment Cancellation Summary' : 'Appointment Rescheduling Summary')
-                        : 'Appointment Reassignment Summary'}</span>
+                        // An Out of Office job also moved tasks and care programs.
+                        : /^Out of Office reassignment/i.test(n.title || '') ? 'Out of Office Reassignment Summary' : 'Appointment Reassignment Summary'}</span>
                       <span className={styles.entrySub}>{n.body}</span>
                     </span>
                   </span>

@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { Icon } from '../../components/Icon/Icon';
 import { Tabs } from '../../components/Tabs/Tabs';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
+import { Badge } from '../../components/Badge/Badge';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../store/useAppStore';
 import { formatDate, initialsOf } from './oooUtils';
-import { TYPE_LABELS } from './reassignJobs';
+import { kindOf, TYPE_LABELS } from './reassignJobs';
+import { PROGRAM_SHAPE, TASK_SHAPE } from './openWorkRows';
 import { ApptRow, DeptGroup } from './ReassignParts';
 import styles from './reassign.module.css';
 
@@ -17,10 +20,21 @@ const TABS = [
   { key: 'failed', label: 'Failed Reassignment', pick: r => r.outcome === 'failed' },
 ];
 
+// Tasks and care programs (Out of Office Reassign Open Work) have no
+// Cancelled or Conflicting.
+const ITEM_TABS = TABS.filter(t => t.key === 'reassigned' || t.key === 'failed');
+// What a job moved, by kind: each kind is a tab when the job has it.
+const KINDS = [
+  { key: 'appointment', label: 'Appointments', tabs: TABS },
+  { key: 'task', label: 'Tasks', tabs: ITEM_TABS },
+  { key: 'program', label: 'Care Programs', tabs: ITEM_TABS },
+];
+const snapshotOf = (r) => r.appointment || r.task || r.program || {};
+
 const byDept = (results) => {
   const map = new Map();
   results.forEach((r) => {
-    const d = r.appointment?.location || 'No Department';
+    const d = snapshotOf(r).location || 'No Department';
     if (!map.has(d)) map.set(d, []);
     map.get(d).push(r);
   });
@@ -44,18 +58,22 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
   const fetchJobs = useAppStore(s => s.fetchReassignmentJobs);
   useEffect(() => { fetchJobs(); }, [fetchJobs]);
   const job = jobs.find(j => j.id === jobId);
+  // Kinds this job has (an appointments-only job shows no kind tabs).
+  const kinds = job ? KINDS.filter(k => job.results.some(r => kindOf(r) === k.key)) : [];
+  const [kindKey, setKindKey] = useState(null);
+  const kind = kinds.find(k => k.key === kindKey) || kinds[0] || KINDS[0];
+  const ofKind = job ? job.results.filter(r => kindOf(r) === kind.key) : [];
   const [tab, setTab] = useState('reassigned');
-  const groups = useMemo(() => {
-    const t = TABS.find(x => x.key === tab);
-    return job ? byDept(job.results.filter(t.pick)) : [];
-  }, [job, tab]);
+  const activeTab = kind.tabs.find(x => x.key === tab) || kind.tabs[0];
+  const groups = byDept(ofKind.filter(activeTab.pick));
+  const mixed = kinds.length > 1 || (kinds[0] && kinds[0].key !== 'appointment');
 
   const range = job && (job.windowEnd
     ? `${formatDate(job.windowStart)} → ${formatDate(job.windowEnd)}`
     : job?.windowStart ? `From ${formatDate(job.windowStart)}` : '');
 
   return (
-    <Drawer title="Appointment Reassignment Summary" width={640} onClose={onClose}>
+    <Drawer title={mixed ? 'Out of Office Reassignment Summary' : 'Appointment Reassignment Summary'} width={640} onClose={onClose}>
       {!job ? (
         <EmptyState icon="solar:history-linear" title="This reassignment summary isn't available" />
       ) : (
@@ -81,12 +99,29 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
             </div>
           </div>
           <div className={styles.summaryField}>
-            <span className={styles.summaryLabel}>Appointments Summary</span>
-            <Tabs
-              items={TABS.map(t => ({ key: t.key, label: `${t.label} (${job.results.filter(t.pick).length})` }))}
-              value={tab}
+            <span className={styles.summaryLabel}>{mixed ? 'Summary' : 'Appointments Summary'}</span>
+            {/* Modules as underline tabs, flush with the content's left edge;
+                the outcome as a toggle under them. */}
+            {mixed && (
+              <Tabs
+                items={kinds.map(k => ({ key: k.key, label: `${k.label} (${job.results.filter(r => kindOf(r) === k.key).length})` }))}
+                value={kind.key}
+                onValueChange={(k) => { setKindKey(k); setTab('reassigned'); }}
+                fullWidth={false}
+                className={styles.summaryTabsFlush}
+              />
+            )}
+            <SegmentedControl
+              // The count as a grey count badge after each label.
+              items={kind.tabs.map(t => ({
+                key: t.key,
+                ariaLabel: `${t.label} (${ofKind.filter(t.pick).length})`,
+                label: <span className={styles.segLabel}>{t.label}<Badge tone="neutral" size="xs" label={String(ofKind.filter(t.pick).length)} /></span>,
+              }))}
+              value={activeTab.key}
               onValueChange={setTab}
-              fullWidth={false}
+              size="md"
+              className={mixed ? `${styles.summarySwitch} ${styles.summarySwitchUnderTabs}` : styles.summarySwitch}
             />
           </div>
           {groups.length === 0 ? (
@@ -95,13 +130,16 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
             <div className={styles.list}>
               {groups.map(([dept, results]) => (
                 <DeptGroup
-                  key={`${tab}-${dept}`}
+                  key={`${kind.key}-${tab}-${dept}`}
                   title={dept}
                   count={results.length}
+                  noun={kind.key === 'task' ? 'Task' : kind.key === 'program' ? 'Program' : 'Appointment'}
                   defaultOpen={groups.length === 1 || tab !== 'reassigned'}
                   controls={tab === 'reassigned' ? <CoveringAvatars results={results} /> : null}
                   items={results}
-                  renderItem={(r) => <SummaryRow key={r.appointmentId} result={r} tab={tab} />}
+                  renderItem={(r) => (kindOf(r) === 'appointment'
+                    ? <SummaryRow key={r.appointmentId} result={r} tab={tab} />
+                    : <ItemSummaryRow key={r.taskId || r.programId} result={r} />)}
                 />
               ))}
             </div>
@@ -109,6 +147,29 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
         </div>
       )}
     </Drawer>
+  );
+}
+
+/** A task or care program in the summary: its row, then who it went to or why it failed. */
+function ItemSummaryRow({ result }) {
+  const isTask = kindOf(result) === 'task';
+  const item = isTask ? result.task : result.program;
+  const main = (isTask ? TASK_SHAPE : PROGRAM_SHAPE).renderMain(item || {});
+  return (
+    <div className={[styles.apptRow, result.outcome === 'failed' ? styles.tone_failed : ''].filter(Boolean).join(' ')}>
+      <div className={styles.apptMain}>
+        {main}
+        {result.outcome === 'reassigned' && result.to && (
+          <span className={styles.apptTrail}><Avatar variant="staff" initials={initialsOf(result.to)} size="S" /></span>
+        )}
+      </div>
+      {result.outcome === 'failed' && (
+        <span className={styles.failReason}>
+          <Icon name="solar:info-circle-linear" size={16} color="var(--neutral-300)" />
+          Failure Reason: {result.reason || 'Unknown'}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -135,7 +196,7 @@ function SummaryRow({ result, tab }) {
     return (
       <ApptRow appt={appt} tone="failed">
         <span className={styles.failReason}>
-          <Icon name="solar:info-circle-linear" size={14} color="var(--status-error)" />
+          <Icon name="solar:info-circle-linear" size={16} color="var(--neutral-300)" />
           Failure Reason: {result.reason || 'Unknown'}
         </span>
       </ApptRow>

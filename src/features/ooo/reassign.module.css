@@ -17,11 +17,11 @@
 .deptCount:hover { color: var(--primary-300); }
 .deptCount:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; border-radius: 2px; }
 .deptDetail { color: var(--neutral-300); }
-.deptList { display: flex; flex-direction: column; border-top: 0.5px solid var(--neutral-150); border-left: 2px solid var(--primary-300); }
+.deptList { display: flex; flex-direction: column; background: var(--primary-25); border-top: 0.5px solid var(--neutral-150); border-left: 2px solid var(--primary-300); }
 .pager { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-2) var(--space-3); font-size: var(--font-sm); color: var(--neutral-300); }
 
 /* ── Appointment row ── */
-.apptRow { display: flex; flex-direction: column; background: var(--neutral-25); border-bottom: 0.5px solid var(--neutral-150); }
+.apptRow { display: flex; flex-direction: column; background: var(--primary-25); border-bottom: 0.5px solid var(--neutral-150); }
 .apptRow:last-child { border-bottom: none; }
 .apptMain { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); }
 .apptText { display: flex; flex-direction: column; flex: 1; min-width: 0; }
@@ -29,7 +29,9 @@
 .apptSub { font-size: var(--font-sm); color: var(--neutral-300); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .apptTrail { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
 .tone_conflict { background: var(--status-warning-light); border-left: 2px solid var(--status-warning); }
-.tone_failed { background: var(--status-error-light); }
+/* Failed: the row stays as it is; the reason runs under it, edge to edge, on a
+   light red strip. */
+.tone_failed .failReason { background: var(--status-error-light); border-top: 0.5px solid var(--neutral-150); padding: var(--space-2) var(--space-3); }
 
 /* ── Controls on cards and rows ── */
 .controls { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
@@ -65,7 +67,7 @@
 }
 
 /* ── Planner chrome ── */
-.planner { display: flex; flex-direction: column; gap: var(--space-3); }
+.planner { display: flex; flex-direction: column; gap: var(--space-3); flex: 1; }
 .plannerHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .plannerTitle { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
 .plannerTools { display: inline-flex; align-items: center; gap: var(--space-1); }
@@ -76,7 +78,16 @@
 .empty { padding: var(--space-4); text-align: center; font-size: var(--font-sm); color: var(--neutral-300); }
 
 /* The bulk bar sits at the foot of the drawer's scroll area, not the window. */
-.bulkInDrawer { position: sticky; left: auto; bottom: var(--space-3); transform: none; align-self: center; margin-top: var(--space-2); }
+/* In a drawer: pinned to the bottom of the drawer's visible area (the
+   planner fills the body, so a short list still puts it at the bottom), and
+   it slides up in place; the page bar's slide carries a translateX(-50%)
+   that would throw it sideways here. */
+.bulkInDrawer { position: sticky; left: auto; bottom: var(--space-3); transform: none; align-self: center; margin-top: auto; animation-name: bulkInDrawerSlide; }
+@keyframes bulkInDrawerSlide {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) { .bulkInDrawer { animation: none; } }
 
 /* ── Summary ── */
 .summary { display: flex; flex-direction: column; gap: var(--space-4); }
@@ -97,7 +108,7 @@
 .failReason {
   display: flex; align-items: center; gap: var(--space-1);
   padding: var(--space-1) var(--space-3) var(--space-2);
-  font-size: var(--font-sm); color: var(--neutral-400);
+  font-size: var(--font-base); color: var(--neutral-300);
 }
 .movedTo { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-3) var(--space-2); font-size: var(--font-sm); color: var(--status-success); }
 .tagMuted { font-size: var(--font-xs); color: var(--neutral-300); padding: 0 var(--space-1); border-radius: 4px; background: var(--neutral-50); }
@@ -166,6 +177,11 @@
 /* The summary's switch hugs its options, with room under the label. */
 .summaryTabs { gap: var(--space-2); }
 .summarySwitch { align-self: flex-start; }
+/* Underline tabs that start at the content's left edge (no inset). */
+.summaryField .summaryTabsFlush { padding-left: 0; padding-right: 0; }
+/* 12px under the module tabs (the field's 4px gap plus 8px). */
+.summarySwitchUnderTabs { margin-top: var(--space-2); }
+.segLabel { display: inline-flex; align-items: center; gap: var(--space-1); }
 .summaryEmpty { padding-top: var(--space-10); }
 /* 16px from the switch (8px gap + 8px), as from the cards below. */
 .summaryNote { margin-top: var(--space-2); font-size: var(--font-base); color: var(--neutral-300); }

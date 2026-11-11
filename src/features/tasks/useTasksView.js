@@ -152,6 +152,12 @@ export function useTasksView() {
   // from another page means this runs before `fetchTasks` has resolved, and
   // clearing on a miss would drop the request on the floor. Leaving it set
   // makes the effect re-run when `tasks` lands.
+  // A task link (#/tasks?taskId=…, e.g. Copy Link or "View Task" in a new
+  // tab) opens that task once, the same way.
+  useEffect(() => {
+    const id = /[?&]taskId=([^&]+)/.exec(window.location.hash)?.[1];
+    if (id) useAppStore.setState({ pendingOpenTaskId: decodeURIComponent(id) });
+  }, []);
   useEffect(() => {
     if (pendingOpenTaskId == null) return;
     const match = tasks.find(t => String(t.id) === String(pendingOpenTaskId));

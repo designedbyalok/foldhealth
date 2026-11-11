@@ -3,6 +3,7 @@ import { Popover } from '../Popover/Popover';
 import { Listbox } from '../Listbox/Listbox';
 import { Avatar } from '../Avatar/Avatar';
 import { Icon } from '../Icon/Icon';
+import { Input } from '../Input/Input';
 import { Checkbox } from '../Checkbox/Checkbox';
 import styles from './UserPickerPopover.module.css';
 
@@ -16,13 +17,19 @@ const initialsOf = (name) => String(name || '?').trim().split(/\s+/).map(w => w[
  *
  * @param {object}   props
  * @param {DOMRect}  props.anchorRect
- * @param {{ id?, name, role?, initials? }[]} props.users
+ * @param {{ id?, name, role?, initials?, section?, badge?, disabled?, searchText? }[]} props.users
+ *   `section` groups users under that header (in the order given), `badge`
+ *   is a node shown after the name (e.g. why they're limited), and
+ *   `disabled` lists a user who can't be picked.
  * @param {string}   [props.selected]     – Who's currently picked (ticked): their id, or (older data) name
  * @param {function} props.onSelect       – (user) => void
  * @param {function} [props.onUnassign]   – Shows an "Unassign" row when given
  * @param {function} props.onClose
  * @param {string}   [props.title='Select User']
  * @param {string}   [props.emptyText='No users available.']
+ * @param {number}   [props.width=280]   – Wider for rows with badges
+ * @param {boolean}  [props.titleCaseSections] – Section headers as written (e.g. "Limited Access")
+ *   instead of the list's default uppercase
  * @param {'left'|'right'} [props.align='left'] – Line up with the trigger's left edge, or its right edge
  *   (opening leftward, for triggers at the right of a panel)
  * @param {boolean}  [props.multiple]     – Checkbox rows (Figma Eventus 16978:128250): `selected` is
@@ -34,14 +41,14 @@ const initialsOf = (name) => String(name || '?').trim().split(/\s+/).map(w => w[
  */
 const NO_USERS = [];
 
-export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSelect, onUnassign, onClose, title = 'Select User', emptyText = 'No users available.', align = 'left', multiple = false, pinned = null, restLabel = 'All Users' }) {
+export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSelect, onUnassign, onClose, title = 'Select User', emptyText = 'No users available.', align = 'left', width = 280, titleCaseSections = false, multiple = false, pinned = null, restLabel = 'All Users' }) {
   const [pinnedKeys] = useState(() => (pinned?.keys || []).map(String));
   const searchRef = useRef(null);
   const [query, setQuery] = useState('');
   useEffect(() => { searchRef.current?.focus(); }, []);
 
   const q = query.trim().toLowerCase();
-  const shown = useMemo(() => users.filter(u => !q || `${u.name} ${u.role || ''}`.toLowerCase().includes(q)), [users, q]);
+  const shown = useMemo(() => users.filter(u => !q || `${u.searchText || u.name} ${u.role || ''}`.toLowerCase().includes(q)), [users, q]);
   const keyOf = (u) => (u.id != null ? String(u.id) : u.name);
   // Pinned first, in the order given; everyone else keeps the caller's order.
   const groups = useMemo(() => {
@@ -70,25 +77,21 @@ export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSe
       anchor={anchorRect}
       onOpenChange={() => onClose()}
       placement={align === 'right' ? 'bottom-end' : 'bottom-start'}
-      width={280}
+      width={width}
       listNavigation
       role="dialog"
       aria-label={title}
-      className={styles.menu}
+      className={[styles.menu, titleCaseSections ? styles.titleSections : ''].filter(Boolean).join(' ')}
     >
       <span className={styles.title}>{title}</span>
-      <label className={styles.search}>
-        <Icon name="solar:magnifer-linear" size={16} color="var(--neutral-300)" />
-        <input
-          ref={searchRef}
-          type="text"
-          className={styles.searchInput}
-          placeholder="Search"
-          aria-label="Search users"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </label>
+      <Input
+        ref={searchRef}
+        leadingIcon="solar:magnifer-linear"
+        placeholder="Search"
+        aria-label="Search users"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
       {multiple && (() => {
         // Select All / Clear All act on the users in view (the search narrows them).
         const allOn = shown.length > 0 && shown.every(isPicked);
@@ -126,10 +129,12 @@ export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSe
           indicator={multiple ? 'checkbox' : 'check'}
           options={ordered.map(u => ({
             value: keyOf(u),
-            label: u.name,
+            label: u.badge ? <span className={styles.nameRow}><span className={styles.nameText}>{u.name}</span>{u.badge}</span> : u.name,
+            searchText: u.searchText || u.name,
             description: u.role,
+            disabled: !!u.disabled,
             leading: <Avatar variant="staff" initials={u.initials || initialsOf(u.name)} size="M" />,
-            section: groups ? (topKeys.has(keyOf(u)) ? pinned.label : restLabel) : undefined,
+            section: u.section ?? (groups ? (topKeys.has(keyOf(u)) ? pinned.label : restLabel) : undefined),
           }))}
           value={multiple ? ordered.filter(isPicked).map(keyOf) : (ordered.find(isPicked) ? keyOf(ordered.find(isPicked)) : null)}
           onSelect={(o) => {

@@ -40,7 +40,7 @@ export function ApptRow({ appt, lead, trail, tone, subPrefix, children }) {
  * toggles the list, then the caller's controls) over its appointments,
  * ten to a page, with the range and page arrows under them.
  */
-export function DeptGroup({ title, count, detail, lead, controls, items, renderItem, defaultOpen = false, tone }) {
+export function DeptGroup({ title, count, detail, lead, controls, items, renderItem, defaultOpen = false, tone, noun = 'Appointment' }) {
   const [open, setOpen] = useState(defaultOpen);
   // Collapse All / Expand All changes `defaultOpen`; follow it (animated),
   // while each card can still be opened or shut on its own in between.
@@ -57,7 +57,7 @@ export function DeptGroup({ title, count, detail, lead, controls, items, renderI
         <span className={styles.deptText}>
           <span className={styles.deptName}>{title}</span>
           <button type="button" className={styles.deptCount} onClick={() => setOpen(o => !o)} aria-expanded={open}>
-            {count} Appointment{count === 1 ? '' : 's'}
+            {count} {noun}{count === 1 ? '' : 's'}
             {detail && <span className={styles.deptDetail}>({detail})</span>}
             <Icon name="solar:alt-arrow-right-linear" size={12} color="var(--neutral-300)" className={open ? `${styles.chevron} ${styles.chevronOpen}` : styles.chevron} />
           </button>

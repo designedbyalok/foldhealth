@@ -23,7 +23,7 @@ export function OooReassignFooter({ reassigning = 0, cancelling = 0, noAction = 
 }
 
 /**
- * "Select Reassignment Providers" before there's anything to plan (Figma
+ * "Select Covering Providers" before there's anything to plan (Figma
  * Eventus 16898:43570): until a provider and their dates are chosen. Once
  * the provider is picked, it only asks for the dates.
  *
@@ -33,7 +33,7 @@ export function OooReassignFooter({ reassigning = 0, cancelling = 0, noAction = 
 export function ReassignProviders({ hasProvider = false }) {
   return (
     <div className={styles.fieldGroup}>
-      <span className={styles.groupTitle}>Select Reassignment Providers</span>
+      <span className={styles.groupTitle}>Select Covering Providers</span>
       <div className={styles.providersEmpty}>
         <EmptyState size="sm" icon="solar:users-group-rounded-linear" title={hasProvider ? 'Select dates to Reassign Appointments' : 'Select Provider and dates to Reassign Appointments'} />
       </div>

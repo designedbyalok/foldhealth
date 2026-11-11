@@ -22,6 +22,7 @@ export function ScheduleDrawerAppointmentDetails({
   provider,
   setProvider,
   profileUsers,
+  providerOoo,
   secondaryUsers,
   setSecondaryUsers,
   date,
@@ -84,7 +85,7 @@ export function ScheduleDrawerAppointmentDetails({
 
         <div className={styles.detailRow}>
           <span className={styles.detailLabel}>Primary User</span>
-          <ProviderPicker value={provider} onSelect={setProvider} profileUsers={profileUsers} onAddSecondary={() => setSectionOpen('secondary', true)} />
+          <ProviderPicker value={provider} onSelect={setProvider} profileUsers={profileUsers} outOfOffice={providerOoo} onAddSecondary={() => setSectionOpen('secondary', true)} />
         </div>
 
         {isSectionOpen('secondary') && (
