@@ -13534,6 +13534,54 @@ export const useAppStore = create((set, get) => ({
     if (error) console.warn('Failed to update JSA status:', error.message);
   },
 
+  // ── My Patients worklist (care management redesign prototype), backed by
+  // my_patients_worklist (supabase/my_patients_worklist_migration.sql). Falls
+  // back to the local rows until that table exists and is seeded.
+  myPatients: [],
+  myPatientsLoading: false,
+  myPatientsDidFetch: false,
+  fetchMyPatients: async () => {
+    if (get().myPatientsDidFetch) return;
+    set({ myPatientsDidFetch: true, myPatientsLoading: true });
+    const { data, error } = await supabase.from('my_patients_worklist').select('*').order('adherence', { ascending: true });
+    if (error || !data || data.length === 0) {
+      console.warn('fetchMyPatients error or empty, falling back to local rows:', error?.message);
+      const { MY_PATIENTS } = await import('../features/my-patients/data/mock');
+      set({ myPatients: MY_PATIENTS, myPatientsLoading: false, ...(error ? { myPatientsDidFetch: false } : {}) });
+      return;
+    }
+    set({
+      myPatients: data.map(r => ({
+        id: r.id,
+        memberId: r.member_id,
+        name: r.name,
+        initials: r.initials,
+        gender: r.gender,
+        age: r.age,
+        dob: r.dob,
+        language: r.language || 'en',
+        payer: r.payer,
+        programs: r.programs || [],
+        conditions: r.conditions || [],
+        adherence: r.adherence,
+        adherencePrev: r.adherence_prev,
+        whyPoints: Array.isArray(r.why_points) ? r.why_points : [],
+        whySummary: r.why_summary,
+        whyGeneratedAt: r.why_generated_at,
+        lastReview: r.last_review,
+        reviewCadenceDays: r.review_cadence_days,
+        minutesProgram: r.minutes_program,
+        minutesLogged: r.minutes_logged,
+        minutesTarget: r.minutes_target,
+        lastTouchDate: r.last_touch_date,
+        lastTouchChannel: r.last_touch_channel,
+        lastTouchBy: r.last_touch_by,
+        assignee: r.assignee,
+      })),
+      myPatientsLoading: false,
+    });
+  },
+
   // ── CMP (Care Management Program) worklist: same shape as the JSA slice,
   // backed by cmp_members (supabase/cmp_members_migration.sql). Falls back to
   // the local mock until that table exists and is seeded.
