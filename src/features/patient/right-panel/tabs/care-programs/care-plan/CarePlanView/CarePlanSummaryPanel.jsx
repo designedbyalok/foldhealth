@@ -165,6 +165,11 @@ export function CarePlanSummaryPanel({
                 {entry?.generatedAt ? `Summarized ${stamp(entry.generatedAt)}` : 'Summarized'}
                 {stale ? ' • Plan changed since' : ''}
               </span>
+              {/* Saved summaries aren't rewritten on their own: a changed plan
+                  offers the rewrite instead. */}
+              {stale && canEdit && (
+                <button type="button" className={styles.link} onClick={summary.regenerate}>Update Summary</button>
+              )}
             </>
           )}
         </section>

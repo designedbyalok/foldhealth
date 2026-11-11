@@ -558,8 +558,11 @@ Only active programs that have a plan row are listed.
 - **Prompt:** a 30-second clinician read at roughly 8th-grade level, with lists capped at 60 items.
 - **Output:** `{intro, points[3-6], actions[2-5]}`.
 - **Retries:** 3 on 429/503.
-- **Storage:** upserted to `patient_care_plan_summaries` (S:1664-1717). The card offers copy, regenerate and delete.
-- **Limits:** there is no staleness tracking, it ignores the filters, and it sends the patient name to Google.
+- **Storage:** upserted to `patient_care_plan_summaries`, one row per patient; ticked action items are kept in the summary's `done` (`setPatientCarePlanSummaryDone`). A program's own summary is the same, in `patient_care_plan_program_summaries`.
+- **When it runs:** only on a click (Summarize in the toolbar or in the Unity Summary). Neither summary is written when a plan opens; the saved one is read back.
+- **Staleness:** a summary is stale once any open plan has a non-note audit row newer than `generatedAt`. The Unity Summary then says "Plan changed since" with **Update Summary**, and the toolbar button reads Update Summary.
+- **Where it shows:** at 1400px and wider, in the left column's Unity Summary (`CarePlanSummaryPanel`, shared with a program's plan, with Summary totals and Recent Notes across programs). Narrower, as the AI Summary section once generated.
+- **Limits:** it ignores the filters, and it sends the patient name to the AI provider.
 
 **CSV** (`carePlanSnapshot.js:129-154`): Conditions, Goals and Interventions, with filters applied. No barriers, and no title dedupe.
 

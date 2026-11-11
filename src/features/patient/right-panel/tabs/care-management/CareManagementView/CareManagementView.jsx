@@ -112,9 +112,11 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
   const toComplete = signing.filter(x => x.state === 'open').length;
   const carePlanTemplates = useAppStore(s => s.carePlanTemplates) || [];
   const [addNoteOpen, setAddNoteOpen] = useState(false);
-  // Summarize sits in this toolbar; the AI Summary section shows once it has run.
+  // Summarize sits in this toolbar and only runs when clicked; the saved
+  // summary shows in the view, and the button offers Update Summary once the
+  // plans changed after it was written.
   const [summarizeRequest, setSummarizeRequest] = useState(0);
-  const [summaryState, setSummaryState] = useState('idle');
+  const [summaryState, setSummaryState] = useState({ state: 'idle', stale: false });
   const logCarePlanAudit = useAppStore(s => s.logCarePlanAudit);
   // A care note goes on an open program that has a care plan.
   const notePrograms = useMemo(
@@ -131,13 +133,15 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
   const [dueDateFilter, setDueDateFilter] = useState([]);
   const [createdDateFilter, setCreatedDateFilter] = useState([]);
 
-  const programCodes = useMemo(() => [...new Set(programs.map(p => p.code))], [programs]);
+  // All Programs is the open programs' plans: filters, Download and the view
+  // read the same set its totals and Look at These First count.
+  const programCodes = useMemo(() => [...new Set(openPrograms.map(p => p.code))], [openPrograms]);
   // Option lists: only surface template / status / priority values
   // that actually appear on this patient's plans, so the popovers
   // never show empty rows.
   const snapshot = useMemo(
-    () => buildCarePlanSnapshot(programs, patientCarePlans, patientId),
-    [programs, patientCarePlans, patientId],
+    () => buildCarePlanSnapshot(openPrograms, patientCarePlans, patientId),
+    [openPrograms, patientCarePlans, patientId],
   );
   const allRows = useMemo(
     () => [...snapshot.goals, ...snapshot.interventions, ...(snapshot.barriers || [])],
@@ -261,7 +265,8 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
              icon actions. */
           <div className={styles.ctaCluster}>
             <SummarizeButton
-              state={summaryState}
+              state={summaryState.state}
+              stale={summaryState.stale}
               onClick={() => setSummarizeRequest(n => n + 1)}
               idleLabel="Summarize active programs"
             />
@@ -306,7 +311,7 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
           embedded
           editable
           patientId={patientId}
-          programs={programs}
+          programs={openPrograms}
           searchText={searchText}
           programFilter={programFilter}
           templateFilter={templateIdsSelected}
@@ -318,6 +323,7 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
           onOpenProgramStep={(p) => setView(p.id)}
           summarizeRequest={summarizeRequest}
           onSummaryState={setSummaryState}
+          onAddNote={notePrograms.length ? () => setAddNoteOpen(true) : undefined}
         />
       </div>
       {addNoteOpen && (

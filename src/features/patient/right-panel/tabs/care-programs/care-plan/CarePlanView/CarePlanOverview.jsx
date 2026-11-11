@@ -50,10 +50,6 @@ function TabEmpty({ icon, title, text, action }) {
   );
 }
 
-// Plans already summarized this session: the summary is written once per
-// visit at most, and a failed run (no AI key, AI busy) isn't retried on its own.
-const autoTried = new Set();
-
 /**
  * The top of a program's care plan (Figma P360 Revamp 8340:295397): one card
  * with a segmented toggle, Care Plan Note, Summarize with Unity, Events
@@ -61,9 +57,10 @@ const autoTried = new Set();
  *
  * Care Plan Note is the note box itself: "@" tags someone, "/" links a goal,
  * intervention or barrier, and saving adds a note (notes are live, outside
- * the signed snapshot). Opening the plan writes the AI summary when there is
- * none, or when the plan changed after it was written, and shows it once
- * written; each action opens the item it names and can be ticked off.
+ * the signed snapshot). The AI summary is written only when someone asks
+ * (Summarize, or Write it Again once the plan has changed) and is saved, so
+ * opening the plan reads the saved one; each action opens the item it names
+ * and can be ticked off.
  */
 export function CarePlanOverview({
   patientId, program, patientName, live, audit, stats, showSummary = true, showEvents = true, showCadence = true, canEdit,
@@ -79,7 +76,6 @@ export function CarePlanOverview({
   const programId = program?.id;
   const key = `${patientId}::${programId}`;
   const entry = useAppStore(s => s.programCarePlanSummaries[key]);
-  const loaded = useAppStore(s => !!s.programCarePlanSummaryLoadedFor[key]);
   const fetchSummary = useAppStore(s => s.fetchProgramCarePlanSummary);
   const saveSummary = useAppStore(s => s.saveProgramCarePlanSummary);
   const deleteSummary = useAppStore(s => s.deleteProgramCarePlanSummary);
@@ -172,14 +168,6 @@ export function CarePlanOverview({
     .filter(a => !NOTE_ACTIONS.has(a.action) && a.action !== 'note_linked')
     .reduce((max, a) => Math.max(max, a.createdAt ? new Date(a.createdAt).getTime() : 0), 0), [audit]);
   const stale = !!entry?.generatedAt && changedAt > new Date(entry.generatedAt).getTime();
-
-  useEffect(() => {
-    if (!showSummary || !loaded || !canEdit || isEmpty || autoTried.has(key)) return;
-    if (entry?.summary && !stale) return;
-    autoTried.add(key);
-    // Shows the new summary; a failed run leaves the tab where it was.
-    summary.autoGenerate().then(ok => { if (ok) setTab('summary'); });
-  }, [showSummary, loaded, canEdit, isEmpty, key, entry?.summary, stale]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const data = entry?.summary || null;
   const actions = data?.actions || [];
