@@ -1,0 +1,151 @@
+/* My Patients row: the shared worklist row shell and Member cell, plus the
+   adherence, why prioritized, review, minutes and last touch cells. */
+
+.row         { composes: row         from '../../components/WorklistShell/WorklistRow.module.css'; }
+.rowSelected { composes: rowSelected from '../../components/WorklistShell/WorklistRow.module.css'; }
+.stickyLeft  { composes: stickyLeft  from '../../components/WorklistShell/WorklistRow.module.css'; }
+.stickyRight { composes: stickyRight from '../../components/WorklistShell/WorklistRow.module.css'; }
+.td          { composes: td          from '../../components/WorklistShell/WorklistRow.module.css'; }
+.checkTd     { composes: checkTd     from '../../components/WorklistShell/WorklistRow.module.css'; }
+.membersTd   { composes: membersTd   from '../../components/WorklistShell/WorklistRow.module.css'; }
+
+.patientCell     { composes: patientCell     from '../../components/WorklistShell/WorklistRow.module.css'; }
+.patientName     { composes: patientName     from '../../components/WorklistShell/WorklistRow.module.css'; }
+.patientNameLink { composes: patientNameLink from '../../components/WorklistShell/WorklistRow.module.css'; }
+.patientDemo     { composes: patientDemo     from '../../components/WorklistShell/WorklistRow.module.css'; }
+.patientMeta     { composes: patientMeta     from '../../components/WorklistShell/WorklistRow.module.css'; }
+.foldId          { composes: foldId          from '../../components/WorklistShell/WorklistRow.module.css'; }
+.langBadge       { composes: langBadge       from '../../components/WorklistShell/WorklistRow.module.css'; }
+
+.actionsCell   { composes: actionsCell   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.actionDivider { composes: actionDivider from '../../components/WorklistShell/WorklistRow.module.css'; }
+
+.payer {
+  display: inline-block;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.value {
+  font-size: var(--font-md);
+  color: var(--neutral-400);
+  white-space: nowrap;
+}
+.muted {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  white-space: nowrap;
+}
+.overdue {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--status-error);
+  white-space: nowrap;
+}
+
+.adherence {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 140px;
+}
+.adherenceTop {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.adherenceScore {
+  min-width: var(--space-5);
+  font-size: var(--font-base);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--neutral-500);
+}
+.deltaUp,
+.deltaDown {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--font-sm);
+  font-weight: 500;
+}
+.deltaUp { color: var(--status-success); }
+.deltaDown { color: var(--status-error); }
+
+.bar {
+  display: block;
+  width: 100%;
+  min-width: 100px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--neutral-100);
+  overflow: hidden;
+}
+.bar > span { display: block; height: 100%; }
+.bar_success { background: var(--status-success); }
+.bar_warning { background: var(--status-warning); }
+.bar_danger { background: var(--status-error); }
+.bar_primary { background: var(--primary-300); }
+
+.why {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-width: 300px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.whyPoint {
+  position: relative;
+  padding-left: var(--space-3);
+  font-size: var(--font-md);
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+}
+.whyPoint::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.55em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary-300);
+}
+.why:hover .whyPoint { color: var(--neutral-500); }
+.whyPop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-md);
+  line-height: var(--leading-normal);
+}
+.whyPopHead {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 500;
+  color: var(--primary-300);
+}
+
+.assignee {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}

@@ -67,6 +67,7 @@ const PharmacyWorklistTable = lz(() => import('../features/pharmacy-worklist/Pha
 const JsaWorklistTable     = lz(() => import('../features/jsa-worklist/JsaWorklistTable'), 'JsaWorklistTable');
 const CcmWorklistTable     = lz(() => import('../features/ccm-worklist/CcmWorklistTable'), 'CcmWorklistTable');
 const SnpWorklistTable     = lz(() => import('../features/snp-worklist/SnpWorklistTable'), 'SnpWorklistTable');
+const MyPatientsTable      = lz(() => import('../features/my-patients/MyPatientsTable'), 'MyPatientsTable');
 const AllPatientsTable     = lz(() => import('../features/all-patients/AllPatientsTable'), 'AllPatientsTable');
 const PopulationGroupsView = lz(() => import('../features/population-groups/PopulationGroupsView'), 'PopulationGroupsView');
 
@@ -186,13 +187,14 @@ function PopulationView() {
   const isCcm = activeSubnavList === 'CCM';
   const isSnp = activeSubnavList === 'SNP';
   const isAllPatients = activeSubnavList === 'All Patients';
+  const isMyPatients = activeSubnavList === 'My Patients';
   const isPopulationGroup = activeSubnavList.startsWith('pg:');
   const isToc = activeSubnavList === 'TOC IP';
   const isTcm = activeSubnavList === 'TCM' || (!isHcc && !isHedis && !isCcm && !isAwv && !isJsa && !isCmp && !isPharmacy && !isAllPatients && !isPopulationGroup && !isToc && activeSubnavList !== 'My Patients' && !['Day Optimizer', 'Review HRA', 'IP Visits', 'High Risk', 'High Cost', 'SNP', 'JSA', 'Pharmacy', 'High Utilizers', 'DM', 'My Patients'].includes(activeSubnavList));
-  const isComingSoon = ['Day Optimizer', 'Review HRA', 'IP Visits', 'High Risk', 'High Cost', 'High Utilizers', 'DM', 'My Patients'].includes(activeSubnavList);
+  const isComingSoon = ['Day Optimizer', 'Review HRA', 'IP Visits', 'High Risk', 'High Cost', 'High Utilizers', 'DM'].includes(activeSubnavList);
   const pgFilter = activeSubnavList === 'pg:Static' ? 'Static' : activeSubnavList === 'pg:Dynamic' ? 'Dynamic' : 'All';
 
-  const chromeless = isHcc || isHedis || isCcm || isSnp || isAwv || isJsa || isCmp || isPharmacy || isComingSoon || isPopulationGroup;
+  const chromeless = isHcc || isHedis || isCcm || isSnp || isAwv || isJsa || isCmp || isPharmacy || isMyPatients || isComingSoon || isPopulationGroup;
 
   return (
     <div className={styles.main}>
@@ -229,6 +231,8 @@ function PopulationView() {
                   ? <CmpWorklistTable />
                 : isPharmacy
                   ? <PharmacyWorklistTable />
+                  : isMyPatients
+                    ? <MyPatientsTable />
                   : isAllPatients
                     ? <AllPatientsTable />
                     : isPopulationGroup

@@ -1,0 +1,80 @@
+/* Care Plan Adherence strip above the My Patients table. */
+.strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.title {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+.bar {
+  display: flex;
+  width: 200px;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--neutral-100);
+}
+.bar > span { height: 100%; }
+.seg_success, .dot_success { background: var(--status-success); }
+.seg_warning, .dot_warning { background: var(--status-warning); }
+.seg_danger, .dot_danger { background: var(--status-error); }
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 0.5px solid transparent;
+  border-radius: var(--space-1);
+  background: none;
+  cursor: pointer;
+  font-size: var(--font-md);
+  color: var(--neutral-400);
+}
+.count strong {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--neutral-500);
+}
+.count:hover { background: var(--neutral-50); }
+.countOn,
+.countOn:hover {
+  border-color: var(--primary-200);
+  background: var(--primary-50);
+}
+.dot_success, .dot_warning, .dot_danger {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.spacer { flex: 1; }
+.howLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  cursor: help;
+}
+.help {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+}
+.helpTitle {
+  font-weight: 600;
+  color: var(--neutral-500);
+}
+.helpRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
