@@ -18,7 +18,7 @@ import {
   withoutCarePlanStep,
 } from './ProgramDetailView.utils';
 import { showsProgramCarePlan } from '../../care-plan/lib/carePlanMode';
-import { deriveStepStatus, programProgressOf, STEP_STATUS } from './stepStatus';
+import { deriveStepStatus, programProgressOf, stepContextFor, STEP_STATUS } from './stepStatus';
 import { useProgramActivityLog } from '../shared/useProgramActivityLog';
 import { isEmptyDash } from '../../../../../../../lib/emptyDash';
 
@@ -188,18 +188,15 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
     fetchProgramStepStatus?.(program.id);
   }, [patientId, program.id, fetchPatientCarePlan, fetchProgramDocuments, fetchAppointments, fetchProgramStepStatus]);
 
-  const stepCtx = useMemo(() => {
-    const pid = String(patientId || '');
-    const ids = new Set([pid, String(currentPatient?.id || ''), String(currentPatient?.memberId || '')].filter(Boolean));
-    return {
-      manual: manualStatus,
-      carePlan,
-      program: liveProgram || program,
-      tasks: allStoreTasks.filter(t => !t.is_subtask && t.program_code === program.code && ids.has(String(t.patient_id))),
-      documents: programDocuments.filter(d => d.programCode === program.code && ids.has(String(d.patientId))),
-      appointments: appointments.filter(a => ids.has(String(a.patient_id))),
-    };
-  }, [patientId, currentPatient, manualStatus, carePlan, liveProgram, program, allStoreTasks, programDocuments, appointments]);
+  const stepCtx = useMemo(() => stepContextFor({
+    patientIds: [patientId, currentPatient?.id, currentPatient?.memberId],
+    program: liveProgram || program,
+    carePlan,
+    manual: manualStatus,
+    tasks: allStoreTasks,
+    documents: programDocuments,
+    appointments,
+  }), [patientId, currentPatient, manualStatus, carePlan, liveProgram, program, allStoreTasks, programDocuments, appointments]);
 
   // Same shape as the step list, with each step's real status filled in.
   const stepList = useMemo(() => stepsForProgram(program.code).map(step => (

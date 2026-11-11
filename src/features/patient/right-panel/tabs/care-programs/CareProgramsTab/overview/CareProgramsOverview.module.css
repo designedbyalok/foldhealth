@@ -1,0 +1,517 @@
+/* Three columns when wide (programs | actions | summaries), two when there's
+   no room for the summaries (they join the left column), one when narrow
+   (actions first). Measured on the overview itself. */
+.overviewWrap {
+  container-type: inline-size;
+  flex-shrink: 0;
+}
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2) 0 var(--space-3);
+}
+.left,
+.main,
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.main { order: -1; }
+.right { display: none; }
+.sumLeft { display: flex; flex-direction: column; gap: var(--space-3); }
+
+@container (min-width: 760px) {
+  .overview { flex-direction: row; align-items: flex-start; }
+  .main { order: 0; flex: 1; }
+  .left { width: clamp(260px, 33%, 340px); flex-shrink: 0; }
+}
+@container (min-width: 1180px) {
+  .left { width: clamp(280px, 24%, 340px); }
+  .right { display: flex; width: clamp(280px, 22%, 330px); flex-shrink: 0; }
+  .sumLeft { display: none; }
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.textDanger { color: var(--status-error); }
+.textWarning { color: var(--status-warning); }
+.chevUp { transform: rotate(180deg); }
+.chevRight { transform: rotate(-90deg); }
+.moreBtn,
+.linkBtn {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+  cursor: pointer;
+}
+.moreBtn { margin: 0 var(--space-3) var(--space-2); }
+.moreBtn:focus-visible,
+.linkBtn:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; border-radius: 4px; }
+
+/* ── Programs: compact cards ── */
+.programList {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.programCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  transition: border-color var(--duration-base) var(--ease-out), background var(--duration-base) var(--ease-out);
+}
+.programCard:hover {
+  border-color: var(--primary-200);
+  background: var(--primary-25);
+}
+.programTop {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.programName {
+  all: unset;
+  flex: 1;
+  min-width: 0;
+  /* Up to two lines: the column is narrow and names are long. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--font-md);
+  font-weight: 500;
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+/* The name's button covers the card, so a click anywhere opens the program;
+   the controls sit above it. */
+.stretch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.programName:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; border-radius: 4px; }
+.programActions,
+.programStatus {
+  position: relative;
+  z-index: 1;
+}
+.programActions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.programMeta,
+.programNext {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.programMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+.programStatus {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 500;
+  cursor: pointer;
+}
+.programStatus:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; border-radius: 4px; }
+
+/* ── Active Problems: name over type, onset and code ── */
+.problemList {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-3) var(--space-2);
+  display: flex;
+  flex-direction: column;
+}
+.problem {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) 0;
+  border-top: 0.5px solid var(--neutral-100);
+}
+.problem:first-child { border-top: none; padding-top: 0; }
+.problemTitle {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.problemMeta {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+/* ── Since Last Visit: day | rail | text | tags ── */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-3) var(--space-3);
+  display: flex;
+  flex-direction: column;
+}
+.tlRow {
+  display: grid;
+  grid-template-columns: 40px 24px minmax(0, 1fr) auto;
+  column-gap: var(--space-2);
+  align-items: start;
+}
+.tlDay {
+  padding-top: var(--space-1);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.tlRail {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  justify-content: center;
+}
+/* The rail joins the icons; it stops at the last row. */
+.tlRail::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: 0;
+  left: 50%;
+  border-left: 0.5px solid var(--neutral-150);
+}
+.tlRow:last-child .tlRail::before { display: none; }
+.tlIcon {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.tlText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-2);
+  min-width: 0;
+}
+.tlMeta {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.tlTitle {
+  font-size: var(--font-md);
+  color: var(--neutral-400);
+}
+.tlTags { padding-top: var(--space-1); }
+
+/* ── Why Prioritized ── */
+.whyBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) var(--space-3);
+}
+.takeaways {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-4);
+  row-gap: var(--space-1);
+}
+.takeaway {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-md);
+  color: var(--neutral-400);
+}
+.dotDanger,
+.dotWarning {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dotDanger { background: var(--status-error); }
+.dotWarning { background: var(--status-warning); }
+.whyPara {
+  margin: 0;
+  font-size: var(--font-md);
+  line-height: var(--leading-loose);
+  color: var(--neutral-400);
+}
+.whyPara strong { font-weight: 600; }
+
+/* ── Next Best Actions ── */
+.nbaHeadRight {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.nbaList {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-2);
+  display: flex;
+  flex-direction: column;
+}
+.nbaRow {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-2);
+}
+/* A line joins the numbers, as one sequence. */
+.nbaRow::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--space-2) + 11px);
+  top: calc(var(--space-2) + 22px);
+  bottom: calc(-1 * var(--space-2));
+  border-left: 0.5px solid var(--neutral-150);
+}
+.nbaRow:last-child::before { display: none; }
+.nbaRowCurrent {
+  background: var(--primary-25);
+  border-radius: var(--space-2);
+}
+.nbaNum {
+  position: relative;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 0.5px solid var(--neutral-150);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  background: var(--neutral-0);
+}
+.nbaNumCurrent {
+  border-color: var(--primary-300);
+  background: var(--primary-300);
+  color: var(--neutral-0);
+}
+.nbaBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.nbaKind {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.nbaTitleLine {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--font-sm);
+}
+.nbaTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.nbaRequired {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--status-error);
+}
+.nbaDetail { color: var(--neutral-300); }
+.nbaWhy {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.nbaActions {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.nbaGroups {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--space-2) var(--space-2);
+}
+.nbaGroup { border-top: 0.5px solid var(--neutral-100); }
+.nbaGroup:first-child { border-top: none; }
+.nbaGroupHead {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-2);
+  cursor: pointer;
+}
+.nbaGroupHead:focus-visible { outline: 2px solid var(--primary-300); outline-offset: -2px; border-radius: 4px; }
+.nbaGroupName {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.nbaGroupMeta {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+/* ── Care Plan Summary ── */
+.sumSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.sumHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sumTitle {
+  margin: 0;
+  font-size: var(--font-lg);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--neutral-500);
+}
+.sumCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+}
+.sumProgress {
+  all: unset;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  cursor: pointer;
+}
+.sumProgress:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; border-radius: 4px; }
+.sumPct {
+  font-size: var(--font-2xl);
+  font-weight: 600;
+  color: var(--neutral-400);
+}
+.sumBar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--neutral-100);
+  overflow: hidden;
+}
+.sumBar > span {
+  display: block;
+  height: 100%;
+  background: var(--primary-300);
+}
+.sumLabel {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.sumRows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 0.5px solid var(--neutral-100);
+  border-radius: var(--space-2);
+}
+.sumRows > li + li { border-top: 0.5px solid var(--neutral-100); }
+.sumRow {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-sm);
+  cursor: pointer;
+}
+.sumRow:hover { background: var(--primary-25); }
+.sumRow:focus-visible { outline: 2px solid var(--primary-300); outline-offset: -2px; border-radius: 4px; }
+.sumN {
+  min-width: 24px;
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--neutral-400);
+}
+.sumRowLabel { flex: 1; font-size: var(--font-md); color: var(--neutral-400); }
+.sumOk { color: var(--neutral-300); }
+.sumPara {
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-3);
+  font-size: var(--font-md);
+  line-height: var(--leading-loose);
+  color: var(--neutral-400);
+}
+.inlineLink {
+  all: unset;
+  color: var(--primary-300);
+  text-decoration: underline;
+  text-decoration-color: var(--primary-200);
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.inlineLink:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; border-radius: 2px; }
+
+/* ── Insight cards: a soft primary tint, like the prototype's summary cards ── */
+.insight {
+  background: var(--primary-50);
+  border-color: var(--primary-200);
+  box-shadow: none;
+}
+.insight .whyPara,
+.insight .takeaway { color: var(--neutral-500); }
+.insightFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  padding-top: var(--space-2);
+  border-top: 0.5px solid var(--primary-100);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .programCard { transition: none; }
+}
