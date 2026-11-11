@@ -145,6 +145,7 @@ import {
   mapPatientCarePlanRow,
   carePlanKey,
   carePlanMemberName,
+  carePlanSignRequestOpen,
   templateItems,
   templateContents,
   templatesAtLastSignature,
@@ -6222,7 +6223,8 @@ export const useAppStore = create((set, get) => ({
   // sent from the app. The provider signs with signCarePlan as usual.
   completeCarePlan: async (patientId, program, { signer, agreement = '', copy = null }) => {
     const key = carePlanKey(patientId, program.id);
-    const planId = get().patientCarePlans[key]?.plan?.id;
+    const before = get().patientCarePlans[key]?.plan;
+    const planId = before?.id;
     if (!planId || !signer?.name) return false;
     const me = get().currentUserProfile;
     const nowIso = new Date().toISOString();
@@ -6259,6 +6261,10 @@ export const useAppStore = create((set, get) => ({
       summary: `Care Plan Completed and Sent to ${signer.name} to Sign`,
       detail: [`Patient agreed${fields.patient_agreement_note ? `: ${fields.patient_agreement_note}` : ''}`, copyText].join(' • '),
     });
+
+    // Completed again before it was signed: the earlier request is replaced,
+    // so its task closes and the provider has only the new one.
+    if (carePlanSignRequestOpen(before)) await get().closeCarePlanSignatureTasks(patientId, program, before);
 
     const memberName = carePlanMemberName(get(), patientId);
     const due = new Date();
