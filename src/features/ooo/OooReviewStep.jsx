@@ -14,6 +14,7 @@ import { ProgressRing } from '../hcc/DiagPanel/ReviewProgressPopover';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { UserPickerPopover } from '../../components/UserPickerPopover/UserPickerPopover';
+import { toast } from '../../components/Toast/sonnerToast';
 import { initialsOf } from './oooUtils';
 import { NO_DEPARTMENT, planPeople } from './openWork';
 import { MODULES } from './useOpenWork';
@@ -62,6 +63,21 @@ const PROGRAM_SHAPE = {
   ),
 };
 const shapeOf = (key) => (key === 'programs' ? PROGRAM_SHAPE : TASK_SHAPE);
+
+// The row's "…" action, opened in a new tab so this drawer keeps its place.
+const programKey = (p) => String(p.code || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const VIEW = {
+  task: {
+    label: 'View Task',
+    icon: 'solar:eye-linear',
+    onSelect: t => window.open(`#/tasks?taskId=${encodeURIComponent(t.id)}`, '_blank', 'noopener'),
+  },
+  programs: {
+    label: 'View Program',
+    icon: 'solar:eye-linear',
+    onSelect: p => window.open(`#/population/patient/${encodeURIComponent(p.patientId)}/care-management/care-programs/${programKey(p)}`, '_blank', 'noopener'),
+  },
+};
 const deptArg = (d) => (d && d !== NO_DEPARTMENT ? d : null);
 
 // Which card a covering provider's missing access affects (COVER_ACCESS).
@@ -114,7 +130,7 @@ function linesFor(key, covered, autoReply) {
  * @param {function} props.onMessageChange – (text) => void, on Save under the field
  */
 export function OooReviewStep({ summary, away, timeWindow, work, coverers, missingByName, phoneTree, autoReply, message, onMessageChange }) {
-  const { items, plans, setPlan, pickUsers, loading } = work;
+  const { items, plans, defaults, setPlan, pickUsers, loading } = work;
   const [editing, setEditing] = useState(null); // module key whose drawer is open
   const [picker, setPicker] = useState(null);   // { rect, key } assigning a whole module
   // The auto-reply message is edited as a draft: Save keeps it, Discard or
@@ -164,7 +180,7 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
 
   // A card's top: the title with its lines (and warnings) right under it,
   // who / Edit on the right.
-  const head = ({ key, title, count, tools, muted, lines }) => (
+  const head = ({ key, title, count, tools, lines, muted }) => (
     <div className={styles.workHead}>
       <span className={styles.workText}>
         <span className={muted ? `${styles.workTitle} ${styles.workTitleMuted}` : styles.workTitle}>
@@ -184,10 +200,19 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
   // The full-width box under a card's lines (phone tree, auto-reply).
   const extraBlock = (extra) => extra && <div className={styles.workExtra}>{extra}</div>;
 
+  // A module card: its count, who it goes to and Edit; muted when there's
+  // nothing to reassign.
   const moduleCard = (m) => {
     const list = items[m.key];
     const n = list.length;
     const ids = list.map(i => i.id);
+    if (!n) {
+      return (
+        <div key={m.key} className={styles.workCard}>
+          {head({ key: m.key, muted: true, lines: linesFor(m.key, covered, autoReply), title: m.title, count: 0 })}
+        </div>
+      );
+    }
     return (
       <div key={m.key} className={styles.workCard}>
         {head({
@@ -195,7 +220,6 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
           lines: linesFor(m.key, covered, autoReply),
           title: m.title,
           count: n,
-          muted: !n,
           tools: n > 0 && (
             <>
               {whoFor(m.key, ids, m.title, () => setEditing(m.key))}
@@ -341,11 +365,18 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
           module={editingModule}
           items={items[editingModule.key]}
           plan={plans[editingModule.key]}
+          defaultPlan={defaults[editingModule.key]}
           away={away}
           timeWindow={timeWindow}
           summary={summary}
           usersFor={(d) => pickUsers(deptArg(d))}
-          onSave={(next) => setPlan(editingModule.key, next)}
+          onSave={async (next) => {
+            // Marked only: everything is reassigned with the record's Save.
+            setPlan(editingModule.key, next);
+            const what = { appointments: 'Appointments', programs: 'Care Programs' }[editingModule.key] || 'Tasks';
+            toast.success(`${what} Marked for Reassignment Successfully`);
+            return true;
+          }}
           onClose={() => setEditing(null)}
         />
       )}
@@ -353,14 +384,23 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
   );
 }
 
+// Same plan: every item goes the same way (to the same person, or nowhere).
+const samePlan = (a, b) => {
+  const ids = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+  const key = (p) => (p?.action === 'reassign' ? `r:${p.toId || p.to}` : p?.action || '');
+  return [...ids].every(id => key(a?.[id]) === key(b?.[id]));
+};
+
 /**
  * One module's Reassign drawer, over Reassign Open Work: Reassign
  * Appointments' planner for appointments, the same layout for tasks and
- * care programs. Edits a copy of the plan; Save hands it back, closing
- * discards it.
+ * care programs. Edits a copy of the plan; Save marks it for reassignment
+ * (it runs with the record's Save), Reset goes back to the defaults (each
+ * item to its department's covering provider), closing discards it.
  */
-function ModuleReassignDrawer({ module: m, items, plan, away, timeWindow, summary, usersFor, onSave, onClose }) {
+function ModuleReassignDrawer({ module: m, items, plan, defaultPlan, away, timeWindow, summary, usersFor, onSave, onClose }) {
   const [draft, setDraft] = useState(plan);
+  const [saving, setSaving] = useState(false);
   const shape = shapeOf(m.key);
   return (
     <Drawer
@@ -371,7 +411,19 @@ function ModuleReassignDrawer({ module: m, items, plan, away, timeWindow, summar
       banner={summary}
       headerRight={(
         <>
-          <Button onClick={() => { onSave(draft); onClose(); }}>Save</Button>
+          {/* Back to the defaults; nothing changes until Save. */}
+          <Button variant="outline" disabled={saving || samePlan(draft, defaultPlan)} onClick={() => setDraft(defaultPlan)}>Reset</Button>
+          <Button
+            loading={saving}
+            onClick={async () => {
+              setSaving(true);
+              const ok = await onSave(draft);
+              setSaving(false);
+              if (ok) onClose();
+            }}
+          >
+            Save
+          </Button>
           <span className={styles.headerDivider} aria-hidden="true" />
         </>
       )}
@@ -387,6 +439,7 @@ function ModuleReassignDrawer({ module: m, items, plan, away, timeWindow, summar
             noun={m.noun}
             icon={m.icon}
             usersFor={usersFor}
+            rowAction={m.key === 'programs' ? VIEW.programs : VIEW.task}
             plan={draft}
             onPlan={setDraft}
           />

@@ -91,5 +91,5 @@ export function useOpenWork({ enabled, away, startAt, endAt, coverage, recordId 
     ];
   };
 
-  return { items, plans, setPlan, pickUsers, loading };
+  return { items, plans, defaults, setPlan, pickUsers, loading };
 }

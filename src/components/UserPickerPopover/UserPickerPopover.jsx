@@ -17,7 +17,7 @@ const initialsOf = (name) => String(name || '?').trim().split(/\s+/).map(w => w[
  *
  * @param {object}   props
  * @param {DOMRect}  props.anchorRect
- * @param {{ id?, name, role?, initials?, section?, badge?, disabled? }[]} props.users
+ * @param {{ id?, name, role?, initials?, section?, badge?, disabled?, searchText? }[]} props.users
  *   `section` groups users under that header (in the order given), `badge`
  *   is a node shown after the name (e.g. why they're limited), and
  *   `disabled` lists a user who can't be picked.
@@ -48,7 +48,7 @@ export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSe
   useEffect(() => { searchRef.current?.focus(); }, []);
 
   const q = query.trim().toLowerCase();
-  const shown = useMemo(() => users.filter(u => !q || `${u.name} ${u.role || ''}`.toLowerCase().includes(q)), [users, q]);
+  const shown = useMemo(() => users.filter(u => !q || `${u.searchText || u.name} ${u.role || ''}`.toLowerCase().includes(q)), [users, q]);
   const keyOf = (u) => (u.id != null ? String(u.id) : u.name);
   // Pinned first, in the order given; everyone else keeps the caller's order.
   const groups = useMemo(() => {
@@ -130,7 +130,7 @@ export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSe
           options={ordered.map(u => ({
             value: keyOf(u),
             label: u.badge ? <span className={styles.nameRow}><span className={styles.nameText}>{u.name}</span>{u.badge}</span> : u.name,
-            searchText: u.name,
+            searchText: u.searchText || u.name,
             description: u.role,
             disabled: !!u.disabled,
             leading: <Avatar variant="staff" initials={u.initials || initialsOf(u.name)} size="M" />,

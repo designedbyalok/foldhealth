@@ -28,8 +28,18 @@ export function ProviderPicker({ value, onSelect, profileUsers = EMPTY_PROFILE_U
   }, [profileUsers]);
 
   const matching = allProviders.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()));
-  const available = matching.filter(p => !outOfOffice(p));
   const away = matching.filter(p => outOfOffice(p));
+  // Searching for someone who's out puts whoever covers them on top, under
+  // Suggested, with who they're covering for (even if their own name
+  // doesn't match the search).
+  const covering = new Map(); // covering provider name → names they cover
+  if (search) {
+    away.forEach(p => (outOfOffice(p).coveredBy || []).forEach((n) => {
+      covering.set(n, [...(covering.get(n) || []), p.name]);
+    }));
+  }
+  const suggested = allProviders.filter(p => covering.has(p.name) && !outOfOffice(p));
+  const available = matching.filter(p => !outOfOffice(p) && !covering.has(p.name));
   // Two staff with the same name are told apart by their email.
   const shared = useMemo(() => {
     const n = new Map();
@@ -53,6 +63,19 @@ export function ProviderPicker({ value, onSelect, profileUsers = EMPTY_PROFILE_U
         <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setOpen(false)}>
           <div className={styles.providerDropdown} style={{ position: 'fixed', top: btnRef.current?.getBoundingClientRect().bottom + 4, left: btnRef.current?.getBoundingClientRect().left, zIndex: 9999 }} onClick={e => e.stopPropagation()}>
             <div className={styles.apptSearchWrap}><Icon name="solar:magnifer-linear" size={14} color="var(--neutral-200)" /><input aria-label="Search providers" className={styles.apptSearchInput} placeholder="Search" value={search} onChange={e => setSearch(e.target.value)} autoFocus /></div>
+            {suggested.length > 0 && <div className={styles.providerGroup}>Suggested</div>}
+            {suggested.map(p => (
+              <button key={`s-${p.id || p.name}`} className={styles.providerItem} onClick={() => { onSelect(p.name, p); setOpen(false); }}>
+                <Avatar variant="assignee" initials={getInitials(p.name).toUpperCase()} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 'var(--font-base)', fontWeight: 500, color: 'var(--neutral-400)' }}>{p.name}</div>
+                  <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)' }}>{shared.has(p.name) && p.email ? p.email : p.gender}</div>
+                  <div className={styles.providerCovering}>Covering for {covering.get(p.name).join(', ')}</div>
+                </div>
+                <span style={{ fontSize: 'var(--font-sm)', color: p.slots === 'Not Available' ? 'var(--neutral-200)' : 'var(--primary-300)' }}>{p.slots || ''}</span>
+              </button>
+            ))}
+            {suggested.length > 0 && available.length > 0 && <div className={styles.providerGroup}>All Providers</div>}
             {available.map(p => (
               <button key={p.id || p.name} className={styles.providerItem} onClick={() => { onSelect(p.name, p); setOpen(false); }}>
                 <Avatar variant="assignee" initials={getInitials(p.name).toUpperCase()} />

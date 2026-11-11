@@ -64,6 +64,19 @@ function Reveal({ open, children }) {
  * @param {function} [props.onSaved] – (record, { reassign }) => void; `reassign` when
  *   there are newly out-of-office dates whose appointments need moving
  */
+// Who covers whom among the Not Available people: covering provider name →
+// the names of those out whom they cover (from each one's own record).
+function coversFor(groups) {
+  const map = new Map();
+  (groups.unavailable || []).forEach(({ user, out }) => {
+    (out?.coverage || []).forEach((c) => {
+      const n = String(c?.userName || '').trim();
+      if (n && !(map.get(n) || []).includes(user.name)) map.set(n, [...(map.get(n) || []), user.name]);
+    });
+  });
+  return map;
+}
+
 export function OooRecordDrawer({ record: initialRecord, user, users = [], initialStep = 1, onClose, onSaved }) {
   // The record being edited; Edit Existing (below) switches to another one.
   const [record, setRecord] = useState(initialRecord);
@@ -161,13 +174,16 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
     </Tooltip>
   );
   const optionsFor = useMemo(() => (groups) => {
+    const covers = coversFor(groups);
     // Title Case group names (the list uppercases headers by default).
     const header = (key, label) => ({ type: 'header', value: `h-${key}`, label: <span className={styles.coverGroup}>{label}</span> });
     // Each row says why it's in its group: Limited Access rows carry a
     // warning badge, Not Available rows an Out of Office one.
     const row = ({ user }, trail, extra) => ({
       value: personKey(user),
-      searchText: [user.name, user.email, user.clinicalRoles?.[0] || 'Staff'].filter(Boolean).join(' '),
+      // Also found by the name of anyone out whom they cover, so searching
+      // for someone who's out shows their covering provider above them.
+      searchText: [user.name, user.email, user.clinicalRoles?.[0] || 'Staff', ...(covers.get(user.name) || [])].filter(Boolean).join(' '),
       triggerLabel: user.name,
       // Like Create Team With: avatar, name over role, and the note on the right.
       label: (
@@ -176,6 +192,7 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
           <span className={styles.coverRowText}>
             <span className={styles.coverRowName}>{user.name}</span>
             <span className={styles.coverRowRole}>{user.clinicalRoles?.[0] || 'Staff'}</span>
+            {covers.has(user.name) && <span className={styles.coverRowCovering}>Covering for {covers.get(user.name).join(', ')}</span>}
           </span>
           {trail}
         </span>
@@ -217,7 +234,13 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
       recordId: record?.id,
       location: locPicker.loc,
     });
-    const asUser = ({ user }, section, extra) => ({ id: personKey(user), name: user.name, role: user.clinicalRoles?.[0] || 'Staff', initials: user.initials, section, ...extra });
+    const covers = coversFor(g);
+    const asUser = ({ user }, section, extra) => ({
+      id: personKey(user), name: user.name, initials: user.initials, section,
+      role: [user.clinicalRoles?.[0] || 'Staff', covers.has(user.name) && `Covering for ${covers.get(user.name).join(', ')}`].filter(Boolean).join(' • '),
+      searchText: [user.name, ...(covers.get(user.name) || [])].join(' '),
+      ...extra,
+    });
     return [
       ...g.suggested.map(x => asUser(x, 'Suggested')),
       ...g.limited.map(x => asUser(x, 'Limited Access', { badge: limitedBadge(x.missing) })),
@@ -287,7 +310,9 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
   const [step, setStep] = useState(initialStep);
   const awayPerson = useMemo(() => ({ id: values.userId, name: values.userName }), [values.userId, values.userName]);
   const work = useOpenWork({
-    enabled: step === 2,
+    // Loaded once the user and dates are set, so step 1 already knows
+    // whether there's open work (none: Save right away, no step 2).
+    enabled: !!values.userName && !!values.startAt && !!values.endAt,
     away: awayPerson,
     startAt: values.startAt,
     endAt: values.endAt,
@@ -328,7 +353,7 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
       Promise.all([Promise.allSettled(taskMoves), programMove]).then(([tasksDone, programsOk]) => {
         const tasksOk = taskMoves.length > 0 && tasksDone.every(r => r.status === 'fulfilled' && r.value !== false);
         const progOk = !!programMove && programsOk !== false;
-        const what = tasksOk && progOk ? 'Tasks and Programs' : tasksOk ? 'Tasks' : progOk ? 'Programs' : null;
+        const what = tasksOk && progOk ? 'Tasks and Care Programs' : tasksOk ? 'Tasks' : progOk ? 'Care Programs' : null;
         if (what) toast.success(`${what} Reassigned Successfully`);
       });
     }
@@ -368,9 +393,12 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
 
   const title = step === 2 ? 'Reassign Open Work' : isEdit ? 'Edit Out of Office Record' : 'New Out of Office Record';
 
+  const noOpenWork = !work.loading && !MODULES.some(m => work.items[m.key].length);
   const headerRight = step === 1 ? (
     <>
-      <Button disabled={touched && hasErrors} onClick={next}>Next</Button>
+      {noOpenWork && values.userName && values.startAt && values.endAt
+        ? <Button disabled={saving || touched && hasErrors} onClick={() => save()} loading={saving}>Save</Button>
+        : <Button disabled={touched && hasErrors} onClick={next}>Next</Button>}
       <span className={styles.headerDivider} aria-hidden="true" />
     </>
   ) : (

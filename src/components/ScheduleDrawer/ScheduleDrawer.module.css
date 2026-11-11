@@ -311,6 +311,7 @@
 .providerMutedName { font-size: var(--font-base); font-weight: 500; color: var(--placeholder-text); }
 .providerMutedSub { font-size: var(--font-sm); color: var(--placeholder-text); }
 /* Stays readable on the muted row: who to book instead. */
+.providerCovering { margin-top: var(--space-1); font-size: var(--font-sm); color: var(--neutral-300); }
 .providerItemDisabled .providerCoveredBy { margin-top: var(--space-1); font-size: var(--font-sm); color: var(--neutral-300); }
 .addSecondaryBtn {
   display: flex; align-items: center; gap: 4px;

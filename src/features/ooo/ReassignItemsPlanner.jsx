@@ -32,6 +32,8 @@ const checkState = (ids, selected) => {
  * @param {function} props.renderMain  – (item) => the row's content (a task row,
  *   a care program row), between the checkbox and the assignee
  * @param {function} props.titleOf     – (item) => its name, for labels
+ * @param {{ label: string, icon: string, onSelect: function }} [props.rowAction] – The row's "…"
+ *   action, e.g. View Task / View Program: (item) => void
  * @param {string}   props.noun        – "Task", "Program" (singular)
  * @param {string}   props.icon        – Solar icon for the empty state
  * @param {function} props.usersFor    – (department | null) => UserPickerPopover users,
@@ -39,11 +41,11 @@ const checkState = (ids, selected) => {
  * @param {object}   props.plan
  * @param {function} props.onPlan      – (updater: plan => plan) => void
  */
-export function ReassignItemsPlanner({ items, renderMain, titleOf, noun, icon, usersFor, plan, onPlan }) {
+export function ReassignItemsPlanner({ items, renderMain, titleOf, noun, icon, usersFor, plan, onPlan, rowAction }) {
   const [view, setView] = useState('collapsed');
   const [selected, setSelected] = useState(() => new Set());
   const [picker, setPicker] = useState(null); // { rect, ids, dept? }
-  const [menu, setMenu] = useState(null);     // { rect, ids }
+  const [menu, setMenu] = useState(null);     // { rect, item }
 
   const groups = useMemo(() => byDepartment(items), [items]);
   const deptOf = (id) => items.find(i => i.id === id)?.location;
@@ -81,22 +83,21 @@ export function ReassignItemsPlanner({ items, renderMain, titleOf, noun, icon, u
       />
     );
   };
-  // More Options, as on Reassign Appointments' rows: Clear sends the items
-  // back to the away user (nothing reassigned).
-  const more = (ids) => (
+  // More Options on a row: View Task / View Program (`rowAction`).
+  const more = (item) => rowAction && (
     <ActionButton
       icon="solar:menu-dots-linear"
       size="sm"
       tooltip="More Options"
       tooltipLeft
       aria-label="More options"
-      onClick={(e) => setMenu({ rect: e.currentTarget.getBoundingClientRect(), ids })}
+      onClick={(e) => setMenu({ rect: e.currentTarget.getBoundingClientRect(), item })}
     />
   );
-  const controls = (ids, label) => (
+  const controls = (ids, label, item) => (
     <span className={styles.controls}>
       {assigneeFor(ids, label)}
-      {more(ids)}
+      {item && more(item)}
     </span>
   );
   const box = (ids, label) => (
@@ -147,7 +148,7 @@ export function ReassignItemsPlanner({ items, renderMain, titleOf, noun, icon, u
                   <div className={styles.apptMain}>
                     {box([it.id], `Select ${titleOf(it)}`)}
                     {renderMain(it)}
-                    <span className={styles.apptTrail}>{controls([it.id], titleOf(it))}</span>
+                    <span className={styles.apptTrail}>{controls([it.id], titleOf(it), it)}</span>
                   </div>
                 </div>
               )}
@@ -189,8 +190,8 @@ export function ReassignItemsPlanner({ items, renderMain, titleOf, noun, icon, u
         <MenuPopover
           anchorRect={menu.rect}
           align="right"
-          items={[{ key: 'clear', label: 'Clear', icon: 'solar:eraser-linear', disabled: !menu.ids.some(id => plan[id]) }]}
-          onSelect={(key) => { if (key === 'clear') clear(menu.ids); setMenu(null); }}
+          items={[{ key: 'view', label: rowAction.label, icon: rowAction.icon }]}
+          onSelect={() => { rowAction.onSelect(menu.item); setMenu(null); }}
           onClose={() => setMenu(null)}
         />
       )}
