@@ -39,6 +39,9 @@ import styles from './CareManagementView.module.css';
 // and both-level orgs get an editable "Care Plan" in its place.
 const CM_TABS_PROGRAM = ['Care Programs', 'Comprehensive Care Plan', 'Program Activity Log'];
 const CM_TABS_PATIENT = ['Care Programs', 'Care Plan', 'Program Activity Log'];
+// The program-level plan tab reads "Care Plan"; its key stays the same so
+// links, the URL and the stored tab keep working.
+const tabItems = tabs => tabs.map(k => (k === 'Comprehensive Care Plan' ? { key: k, label: 'Care Plan' } : k));
 
 /** "Add Care Note" drawer for the Comprehensive Care Plan pane: one note for
  *  every active program, or for the ones picked. Each program gets the note
@@ -605,7 +608,7 @@ export function CareManagementView() {
 
   // The sub-tab switch is a controlled element owned here, handed to each pane
   // so it renders inline in that pane's shared toolbar row.
-  const subTabBar = <Tabs variant="pill" items={cmTabs} value={subTab} onValueChange={setSubTab} />;
+  const subTabBar = <Tabs variant="pill" items={tabItems(cmTabs)} value={subTab} onValueChange={setSubTab} />;
 
   // Keep all three panes mounted and toggle visibility, so switching only
   // shows/hides a pane instead of unmounting + remounting it, no re-fetch,
