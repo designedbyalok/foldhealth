@@ -5,6 +5,11 @@
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: var(--space-2);
 }
+/* Four tiles (All Programs) go 4 across, or 2 × 2 under 560px, never 3 + 1:
+   the clamp picks a quarter of the row when it's wide and a half when not. */
+.strip:has(> :nth-child(4):last-child) {
+  grid-template-columns: repeat(auto-fit, minmax(clamp(calc(25% - var(--space-2)), calc((560px - 100%) * 999), calc(50% - var(--space-2))), 1fr));
+}
 
 .progress,
 .tile {

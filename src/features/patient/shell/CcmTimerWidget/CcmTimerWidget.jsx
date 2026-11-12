@@ -521,7 +521,6 @@ export function CcmTimerWidget({ patient }) {
     e.preventDefault();
     const handle = e.currentTarget;
     const { pointerId } = e;
-    try { handle.setPointerCapture(pointerId); } catch { /* ignore */ }
 
     // Start from wherever the dragged surface is now (the bar, or the card).
     const surface = handle.closest('[data-ccm-timer-surface]');
@@ -545,18 +544,19 @@ export function CcmTimerWidget({ patient }) {
     };
     const onUp = (ev) => {
       if (ev.pointerId !== pointerId) return;
-      handle.removeEventListener('pointermove', onMove);
-      handle.removeEventListener('pointerup', onUp);
-      handle.removeEventListener('pointercancel', onUp);
-      try { handle.releasePointerCapture(pointerId); } catch { /* ignore */ }
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
       setIsDragging(false);
       setOverDockZone(false);
       document.body.classList.remove(DRAG_GHOST_CLASS);
       if (overDock(ev.clientX, ev.clientY, dockEl)) setIsDocked(true);
     };
-    handle.addEventListener('pointermove', onMove);
-    handle.addEventListener('pointerup', onUp);
-    handle.addEventListener('pointercancel', onUp);
+    // On the window, not the handle: undocking re-renders the timer in its
+    // floating host, which replaces the handle the drag started on.
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
   };
 
   // Show where a drop would land: the tag row lights up while dragging over it.
@@ -648,7 +648,8 @@ export function CcmTimerWidget({ patient }) {
         title={showCard ? 'Collapse' : 'Expand'}
         aria-expanded={showCard}
       >
-        <Icon name={showCard ? 'solar:minimize-square-linear' : 'solar:maximize-square-linear'} size={14} color="currentColor" />
+        {/* A chevron, so it doesn't read as the profile's full screen control. */}
+        <Icon name={showCard ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-down-linear'} size={14} color="currentColor" />
       </button>
     </div>
   );
@@ -760,7 +761,7 @@ export function CcmTimerWidget({ patient }) {
         <ActionButton icon="solar:history-linear" size="sm" tooltip="Time Log" />
         <span className={styles.headDivider} aria-hidden="true" />
         <ActionButton
-          icon="solar:minimize-square-linear"
+          icon="solar:alt-arrow-up-linear"
           size="sm"
           tooltip="Collapse"
           tooltipLeft

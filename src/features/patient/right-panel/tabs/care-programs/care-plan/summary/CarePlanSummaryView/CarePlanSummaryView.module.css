@@ -414,7 +414,7 @@
 
 /* ── All Programs (editable): tables beside the docked focus / item column ──
    The columns' outer edges line up with the program switch above; the gap
-   is the only gutter between them. */
+   is the only gutter between them, and the pane's row gap the space above. */
 .workspace {
   flex-direction: row;
   overflow: hidden;
@@ -428,14 +428,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-4) 0;
+  padding: 0 0 var(--space-4);
 }
 .plainMain { display: contents; }
 .dockColumn {
   flex-shrink: 0;
   width: clamp(300px, 28%, 380px);
   display: flex;
-  padding: var(--space-4) 0;
+  padding: 0 0 var(--space-4);
   box-sizing: border-box;
   transition: width var(--duration-base) var(--ease-out);
 }
@@ -452,7 +452,7 @@
   flex-shrink: 0;
   width: clamp(260px, 20%, 320px);
   display: flex;
-  padding: var(--space-4) 0;
+  padding: 0 0 var(--space-4);
   box-sizing: border-box;
 }
 .gbiHeader {
