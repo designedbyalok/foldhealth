@@ -7585,6 +7585,11 @@ export const useAppStore = create((set, get) => ({
       .then(({ count, error }) => {
         if (!error) set(s => ({ worklistCounts: { ...s.worklistCounts, pharmacy: count || 0 } }));
       });
+    // My Patients, the same way: one row per patient.
+    supabase.from('my_patients_worklist').select('id', { count: 'exact', head: true })
+      .then(({ count, error }) => {
+        if (!error) set(s => ({ worklistCounts: { ...s.worklistCounts, myPatients: count || 0 } }));
+      });
 
     const fail = (msg) => {
       // Release the guard so the next mount retries. Badges fall back to

@@ -34,6 +34,7 @@ export function SubNav({ collapsed, width = 200 }) {
   const snpWorklistMembers = useAppStore(s => s.snpWorklistMembers || []);
   const jsaMembers = useAppStore(s => s.jsaMembers || []);
   const pharmacyMembers = useAppStore(s => s.pharmacyWorklistMembers);
+  const myPatients = useAppStore(s => s.myPatients);
   const cmpMembers = useAppStore(s => s.cmpMembers || []);
   const worklistCounts = useAppStore(s => s.worklistCounts);
   const fetchWorklistCounts = useAppStore(s => s.fetchWorklistCounts);
@@ -154,6 +155,9 @@ export function SubNav({ collapsed, width = 200 }) {
     return Math.max(seen.size, worklistCounts?.allPatients ?? 0);
   }, [patients, hccMembers, awvMembers, ccmWorklistMembers, snpWorklistMembers, jsaMembers, pharmacyMembers, worklistCounts]);
 
+  // The loaded rows once the list has been opened, else the count query.
+  const myPatientsCount = myPatients?.length || worklistCounts?.myPatients || 0;
+
   const sections = useMemo(() => [
     {
       key: 'worklists',
@@ -164,7 +168,7 @@ export function SubNav({ collapsed, width = 200 }) {
       key: 'patients',
       label: 'Patients',
       items: [
-        { key: 'My Patients', label: 'My Patients', count: 0 },
+        { key: 'My Patients', label: 'My Patients', count: myPatientsCount },
         { key: 'All Patients', label: 'All Patients', count: allPatientsCount || 0 },
       ],
     },
@@ -178,7 +182,7 @@ export function SubNav({ collapsed, width = 200 }) {
       ],
     },
     { key: 'leads-contacts', label: 'Leads & Contacts', items: [] },
-  ], [orderedWorklists, getCounts, allPatientsCount, patients.length, hccUniquePatientCount]);
+  ], [orderedWorklists, getCounts, allPatientsCount, myPatientsCount, patients.length, hccUniquePatientCount]);
 
   const handleSelect = (key) => {
     setActiveSubnavList(key);
