@@ -121,8 +121,10 @@ export function nextBestActions(entries) {
 export function whyPrioritized(actions, { acuity, totals, progress = [], firstName } = {}) {
   const takeaways = [];
   const urgent = actions.filter(a => a.detail.urgent);
+  // Short: the action and its program; the paragraph and the list carry the detail.
   for (const a of urgent.slice(0, 2)) {
-    takeaways.push({ tone: 'danger', text: `${a.programs.map(p => p.code).join(', ')} ${a.title}: ${a.detail.text.replace(/\.$/, '')}` });
+    const late = /overdue/i.test(a.detail.text) ? ', overdue' : '';
+    takeaways.push({ tone: 'danger', text: `${a.title} (${a.programs.map(p => p.code).join(', ')}${late})` });
   }
   if (urgent.length > 2) takeaways.push({ tone: 'danger', text: `${urgent.length - 2} more urgent` });
   const offTarget = actions.reduce((n, a) => n + (a.kind === 'goal' ? 1 : a.counts?.goal || 0), 0);

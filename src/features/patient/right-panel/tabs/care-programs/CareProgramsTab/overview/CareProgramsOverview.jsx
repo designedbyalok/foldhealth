@@ -176,15 +176,6 @@ function CopyButton({ text }) {
   );
 }
 
-function InsightFooter({ text, copy }) {
-  return (
-    <span className={styles.insightFoot}>
-      <span>{text}</span>
-      <CopyButton text={copy} />
-    </span>
-  );
-}
-
 const stamp = iso => (iso
   ? new Date(iso).toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit' })
   : '');
@@ -222,17 +213,18 @@ function UnityFooter({ unity, copy }) {
 function Takeaway({ t, onOpenRef }) {
   const dot = <span className={t.tone === 'danger' ? styles.dotDanger : styles.dotWarning} aria-hidden="true" />;
   return (
-    <li className={styles.takeaway}>
+    <li className={styles.takeaway} title={t.text}>
       {dot}
       {t.ref && onOpenRef ? (
-        <button type="button" className={styles.takeawayLink} onClick={() => onOpenRef(t.ref)}>{t.text}</button>
-      ) : t.text}
+        <button type="button" className={`${styles.takeawayLink} ${styles.takeawayText}`} onClick={() => onOpenRef(t.ref)}>{t.text}</button>
+      ) : <span className={styles.takeawayText}>{t.text}</span>}
     </li>
   );
 }
 
 function WhyPrioritized({ why, unity, onOpenRef }) {
-  const [open, setOpen] = useState(true);
+  // The points first; the paragraph behind Show More.
+  const [open, setOpen] = useState(false);
   const ai = unity.state === 'ready' ? unity.insights.why : null;
   const takeaways = ai ? ai.takeaways : why.takeaways;
   const hasParagraph = ai ? !!ai.paragraph : why.segments.length > 0;
@@ -249,6 +241,7 @@ function WhyPrioritized({ why, unity, onOpenRef }) {
       actions={(
         <span className={styles.cardActions}>
           <SummarizeAction unity={unity} />
+          {!ai && !empty && <CopyButton text={plain} />}
           {!empty && hasParagraph && (
             <button type="button" className={styles.linkBtn} aria-expanded={open} onClick={() => setOpen(v => !v)}>
               {open ? 'Show Less' : 'Show More'}
@@ -257,9 +250,7 @@ function WhyPrioritized({ why, unity, onOpenRef }) {
           )}
         </span>
       )}
-      footer={ai
-        ? <UnityFooter unity={unity} copy={plain} />
-        : !empty && <InsightFooter text="From live records: program steps, care plans and the patient record" copy={plain} />}
+      footer={ai ? <UnityFooter unity={unity} copy={plain} /> : null}
     >
       <div className={styles.whyBody}>
         {unity.state === 'loading' ? <AiSummarySkeleton /> : empty ? <p className={styles.whyPara}>Nothing urgent across the active programs.</p> : (
@@ -352,6 +343,7 @@ function ProgramSummary({ clinical, unity, onOpenItem }) {
       actions={(
         <span className={styles.cardActions}>
           <SummarizeAction unity={unity} />
+          {!ai && <CopyButton text={copy} />}
           {hidden > 0 && (
             <button type="button" className={styles.linkBtn} aria-expanded={all} onClick={() => setAll(v => !v)}>
               {all ? 'Show Less' : `Show ${hidden} More`}
@@ -360,9 +352,7 @@ function ProgramSummary({ clinical, unity, onOpenItem }) {
           )}
         </span>
       )}
-      footer={ai
-        ? <UnityFooter unity={unity} copy={copy} />
-        : <InsightFooter text="From live records: problems, goal readings and care plans" copy={copy} />}
+      footer={ai ? <UnityFooter unity={unity} copy={copy} /> : null}
     >
       <div className={styles.clinBody}>
         {unity.state === 'loading' ? <AiSummarySkeleton /> : <p className={styles.clinLead}>{lead}</p>}

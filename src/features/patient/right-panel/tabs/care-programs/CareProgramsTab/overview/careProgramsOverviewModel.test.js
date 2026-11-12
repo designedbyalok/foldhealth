@@ -68,7 +68,7 @@ describe('whyPrioritized', () => {
       firstName: 'Maria',
     });
     expect(takeaways).toEqual([
-      { tone: 'danger', text: 'CCM Program Related Task: Overdue, due 01/02/2020' },
+      { tone: 'danger', text: 'Program Related Task (CCM, overdue)' },
       { tone: 'warning', text: '1 goal off target' },
       { tone: 'warning', text: 'High-Risk acuity' },
     ]);
