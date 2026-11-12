@@ -58,7 +58,6 @@ export function MyPatientsRow({ row, hiddenSet, selected, onToggle, onOpenProgra
               <Tooltip label={`Preferred Language: ${memberLanguageLabel(language)}`} variant="light">
                 <span className={styles.langBadge}>{language.toUpperCase()}</span>
               </Tooltip>
-              {row.payer && <>{' '}•{' '}<span className={styles.payer} title={row.payer}>{row.payer}</span></>}
             </div>
           </div>
         </div>
@@ -74,6 +73,12 @@ export function MyPatientsRow({ row, hiddenSet, selected, onToggle, onOpenProgra
               </Tooltip>
             )}
           </span>
+        </td>
+      )}
+
+      {show('payer') && (
+        <td className={styles.td}>
+          <span className={styles.payer} title={row.payer || ''}>{row.payer || '-'}</span>
         </td>
       )}
 
