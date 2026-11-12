@@ -42,7 +42,7 @@ export function flagsOf(b, overlaps) {
   const flags = [];
   if (!b.endDate) flags.push({ key: 'ongoing', icon: 'solar:infinity-linear', label: 'Ongoing: no end date' });
   if (b.repeat === 'monthly') flags.push({ key: 'monthly', icon: 'solar:calendar-mark-linear', label: 'Monthly by week of the month' });
-  if (overlaps) flags.push({ key: 'overlap', icon: 'solar:layers-minimalistic-linear', label: 'Overlaps another slot (may double-book)', warn: true });
+  if (overlaps) flags.push({ key: 'overlap', icon: 'solar:layers-minimalistic-linear', label: 'Overlaps another schedule (may double-book)', warn: true });
   return flags;
 }
 

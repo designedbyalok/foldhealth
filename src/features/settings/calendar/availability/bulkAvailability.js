@@ -77,17 +77,19 @@ export function reviewUser(user, blocks, { existing = [], appointmentTypes = [],
   }
   const skips = [];
   const assigned = new Set(listOf(user.locations).map(norm));
-  blocks.forEach((b, i) => {
-    const label = `Schedule ${i + 1}`;
-    // No locations on record: nothing to check against.
-    if (assigned.size && b.location && !assigned.has(norm(b.location))) {
-      skips.push(`${label}: ${b.location} isn't assigned to this user.`);
-    }
+  // One line per reason across all schedules, so users who fail the same way
+  // read the same and can be grouped. No locations on record: nothing to check.
+  const missing = [...new Set(blocks.map(b => b.location)
+    .filter(loc => assigned.size && loc && !assigned.has(norm(loc))))];
+  if (missing.length) {
+    const names = missing.length > 1 ? `${missing.slice(0, -1).join(', ')} and ${missing.at(-1)}` : missing[0];
+    skips.push(`${names} ${missing.length > 1 ? "aren't" : "isn't"} assigned.`);
+  }
+  const noType = blocks.some(b => {
     const types = (b.slots || []).map(s => s.appointmentType || ALL_TYPES);
-    if (types.length && !types.some(t => typeApplicable(t, user, appointmentTypes))) {
-      skips.push(`${label}: No active appointment type is applicable for the ${roleOf(user)} role.`);
-    }
+    return types.length && !types.some(t => typeApplicable(t, user, appointmentTypes));
   });
+  if (noType) skips.push('No active appointment type for this role.');
   if (skips.length) return { user, outcome: 'skip', lines: skips };
 
   const warnings = [];

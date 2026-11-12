@@ -20,6 +20,7 @@ import { toast } from '../../../../components/Toast/sonnerToast';
 import { useAppStore } from '../../../../store/useAppStore';
 import { OooUserRecordsDrawer } from '../../../ooo/OooRecordsDrawers';
 import { OOO_ICON } from '../../../ooo/oooUtils';
+import { StampCell } from '../../../ooo/OooRecordsTable';
 import { UserAvailabilityDrawer } from './UserAvailabilityDrawer';
 // The list, or This Week (providers by day, from the redesign view).
 import { UserAvailabilityNewView } from './UserAvailabilityNewView';
@@ -66,6 +67,8 @@ const COLUMNS = [
   // Details takes the rest.
   { key: 'repeats', label: 'Repeats', width: 224 },
   { key: 'details', label: 'Details' },
+  // As OOO Records' Created: when it was added, over who added it.
+  { key: 'created', label: 'Created', width: 184 },
   { key: 'actions', label: 'Actions', sticky: 'right', width: 105 },
 ];
 const REPEATS_MAX = 224;
@@ -158,12 +161,14 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
   const [fStatuses, setFStatuses] = useState(DEFAULT_STATUSES);
   const [fTypes, setFTypes] = useState([]);
   const [fUsers, setFUsers] = useState([]);
-  // 'Fixed Slot' (has an end date) / 'Rolling Slot' (none).
+  // 'Fixed Schedule' (has an end date) / 'Rolling Schedule' (none).
   const [fSpans, setFSpans] = useState([]);
   // [fromISO, toISO]: keeps slots that run on any day in it.
   const [fRange, setFRange] = useState([]);
   // 'Yes' (has any schedule of their own) / 'No' (none).
   const [fHas, setFHas] = useState([]);
+  // Roles, as the list shows them (first clinical role, or Staff).
+  const [fRoles, setFRoles] = useState([]);
   // Bulk select (List view): the toolbar icon shows the checkboxes. Users
   // picked, by name, are kept across pages and cleared after a successful save.
   const [bulkMode, setBulkMode] = useState(false);
@@ -232,6 +237,8 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
       // User narrows people, not slots: everyone picked stays listed.
       .filter(u => !people.length || peopleSet.has(u.name))
       .filter(u => embedded || !fHas.length || fHas.includes(u.hasSchedule ? 'Yes' : 'No'))
+      // Anyone holding a picked role (any of their roles, or Staff with none).
+      .filter(u => embedded || !fRoles.length || (u.clinicalRoles?.length ? u.clinicalRoles : ['Staff']).some(r => fRoles.includes(r)))
       // Filters narrow each user's blocks; with any on, users left with none drop out.
       .map(u => ({
         ...u,
@@ -241,7 +248,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
           && (!stats.length || stats.some(k => STATUS_FILTER[k] === b.status))
           // In the Calendar a slot open to every type matches any type picked.
           && (!types.length || (b.slots || []).some(sl => typeSet.has(sl.appointmentType || ALL_TYPES) || (embedded && !sl.appointmentType)))
-          && (!spans.length || spanSet.has(b.endDate ? 'Fixed Slot' : 'Rolling Slot'))
+          && (!spans.length || spanSet.has(b.endDate ? 'Fixed Schedule' : 'Rolling Schedule'))
           && (range.length !== 2 || (b.startDate <= range[1] && (b.endDate || '9999-12-31') >= range[0]))),
       }))
       // The default Active + Upcoming doesn't count as narrowing: users on
@@ -255,7 +262,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
         : (b.blocks.length > 0) - (a.blocks.length > 0)
           || (sortDir && a.blocks.length && (sortDir === 'asc' ? 1 : -1) * a.blocks[0].startDate.localeCompare(b.blocks[0].startDate))
           || a.name.localeCompare(b.name)));
-  }, [platformUsers, taskProfiles, blocks, query, layout, fLocations, fStatuses, fTypes, fRange, fUsers, fSpans, fHas, sort, sortDir, embedded, filterUsers, filterLocations, filterTypes, searchQuery]);
+  }, [platformUsers, taskProfiles, blocks, query, layout, fLocations, fStatuses, fTypes, fRange, fUsers, fSpans, fHas, fRoles, sort, sortDir, embedded, filterUsers, filterLocations, filterTypes, searchQuery]);
   // Everyone, unfiltered, for the Add availability drawer's Users field.
   const allUsers = useMemo(() => (platformUsers || []).map(u => ({ ...u, role: u.clinicalRoles?.[0] || 'Staff' })), [platformUsers]);
   // For the User filter: keyed by name (what fUsers holds), with role for the second line.
@@ -265,7 +272,8 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
     .sort((a, b) => a.name.localeCompare(b.name)), [platformUsers]);
   const allLocations = useMemo(() => [...new Set((blocks || []).map(b => b.location).filter(Boolean))].sort(), [blocks]);
   const allTypes = useMemo(() => [...new Set((blocks || []).flatMap(b => (b.slots || []).map(sl => sl.appointmentType || ALL_TYPES)))].sort(), [blocks]);
-  const filtersOn = fLocations.length || !isDefaultStatus(fStatuses) || fTypes.length || fRange.length || fUsers.length || fSpans.length || fHas.length;
+  const allRoles = useMemo(() => [...new Set((platformUsers || []).flatMap(u => (u.clinicalRoles?.length ? u.clinicalRoles : ['Staff'])))].sort(), [platformUsers]);
+  const filtersOn = fLocations.length || !isDefaultStatus(fStatuses) || fTypes.length || fRange.length || fUsers.length || fSpans.length || fHas.length || fRoles.length;
 
   const lastPage = Math.max(1, Math.ceil(users.length / perPage));
   const pageNow = Math.min(page, lastPage);
@@ -523,7 +531,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
         <tr key={u.id || u.name} className={[styles.row, styles.rowEmpty].join(' ')}>
           {bulkMode && checkCell(u, 1)}
           {userCell(u, 1)}
-          <td colSpan={5} className={`${styles.td} ${styles.inheritedTd}`}>
+          <td colSpan={6} className={`${styles.td} ${styles.inheritedTd}`}>
             <span className={styles.inherited}>
               No User Availability configured. They follow the availability schedule for their assigned practice.
             </span>
@@ -577,13 +585,14 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
                   ))}
                 </span>
               </td>
+              <td className={`${styles.td} ${styles.createdTd}`}><StampCell at={b.createdAt} by={b.createdBy} /></td>
               {i === 0 && actionCell(u, span)}
             </tr>
           );
         })}
         {more > 0 && (
           <tr className={styles.moreRow}>
-            <td colSpan={5} className={styles.moreTd}>
+            <td colSpan={6} className={styles.moreTd}>
               <Link variant="secondary" onClick={() => toggle(id)}>
                 <span className={styles.moreLink}>
                   {open && !isClosing ? 'Show Less' : `Show ${more} More`}
@@ -631,6 +640,9 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
               />
             )}
           />
+          {!embedded && (
+            <FilterChip label="Role" searchable pinSelected options={allRoles} selected={fRoles} onChange={(v) => { setFRoles(v); setPage(1); }} />
+          )}
           <FilterChip label="Location" searchable pinSelected options={allLocations} selected={fLocations} onChange={(v) => { setFLocations(v); setPage(1); }} />
           {/* Like Employer Impact's Time Frame: the default reads as a neutral, set value
               (no ✕); once changed it's an active filter, and clearing it goes back to the default. */}
@@ -643,7 +655,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
             onChange={(v) => { setFStatuses(v.length ? v : DEFAULT_STATUSES); setPage(1); }}
           />
           <FilterChip label="Appointment Type" searchable pinSelected options={allTypes} selected={fTypes} onChange={(v) => { setFTypes(v); setPage(1); }} />
-          <FilterChip label="Slot Type" pinSelected options={['Fixed Slot', 'Rolling Slot']} selected={fSpans} onChange={(v) => { setFSpans(v); setPage(1); }} />
+          <FilterChip label="Schedule Type" pinSelected options={['Fixed Schedule', 'Rolling Schedule']} selected={fSpans} onChange={(v) => { setFSpans(v); setPage(1); }} />
           {/* Availability looks ahead, so just a custom range (no "Last 7 days" presets). */}
           <FilterChip
             label="Date Range"
@@ -663,7 +675,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
           {!embedded && (
             <FilterChip label="Has schedule" singleSelect pinSelected options={HAS_SCHEDULE} selected={fHas} onChange={(v) => { setFHas(v); setPage(1); }} />
           )}
-          {filtersOn ? <Link variant="secondary" onClick={() => { setFLocations([]); setFStatuses(DEFAULT_STATUSES); setFTypes([]); setFRange([]); setFUsers([]); setFSpans([]); setFHas([]); }}>Clear all</Link> : null}
+          {filtersOn ? <Link variant="secondary" onClick={() => { setFLocations([]); setFStatuses(DEFAULT_STATUSES); setFTypes([]); setFRange([]); setFUsers([]); setFSpans([]); setFHas([]); setFRoles([]); }}>Clear all</Link> : null}
         </div>
       )}
       {layout === 'week' ? (
@@ -689,7 +701,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
           // The floating bulk island: count, Add availability, clear (✕).
           selectedIds={selected}
           onClearSelection={() => setSelected([])}
-          bulkActions={[{ label: 'Add availability', icon: 'solar:calendar-linear', variant: 'primary', size: 'md', onClick: () => setBulk({ users: allUsers.filter(u => selectedSet.has(u.name)) }) }]}
+          bulkActions={[{ label: 'Add availability', icon: 'solar:clock-circle-linear', variant: 'primary', size: 'md', onClick: () => setBulk({ users: allUsers.filter(u => selectedSet.has(u.name)) }) }]}
           selectAll={{ checked: pageAll ? true : pageSome ? 'indeterminate' : false }}
           onSelectAll={selectPage}
           sortKey={sort?.key || null}
@@ -708,7 +720,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
             </div>
           )}
           // Sized to fit a 1440px screen; narrower ones scroll sideways.
-          minTableWidth={bulkMode ? 1188 + SELECT_W : 1188}
+          minTableWidth={(bulkMode ? 1188 + SELECT_W : 1188) + 184}
           fixedLayout
           page={pageNow}
           perPage={perPage}
@@ -747,7 +759,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
         <ConfirmDialog
           variant="destructive"
           title="Delete availability?"
-          description={`${total === 1 ? 'The' : `All ${total}`} availability slot${total === 1 ? '' : 's'} for ${deleting.name} will be deleted and they will follow the availability schedule of their assigned practice.`}
+          description={`${total === 1 ? 'The' : `All ${total}`} availability schedule${total === 1 ? '' : 's'} for ${deleting.name} will be deleted and they will follow the availability schedule of their assigned practice.`}
           confirmLabel="Delete"
           cancelLabel="Cancel"
           loading={deleteBusy}

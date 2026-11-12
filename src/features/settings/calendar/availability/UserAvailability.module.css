@@ -415,11 +415,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  /* The bottom margin cancels the form's 16px gap, so the bar's own 12px
-     bottom padding is the whole gap to the first slot (and stays white when
-     slots scroll under it). */
-  margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) calc(var(--space-4) * -1);
-  padding: var(--space-4) var(--space-4) var(--space-3);
+  /* Still 12px to the first slot (8px padding + 4px of the form's gap), but
+     the bar ends 4px short of the slot: flush against it, its white could
+     paint over the slot's 0.5px top line at fractional offsets (e.g. with
+     the bulk banner above). */
+  margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) calc(var(--space-3) * -1);
+  padding: var(--space-4) var(--space-4) var(--space-2);
   background: var(--neutral-0);
 }
 
@@ -918,100 +919,12 @@
 .review {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-}
-
-.reviewIntro {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.reviewKpis {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-3);
-  margin-bottom: var(--space-2);
-}
-
-/* "Schedules to be added": a grey tray like Bulk Update Preview's "Ready to
-   Update" (AppointmentListView.module.css .appliesTo): a title, an orange
-   count and an arrow that turns as it opens, the cards on white inside. */
-.reviewSection {
-  display: flex;
-  flex-direction: column;
-  padding: var(--space-2);
-  background: var(--neutral-50);
-  border: 0.5px solid var(--neutral-150);
-  border-radius: var(--space-2);
-}
-
-.reviewSectionBody { padding-top: var(--space-2); }
-
-.reviewToggle {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  gap: var(--space-1);
-  padding: 0;
-  border: 0;
-  background: none;
-  font-size: var(--font-base);
-  font-weight: 500;
-  line-height: 1.2;
-  color: var(--neutral-300);
-  text-align: left;
-  cursor: pointer;
-}
-.reviewToggle:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; border-radius: 2px; }
-
-.reviewCountBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  padding: calc(var(--space-1) / 2) var(--space-1);
-  border-radius: 4px;
-  background: var(--secondary-300);
-  font-size: var(--font-2xs);
-  font-weight: 500;
-  line-height: 1.2;
-  color: var(--neutral-0);
+  gap: var(--space-4);
 }
 
 .reviewChevron { flex-shrink: 0; transition: transform var(--duration-medium) var(--ease-out); }
 .reviewChevronOpen { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { .reviewChevron { transition: none; } }
-
-.reviewSchedules {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-
-
-
-.reviewUsers {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  border: 0.5px solid var(--neutral-150);
-  border-radius: var(--space-2);
-}
-
-.reviewUser {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-3);
-}
-
-.reviewUser + .reviewUser {
-  border-top: 0.5px solid var(--neutral-150);
-}
 
 .reviewUserText {
   flex: 1;
@@ -1021,18 +934,19 @@
   gap: 0.125rem;
 }
 
-.reviewLineWarn,
-.reviewLineSkip {
+.reviewUserName {
+  font-size: var(--font-base);
+  line-height: 1.2;
+  color: var(--neutral-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reviewUserRole {
   font-size: var(--font-sm);
-  white-space: normal;
-}
-
-.reviewLineWarn {
-  color: var(--status-warning);
-}
-
-.reviewLineSkip {
-  color: var(--status-error);
+  line-height: 1.2;
+  color: var(--neutral-300);
 }
 
 .reviewEmpty {
@@ -1065,46 +979,28 @@
 /* Multi-line banners: the icon sits on the first line, not the middle. */
 .bannerTop { align-items: flex-start; }
 
-/* Review KPIs: warnings and skips read in their status colours. */
-.kpiAdd { color: var(--status-success); }
-.kpiWarn { color: var(--status-warning); }
-.kpiSkip { color: var(--status-error); }
-/* Each outcome's tile on its light status colour (Users stays white). */
-.kpiAddTile.kpiAddTile { background: var(--status-success-light); }
-.kpiWarnTile.kpiWarnTile { background: var(--status-warning-light); }
-.kpiSkipTile.kpiSkipTile { background: var(--status-error-light); }
+/* An action at the right end of a group header (Imported from … → Clear all). */
+.groupLabelAction { margin-left: auto; }
 
-/* Review's schedule card: light, one block (title over where, when, hours),
-   no divider. */
-.reviewSchedule {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  padding: var(--space-2) var(--space-3);
-  border: 0.5px solid var(--neutral-150);
-  border-radius: var(--space-2);
-  background: var(--neutral-0);
-}
+/* Add availability's Users options, like the covering provider picker:
+   avatar, then name over role. */
+.userOption { display: flex; align-items: center; gap: var(--space-2); width: 100%; min-width: 0; }
+/* Figma Mar-Present 4959:55989: 14px name over a 12px grey role, 2px apart. */
+.userOptionText { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 0.125rem; }
+.userOptionName { font-size: var(--font-base); font-weight: 500; line-height: 1.2; color: var(--neutral-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.userOptionRole { font-size: var(--font-sm); line-height: 1.2; color: var(--neutral-200); }
 
-.reviewScheduleTitle {
-  /* 4px under the title in all (with the 2px gap). */
-  margin-bottom: 0.125rem;
-  font-size: var(--font-base);
-  font-weight: 500;
-  color: var(--neutral-400);
-}
+/* Add availability's two steps: the one coming in slides from the side it
+   comes from (Review from the right, editing back from the left). */
+.stepFromRight { animation: stepFromRight var(--duration-medium) var(--ease-out); }
+.stepFromLeft { animation: stepFromLeft var(--duration-medium) var(--ease-out); }
+@keyframes stepFromRight { from { opacity: 0; transform: translateX(var(--space-6)); } to { opacity: 1; transform: none; } }
+@keyframes stepFromLeft { from { opacity: 0; transform: translateX(calc(var(--space-6) * -1)); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .stepFromRight, .stepFromLeft { animation: none; } }
 
-/* Review's count badges: a single digit sits centred with even side room,
-   as the Clone group counts do. */
-.reviewBadge.reviewBadge {
-  box-sizing: border-box;
-  min-width: 1.25rem;
-  justify-content: center;
-  padding-left: 0.375rem;
-  padding-right: 0.375rem;
-}
+/* Created reads in the secondary grey, as in OOO Records. */
+.tableWrap .createdTd { color: var(--neutral-300); }
 
-/* Review's schedule card: its summary as plain grey text that wraps. */
 .reviewScheduleSub {
   min-width: 0;
   font-size: var(--font-sm);
@@ -1114,21 +1010,108 @@
   overflow-wrap: break-word;
 }
 
-/* Review's outcome groups: a header that folds its list (title, count,
-   arrow), the list 4px below it. */
-.reviewFold {
-  display: flex;
-  flex-direction: column;
-}
-.reviewFoldHead {
+/* Skipped and warnings need attention: an orange count. */
+.reviewCountBadge {
   display: inline-flex;
   align-items: center;
-  align-self: flex-start;
+  justify-content: center;
+  min-width: 16px;
+  padding: calc(var(--space-1) / 2) var(--space-1);
+  border-radius: 4px;
+  background: var(--secondary-300);
+  font-size: var(--font-2xs);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-0);
+}
+
+/* Review step (Figma Eventus 17856:123383). The counts: four joined tiles,
+   a 14px grey label over a 20px semibold number. */
+.reviewStats {
+  display: flex;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+}
+.reviewStat {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: var(--space-2) 0.375rem;
+}
+.reviewStat + .reviewStat { border-left: 0.5px solid var(--neutral-150); }
+.reviewStatLabel { font-size: var(--font-base); line-height: 1.2; color: var(--neutral-300); }
+.reviewStatValue { font-size: var(--font-2xl); font-weight: 600; line-height: 1.2; color: var(--neutral-400); }
+/* Each outcome's number in its status colour; the total stays grey. */
+.reviewStatSkip { color: var(--status-error); }
+.reviewStatWarn { color: var(--status-warning); }
+.reviewStatAdd { color: var(--status-success); }
+
+/* Warnings and Added: a white card, its title over a hairline. */
+.reviewCard {
+  display: flex;
+  flex-direction: column;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  overflow: hidden;
+}
+.reviewCardTitle {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-400);
+}
+.reviewGroup { display: flex; flex-direction: column; }
+.reviewGroup + .reviewGroup { border-top: 0.5px solid var(--neutral-150); }
+
+/* The reason band over its users: 12px grey on red (skipped) or yellow. */
+.reviewBand {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-sm);
+  line-height: 1.2;
+  color: var(--neutral-300);
+}
+.reviewBandSkip { background: var(--status-error-light); }
+.reviewBandWarn { background: var(--status-warning-light); }
+.reviewBandList {
+  margin: 0;
+  padding-left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  list-style: disc;
+}
+
+/* A user: 56px, avatar, name over role, remove. */
+.reviewRow {
+  display: flex;
+  align-items: center;
   gap: var(--space-2);
-  padding: var(--space-1) 0;
-  border: 0;
+  min-height: 3.5rem;
+  padding: var(--space-1) var(--space-3);
+  background: var(--primary-25);
+}
+.reviewRow + .reviewRow { border-top: 0.5px solid var(--neutral-100); }
+/* A schedule: its name over the 12px summary, wrapping as needed. */
+.reviewScheduleRow { padding-top: var(--space-2); padding-bottom: var(--space-2); }
+/* Schedules to be added folds from its title; shut, the title loses its hairline. */
+.reviewCardToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
   background: none;
+  text-align: left;
   cursor: pointer;
 }
-.reviewFoldHead:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; border-radius: 2px; }
-.reviewFoldBody { margin-top: var(--space-1); }
+.reviewCardToggle:focus-visible { outline: 2px solid var(--primary-300); outline-offset: -2px; }
+.reviewCardTitleShut { border-bottom-color: transparent; }

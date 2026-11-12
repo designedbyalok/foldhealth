@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Drawer } from '../../../../components/Drawer/Drawer';
 import { Button } from '../../../../components/Button/Button';
+import { Avatar } from '../../../../components/Avatar/Avatar';
 import { Select } from '../../../../components/Select/Select';
 import { DatePicker } from '../../../../components/DatePicker/DatePicker';
 import { WeekdayPicker } from '../../../../components/WeekdayPicker/WeekdayPicker';
@@ -96,6 +97,10 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
   // imported, an import waiting on "replace?", and why one user can't be saved.
   const [bulkNames, setBulkNames] = useState(() => bulkUsers.map(u => u.name));
   const [step, setStep] = useState('edit');
+  // Which way the last step change went, so the step coming in slides from
+  // that side ('forward' to Review, 'back' to editing). Null on first open.
+  const [stepDir, setStepDir] = useState(null);
+  const goStep = (next) => { setStepDir(next === 'review' ? 'forward' : 'back'); setStep(next); };
   const [importSource, setImportSource] = useState('');
   const [pendingImport, setPendingImport] = useState(null);
   const [singleSkip, setSingleSkip] = useState(null);
@@ -291,7 +296,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
   // (they're listed, not numbered, in Clone); everything else by number.
   const blockNumber = (k) => (cloneFrom ? k - targetCount + 1 : k + 1);
   // Bulk calls them schedules, as Review does ("Schedule 2: …").
-  const unit = bulk ? 'Schedule' : isNew ? 'Slot' : 'Block';
+  const unit = isNew ? 'Schedule' : 'Block';
   const blockLabel = (k) => (cloneFrom && k < targetCount
     ? `${user?.name}'s ${blocks[k].location || unit.toLowerCase()}`
     : `${unit} ${blockNumber(k)}`);
@@ -353,7 +358,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
     if (!ok) return;
     const skipped = results.length - to.length;
     toast.success(
-      to.length === 1 ? `Availability Added for ${to[0].user.name} Successfully` : `Availability Added for ${to.length} Users Successfully`,
+      'Availability Added Successfully',
       { description: `${skipped ? `${skipped} user${skipped === 1 ? '' : 's'} skipped. ` : ''}Availability updates may take a few minutes.` },
     );
     onSaved?.();
@@ -372,7 +377,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
     }
     if (bulk) {
       const results = bulkResults();
-      if (results.length > 1) { setStep('review'); return; }
+      if (results.length > 1) { goStep('review'); return; }
       // One user: no Review; the same checks run here, and a skip saves nothing.
       if (results[0]?.outcome === 'skip') { setSingleSkip(results[0].lines); return; }
       setSingleSkip(null);
@@ -390,7 +395,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
     const ok = await saveUserAvailability(user, clean);
     setSaving(false);
     if (ok) {
-      toast.success(`Availability saved for ${user.name}`);
+      toast.success('Availability Saved Successfully');
       setDismissed(true);
     }
   };
@@ -491,7 +496,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                   <RadioOptionGroup
                     name={`slot-span-${i}`}
                     className={styles.spanRadios}
-                    options={[{ value: 'fixed', label: 'Fixed Slot' }, { value: 'rolling', label: 'Rolling Slot' }]}
+                    options={[{ value: 'fixed', label: 'Fixed Schedule' }, { value: 'rolling', label: 'Rolling Schedule' }]}
                     value={b.rolling ? 'rolling' : 'fixed'}
                     // Rolling drops the end date; Fixed asks for one again.
                     onChange={(v) => update(i, v === 'rolling' ? { rolling: true, endDate: '' } : { rolling: false })}
@@ -639,7 +644,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                   if (!out.length) return null;
                   return (
                     <Banner size="sm" tone="info">
-                      This slot includes the user&apos;s out-of-office days ({out.map(r => `${oooDate(r.startAt)} – ${oooDate(r.endAt)}`).join(', ')}). Availability does not apply to those days.
+                      This schedule includes the user&apos;s out-of-office days ({out.map(r => `${oooDate(r.startAt)} – ${oooDate(r.endAt)}`).join(', ')}). Availability does not apply to those days.
                     </Banner>
                   );
                 })()}
@@ -665,12 +670,12 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
           return false;
         }}
         secondaryAction={bulk && step === 'review'
-          ? <Button variant="outline" onClick={() => setStep('edit')}>Back</Button>
+          ? <Button variant="outline" onClick={() => goStep('edit')}>Back</Button>
           : undefined}
         primaryAction={(() => {
           // Review: Save is off when every user would be skipped.
           const reviewBlocker = bulk && step === 'review' && !bulkResults().some(r => r.outcome !== 'skip')
-            ? 'Every user would be skipped' : '';
+            ? 'Nothing will be saved as every user would be skipped' : '';
           const blocker = reviewBlocker || saveBlocker;
           return (
             <Tooltip label={blocker} placement="bottom" align="right">
@@ -687,13 +692,21 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
         })()}
       >
         {bulk && step === 'review' ? (
+          <div className={stepDir === 'forward' ? styles.stepFromRight : undefined}>
           <BulkAvailabilityReview
             results={bulkResults()}
             blocks={bulkBlocks()}
-            onRemove={(u) => { setDirty(true); setBulkNames(ns => ns.filter(n => n !== u.name)); }}
+            onRemove={(u) => {
+              setDirty(true);
+              const left = bulkNames.filter(n => n !== u.name);
+              setBulkNames(left);
+              // Nobody left: back to editing, the Users field now empty.
+              if (!left.length) goStep('edit');
+            }}
           />
+          </div>
         ) : (
-        <div className={styles.form}>
+        <div className={[styles.form, bulk && stepDir === 'back' ? styles.stepFromLeft : ''].filter(Boolean).join(' ')}>
           {bulk && (
             <Banner size="sm" className={styles.bannerTop}>
               Every selected user gets all of these schedules, or none. Existing schedules aren&apos;t changed. To set something different for one user, edit that user after saving.
@@ -724,7 +737,21 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                 multiple
                 checkboxes
                 badges
-                options={users.map(u => ({ value: u.name, label: u.name, searchText: [u.name, u.email, u.role].filter(Boolean).join(' ') }))}
+                // Like the covering provider picker: avatar, name over role.
+                options={users.map(u => ({
+                  value: u.name,
+                  triggerLabel: u.name,
+                  searchText: [u.name, u.email, u.role].filter(Boolean).join(' '),
+                  label: (
+                    <span className={styles.userOption}>
+                      <Avatar variant="staff" size="M" initials={u.initials} userName={u.name} userId={u.id} />
+                      <span className={styles.userOptionText}>
+                        <span className={styles.userOptionName}>{u.name}</span>
+                        <span className={styles.userOptionRole}>{u.role || u.clinicalRoles?.[0] || 'Staff'}</span>
+                      </span>
+                    </span>
+                  ),
+                }))}
                 value={bulkNames}
                 onValueChange={(v) => { setBulkNames(v); setDirty(true); setSingleSkip(null); }}
                 placeholder="Select users"
@@ -744,7 +771,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
             />
             )}
             <div className={styles.blocksHead}>
-              <span className={styles.blocksTitle}>{bulk ? 'Schedules' : isNew ? 'Availability slots' : 'Availability blocks'}</span>
+              <span className={styles.blocksTitle}>{bulk ? 'Schedules' : isNew ? 'Availability schedules' : 'Availability blocks'}</span>
               <span className={styles.blockActions}>
                 {/* Applies to every slot, so it sits with the slots' actions. */}
                 {isNew && (
@@ -753,10 +780,10 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                     <span className={styles.actionDivider} aria-hidden="true" />
                   </>
                 )}
-                {/* Bulk holds new schedules or imported ones, never both. */}
-                {bulk && importSource ? (
-                  <Link variant="secondary" onClick={clearImported}>Clear imported blocks</Link>
-                ) : (
+                {/* Bulk holds new schedules or imported ones, never both: while
+                    imported blocks are here, Add new gives way (Clear all sits
+                    on their group's header). */}
+                {bulk && importSource ? null : (
                 <Button
                   variant="soft"
                   size="sm"
@@ -832,7 +859,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                 onClick={() => setPastOpen(v => !v)}
                 aria-expanded={pastOpen}
               >
-                <span className={styles.pastTitle}>Past slots</span>
+                <span className={styles.pastTitle}>Past schedules</span>
                 <Badge size="sm" label={String(pastCount)} className={styles.pastCount} />
                 <DownChevronIcon size={12} color="var(--neutral-200)" style={pastOpen ? undefined : { transform: 'rotate(-90deg)' }} />
               </button>
@@ -853,6 +880,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                 <div className={styles.groupLabel}>
                   <span className={styles.groupTitle}>{from ? `Imported from ${from}` : 'Imported'}</span>
                   <Badge tone="primary" size="sm" label={String(count)} className={styles.countBadge} />
+                  {bulk && <Link variant="secondary" className={styles.groupLabelAction} onClick={clearImported}>Clear all</Link>}
                 </div>
                 {blocks.map((b, i) => (b.arrive && b.importedFrom === from ? renderBlock(b, i) : null))}
               </section>
@@ -865,7 +893,9 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
 
       {importing && (
         <CloneFromUserDrawer
-          users={users}
+          // Bulk gets every user without their schedules; Import lists people
+          // by what they have, so attach each one's saved schedules here.
+          users={bulk ? users.map(u => ({ ...u, blocks: (storedBlocks || []).filter(b => String(b.userName || '').toLowerCase() === String(u.name || '').toLowerCase()) })) : users}
           exclude={bulk ? undefined : user?.name}
           imported={bulk ? [] : blocks.map(b => b.importedFromId).filter(Boolean)}
           target={bulk ? null : user}
@@ -879,9 +909,10 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
       {pendingImport && (
         <ConfirmDialog
           variant="primary"
+          icon="solar:danger-circle-linear"
           iconColor="var(--neutral-200)"
           title="Replace schedules?"
-          description={`Importing replaces the ${blocks.length} schedule${blocks.length === 1 ? '' : 's'} in this drawer. Continue?`}
+          description={`Importing replaces ${blocks.length} schedule${blocks.length === 1 ? '' : 's'} already present in this drawer. Please confirm to continue.`}
           confirmLabel="Replace"
           cancelLabel="Cancel"
           onCancel={() => setPendingImport(null)}
@@ -893,9 +924,9 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
         <ConfirmDialog
           variant="primary"
           iconColor="var(--neutral-200)"
-          title="Save with overlapping slots?"
+          title="Save with overlapping schedules?"
           // Every overlapping slot counts, including overlaps accepted before.
-          description={`${conflicts.filter(c => c.length).length} slots in this availability are overlapping. Double booking may occur during overlapping availability.`}
+          description={`${conflicts.filter(c => c.length).length} schedules in this availability are overlapping. Double booking may occur during overlapping availability.`}
           confirmLabel="Save anyway"
           cancelLabel="Cancel"
           onCancel={() => setAckOpen(false)}

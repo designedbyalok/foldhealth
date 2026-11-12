@@ -32,8 +32,9 @@ const columnsFor = (wide, showUser) => [
   { key: 'actions', label: 'Actions', sticky: 'right', width: 156, thStyle: { boxShadow: 'inset 0.5px 0 0 var(--neutral-150)' } },
 ];
 
-/** A date and time over the person, like Care Plan Library's Last Update. */
-function StampCell({ at, by }) {
+/** A date and time over the person, like Care Plan Library's Last Update.
+ *  Also User Availability's Created column, so the two read the same. */
+export function StampCell({ at, by }) {
   if (!at) return '–';
   return (
     <span className={styles.stamp}>

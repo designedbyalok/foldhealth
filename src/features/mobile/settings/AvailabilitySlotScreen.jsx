@@ -151,7 +151,7 @@ export function AvailabilitySlotScreen({ blockId }) {
         <label className={styles.switchRow}>
           <span>
             Repeats until stopped
-            <span className={styles.switchSub}>Rolling slot, no end date</span>
+            <span className={styles.switchSub}>Rolling schedule, no end date</span>
           </span>
           <span className={styles.switchWrap}>
             <Switch checked={!!block.rolling} onChange={(on) => update(on ? { rolling: true, endDate: '' } : { rolling: false })} ariaLabel="Repeats until stopped" />
