@@ -13539,6 +13539,25 @@ export const useAppStore = create((set, get) => ({
     if (error) console.warn('Failed to update JSA status:', error.message);
   },
 
+  // ── Program eligibility (care management redesign prototype, Eligible
+  // Programs), by member id, from program_eligibility
+  // (supabase/program_eligibility_migration.sql). Falls back to the local
+  // rows until that table exists and is seeded.
+  programEligibility: {},
+  fetchProgramEligibility: async (memberId) => {
+    const key = String(memberId || '');
+    if (!key || get().programEligibility[key]) return;
+    set(s => ({ programEligibility: { ...s.programEligibility, [key]: [] } }));
+    const { data, error } = await supabase.from('program_eligibility').select('*').eq('member_id', key);
+    let rows = (data || []).map(r => ({ id: r.id, memberId: r.member_id, code: r.code, fit: r.fit, why: r.why, checkedAt: r.checked_at }));
+    if (error || rows.length === 0) {
+      if (error) console.warn('fetchProgramEligibility failed, using local rows:', error.message);
+      const { PROGRAM_ELIGIBILITY } = await import('../features/patient/data/programEligibilitySeed');
+      rows = PROGRAM_ELIGIBILITY.filter(r => r.memberId === key);
+    }
+    set(s => ({ programEligibility: { ...s.programEligibility, [key]: rows } }));
+  },
+
   // ── My Patients worklist (care management redesign prototype), backed by
   // my_patients_worklist (supabase/my_patients_worklist_migration.sql). Falls
   // back to the local rows until that table exists and is seeded.

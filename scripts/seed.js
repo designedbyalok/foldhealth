@@ -31,6 +31,7 @@ import { PHARMACY_WORKLIST_MEMBERS } from '../src/features/pharmacy-worklist/dat
 import { CMP_MEMBERS } from '../src/features/cmp-worklist/data/mock.js';
 import { MY_PATIENTS } from '../src/features/my-patients/data/mock.js';
 import { LIVE_CALL_SCRIPTS } from '../src/features/live-call/data/scripts.js';
+import { PROGRAM_ELIGIBILITY } from '../src/features/patient/data/programEligibilitySeed.js';
 import { SAMPLE_PROTOCOLS, HARBOR_HYPERTENSION_TEXT_FILE } from '../src/features/settings/clinical-protocols/data/sampleProtocols.js';
 import { protocolToRow } from '../src/features/settings/clinical-protocols/lib/protocolSchema.js';
 import { BUILT_IN_ROLES } from '../src/lib/accessControl.js';
@@ -1082,6 +1083,12 @@ async function main() {
     .from('live_call_scripts')
     .upsert(LIVE_CALL_SCRIPTS.map(liveCallScriptToRow), { onConflict: 'member_id' });
   if (liveCallErr) { console.error('  ✗', liveCallErr.message, '(run supabase/live_call_scripts_migration.sql first)'); } else { console.log(`  ✓ ${LIVE_CALL_SCRIPTS.length} scripts`); }
+
+  console.log('Seeding program_eligibility...');
+  const { error: eligErr } = await supabase
+    .from('program_eligibility')
+    .upsert(PROGRAM_ELIGIBILITY.map(r => ({ id: r.id, member_id: r.memberId, code: r.code, fit: r.fit, why: r.why })), { onConflict: 'id' });
+  if (eligErr) { console.error('  ✗', eligErr.message, '(run supabase/program_eligibility_migration.sql first)'); } else { console.log(`  ✓ ${PROGRAM_ELIGIBILITY.length} rows`); }
 
   console.log('Seeding cmp_members...');
   const { error: cmpErr } = await supabase

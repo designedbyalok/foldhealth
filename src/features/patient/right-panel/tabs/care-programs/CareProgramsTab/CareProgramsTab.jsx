@@ -36,6 +36,7 @@ import { CareProgramsOverview } from './overview/CareProgramsOverview';
 import styles from './CareProgramsTab.module.css';
 import { nextEnrollment } from '../../../../data/programLifecycle';
 import { useConsentedEnrollment } from './useConsentedEnrollment';
+import { EligiblePrograms } from './eligible/EligiblePrograms';
 import { isEmptyDash } from '../../../../../../lib/emptyDash';
 
 // Programs move to the "Past" section once completed or closed.
@@ -280,6 +281,10 @@ export function CareProgramsTab({ header }) {
       showToast?.(`Preparing ${program.name} summary…`);
     } else if (key === 'close') {
       setClosing({ program, status: null });
+    } else if (key === 'again') {
+      // A new instance of an ended program (CMP keeps its sub-program; SNP
+      // asks for the new trigger in its drawer).
+      handleAddProgram(program.code, program.code === 'CMP' && program.subProgram ? { subProgram: program.subProgram } : null);
     }
   };
 
@@ -430,7 +435,10 @@ export function CareProgramsTab({ header }) {
       />
 
       {visible.length === 0 ? (
-        <NoProgramsEmptyState />
+        <div className={styles.programSections}>
+          <NoProgramsEmptyState />
+          <EligiblePrograms patientId={patientId} programs={programs} catalog={catalog} onEnroll={handleAddProgram} />
+        </div>
       ) : (
         <div className={styles.programSections}>
           {activePrograms.length === 0 ? (
@@ -449,6 +457,8 @@ export function CareProgramsTab({ header }) {
               onAssign={assignOwner}
             />
           )}
+
+          <EligiblePrograms patientId={patientId} programs={programs} catalog={catalog} onEnroll={handleAddProgram} />
 
           {pastPrograms.length > 0 && (
             <ProgramSection

@@ -33,6 +33,12 @@ export const ROW_MENU_ITEMS = [
   { key: 'close',  icon: 'solar:close-circle-linear',      label: 'Close Program', danger: true },
 ];
 
+// A past (completed or closed) program: print it, or start it again.
+export const PAST_ROW_MENU_ITEMS = [
+  { key: 'print', icon: 'solar:printer-linear',  label: 'Print Summary' },
+  { key: 'again', icon: 'solar:restart-linear',  label: 'Enroll Again' },
+];
+
 export const matchesTab = (p, tab) => {
   if (tab === 'New') return p.status === 'New';
   if (tab === 'Enrolled') return p.status === 'Enrolled' || p.status === 'Engaged';
