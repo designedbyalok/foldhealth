@@ -16,6 +16,12 @@
   padding-left: 0;
   padding-right: 0;
 }
+/* "View N More" under the list: inside the card, as on the Overview cards
+   (the shared button pulls left to meet padded rows, and these have none). */
+.listBody > button {
+  margin-left: var(--space-2);
+  margin-bottom: var(--space-2);
+}
 
 .empty {
   margin: 0;

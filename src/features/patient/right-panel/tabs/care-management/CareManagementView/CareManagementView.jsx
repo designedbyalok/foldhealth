@@ -15,6 +15,9 @@ import { buildCarePlanSnapshot, filterCarePlanSnapshot, downloadCarePlanCsv, CAR
 import { CareManagementToolbar } from '../CareManagementToolbar/CareManagementToolbar';
 import { CarePlanCard, PatientCarePlanPane } from '../PatientCarePlanPane/PatientCarePlanPane';
 import { allProgramsPlanState } from '../../care-programs/care-plan/summary/allProgramsPlan';
+import { appliedTemplatesAcross, templateItemTitles } from '../../care-programs/care-plan/summary/allProgramsTemplates';
+import { AppliedTemplateStrip } from '../../care-programs/care-plan/CarePlanView/AppliedTemplateStrip';
+import stripStyles from '../../care-programs/care-plan/CarePlanView/CarePlanView.module.css';
 import { computeDueDate } from '../../care-programs/care-plan/tables/CarePlanInterventionsTable';
 import { SegmentedControl } from '../../../../../../components/SegmentedControl/SegmentedControl';
 import { MenuPopover } from '../../../../../../components/MenuPopover/MenuPopover';
@@ -92,6 +95,7 @@ function AddCareNoteDrawer({ programs, onClose, onSave }) {
 
 const SIGN_ICON = { open: 'solar:pen-new-square-linear', awaiting: 'solar:clock-circle-linear', signed: 'solar:check-circle-linear' };
 const dueOf = i => computeDueDate(i);
+const NO_ROWS = [];
 
 /** Comprehensive Care Plan pane: the patient's care plans in one place (care
  *  plan redesign prototype). All Programs combines every open program's live
@@ -113,7 +117,12 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
     [openPrograms, patientCarePlans, patientId],
   );
   const toComplete = signing.filter(x => x.state === 'open').length;
-  const carePlanTemplates = useAppStore(s => s.carePlanTemplates) || [];
+  const carePlanTemplates = useAppStore(s => s.carePlanTemplates) || NO_ROWS;
+  const libraryGoals = useAppStore(s => s.carePlanGoals) || NO_ROWS;
+  const fetchCarePlanLibrary = useAppStore(s => s.fetchCarePlanLibrary);
+  const requestCarePlanPanel = useAppStore(s => s.requestCarePlanPanel);
+  const [addTemplateMenu, setAddTemplateMenu] = useState(null);
+  useEffect(() => { fetchCarePlanLibrary?.(); }, [fetchCarePlanLibrary]);
   const [addNoteOpen, setAddNoteOpen] = useState(false);
   const logCarePlanAudit = useAppStore(s => s.logCarePlanAudit);
   // A care note goes on an open program that has a care plan.
@@ -163,6 +172,27 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
     () => templateFilter.map(name => nameToTemplateId[name]).filter(Boolean),
     [templateFilter, nameToTemplateId],
   );
+  // Every open program's templates on one strip, as each program's plan
+  // shows its own; picking one shows the items it put on the plans.
+  const appliedAcross = useMemo(
+    () => appliedTemplatesAcross(openPrograms, patientCarePlans, patientId, carePlanTemplates),
+    [openPrograms, patientCarePlans, patientId, carePlanTemplates],
+  );
+  const templateScopes = useMemo(
+    () => Object.fromEntries(appliedAcross.map(a => [a.template.id, templateItemTitles(a.template, libraryGoals)])),
+    [appliedAcross, libraryGoals],
+  );
+  const pickTemplate = (id) => {
+    const name = appliedAcross.find(a => a.template.id === id)?.template.name;
+    setTemplateFilter(prev => (prev.length === 1 && prev[0] === name ? [] : [name]));
+  };
+  // Templates go on a program's plan: pick the program, its plan opens with
+  // the template picker.
+  const addTemplatesTo = (programId) => {
+    setAddTemplateMenu(null);
+    setView(programId);
+    requestCarePlanPanel('templates');
+  };
 
   const activeCount = [
     programFilter, templateFilter, statusFilter,
@@ -179,6 +209,7 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
 
   const handleDownload = () => {
     const filtered = filterCarePlanSnapshot(snapshot, {
+      templateScopes,
       searchText,
       programFilter,
       templateFilter: templateIdsSelected,
@@ -302,6 +333,41 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
         )}
       />
       {programSwitch}
+      <div className={styles.templatesCard}>
+        <AppliedTemplateStrip
+          templates={appliedAcross.map(a => a.template)}
+          appliedTemplatePriorities={Object.fromEntries(appliedAcross.map(a => [a.template.id, a.priority]))}
+          templateFilterId={templateIdsSelected.length === 1 ? templateIdsSelected[0] : null}
+          canRemove={false}
+          onSelect={pickTemplate}
+          onRemove={() => {}}
+          templateVersions={Object.fromEntries(appliedAcross.map(a => [a.template.id, { title: `On ${a.programCodes.join(', ')}` }]))}
+          trailing={(
+            <span className={stripStyles.stripActions}>
+              <span className={stripStyles.stripDivider} aria-hidden="true" />
+              <Button
+                variant="ghost"
+                size="sm"
+                leadingIcon="solar:add-linear"
+                disabled={!openPrograms.length}
+                onClick={(e) => setAddTemplateMenu(e.currentTarget.getBoundingClientRect())}
+              >
+                Templates
+              </Button>
+            </span>
+          )}
+        />
+        {addTemplateMenu && (
+          <MenuPopover
+            anchorRect={addTemplateMenu}
+            width={240}
+            ariaLabel="Add templates to a program's care plan"
+            items={openPrograms.map(p => ({ key: p.id, label: `${p.code} Care Plan` }))}
+            onSelect={addTemplatesTo}
+            onClose={() => setAddTemplateMenu(null)}
+          />
+        )}
+      </div>
       <div className={styles.paneBody}>
         <CarePlanSummaryView
           embedded
@@ -311,6 +377,7 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
           searchText={searchText}
           programFilter={programFilter}
           templateFilter={templateIdsSelected}
+          templateScopes={templateScopes}
           statusFilter={statusFilter}
           priorityFilter={priorityFilter}
           dueDateFilter={dueDateFilter}

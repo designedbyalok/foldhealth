@@ -115,5 +115,13 @@
 }
 /* The program switch on the left; Active Programs and Complete at the right. */
 .planBar > :first-child { margin-right: auto; }
+/* All Programs' Applied Templates strip, framed like a program plan's header. */
+.templatesCard {
+  flex-shrink: 0;
+  border: 0.5px solid var(--neutral-150);
+  border-bottom: none;
+  border-radius: var(--space-2) var(--space-2) 0 0;
+  overflow: hidden;
+}
 .signItem { display: flex; flex-direction: column; min-width: 0; line-height: var(--leading-normal); }
 .signItemMeta { font-size: var(--font-sm); color: var(--neutral-300); }

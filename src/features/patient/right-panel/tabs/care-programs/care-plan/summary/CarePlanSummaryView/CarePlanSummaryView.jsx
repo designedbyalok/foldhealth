@@ -707,6 +707,8 @@ export function CarePlanSummaryView({
   searchText = '',
   programFilter = [],
   templateFilter = [],
+  // { [templateId]: title sets }: a template filter keeps that template's own items.
+  templateScopes,
   statusFilter = [],
   priorityFilter = [],
   dueDateFilter = [],
@@ -798,9 +800,9 @@ export function CarePlanSummaryView({
   const { goals: filteredGoals, interventions: filteredInterventions, barriers: filteredBarriers } = useMemo(
     () => filterCarePlanSnapshot(
       { conditions, goals, interventions, barriers },
-      { searchText, programFilter, templateFilter, statusFilter, priorityFilter, dueDateFilter, createdDateFilter },
+      { searchText, programFilter, templateFilter, statusFilter, priorityFilter, dueDateFilter, createdDateFilter, templateScopes },
     ),
-    [conditions, goals, interventions, barriers, searchText, filterKey], // eslint-disable-line react-hooks/exhaustive-deps
+    [conditions, goals, interventions, barriers, searchText, filterKey, templateScopes], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // Per-table cross-program overlap map: powers the ProgramCell's

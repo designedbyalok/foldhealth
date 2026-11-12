@@ -73,7 +73,10 @@ function createdDateOf(row) {
 /**
  * Apply the toolbar filters to a snapshot's rows. Every filter is an
  * array: empty array means "inactive" (the same shape FilterChip
- * emits).
+ * emits). `templateScopes` ({ [templateId]: { goals, interventions,
+ * barriers } } title sets, from templateItemTitles) narrows a template
+ * filter to the items that template put on the plan; without one, a
+ * template keeps every row of the plans it is on.
  */
 export function filterCarePlanSnapshot(snapshot, {
   searchText = '',
@@ -83,6 +86,7 @@ export function filterCarePlanSnapshot(snapshot, {
   priorityFilter = [],
   dueDateFilter = [],
   createdDateFilter = [],
+  templateScopes = {},
 } = {}) {
   const q = norm(searchText);
   const progSet     = programFilter.length     ? new Set(programFilter)                       : null;
@@ -92,13 +96,22 @@ export function filterCarePlanSnapshot(snapshot, {
   const dueSet      = dueDateFilter.length     ? new Set(dueDateFilter)                       : null;
   const createdSet  = createdDateFilter.length ? new Set(createdDateFilter)                   : null;
 
-  const match = (row) => {
+  // A barrier belongs to a template when its goal does.
+  const templateGoalIds = new Set();
+  const fromTemplate = (row, kind) => {
+    const ids = (Array.isArray(row.templateIds) ? row.templateIds : []).filter(id => tmplSet.has(id));
+    if (!ids.length) return false;
+    return ids.some((id) => {
+      const scope = templateScopes[id];
+      if (!scope || !(scope.goals.size || scope.interventions.size || scope.barriers.size)) return true;
+      if (scope[kind].has(norm(row.title))) return true;
+      return kind === 'barriers' && templateGoalIds.has(`${row.programCode}:${row.goalId}`);
+    });
+  };
+  const match = (row, kind) => {
     if (q && !norm(row.title).includes(q)) return false;
     if (progSet && !progSet.has(row.programCode)) return false;
-    if (tmplSet) {
-      const ids = Array.isArray(row.templateIds) ? row.templateIds : [];
-      if (!ids.some(id => tmplSet.has(id))) return false;
-    }
+    if (tmplSet && !fromTemplate(row, kind)) return false;
     if (statusSet && !statusSet.has(norm(row.status))) return false;
     if (priSet && !priSet.has(norm(row.priority))) return false;
     if (dueSet) {
@@ -111,11 +124,14 @@ export function filterCarePlanSnapshot(snapshot, {
     }
     return true;
   };
+  if (tmplSet) {
+    for (const g of snapshot.goals) if (fromTemplate(g, 'goals')) templateGoalIds.add(`${g.programCode}:${g.id}`);
+  }
   return {
     conditions: snapshot.conditions,
-    goals: snapshot.goals.filter(match),
-    interventions: snapshot.interventions.filter(match),
-    barriers: (snapshot.barriers || []).filter(match),
+    goals: snapshot.goals.filter(g => match(g, 'goals')),
+    interventions: snapshot.interventions.filter(i => match(i, 'interventions')),
+    barriers: (snapshot.barriers || []).filter(b => match(b, 'barriers')),
   };
 }
 

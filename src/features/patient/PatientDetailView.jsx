@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect, useMemo, lazy, Suspense } fro
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
+import { Button } from '../../components/Button/Button';
 import { PanelStack } from '../../components/PanelStack/PanelStack';
 import { PatientP360Banner } from './shell/PatientP360Banner/PatientP360Banner';
 import { AgentHandoffStrip } from '../live-call/AgentHandoffStrip';
@@ -166,7 +167,12 @@ export function PatientDetailView() {
   const splitCardRef = useRef(null);
   // Seed from the device's most recent choice so the first paint matches;
   // the per-user value is reconciled once the profile id resolves (below).
-  const [leftCollapsed, setLeftCollapsed] = useState(() => readCollapse('last') === 'true');
+  const [leftCollapsedPref, setLeftCollapsed] = useState(() => readCollapse('last') === 'true');
+  // Full screen folds the left panel's tabs into the tab bar, like a
+  // collapse, without changing the user's saved choice.
+  const fullScreen = useAppStore(s => s.profileFullScreen);
+  const setFullScreen = useAppStore(s => s.setProfileFullScreen);
+  const leftCollapsed = leftCollapsedPref || fullScreen;
   // Left-panel tab, lifted here so it survives collapse: when the panel is
   // collapsed its tabs flow into the right-panel tab bar and its content
   // renders in the right panel. `showingLeftContent` is only meaningful while
@@ -205,13 +211,31 @@ export function PatientDetailView() {
 
   // Toggling the panel flows the left tabs back to the left panel; the right
   // panel returns to its own active tab, and the choice is persisted per user.
+  // In full screen, opening the panel leaves full screen.
   const toggleLeft = useCallback(() => {
     const wasCollapsed = leftCollapsed;
     const next = !leftCollapsed;
+    if (fullScreen) setFullScreen(false);
     writeCollapse(currentUserId || 'anon', next);
     setLeftCollapsed(next);
     if (wasCollapsed) setShowingLeftContent(false);
-  }, [currentUserId, leftCollapsed]);
+  }, [currentUserId, leftCollapsed, fullScreen, setFullScreen]);
+
+  // Leaving the profile ends full screen.
+  useEffect(() => () => setFullScreen(false), [setFullScreen]);
+  // Escape leaves full screen when nothing else is open to take it (a drawer,
+  // dialog or menu answers Escape first) and the key isn't for a field.
+  useEffect(() => {
+    if (!fullScreen) return undefined;
+    const onKey = (e) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      if (e.target.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+      if (document.querySelector('[aria-modal="true"], [role="dialog"], [role="menu"], [role="listbox"]')) return;
+      setFullScreen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [fullScreen, setFullScreen]);
 
   // While collapsed and viewing a flowed-in left tab, the tab bar's active key
   // is that left tab; otherwise it's the right tab.
@@ -568,15 +592,28 @@ export function PatientDetailView() {
             leftCollapsed={leftCollapsed}
             onToggleLeft={toggleLeft}
             extraTabs={leftCollapsed ? leftTabs : undefined}
-            actions={barActiveTab === 'Overview' ? (
-              <ActionButton
-                icon="solar:tuning-2-linear"
-                size="sm"
-                tooltip="Customize Overview"
-                tooltipLeft
-                onClick={() => setCustomizingOverview(true)}
-              />
-            ) : null}
+            actions={(
+              <>
+                {barActiveTab === 'Overview' && (
+                  <ActionButton
+                    icon="solar:tuning-2-linear"
+                    size="sm"
+                    tooltip="Customize Overview"
+                    tooltipLeft
+                    onClick={() => setCustomizingOverview(true)}
+                  />
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  leadingIcon={fullScreen ? 'solar:minimize-square-linear' : 'solar:maximize-square-linear'}
+                  title={fullScreen ? 'Exit full screen (Esc)' : 'Hide the app menus and patient panel for more room'}
+                  onClick={() => setFullScreen(!fullScreen)}
+                >
+                  {fullScreen ? 'Exit Full Screen' : 'Full Screen'}
+                </Button>
+              </>
+            )}
           />
           <div className={styles.tabContent}>
             {leftCollapsed && showingLeftContent ? (
