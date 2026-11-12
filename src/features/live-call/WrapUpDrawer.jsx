@@ -9,16 +9,15 @@ import { Textarea } from '../../components/Textarea/Textarea';
 import { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { useLiveCall } from './useLiveCall';
-import { callRecordFromWrapUp, wrapUpDraft } from './liveCallModel';
+import { MODE_COPY, callRecordFromWrapUp, wrapUpDraft } from './liveCallModel';
 import { routeAcceptedItems, routeLabel, routedSummary } from './liveCallRouting';
 import { useCallPatient } from './useCallPatient';
 import { patientLevelProgram, showsProgramCarePlan } from '../patient/right-panel/tabs/care-programs/care-plan/lib/carePlanMode';
 import styles from './WrapUpDrawer.module.css';
 
-const DISPOSITIONS = ['Reached', 'Left Voicemail', 'No Answer', 'Refused'];
 const clock = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
-/** Wrap Up Call: after the call ends, the summary to keep and what saves with it. */
+/** Wrap Up Call (or Visit): after it ends, the summary to keep and what saves with it. */
 export function WrapUpDrawer() {
   const open = useLiveCall(s => s.wrapOpen && !!s.patient && !!s.script);
   return open ? <WrapUpDrawerBody /> : null;
@@ -41,7 +40,8 @@ function WrapUpDrawerBody() {
     : patientLevelProgram(pid);
   const draft = wrapUpDraft(script, session);
   const summary = session.summaryDraft ?? draft.summary;
-  const reached = session.disposition === 'Reached';
+  const copy = MODE_COPY[session.mode] || MODE_COPY.call;
+  const reached = session.disposition === copy.done;
   const canComplete = !saving && (!reached || summary.trim().length > 0);
   const endedAt = new Date(session.wrapEndedAt);
   const destination = (route) => {
@@ -63,12 +63,12 @@ function WrapUpDrawerBody() {
     setSaving(false);
     session.reset();
     const made = routedSummary(done);
-    showToast(`Call saved to ${patient.name.split(' ')[0]}’s call log${made ? ` · created ${made}` : ''}${done.failed ? ` · ${done.failed} couldn’t be saved` : ''}`);
+    showToast(`${copy.noun} saved to ${patient.name.split(' ')[0]}’s call log${made ? ` · created ${made}` : ''}${done.failed ? ` · ${done.failed} couldn’t be saved` : ''}`);
   };
 
   return (
     <Drawer
-      title="Wrap Up Call"
+      title={`Wrap Up ${copy.noun}`}
       onClose={discard}
       closeOnOverlayClick={false}
       noCloseDivider
@@ -94,7 +94,7 @@ function WrapUpDrawerBody() {
 
         <section className={styles.section}>
           <span className={styles.label}>Outcome</span>
-          <SegmentedControl size="sm" items={DISPOSITIONS} value={session.disposition} onValueChange={session.setDisposition} aria-label="Call outcome" />
+          <SegmentedControl size="sm" items={copy.outcomes} value={session.disposition} onValueChange={session.setDisposition} aria-label={`${copy.noun} outcome`} />
         </section>
 
         <section className={styles.section}>
@@ -111,9 +111,9 @@ function WrapUpDrawerBody() {
             aria-label="Call summary"
             value={summary}
             onChange={e => session.setSummaryDraft(e.target.value)}
-            placeholder={draft.recorded ? 'Summarize the call.' : 'Nothing was recorded. Write a short summary of the call.'}
+            placeholder={draft.recorded ? `Summarize the ${copy.noun.toLowerCase()}.` : `Nothing was recorded. Write a short summary of the ${copy.noun.toLowerCase()}.`}
           />
-          {reached && !canComplete && <span className={styles.hint}>A reached call needs a summary before it can be saved.</span>}
+          {reached && !canComplete && <span className={styles.hint}>{copy.noun === 'Visit' ? 'A completed visit' : 'A reached call'} needs a summary before it can be saved.</span>}
         </section>
 
         {draft.pending.length > 0 && (

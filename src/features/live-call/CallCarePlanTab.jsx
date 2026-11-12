@@ -17,6 +17,8 @@ export function CallCarePlanTab({ patient }) {
   const planProgramId = useLiveCall(s => s.planProgramId);
   const setPlanProgramId = useLiveCall(s => s.setPlanProgramId);
   const session = useLiveCall();
+  // Wrap-up adds them to the transition program's plan, else the first open one.
+  const planCode = programLevel ? (programs.find(p => /^TOC/.test(p.code)) || programs[0])?.code : '';
   // Goals and barriers accepted on this call: not on the plan until wrap-up.
   const fromCall = (session.script?.items || []).filter(it => (it.route?.kind === 'goal' || it.route?.kind === 'barrier') && itemState(session, it.id) === 'accepted');
   const pending = fromCall.length > 0 && (
@@ -27,7 +29,7 @@ export function CallCarePlanTab({ patient }) {
           <li key={it.id} className={styles.fromCallRow}>
             <Badge size="sm" tone={it.tone} icon={it.icon} label={it.type} />
             <span className={styles.fromCallTitle}>{session.edits[it.id] || it.title}</span>
-            <span className={styles.count}>Adds at wrap-up</span>
+            <span className={styles.count}>Adds to {planCode ? `${planCode} ` : 'the plan '}at wrap-up</span>
           </li>
         ))}
       </ul>

@@ -5,6 +5,9 @@ import { medRecord } from './liveCallModel';
    completed. An item's `route` (data/scripts.js) names the record; items
    without one stay on the call record only. */
 
+// patient_medications.source allows manual / openfda / discharge_import: a
+// medication reported on a call is a manual entry, marked in its note.
+const LIVE_CALL_NOTE = 'Reported on a live call.';
 const pad = n => String(n).padStart(2, '0');
 const mdy = d => `${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${d.getFullYear()}`;
 const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -113,7 +116,7 @@ export async function routeAcceptedItems({ store, patient, pid, program, accepte
         const found = findMedication(meds(), route.name);
         if (route.action === 'add' || !found) {
           if (route.action === 'stop') continue;
-          ok('medication', await s.addPatientMedication(pid, { name: route.rename || route.name, sig: route.sig || '', start: route.start || iso(today), source: 'live call' }));
+          ok('medication', await s.addPatientMedication(pid, { name: route.rename || route.name, sig: route.sig || '', start: route.start || iso(today), note: LIVE_CALL_NOTE, source: 'manual' }));
         } else if (route.action === 'stop') {
           ok('medication', await s.updatePatientMedication(pid, found.id, { status: 'Stopped', stop: iso(today), stopReason: route.reason || '' }));
         } else {
@@ -132,7 +135,7 @@ export async function routeAcceptedItems({ store, patient, pid, program, accepte
     const fields = { status: r.status, start: r.start, stop: r.stop, stopReason: r.reason, sig: r.sig, lastFilledOn: r.last, daysSupply: r.days === '' ? null : Number(r.days), note: r.note };
     try {
       const found = findMedication(meds(), med.n);
-      ok('medication', found ? await s.updatePatientMedication(pid, found.id, fields) : await s.addPatientMedication(pid, { name: med.n, ...fields, source: 'live call' }));
+      ok('medication', found ? await s.updatePatientMedication(pid, found.id, fields) : await s.addPatientMedication(pid, { name: med.n, ...fields, note: fields.note || LIVE_CALL_NOTE, source: 'manual' }));
     } catch (err) {
       console.warn('live call medication update failed for', med.n, err);
       done.failed += 1;

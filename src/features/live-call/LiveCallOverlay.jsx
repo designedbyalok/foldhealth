@@ -10,10 +10,11 @@ import { useAppStore } from '../../store/useAppStore';
 import { useLiveCall } from './useLiveCall';
 import { minimizeLiveCall } from './liveCallMorph';
 import { endLiveCall } from './endLiveCall';
-import { recordingStatus } from './liveCallModel';
+import { MODE_COPY, recordingStatus } from './liveCallModel';
 import { useCallControls } from './useCallControls';
 import { CallBrief } from './CallBrief';
 import { CallWorkspace } from './CallWorkspace';
+import { DroppedCallBanner } from './DroppedCallBanner';
 import { ActionItems } from './ActionItems';
 import styles from './LiveCallOverlay.module.css';
 
@@ -22,7 +23,7 @@ const clock = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s 
 /** The call in progress, full screen: brief, live transcript and the action items it raises. */
 export function LiveCallOverlay() {
   const call = useLiveCall();
-  const seconds = useAppStore(s => s.activeCallSeconds);
+  const callSeconds = useAppStore(s => s.activeCallSeconds);
   const showToast = useAppStore(s => s.showToast);
   const cmName = useAppStore(s => s.currentUserProfile?.name) || 'Care Manager';
   const { patient, script } = call;
@@ -36,6 +37,8 @@ export function LiveCallOverlay() {
 
   if (!call.open || !patient) return null;
 
+  const copy = MODE_COPY[call.mode] || MODE_COPY.call;
+  const seconds = call.mode === 'visit' ? call.visitSeconds : callSeconds;
   const total = script?.lines.length || 0;
   const status = recordingStatus(call, total);
   const endCall = () => endLiveCall(patient);
@@ -54,12 +57,16 @@ export function LiveCallOverlay() {
             <span className={styles.meta}>
               <span className={styles.callStatus} data-lc="status">
                 <span className={call.held ? styles.liveDotHeld : styles.liveDot} aria-hidden="true" />
-                Active Call
+                {copy.live}
                 <span className={styles.sep}>•</span>
                 <span className={styles.timer}>{clock(seconds)}</span>
-                <span className={styles.sep}>•</span>
-                <Icon name="solar:smile-circle-linear" size={14} color="var(--status-success)" />
-                {patient.agent || 'TOC Agent'}
+                {call.mode !== 'visit' && (
+                  <>
+                    <span className={styles.sep}>•</span>
+                    <Icon name="solar:smile-circle-linear" size={14} color="var(--status-success)" />
+                    {patient.agent || 'TOC Agent'}
+                  </>
+                )}
               </span>
               {script && <><span className={styles.sep}>•</span><span className={styles.interp} title={script.interpreter}>{script.interpreter}</span></>}
               <span className={styles.sep}>•</span>
@@ -82,9 +89,10 @@ export function LiveCallOverlay() {
             </span>
           </div>
           <span data-lc="end">
-            <Button tone="danger" size="sm" leadingIcon="solar:end-call-linear" onClick={endCall}>End Call</Button>
+            <Button tone="danger" size="sm" leadingIcon={call.mode === 'visit' ? 'solar:close-circle-linear' : 'solar:end-call-linear'} onClick={endCall}>{copy.end}</Button>
           </span>
         </header>
+        <DroppedCallBanner patient={patient} />
 
         {!script ? (
           <div className={styles.loading}><Spinner size={24} label="Loading the call" /></div>

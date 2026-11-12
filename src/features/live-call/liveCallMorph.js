@@ -45,6 +45,15 @@ export async function expandLiveCall(patient) {
   morph(() => useLiveCall.getState().show(), '[data-live-call]');
 }
 
+/** Start an in-person visit for the patient: the full-screen view fades in, recording waits for consent. */
+export async function startLiveVisit(patient) {
+  const s = useLiveCall.getState();
+  if (s.open || (s.patient && s.mode === 'visit' && !s.wrapOpen)) { morph(() => useLiveCall.getState().show(), '[data-live-call]'); return; }
+  await s.prepare(patient);
+  useLiveCall.getState().beginVisit();
+  morph(() => useLiveCall.getState().show(), '[data-live-call]');
+}
+
 /** Full-screen live transcript → floating card. */
 export function minimizeLiveCall() {
   if (!useLiveCall.getState().open) return;

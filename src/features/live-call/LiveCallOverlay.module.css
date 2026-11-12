@@ -186,6 +186,7 @@
 .status_success { color: var(--status-success); }
 .status_warning { color: var(--status-warning-dark); }
 .status_neutral { color: var(--neutral-400); }
+.status_danger { color: var(--status-error); }
 
 .spacer { flex: 1; }
 
@@ -210,6 +211,32 @@
   display: grid;
   flex: 1;
   place-items: center;
+}
+
+/* Dropped call: a slim strip under the header (full screen) or a row in the card. */
+
+.drop,
+.dropCompact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--status-error-light);
+}
+
+.drop {
+  padding: var(--space-2) var(--space-5);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.dropCompact {
+  padding: var(--space-2) var(--space-3);
+}
+
+.dropText {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-md);
+  color: var(--neutral-500);
 }
 
 /* Body: three floating cards */

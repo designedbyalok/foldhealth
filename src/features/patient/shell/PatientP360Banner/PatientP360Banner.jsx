@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
 import { Avatar } from '../../../../components/Avatar/Avatar';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
+import { startLiveVisit } from '../../../live-call/liveCallMorph';
 import { Icon } from '../../../../components/Icon/Icon';
 import { MenuPopover } from '../../../../components/MenuPopover/MenuPopover';
 import { CollapsibleContent } from '../../../../components/Collapsible/Collapsible';
@@ -214,6 +215,15 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
               onClick={() => openCallPopover(patient.id, callBtnRef)}
             />
             <span className={styles.actionLabel}>Call</span>
+          </div>
+          <span className={styles.hDivider} />
+          <div className={styles.actionCol}>
+            <ActionButton
+              icon="solar:microphone-3-linear"
+              tooltip="Start in-person visit: record the conversation"
+              onClick={() => startLiveVisit({ id: patient.id, memberId: patient.memberId || patient.id, name: patient.name, initials: patient.initials, admitReason: patient.admitReason, relayNote: patient.relayNote, tags: patient.tocType ? [`TOC ${patient.tocType}`] : [] })}
+            />
+            <span className={styles.actionLabel}>Visit</span>
           </div>
           <span className={styles.hDivider} />
           <div className={styles.actionCol}><ActionButton icon="solar:letter-linear" tooltip="Email" onClick={() => runPatientRowAction('Send Email', patient)} /><span className={styles.actionLabel}>Email</span></div>

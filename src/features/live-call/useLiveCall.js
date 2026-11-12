@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../../lib/supabase';
-import { fallbackScript, scriptFromRow } from './liveCallModel';
+import { MODE_COPY, fallbackScript, scriptFromRow, visitScript } from './liveCallModel';
 
 /* The live call workspace: the full-screen overlay opened from the floating
    call card. The script comes from live_call_scripts; the session (consent,
@@ -12,6 +12,12 @@ import { fallbackScript, scriptFromRow } from './liveCallModel';
 const LINE_MS = 3200;
 
 const SESSION = {
+  // 'call' (phone, with the call card) or 'visit' (in person, recorded in the room).
+  mode: 'call',
+  visitSeconds: 0,
+  // A phone call that cut off: { at: seconds into the call }. The More menu's anchor.
+  dropped: null,
+  moreRect: null,
   consent: 'pending',
   consentAt: null,
   shown: 0,
@@ -44,6 +50,9 @@ const SESSION = {
 
 let timer = null;
 const stopTimer = () => { if (timer) clearInterval(timer); timer = null; };
+// An in-person visit has no phone call to time it, so it keeps its own clock.
+let visitTimer = null;
+const stopVisitTimer = () => { if (visitTimer) clearInterval(visitTimer); visitTimer = null; };
 
 export const useLiveCall = create((set, get) => ({
   open: false,
@@ -70,18 +79,26 @@ export const useLiveCall = create((set, get) => ({
   },
 
   show: () => set({ open: true }),
+
+  /** Start recording an in-person visit for the patient (after prepare). */
+  beginVisit: () => {
+    stopVisitTimer();
+    set(s => ({ mode: 'visit', visitSeconds: 0, script: s.script ? visitScript(s.script, s.patient) : s.script }));
+    visitTimer = setInterval(() => set(s => ({ visitSeconds: s.visitSeconds + 1 })), 1000);
+  },
   minimize: () => set({ open: false }),
 
   /** The call ended: stop the transcript and open the wrap-up. */
   startWrap: (seconds) => {
     stopTimer();
-    set({ open: false, wrapOpen: true, wrapSeconds: seconds, wrapEndedAt: Date.now(), disposition: 'Reached', summaryDraft: null });
+    stopVisitTimer();
+    set(s => ({ open: false, wrapOpen: true, wrapSeconds: seconds, wrapEndedAt: Date.now(), disposition: (MODE_COPY[s.mode] || MODE_COPY.call).done, summaryDraft: null }));
   },
   setDisposition: (disposition) => set({ disposition }),
   setSummaryDraft: (summaryDraft) => set({ summaryDraft }),
 
   /** Wrap-up saved or discarded: drop the session. */
-  reset: () => { stopTimer(); set({ ...SESSION, open: false, patient: null, script: null }); },
+  reset: () => { stopTimer(); stopVisitTimer(); set({ ...SESSION, open: false, patient: null, script: null }); },
 
   setConsent: (agreed) => {
     const at = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -93,7 +110,7 @@ export const useLiveCall = create((set, get) => ({
     stopTimer();
     const step = () => {
       const { shown, script, held, consent } = get();
-      if (consent !== 'yes' || held || !script) return;
+      if (consent !== 'yes' || held || !script || get().dropped) return;
       if (shown >= script.lines.length) { stopTimer(); return; }
       set({ shown: shown + 1 });
     };
@@ -111,6 +128,13 @@ export const useLiveCall = create((set, get) => ({
   },
 
   setFilter: (filter) => set({ filter }),
+  openMore: (moreRect) => set({ moreRect }),
+  closeMore: () => set({ moreRect: null }),
+  drop: (at) => { stopTimer(); set({ dropped: { at }, moreRect: null }); },
+  callBack: () => {
+    set({ dropped: null });
+    if (get().consent === 'yes' && !get().held) get().play();
+  },
   setTab: (tab) => set({ tab }),
   setPlanProgramId: (planProgramId) => set({ planProgramId }),
   markStep: (program, step, status) => set(s => {

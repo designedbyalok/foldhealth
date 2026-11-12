@@ -8,6 +8,7 @@ import styles from './LiveCallOverlay.module.css';
 /** Left rail: why we're calling, what to cover and the medications to review. */
 export function CallBrief({ script }) {
   const shown = useLiveCall(s => s.shown);
+  const mode = useLiveCall(s => s.mode);
   const medOpen = useLiveCall(s => s.medOpen);
   const medEdits = useLiveCall(s => s.medEdits);
   const openMed = useLiveCall(s => s.openMed);
@@ -17,7 +18,7 @@ export function CallBrief({ script }) {
   return (
     <aside className={`${styles.panel} ${styles.brief}`} aria-label="Call brief">
       <section className={styles.briefSection}>
-        <span className={styles.sectionLabel}>Reason for Call</span>
+        <span className={styles.sectionLabel}>Reason for {mode === 'visit' ? 'Visit' : 'Call'}</span>
         <p className={styles.reason}>{script.reason}</p>
       </section>
 
