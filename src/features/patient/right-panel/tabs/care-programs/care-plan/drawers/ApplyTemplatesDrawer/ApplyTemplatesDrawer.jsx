@@ -66,6 +66,9 @@ const conditionSortKey = (t) => {
  *   the "Recommended" group (templates whose conditions match an active problem).
  * @param {Function} [props.onApplyAgain]  Called with a template already on the
  *   plan to extend or reinstate it; its rows get an Apply again action.
+ * @param {React.ReactNode} [props.target]  Which plan the templates go on, when
+ *   the caller lets the user pick (the All Programs care plan); shown above
+ *   the search.
  *
  * A template with categories that is being added to a patient's plan gets a
  * Category picker, preset to the category the patient's latest results match.
@@ -85,6 +88,7 @@ export function ApplyTemplatesDrawer({
   // elsewhere (the library's New Care Plan) only library templates are.
   patientId = null,
   onApplyAgain,
+  target = null,
 }) {
   const allTemplates = useAppStore(s => s.carePlanTemplates);
   const authUserId = useAppStore(s => s.authUserId);
@@ -399,6 +403,7 @@ export function ApplyTemplatesDrawer({
   return (
     <Drawer title="Add Care Plan Templates" onClose={onClose} headerRight={headerRight} noCloseDivider>
       <div className={styles.body}>
+        {target && <div className={styles.target}>{target}</div>}
         <div className={styles.controls}>
           <Input
             type="search"
