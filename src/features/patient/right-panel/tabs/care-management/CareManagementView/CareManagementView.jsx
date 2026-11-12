@@ -17,6 +17,11 @@ import { CarePlanCard, PatientCarePlanPane } from '../PatientCarePlanPane/Patien
 import { allProgramsPlanState } from '../../care-programs/care-plan/summary/allProgramsPlan';
 import { appliedTemplatesAcross, templateItemTitles } from '../../care-programs/care-plan/summary/allProgramsTemplates';
 import { AppliedTemplateStrip } from '../../care-programs/care-plan/CarePlanView/AppliedTemplateStrip';
+import { ApplyTemplatesDrawer } from '../../care-programs/care-plan/drawers/ApplyTemplatesDrawer/ApplyTemplatesDrawer';
+import { ApplyAgainDialog } from '../../care-programs/care-plan/CarePlanView/ApplyAgainDialog';
+import { TemplateCreateLayer } from '../../care-programs/care-plan/CarePlanView/TemplateCreateLayer';
+import { useCarePlanEpisodes } from '../../care-programs/care-plan/CarePlanView/useCarePlanEpisodes';
+import { Select } from '../../../../../../components/Select/Select';
 import stripStyles from '../../care-programs/care-plan/CarePlanView/CarePlanView.module.css';
 import { computeDueDate } from '../../care-programs/care-plan/tables/CarePlanInterventionsTable';
 import { SegmentedControl } from '../../../../../../components/SegmentedControl/SegmentedControl';
@@ -99,6 +104,7 @@ function AddCareNoteDrawer({ programs, onClose, onSave }) {
 const SIGN_ICON = { open: 'solar:pen-new-square-linear', awaiting: 'solar:clock-circle-linear', signed: 'solar:check-circle-linear' };
 const dueOf = i => computeDueDate(i);
 const NO_ROWS = [];
+const NO_PRIORITIES = {};
 
 /** Comprehensive Care Plan pane: the patient's care plans in one place (care
  *  plan redesign prototype). All Programs combines every open program's live
@@ -122,8 +128,18 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
   const carePlanTemplates = useAppStore(s => s.carePlanTemplates) || NO_ROWS;
   const libraryGoals = useAppStore(s => s.carePlanGoals) || NO_ROWS;
   const fetchCarePlanLibrary = useAppStore(s => s.fetchCarePlanLibrary);
-  const requestCarePlanPanel = useAppStore(s => s.requestCarePlanPanel);
-  const [addTemplateMenu, setAddTemplateMenu] = useState(null);
+  // Add Care Plan Templates, as on a program's plan, with the plan it goes on
+  // picked in the drawer. The program stays set after the drawer closes so a
+  // Start Episode dialog it opened still applies to it.
+  const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [templatesProgramId, setTemplatesProgramId] = useState(null);
+  const [templateCreateOpen, setTemplateCreateOpen] = useState(false);
+  const [createdTemplateIds, setCreatedTemplateIds] = useState([]);
+  const [applyAgainTemplate, setApplyAgainTemplate] = useState(null);
+  const applyPatientCarePlanTemplates = useAppStore(s => s.applyPatientCarePlanTemplates);
+  const patientProblems = useAppStore(s => s.patientProblems[patientId]) || NO_ROWS;
+  const fetchPatientProblems = useAppStore(s => s.fetchPatientProblems);
+  useEffect(() => { if (patientId) fetchPatientProblems?.(patientId); }, [patientId, fetchPatientProblems]);
   useEffect(() => { fetchCarePlanLibrary?.(); }, [fetchCarePlanLibrary]);
   const [addNoteOpen, setAddNoteOpen] = useState(false);
   const logCarePlanAudit = useAppStore(s => s.logCarePlanAudit);
@@ -188,13 +204,13 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
     const name = appliedAcross.find(a => a.template.id === id)?.template.name;
     setTemplateFilter(prev => (prev.length === 1 && prev[0] === name ? [] : [name]));
   };
-  // Templates go on a program's plan: pick the program, its plan opens with
-  // the template picker.
-  const addTemplatesTo = (programId) => {
-    setAddTemplateMenu(null);
-    setView(programId);
-    requestCarePlanPanel('templates');
-  };
+  const templatesProgram = openPrograms.find(p => p.id === templatesProgramId) || openPrograms[0] || null;
+  const templatesLive = templatesProgram ? patientCarePlans[`${patientId}::${templatesProgram.id}`] : null;
+  const applyTemplatesTo = (ids, priorities, categoryPicks) => applyPatientCarePlanTemplates(patientId, templatesProgram, ids, priorities, categoryPicks);
+  const templateEpisodes = useCarePlanEpisodes({
+    patientId, program: templatesProgram, live: templatesLive, canEdit: true, readOnly: false, applyTemplates: applyTemplatesTo,
+  });
+  const closeTemplates = () => { setTemplatesOpen(false); setCreatedTemplateIds([]); };
 
   const activeCount = [
     programFilter, templateFilter, statusFilter,
@@ -364,24 +380,65 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
                 size="sm"
                 leadingIcon="solar:add-linear"
                 disabled={!openPrograms.length}
-                onClick={(e) => setAddTemplateMenu(e.currentTarget.getBoundingClientRect())}
+                onClick={() => setTemplatesOpen(true)}
               >
                 Templates
               </Button>
             </span>
           )}
         />
-        {addTemplateMenu && (
-          <MenuPopover
-            anchorRect={addTemplateMenu}
-            width={240}
-            ariaLabel="Add templates to a program's care plan"
-            items={openPrograms.map(p => ({ key: p.id, label: `${p.code} Care Plan` }))}
-            onSelect={addTemplatesTo}
-            onClose={() => setAddTemplateMenu(null)}
-          />
-        )}
       </div>
+      {templatesOpen && templatesProgram && (
+        <ApplyTemplatesDrawer
+          // A different plan has different templates on it: start the picks over.
+          key={templatesProgram.id}
+          patientId={patientId}
+          appliedTemplateIds={templatesLive?.plan?.appliedTemplateIds || NO_ROWS}
+          appliedTemplatePriorities={templatesLive?.plan?.appliedTemplatePriorities || NO_PRIORITIES}
+          patientProblems={patientProblems}
+          preselectedIds={createdTemplateIds}
+          target={(
+            <>
+              <span>Add to</span>
+              <Select
+                size="sm"
+                value={templatesProgram.id}
+                onValueChange={setTemplatesProgramId}
+                options={openPrograms.map(p => ({ value: p.id, label: `${p.code} Care Plan` }))}
+              />
+            </>
+          )}
+          onClose={closeTemplates}
+          onApply={async (ids, priorities, categoryPicks) => {
+            closeTemplates();
+            if (templateEpisodes.interceptApply(ids, priorities, categoryPicks)) return;
+            await applyTemplatesTo(ids, priorities, categoryPicks);
+          }}
+          onCreateNew={() => { setTemplatesOpen(false); setTemplateCreateOpen(true); }}
+          onApplyAgain={setApplyAgainTemplate}
+        />
+      )}
+      {templateCreateOpen && (
+        <TemplateCreateLayer
+          onClose={() => { setTemplateCreateOpen(false); setTemplatesOpen(true); }}
+          onCreated={(template) => {
+            // A draft isn't ready to apply, so only a published template comes back checked.
+            if (template.status !== 'draft') setCreatedTemplateIds(ids => [...ids, template.id]);
+            setTemplateCreateOpen(false);
+            setTemplatesOpen(true);
+          }}
+        />
+      )}
+      {applyAgainTemplate && templatesProgram && (
+        <ApplyAgainDialog
+          template={applyAgainTemplate}
+          patientId={patientId}
+          program={templatesProgram}
+          onClose={() => setApplyAgainTemplate(null)}
+          onDone={closeTemplates}
+        />
+      )}
+      {templateEpisodes.dialogs}
       <div className={styles.paneBody}>
         <CarePlanSummaryView
           embedded
