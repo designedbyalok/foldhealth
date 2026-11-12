@@ -235,6 +235,8 @@ export const Select = forwardRef(function Select({
   const selectedKey = selectedMulti.map(o => o.value).join('|');
   const badgeRowRef = useRef(null);
   const badgeMeasureRef = useRef(null);
+  // The open, searchable field's line: chips, then the search input.
+  const openLineRef = useRef(null);
   const [visibleBadgeCount, setVisibleBadgeCount] = useState(selectedMulti.length);
 
   useLayoutEffect(() => {
@@ -244,7 +246,13 @@ export const Select = forwardRef(function Select({
     if (!row || !measure) return undefined;
 
     const recompute = () => {
-      const available = row.clientWidth;
+      // Open and searchable, the chips keep their own width and the input
+      // fills the rest, so measure against the line less the input's minimum.
+      const line = openLineRef.current;
+      const input = searchRef.current;
+      const available = line && input
+        ? line.clientWidth - (parseFloat(getComputedStyle(input).minWidth) || 0) - 4
+        : row.clientWidth;
       const widths = [...measure.children].map(c => c.offsetWidth);
       if (widths.length === 0) { setVisibleBadgeCount(0); return; }
       const GAP = 4;
@@ -266,6 +274,7 @@ export const Select = forwardRef(function Select({
 
     const ro = new ResizeObserver(recompute);
     ro.observe(row);
+    if (openLineRef.current) ro.observe(openLineRef.current);
     // rAF rather than a synchronous call, setting state in an effect body
     // cascades renders.
     const raf = requestAnimationFrame(recompute);
@@ -407,7 +416,7 @@ export const Select = forwardRef(function Select({
           // Searching a multi-pick with chips: the field stays one line; as
           // many chips as fit show, the rest fold into "+N", and the search
           // is typed after them. Removing a chip keeps the menu open.
-          <span className={styles.triggerBadgesOpen}>
+          <span ref={openLineRef} className={styles.triggerBadgesOpen}>
             <span className={styles.triggerBadgesOpenRow} onClick={(e) => e.stopPropagation()}>
               {badgeRow}
             </span>

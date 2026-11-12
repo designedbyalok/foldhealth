@@ -42,7 +42,7 @@ const deptArg = (d) => (d && d !== NO_DEPARTMENT ? d : null);
 // Which card a covering provider's missing access affects (COVER_ACCESS).
 const ACCESS_CARDS = {
   Inbox: ['communications'],
-  'Manage Tasks & Alerts': ['carePlan', 'medRecon', 'tasks'],
+  'Manage Tasks & Alerts': ['carePlan', 'medRecon', 'intervention', 'tasks'],
   'Program Worklists': ['programs'],
 };
 
@@ -401,6 +401,7 @@ function ModuleReassignDrawer({ module: m, items, plan, defaultPlan, away, timeW
             icon={m.icon}
             usersFor={usersFor}
             rowAction={m.key === 'programs' ? VIEW.programs : VIEW.task}
+            grouped={m.key !== 'programs'}
             plan={draft}
             onPlan={setDraft}
           />

@@ -1001,15 +1001,6 @@
 /* Created reads in the secondary grey, as in OOO Records. */
 .tableWrap .createdTd { color: var(--neutral-300); }
 
-.reviewScheduleSub {
-  min-width: 0;
-  font-size: var(--font-sm);
-  line-height: 1.4;
-  color: var(--neutral-300);
-  white-space: normal;
-  overflow-wrap: break-word;
-}
-
 /* Skipped and warnings need attention: an orange count. */
 .reviewCountBadge {
   display: inline-flex;
@@ -1098,8 +1089,6 @@
   background: var(--primary-25);
 }
 .reviewRow + .reviewRow { border-top: 0.5px solid var(--neutral-100); }
-/* A schedule: its name over the 12px summary, wrapping as needed. */
-.reviewScheduleRow { padding-top: var(--space-2); padding-bottom: var(--space-2); }
 /* Schedules to be added folds from its title; shut, the title loses its hairline. */
 .reviewCardToggle {
   display: flex;
