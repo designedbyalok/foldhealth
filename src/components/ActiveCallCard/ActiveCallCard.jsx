@@ -1,6 +1,11 @@
+import { Fragment } from 'react';
 import { Icon } from '../Icon/Icon';
 import { Avatar } from '../Avatar/Avatar';
 import { useAppStore } from '../../store/useAppStore';
+import { useLiveCall } from '../../features/live-call/useLiveCall';
+import { expandLiveCall } from '../../features/live-call/liveCallMorph';
+import { useCallControls } from '../../features/live-call/useCallControls';
+import { endLiveCall } from '../../features/live-call/endLiveCall';
 import styles from './ActiveCallCard.module.css';
 
 function formatTimer(secs) {
@@ -12,15 +17,29 @@ export function ActiveCallCard() {
   const activeCallPatient = useAppStore(s => s.activeCallPatient);
   const activeCallSeconds = useAppStore(s => s.activeCallSeconds);
   const p = useAppStore(s => s.patients.find(x => x.id === s.activeCallPatient));
-  const endActiveCall = useAppStore(s => s.endActiveCall);
+  const expanded = useLiveCall(s => s.open);
+  const held = useLiveCall(s => s.held);
+  const controls = useCallControls();
 
-  const visible = !!activeCallPatient;
+  const visible = !!activeCallPatient && !expanded;
+  const payload = () => ({
+    id: p.id,
+    memberId: p.memberId || p.id,
+    name: p.name,
+    initials: p.initials,
+    relayNote: p.relayNote,
+    admitReason: p.admitReason,
+    agent: p.agentAssigned,
+    tags: p.tocType ? [`TOC ${p.tocType}`] : [],
+  });
+  const openFullScreen = () => p && expandLiveCall(payload());
+  const endCall = () => endLiveCall(p ? payload() : null);
 
   return (
-    <div className={[styles.card, visible ? styles.visible : ''].filter(Boolean).join(' ')}>
+    <div className={[styles.card, visible ? styles.visible : '', expanded ? styles.expanded : ''].filter(Boolean).join(' ')} data-call-card={visible ? '' : undefined}>
       <div className={styles.header}>
-        <div className={styles.status}>
-          <span className={styles.liveDot} />
+        <div className={styles.status} data-lc="status">
+          <span className={held ? styles.liveDotHeld : styles.liveDot} />
           Active Call
           <span style={{ color: 'var(--neutral-200)', fontWeight: 400 }}>•</span>
           <span>{formatTimer(activeCallSeconds)}</span>
@@ -28,17 +47,17 @@ export function ActiveCallCard() {
           <Icon name="solar:smile-circle-linear" size={14} color="#059669" />
           <span>{p?.agentAssigned || 'TOC Agent'}</span>
         </div>
-        <button type="button" className={styles.expandBtn} aria-label="Expand call card">
+        <button type="button" className={styles.expandBtn} data-lc="toggle" aria-label="Open the live transcript full screen" title="Full Screen" onClick={openFullScreen}>
           <Icon name="solar:maximize-square-2-linear" size={16} />
         </button>
       </div>
 
       {p && (
         <div className={styles.patient}>
-          <Avatar variant="callCard" initials={p.initials} />
+          <span data-lc="avatar"><Avatar variant="callCard" initials={p.initials} /></span>
           <div>
             <div className={styles.patientName}>
-              {p.name}
+              <span data-lc="name">{p.name}</span>
               <button
                 type="button"
                 className={styles.openPatientBtn}
@@ -56,31 +75,15 @@ export function ActiveCallCard() {
       <div className={styles.divider} />
 
       <div className={styles.actions}>
-        <button type="button" className={styles.actionBtn} aria-label="Mute">
-          <Icon name="solar:muted-linear" size={18} />
-        </button>
-        <div className={styles.sep} />
-        <button type="button" className={styles.actionBtn} aria-label="Hold">
-          <Icon name="solar:pause-linear" size={18} />
-        </button>
-        <div className={styles.sep} />
-        <button type="button" className={styles.actionBtn} aria-label="Transfer">
-          <Icon name="solar:phone-calling-rounded-linear" size={18} />
-        </button>
-        <div className={styles.sep} />
-        <button type="button" className={styles.actionBtn} aria-label="Add participant">
-          <Icon name="solar:user-plus-linear" size={18} />
-        </button>
-        <div className={styles.sep} />
-        <button type="button" className={styles.actionBtn} aria-label="Keypad">
-          <Icon name="tabler:dialpad" size={18} />
-        </button>
-        <div className={styles.sep} />
-        <button type="button" className={styles.actionBtn} aria-label="More call actions">
-          <Icon name="solar:menu-dots-linear" size={18} />
-        </button>
-        <div className={styles.sep} />
-        <button type="button" className={styles.endBtn} aria-label="End call" onClick={endActiveCall}>
+        {controls.map(c => (
+          <Fragment key={c.key}>
+            <button type="button" className={styles.actionBtn} data-lc={c.key} aria-label={c.label} title={c.label} aria-pressed={c.active ?? undefined} onClick={c.onClick}>
+              <Icon name={c.icon} size={18} />
+            </button>
+            <div className={styles.sep} />
+          </Fragment>
+        ))}
+        <button type="button" className={styles.endBtn} data-lc="end" aria-label="End call" onClick={endCall}>
           <Icon name="solar:end-call-linear" size={18} />
         </button>
       </div>

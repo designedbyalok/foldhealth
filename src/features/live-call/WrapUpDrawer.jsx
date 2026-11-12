@@ -1,0 +1,144 @@
+import { Avatar } from '../../components/Avatar/Avatar';
+import { Badge } from '../../components/Badge/Badge';
+import { Banner } from '../../components/Banner/Banner';
+import { Button } from '../../components/Button/Button';
+import { Drawer } from '../../components/Drawer/Drawer';
+import { Icon } from '../../components/Icon/Icon';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
+import { Textarea } from '../../components/Textarea/Textarea';
+import { useAppStore } from '../../store/useAppStore';
+import { useLiveCall } from './useLiveCall';
+import { callRecordFromWrapUp, wrapUpDraft } from './liveCallModel';
+import styles from './WrapUpDrawer.module.css';
+
+const DISPOSITIONS = ['Reached', 'Left Voicemail', 'No Answer', 'Refused'];
+const clock = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+/** Wrap Up Call: after the call ends, the summary to keep and what saves with it. */
+export function WrapUpDrawer() {
+  const session = useLiveCall();
+  const createCallRecord = useAppStore(s => s.createCallRecord);
+  const showToast = useAppStore(s => s.showToast);
+  const cmName = useAppStore(s => s.currentUserProfile?.name) || 'Care Manager';
+  const { patient, script } = session;
+  if (!session.wrapOpen || !patient || !script) return null;
+
+  const draft = wrapUpDraft(script, session);
+  const summary = session.summaryDraft ?? draft.summary;
+  const reached = session.disposition === 'Reached';
+  const canComplete = !reached || summary.trim().length > 0;
+  const endedAt = new Date(session.wrapEndedAt);
+
+  const discard = () => { session.reset(); showToast('Wrap-up discarded'); };
+  const complete = () => {
+    createCallRecord(callRecordFromWrapUp({
+      patient, script, session, cmName, summary: summary.trim(), disposition: session.disposition,
+      seconds: session.wrapSeconds, endedAt, accepted: draft.accepted, medUpdates: draft.medUpdates, stepUpdates: draft.stepUpdates,
+    }));
+    session.reset();
+    showToast(`Call saved to ${patient.name.split(' ')[0]}’s call log`);
+  };
+
+  return (
+    <Drawer
+      title="Wrap Up Call"
+      onClose={discard}
+      closeOnOverlayClick={false}
+      noCloseDivider
+      headerRight={(
+        <div className={styles.headerRight}>
+          <Button size="sm" leadingIcon="solar:check-circle-linear" disabled={!canComplete} onClick={complete}>Complete</Button>
+          <span className={styles.headerDivider} />
+        </div>
+      )}
+    >
+      <div className={styles.body}>
+        <section className={styles.callCard}>
+          <Avatar variant="patient" size={36} initials={patient.initials} />
+          <div className={styles.who}>
+            <span className={styles.name}>{patient.name}</span>
+            <span className={styles.sub}>#{patient.memberId} · {script.reason}</span>
+          </div>
+          <div className={styles.stats}>
+            <span className={styles.stat}><span className={styles.statKey}>Duration</span>{clock(session.wrapSeconds)}</span>
+            <span className={styles.stat}><span className={styles.statKey}>Ended</span>{endedAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <span className={styles.label}>Outcome</span>
+          <SegmentedControl size="sm" items={DISPOSITIONS} value={session.disposition} onValueChange={session.setDisposition} aria-label="Call outcome" />
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.labelRow}>
+            <Icon name="custom:ai" size={16} />
+            <span className={styles.label}>Call Summary</span>
+            <span className={styles.spacer} />
+            {draft.sources.length > 0
+              ? <span className={styles.sources}>From {draft.sources.join(' · ')}</span>
+              : <span className={styles.sources}>Not recorded</span>}
+          </div>
+          <Textarea
+            rows={8}
+            aria-label="Call summary"
+            value={summary}
+            onChange={e => session.setSummaryDraft(e.target.value)}
+            placeholder={draft.recorded ? 'Summarize the call.' : 'Nothing was recorded. Write a short summary of the call.'}
+          />
+          {reached && !canComplete && <span className={styles.hint}>A reached call needs a summary before it can be saved.</span>}
+        </section>
+
+        {draft.pending.length > 0 && (
+          <section className={styles.section}>
+            <Banner tone="warning" size="sm">
+              {draft.pending.length} {draft.pending.length === 1 ? 'suggestion wasn’t' : 'suggestions weren’t'} reviewed. Accept the ones to keep; the rest won’t be saved.
+            </Banner>
+            <ul className={styles.list}>
+              {draft.pending.map(it => (
+                <li key={it.id} className={styles.row}>
+                  <Badge size="sm" tone={it.tone} icon={it.icon} label={it.type} />
+                  <span className={styles.rowText}>{session.edits[it.id] || it.title}</span>
+                  <Button size="sm" variant="soft" onClick={() => session.accept(it.id)}>Accept</Button>
+                  <Button size="sm" variant="ghost" onClick={() => session.dismiss(it.id)}>Dismiss</Button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section className={styles.section}>
+          <span className={styles.label}>Saved With This Call</span>
+          <ul className={styles.list}>
+            <li className={styles.row}>
+              <span className={styles.rowIcon}><Icon name="solar:document-text-linear" size={16} color="var(--neutral-400)" /></span>
+              <span className={styles.rowText}>Summary{draft.recorded && session.shown > 0 ? ', transcript' : ''} and outcome</span>
+              <span className={styles.where}>Call log</span>
+            </li>
+            {draft.stepUpdates.map(st => (
+              <li key={st} className={styles.row}>
+                <span className={styles.rowIcon}><Icon name="solar:checklist-minimalistic-linear" size={16} color="var(--neutral-400)" /></span>
+                <span className={styles.rowText}>Program step: {st}</span>
+                <span className={styles.where}>Care Programs</span>
+              </li>
+            ))}
+            {draft.medUpdates.map(m => (
+              <li key={m} className={styles.row}>
+                <span className={styles.rowIcon}><Icon name="solar:pill-linear" size={16} color="var(--neutral-400)" /></span>
+                <span className={styles.rowText}>Medication update: {m}</span>
+                <span className={styles.where}>Medications</span>
+              </li>
+            ))}
+            {draft.accepted.map(it => (
+              <li key={it.id} className={styles.row}>
+                <span className={styles.rowIcon}><Icon name={it.icon} size={16} color="var(--neutral-400)" /></span>
+                <span className={styles.rowText}>{it.type}: {it.title}</span>
+                <span className={styles.where}>{it.where}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    </Drawer>
+  );
+}

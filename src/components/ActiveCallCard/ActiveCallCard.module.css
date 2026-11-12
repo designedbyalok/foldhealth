@@ -11,12 +11,17 @@
   overflow: hidden;
   transform: translateX(calc(100% + 48px));
   opacity: 0;
-  transition: transform 0.28s cubic-bezier(.4,0,.2,1), opacity 0.28s ease;
+  /* Hidden once the slide-out finishes, so leaving the expanded state (the
+     call ended from the overlay) can't flash the card on its way out. */
+  visibility: hidden;
+  transition: transform 0.28s cubic-bezier(.4,0,.2,1), opacity 0.28s ease, visibility 0s linear 0.28s;
 }
 
 .card.visible {
   transform: translateX(0);
   opacity: 1;
+  visibility: visible;
+  transition: transform 0.28s cubic-bezier(.4,0,.2,1), opacity 0.28s ease, visibility 0s;
 }
 
 .header {
@@ -116,6 +121,7 @@
 }
 
 .actionBtn:hover { background: var(--neutral-50); color: var(--neutral-400); }
+.actionBtn[aria-pressed='true'] { background: var(--primary-50); color: var(--primary-300); }
 
 .sep {
   width: 0.5px;
@@ -139,3 +145,58 @@
 }
 
 .endBtn:hover { background: #B91C1C; }
+
+/* Expanded into the live call overlay: gone at once, no slide, so the
+   view-transition morph (live-call/liveCallMorph.js) is the only motion and
+   the card is back in place the moment the overlay shrinks into it. */
+.card.expanded {
+  transform: translateX(0);
+  opacity: 1;
+  visibility: hidden;
+  transition: none;
+}
+
+.liveDotHeld {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--status-warning);
+}
+
+/* Card ↔ overlay morph (features/live-call/liveCallMorph.js). The card and
+   the overlay header carry the same pieces, tagged data-lc; during the morph
+   each pair shares a name, so the avatar, name, call status, every control,
+   End and the expand/minimize toggle travel to their new spot while the
+   frame grows around them. Kept here, not in the overlay's stylesheet,
+   because this one is loaded before the first expand. */
+:root[data-call-morph] .card.visible { view-transition-name: live-call; }
+:root[data-call-morph] :is([data-call-card], [data-live-call]) [data-lc] { view-transition-class: lc-part; }
+:root[data-call-morph] :is([data-call-card], [data-live-call]) [data-lc='avatar'] { view-transition-name: lc-avatar; }
+:root[data-call-morph] :is([data-call-card], [data-live-call]) [data-lc='name'] { view-transition-name: lc-name; }
+:root[data-call-morph] :is([data-call-card], [data-live-call]) [data-lc='status'] { view-transition-name: lc-status; }
+:root[data-call-morph] :is([data-call-card], [data-live-call]) [data-lc='mute'] { view-transition-name: lc-mute; }
+:root[data-call-morph] :is([data-call-card], [data-live-call]) [data-lc='hold'] { view-transition-name: lc-hold; }
+:root[data-call-morph] :is([data-call-card], [data-live-call]) [data-lc='transfer'] { view-transition-name: lc-transfer; }
+:root[data-call-morph] :is([data-call-card], [data-live-call]) [data-lc='add'] { view-transition-name: lc-add; }
+:root[data-call-morph] :is([data-call-card], [data-live-call]) [data-lc='keypad'] { view-transition-name: lc-keypad; }
+:root[data-call-morph] :is([data-call-card], [data-live-call]) [data-lc='more'] { view-transition-name: lc-more; }
+:root[data-call-morph] :is([data-call-card], [data-live-call]) [data-lc='toggle'] { view-transition-name: lc-toggle; }
+:root[data-call-morph] :is([data-call-card], [data-live-call]) [data-lc='end'] { view-transition-name: lc-end; }
+
+/* A morphing part must be one box, so the wrapper spans can't stay inline. */
+:is([data-call-card], [data-live-call]) span[data-lc] { display: inline-flex; align-items: center; }
+
+/* Above the frame (z-index 1), on the same curve as it. Scaled, not
+   clipped: a part is the same thing at a new size, so it crossfades while
+   it moves. */
+::view-transition-group(*.lc-part) {
+  z-index: 2;
+  animation-duration: var(--duration-slow);
+  animation-timing-function: var(--ease-drawer);
+}
+::view-transition-old(*.lc-part),
+::view-transition-new(*.lc-part) {
+  height: 100%;
+  animation-duration: var(--duration-slow);
+  animation-timing-function: var(--ease-out);
+}
