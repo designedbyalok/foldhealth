@@ -10106,6 +10106,7 @@ export const useAppStore = create((set, get) => ({
       activityType:     r.activity_type,
       description:      r.description || '',
       durationSeconds:  r.duration_seconds ?? 0,
+      programCode:      r.program_code || null,
       loggedBy:         r.logged_by,
       loggedByInitials: r.logged_by_initials,
       occurredAt:       r.occurred_at,
@@ -10216,8 +10217,15 @@ export const useAppStore = create((set, get) => ({
       logged_by_initials: activity.loggedByInitials ?? null,
       occurred_at:        activity.occurredAt,
       is_unlogged:        !!activity.isUnlogged,
+      ...(activity.programCode ? { program_code: activity.programCode } : {}),
     };
-    const { error } = await supabase.from('ccm_billable_activities').insert(row);
+    let { error } = await supabase.from('ccm_billable_activities').insert(row);
+    // Before ccm_billable_activities_program_migration.sql there's no
+    // program_code column: keep the time, without the program.
+    if (error && row.program_code && /program_code/.test(error.message || '')) {
+      const { program_code: _skip, ...withoutProgram } = row;
+      ({ error } = await supabase.from('ccm_billable_activities').insert(withoutProgram));
+    }
     if (error) console.warn('addCcmBillableActivity: insert failed:', error.message);
     return { ok: true, blocked: false, reason: null };
   },
