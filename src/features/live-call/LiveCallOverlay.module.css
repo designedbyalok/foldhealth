@@ -446,6 +446,38 @@
   padding: var(--space-4) var(--space-5) var(--space-6);
 }
 
+/* Care Plan tab: changes from this call, before wrap-up */
+
+.fromCall {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.fromCallList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fromCallRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+}
+
+.fromCallTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-md);
+  color: var(--neutral-500);
+}
+
 /* Program Steps */
 
 .stepGroup {
@@ -728,11 +760,18 @@
 }
 
 .itemTitle {
+  padding: 0;
+  border: none;
+  background: none;
   font-size: var(--font-md);
   font-weight: 600;
   line-height: var(--leading-normal);
   color: var(--neutral-500);
+  text-align: left;
+  cursor: pointer;
 }
+
+.itemTitle:hover { color: var(--primary-300); }
 
 .editRow {
   display: flex;

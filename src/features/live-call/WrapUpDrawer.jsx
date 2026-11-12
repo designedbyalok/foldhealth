@@ -6,9 +6,13 @@ import { Drawer } from '../../components/Drawer/Drawer';
 import { Icon } from '../../components/Icon/Icon';
 import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Textarea } from '../../components/Textarea/Textarea';
+import { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { useLiveCall } from './useLiveCall';
 import { callRecordFromWrapUp, wrapUpDraft } from './liveCallModel';
+import { routeAcceptedItems, routeLabel, routedSummary } from './liveCallRouting';
+import { useCallPatient } from './useCallPatient';
+import { patientLevelProgram, showsProgramCarePlan } from '../patient/right-panel/tabs/care-programs/care-plan/lib/carePlanMode';
 import styles from './WrapUpDrawer.module.css';
 
 const DISPOSITIONS = ['Reached', 'Left Voicemail', 'No Answer', 'Refused'];
@@ -16,27 +20,50 @@ const clock = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s 
 
 /** Wrap Up Call: after the call ends, the summary to keep and what saves with it. */
 export function WrapUpDrawer() {
+  const open = useLiveCall(s => s.wrapOpen && !!s.patient && !!s.script);
+  return open ? <WrapUpDrawerBody /> : null;
+}
+
+function WrapUpDrawerBody() {
   const session = useLiveCall();
   const createCallRecord = useAppStore(s => s.createCallRecord);
   const showToast = useAppStore(s => s.showToast);
   const cmName = useAppStore(s => s.currentUserProfile?.name) || 'Care Manager';
+  const programLevel = showsProgramCarePlan(useAppStore(s => s.carePlanMode));
   const { patient, script } = session;
-  if (!session.wrapOpen || !patient || !script) return null;
+  const { pid, programs } = useCallPatient(patient);
+  const [saving, setSaving] = useState(false);
 
+  // Care plan items go to the transition program when there is one (the call
+  // is about the discharge), else the first open program.
+  const planProgram = programLevel
+    ? (programs.find(p => /^TOC/.test(p.code)) || programs[0] || null)
+    : patientLevelProgram(pid);
   const draft = wrapUpDraft(script, session);
   const summary = session.summaryDraft ?? draft.summary;
   const reached = session.disposition === 'Reached';
-  const canComplete = !reached || summary.trim().length > 0;
+  const canComplete = !saving && (!reached || summary.trim().length > 0);
   const endedAt = new Date(session.wrapEndedAt);
+  const destination = (route) => {
+    const label = routeLabel(route);
+    if ((route?.kind === 'goal' || route?.kind === 'barrier') && planProgram?.code) return `${label} (${planProgram.code})`;
+    return label;
+  };
 
   const discard = () => { session.reset(); showToast('Wrap-up discarded'); };
-  const complete = () => {
+  const complete = async () => {
+    setSaving(true);
     createCallRecord(callRecordFromWrapUp({
       patient, script, session, cmName, summary: summary.trim(), disposition: session.disposition,
       seconds: session.wrapSeconds, endedAt, accepted: draft.accepted, medUpdates: draft.medUpdates, stepUpdates: draft.stepUpdates,
     }));
+    const done = await routeAcceptedItems({
+      store: useAppStore, patient, pid, program: planProgram, accepted: draft.accepted, script, medEdits: session.medEdits,
+    });
+    setSaving(false);
     session.reset();
-    showToast(`Call saved to ${patient.name.split(' ')[0]}’s call log`);
+    const made = routedSummary(done);
+    showToast(`Call saved to ${patient.name.split(' ')[0]}’s call log${made ? ` · created ${made}` : ''}${done.failed ? ` · ${done.failed} couldn’t be saved` : ''}`);
   };
 
   return (
@@ -47,7 +74,7 @@ export function WrapUpDrawer() {
       noCloseDivider
       headerRight={(
         <div className={styles.headerRight}>
-          <Button size="sm" leadingIcon="solar:check-circle-linear" disabled={!canComplete} onClick={complete}>Complete</Button>
+          <Button size="sm" leadingIcon="solar:check-circle-linear" disabled={!canComplete} onClick={complete}>{saving ? 'Saving…' : 'Complete'}</Button>
           <span className={styles.headerDivider} />
         </div>
       )}
@@ -119,21 +146,21 @@ export function WrapUpDrawer() {
               <li key={st} className={styles.row}>
                 <span className={styles.rowIcon}><Icon name="solar:checklist-minimalistic-linear" size={16} color="var(--neutral-400)" /></span>
                 <span className={styles.rowText}>Program step: {st}</span>
-                <span className={styles.where}>Care Programs</span>
+                <span className={styles.where}>Saved to the program</span>
               </li>
             ))}
             {draft.medUpdates.map(m => (
               <li key={m} className={styles.row}>
                 <span className={styles.rowIcon}><Icon name="solar:pill-linear" size={16} color="var(--neutral-400)" /></span>
                 <span className={styles.rowText}>Medication update: {m}</span>
-                <span className={styles.where}>Medications</span>
+                <span className={styles.where}>Updates the medication list</span>
               </li>
             ))}
             {draft.accepted.map(it => (
               <li key={it.id} className={styles.row}>
                 <span className={styles.rowIcon}><Icon name={it.icon} size={16} color="var(--neutral-400)" /></span>
                 <span className={styles.rowText}>{it.type}: {it.title}</span>
-                <span className={styles.where}>{it.where}</span>
+                <span className={styles.where}>{destination(it.route)}</span>
               </li>
             ))}
           </ul>

@@ -32,6 +32,8 @@ const SESSION = {
   // Medication editor in the right rail (keyed by medication name).
   medOpen: null,
   medEdits: {},
+  // Action item shown in full in the right rail.
+  detailId: null,
   // Wrap Up Call, after the call ends.
   wrapOpen: false,
   wrapSeconds: 0,
@@ -118,7 +120,9 @@ export const useLiveCall = create((set, get) => ({
     else delete stepsThisCall[key];
     return { stepsThisCall };
   }),
-  openMed: (name) => set(s => ({ medOpen: s.medOpen === name ? null : name })),
+  openMed: (name) => set(s => ({ medOpen: s.medOpen === name ? null : name, detailId: null })),
+  openDetail: (detailId) => set({ detailId, medOpen: null, focus: detailId }),
+  closeDetail: () => set({ detailId: null }),
   closeMed: () => set({ medOpen: null }),
   saveMed: (name, rec) => set(s => ({ medEdits: { ...s.medEdits, [name]: rec }, medOpen: null })),
   focusItem: (id) => set({ focus: id }),

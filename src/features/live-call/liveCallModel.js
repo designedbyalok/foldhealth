@@ -39,7 +39,7 @@ export function fallbackScript(patient = {}) {
     points: [{ t: 'Reason for the call', line: 3 }, { t: 'Next follow-up', line: 5 }],
     meds: [],
     items: [
-      { id: 'f1', type: 'New Appointment', tone: 'primary', icon: 'solar:calendar-add-linear', where: 'Calendar', title: 'Follow-up call in 2 weeks', fields: [['Preferred Time', 'Mornings'], ['Type', 'Phone']] },
+      { id: 'f1', type: 'New Task', tone: 'neutral', icon: 'solar:checklist-minimalistic-linear', where: 'Tasks', title: 'Follow-up call in 2 weeks (mornings)', route: { kind: 'task', name: 'Follow-up call in 2 weeks (mornings)', dueInDays: 14 }, fields: [['Preferred Time', 'Mornings'], ['Due', 'In 2 weeks']] },
     ],
   };
 }
@@ -133,7 +133,7 @@ export function wrapUpDraft(script, session) {
   const recorded = session.consent === 'yes';
   const shown = recorded ? session.shown : 0;
   const view = actionItemsView(script, shown, { ...session, filter: 'all' });
-  const accepted = view.raised.filter(it => itemState(session, it.id) === 'accepted').map(it => ({ ...it, title: session.edits[it.id] || it.title }));
+  const accepted = view.raised.filter(it => itemState(session, it.id) === 'accepted').map(it => ({ ...it, originalTitle: it.title, title: session.edits[it.id] || it.title }));
   const pending = view.raised.filter(it => itemState(session, it.id) === 'pending');
   const sources = recorded && shown > 0 ? ['Live transcript', ...(accepted.length ? [`${accepted.length} accepted ${accepted.length === 1 ? 'item' : 'items'}`] : [])] : [];
 
