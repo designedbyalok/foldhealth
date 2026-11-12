@@ -3,13 +3,13 @@ import { Avatar } from '../../components/Avatar/Avatar';
 import { Button } from '../../components/Button/Button';
 import { Icon } from '../../components/Icon/Icon';
 import { useLiveCall } from './useLiveCall';
-import { fillCm, speakerOf, splitHighlight } from './liveCallModel';
+import { MODE_COPY, fillCm, speakerOf, splitHighlight } from './liveCallModel';
 import { jumpToLine } from './jumpToLine';
 import styles from './LiveCallOverlay.module.css';
 
 /** The transcript as it comes in, newest on top, behind the recording consent gate. */
 export function LiveTranscript({ script, cmName }) {
-  const { consent, consentAt, shown, held, focus, setConsent, focusItem } = useLiveCall();
+  const { consent, consentAt, shown, held, focus, setConsent, focusItem, mode } = useLiveCall();
   const itemsById = new Map(script.items.map(it => [it.id, it]));
   const listening = consent === 'yes' && !held && shown < script.lines.length;
   const next = listening ? speakerOf(script, script.lines[shown].who, cmName) : null;
@@ -25,7 +25,7 @@ export function LiveTranscript({ script, cmName }) {
         <div className={styles.consent} role="region" aria-label="Recording consent">
           <span className={styles.consentIcon}><Icon name="solar:microphone-3-linear" size={24} color="var(--neutral-300)" /></span>
           <span className={styles.consentTitle}>Ask for recording consent</span>
-          <span className={styles.consentScript}>“This call is recorded and transcribed for your care record. Is that okay?”</span>
+          <span className={styles.consentScript}>“{(MODE_COPY[mode] || MODE_COPY.call).consent}”</span>
           <span className={styles.consentActions}>
             <Button onClick={() => setConsent(true)}>Agreed, Start Recording</Button>
             <Button variant="outline" onClick={() => setConsent(false)}>Declined</Button>

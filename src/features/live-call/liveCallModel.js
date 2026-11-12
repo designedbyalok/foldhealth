@@ -9,6 +9,7 @@ export function scriptFromRow(r) {
     reason: r.reason || '',
     interpreter: r.interpreter || 'English',
     summary: r.summary || '',
+    handoff: Array.isArray(r.handoff) ? r.handoff : [],
     speakers: r.speakers || {},
     lines: Array.isArray(r.lines) ? r.lines : [],
     points: Array.isArray(r.points) ? r.points : [],
@@ -39,7 +40,7 @@ export function fallbackScript(patient = {}) {
     points: [{ t: 'Reason for the call', line: 3 }, { t: 'Next follow-up', line: 5 }],
     meds: [],
     items: [
-      { id: 'f1', type: 'New Appointment', tone: 'primary', icon: 'solar:calendar-add-linear', where: 'Calendar', title: 'Follow-up call in 2 weeks', fields: [['Preferred Time', 'Mornings'], ['Type', 'Phone']] },
+      { id: 'f1', type: 'New Task', tone: 'neutral', icon: 'solar:checklist-minimalistic-linear', where: 'Tasks', title: 'Follow-up call in 2 weeks (mornings)', route: { kind: 'task', name: 'Follow-up call in 2 weeks (mornings)', dueInDays: 14 }, fields: [['Preferred Time', 'Mornings'], ['Due', 'In 2 weeks']] },
     ],
   };
 }
@@ -117,9 +118,10 @@ export function acceptCopy(item) {
 
 /** Header status for the recording. */
 export function recordingStatus(session, total) {
+  if (session.dropped) return { label: 'Call Dropped', tone: 'danger' };
   if (session.consent === 'pending') return { label: 'Not Recording · Ask Consent', tone: 'warning' };
   if (session.consent === 'no') return { label: 'Not Recording · Declined', tone: 'neutral' };
-  if (session.held) return { label: 'On Hold · Transcript Paused', tone: 'warning' };
+  if (session.held) return { label: (MODE_COPY[session.mode] || MODE_COPY.call).paused, tone: 'warning' };
   return { label: session.shown >= total ? 'Recording · Up to Date' : 'Recording', tone: 'success' };
 }
 
@@ -133,7 +135,7 @@ export function wrapUpDraft(script, session) {
   const recorded = session.consent === 'yes';
   const shown = recorded ? session.shown : 0;
   const view = actionItemsView(script, shown, { ...session, filter: 'all' });
-  const accepted = view.raised.filter(it => itemState(session, it.id) === 'accepted').map(it => ({ ...it, title: session.edits[it.id] || it.title }));
+  const accepted = view.raised.filter(it => itemState(session, it.id) === 'accepted').map(it => ({ ...it, originalTitle: it.title, title: session.edits[it.id] || it.title }));
   const pending = view.raised.filter(it => itemState(session, it.id) === 'pending');
   const sources = recorded && shown > 0 ? ['Live transcript', ...(accepted.length ? [`${accepted.length} accepted ${accepted.length === 1 ? 'item' : 'items'}`] : [])] : [];
 
@@ -145,7 +147,7 @@ export function wrapUpDraft(script, session) {
     const covered = points.filter(p => p.done).map(p => p.t);
     const open = points.filter(p => !p.done).map(p => p.t);
     summary = [
-      shown < script.lines.length ? `Call ended before the brief was finished. ${script.reason}` : script.reason,
+      shown < script.lines.length ? `${session.mode === 'visit' ? 'Visit' : 'Call'} ended before the brief was finished. ${script.reason}` : script.reason,
       covered.length ? `Covered: ${covered.join('; ')}.` : '',
       open.length ? `Not covered: ${open.join('; ')}.` : '',
       accepted.length ? `Agreed on the call: ${accepted.map(it => it.title).join('; ')}.` : '',
@@ -171,7 +173,7 @@ export function callRecordFromWrapUp({ patient, script, session, cmName, summary
     patientId: String(patient.id),
     callType: 'completed',
     agentName: cmName,
-    direction: 'outgoing',
+    direction: session.mode === 'visit' ? 'in-person' : 'outgoing',
     isBot: false,
     startedAt: stamp(started),
     endedAt: stamp(endedAt),
@@ -256,3 +258,24 @@ export function medUpdateLines(script, medEdits) {
     return r.status === 'Stopped' ? `${m.n}: stopped ${isoToUs(r.stop)} (${r.reason})` : `${m.n}: ${r.sig}`;
   });
 }
+
+/**
+ * The script as an in-person visit: the care manager opens in the room
+ * instead of on the phone, and the language line says so.
+ */
+export function visitScript(script, patient = {}) {
+  const first = String(patient.name || script.speakers?.pt?.name || '').split(/\s+/)[0] || 'there';
+  let opened = false;
+  const lines = script.lines.map(l => {
+    if (opened || l.who !== 'cm') return l;
+    opened = true;
+    return { ...l, text: `Hi ${first}, thanks for coming in. I’ll keep the recorder on so I can focus on you.`, hl: undefined, item: l.item };
+  });
+  return { ...script, lines, interpreter: `In room · ${script.interpreter}` };
+}
+
+/** Words that change between a phone call and an in-person visit. */
+export const MODE_COPY = {
+  call: { noun: 'Call', live: 'Active Call', end: 'End Call', consent: 'This call is recorded and transcribed for your care record. Is that okay?', paused: 'On Hold · Transcript Paused', outcomes: ['Reached', 'Left Voicemail', 'No Answer', 'Refused'], done: 'Reached' },
+  visit: { noun: 'Visit', live: 'In-Person Visit', end: 'End Visit', consent: 'This visit is recorded and transcribed for your care record. Is that okay?', paused: 'Recording Paused', outcomes: ['Completed', 'Ended Early', 'Recording Declined'], done: 'Completed' },
+};

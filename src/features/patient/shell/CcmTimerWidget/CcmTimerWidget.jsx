@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../../../../components/Icon/Icon';
 import { Avatar } from '../../../../components/Avatar/Avatar';
@@ -15,6 +15,7 @@ import { useCcmTimerDock } from './CcmTimerDockContext';
 import { armAlertAudio, formatIdleDuration, inactivitySecondsFor, isInactivityDemoPatient, playAlertChime, useInactivity } from './inactivity';
 import { usePatientConsent } from '../../hooks/usePatientConsent';
 import { canBill } from '../../data/consentRules';
+import { loggedSecondsFor, progressLabel, targetMinutesFor, timeProgramsFor } from './timeAttribution';
 import styles from './CcmTimerWidget.module.css';
 
 // CCM activity timer (Figma CCM Timer 324:84077), drawn in our timer's own
@@ -47,6 +48,7 @@ import styles from './CcmTimerWidget.module.css';
 // running again only if it was running when they left. Drag the handle to
 // move it anywhere; drop it on the tag row to dock it back there.
 const DRAG_GHOST_CLASS = 'ccm-timer-dragging';
+const NO_ROWS = [];
 const LOGGED_FEEDBACK_MS = 1600;
 // How far outside the tag row a drop still counts as "in" it.
 const DOCK_SLOP = 16;
@@ -161,6 +163,13 @@ export function CcmTimerWidget({ patient }) {
   const addCcmBillableActivity = useAppStore(s => s.addCcmBillableActivity);
   const logTimerInactivityEvent = useAppStore(s => s.logTimerInactivityEvent);
   const currentPeriod = periods && periods[0];
+  const activities = useAppStore(s => s.ccmBillableActivitiesByPatient[patientId]) || NO_ROWS;
+  const enrolled = useAppStore(s => s.careProgramsByPatient[patientId]) || NO_ROWS;
+  // Which time-billed program this session counts toward (CCM unless the
+  // patient is in another and it's picked when logging).
+  const timePrograms = useMemo(() => timeProgramsFor(enrolled), [enrolled]);
+  const [pickedProgram, setPickedProgram] = useState(null);
+  const program = timePrograms.includes(pickedProgram) ? pickedProgram : timePrograms[0];
 
   const { dockEl, isDocked, setIsDocked, floatPos, setFloatPos } = useCcmTimerDock();
 
@@ -432,6 +441,7 @@ export function CcmTimerWidget({ patient }) {
         id: activityId(),
         periodId: currentPeriod.id,
         patientId,
+        programCode: program,
         activityType,
         description: description.trim(),
         durationSeconds: elapsed,
@@ -560,6 +570,9 @@ export function CcmTimerWidget({ patient }) {
   if (!currentPeriod) return null;
 
   const timeTone = isRunning ? styles.timeRunning : styles.timeHeld;
+  const loggedSeconds = loggedSecondsFor(activities, currentPeriod.id, program);
+  const targetMinutes = targetMinutesFor(program, currentPeriod);
+  const progress = progressLabel(program, loggedSeconds, isLogged ? 0 : elapsed, targetMinutes);
   const name = patient?.name || 'Patient';
 
   // ── Mini: the control bar ────────────────────────────────────────────
@@ -582,6 +595,12 @@ export function CcmTimerWidget({ patient }) {
           {isLogged
             ? <><Icon name="solar:check-circle-linear" size={14} color="var(--status-success)" /><span className={styles.loggedLabel}>Logged</span></>
             : <TimeText seconds={elapsed} className={`${styles.chipTime} ${isRunning ? styles.chipTimeActive : styles.chipTimeIdle}`} />}
+        </span>
+        <span
+          className={[styles.attribution, loggedSeconds + elapsed >= targetMinutes * 60 ? styles.attributionMet : ''].filter(Boolean).join(' ')}
+          title={`Counts toward ${program}: ${progress.replace(`${program} `, '')} this month${loggedSeconds + elapsed >= targetMinutes * 60 ? ' (minimum met)' : ''}`}
+        >
+          {progress}
         </span>
       </div>
 
@@ -654,6 +673,16 @@ export function CcmTimerWidget({ patient }) {
       return (
         <div className={styles.form}>
           <span className={styles.formTitle}>Log {secondsToTime(elapsed)}</span>
+          {timePrograms.length > 1 ? (
+            <Select
+              label="Program"
+              options={timePrograms.map(c => ({ value: c, label: c }))}
+              value={program}
+              onValueChange={setPickedProgram}
+            />
+          ) : (
+            <span className={styles.formHint}>Counts toward {program} · {Math.floor((loggedSeconds + elapsed) / 60)} of {targetMinutes} min this month</span>
+          )}
           <Select
             label="Activity"
             options={CCM_ACTIVITY_TYPES.map(t => ({ value: t, label: t }))}

@@ -12,12 +12,12 @@
 
 const ANNETTE_OVERVIEW = {
     memberId: '11089',
-    synopsis: 'Annette is a 56-year-old woman with Type 2 Diabetes and Hypertension, both above target. HbA1c rose to 8.2% (goal under 7.0%) and blood pressure is 142/88 mmHg. She is enrolled in CCM and TCM following an ER visit for chest pain on 03/02/2025.',
-    synopsisEmphasis: ['8.2%', '142/88 mmHg', 'CCM', 'TCM'],
+    synopsis: 'Annette is a 61-year-old woman with Type 2 Diabetes, Hypertension, COPD and Hyperlipidemia. She was seen in the City Medical ER on 11/10/2026 for chest pain; ACS was ruled out and she started aspirin and nitroglycerin. HbA1c is 8.2% (goal under 7.0%) and blood pressure 142/88 mmHg.',
+    synopsisEmphasis: ['11/10/2026', '8.2%', '142/88 mmHg'],
     takeaways: [
-      { tone: 'error', text: 'Glycemic control worsening: HbA1c 7.6% → 8.2% in 6 months' },
+      { tone: 'error', text: 'ED visit for chest pain on 11/10; 7-day follow-up due by 11/17' },
+      { tone: 'warning', text: 'HbA1c 8.2%, above the under 7.0% goal' },
       { tone: 'warning', text: '2 missed PHQ-9 screenings; care plan adherence at 70%' },
-      { tone: 'success', text: 'Lipid panel and BMP ordered; results pending' },
     ],
     sourcesCount: 14,
     generatedAt: '2025-05-10T09:42:00Z',

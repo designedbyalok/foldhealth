@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LIVE_CALL_SCRIPTS } from './data/scripts';
-import { acceptCopy, actionItemsView, callRecordFromWrapUp, fallbackScript, fillCm, pointsView, recordingStatus, splitHighlight, summaryPoints, wrapUpDraft } from './liveCallModel';
+import { MODE_COPY, visitScript, acceptCopy, actionItemsView, callRecordFromWrapUp, fallbackScript, fillCm, pointsView, recordingStatus, splitHighlight, summaryPoints, wrapUpDraft } from './liveCallModel';
 
 const script = LIVE_CALL_SCRIPTS[0];
 const session = (patch = {}) => ({ accepted: {}, dismissed: {}, edits: {}, filter: 'all', consent: 'yes', held: false, shown: 0, ...patch });
@@ -81,5 +81,23 @@ describe('live call model', () => {
     expect(r.callTranscript[0]).toMatchObject({ name: 'Robin Bang', sender: 'agent', time: '00:03' });
     expect(r.callTranscript[0].text).toContain('this is Robin,');
     expect(summaryPoints('Weight 186 lb. Up 4 lb.')).toEqual(['Weight 186 lb.', 'Up 4 lb.']);
+  });
+
+  it('turns a phone script into an in-person visit', () => {
+    const v = visitScript(script, { name: 'William Davis' });
+    expect(v.lines[0].text).toBe('Hi William, thanks for coming in. I’ll keep the recorder on so I can focus on you.');
+    expect(v.lines.slice(1)).toEqual(script.lines.slice(1));
+    expect(v.interpreter).toBe('In room · English');
+    expect(MODE_COPY.visit.outcomes).toEqual(['Completed', 'Ended Early', 'Recording Declined']);
+  });
+
+  it('reads a paused visit and a dropped call in the status', () => {
+    expect(recordingStatus(session({ held: true, mode: 'visit' }), 5).label).toBe('Recording Paused');
+    expect(recordingStatus(session({ dropped: { at: 42 } }), 5)).toMatchObject({ label: 'Call Dropped', tone: 'danger' });
+  });
+
+  it('records a visit as in person', () => {
+    const r = callRecordFromWrapUp({ patient: { id: '1' }, script, session: session({ mode: 'visit' }), cmName: 'A', summary: '', disposition: 'Completed', seconds: 60 });
+    expect(r.direction).toBe('in-person');
   });
 });

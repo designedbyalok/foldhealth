@@ -186,6 +186,7 @@
 .status_success { color: var(--status-success); }
 .status_warning { color: var(--status-warning-dark); }
 .status_neutral { color: var(--neutral-400); }
+.status_danger { color: var(--status-error); }
 
 .spacer { flex: 1; }
 
@@ -210,6 +211,32 @@
   display: grid;
   flex: 1;
   place-items: center;
+}
+
+/* Dropped call: a slim strip under the header (full screen) or a row in the card. */
+
+.drop,
+.dropCompact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--status-error-light);
+}
+
+.drop {
+  padding: var(--space-2) var(--space-5);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.dropCompact {
+  padding: var(--space-2) var(--space-3);
+}
+
+.dropText {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-md);
+  color: var(--neutral-500);
 }
 
 /* Body: three floating cards */
@@ -273,6 +300,45 @@
   font-size: var(--font-md);
   line-height: var(--leading-normal);
   color: var(--neutral-400);
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-md);
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+}
+
+.words {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.words li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.wordsQuote {
+  font-size: var(--font-md);
+  font-style: italic;
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+}
+
+.wordsGoal {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
 }
 
 .points,
@@ -444,6 +510,38 @@
   min-height: 0;
   overflow-y: auto;
   padding: var(--space-4) var(--space-5) var(--space-6);
+}
+
+/* Care Plan tab: changes from this call, before wrap-up */
+
+.fromCall {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.fromCallList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fromCallRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+}
+
+.fromCallTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-md);
+  color: var(--neutral-500);
 }
 
 /* Program Steps */
@@ -728,11 +826,18 @@
 }
 
 .itemTitle {
+  padding: 0;
+  border: none;
+  background: none;
   font-size: var(--font-md);
   font-weight: 600;
   line-height: var(--leading-normal);
   color: var(--neutral-500);
+  text-align: left;
+  cursor: pointer;
 }
+
+.itemTitle:hover { color: var(--primary-300); }
 
 .editRow {
   display: flex;

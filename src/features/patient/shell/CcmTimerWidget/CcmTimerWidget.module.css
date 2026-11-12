@@ -499,3 +499,19 @@
   .prompt,
   .chipDot { animation: none; }
 }
+
+/* Program attribution beside the time: "CCM 12/20 min" this month. */
+.attribution {
+  margin-left: var(--space-2);
+  font-size: var(--font-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--neutral-300);
+  white-space: nowrap;
+}
+
+.attributionMet { color: var(--status-success); }
+
+.formHint {
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+}

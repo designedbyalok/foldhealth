@@ -8,6 +8,11 @@ import { useLiveCall } from './useLiveCall';
  * the reason and the items.
  */
 export async function endLiveCall(patient) {
+  const live = useLiveCall.getState();
+  if (live.mode === 'visit') {
+    live.startWrap(live.visitSeconds);
+    return;
+  }
   const { activeCallSeconds, endActiveCall } = useAppStore.getState();
   endActiveCall();
   if (patient) await useLiveCall.getState().prepare(patient);

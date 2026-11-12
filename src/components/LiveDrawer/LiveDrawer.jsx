@@ -5,6 +5,7 @@ import { Drawer } from '../Drawer/Drawer';
 import { ComplianceBadges } from '../ComplianceBadges/ComplianceBadges';
 import { DepartmentSelector, TransferringState, TransferFailure, NoHumanAvailable, CallbackOffer, PostTransferFeedback } from '../TransferFlow/TransferFlow';
 import { useAppStore } from '../../store/useAppStore';
+import { joinAgentCall } from '../../features/live-call/joinAgentCall';
 import { LiveCallDuration } from '../../features/toc/worklist/LiveCallDuration';
 import styles from './LiveDrawer.module.css';
 
@@ -75,7 +76,7 @@ export function LiveDrawer() {
         >
           Live Listen
         </Button>
-        <Button leadingIcon="solar:phone-calling-bold" onClick={() => showToast('Take Over Call – coming soon')}>
+        <Button leadingIcon="solar:phone-calling-bold" onClick={() => joinAgentCall(p)}>
           Take Over Call
         </Button>
         <Button

@@ -1,6 +1,6 @@
 import { MenuPopover } from '../../../../../../components/MenuPopover/MenuPopover';
-import { PROGRAM_STATUS_OPTIONS } from '../../../../data/programStatus';
-import { ROW_MENU_ITEMS } from './CareProgramsTab.utils';
+import { PROGRAM_STATUS_OPTIONS, isProgramClosed } from '../../../../data/programStatus';
+import { PAST_ROW_MENU_ITEMS, ROW_MENU_ITEMS } from './CareProgramsTab.utils';
 
 export function CareProgramsTabMenus({ statusMenu, setStatusMenu, rowMenu, setRowMenu, visible, changeStatus, handleRowAction }) {
   return (
@@ -28,7 +28,7 @@ export function CareProgramsTabMenus({ statusMenu, setStatusMenu, rowMenu, setRo
           align="right"
           width={180}
           ariaLabel="Program actions"
-          items={ROW_MENU_ITEMS}
+          items={isProgramClosed(visible.find(p => p.id === rowMenu.id)?.status) ? PAST_ROW_MENU_ITEMS : ROW_MENU_ITEMS}
           onSelect={(key) => {
             const program = visible.find(p => p.id === rowMenu.id);
             if (program) handleRowAction(key, program);

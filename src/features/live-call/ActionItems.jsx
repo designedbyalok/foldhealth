@@ -5,6 +5,7 @@ import { Input } from '../../components/Input/Input';
 import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { useLiveCall } from './useLiveCall';
 import { MedicationEditor } from './MedicationEditor';
+import { ItemDetails } from './ItemDetails';
 import { acceptCopy, actionItemsView, fillCm, itemState, speakerOf } from './liveCallModel';
 import styles from './LiveCallOverlay.module.css';
 
@@ -12,6 +13,7 @@ import styles from './LiveCallOverlay.module.css';
 export function ActionItems({ script, cmName, showToast }) {
   const session = useLiveCall();
   const openMed = session.medOpen ? script.meds.find(m => m.n === session.medOpen) : null;
+  const detailItem = session.detailId ? script.items.find(it => it.id === session.detailId) : null;
   const view = actionItemsView(script, session.consent === 'yes' ? session.shown : 0, session);
   const filters = [
     { key: 'all', label: 'All' },
@@ -28,6 +30,14 @@ export function ActionItems({ script, cmName, showToast }) {
     return (
       <aside className={styles.panel} aria-label="Medication">
         <MedicationEditor key={openMed.n} script={script} med={openMed} cmName={cmName} showToast={showToast} />
+      </aside>
+    );
+  }
+
+  if (detailItem) {
+    return (
+      <aside className={styles.panel} aria-label="Action item">
+        <ItemDetails key={detailItem.id} script={script} item={detailItem} cmName={cmName} showToast={showToast} />
       </aside>
     );
   }
@@ -79,7 +89,7 @@ export function ActionItems({ script, cmName, showToast }) {
                   <Button size="sm" variant="ghost" onClick={session.cancelEdit}>Cancel</Button>
                 </div>
               ) : (
-                <span className={styles.itemTitle}>{title}</span>
+                <button type="button" className={styles.itemTitle} onClick={() => session.openDetail(it.id)} title="Open details">{title}</button>
               )}
 
               <div className={styles.fields}>

@@ -4,6 +4,7 @@ import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { PanelStack } from '../../components/PanelStack/PanelStack';
 import { PatientP360Banner } from './shell/PatientP360Banner/PatientP360Banner';
+import { AgentHandoffStrip } from '../live-call/AgentHandoffStrip';
 import { PatientProfileTabs } from './left-panel/PatientProfileTabs/PatientProfileTabs';
 import { ProfileTabBar } from './shell/ProfileTabBar/ProfileTabBar';
 import { CareManagementView } from './right-panel/tabs/care-management/CareManagementView/CareManagementView';
@@ -530,6 +531,7 @@ export function PatientDetailView() {
     <CcmTimerDockProvider>
     <div className={styles.wrapper}>
       <PatientP360Banner patient={patientWithAppStatus} />
+      <AgentHandoffStrip patient={patient} />
       {/* The pharmacy adherence workflow isn't time-billed. */}
       {activeSubnavList !== 'Pharmacy' && <CcmTimerWidget patient={patient} />}
       <div className={styles.body} ref={bodyRef}>
