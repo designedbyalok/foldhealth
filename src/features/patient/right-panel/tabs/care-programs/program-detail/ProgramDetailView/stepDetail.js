@@ -10,6 +10,20 @@ const ISSUE = { goal: 'off target', intervention: 'overdue', barrier: 'with noth
 
 const fmt = d => `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
 const today = () => { const t = new Date(); t.setHours(0, 0, 0, 0); return t; };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const addBusinessDays = (d, n) => {
+  const x = new Date(d);
+  for (let left = n; left > 0;) { x.setDate(x.getDate() + 1); if (x.getDay() % 6 !== 0) left -= 1; }
+  return x;
+};
+
+// Transitions of care run on the discharge date (the enrollment's trigger):
+// an interactive contact within 2 business days and a face-to-face follow-up
+// within 7 days (TCM high complexity), with medications reconciled by then.
+const TOC = /^TOC (IP|ED)$/;
+const dischargeOf = ctx => (TOC.test(ctx.program?.code || '') ? parseLocalDate(ctx.program?.triggerDate) : null);
+const STOPPED_MED = /stopped|discontinued|inactive/i;
+const medWord = m => String(m.name || '').split(/\s+/)[0];
 
 /**
  * One line on where an open step stands, read from the records behind it
@@ -20,7 +34,10 @@ const today = () => { const t = new Date(); t.setHours(0, 0, 0, 0); return t; };
  * `ctx.dueOf(intervention)` gives an intervention's due date (the care plan
  * table's computeDueDate), for the Care Plan step's overdue count.
  *
- * @returns {{ text: string, urgent: boolean } | null}
+ * `title` / `label` (optional) name what the step comes down to right now
+ * (the task to do, "Interactive Contact") for a list of actions.
+ *
+ * @returns {{ text: string, urgent: boolean, title?: string, label?: string } | null}
  */
 export function stepDetail(step, ctx) {
   const name = step.name || '';
@@ -43,23 +60,67 @@ export function stepDetail(step, ctx) {
     return { text: cp.plan.signedAt ? 'Changed since it was signed' : 'Not signed yet', urgent: false };
   }
 
+  // The task to do next, by name: an overdue one first, then the soonest due.
   if (name === 'Program Related Task' || name === 'Tasks') {
     const open = (ctx.tasks || []).filter(t => !DONE_TASK.test(t.status || ''));
     if (!open.length) return required ? { text: 'Required', urgent: false } : null;
-    const overdue = open.filter(t => t.status === 'missed' || (parseLocalDate(t.due_date) && parseLocalDate(t.due_date) < today())).length;
-    return { text: `${open.length} open${overdue ? ` • ${overdue} overdue` : ''}`, urgent: overdue > 0 };
+    const dueOfTask = t => parseLocalDate(String(t.due_date || '').replace(/-/g, '/'));
+    const isOverdue = t => t.status === 'missed' || (dueOfTask(t) && dueOfTask(t) < today());
+    const [first] = [...open].sort((a, b) => (isOverdue(b) - isOverdue(a)) || ((dueOfTask(a) || Infinity) - (dueOfTask(b) || Infinity)));
+    const due = dueOfTask(first);
+    const when = isOverdue(first) ? `Overdue${due ? `, due ${fmt(due)}` : ''}` : due ? `Due ${fmt(due)}` : 'Open';
+    return {
+      title: first.name,
+      label: 'Program Task',
+      text: `${when}${open.length > 1 ? ` • ${open.length - 1} more` : ''}`,
+      // Overdue, or due by tomorrow.
+      urgent: open.some(t => isOverdue(t) || (dueOfTask(t) && dueOfTask(t) <= addDays(today(), 1))),
+    };
+  }
+
+  // Interactive contact after a discharge: due within 2 business days.
+  if (name === 'Outreach' && dischargeOf(ctx)) {
+    const due = addBusinessDays(dischargeOf(ctx), 2);
+    return { title: 'Interactive Contact', text: `${due < today() ? 'Overdue, due' : 'Due'} ${fmt(due)} (2 business days after discharge)`, urgent: true };
   }
 
   if (name === 'Program Related Files' || name === 'Program Documents' || name === 'Documents') {
     return { text: 'No documents yet', urgent: false };
   }
 
+  // Medications started since the discharge (or the enrollment) that the
+  // reconciliation hasn't covered yet; urgent after a discharge.
   if (name === 'Medication Reconciliation' || name === 'Medication Review') {
-    return { text: 'Not signed yet', urgent: false };
+    const discharge = dischargeOf(ctx);
+    const since = discharge || parseLocalDate(ctx.program?.startDate);
+    const added = since ? (ctx.medications || []).filter(m => !STOPPED_MED.test(m.status || '') && parseLocalDate(m.start) >= since) : [];
+    if (!added.length) return { text: 'Not signed yet', urgent: false };
+    const names = added.slice(0, 3).map(medWord).join(', ');
+    return {
+      title: discharge ? 'Medication Reconciliation' : undefined,
+      text: `${added.length} new since ${discharge ? 'discharge' : 'enrollment'} ${fmt(since)}: ${names}${added.length > 3 ? ', …' : ''}`,
+      urgent: !!discharge,
+    };
   }
 
   if (/appointment/i.test(name)) {
     const wantIct = /ict/i.test(name);
+    // After a discharge: the follow-up visit has to land within 7 days.
+    const discharge = dischargeOf(ctx);
+    if (discharge && !wantIct) {
+      const by = addDays(discharge, 7);
+      const next = (ctx.appointments || [])
+        .filter(a => OPEN_APPT.test(a.status || '') || !a.status)
+        .map(a => parseLocalDate(String(a.date || '').replace(/-/g, '/')))
+        .filter(d => d && d >= today())
+        .sort((a, b) => a - b)[0];
+      if (next && next <= by) return { title: '7-Day Follow-Up Visit', text: `Scheduled ${fmt(next)}`, urgent: false };
+      return {
+        title: '7-Day Follow-Up Visit',
+        text: next ? `Book by ${fmt(by)}; the ${fmt(next)} visit is after the 7-day window` : `Not booked; due by ${fmt(by)}`,
+        urgent: true,
+      };
+    }
     const dates = (ctx.appointments || [])
       .filter(a => (!wantIct || /ict|interdisciplinary/i.test(`${a.appointment_type_name || ''} ${a.title || ''}`)) && (OPEN_APPT.test(a.status || '') || !a.status))
       .map(a => parseLocalDate(a.date))

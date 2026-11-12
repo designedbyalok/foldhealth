@@ -3,7 +3,6 @@ import { DashboardCard } from '@/components/DashboardCard/DashboardCard';
 import { SegmentedControl } from '@/components/SegmentedControl/SegmentedControl';
 import { Badge } from '@/components/Badge/Badge';
 import { Button } from '@/components/Button/Button';
-import { ActionButton } from '@/components/ActionButton/ActionButton';
 import { Icon } from '@/components/Icon/Icon';
 import { DownChevronIcon } from '@/components/Icon/DownChevronIcon';
 import styles from './CareProgramsOverview.module.css';
@@ -16,23 +15,25 @@ const KIND = {
   goal: { icon: 'solar:target-linear', label: 'Goal' },
   intervention: { icon: 'solar:checklist-minimalistic-linear', label: 'Intervention' },
   barrier: { icon: 'solar:flag-linear', label: 'Barrier' },
+  plan: { icon: 'solar:clipboard-heart-linear', label: 'Care Plan' },
 };
 const LIMIT = 5;
 
 // A care plan item's short status beside its title; its detail is the why line.
 const ITEM_STATUS = { goal: ['Off target', 'danger'], intervention: ['Overdue', 'danger'], barrier: ['Unaddressed', 'warning'] };
 
-function ActionRow({ row, n, current, onRun, onReview }) {
+function ActionRow({ row, n, current, onRun }) {
   const kind = KIND[row.kind];
   const isStep = row.kind === 'step';
-  const [status, tone] = isStep ? [row.detail.text, row.detail.urgent ? 'danger' : 'neutral'] : ITEM_STATUS[row.kind];
+  // A plan row's title already says what's wrong.
+  const [status, tone] = isStep ? [row.detail.text, row.detail.urgent ? 'danger' : 'neutral'] : ITEM_STATUS[row.kind] || [];
   return (
     <li className={`${styles.nbaRow} ${current ? styles.nbaRowCurrent : ''}`}>
       <span className={`${styles.nbaNum} ${current ? styles.nbaNumCurrent : ''}`} aria-hidden="true">{n}</span>
       <div className={styles.nbaBody}>
         <span className={styles.nbaKind}>
           <Icon name={kind.icon} size={12} color="currentColor" />
-          {kind.label}{row.with ? ` · With ${row.with}` : ''}
+          {row.label || kind.label}{row.with ? ` · With ${row.with}` : ''}
         </span>
         <span className={styles.nbaTitleLine}>
           <span className={styles.nbaTitle}>{row.title}</span>
@@ -42,17 +43,17 @@ function ActionRow({ row, n, current, onRun, onReview }) {
               <Icon name="solar:danger-triangle-linear" size={12} color="currentColor" />Required
             </span>
           )}
-          <span className={tone === 'danger' ? styles.textDanger : tone === 'warning' ? styles.textWarning : styles.nbaDetail}>{status}</span>
+          {/* "Required" is already the badge beside it. */}
+          {status && !(row.required && status === 'Required') && (
+            <span className={tone === 'danger' ? styles.textDanger : tone === 'warning' ? styles.textWarning : styles.nbaDetail}>{status}</span>
+          )}
         </span>
         {!isStep && <span className={styles.nbaWhy}>{row.detail.text}</span>}
       </div>
       <div className={styles.nbaActions}>
         <Button size="sm" variant={current ? 'solid' : 'outline'} onClick={() => onRun(row)}>
-          {row.kind === 'step' ? 'Open Step' : `Open ${ITEM_LABEL[row.kind]}`}
+          {row.kind === 'step' ? 'Open Step' : row.kind === 'plan' ? 'Open Care Plan' : `Open ${ITEM_LABEL[row.kind]}`}
         </Button>
-        {row.kind === 'step' && (
-          <ActionButton icon="solar:check-circle-linear" size="sm" tooltip="Mark as Reviewed" aria-label={`Mark ${row.title} as reviewed`} onClick={() => onReview(row)} />
-        )}
       </div>
     </li>
   );
@@ -62,10 +63,10 @@ function ActionRow({ row, n, current, onRun, onReview }) {
  * Next Best Actions (care plan redesign prototype): program steps and care
  * plan items that need doing, from nextBestActions. In Order shows the
  * sequence (the first is the one to do now); By Program groups them per
- * program. A step opens in a drawer and can be marked reviewed;
- * a goal, intervention or barrier opens in its drawer.
+ * program. A step opens in a drawer; a goal, intervention or barrier opens
+ * in its drawer.
  */
-export function NextBestActions({ actions, programs, onRun, onReview }) {
+export function NextBestActions({ actions, programs, onRun }) {
   const [view, setView] = useState('order');
   const [all, setAll] = useState(false);
   const [collapsed, setCollapsed] = useState({});
@@ -89,7 +90,7 @@ export function NextBestActions({ actions, programs, onRun, onReview }) {
       ) : view === 'order' ? (
         <>
           <ol className={styles.nbaList}>
-            {shown.map((row, i) => <ActionRow key={row.key} row={row} n={i + 1} current={i === 0} onRun={onRun} onReview={onReview} />)}
+            {shown.map((row, i) => <ActionRow key={row.key} row={row} n={i + 1} current={i === 0} onRun={onRun} />)}
           </ol>
           {actions.length > LIMIT && (
             <button type="button" className={styles.moreBtn} onClick={() => setAll(v => !v)}>
@@ -114,7 +115,7 @@ export function NextBestActions({ actions, programs, onRun, onReview }) {
                 </button>
                 {open && (rows.length ? (
                   <ol className={styles.nbaList}>
-                    {rows.map((row, i) => <ActionRow key={row.key} row={row} n={i + 1} current={i === 0} onRun={onRun} onReview={onReview} />)}
+                    {rows.map((row, i) => <ActionRow key={row.key} row={row} n={i + 1} current={i === 0} onRun={onRun} />)}
                   </ol>
                 ) : <p className={styles.empty}>Nothing open in this program.</p>)}
               </section>

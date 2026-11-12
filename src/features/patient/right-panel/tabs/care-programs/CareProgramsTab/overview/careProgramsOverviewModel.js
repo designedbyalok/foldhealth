@@ -6,6 +6,12 @@ import { isExcludedStatus } from '../../care-plan/lib/gbiStatus';
 const normName = n => (n === 'Care Plan Details' ? 'Care Plan' : n);
 const ITEM_KIND = { goal: 'Goal', intervention: 'Intervention', barrier: 'Barrier' };
 const ITEM_SUB = { goal: 'Off target', intervention: 'Overdue', barrier: 'Nothing addressing it' };
+const PLAN_KINDS = ['intervention', 'goal', 'barrier'];
+const PLAN_LABEL = {
+  goal: ['Off-Target Goal', 'Off-Target Goals'],
+  intervention: ['Overdue Intervention', 'Overdue Interventions'],
+  barrier: ['Unaddressed Barrier', 'Unaddressed Barriers'],
+};
 
 /**
  * One enrollment, ready for the overview:
@@ -30,34 +36,58 @@ export function programProgress({ program, steps, ctx }) {
  * plan item then moves to just after its program's Care Plan step, when that
  * step is listed, so related work stays together.
  *
- * Row: { key, kind: 'step'|'goal'|'intervention'|'barrier', title, programs: [program],
- *        refs: [{ program, step }] | ref: { program, item }, detail: { text, urgent },
+ * A program with several care plan items gets one 'plan' row for them (its
+ * title the counts, its detail their names) instead of a row each.
+ *
+ * Row: { key, kind: 'step'|'goal'|'intervention'|'barrier'|'plan', title, label?, programs: [program],
+ *        refs: [{ program, step }] | ref: { program, item? }, counts? (plan), detail: { text, urgent },
  *        required, with?: 'Care Plan' }
  */
 export function nextBestActions(entries) {
   const steps = new Map();
   entries.forEach((e, order) => {
     for (const s of openStepsWithDetail(e.steps, e.ctx)) {
-      const name = normName(s.name);
+      // What the step comes down to now (the task to do, the 7-day visit), when the records say.
+      const name = s.detail.title || normName(s.name);
       const k = `${name}|${s.detail.text}`;
-      const row = steps.get(k) || { key: `step:${k}`, kind: 'step', title: name, programs: [], refs: [], detail: s.detail, required: false, order };
+      const row = steps.get(k) || { key: `step:${k}`, kind: 'step', title: name, label: s.detail.label, programs: [], refs: [], detail: s.detail, required: false, order };
       row.programs.push(e.program);
       row.refs.push({ program: e.program, step: s });
       row.required = row.required || (!!s.mandatory && s.status === STEP_STATUS.pending);
       steps.set(k, row);
     }
   });
-  const items = entries.flatMap((e, order) => (e.attention || []).filter(a => a.item).map(a => ({
-    key: `${a.kind}:${e.program.id}:${a.item.id}`,
-    kind: a.kind,
-    title: a.item.title,
-    sub: ITEM_SUB[a.kind],
-    programs: [e.program],
-    ref: { program: e.program, item: a.item },
-    detail: { text: a.text, urgent: a.kind === 'intervention' },
-    required: false,
-    order,
-  })));
+  // A program's care plan items: one row each, or one row for the plan when
+  // there are several, so they don't crowd out the program work.
+  const items = entries.flatMap((e, order) => {
+    const list = (e.attention || []).filter(a => a.item);
+    if (list.length < 2) {
+      return list.map(a => ({
+        key: `${a.kind}:${e.program.id}:${a.item.id}`,
+        kind: a.kind,
+        title: a.item.title,
+        sub: ITEM_SUB[a.kind],
+        programs: [e.program],
+        ref: { program: e.program, item: a.item },
+        detail: { text: a.text, urgent: a.kind === 'intervention' },
+        required: false,
+        order,
+      }));
+    }
+    const counts = { goal: 0, intervention: 0, barrier: 0 };
+    for (const a of list) counts[a.kind] += 1;
+    return [{
+      key: `plan:${e.program.id}`,
+      kind: 'plan',
+      title: PLAN_KINDS.filter(k => counts[k]).map(k => `${counts[k]} ${PLAN_LABEL[k][counts[k] === 1 ? 0 : 1]}`).join(', '),
+      programs: [e.program],
+      ref: { program: e.program },
+      counts,
+      detail: { text: list.map(a => a.item.title).join(', '), urgent: counts.intervention > 0 },
+      required: false,
+      order,
+    }];
+  });
   const bucket = r => (r.detail.urgent ? 0 : r.kind !== 'step' ? 1 : 2);
   const ranked = [...steps.values(), ...items].sort((a, b) => bucket(a) - bucket(b) || a.order - b.order);
 
@@ -91,11 +121,13 @@ export function nextBestActions(entries) {
 export function whyPrioritized(actions, { acuity, totals, progress = [], firstName } = {}) {
   const takeaways = [];
   const urgent = actions.filter(a => a.detail.urgent);
+  // Short: the action and its program; the paragraph and the list carry the detail.
   for (const a of urgent.slice(0, 2)) {
-    takeaways.push({ tone: 'danger', text: `${a.programs.map(p => p.code).join(', ')} ${a.title}: ${a.detail.text.replace(/\.$/, '')}` });
+    const late = /overdue/i.test(a.detail.text) ? ', overdue' : '';
+    takeaways.push({ tone: 'danger', text: `${a.title} (${a.programs.map(p => p.code).join(', ')}${late})` });
   }
   if (urgent.length > 2) takeaways.push({ tone: 'danger', text: `${urgent.length - 2} more urgent` });
-  const offTarget = actions.filter(a => a.kind === 'goal').length;
+  const offTarget = actions.reduce((n, a) => n + (a.kind === 'goal' ? 1 : a.counts?.goal || 0), 0);
   if (offTarget) takeaways.push({ tone: 'warning', text: `${offTarget} ${offTarget === 1 ? 'goal' : 'goals'} off target` });
   if (/high/i.test(acuity || '')) takeaways.push({ tone: 'warning', text: `${acuity} acuity` });
 

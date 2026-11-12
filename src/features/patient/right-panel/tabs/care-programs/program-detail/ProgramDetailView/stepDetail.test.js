@@ -15,15 +15,39 @@ describe('stepDetail', () => {
       .toEqual({ text: 'Not signed yet', urgent: false });
   });
 
-  it('counts open and overdue tasks', () => {
+  it('names the task to do next: an overdue one first, then the soonest due', () => {
     const ctx = { tasks: [
-      { status: 'pending', due_date: '01/02/2020' },
-      { status: 'missed' },
-      { status: 'pending', due_date: '01/02/2999' },
-      { status: 'completed', due_date: '01/02/2020' },
+      { name: 'Later', status: 'pending', due_date: '01-02-2999' },
+      { name: 'Missed call', status: 'missed' },
+      { name: 'Potassium recheck', status: 'pending', due_date: '01-02-2020' },
+      { name: 'Done', status: 'completed', due_date: '01/02/2020' },
     ] };
-    expect(stepDetail({ name: 'Program Related Task' }, ctx)).toEqual({ text: '3 open • 2 overdue', urgent: true });
+    expect(stepDetail({ name: 'Program Related Task' }, ctx))
+      .toEqual({ title: 'Potassium recheck', label: 'Program Task', text: 'Overdue, due 01/02/2020 • 2 more', urgent: true });
+    expect(stepDetail({ name: 'Program Related Task' }, { tasks: [{ name: 'Later', status: 'pending', due_date: '01-02-2999' }] }))
+      .toEqual({ title: 'Later', label: 'Program Task', text: 'Due 01/02/2999', urgent: false });
     expect(stepDetail({ name: 'Program Related Task' }, { tasks: [] })).toBeNull();
+  });
+
+  it('times a transition of care from the discharge: contact, 7-day visit, medications', () => {
+    const program = { code: 'TOC IP', triggerDate: '01/03/2020' }; // a Friday
+    expect(stepDetail({ name: 'Outreach' }, { program }))
+      .toEqual({ title: 'Interactive Contact', text: 'Overdue, due 01/07/2020 (2 business days after discharge)', urgent: true });
+    expect(stepDetail({ name: 'Appointment' }, { program, appointments: [{ status: 'Scheduled', date: '12-01-2999' }] }))
+      .toEqual({ title: '7-Day Follow-Up Visit', text: 'Book by 01/10/2020; the 12/01/2999 visit is after the 7-day window', urgent: true });
+    expect(stepDetail({ name: 'Appointment' }, { program, appointments: [] }))
+      .toEqual({ title: '7-Day Follow-Up Visit', text: 'Not booked; due by 01/10/2020', urgent: true });
+    const medications = [
+      { name: 'Aspirin 81 mg tablet', start: '2020-01-05', status: 'Active' },
+      { name: 'Prednisone 10 mg tablet', start: '2020-01-03', status: 'Stopped' },
+      { name: 'Lisinopril 20 mg tablet', start: '2019-03-01', status: 'Active' },
+    ];
+    expect(stepDetail({ name: 'Medication Review' }, { program, medications }))
+      .toEqual({ title: 'Medication Reconciliation', text: '1 new since discharge 01/03/2020: Aspirin', urgent: true });
+    // Outside a transition: new since enrollment, not urgent.
+    expect(stepDetail({ name: 'Medication Review' }, { program: { code: 'CCM', startDate: '01/01/2020' }, medications }))
+      .toEqual({ title: undefined, text: '1 new since enrollment 01/01/2020: Aspirin', urgent: false });
+    expect(stepDetail({ name: 'Outreach', mandatory: true }, { program: { code: 'CCM' } })).toEqual({ text: 'Required', urgent: false });
   });
 
   it('names the next open appointment, ICT only for an ICT step', () => {
