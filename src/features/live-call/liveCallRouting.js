@@ -102,45 +102,52 @@ export async function routeAcceptedItems({ store, patient, pid, program, accepte
   if (needsMeds) await s.fetchPatientMedications?.(pid);
   const meds = () => store.getState().patientMedications?.[pid] || [];
 
-  for (const it of accepted) {
+  // One item's record. Returns the kind it counted toward, or null when it
+  // has nothing to create.
+  const routeOne = async (it) => {
     const route = it.route;
-    if (!route) continue;
-    try {
-      if (route.kind === 'task') ok('task', await s.createTask(taskRecord({ route: { ...route, name: it.title === it.originalTitle ? route.name : it.title }, patient, pid, program, me, today })));
-      else if (route.kind === 'appointment') ok('appointment', await s.createAppointment(appointmentRecord({ route, patient, pid })));
-      else if ((route.kind === 'goal' || route.kind === 'barrier') && program) {
-        const payload = inlineAddPayload(route.kind, { title: it.title });
-        const save = route.kind === 'goal' ? s.savePatientCarePlanGoal : s.savePatientCarePlanBarrier;
-        ok('carePlan', await save(pid, program, route.words ? { ...payload, patientTitle: route.words } : payload));
-      } else if (route.kind === 'medication') {
-        const found = findMedication(meds(), route.name);
-        if (route.action === 'add' || !found) {
-          if (route.action === 'stop') continue;
-          ok('medication', await s.addPatientMedication(pid, { name: route.rename || route.name, sig: route.sig || '', start: route.start || iso(today), note: LIVE_CALL_NOTE, source: 'manual' }));
-        } else if (route.action === 'stop') {
-          ok('medication', await s.updatePatientMedication(pid, found.id, { status: 'Stopped', stop: iso(today), stopReason: route.reason || '' }));
-        } else {
-          ok('medication', await s.updatePatientMedication(pid, found.id, { ...(route.rename ? { name: route.rename } : {}), ...(route.sig ? { sig: route.sig } : {}) }));
-        }
-      }
-    } catch (err) {
-      console.warn('live call routing failed for', it.id, err);
-      done.failed += 1;
+    if (route.kind === 'task') return ['task', await s.createTask(taskRecord({ route: { ...route, name: it.title === it.originalTitle ? route.name : it.title }, patient, pid, program, me, today }))];
+    if (route.kind === 'appointment') return ['appointment', await s.createAppointment(appointmentRecord({ route, patient, pid }))];
+    if ((route.kind === 'goal' || route.kind === 'barrier') && program) {
+      const payload = inlineAddPayload(route.kind, { title: it.title });
+      const save = route.kind === 'goal' ? s.savePatientCarePlanGoal : s.savePatientCarePlanBarrier;
+      return ['carePlan', await save(pid, program, route.words ? { ...payload, patientTitle: route.words } : payload)];
     }
-  }
+    if (route.kind === 'medication') {
+      const found = findMedication(meds(), route.name);
+      if (route.action === 'add' || !found) {
+        if (route.action === 'stop') return null;
+        return ['medication', await s.addPatientMedication(pid, { name: route.rename || route.name, sig: route.sig || '', start: route.start || iso(today), note: LIVE_CALL_NOTE, source: 'manual' })];
+      }
+      if (route.action === 'stop') return ['medication', await s.updatePatientMedication(pid, found.id, { status: 'Stopped', stop: iso(today), stopReason: route.reason || '' })];
+      return ['medication', await s.updatePatientMedication(pid, found.id, { ...(route.rename ? { name: route.rename } : {}), ...(route.sig ? { sig: route.sig } : {}) })];
+    }
+    return null;
+  };
 
   // Medication editor saves: the full record from the editor.
-  for (const med of script.meds.filter(m => medEdits[m.n])) {
+  const saveEdit = async (med) => {
     const r = medRecord(med, medEdits[med.n]);
     const fields = { status: r.status, start: r.start, stop: r.stop, stopReason: r.reason, sig: r.sig, lastFilledOn: r.last, daysSupply: r.days === '' ? null : Number(r.days), note: r.note };
+    const found = findMedication(meds(), med.n);
+    return ['medication', found ? await s.updatePatientMedication(pid, found.id, fields) : await s.addPatientMedication(pid, { name: med.n, ...fields, note: fields.note || LIVE_CALL_NOTE, source: 'manual' })];
+  };
+
+  // One after another, never at once: two care plan items saved together
+  // would both create the plan. A failure counts and the rest carry on.
+  const jobs = [
+    ...accepted.filter(it => it.route).map(it => () => routeOne(it)),
+    ...script.meds.filter(m => medEdits[m.n]).map(m => () => saveEdit(m)),
+  ];
+  await jobs.reduce((chain, job) => chain.then(async () => {
     try {
-      const found = findMedication(meds(), med.n);
-      ok('medication', found ? await s.updatePatientMedication(pid, found.id, fields) : await s.addPatientMedication(pid, { name: med.n, ...fields, note: fields.note || LIVE_CALL_NOTE, source: 'manual' }));
+      const result = await job();
+      if (result) ok(result[0], result[1]);
     } catch (err) {
-      console.warn('live call medication update failed for', med.n, err);
+      console.warn('live call routing failed:', err);
       done.failed += 1;
     }
-  }
+  }), Promise.resolve());
   return done;
 }
 

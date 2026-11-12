@@ -53,24 +53,29 @@ function WrapUpDrawerBody() {
   const discard = () => { session.reset(); showToast('Wrap-up discarded'); };
   const complete = async () => {
     setSaving(true);
-    createCallRecord(callRecordFromWrapUp({
-      patient, script, session, cmName, summary: summary.trim(), disposition: session.disposition,
-      seconds: session.wrapSeconds, endedAt, accepted: draft.accepted, medUpdates: draft.medUpdates, stepUpdates: draft.stepUpdates,
-    }));
-    const done = await routeAcceptedItems({
-      store: useAppStore, patient, pid, program: planProgram, accepted: draft.accepted, script, medEdits: session.medEdits,
-    });
-    // A call taken over from an agent closes the agent's relay: it no
-    // longer holds the patient, and the TOC worklist's Relay says so.
-    const record = useAppStore.getState().patients.find(p => String(p.id) === String(pid));
-    if (record?.relayStatus === 'live') {
-      useAppStore.getState().updatePatient(record.id, { relayStatus: 'completed', relayNote: `Handed off to ${cmName}` });
+    let done;
+    try {
+      createCallRecord(callRecordFromWrapUp({
+        patient, script, session, cmName, summary: summary.trim(), disposition: session.disposition,
+        seconds: session.wrapSeconds, endedAt, accepted: draft.accepted, medUpdates: draft.medUpdates, stepUpdates: draft.stepUpdates,
+      }));
+      done = await routeAcceptedItems({
+        store: useAppStore, patient, pid, program: planProgram, accepted: draft.accepted, script, medEdits: session.medEdits,
+      });
+      // A call taken over from an agent closes the agent's relay: it no
+      // longer holds the patient, and the TOC worklist's Relay says so.
+      const record = useAppStore.getState().patients.find(p => String(p.id) === String(pid));
+      if (record?.relayStatus === 'live') {
+        useAppStore.getState().updatePatient(record.id, { relayStatus: 'completed', relayNote: `Handed off to ${cmName}` });
+      }
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
     session.reset();
     const made = routedSummary(done);
     showToast(`${copy.noun} saved to ${patient.name.split(' ')[0]}’s call log${made ? ` · created ${made}` : ''}${done.failed ? ` · ${done.failed} couldn’t be saved` : ''}`);
   };
+
 
   return (
     <Drawer
