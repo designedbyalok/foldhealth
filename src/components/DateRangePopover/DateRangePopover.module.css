@@ -15,17 +15,17 @@
 
 /* ── Calendar header (chevrons + month labels) ───────────────────────── */
 
-/* Each month's own header row: the title centered over its calendar, the
-   prev/next arrow on the outer edge (a spacer balances the other side). */
+/* Each month's own header row: year and month arrows on the outer edge,
+   the month / year pickers centered in the rest of the row. */
 .calHeader {
   display: grid;
-  grid-template-columns: 28px 1fr 28px;
   align-items: center;
-  margin-bottom: 8px;
+  gap: calc(var(--space-1) / 2);
+  margin-bottom: var(--space-2);
 }
-.navSpacer {
-  width: 28px;
-}
+.calHeaderLeft { grid-template-columns: auto 1fr; }
+.calHeaderRight { grid-template-columns: 1fr auto; }
+.navGroup { display: inline-flex; align-items: center; }
 .monthTitle {
   display: flex;
   align-items: center;
@@ -38,8 +38,8 @@
 }
 
 .navBtn {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

@@ -16,6 +16,7 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
+const MONTH_OPTIONS = MONTH_NAMES.map((name, i) => ({ value: String(i), label: name }));
 
 
 /**
@@ -123,31 +124,44 @@ export function DateRangePopover({
     else            { setEnd(d); }
   };
 
-  const stepView = (delta) => {
-    setViewL(v => stepMonth(v, delta));
-    setViewR(v => stepMonth(v, delta));
-  };
-
-  // The year dropdown in either month's title moves both months together.
-  const setLeftYear = (y) => {
-    const next = { y: Number(y), m: viewL.m };
+  // Each month moves on its own. The other one only shifts when they would
+  // meet, so the left month always stays before the right one.
+  const setLeft = (next) => {
     setViewL(next);
-    setViewR(stepMonth(next, 1));
+    if (monthIndex(next) >= monthIndex(viewR)) setViewR(stepMonth(next, 1));
   };
-  const setRightYear = (y) => {
-    const next = { y: Number(y), m: viewR.m };
+  const setRight = (next) => {
     setViewR(next);
-    setViewL(stepMonth(next, -1));
+    if (monthIndex(viewL) >= monthIndex(next)) setViewL(stepMonth(next, -1));
   };
-  const title = (view, onYear) => (
+  const title = (view, onView) => (
     <div className={styles.monthTitle}>
-      <span>{MONTH_NAMES[view.m]}</span>
+      <PickerBadge
+        value={String(view.m)}
+        label={MONTH_NAMES[view.m]}
+        options={MONTH_OPTIONS}
+        width={140}
+        ariaLabel="Month"
+        onChange={(m) => onView({ y: view.y, m: Number(m) })}
+      />
       {years ? (
-        <YearBadge value={String(view.y)} options={yearOptions} onChange={onYear} />
+        <PickerBadge
+          value={String(view.y)}
+          label={String(view.y)}
+          options={yearOptions}
+          width={120}
+          ariaLabel="Year"
+          onChange={(y) => onView({ y: Number(y), m: view.m })}
+        />
       ) : (
         <span>{view.y}</span>
       )}
     </div>
+  );
+  const navBtn = (label, icon, onClick) => (
+    <button type="button" className={styles.navBtn} onClick={onClick} aria-label={label}>
+      <Icon name={icon} size={14} color="var(--neutral-300)" />
+    </button>
   );
 
   const yearsReady = !!fromYear && !!toYear;
@@ -225,12 +239,12 @@ export function DateRangePopover({
       ) : (
       <div className={styles.calBody}>
         <div className={styles.month}>
-          <div className={styles.calHeader}>
-            <button type="button" className={styles.navBtn} onClick={() => stepView(-1)} aria-label="Previous month">
-              <Icon name="solar:alt-arrow-left-linear" size={14} color="var(--neutral-300)" />
-            </button>
-            {title(viewL, setLeftYear)}
-            <span className={styles.navSpacer} />
+          <div className={`${styles.calHeader} ${styles.calHeaderLeft}`}>
+            <span className={styles.navGroup}>
+              {navBtn('Previous year', 'solar:double-alt-arrow-left-linear', () => setLeft(stepMonth(viewL, -12)))}
+              {navBtn('Previous month', 'solar:alt-arrow-left-linear', () => setLeft(stepMonth(viewL, -1)))}
+            </span>
+            {title(viewL, setLeft)}
           </div>
           <Calendar
             mode="range"
@@ -244,12 +258,12 @@ export function DateRangePopover({
         </div>
         <span className={styles.calDivider} />
         <div className={styles.month}>
-          <div className={styles.calHeader}>
-            <span className={styles.navSpacer} />
-            {title(viewR, setRightYear)}
-            <button type="button" className={styles.navBtn} onClick={() => stepView(1)} aria-label="Next month">
-              <Icon name="solar:alt-arrow-right-linear" size={14} color="var(--neutral-300)" />
-            </button>
+          <div className={`${styles.calHeader} ${styles.calHeaderRight}`}>
+            {title(viewR, setRight)}
+            <span className={styles.navGroup}>
+              {navBtn('Next month', 'solar:alt-arrow-right-linear', () => setRight(stepMonth(viewR, 1)))}
+              {navBtn('Next year', 'solar:double-alt-arrow-right-linear', () => setRight(stepMonth(viewR, 12)))}
+            </span>
           </div>
           <Calendar
             mode="range"
@@ -274,9 +288,9 @@ export function DateRangePopover({
   );
 }
 
-// The year in a month title: a Badge with a chevron that opens a searchable
-// list of years. The badge keeps its size while the list is open.
-function YearBadge({ value, options, onChange }) {
+// The month or year in a month title: a Badge with a chevron that opens a
+// searchable list. The badge keeps its size while the list is open.
+function PickerBadge({ value, label, options, width, ariaLabel, onChange }) {
   const ref = useRef(null);
   const [rect, setRect] = useState(null);
   return (
@@ -287,18 +301,18 @@ function YearBadge({ value, options, onChange }) {
         className={styles.yearTrigger}
         aria-haspopup="listbox"
         aria-expanded={!!rect}
-        aria-label={`Year: ${value}`}
+        aria-label={`${ariaLabel}: ${label}`}
         onClick={() => setRect(rect ? null : ref.current?.getBoundingClientRect() ?? null)}
       >
-        <Badge variant="outline" size="md" label={value} chevron />
+        <Badge variant="outline" size="md" label={label} chevron />
       </button>
       {rect && (
         <SearchListPopover
           anchorRect={rect}
           options={options}
           selected={value}
-          width={120}
-          searchPlaceholder="Year"
+          width={width}
+          searchPlaceholder={ariaLabel}
           onSelect={onChange}
           onClose={() => setRect(null)}
         />
@@ -311,14 +325,12 @@ function YearBadge({ value, options, onChange }) {
 const YEAR_SPAN = 120;
 
 
-function stepMonth(v, delta) {
-  let m = v.m + delta;
-  let y = v.y;
-  if (m < 0)  { m = 11; y -= 1; }
-  if (m > 11) { m = 0;  y += 1; }
-  return { y, m };
-}
+function monthIndex(v) { return v.y * 12 + v.m; }
 
+function stepMonth(v, delta) {
+  const i = monthIndex(v) + delta;
+  return { y: Math.floor(i / 12), m: ((i % 12) + 12) % 12 };
+}
 
 function pad2(n) { return String(n).padStart(2, '0'); }
 
