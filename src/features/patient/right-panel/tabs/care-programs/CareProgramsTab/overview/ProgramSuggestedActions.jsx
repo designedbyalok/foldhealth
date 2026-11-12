@@ -60,7 +60,7 @@ export function ProgramSuggestedActions({ patientId, programs, onEnroll, onOpenS
   };
 
   return (
-    <DashboardCard icon="solar:bolt-linear" title="Suggested Actions" count={shown.length} actions={<span className={styles.sugBasis}>From new ADT, eFax, imaging and lab events</span>}>
+    <DashboardCard icon="solar:bolt-linear" title="Suggested Actions" count={shown.length} footer="From new ADT, eFax, imaging and lab events">
       <ul className={styles.sugList}>
         {shown.map(r => {
           const kind = EVENT_KINDS[r.eventKind] || EVENT_KINDS.lab;
@@ -77,8 +77,8 @@ export function ProgramSuggestedActions({ patientId, programs, onEnroll, onOpenS
                 trailing={<Badge size="sm" label={r.programCode} />}
               >
                 <span className={styles.sugActions}>
-                  <Button variant="ghost" size="sm" onClick={() => decide(memberId, r.id, 'dismissed')}>Dismiss</Button>
                   <Button variant="outline" size="sm" disabled={a.disabled} title={a.hint || undefined} onClick={() => run(r)}>{a.label}</Button>
+                  <Button variant="ghost" size="sm" onClick={() => decide(memberId, r.id, 'dismissed')}>Dismiss</Button>
                 </span>
               </PanelSectionItem>
             </li>
