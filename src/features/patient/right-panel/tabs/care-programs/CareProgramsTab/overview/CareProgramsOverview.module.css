@@ -622,3 +622,24 @@
   color: var(--neutral-500);
 }
 .unityPoints strong { font-weight: 600; }
+
+/* Suggested Actions (from new ADT, eFax, imaging and lab events) */
+.sugBasis {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.sugList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sugActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}

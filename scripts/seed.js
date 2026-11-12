@@ -32,6 +32,7 @@ import { CMP_MEMBERS } from '../src/features/cmp-worklist/data/mock.js';
 import { MY_PATIENTS } from '../src/features/my-patients/data/mock.js';
 import { LIVE_CALL_SCRIPTS } from '../src/features/live-call/data/scripts.js';
 import { PROGRAM_ELIGIBILITY } from '../src/features/patient/data/programEligibilitySeed.js';
+import { PROGRAM_EVENT_SUGGESTIONS } from '../src/features/patient/data/programEventSuggestionsSeed.js';
 import { SAMPLE_PROTOCOLS, HARBOR_HYPERTENSION_TEXT_FILE } from '../src/features/settings/clinical-protocols/data/sampleProtocols.js';
 import { protocolToRow } from '../src/features/settings/clinical-protocols/lib/protocolSchema.js';
 import { BUILT_IN_ROLES } from '../src/lib/accessControl.js';
@@ -1089,6 +1090,16 @@ async function main() {
     .from('program_eligibility')
     .upsert(PROGRAM_ELIGIBILITY.map(r => ({ id: r.id, member_id: r.memberId, code: r.code, fit: r.fit, why: r.why })), { onConflict: 'id' });
   if (eligErr) { console.error('  ✗', eligErr.message, '(run supabase/program_eligibility_migration.sql first)'); } else { console.log(`  ✓ ${PROGRAM_ELIGIBILITY.length} rows`); }
+
+  console.log('Seeding program_event_suggestions...');
+  const { error: suggErr } = await supabase
+    .from('program_event_suggestions')
+    .upsert(PROGRAM_EVENT_SUGGESTIONS.map(r => ({
+      id: r.id, member_id: r.memberId, event_kind: r.eventKind, event_title: r.eventTitle, event_detail: r.eventDetail,
+      event_source: r.eventSource, occurred_at: r.occurredAt, program_code: r.programCode, suggestion: r.suggestion,
+      action: r.action, status: 'open',
+    })), { onConflict: 'id' });
+  if (suggErr) { console.error('  ✗', suggErr.message, '(run supabase/program_event_suggestions_migration.sql first)'); } else { console.log(`  ✓ ${PROGRAM_EVENT_SUGGESTIONS.length} rows`); }
 
   console.log('Seeding cmp_members...');
   const { error: cmpErr } = await supabase

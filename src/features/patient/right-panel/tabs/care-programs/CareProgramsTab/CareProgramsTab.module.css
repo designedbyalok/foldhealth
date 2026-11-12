@@ -196,3 +196,10 @@
   text-align: left;
 }
 .assignName:hover { background: var(--neutral-50); }
+
+/* No programs: Eligible Programs under the empty state, at a card's width. */
+.eligibleAlone {
+  align-self: center;
+  width: min(560px, 100%);
+  padding: 0 var(--space-4) var(--space-4);
+}
