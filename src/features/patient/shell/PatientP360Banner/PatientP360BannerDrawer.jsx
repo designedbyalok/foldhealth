@@ -13,6 +13,7 @@ import { formatFoldId } from '../../../../lib/foldId';
 import { FALLBACK_P360 } from '../../data/p360Mock';
 import { usePatientDisplay } from '../../hooks/usePatientDisplay';
 import { QuickViewExpanded } from './PatientP360BannerExpanded';
+import { usePatientProfiles } from './usePatientProfiles';
 import { DRAWER_ACTIONS, MORE_MENU_LABELS } from './PatientP360Banner.utils';
 import { PatientTagPills, AddPatientTagDrawer } from './PatientTags';
 import styles from './PatientP360Banner.module.css';
@@ -56,7 +57,7 @@ export function PatientP360BannerDrawer({ patient, p, programCodes, onManageFami
   const overflowActions = QUICK_ACTIONS.slice(fitCount);
   const [moreMenuRect, setMoreMenuRect] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [selectedProfileId, setSelectedProfileId] = useState('central');
+  const { profiles, activeId: selectedProfileId, setActive: setSelectedProfileId } = usePatientProfiles(patient.id, p);
 
   const showToast = useAppStore(s => s.showToast);
   const updatePatient = useAppStore(s => s.updatePatient);
@@ -168,7 +169,7 @@ export function PatientP360BannerDrawer({ patient, p, programCodes, onManageFami
         </button>
       </div>
 
-      {drawerExpanded && <QuickViewExpanded p={p} patientId={patient.id} programCodes={programCodes} onManageFamily={onManageFamily} onManageCareTeam={onManageCareTeam} />}
+      {drawerExpanded && <QuickViewExpanded p={p} patientId={patient.id} programCodes={programCodes} profiles={profiles} activeProfileId={selectedProfileId} onManageFamily={onManageFamily} onManageCareTeam={onManageCareTeam} />}
 
       <div className={styles.drawerActionsRow}>
         <div ref={actionsListRef} className={styles.drawerActionsList}>

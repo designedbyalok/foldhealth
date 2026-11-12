@@ -1620,10 +1620,17 @@ export const useAppStore = create((set, get) => ({
     }
     set({ p360Loading: false });
   },
+  // The profile picked in the P360 banner's profile dropdown, per patient
+  // ('central' or a location profile id). Shared so both banners and the
+  // Care Team section agree on it.
+  activeProfileByPatient: {},
+  setActiveProfile: (patientId, profileId) => set(s => ({ activeProfileByPatient: { ...s.activeProfileByPatient, [String(patientId)]: profileId } })),
+
   // ── Primary Care Team (patient_care_team) ──
-  // { [patientId]: { current: member[], history: member[] } }. Until the
-  // migration runs, the profile's care_team is the current team and saves
-  // stay in memory (careTeamLocal).
+  // { [patientId]: { current: member[], history: member[] } }, every
+  // location's members together; each member has a `location` ('central' or
+  // a profile id). Until the migration runs, the profile's care_team is the
+  // Central team and saves stay in memory (careTeamLocal).
   careTeams: {},
   careTeamLocal: false,
   fetchCareTeam: async (patientId) => {
@@ -1638,34 +1645,43 @@ export const useAppStore = create((set, get) => ({
     if (error) {
       // The profile's team, read once it has loaded.
       if (get().p360ProfilesById[key] === undefined) await get().fetchP360Profile(key);
-      const fromProfile = (get().p360ProfilesById[key]?.care_team || []).map((m, i) => ({ ...m, id: `ct-${key}-${i + 1}` }));
+      const fromProfile = (get().p360ProfilesById[key]?.care_team || []).map((m, i) => ({ ...m, id: `ct-${key}-${i + 1}`, location: 'central' }));
       set(s => ({ careTeamLocal: true, careTeams: { ...s.careTeams, [key]: s.careTeams[key] || { current: fromProfile, history: [] } } }));
       return;
     }
-    const toMember = r => ({ id: r.id, userId: r.user_id, name: r.name, initials: r.initials, role: r.role, title: r.title, endedAt: r.ended_at });
+    const toMember = r => ({ id: r.id, userId: r.user_id, name: r.name, initials: r.initials, role: r.role, title: r.title, endedAt: r.ended_at, location: r.location || 'central' });
     set(s => ({ careTeams: { ...s.careTeams, [key]: {
       current: data.filter(r => r.status === 'current').map(toMember),
       history: data.filter(r => r.status === 'historical').map(toMember),
     } } }));
   },
-  // Writes the whole team: members kept are updated, members removed are deleted.
-  saveCareTeam: async (patientId, current, history) => {
+  // Writes one location's team: members kept are updated, members removed
+  // are deleted. Other locations' members are left as they are.
+  saveCareTeam: async (patientId, current, history, location = 'central') => {
     const key = String(patientId);
     const before = get().careTeams[key] || { current: [], history: [] };
+    const here = m => (m.location || 'central') === location;
     const now = new Date().toISOString();
-    const stamp = (m, status) => (status === 'historical' ? { ...m, endedAt: m.endedAt || now } : { ...m, endedAt: null });
-    const next = { current: current.map(m => stamp(m, 'current')), history: history.map(m => stamp(m, 'historical')) };
+    const stamp = (m, status) => ({ ...m, location, endedAt: status === 'historical' ? m.endedAt || now : null });
+    const mine = { current: current.map(m => stamp(m, 'current')), history: history.map(m => stamp(m, 'historical')) };
     if (!get().careTeamLocal) {
       const by = get().currentUserProfile?.name || null;
       const row = (m, status, i) => ({
         id: m.id, patient_id: key, user_id: m.userId || null, name: m.name, initials: m.initials || null,
-        role: m.role || null, title: m.title || null, status, sort_order: i, ended_at: m.endedAt, added_by: m.addedBy || by,
+        role: m.role || null, title: m.title || null, status, sort_order: i, ended_at: m.endedAt, added_by: m.addedBy || by, location,
       });
-      const rows = [...next.current.map((m, i) => row(m, 'current', i)), ...next.history.map((m, i) => row(m, 'historical', i))];
+      let rows = [...mine.current.map((m, i) => row(m, 'current', i)), ...mine.history.map((m, i) => row(m, 'historical', i))];
       const keep = new Set(rows.map(r => r.id));
-      const gone = [...before.current, ...before.history].map(m => m.id).filter(id => !keep.has(id));
+      const gone = [...before.current, ...before.history].filter(here).map(m => m.id).filter(id => !keep.has(id));
       if (rows.length) {
-        const { error } = await supabase.from('patient_care_team').upsert(rows, { onConflict: 'id' });
+        let { error } = await supabase.from('patient_care_team').upsert(rows, { onConflict: 'id' });
+        // Before patient_care_team_location_migration.sql there is no location
+        // column: the Central team still saves; a location team can't yet.
+        if (error && /location/i.test(error.message || '')) {
+          if (location !== 'central') return false;
+          rows = rows.map((r) => { const copy = { ...r }; delete copy.location; return copy; });
+          ({ error } = await supabase.from('patient_care_team').upsert(rows, { onConflict: 'id' }));
+        }
         if (error) return false;
       }
       if (gone.length) {
@@ -1673,6 +1689,10 @@ export const useAppStore = create((set, get) => ({
         if (error) return false;
       }
     }
+    const next = {
+      current: [...before.current.filter(m => !here(m)), ...mine.current],
+      history: [...before.history.filter(m => !here(m)), ...mine.history],
+    };
     set(s => ({ careTeams: { ...s.careTeams, [key]: next } }));
     return true;
   },
