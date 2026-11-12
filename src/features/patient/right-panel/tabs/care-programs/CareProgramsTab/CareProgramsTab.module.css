@@ -40,7 +40,9 @@
   border: 0.5px solid var(--neutral-150);
 }
 /* ── Active / Past collapsible sections ── */
-.programSections { display: flex; flex-direction: column; flex: 1; overflow-y: auto; }
+/* A size container, so the overview's columns can cap themselves at its
+   height (100cqh) and scroll on their own. */
+.programSections { display: flex; flex-direction: column; flex: 1; overflow-y: auto; container-type: size; }
 .programSection { display: flex; flex-direction: column; flex-shrink: 0; }
 .programSectionHeader {
   display: flex;
