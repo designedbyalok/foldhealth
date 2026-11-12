@@ -426,7 +426,7 @@ function ProgramSummary({ clinical, unity, onOpenItem }) {
  * Summary can also be written by Unity on request (useCareProgramsInsights).
  */
 export function CareProgramsOverview({
-  patientId, programs, onOpenProgram, onOpenStep, onOpenPlan, onOpenLog, onReviewStep,
+  patientId, programs, onOpenProgram, onOpenStep, onOpenPlan, onOpenLog,
   onStatusMenu, onRowMenu, onAssign, onEnroll, eligible = null,
 }) {
   const data = useCareProgramsOverview(patientId, programs);
@@ -454,7 +454,11 @@ export function CareProgramsOverview({
 
   const order = programOrder(data.progress, data.actions);
   const shownOrder = allCards ? order : order.slice(0, CARD_LIMIT);
-  const onRun = row => (row.kind === 'step' ? setOpenStep({ program: row.refs[0].program, stepId: row.refs[0].step.id }) : setOpenItem({ kind: row.kind, ...row.ref }));
+  const onRun = (row) => {
+    if (row.kind === 'step') setOpenStep({ program: row.refs[0].program, stepId: row.refs[0].step.id });
+    else if (row.kind === 'plan') onOpenPlan(row.ref.program);
+    else setOpenItem({ kind: row.kind, ...row.ref });
+  };
   // A Unity takeaway names the action, reading or concern it is about by key.
   const openRef = (key) => {
     const action = data.actions.find(a => a.key === key);
@@ -504,7 +508,7 @@ export function CareProgramsOverview({
         </div>
         <div className={styles.main}>
           <WhyPrioritized why={data.why} unity={unity} onOpenRef={openRef} />
-          <NextBestActions actions={data.actions} programs={order.map(o => data.entries[o.index].program)} onRun={onRun} onReview={onReviewStep} />
+          <NextBestActions actions={data.actions} programs={order.map(o => data.entries[o.index].program)} onRun={onRun} />
         </div>
         <div className={styles.right}>{summaries}</div>
       </div>

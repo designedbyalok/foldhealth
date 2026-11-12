@@ -89,7 +89,6 @@ export function CareProgramsTab({ header }) {
   const updateCareProgram = useAppStore(s => s.updateCareProgram);
   const showToast = useAppStore(s => s.showToast);
   const setCareManagementTab = useAppStore(s => s.setCareManagementTab);
-  const setProgramStepStatus = useAppStore(s => s.setProgramStepStatus);
   const fetchCareProgramsForPatient = useAppStore(s => s.fetchCareProgramsForPatient);
   const pendingCareProgramCode = useAppStore(s => s.pendingCareProgramCode);
   const clearPendingCareProgramCode = useAppStore(s => s.clearPendingCareProgramCode);
@@ -227,10 +226,6 @@ export function CareProgramsTab({ header }) {
   const openPlanFromOverview = (program) => {
     if (program) setPendingProgram({ program, firstStep: false, carePlan: true });
     else setCareManagementTab('Comprehensive Care Plan');
-  };
-  const reviewStepFromOverview = (row) => {
-    for (const ref of row.refs) setProgramStepStatus(ref.program.id, ref.step, 'completed');
-    showToast?.(`${row.title} marked as reviewed${row.refs.length > 1 ? ` in ${row.programs.map(p => p.code).join(' and ')}` : ''}`);
   };
 
   // From the comprehensive view, hand off to the owning program's Care Plan
@@ -438,7 +433,6 @@ export function CareProgramsTab({ header }) {
               onOpenStep={openProgramAtStep}
               onOpenPlan={openPlanFromOverview}
               onOpenLog={() => setCareManagementTab('Program Activity Log')}
-              onReviewStep={reviewStepFromOverview}
               onStatusMenu={setStatusMenu}
               onRowMenu={setRowMenu}
               onAssign={assignOwner}

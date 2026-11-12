@@ -30,16 +30,21 @@ const dmEntry = {
 };
 
 describe('nextBestActions', () => {
-  it('puts urgent first, merges a step that reads the same across programs, and keeps plan items with nothing to anchor to', () => {
+  it('puts urgent first, merges a step that reads the same across programs, and folds a program\'s plan items into one row', () => {
     const rows = nextBestActions([ccmEntry, dmEntry]);
     expect(rows.map(r => [r.kind, r.title, r.programs.map(p => p.code).join('+')])).toEqual([
       ['step', 'Program Related Task', 'CCM'],
-      ['goal', 'Improve A1C control', 'CCM'],
-      ['barrier', 'Cost of strips', 'CCM'],
+      ['plan', '1 Off-Target Goal, 1 Unaddressed Barrier', 'CCM'],
       ['step', 'Outreach', 'CCM+DM'],
     ]);
-    expect(rows[0].detail).toEqual({ text: '1 open • 1 overdue', urgent: true });
-    expect(rows[3].required).toBe(true);
+    expect(rows[0].detail).toMatchObject({ label: 'Program Task', text: 'Overdue, due 01/02/2020', urgent: true });
+    expect(rows[1].detail.text).toBe('Improve A1C control, Cost of strips');
+    expect(rows[2].required).toBe(true);
+  });
+
+  it('keeps a lone plan item as its own row', () => {
+    const rows = nextBestActions([{ ...ccmEntry, steps: [], attention: ccmEntry.attention.slice(0, 1) }]);
+    expect(rows.map(r => [r.kind, r.title])).toEqual([['goal', 'Improve A1C control']]);
   });
 
   it('places care plan items right after their program\'s Care Plan step', () => {
@@ -48,8 +53,7 @@ describe('nextBestActions', () => {
     const rows = nextBestActions([entry]);
     expect(rows.map(r => [r.title, r.with || ''])).toEqual([
       ['Care Plan', ''],
-      ['Improve A1C control', 'Care Plan'],
-      ['Cost of strips', 'Care Plan'],
+      ['1 Off-Target Goal, 1 Unaddressed Barrier', 'Care Plan'],
     ]);
   });
 });
@@ -64,11 +68,11 @@ describe('whyPrioritized', () => {
       firstName: 'Maria',
     });
     expect(takeaways).toEqual([
-      { tone: 'danger', text: 'CCM Program Related Task: 1 open • 1 overdue' },
+      { tone: 'danger', text: 'CCM Program Related Task: Overdue, due 01/02/2020' },
       { tone: 'warning', text: '1 goal off target' },
       { tone: 'warning', text: 'High-Risk acuity' },
     ]);
-    expect(segments[0]).toEqual({ bold: true, text: 'Urgent: CCM Program Related Task (1 open • 1 overdue).' });
+    expect(segments[0]).toEqual({ bold: true, text: 'Urgent: CCM Program Related Task (Overdue, due 01/02/2020).' });
     expect(segments.slice(1).map(s => s.text).join('')).toBe(' Goal progress is 40% across 1 goal, with 1 goal off target, 1 barrier without an intervention. Maria is in 2 programs: CCM 1 of 4 steps done, DM 0 of 1 steps done.');
     expect(whyPrioritized([], { acuity: 'Low' })).toEqual({ takeaways: [], segments: [] });
   });

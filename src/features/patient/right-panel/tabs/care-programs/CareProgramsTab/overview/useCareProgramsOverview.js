@@ -32,6 +32,7 @@ export function useCareProgramsOverview(patientId, programs) {
   const tasks = useAppStore(s => s.tasks) || EMPTY;
   const documents = useAppStore(s => s.programDocuments) || EMPTY;
   const appointments = useAppStore(s => s.appointments) || EMPTY;
+  const medications = useAppStore(s => s.patientMedications[patientId]) || EMPTY;
   // Strings, not the record: a new object per read would re-render forever.
   const recordId = useAppStore(s => String(findPatientRecord(s, patientId)?.id || ''));
   const recordMemberId = useAppStore(s => String(findPatientRecord(s, patientId)?.memberId || ''));
@@ -49,6 +50,7 @@ export function useCareProgramsOverview(patientId, programs) {
     s.fetchProgramDocuments?.();
     s.fetchAppointments?.();
     s.fetchTasks?.();
+    s.fetchPatientMedications?.(patientId);
     s.fetchPatientProgramActivity?.(patientId);
     if (patientId && !s.patientProblemsLoadedFor[patientId]) s.fetchPatientProblems?.(patientId);
     for (const p of programs) {
@@ -67,7 +69,7 @@ export function useCareProgramsOverview(patientId, programs) {
     return programs.map(program => {
       const carePlan = carePlans[`${patientId}::${program.id}`] || null;
       const ctx = {
-        ...stepContextFor({ patientIds, program, carePlan, manual: stepStatus[program.id], tasks, documents, appointments }),
+        ...stepContextFor({ patientIds, program, carePlan, manual: stepStatus[program.id], tasks, documents, appointments, medications }),
         dueOf,
       };
       const list = programCarePlan ? stepsFor(program.code) : withoutCarePlanStep(stepsFor(program.code));
@@ -78,7 +80,7 @@ export function useCareProgramsOverview(patientId, programs) {
       }) : EMPTY;
       return { program, steps, ctx, carePlan, attention };
     });
-  }, [ready, programs, patientId, recordId, recordMemberId, carePlans, stepStatus, tasks, documents, appointments, programCarePlan]);
+  }, [ready, programs, patientId, recordId, recordMemberId, carePlans, stepStatus, tasks, documents, appointments, medications, programCarePlan]);
 
   return useMemo(() => {
     const actions = nextBestActions(entries);
