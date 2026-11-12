@@ -31,8 +31,9 @@ const mdyTime = (mdy) => {
 
 const COLUMNS = [
   { key: 'select', showCheckbox: true, sticky: 'left', left: 0, width: 36 },
-  { key: 'name', label: 'Patients', sortKey: 'name', sticky: 'left', left: 36, width: 280 },
+  { key: 'name', label: 'Patients', sortKey: 'name', sticky: 'left', left: 36, width: 240 },
   { key: 'programs', label: 'Programs', width: 170 },
+  { key: 'payer', label: 'Payer', sortKey: 'payer', sortType: 'alpha', width: 180 },
   { key: 'adherence', label: 'Plan Adherence', sortKey: 'adherence', width: 190 },
   { key: 'why', label: 'Why Prioritized', width: 320 },
   { key: 'lastReview', label: 'Last Review', sortKey: 'reviewOverdueDays', width: 150 },

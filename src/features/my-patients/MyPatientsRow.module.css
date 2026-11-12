@@ -21,12 +21,12 @@
 .actionDivider { composes: actionDivider from '../../components/WorklistShell/WorklistRow.module.css'; }
 
 .payer {
-  display: inline-block;
-  max-width: 140px;
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  vertical-align: bottom;
+  font-size: var(--font-md);
+  color: var(--neutral-400);
 }
 
 .badges {
