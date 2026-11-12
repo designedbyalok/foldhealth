@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { Avatar } from '../Avatar/Avatar';
 import { Icon } from '../Icon/Icon';
 import { DownChevronIcon } from '../Icon/DownChevronIcon';
+import { Badge } from '../Badge/Badge';
+import { Tooltip } from '../Tooltip/Tooltip';
 import styles from './AssigneeChange.module.css';
 
 /**
@@ -27,7 +29,15 @@ import styles from './AssigneeChange.module.css';
  *
  * Hover / keyboard focus fills the pill with a subtle neutral-50
  * background and reveals a chevron (disabled states skip the reveal).
+ *
+ * `outOfOffice` (user) => { startAt, endAt, coveredBy: string[] } | null, as
+ * in booking's provider picker: people who are out can't be picked. They're
+ * listed last under Not Available with an Out of Office badge (its tooltip
+ * gives the dates) and who covers them; searching for one puts whoever
+ * covers them on top, under Suggested, "Covering for …".
  */
+const NOBODY_OUT = () => null;
+const mdY = (v) => { const d = new Date(v); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`; };
 // v2: added fillContainer prop for row-cell full-width pills.
 export const AssigneeChange = forwardRef(function AssigneeChange({
   name,
@@ -55,6 +65,11 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
   fillContainer = false,
   users,
   onSelect,
+  outOfOffice = NOBODY_OUT,
+  // Opt-in: `{ id, name }` of the assigned person, so the avatar wears the
+  // Out of Office badge while they're away; `oooNote` adds a line to its hover.
+  oooUser,
+  oooNote,
   pickerTitle,
   onClick,
   className,
@@ -164,6 +179,36 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
     ? users.filter(u =>
         u.name.toLowerCase().includes(q) || (u.role || '').toLowerCase().includes(q))
     : (users || []);
+  // Who's out (can't be picked), and, while searching, who covers them.
+  const away = filtered.filter(u => outOfOffice(u));
+  const covering = new Map(); // covering name → names they cover
+  if (q) {
+    away.forEach(u => (outOfOffice(u).coveredBy || []).forEach((n) => {
+      covering.set(n, [...(covering.get(n) || []), u.name]);
+    }));
+  }
+  const suggested = (users || []).filter(u => covering.has(u.name) && !outOfOffice(u));
+  const available = filtered.filter(u => !outOfOffice(u) && !covering.has(u.name));
+
+  const userRow = (u, note) => (
+    <button
+      key={u.id}
+      type="button"
+      role="menuitem"
+      className={[styles.userRow, u.name === name ? styles.userRowActive : ''].filter(Boolean).join(' ')}
+      onClick={() => { onSelect?.(u); close(); }}
+    >
+      <Avatar variant={u.avatarVariant || 'staff'} initials={u.initials} size={24} />
+      <span className={styles.userText}>
+        <span className={styles.userName}>{u.name}</span>
+        {u.role && <span className={styles.userRole}>{u.role}</span>}
+        {note && <span className={styles.userNote}>{note}</span>}
+      </span>
+      {u.name === name && (
+        <Icon name="solar:check-circle-bold" size={14} color="var(--primary-300)" />
+      )}
+    </button>
+  );
 
   const label = ariaLabel || (unassigned
     ? 'Assign user'
@@ -236,6 +281,9 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
         <Avatar
           variant={avatarVariant}
           initials={initials}
+          userName={oooUser?.name}
+          userId={oooUser?.id || undefined}
+          oooNote={oooNote}
           size={avatarSize}
           className={avatarOnly ? styles.avatarInner : undefined}
         />
@@ -300,28 +348,35 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
             />
           </div>
           <div className={styles.list}>
-            {filtered.length === 0 ? (
+            {filtered.length === 0 && suggested.length === 0 ? (
               <div className={styles.empty}>
                 {q ? 'No users match your search.' : 'No users available.'}
               </div>
-            ) : filtered.map(u => (
-              <button
-                key={u.id}
-                type="button"
-                role="menuitem"
-                className={[styles.userRow, u.name === name ? styles.userRowActive : ''].filter(Boolean).join(' ')}
-                onClick={() => { onSelect?.(u); close(); }}
-              >
-                <Avatar variant={u.avatarVariant || 'staff'} initials={u.initials} size={24} />
-                <span className={styles.userText}>
-                  <span className={styles.userName}>{u.name}</span>
-                  {u.role && <span className={styles.userRole}>{u.role}</span>}
-                </span>
-                {u.name === name && (
-                  <Icon name="solar:check-circle-bold" size={14} color="var(--primary-300)" />
-                )}
-              </button>
-            ))}
+            ) : (
+              <>
+                {suggested.length > 0 && <div className={styles.group}>Suggested</div>}
+                {suggested.map(u => userRow(u, `Covering for ${covering.get(u.name).join(', ')}`))}
+                {suggested.length > 0 && available.length > 0 && <div className={styles.group}>All Users</div>}
+                {available.map(u => userRow(u))}
+                {away.length > 0 && <div className={styles.group}>Not Available</div>}
+                {away.map((u) => {
+                  const out = outOfOffice(u);
+                  return (
+                    <div key={u.id} className={`${styles.userRow} ${styles.userRowDisabled}`} aria-disabled="true">
+                      <Avatar variant={u.avatarVariant || 'staff'} initials={u.initials} size={24} />
+                      <span className={styles.userText}>
+                        <span className={`${styles.userName} ${styles.userNameMuted}`}>{u.name}</span>
+                        {u.role && <span className={`${styles.userRole} ${styles.userNameMuted}`}>{u.role}</span>}
+                        <span className={styles.userNote}>{out.coveredBy?.length ? `Covered by: ${out.coveredBy.join(', ')}` : 'No covering provider'}</span>
+                      </span>
+                      <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="right">
+                        <Badge tone="magenta" size="sm" label="Out of Office" />
+                      </Tooltip>
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </div>
         </div>,
         document.body,

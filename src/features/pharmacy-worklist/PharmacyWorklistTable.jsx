@@ -23,6 +23,7 @@ import { PHARMACY_MIDDLE_COLUMNS, PHARMACY_HIDDEN_BY_DEFAULT } from './pharmacyC
 import { enrichPharmacyMember, measureDrugs, normMemberId } from './pharmacyWorklist.utils';
 import { FILTER_DEF_MAP, MORE_FILTER_ITEMS, PRIMARY_FILTER_KEYS, dynamicFilterOptions, matchingGaps, memberMatchesFilters } from './pharmacyFilters';
 import { MEASURE_NAMES as HEDIS_MEASURE_NAMES } from '../hedis-worklist/CareGapDetailDrawer.utils';
+import { useCovering } from '../ooo/useCovering';
 import styles from './PharmacyWorklistTable.module.css';
 
 // Default order is triage order: priority, then the soonest fail date.
@@ -30,6 +31,15 @@ import styles from './PharmacyWorklistTable.module.css';
 const byTriage = (a, b) =>
   a.priorityRank - b.priorityRank
   || (a.failDateSort ?? Infinity) - (b.failDateSort ?? Infinity);
+
+// FilterChipBar reads chip values from the store, so this filter's picks sit
+// in pharmacyFilters too; pharmacyFilters.js doesn't know the key, so the
+// shared matcher skips it and the table applies it.
+const COVERING_KEY = 'coveringFor';
+const COVERING_ITEM = { k: COVERING_KEY, label: 'Covering for', primary: true };
+const COVERING_DEF_MAP = { ...FILTER_DEF_MAP, [COVERING_KEY]: { type: 'multi', dynamic: COVERING_KEY, opts: [], searchable: true } };
+const COVERING_MORE_ITEMS = [COVERING_ITEM, ...MORE_FILTER_ITEMS];
+const COVERING_PRIMARY_KEYS = [COVERING_KEY, ...PRIMARY_FILTER_KEYS];
 
 const thStyle = {
   padding: '8px 14px',
@@ -101,7 +111,10 @@ export function PharmacyWorklistTable() {
   );
 
   const filterCtx = useMemo(() => ({ authUserId }), [authUserId]);
-  const dynamicOpts = useMemo(() => dynamicFilterOptions(enriched, filterCtx), [enriched, filterCtx]);
+  const covering = useCovering();
+  const showCovering = covering.names.length > 0;
+  const coveringPicked = useMemo(() => (showCovering ? filters[COVERING_KEY] || [] : []), [showCovering, filters]);
+  const dynamicOpts = useMemo(() => ({ ...dynamicFilterOptions(enriched, filterCtx), [COVERING_KEY]: covering.names }), [enriched, filterCtx, covering.names]);
 
   const filtered = useMemo(() => {
     let rows = enriched;
@@ -114,6 +127,7 @@ export function PharmacyWorklistTable() {
         (m.measures || []).some(x => measureDrugs(x).toLowerCase().includes(q)),
       );
     }
+    if (coveringPicked.length) rows = rows.filter(m => covering.coveringOn([m.assigneeName], coveringPicked).length > 0);
     // Gap filters also narrow each row to the gaps that pass them.
     return rows
       .filter(m => memberMatchesFilters(m, filters, filterCtx))
@@ -121,7 +135,7 @@ export function PharmacyWorklistTable() {
         const gaps = matchingGaps(m, filters, filterCtx);
         return gaps.length === m.gaps.length ? m : { ...m, gaps };
       });
-  }, [enriched, searchQuery, filters, filterCtx]);
+  }, [enriched, searchQuery, filters, filterCtx, coveringPicked, covering]);
 
   const { sorted: bySort, sortKey, sortDir, setSort, clearSort } = useTableSort(filtered);
   // Gaps a claim reversal reopened stay on top whatever the sort, since
@@ -184,9 +198,9 @@ export function PharmacyWorklistTable() {
       <FilterChipBar
         collapsed={!filterBarOpen}
         list="Pharmacy"
-        filterDefMap={FILTER_DEF_MAP}
-        moreFilterItems={MORE_FILTER_ITEMS}
-        primaryFilterKeys={PRIMARY_FILTER_KEYS}
+        filterDefMap={showCovering ? COVERING_DEF_MAP : FILTER_DEF_MAP}
+        moreFilterItems={showCovering ? COVERING_MORE_ITEMS : MORE_FILTER_ITEMS}
+        primaryFilterKeys={showCovering ? COVERING_PRIMARY_KEYS : PRIMARY_FILTER_KEYS}
         dynamicOpts={dynamicOpts}
         onSaveFilter={() => setSaveDialogOpen(true)}
       />
@@ -274,6 +288,7 @@ export function PharmacyWorklistTable() {
                   isSelected={selectedIds.has(m.id)}
                   onSelect={toggleSelected}
                   onOpenCareGap={(hedisMemberId, code) => setCareGap({ hedisMemberId, code })}
+                  coveringFor={coveringPicked.length ? covering.coveringOn([m.assigneeName], coveringPicked) : undefined}
                 />
               ))}
             </tbody>

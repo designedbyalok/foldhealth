@@ -10,6 +10,7 @@ import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { HeaderCell } from '../../../components/HeaderCell/HeaderCell';
 import { ColumnsHeaderButton } from '../../../components/WorklistColumns/ColumnsHeaderButton';
 import { useWorklistColumns } from '../../worklists/useWorklistColumns';
+import { COVERING_FILTER_KEY } from '../useTocFilterDefs';
 
 function EmptySearch() {
   return (
@@ -157,6 +158,8 @@ export function WorklistTable() {
     }
 
     for (const [key, value] of Object.entries(activeFilters)) {
+      // TOC IP's Covering for chip (string[]) shares activeFilters; TCM has no such chip.
+      if (key === COVERING_FILTER_KEY) continue;
       if (value) {
         result = result.filter(p => String(p[key]) === String(value));
       }

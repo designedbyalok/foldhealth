@@ -264,13 +264,6 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
   // The away summary: who lacks which access.
   const missingByName = Object.fromEntries(groups.limited.map(g => [g.user.name, g.missing]));
 
-  // A banner for anyone picked who is out themselves. (Missing access shows
-  // on the summary row it affects instead.)
-  const coverWarnings = coverers.map((p) => {
-    const out = groups.unavailable.find(g => samePerson(g.user, p));
-    return out ? { key: p.name, text: `${p.name} is out of office ${formatDate(out.out.startAt)} - ${formatDate(out.out.endAt)}. Pick someone else.` } : null;
-  }).filter(Boolean);
-
   // After a save: Reassign Appointments opens next only if the dates hold
   // appointments still to move; the toast says so when it does.
   const finish = async (saved, wantsReassign, started = false) => {
@@ -642,9 +635,6 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
               }}
             />
           )}
-          {coverWarnings.map(w => (
-            <Banner key={w.key} icon="solar:danger-triangle-linear" tone="warning" size="sm">{w.text}</Banner>
-          ))}
         </div>
 
 

@@ -17,6 +17,12 @@
   padding-top: 8px;
   padding-bottom: 24px;
 }
+/* The out of office banner on top: no extra space above it, so it sits 16px
+   from the top like it does from the sides. */
+.body.bodyBanner { padding-top: 0; }
+/* "N users" in the banner: a primary link-style count, the list on hover. */
+.awayCount { color: var(--primary-300); font-weight: 500; text-decoration: underline dotted; text-underline-offset: 2px; cursor: default; }
+.awayList { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); text-align: left; }
 
 /* One row in the "Create Team With" Select: avatar, name over role, capacity chip. */
 .userOption {
@@ -277,6 +283,9 @@
   gap: 1px;
 }
 .userCardName {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   font-size: var(--font-base);
   font-weight: 500;
   color: var(--neutral-500);

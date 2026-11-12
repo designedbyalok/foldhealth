@@ -52,6 +52,8 @@ export const TASK_FILTER_DEFS = [
   // see filterDefs's usesProfiles branch. Empty here so the cold-load
   // dropdown never shows stale seed names.
   { key: 'assigned_to', label: 'Assigned to', primary: true, options: [] },
+  // Out of Office cover: each person out now. Options built in useTasksView.
+  { key: 'covering', label: 'Covering for', primary: true, multi: true, options: [] },
   { key: 'view_by', label: 'View By', primary: true, options: [
     { value: 'status', label: 'Status' },
     { value: 'priority', label: 'Priority' },

@@ -7,6 +7,7 @@ import { FilterBar } from '../worklists/FilterBar';
 import { SavedFiltersChip } from '../hcc/SavedFiltersChip';
 import { useSavedFilterActions } from '../hcc/useSavedFilterActions';
 import { useTableSort } from '../../components/HeaderCell/useTableSort';
+import { useCovering } from '../ooo/useCovering';
 import { AwvWorklistRow, AWV_MIDDLE_COLUMNS } from './AwvWorklistRow';
 
 // FilterBar chip definitions, per the worklist filter spec: always-primary
@@ -23,6 +24,12 @@ const AWV_FILTER_DEFS = [
   { key: 'fr',            label: 'Frailty',            primary: false, group: 'Clinical' },
 ];
 const AWV_MORE_FILTER_ITEMS = AWV_FILTER_DEFS.map(fd => ({ k: fd.key, label: fd.label, primary: fd.primary, group: fd.group }));
+// Shown only while the signed-in user is covering someone out of office.
+// Its value lives in local state, not the store's awvFilters.
+const NO_PICKS = [];
+const COVERING_DEF = { key: 'coveringFor', label: 'Covering for', primary: true };
+const AWV_FILTER_DEFS_COVERING = [AWV_FILTER_DEFS[0], COVERING_DEF, ...AWV_FILTER_DEFS.slice(1)];
+const AWV_MORE_FILTER_ITEMS_COVERING = AWV_FILTER_DEFS_COVERING.map(fd => ({ k: fd.key, label: fd.label, primary: fd.primary, group: fd.group }));
 
 // WorklistShell column defs: sticky checkbox + sticky Members col on the
 // left, AWV middle columns from AwvWorklistRow (each carries `renderCell`
@@ -57,6 +64,9 @@ export function AwvWorklistTable() {
   const [filterBarOpen, setFilterBarOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const { names: coveringNames, coveringOn } = useCovering();
+  const [coveringPicked, setCoveringPicked] = useState([]);
+  const covering = coveringNames.length > 0 ? coveringPicked : NO_PICKS;
 
   useEffect(() => { fetchMembers(); }, [fetchMembers]);
 
@@ -101,8 +111,9 @@ export function AwvWorklistTable() {
       if (!vals || vals.length === 0) return;
       rows = rows.filter(m => vals.includes(m[k]));
     });
+    if (covering.length) rows = rows.filter(m => coveringOn([m.assignee], covering).length > 0);
     return rows;
-  }, [members, searchQuery, filters]);
+  }, [members, searchQuery, filters, covering, coveringOn]);
 
   const { sorted, sortKey, sortDir, requestSort } = useTableSort(filtered, 'due', 'asc');
 
@@ -123,18 +134,18 @@ export function AwvWorklistTable() {
       pinPrimary
       multiSelect
       leading={null}
-      filterDefs={AWV_FILTER_DEFS}
-      filters={filters}
-      onFilterChange={(k, vals) => setFilter(k, vals)}
-      onClearAll={savedActions.onClearAll}
+      filterDefs={coveringNames.length ? AWV_FILTER_DEFS_COVERING : AWV_FILTER_DEFS}
+      filters={coveringNames.length ? { ...filters, coveringFor: covering } : filters}
+      onFilterChange={(k, vals) => { if (k === 'coveringFor') { setCoveringPicked(vals); setPage(1); } else setFilter(k, vals); }}
+      onClearAll={() => { setCoveringPicked([]); savedActions.onClearAll(); }}
       clearAllLabel={savedActions.clearAllLabel}
       saveLabel={savedActions.saveLabel}
       saveMenuItems={savedActions.saveMenuItems}
       onSaveMenuSelect={savedActions.onSaveMenuSelect}
       hasActive={savedActions.edited || undefined}
       onSaveFilter={(name) => saveSavedFilter('AWV', name)}
-      getOptions={(def) => filterOptions[def.key] || []}
-      moreFilterItems={AWV_MORE_FILTER_ITEMS}
+      getOptions={(def) => (def.key === 'coveringFor' ? coveringNames : filterOptions[def.key] || [])}
+      moreFilterItems={coveringNames.length ? AWV_MORE_FILTER_ITEMS_COVERING : AWV_MORE_FILTER_ITEMS}
     />
   );
 
@@ -176,6 +187,7 @@ export function AwvWorklistTable() {
         <AwvWorklistRow
           key={m.id}
           member={m}
+          coveringFor={covering.length ? coveringOn([m.assignee], covering) : null}
           columns={ctx.orderedColumns}
           hiddenSet={ctx.hiddenSet}
           selected={selectedIds.includes(m.id)}

@@ -96,6 +96,20 @@
   gap: 2px;
   color: var(--neutral-300);
 }
+/* A header action that's on (e.g. the filter row is open or applied). */
+.actionOn { background: var(--primary-50); }
+
+/* My Worklist's filter row, under the header. */
+.cardFilters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) calc(var(--space-3) + var(--space-1) / 2);
+  border-bottom: 0.5px solid var(--neutral-150);
+  flex-shrink: 0;
+}
+.cardFiltersClear { border: 0; background: none; padding: 0 var(--space-1); font-size: var(--font-sm); color: var(--status-error); cursor: pointer; }
 
 .iconBtn {
   width: 24px;

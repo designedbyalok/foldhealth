@@ -12,6 +12,8 @@ import {
   PRIMARY_FILTER_KEYS as HCC_PRIMARY_FILTER_KEYS,
 } from './filters';
 
+const COVERING_KEY = 'coveringFor';
+
 /**
  * Wrap a state mutation in document.startViewTransition when the browser
  * supports it, so the HCC worklist tbody crossfades between filter sets
@@ -69,22 +71,46 @@ const STORE_SELECTORS_BY_LIST = {
 export function FilterChipBar({
   list = 'HCC',
   filterDefMap = HCC_FILTER_DEF_MAP,
-  moreFilterItems = HCC_MORE_FILTER_ITEMS,
-  primaryFilterKeys = HCC_PRIMARY_FILTER_KEYS,
+  moreFilterItems: moreFilterItemsProp = HCC_MORE_FILTER_ITEMS,
+  primaryFilterKeys: primaryFilterKeysProp = HCC_PRIMARY_FILTER_KEYS,
   dynamicOpts: dynamicOptsProp,
   onSaveFilter,
   collapsed = false,
+  // Optional "Covering for" chip ({ names, selected, onChange }). Its value
+  // is owned by the caller, not the store, and the chip only shows while
+  // `names` is non-empty.
+  covering,
 }) {
   const sel = STORE_SELECTORS_BY_LIST[list] || STORE_SELECTORS_BY_LIST.HCC;
 
-  const filters             = useAppStore(s => s[sel.filters]);
+  const storeFilters        = useAppStore(s => s[sel.filters]);
   const setFilter           = useAppStore(s => s[sel.setFilter]);
   const clearFilters        = useAppStore(s => s[sel.clearFilters]);
   const storedVisible       = useAppStore(s => s[sel.visibleKeys]);
   const setVisibleFilterKeys= useAppStore(s => s[sel.setVisible]);
   const clearVisibleFilters = useAppStore(s => s[sel.clearVisible]);
   // A selected saved filter stays selected while edited: Go Back / Update it.
-  const savedActions = useSavedFilterActions(list, filters, clearFilters, onSaveFilter);
+  const savedActions = useSavedFilterActions(list, storeFilters, clearFilters, onSaveFilter);
+
+  const withCovering = (covering?.names?.length ?? 0) > 0;
+  const coveringSelected = covering?.selected;
+  const filters = useMemo(
+    () => (withCovering ? { ...storeFilters, [COVERING_KEY]: coveringSelected || [] } : storeFilters),
+    [withCovering, storeFilters, coveringSelected],
+  );
+  // Covering for sits right after Assignee so it stays on the first line.
+  const moreFilterItems = useMemo(() => {
+    if (!withCovering) return moreFilterItemsProp;
+    const at = moreFilterItemsProp.findIndex(x => x.label === 'Assignee') + 1;
+    const next = [...moreFilterItemsProp];
+    next.splice(at, 0, { k: COVERING_KEY, label: 'Covering for', primary: true });
+    return next;
+  }, [withCovering, moreFilterItemsProp]);
+  const primaryFilterKeys = useMemo(() => {
+    if (!withCovering) return primaryFilterKeysProp;
+    const base = new Set(primaryFilterKeysProp);
+    return moreFilterItems.filter(x => x.k === COVERING_KEY || base.has(x.k)).map(x => x.k);
+  }, [withCovering, primaryFilterKeysProp, moreFilterItems]);
 
   const showToast = useAppStore(s => s.showToast);
   const hccMembers = useAppStore(s => s.hccMembers);
@@ -197,6 +223,17 @@ export function FilterChipBar({
   const renderChip = (k /* , mirror */) => {
     const item = moreFilterItems.find(x => x.k === k);
     if (!item) return null;
+    if (k === COVERING_KEY) {
+      return (
+        <FilterChip
+          label={item.label}
+          options={covering.names}
+          selected={filters[k] || []}
+          onChange={list === 'HCC' ? (next) => withViewTransition(() => covering.onChange(next)) : covering.onChange}
+          searchable
+        />
+      );
+    }
     const def = filterDefMap[k];
     const vals = filters[k] || [];
     const active = vals.length > 0;
@@ -306,12 +343,14 @@ export function FilterChipBar({
       filterDefs={filterDefs}
       primaryKeys={primaryFilterKeys}
       filters={filters}
-      onFilterChange={list === 'HCC'
-        ? (k, next) => withViewTransition(() => setFilter(k, next))
-        : (k, next) => setFilter(k, next)}
-      onClearAll={list === 'HCC'
-        ? () => withViewTransition(() => savedActions.onClearAll())
-        : savedActions.onClearAll}
+      onFilterChange={(k, next) => {
+        const apply = k === COVERING_KEY ? () => covering.onChange(next) : () => setFilter(k, next);
+        if (list === 'HCC') withViewTransition(apply); else apply();
+      }}
+      onClearAll={() => {
+        const clear = () => { covering?.onChange([]); savedActions.onClearAll(); };
+        if (list === 'HCC') withViewTransition(clear); else clear();
+      }}
       clearAllLabel={savedActions.clearAllLabel}
       saveLabel={savedActions.saveLabel}
       saveMenuItems={savedActions.saveMenuItems}

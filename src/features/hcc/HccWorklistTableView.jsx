@@ -31,7 +31,7 @@ export function HccWorklistTableView({
   filterOpen, setFilterOpen, activeFilterCount, openHccHistoryDrawer, showToast,
   startHccUpload, setHccUploadPhase, saveDialogOpen, setSaveDialogOpen, renameTarget, setRenameTarget,
   saveHccFilter, renameHccSavedFilter, combinedRows, filtered, patientsWithoutGaps, filtersActive, totalRecordCount,
-  hccMembersLoading, clearHccFilters, scrollWrapRef, someSelected, allSelected, handleSelectAll,
+  hccMembersLoading, clearHccFilters, coveringChip, coveringFor, scrollWrapRef, someSelected, allSelected, handleSelectAll,
   setMemberSortPop, orderedColumns, hiddenSet, sortKey, sortDir, setSortPop,
   colCfgBtnRef, colCfgRect, setColCfgRect, paginated, selectedHccIds, clearHccSelected,
   bulkAssigneeOpen, setBulkAssigneeOpen, sortPop, setSort, clearSort, memberSortPop,
@@ -87,7 +87,7 @@ export function HccWorklistTableView({
         }
       />
 
-      <FilterChipBar collapsed={!filterOpen} onSaveFilter={() => setSaveDialogOpen(true)} />
+      <FilterChipBar collapsed={!filterOpen} onSaveFilter={() => setSaveDialogOpen(true)} covering={coveringChip} />
       {/* Saved filters live exclusively in the left SubNav (under HCC).
           Inline chip strip removed per UX; rename/delete handled in-sidebar. */}
 
@@ -131,7 +131,7 @@ export function HccWorklistTableView({
                 variant="outline"
                 size="sm"
                 leadingIcon="solar:close-circle-linear"
-                onClick={() => { clearHccFilters(); setHccDueDateFilter(null); }}
+                onClick={() => { clearHccFilters(); setHccDueDateFilter(null); coveringChip.onChange([]); }}
               >
                 Clear All Filters
               </Button>
@@ -223,6 +223,7 @@ export function HccWorklistTableView({
                   <HccWorklistRow
                     key={row.key}
                     member={row.member}
+                    coveringFor={coveringFor(row.member)}
                     hiddenCols={hiddenSet}
                     columns={orderedColumns}
                     staggerIndex={index}

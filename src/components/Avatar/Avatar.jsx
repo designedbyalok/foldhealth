@@ -13,7 +13,15 @@ import styles from './Avatar.module.css';
 // including the default and M, 8px.
 const oooMarkSize = (size) => (['L', 'XL', 'DXL'].includes(size) || (typeof size === 'number' && size > 40) ? 16 : 8);
 
-function OooWrapper({ record, size, children }) {
+// A day for the badge's hover: "11/11/2026", with the time only when it isn't
+// midnight ("11/11/2026, 2:30 PM").
+function oooDay(v) {
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.getHours() || d.getMinutes() ? formatDateTime(v) : d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+}
+
+function OooWrapper({ record, size, note, children }) {
   return (
     <span className={styles.oooWrap}>
       {children}
@@ -23,9 +31,9 @@ function OooWrapper({ record, size, children }) {
         className={styles.oooBadgeWrap}
         label={(
           <span className={styles.oooTip}>
-            <span>Out Of Office</span>
-            <span>{formatDateTime(record.startAt)} →</span>
-            <span>{formatDateTime(record.endAt)}</span>
+            <span className={styles.oooTipTitle}>Out of office</span>
+            <span>{oooDay(record.startAt)} – {oooDay(record.endAt)}</span>
+            {note && <span className={styles.oooTipNote}>{note}</span>}
           </span>
         )}
       >
@@ -42,12 +50,13 @@ function OooWrapper({ record, size, children }) {
  * two staff with the same name aren't confused) and the badge shows whenever
  * that user is out of office now (the app supplies the lookup through
  * AvatarOooLookup); or pass `ooo` (a record, or null) to decide it yourself.
+ * `oooNote` adds a line under the dates in that hover (e.g. "You're covering").
  */
-export function Avatar({ userName, userId, ooo, ...props }) {
+export function Avatar({ userName, userId, ooo, oooNote, ...props }) {
   const lookup = useContext(AvatarOooLookup);
   const found = ooo !== undefined || !userName || !lookup ? null
     : lookup(userId ? { id: userId, name: userName } : userName);
   const record = ooo !== undefined ? ooo : found;
   const el = <AvatarBase {...props} />;
-  return record ? <OooWrapper record={record} size={props.size}>{el}</OooWrapper> : el;
+  return record ? <OooWrapper record={record} size={props.size} note={oooNote}>{el}</OooWrapper> : el;
 }

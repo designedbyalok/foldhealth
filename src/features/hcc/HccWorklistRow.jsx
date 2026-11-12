@@ -19,6 +19,7 @@ import { DOS_INNER, CELL_RENDERERS } from './HccWorklistRowCellRenderers';
 import { synthesizeHccProfile } from './HccWorklistRowParts.utils';
 import { resolveStaffName } from './HccWorklistRow.utils';
 import { dosKey } from './assignment/dosState';
+import { CoveringNote } from '../ooo/CoveringNote';
 import styles from './HccWorklistRow.module.css';
 
 export {
@@ -28,7 +29,7 @@ export {
   resolveCurrentAssignee,
 } from './HccWorklistRow.utils';
 
-function HccWorklistRowImpl({ member, hiddenCols, columns, staggerIndex = 0 }) {
+function HccWorklistRowImpl({ member, coveringFor, hiddenCols, columns, staggerIndex = 0 }) {
   const selectedHccIds = useAppStore(s => s.selectedHccIds);
   const selectHccMember = useAppStore(s => s.selectHccMember);
   const openDiagPanel = useAppStore(s => s.openDiagPanel);
@@ -229,6 +230,7 @@ function HccWorklistRowImpl({ member, hiddenCols, columns, staggerIndex = 0 }) {
                 </button>
               </Tooltip>
             </div>
+            <CoveringNote people={coveringFor} />
           </div>
         </div>
       </td>
@@ -378,6 +380,8 @@ export const HccWorklistRow = memo(HccWorklistRowImpl, (prev, next) => (
   && prev.hiddenCols === next.hiddenCols
   && prev.columns === next.columns
   && prev.staggerIndex === next.staggerIndex
+  // coveringFor is rebuilt every render; compare its contents.
+  && JSON.stringify(prev.coveringFor ?? null) === JSON.stringify(next.coveringFor ?? null)
 ));
 
 function HccEmptyPatientRowImpl({ patient, hiddenCols, columns, staggerIndex = 0 }) {

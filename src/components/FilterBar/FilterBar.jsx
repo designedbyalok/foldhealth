@@ -279,7 +279,9 @@ export function FilterBar({
     const fd = defByKey[k];
     if (!fd) return null;
     const opts = effectiveGetOptions(fd) || [];
-    if (multiSelect) {
+    // `multi` on a def: that one filter picks several values (string options)
+    // even when the bar is single-select.
+    if (multiSelect || fd.multi) {
       return (
         <FilterChip
           label={fd.label}

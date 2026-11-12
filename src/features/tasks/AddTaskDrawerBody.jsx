@@ -13,6 +13,7 @@ import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { DownChevronIcon } from '../../components/Icon/DownChevronIcon';
 import { PriorityIcon } from './TasksViewIcons';
 import { TaskDatePicker, DetailDropdown, CreatableLabelDropdown } from './TasksViewDropdowns';
+import { useAssigneeOoo, useRoleOf } from './assigneeHooks';
 import { LinkGoalToBarrierDrawer } from '../patient/right-panel/tabs/care-programs/care-plan/drawers/BarrierDetailDrawer/LinkGoalToBarrierDrawer';
 import { formatGoalTarget, formatGoalDuration } from '../settings/care-plan-library/lib';
 import styles from './TasksView.module.css';
@@ -118,6 +119,10 @@ export function AddTaskDrawerBody({
     .map(id => availableGoals.find(g => g.id === id))
     .filter(Boolean);
   const goalsForPicker = availableGoals.filter(g => !linkedGoalIds.includes(g.id));
+
+  // Who's out of office: can't be picked, shown under Not Available.
+  const assigneeOoo = useAssigneeOoo();
+  const roleOf = useRoleOf();
 
   // In care-plan scope, an intervention/task may be assigned to a platform
   // user OR the member (patient). Merge memberOptions into assigneeOptions
@@ -356,10 +361,12 @@ export function AddTaskDrawerBody({
             value={assignedTo}
             options={assigneeChoices}
             onSelect={setAssignedTo}
-            // Only Internal Task lets the user reassign, Patient Task
-            // runs on the member and the assignee stays locked to them.
-            disabled={!isInternalTask}
-            renderOption={opt => {
+            outOfOffice={assigneeOoo}
+            // In a care plan, only Internal Task lets the user reassign:
+            // Patient Task runs on the member and stays locked to them. The
+            // Tasks list's own Add Task has no kind and is always open.
+            disabled={showScheduleFields && !isInternalTask}
+            renderOption={(opt, { note, muted } = {}) => {
               const label = typeof opt === 'string' ? opt : opt.label;
               const val = typeof opt === 'string' ? opt : opt.value;
               const initials = (val || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -370,8 +377,14 @@ export function AddTaskDrawerBody({
               const isMember = (memberOptions || []).some(m => (typeof m === 'string' ? m : m.value) === val);
               return (
                 <>
-                  <Avatar variant={isMember ? 'patient' : 'assignee'} initials={initials} size="S" />
-                  <span>{label}</span>
+                  <Avatar variant={isMember ? 'patient' : 'assignee'} initials={initials} />
+                  {/* As booking's provider picker: name, role (Member for a
+                      patient), then any covering line. */}
+                  <span className={styles.dropItemText}>
+                    <span className={muted ? `${styles.dropItemName} ${styles.dropItemMuted}` : styles.dropItemName}>{label}</span>
+                    <span className={muted ? `${styles.dropItemRole} ${styles.dropItemMuted}` : styles.dropItemRole}>{isMember ? 'Member' : roleOf(val)}</span>
+                    {note && <span className={styles.dropItemNote}>{note}</span>}
+                  </span>
                 </>
               );
             }}

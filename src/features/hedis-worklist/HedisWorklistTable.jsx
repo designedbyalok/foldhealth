@@ -19,6 +19,7 @@ import { FilterNameDialog } from '../../components/FilterBar/FilterNameDialog';
 import { BulkBar } from '../../components/BulkBar/BulkBar';
 import { BulkChangeHedisAssigneeDialog } from './BulkChangeHedisAssigneeDialog';
 import { SortPopover } from '../../components/SortPopover/SortPopover';
+import { useCovering } from '../ooo/useCovering';
 
 // Axes the reviewer can sort the Member column on. Age is stored as
 // "48y 4m", useTableSort's number path would collapse that to 484
@@ -44,6 +45,9 @@ import styles from './HedisWorklistTable.module.css';
 import rowStyles from './HedisWorklistRow.module.css';
 
 const YEARS = [2024, 2025, 2026];
+const NO_PICKS = [];
+// Same owners the Assignee filter matches: the member's and each gap's.
+const assigneeNamesOf = (m) => [m.assignee, ...(m.gaps || []).map(g => g.assignee)];
 
 export function HedisWorklistTable() {
   const currentPage = useAppStore(s => s.currentPage);
@@ -74,6 +78,14 @@ export function HedisWorklistTable() {
   const [drawerMemberId, setDrawerMemberId] = useState(null);
   const [drawerGapCode, setDrawerGapCode] = useState(null);
   const [drawerInstanceNo, setDrawerInstanceNo] = useState(null);
+  // "Covering for" filter: local, not in hedisFilters, so saved filters never carry it.
+  const { names: coveringNames, coveringOn } = useCovering();
+  const [coveringPicked, setCoveringPicked] = useState([]);
+  const covering = coveringNames.length > 0 ? coveringPicked : NO_PICKS;
+  const coveringChip = useMemo(
+    () => ({ names: coveringNames, selected: coveringPicked, onChange: setCoveringPicked }),
+    [coveringNames, coveringPicked],
+  );
 
   // Read the live member from the store so store mutations re-render the drawer.
   const drawerMember = useMemo(
@@ -110,7 +122,8 @@ export function HedisWorklistTable() {
         m.in.toLowerCase().includes(q)
       );
     }
-    const matched = result.filter(m => hedisMemberMatchesFilters(m, hedisFilters));
+    const matched = result.filter(m => hedisMemberMatchesFilters(m, hedisFilters)
+      && (!covering.length || coveringOn(assigneeNamesOf(m), covering).length > 0));
     // Source / Instance are per-gap: a matching member shows only the gaps
     // that match, not all of its gaps. `allGaps` keeps the rest for context
     // (a manual gap's parent instance).
@@ -123,8 +136,8 @@ export function HedisWorklistTable() {
       gaps: (m.gaps || []).filter(g => (!src.length || src.includes(gapSourceLabel(g)))
         && (!inst.length || inst.includes(gapInstanceLabel(g)))),
     }));
-  }, [searchQuery, hedisFilters, hedisMembers]);
-  const isFiltered = !!searchQuery.trim() || Object.values(hedisFilters || {}).some(v => v?.length);
+  }, [searchQuery, hedisFilters, hedisMembers, covering, coveringOn]);
+  const isFiltered = !!searchQuery.trim() || Object.values(hedisFilters || {}).some(v => v?.length) || covering.length > 0;
 
   // Data-derived option pools passed to the FilterChipBar so `dynamic` chips
   // (Assignee, State, City, IPA, HP Code) enumerate only what the loaded
@@ -160,7 +173,7 @@ export function HedisWorklistTable() {
     };
   }, [hedisMembers, platformUsers]);
 
-  const activeFilterCount = countActiveHedisFilters(hedisFilters);
+  const activeFilterCount = countActiveHedisFilters(hedisFilters) + (covering.length ? 1 : 0);
 
   // Decorate members with `_ageYears` (leading integer of "48y 4m")
   // so the SortPopover's Age axis ranks by actual years instead of the
@@ -278,6 +291,7 @@ export function HedisWorklistTable() {
         primaryFilterKeys={HEDIS_PRIMARY_FILTER_KEYS}
         dynamicOpts={dynamicOpts}
         onSaveFilter={() => setSaveDialogOpen(true)}
+        covering={coveringChip}
       />
 
       {/* ── Table ── */}
@@ -349,6 +363,7 @@ export function HedisWorklistTable() {
                 <HedisWorklistRow
                   key={m.id}
                   member={m}
+                  coveringFor={covering.length ? coveringOn(assigneeNamesOf(m), covering) : null}
                   columns={orderedColumnsForRow}
                   hiddenSet={columnPrefs.hiddenSet}
                   isSelected={selectedSet.has(m.id)}

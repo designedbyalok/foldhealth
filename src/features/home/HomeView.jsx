@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import GridLayout from 'react-grid-layout/legacy';
 import { Icon } from '../../components/Icon/Icon';
 import { Select } from '../../components/Select/Select';
+import { CheckboxListPopover } from '../../components/CheckboxListPopover/CheckboxListPopover';
 import { TopBar } from '../../components/TopBar/TopBar';
 import { TodayView } from './today/TodayView';
 import { WelcomeCard } from './WelcomeCard';
@@ -11,6 +12,7 @@ import { TodayCalendarCard } from './TodayCalendarCard';
 import { TasksCard } from './TasksCard';
 import { QuickNotesCard } from './QuickNotesCard';
 import { TeamProgramsCard } from './TeamProgramsCard';
+import { HomeWidgetEmpty } from './HomeWidgetEmpty';
 import { useProgramAccess } from '../patient/hooks/useProgramAccess';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -33,6 +35,27 @@ const DEFAULT_LAYOUT = [
 ];
 
 const DEFAULT_ORDER = Object.fromEntries(DEFAULT_LAYOUT.map((l, idx) => [l.i, idx]));
+
+// Which cards show on Home (the Widgets picker); saved per browser, like the
+// layout. Hidden cards keep their spot for when they're turned back on.
+const HIDDEN_KEY = 'home-hidden-widgets';
+const WIDGET_LABELS = {
+  welcome: 'Welcome',
+  team: 'Team Programs',
+  alerts: 'My Worklist',
+  assigned: 'Assigned to Me',
+  calendar: 'Calendar',
+  tasks: 'Tasks',
+  notes: 'Quick Notes',
+};
+function loadHidden() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed.filter(k => k in WIDGET_LABELS) : [];
+  } catch {
+    return [];
+  }
+}
 
 function loadLayout() {
   try {
@@ -71,6 +94,11 @@ const CARD_RENDERERS = {
 export function HomeView() {
   const [layout, setLayout] = useState(loadLayout);
   const [editing, setEditing] = useState(false);
+  const [hidden, setHidden] = useState(loadHidden);
+  const [widgetsAt, setWidgetsAt] = useState(null); // the picker's anchor rect
+  useEffect(() => {
+    try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(hidden)); } catch { /* private mode */ }
+  }, [hidden]);
   const [view, setView] = useState(() => {
     try { return localStorage.getItem(VIEW_KEY) || 'dashboard'; } catch { return 'dashboard'; }
   });
@@ -99,8 +127,31 @@ export function HomeView() {
   // appearing once access loads), the grid keeps the earlier one in place
   // and pushes the other down.
   const visibleLayout = useMemo(() => layout
-    .filter(l => l.i !== 'team' || showTeam)
-    .sort((a, b) => DEFAULT_ORDER[a.i] - DEFAULT_ORDER[b.i]), [layout, showTeam]);
+    .filter(l => (l.i !== 'team' || showTeam) && !hidden.includes(l.i))
+    .sort((a, b) => DEFAULT_ORDER[a.i] - DEFAULT_ORDER[b.i]), [layout, showTeam, hidden]);
+  // Only My Worklist and Calendar on: a fixed two-column view, the worklist
+  // wide on the left and the calendar on the right, both filling the screen
+  // (like the worklist page). The saved layout is kept for when others return.
+  const focusView = visibleLayout.length === 2 && visibleLayout.every(l => l.i === 'alerts' || l.i === 'calendar');
+  // Room below the grid's top, measured on mount and resize.
+  const [room, setRoom] = useState(() => window.innerHeight - 96);
+  useEffect(() => {
+    const measure = () => setRoom(window.innerHeight - (containerRef.current?.getBoundingClientRect().top || 96));
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [view]);
+  const gridLayout = useMemo(() => {
+    if (!focusView) return visibleLayout;
+    const h = Math.max(8, Math.floor((room - 12) / (ROW_HEIGHT + 12)));
+    return [
+      { i: 'alerts', x: 0, y: 0, w: 9, h, static: true },
+      { i: 'calendar', x: 9, y: 0, w: 3, h, static: true },
+    ];
+  }, [focusView, visibleLayout, room]);
+
+  // The cards this user can turn on (Team Programs only for supervisors).
+  const widgetKeys = useMemo(() => DEFAULT_LAYOUT.map(l => l.i).filter(k => k !== 'team' || showTeam), [showTeam]);
 
   // The grid only reports visible cards, so a hidden card keeps its spot.
   const handleLayoutChange = useCallback((next) => {
@@ -122,14 +173,14 @@ export function HomeView() {
     try { localStorage.setItem(VIEW_KEY, next); } catch { /* private mode */ }
   }, []);
 
-  const items = useMemo(() => visibleLayout.map(l => {
+  const items = useMemo(() => gridLayout.map(l => {
     const Card = CARD_RENDERERS[l.i];
     return (
       <div key={l.i}>
         <Card dragHandleClassName={editing ? DRAG_HANDLE : undefined} {...(l.i === 'team' ? { codes: supervisedCodes } : {})} />
       </div>
     );
-  }), [visibleLayout, editing, supervisedCodes]);
+  }), [gridLayout, editing, supervisedCodes]);
 
   return (
     <div className={styles.page}>
@@ -145,6 +196,15 @@ export function HomeView() {
         />
         {view === 'dashboard' && (
           <div style={{ display: 'flex', gap: 4 }}>
+            <button
+              className={[styles.toolbarBtn, widgetsAt ? styles.editing : ''].filter(Boolean).join(' ')}
+              onClick={(e) => setWidgetsAt(widgetsAt ? null : e.currentTarget.getBoundingClientRect())}
+              aria-haspopup="listbox"
+              aria-expanded={!!widgetsAt}
+            >
+              <Icon name="solar:widget-linear" size={14} />
+              Widgets
+            </button>
             {editing && (
               <button className={styles.toolbarBtn} onClick={resetLayout}>
                 <Icon name="solar:refresh-linear" size={14} />
@@ -161,6 +221,18 @@ export function HomeView() {
           </div>
         )}
       </div>
+      {widgetsAt && (
+        <CheckboxListPopover
+          anchorRect={widgetsAt}
+          label="Show on Home"
+          options={widgetKeys}
+          labelOf={(k) => WIDGET_LABELS[k]}
+          selected={widgetKeys.filter(k => !hidden.includes(k))}
+          onChange={(shown) => setHidden(widgetKeys.filter(k => !shown.includes(k)))}
+          onClose={() => setWidgetsAt(null)}
+          width={220}
+        />
+      )}
       {view === 'today' ? (
         <TodayView />
       ) : (
@@ -168,9 +240,12 @@ export function HomeView() {
         ref={containerRef}
         className={[styles.gridContainer, editing ? styles.editing : ''].filter(Boolean).join(' ')}
       >
+        {visibleLayout.length === 0 && (
+          <HomeWidgetEmpty icon="solar:widget-linear" title="No widgets on Home" description="Turn widgets on from Widgets above." />
+        )}
         <GridLayout
           className="layout"
-          layout={visibleLayout}
+          layout={gridLayout}
           cols={COLS}
           rowHeight={ROW_HEIGHT}
           width={width}
@@ -179,7 +254,7 @@ export function HomeView() {
           isDraggable={editing}
           isResizable={editing}
           draggableHandle={`.${DRAG_HANDLE}`}
-          onLayoutChange={handleLayoutChange}
+          onLayoutChange={focusView ? undefined : handleLayoutChange}
           compactType="vertical"
           preventCollision={false}
         >
