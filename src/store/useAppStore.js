@@ -1655,6 +1655,11 @@ export const useAppStore = create((set, get) => ({
   // Patient detail view
   selectedPatientId: null,
   patientProfileTab: 'Overview',
+  // Patient profile in full screen: the app sidebar, top bar and the profile's
+  // left panel step aside so Care Management and the care plan get the room.
+  // Cleared when the profile closes.
+  profileFullScreen: false,
+  setProfileFullScreen: (on) => set({ profileFullScreen: !!on }),
   // Care Programs is now a sub-tab of Care Management. This holds the active
   // Care Management sub-tab ('Care Programs' | 'Comprehensive Care Plan' |
   // 'Program Activity Log') and rides the URL so a refresh restores it.

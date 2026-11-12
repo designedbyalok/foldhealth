@@ -137,6 +137,7 @@ function PopulationView() {
   const pgRuleBuilder = useAppStore(s => s.pgRuleBuilder);
   const setHccFilter = useAppStore(s => s.setHccFilter);
   const programSplit = useProgramPanelSplitActive();
+  const profileFull = useAppStore(s => s.profileFullScreen);
 
   const isAwv = activeSubnavList === 'Annual Visit';
   const isJsa = activeSubnavList === 'JSA';
@@ -172,7 +173,7 @@ function PopulationView() {
   if (selectedPatientId) {
     return (
       <div className={styles.main} data-floating-split={programSplit || undefined}>
-        {!programSplit && <TopBar />}
+        {!programSplit && !profileFull && <TopBar />}
         <div className={styles.content}>
           <Suspense fallback={<LazyFallback />}>
             <PatientDetailView />
@@ -510,6 +511,8 @@ export function AppLayout() {
   }, []);
 
   const showCreateAgent = useAppStore(s => s.showCreateAgent);
+  // A patient profile in full screen takes the whole window.
+  const profileFull = useAppStore(s => s.profileFullScreen && !!s.selectedPatientId);
   const detailPatient = useAppStore(s => s.detailPatient);
   const liveDrawerPatient = useAppStore(s => s.liveDrawerPatient);
   const liveCallOpen = useLiveCall(s => s.open);
@@ -650,7 +653,7 @@ export function AppLayout() {
 
   return (
     <div className={styles.app}>
-      <AppSidebar />
+      {!profileFull && <AppSidebar />}
       <Suspense fallback={<LazyFallback />}>
         {activeView}
       </Suspense>
