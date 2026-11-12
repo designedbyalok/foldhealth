@@ -15,6 +15,7 @@ const has = (t, re) => re.test([...(t.labels || []), t.name || ''].join(' '));
 export const TASK_CARDS = [
   { key: 'carePlan', title: 'Care Plan Review Tasks', match: t => has(t, /care plan review/i) },
   { key: 'medRecon', title: 'Med Recon Review Tasks', match: t => has(t, /med(ication)?\.? ?rec(on|onciliation)?\b/i) },
+  { key: 'intervention', title: 'Intervention Tasks', match: t => has(t, /intervention/i) },
   { key: 'tasks', title: 'Other Tasks', match: () => true },
 ];
 

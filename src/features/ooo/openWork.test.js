@@ -15,9 +15,11 @@ describe('openTasksByCard', () => {
       task('f', { assigned_to: 'Someone', assigned_to_id: 'u9' }),
       task('g', { due_date: null }),
       task('h', { due_date: '11-14-2026' }),
+      task('i', { labels: ['Intervention'] }),
     ], away, new Date(2026, 10, 20).toISOString());
     expect(out.carePlan.map(t => t.id)).toEqual(['a']);
     expect(out.medRecon.map(t => t.id)).toEqual(['b']);
+    expect(out.intervention.map(t => t.id)).toEqual(['i']);
     expect(out.tasks.map(t => t.id)).toEqual(['c', 'g', 'h']);
   });
 });

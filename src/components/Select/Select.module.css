@@ -256,8 +256,8 @@
   white-space: nowrap;
 }
 
-/* Open multi-pick with chips: one line, the chip row (with its "+N") takes
-   what the search input leaves. */
+/* Open multi-pick with chips: one line, the chip row (with its "+N") at its
+   own width, the search input right after it filling the rest. */
 .triggerBadgesOpen {
   display: flex;
   flex-wrap: nowrap;
@@ -269,13 +269,13 @@
 }
 .triggerBadgesOpenRow {
   display: flex;
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
 }
 .triggerInputInline {
-  flex: 0 0 6rem;
-  min-width: 0;
-  width: 6rem;
+  flex: 1 1 6rem;
+  min-width: 6rem;
+  width: auto;
 }
 
 /* size="sm": 28px, for filter rows and dense toolbars (matches Toggle sm). */

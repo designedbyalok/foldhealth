@@ -2,24 +2,10 @@ import { useState } from 'react';
 import { Icon } from '../../../../components/Icon/Icon';
 import { CollapsibleContent } from '../../../../components/Collapsible/Collapsible';
 import { Avatar } from '../../../../components/Avatar/Avatar';
-import { ActionButton } from '../../../../components/ActionButton/ActionButton';
-import { CloseIcon } from '../../../../components/Icon/CloseIcon';
 import { EmptyState } from '../../../../components/EmptyState/EmptyState';
-import { ruleSummary } from './availabilityUtils';
 import styles from './UserAvailability.module.css';
 
-// Users who share the same reasons sit under one band.
-function byReason(list) {
-  const groups = new Map();
-  list.forEach(({ user, lines }) => {
-    const k = lines.join('|');
-    if (!groups.has(k)) groups.set(k, { lines, users: [] });
-    groups.get(k).users.push(user);
-  });
-  return [...groups.values()];
-}
-
-function UserRow({ user, onRemove }) {
+function UserRow({ user }) {
   return (
     <div className={styles.reviewRow}>
       <Avatar variant="staff" size="S" initials={user.initials} userName={user.name} userId={user.id} />
@@ -27,9 +13,6 @@ function UserRow({ user, onRemove }) {
         <span className={styles.reviewUserName}>{user.name}</span>
         <span className={styles.reviewUserRole}>{user.role || user.clinicalRoles?.[0] || 'Staff'}</span>
       </span>
-      <ActionButton size="md" tooltip="Remove user" tooltipLeft onClick={() => onRemove(user)}>
-        <CloseIcon size={20} color="var(--neutral-300)" />
-      </ActionButton>
     </div>
   );
 }
@@ -47,31 +30,27 @@ function ReasonBand({ lines, tone }) {
   );
 }
 
-// Each reason's band, then its users.
-function ReasonGroups({ list, tone, onRemove }) {
-  return byReason(list).map(({ lines, users }) => (
-    <div key={lines.join('|')} className={styles.reviewGroup}>
-      <ReasonBand lines={lines} tone={tone} />
-      {users.map(user => <UserRow key={user.id || user.name} user={user} onRemove={onRemove} />)}
+// Each user, then their reason band under them.
+function UserReasons({ list, tone }) {
+  return list.map(({ user, lines }) => (
+    <div key={user.id || user.name} className={styles.reviewGroup}>
+      <UserRow user={user} />
+      {lines.length > 0 && <ReasonBand lines={lines} tone={tone} />}
     </div>
   ));
 }
 
 /**
  * Review before adding availability for multiple users (Figma Eventus
- * 17856:123383): the counts on top, then a folding card of the schedules
- * being added, then white cards for "Will be skipped" (folded), "Will be added
- * with warnings" and "Will be added". Skipped and warned users sit under a
- * band with their reason (red or yellow), grouped when they share it. Any
- * user can be taken off the list.
+ * 17856:123383): the counts on top, then white cards for "Will be
+ * skipped" (open, folds), "Will be added with warnings" and "Will be added".
+ * Each user is listed with their reason on a band under them (red or
+ * yellow).
  *
- * @param {object[]} props.results  – reviewUser() per user
- * @param {object[]} props.blocks   – the schedules, in order
- * @param {function} props.onRemove – (user) => void
+ * @param {object[]} props.results – reviewUser() per user
  */
-export function BulkAvailabilityReview({ results, blocks, onRemove }) {
-  const [schedulesOpen, setSchedulesOpen] = useState(false);
-  const [skippedOpen, setSkippedOpen] = useState(false);
+export function BulkAvailabilityReview({ results }) {
+  const [skippedOpen, setSkippedOpen] = useState(true);
   if (!results.length) {
     return (
       <div className={styles.reviewEmpty}>
@@ -99,25 +78,6 @@ export function BulkAvailabilityReview({ results, blocks, onRemove }) {
         ))}
       </div>
 
-      <section className={styles.reviewCard}>
-        <button type="button" className={`${styles.reviewCardTitle} ${styles.reviewCardToggle} ${schedulesOpen ? '' : styles.reviewCardTitleShut}`} aria-expanded={schedulesOpen} onClick={() => setSchedulesOpen(v => !v)}>
-          Schedules to be added
-          {chevron(schedulesOpen)}
-        </button>
-        <CollapsibleContent open={schedulesOpen}>
-          <div className={styles.reviewGroup}>
-            {blocks.map((b, i) => (
-              <div key={i} className={`${styles.reviewRow} ${styles.reviewScheduleRow}`}>
-                <span className={styles.reviewUserText}>
-                  <span className={styles.reviewUserName}>Schedule {i + 1}</span>
-                  <span className={styles.reviewScheduleSub}>{ruleSummary(b)}</span>
-                </span>
-              </div>
-            ))}
-          </div>
-        </CollapsibleContent>
-      </section>
-
       {skipped.length > 0 && (
         <section className={styles.reviewCard}>
           <button type="button" className={`${styles.reviewCardTitle} ${styles.reviewCardToggle} ${skippedOpen ? '' : styles.reviewCardTitleShut}`} aria-expanded={skippedOpen} onClick={() => setSkippedOpen(v => !v)}>
@@ -126,7 +86,7 @@ export function BulkAvailabilityReview({ results, blocks, onRemove }) {
             {chevron(skippedOpen)}
           </button>
           <CollapsibleContent open={skippedOpen}>
-            <ReasonGroups list={skipped} tone="skip" onRemove={onRemove} />
+            <UserReasons list={skipped} tone="skip" />
           </CollapsibleContent>
         </section>
       )}
@@ -134,16 +94,14 @@ export function BulkAvailabilityReview({ results, blocks, onRemove }) {
       {warned.length > 0 && (
         <section className={styles.reviewCard}>
           <h3 className={styles.reviewCardTitle}>Will be added with warnings</h3>
-          <ReasonGroups list={warned} tone="warn" onRemove={onRemove} />
+          <UserReasons list={warned} tone="warn" />
         </section>
       )}
 
       {added.length > 0 && (
         <section className={styles.reviewCard}>
           <h3 className={styles.reviewCardTitle}>Will be added</h3>
-          <div className={styles.reviewGroup}>
-            {added.map(({ user }) => <UserRow key={user.id || user.name} user={user} onRemove={onRemove} />)}
-          </div>
+          <UserReasons list={added} />
         </section>
       )}
     </div>

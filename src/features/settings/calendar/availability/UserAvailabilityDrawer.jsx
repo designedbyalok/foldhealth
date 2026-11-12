@@ -356,11 +356,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
     const ok = await addUserAvailabilityCopies(to.flatMap(r => copiesFor(r.user, list, { by, now })));
     setSaving(false);
     if (!ok) return;
-    const skipped = results.length - to.length;
-    toast.success(
-      'Availability Added Successfully',
-      { description: `${skipped ? `${skipped} user${skipped === 1 ? '' : 's'} skipped. ` : ''}Availability updates may take a few minutes.` },
-    );
+    toast.success('Availability Added Successfully');
     onSaved?.();
     setDismissed(true);
   };
@@ -693,17 +689,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
       >
         {bulk && step === 'review' ? (
           <div className={stepDir === 'forward' ? styles.stepFromRight : undefined}>
-          <BulkAvailabilityReview
-            results={bulkResults()}
-            blocks={bulkBlocks()}
-            onRemove={(u) => {
-              setDirty(true);
-              const left = bulkNames.filter(n => n !== u.name);
-              setBulkNames(left);
-              // Nobody left: back to editing, the Users field now empty.
-              if (!left.length) goStep('edit');
-            }}
-          />
+          <BulkAvailabilityReview results={bulkResults()} />
           </div>
         ) : (
         <div className={[styles.form, bulk && stepDir === 'back' ? styles.stepFromLeft : ''].filter(Boolean).join(' ')}>
