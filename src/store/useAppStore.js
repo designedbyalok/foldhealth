@@ -13567,6 +13567,8 @@ export const useAppStore = create((set, get) => ({
   /** Done (acted on) or dismissed: leaves the open list, kept with who decided. */
   decideProgramEventSuggestion: async (memberId, id, status) => {
     const key = String(memberId || '');
+    // Already decided (the card can be mounted twice, once per layout): keep the first decision.
+    if ((get().programEventSuggestions[key] || []).find(r => r.id === id)?.status !== 'open') return;
     const decidedBy = get().currentUserProfile?.name || null;
     set(s => ({
       programEventSuggestions: {

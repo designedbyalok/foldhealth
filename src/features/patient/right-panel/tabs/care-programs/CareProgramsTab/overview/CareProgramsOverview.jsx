@@ -418,9 +418,10 @@ function ProgramSummary({ clinical, unity, onOpenItem }) {
 
 /**
  * The Care Programs tab's overview (care plan redesign prototype): programs
- * and active problems on the left; Why Prioritized, Next Best Actions and
- * recent activity in the middle; the Care Plan Summary and Program Summary on
- * the right (or on the left when there's no room for three columns).
+ * active problems and recent activity on the left; Why Prioritized and Next
+ * Best Actions in the middle; Suggested Actions, the Care Plan Summary and
+ * Program Summary on the right (or on the left when there's no room for three
+ * columns).
  * Everything comes from the patient's records; Why Prioritized and Program
  * Summary can also be written by Unity on request (useCareProgramsInsights).
  */
@@ -465,6 +466,7 @@ export function CareProgramsOverview({
   };
   const summaries = (
     <>
+      <ProgramSuggestedActions patientId={patientId} programs={programs} onEnroll={onEnroll} onOpenStep={onOpenStep} />
       <CarePlanSummary data={data} onOpenPlan={() => onOpenPlan(null)} />
       <ProgramSummary clinical={data.clinical} unity={unity} onOpenItem={setOpenItem} />
     </>
@@ -498,13 +500,11 @@ export function CareProgramsOverview({
           {eligible}
           <div className={styles.sumLeft}>{summaries}</div>
           <ActiveProblems problems={data.problems} loaded={data.problemsLoaded} />
+          <SinceLastVisit activity={data.activity} lastVisit={lastVisit} onOpenLog={onOpenLog} />
         </div>
-        {/* Recent activity sits under the actions so the columns end level. */}
         <div className={styles.main}>
           <WhyPrioritized why={data.why} unity={unity} onOpenRef={openRef} />
-          <ProgramSuggestedActions patientId={patientId} programs={programs} onEnroll={onEnroll} onOpenStep={onOpenStep} />
           <NextBestActions actions={data.actions} programs={order.map(o => data.entries[o.index].program)} onRun={onRun} onReview={onReviewStep} />
-          <SinceLastVisit activity={data.activity} lastVisit={lastVisit} onOpenLog={onOpenLog} />
         </div>
         <div className={styles.right}>{summaries}</div>
       </div>
