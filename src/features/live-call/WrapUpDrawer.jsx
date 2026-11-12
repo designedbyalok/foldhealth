@@ -63,9 +63,10 @@ function WrapUpDrawerBody() {
         store: useAppStore, patient, pid, program: planProgram, accepted: draft.accepted, script, medEdits: session.medEdits,
       });
       // A call taken over from an agent closes the agent's relay: it no
-      // longer holds the patient, and the TOC worklist's Relay says so.
+      // longer holds the patient, and the TOC worklist's Relay says so. An
+      // in-person visit takes nothing over, so it leaves the relay alone.
       const record = useAppStore.getState().patients.find(p => String(p.id) === String(pid));
-      if (record?.relayStatus === 'live') {
+      if (session.mode === 'call' && record?.relayStatus === 'live') {
         useAppStore.getState().updatePatient(record.id, { relayStatus: 'completed', relayNote: `Handed off to ${cmName}` });
       }
     } finally {
