@@ -1738,11 +1738,6 @@ export const useAppStore = create((set, get) => ({
     track('care_program.opened', { patientId: get().selectedPatientId, programKey });
     set({ selectedCareProgramKey: programKey, careProgramStep: null, carePlanSummaryOpen: false });
     updateHash?.(get());
-    // Remember the user's program context: the Care Programs tab reopens it
-    // the next time they land on a patient enrolled in it.
-    if (programKey && get().panelLayouts['care-program-context']?.key !== programKey) {
-      get().savePanelLayout('care-program-context', { key: programKey });
-    }
   },
   closeCareProgram: () => {
     set({ selectedCareProgramKey: null, careProgramStep: null, carePlanSummaryOpen: false });
