@@ -43,7 +43,10 @@ const CM_TABS_PROGRAM = ['Care Programs', 'Comprehensive Care Plan', 'Program Ac
 const CM_TABS_PATIENT = ['Care Programs', 'Care Plan', 'Program Activity Log'];
 // The program-level plan tab reads "Care Plan"; its key stays the same so
 // links, the URL and the stored tab keep working.
-const tabItems = tabs => tabs.map(k => (k === 'Comprehensive Care Plan' ? { key: k, label: 'Care Plan' } : k));
+// Short labels, as in the prototype, so the Care Plan toolbar (with its
+// program switch) fits on one row.
+const TAB_LABELS = { 'Comprehensive Care Plan': 'Care Plan', 'Program Activity Log': 'Activity Log' };
+const tabItems = tabs => tabs.map(k => (TAB_LABELS[k] ? { key: k, label: TAB_LABELS[k] } : k));
 
 /** "Add Care Note" drawer for the Comprehensive Care Plan pane: one note for
  *  every active program, or for the ones picked. Each program gets the note
@@ -109,7 +112,6 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
   // 'all' or a program id.
   const [view, setView] = useState('all');
   const [signMenu, setSignMenu] = useState(null);
-  const [programsOpen, setProgramsOpen] = useState(false);
   const openPrograms = useMemo(() => programs.filter(p => !isProgramClosed(p.status)), [programs]);
   const shownProgram = view === 'all' ? null : openPrograms.find(p => p.id === view) || null;
   const signing = useMemo(
@@ -236,7 +238,7 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
       <div className={styles.programSwitch}>
         <SegmentedControl
           size="sm"
-          items={[{ key: 'all', label: 'All Programs' }, ...openPrograms.map(p => ({ key: p.id, label: p.code }))]}
+          items={[{ key: 'all', label: 'All' }, ...openPrograms.map(p => ({ key: p.id, label: p.code }))]}
           value={shownProgram ? shownProgram.id : 'all'}
           onValueChange={setView}
         />
@@ -245,22 +247,23 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
   );
   const planActions = (
     <>
-      {!shownProgram && (
-        <span className={styles.planActions}>
-          <Button size="sm" variant="outline" leadingIcon="solar:list-linear" onClick={() => setProgramsOpen(true)}>
-            Active Programs ({openPrograms.length})
+      {/* Each program's care plan is completed here and signed by its
+          provider; the menu lists them with where each one stands. */}
+      {!shownProgram && signing.length > 0 && (
+        <>
+          <Button
+            size="sm"
+            variant={toComplete ? 'solid' : 'outline'}
+            trailingIcon="solar:alt-arrow-down-linear"
+            title={toComplete
+              ? `${toComplete} program care plan${toComplete === 1 ? '' : 's'} to complete and send for signature`
+              : 'Each program care plan: awaiting signature or signed'}
+            onClick={(e) => setSignMenu(e.currentTarget.getBoundingClientRect())}
+          >
+            {toComplete ? `Complete Plans (${toComplete})` : 'Plan Signatures'}
           </Button>
-          {signing.length > 0 && (
-            <Button
-              size="sm"
-              variant={toComplete ? 'solid' : 'outline'}
-              trailingIcon="solar:alt-arrow-down-linear"
-              onClick={(e) => setSignMenu(e.currentTarget.getBoundingClientRect())}
-            >
-              {toComplete ? `Complete (${toComplete})` : 'Complete / Sign'}
-            </Button>
-          )}
-        </span>
+          <span className={styles.ctaDivider} aria-hidden="true" />
+        </>
       )}
       {signMenu && (
         <MenuPopover
@@ -305,12 +308,11 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
         searchPlaceholder="Search goals & interventions"
         showFilters={showFilters} setShowFilters={setShowFilters}
         cta={(
-          /* Active Programs and Complete, then the icon-only cluster: note
-             (opens the Add Care Note drawer) and download (streams the
-             CSV), hugging the toolbar's right edge. */
+          /* Complete Plans, then the icon-only cluster: note (opens the
+             Add Care Note drawer) and download (streams the CSV), hugging
+             the toolbar's right edge. */
           <div className={styles.ctaCluster}>
             {planActions}
-            <span className={styles.ctaDivider} aria-hidden="true" />
             <ActionButton
               icon="solar:notes-linear"
               tooltip="Add care note"
@@ -397,8 +399,6 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
           onClose={onClose}
           onOpenProgramStep={(p) => setView(p.id)}
           onAddNote={notePrograms.length ? () => setAddNoteOpen(true) : undefined}
-          programsOpen={programsOpen}
-          onProgramsClose={() => setProgramsOpen(false)}
         />
       </div>
       {addNoteOpen && (

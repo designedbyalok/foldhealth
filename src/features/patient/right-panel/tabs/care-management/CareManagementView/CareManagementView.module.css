@@ -105,7 +105,7 @@
 
 /* Comprehensive Care Plan: the program switch (in the toolbar row, after the
    sub-tabs) keeps its labels' width and scrolls sideways only when even that
-   doesn't fit; Active Programs and Complete lead the toolbar's actions. */
+   doesn't fit; Complete Plans leads the toolbar's actions. */
 .programSwitch {
   min-width: 0;
   max-width: 100%;
@@ -113,7 +113,6 @@
   scrollbar-width: none;
 }
 .programSwitch > * { max-width: none; }
-.planActions { display: flex; align-items: center; gap: var(--space-2); }
 /* All Programs' Applied Templates strip, framed like a program plan's header. */
 .templatesCard {
   flex-shrink: 0;
