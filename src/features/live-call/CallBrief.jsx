@@ -3,12 +3,19 @@ import { Badge } from '../../components/Badge/Badge';
 import { useLiveCall } from './useLiveCall';
 import { medBadge, pointsView } from './liveCallModel';
 import { jumpToLine } from './jumpToLine';
+import { useGoalsInTheirWords } from './useGoalsInTheirWords';
+import { Button } from '../../components/Button/Button';
+import { useAppStore } from '../../store/useAppStore';
 import styles from './LiveCallOverlay.module.css';
 
 /** Left rail: why we're calling, what to cover and the medications to review. */
 export function CallBrief({ script }) {
   const shown = useLiveCall(s => s.shown);
   const mode = useLiveCall(s => s.mode);
+  const patient = useLiveCall(s => s.patient);
+  const openLiveDrawer = useAppStore(s => s.openLiveDrawer);
+  const words = useGoalsInTheirWords(patient);
+  const agent = patient?.agent || 'the agent';
   const medOpen = useLiveCall(s => s.medOpen);
   const medEdits = useLiveCall(s => s.medEdits);
   const openMed = useLiveCall(s => s.openMed);
@@ -21,6 +28,16 @@ export function CallBrief({ script }) {
         <span className={styles.sectionLabel}>Reason for {mode === 'visit' ? 'Visit' : 'Call'}</span>
         <p className={styles.reason}>{script.reason}</p>
       </section>
+
+      {script.handoff?.length > 0 && (
+        <section className={styles.briefSection}>
+          <span className={styles.sectionLabel}>Handoff From {agent}</span>
+          <ul className={styles.notes}>
+            {script.handoff.map(h => <li key={h}>{h}</li>)}
+          </ul>
+          <span><Button variant="ghost" size="sm" leadingIcon="solar:document-text-linear" onClick={() => openLiveDrawer(patient.id)}>Agent Transcript</Button></span>
+        </section>
+      )}
 
       {points.length > 0 && (
         <section className={styles.briefSection}>
@@ -42,6 +59,20 @@ export function CallBrief({ script }) {
                   <span className={styles.pointText}>{p.t}</span>
                   {p.done && <span className={styles.pointAt}>{script.lines[p.line].t}</span>}
                 </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {words.length > 0 && (
+        <section className={styles.briefSection}>
+          <span className={styles.sectionLabel}>Goals in Their Words</span>
+          <ul className={styles.words}>
+            {words.map(w => (
+              <li key={w.id}>
+                <span className={styles.wordsQuote}>“{w.words}”</span>
+                <span className={styles.wordsGoal}>{w.goal} · {w.program}</span>
               </li>
             ))}
           </ul>

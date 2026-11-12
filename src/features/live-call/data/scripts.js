@@ -8,6 +8,12 @@ export const LIVE_CALL_SCRIPTS = [
     memberId: '11143',
     reason: 'TCM interactive contact after CHF discharge (St. Mary Hospital, 11/08). Taken over from Erica: confused about the new torsemide dose.',
     interpreter: 'English',
+    handoff: [
+      'Called William 2 days after his CHF discharge from St. Mary Hospital (11/08).',
+      'He has furosemide and torsemide bottles at home and is taking one torsemide each morning.',
+      'He says his ankles are puffier. Flagged as medication confusion.',
+      'Kept him on the line and paged you. Erica stays on until you join, then hands off.',
+    ],
     summary: 'TCM interactive contact by phone after CHF discharge (St. Mary Hospital, 11/08), taken over from Erica. He had been taking one torsemide 20 mg each morning instead of two. Reconciled with teach-back: torsemide 40 mg (two tablets) every morning, furosemide stopped, metoprolol succinate up to 50 mg nightly. Weight 186 lb, up 4 lb since discharge, with mild ankle swelling and no change in orthopnea; Dr. Chen to be notified today. Reviewed daily weights and when to call: 3 lb in a day, 5 lb in a week, or worse breathing. 11 torsemide tablets left; refill requested. Large-print pill organizer for poor vision. 7-day TCM visit Fri 11/13 at 10:20 AM, daughter driving. His goal: walk to church on Sundays again.',
     speakers: {
       cm: { role: 'Care Manager' },
@@ -65,6 +71,11 @@ export const LIVE_CALL_SCRIPTS = [
     memberId: '11089',
     reason: 'ED follow-up after chest pain, rule out ACS (City Medical ER, 11/10). Taken over from Erica: asking about follow-up labs.',
     interpreter: 'English',
+    handoff: [
+      'Called Annette the day after her ED visit for chest pain (City Medical ER, 11/10).',
+      'No chest pain since Tuesday night. She has questions about the follow-up labs the ER asked for.',
+      'Kept her on the line and paged you. Erica stays on until you join, then hands off.',
+    ],
     summary: 'ED follow-up call after chest pain with ACS ruled out (City Medical ER, 11/10), taken over from Erica. Troponins were normal and she has had no chest pain since Tuesday night. Fasting lipid panel at Quest Fri 11/13 at 7:30 AM. 7-day ED follow-up with Dr. Patel Mon 11/16 at 2:00 PM. Taking aspirin 81 mg every morning as started in the ER. She was unsure when to use nitroglycerin; taught back: sit down, one tablet under the tongue, call 911 if the pain lasts 5 minutes. Stress test order to be requested from Dr. Patel before Monday.',
     speakers: {
       cm: { role: 'Care Manager' },

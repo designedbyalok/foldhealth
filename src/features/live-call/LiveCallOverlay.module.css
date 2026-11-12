@@ -302,6 +302,45 @@
   color: var(--neutral-400);
 }
 
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-md);
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+}
+
+.words {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.words li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.wordsQuote {
+  font-size: var(--font-md);
+  font-style: italic;
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+}
+
+.wordsGoal {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
 .points,
 .meds {
   display: flex;

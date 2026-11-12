@@ -682,6 +682,7 @@ function liveCallScriptToRow(s) {
     reason: s.reason,
     interpreter: s.interpreter,
     summary: s.summary,
+    handoff: s.handoff || [],
     speakers: s.speakers,
     lines: s.lines,
     points: s.points,

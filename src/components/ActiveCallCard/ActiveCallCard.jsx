@@ -6,6 +6,7 @@ import { useLiveCall } from '../../features/live-call/useLiveCall';
 import { expandLiveCall } from '../../features/live-call/liveCallMorph';
 import { useCallControls } from '../../features/live-call/useCallControls';
 import { endLiveCall } from '../../features/live-call/endLiveCall';
+import { livePatientOf } from '../../features/live-call/joinAgentCall';
 import { CallMoreMenu } from '../../features/live-call/CallMoreMenu';
 import { DroppedCallBanner } from '../../features/live-call/DroppedCallBanner';
 import styles from './ActiveCallCard.module.css';
@@ -32,16 +33,7 @@ export function ActiveCallCard() {
   const visiting = mode === 'visit' && !!livePatient && !wrapOpen;
   const who = visiting ? livePatient : p;
   const visible = (!!activeCallPatient || visiting) && !expanded;
-  const payload = () => ({
-    id: p.id,
-    memberId: p.memberId || p.id,
-    name: p.name,
-    initials: p.initials,
-    relayNote: p.relayNote,
-    admitReason: p.admitReason,
-    agent: p.agentAssigned,
-    tags: p.tocType ? [`TOC ${p.tocType}`] : [],
-  });
+  const payload = () => livePatientOf(p);
   const openFullScreen = () => (visiting ? expandLiveCall(livePatient) : p && expandLiveCall(payload()));
   const endCall = () => endLiveCall(visiting ? livePatient : (p ? payload() : null));
 

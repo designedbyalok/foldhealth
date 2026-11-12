@@ -60,6 +60,12 @@ function WrapUpDrawerBody() {
     const done = await routeAcceptedItems({
       store: useAppStore, patient, pid, program: planProgram, accepted: draft.accepted, script, medEdits: session.medEdits,
     });
+    // A call taken over from an agent closes the agent's relay: it no
+    // longer holds the patient, and the TOC worklist's Relay says so.
+    const record = useAppStore.getState().patients.find(p => String(p.id) === String(pid));
+    if (record?.relayStatus === 'live') {
+      useAppStore.getState().updatePatient(record.id, { relayStatus: 'completed', relayNote: `Handed off to ${cmName}` });
+    }
     setSaving(false);
     session.reset();
     const made = routedSummary(done);

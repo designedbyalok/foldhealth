@@ -9,6 +9,7 @@ export function scriptFromRow(r) {
     reason: r.reason || '',
     interpreter: r.interpreter || 'English',
     summary: r.summary || '',
+    handoff: Array.isArray(r.handoff) ? r.handoff : [],
     speakers: r.speakers || {},
     lines: Array.isArray(r.lines) ? r.lines : [],
     points: Array.isArray(r.points) ? r.points : [],
