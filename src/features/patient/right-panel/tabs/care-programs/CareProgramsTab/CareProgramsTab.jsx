@@ -16,7 +16,6 @@ import { CareProgramsTabMenus } from './CareProgramsTabToolbar';
 import { CareManagementToolbar } from '../../care-management/CareManagementToolbar/CareManagementToolbar';
 import {
   programUrlKey,
-  programForLastKey,
   EMPTY_FILTERS,
   SUB_STATUS_OPTIONS,
   DATE_RANGE_OPTIONS,
@@ -159,20 +158,6 @@ export function CareProgramsTab({ header }) {
     clearPendingCareProgramCode();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingCareProgramCode, patientId, programsLoaded]);
-
-  // Reopen the program this user last worked in, once per patient visit, when
-  // nothing else picked one (a worklist hand-off, the URL, the plan summary).
-  const lastProgramKey = useAppStore(s => s.panelLayouts['care-program-context']?.key || null);
-  const restoredFor = useRef(null);
-  useEffect(() => {
-    if (!programsLoaded || restoredFor.current === patientId) return;
-    restoredFor.current = patientId;
-    const st = useAppStore.getState();
-    if (st.selectedCareProgramKey || st.pendingCareProgramCode || st.carePlanSummaryOpen) return;
-    const match = programForLastKey(programs, lastProgramKey);
-    if (match) openCareProgram(programUrlKey(match));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [programsLoaded, patientId]);
 
   // CMP sub-programs this member already has (greyed out in the picker).
   const cmpTaken = useMemo(
