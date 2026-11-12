@@ -74,7 +74,7 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
     return targetLocs.size > 0 && !!loc && !targetLocs.has(loc);
   };
   // Why a row can't be picked, for its tooltip (null when it can be).
-  const blockedReason = (r) => (isImported(r) ? 'These slots are already added' : null);
+  const blockedReason = (r) => (isImported(r) ? 'These schedules are already added' : null);
   const available = rows.filter(r => !blockedReason(r)).map(r => r.id);
   const defaultLoc = target?.locations?.[0] || '';
   // The slots as they'll be imported: one at a location the user can't
@@ -94,7 +94,7 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
       onClose={() => (done ? onImport(done) : onClose())}
       primaryAction={(
         <Button disabled={!picked.length} onClick={() => setDone(pickedBlocks())}>
-          {picked.length ? `Import ${picked.length} slot${picked.length === 1 ? '' : 's'}` : 'Import'}
+          {picked.length ? `Import ${picked.length} schedule${picked.length === 1 ? '' : 's'}` : 'Import'}
         </Button>
       )}
     >
@@ -117,7 +117,7 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
                     <span className={styles.cloneOptionName}>{u.name}</span>
                     {u.role && <span className={styles.cloneOptionRole}>{u.role}</span>}
                   </span>
-                  <Badge size="sm" label={`${u.blocks.length} slot${u.blocks.length === 1 ? '' : 's'}`} />
+                  <Badge size="sm" label={`${u.blocks.length} schedule${u.blocks.length === 1 ? '' : 's'}`} />
                 </span>
               ),
               triggerLabel: u.name,
@@ -133,16 +133,16 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
         </div>
 
         <div className={styles.cloneSection}>
-          <span className={styles.cloneHeading}>Select availability slots</span>
+          <span className={styles.cloneHeading}>Select availability schedules</span>
           {!rows.length ? (
             <div className={styles.cloneEmpty}>
-              <EmptyState size="sm" icon="solar:calendar-minimalistic-linear" title="Slots appear once a user is selected" />
+              <EmptyState size="sm" icon="solar:calendar-minimalistic-linear" title="Schedules appear once a user is selected" />
             </div>
           ) : (
             <>
             {rows.some(noAccess) && (
               <Banner size="sm" className={styles.cloneAccessNote}>
-                If selected, slots at locations you don't have access to will be added for your default location ({defaultLoc}).
+                If selected, schedules at locations you don't have access to will be added for your default location ({defaultLoc}).
               </Banner>
             )}
             <div className={styles.cloneTable}>
@@ -182,7 +182,7 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
                           className={was ? styles.cloneCheckDone : undefined}
                           onClick={(e) => e.stopPropagation()}
                           onCheckedChange={() => toggle(b.id)}
-                          aria-label={`Select ${b.owner}'s slot ${b.index + 1}`}
+                          aria-label={`Select ${b.owner}'s schedule ${b.index + 1}`}
                         />
                       </>)}
                       </td>
@@ -207,7 +207,7 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
                             {b.location.split(' ').slice(0, -1).join(' ')}{' '}
                             <span className={styles.cloneNoWrapTail}>
                             {b.location.split(' ').slice(-1)[0]}
-                            <Tooltip label="You don't have access to this location. If selected, this slot will be added for your default location." maxWidth={240} className={styles.cloneNoAccessTip}>
+                            <Tooltip label="You don't have access to this location. If selected, this schedule will be added for your default location." maxWidth={240} className={styles.cloneNoAccessTip}>
                               <Icon name="solar:info-circle-linear" size={14} color="currentColor" className={styles.cloneNoAccessIcon} />
                             </Tooltip>
                             </span>

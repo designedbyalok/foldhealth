@@ -261,7 +261,7 @@ function ProviderTable({ people, onAdd, onEdit, onDelete }) {
       cell: () => (
         <span className={styles.stack}>
           <span className={styles.innerName}>{loc}{tagFor(loc, u)}</span>
-          <span className={styles.sub}>{slots.length} slot{slots.length === 1 ? '' : 's'} · {daysCovered(slots)}</span>
+          <span className={styles.sub}>{slots.length} schedule{slots.length === 1 ? '' : 's'} · {daysCovered(slots)}</span>
         </span>
       ),
       slots,
@@ -276,13 +276,13 @@ function ProviderTable({ people, onAdd, onEdit, onDelete }) {
           <span className={styles.stack}>
             <span className={styles.outerName}>{u.name}</span>
             <span className={styles.sub}>{u.email || u.role}</span>
-            {u.blocks.length > 0 && <span className={styles.sub}>{current.length} slot{current.length === 1 ? '' : 's'} · {locs} location{locs === 1 ? '' : 's'}</span>}
+            {u.blocks.length > 0 && <span className={styles.sub}>{current.length} schedule{current.length === 1 ? '' : 's'} · {locs} location{locs === 1 ? '' : 's'}</span>}
           </span>
         </span>
       ),
       actions: (
         <span className={styles.actions}>
-          <ActionButton icon="solar:add-linear" size="sm" tooltip="Add slot" onClick={() => onAdd(u)} />
+          <ActionButton icon="solar:add-linear" size="sm" tooltip="Add schedule" onClick={() => onAdd(u)} />
           {u.blocks.length > 0 && (
             <>
               <span className={styles.divider} aria-hidden="true" />

@@ -17586,6 +17586,13 @@ export const useAppStore = create((set, get) => ({
     if (windowError) writeLocalTypeWindow(id, windows);
     return true;
   },
+  // Settings → Calendar → Appointment Types → Delete. Returns false when it failed.
+  deleteAppointmentType: async (id) => {
+    const { error } = await supabase.from('appointment_types').delete().eq('id', id);
+    if (error) { console.warn('deleteAppointmentType:', error.message); return false; }
+    set(s => ({ appointmentTypes: s.appointmentTypes.filter(t => t.id !== id) }));
+    return true;
+  },
   // Settings → Calendar → Online booking. Optimistic; rolls back on failure.
   setAppointmentTypeBookable: async (id, bookable) => {
     const patch = (value) => set(s => ({ appointmentTypes: s.appointmentTypes.map(t => (t.id === id ? { ...t, patient_bookable: value } : t)) }));

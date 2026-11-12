@@ -32,15 +32,21 @@ describe('reviewUser', () => {
   it('skips when a location is not assigned', () => {
     const r = reviewUser(user, [block(), block({ location: 'Riverside Clinic' })], { appointmentTypes: types, today });
     expect(r.outcome).toBe('skip');
-    expect(r.lines).toEqual(["Schedule 2: Riverside Clinic isn't assigned to this user."]);
+    expect(r.lines).toEqual(["Riverside Clinic isn't assigned."]);
   });
   it('skips when no active appointment type applies to the role', () => {
     const r = reviewUser(user, [block({ slots: [{ appointmentType: 'Nurse Visit', start: '08:00', end: '09:00' }] })], { appointmentTypes: types, today });
-    expect(r.lines).toEqual(['Schedule 1: No active appointment type is applicable for the Physician role.']);
+    expect(r.lines).toEqual(['No active appointment type for this role.']);
     const support = { ...user, clinicalRoles: ['Support'] };
     const roleTypes = [{ name: 'Flu Shot', applicable_roles: ['Physician'] }, { name: 'Old', applicable_roles: ['Support'], active: false }];
     expect(reviewUser(support, [block({ slots: [{ appointmentType: 'All appointment types', start: '08:00', end: '09:00' }] })], { appointmentTypes: roleTypes, today }).lines)
-      .toEqual(['Schedule 1: No active appointment type is applicable for the Support role.']);
+      .toEqual(['No active appointment type for this role.']);
+  });
+  it('gives one line per reason across schedules', () => {
+    const support = { ...user, clinicalRoles: ['Support'] };
+    const nurse = [{ appointmentType: 'Nurse Visit', start: '08:00', end: '09:00' }];
+    const r = reviewUser(support, [block({ location: 'Riverside Clinic', slots: nurse }), block({ location: 'Valley Clinic', slots: nurse })], { appointmentTypes: types, today });
+    expect(r.lines).toEqual(["Riverside Clinic and Valley Clinic aren't assigned.", 'No active appointment type for this role.']);
   });
   it('uses the default roles before a type has its own', () => {
     expect(typeApplicable('X', { ...user, clinicalRoles: ['Coder'] }, [{ name: 'X' }])).toBe(false);
