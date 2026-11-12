@@ -7,6 +7,7 @@ import { MenuPopover } from '../../../../components/MenuPopover/MenuPopover';
 import { CollapsibleContent } from '../../../../components/Collapsible/Collapsible';
 import { useAppStore } from '../../../../store/useAppStore';
 import { formatFoldId } from '../../../../lib/foldId';
+import { FoldIdTag } from '../../../../components/FoldIdTag/FoldIdTag';
 import { usePatientDisplay } from '../../hooks/usePatientDisplay';
 import { PatientAppActiveIndicator } from '../../../../components/PatientAppActiveIndicator/PatientAppActiveIndicator';
 import { FALLBACK_P360 } from '../../data/p360Mock';
@@ -20,6 +21,7 @@ import { consentPopoverPos, consentSummaryLabel } from './consentBadge';
 import { PatientTagPills, AddPatientTagDrawer } from './PatientTags';
 import { AddFamilyDrawer } from '../../family/AddFamilyDrawer';
 import { CareTeamDrawer } from '../../care-team/CareTeamDrawer';
+import { AgentHandoffStrip } from '../../../live-call/AgentHandoffStrip';
 import styles from './PatientP360Banner.module.css';
 
 export function PatientP360Banner({ patient, variant = 'full' }) {
@@ -107,6 +109,24 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
 
   if (!patient) return null;
   if (variant === 'drawer') return <><PatientP360BannerDrawer patient={patient} p={p} programCodes={programCodes} onManageFamily={() => setFamilyOpen(true)} onManageCareTeam={() => setCareTeamOpen(true)} />{familyDrawer}</>;
+  // Full screen: one row with who the patient is (name, sex, DOB, age, Fold
+  // ID), and the CCM timer still docked at its end.
+  if (variant === 'compact') {
+    return (
+      <div className={styles.banner} ref={bannerRef}>
+        <div className={`${styles.row1} ${styles.compactRow}`} data-ccm-timer-row>
+          <Avatar variant="patient" size="S" initials={patient.initials || '??'} />
+          <span className={styles.name}>{display.displayName}</span>
+          {showPatientAppIndicator && patient.patientAppActive && <PatientAppActiveIndicator size={16} />}
+          <span className={styles.compactMeta}>{display.gender} • {display.dob || '-'} ({display.age})</span>
+          {patient.memberId && <FoldIdTag id={patient.memberId} showToast={showToast} />}
+          <AgentHandoffStrip patient={patient} inline />
+          <span className={styles.row2Spacer} aria-hidden="true" />
+          <div ref={dockRef} className={styles.timerDockSlot} data-ccm-timer-dock />
+        </div>
+      </div>
+    );
+  }
 
 
   return (
@@ -269,6 +289,7 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
         <button className={styles.addTagBtn} aria-label="Add tag" onClick={() => setAddTagOpen(true)}><Icon name="solar:add-circle-linear" size={12} color="var(--neutral-300)" /></button>
         {addTagOpen && <AddPatientTagDrawer patient={patient} onClose={() => setAddTagOpen(false)} />}
         {familyDrawer}
+        <AgentHandoffStrip patient={patient} inline />
         <span className={styles.row2Spacer} aria-hidden="true" />
         <div ref={dockRef} className={styles.timerDockSlot} data-ccm-timer-dock />
       </div>

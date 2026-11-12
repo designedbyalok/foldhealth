@@ -226,28 +226,41 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
     showToast?.('Care plan downloaded');
   };
 
-  const programSwitch = (
-    <div className={styles.planBar}>
-      <SegmentedControl
-        size="sm"
-        items={[{ key: 'all', label: 'All Programs' }, ...openPrograms.map(p => ({ key: p.id, label: p.code }))]}
-        value={shownProgram ? shownProgram.id : 'all'}
-        onValueChange={setView}
-      />
-      {!shownProgram && (
-        <Button size="sm" variant="outline" leadingIcon="solar:list-linear" onClick={() => setProgramsOpen(true)}>
-          Active Programs ({openPrograms.length})
-        </Button>
-      )}
-      {!shownProgram && signing.length > 0 && (
-        <Button
+  // The program switch sits in the toolbar row after the sub-tabs (as in the
+  // prototype), so the plan starts a row higher; it wraps under them when
+  // the pane is narrow.
+  const programHeader = (
+    <>
+      {header}
+      <span className={toolbarStyles.vDivider} aria-hidden="true" />
+      <div className={styles.programSwitch}>
+        <SegmentedControl
           size="sm"
-          variant={toComplete ? 'solid' : 'outline'}
-          trailingIcon="solar:alt-arrow-down-linear"
-          onClick={(e) => setSignMenu(e.currentTarget.getBoundingClientRect())}
-        >
-          {toComplete ? `Complete (${toComplete})` : 'Complete / Sign'}
-        </Button>
+          items={[{ key: 'all', label: 'All Programs' }, ...openPrograms.map(p => ({ key: p.id, label: p.code }))]}
+          value={shownProgram ? shownProgram.id : 'all'}
+          onValueChange={setView}
+        />
+      </div>
+    </>
+  );
+  const planActions = (
+    <>
+      {!shownProgram && (
+        <span className={styles.planActions}>
+          <Button size="sm" variant="outline" leadingIcon="solar:list-linear" onClick={() => setProgramsOpen(true)}>
+            Active Programs ({openPrograms.length})
+          </Button>
+          {signing.length > 0 && (
+            <Button
+              size="sm"
+              variant={toComplete ? 'solid' : 'outline'}
+              trailingIcon="solar:alt-arrow-down-linear"
+              onClick={(e) => setSignMenu(e.currentTarget.getBoundingClientRect())}
+            >
+              {toComplete ? `Complete (${toComplete})` : 'Complete / Sign'}
+            </Button>
+          )}
+        </span>
       )}
       {signMenu && (
         <MenuPopover
@@ -269,16 +282,15 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
           onClose={() => setSignMenu(null)}
         />
       )}
-    </div>
+    </>
   );
 
   if (shownProgram) {
     return (
       <div className={styles.pane}>
         <div className={toolbarStyles.subTabBar}>
-          <div className={toolbarStyles.subTabs}>{header}</div>
+          <div className={toolbarStyles.subTabs}>{programHeader}</div>
         </div>
-        {programSwitch}
         <CarePlanCard key={shownProgram.id} patientId={patientId} program={shownProgram} />
       </div>
     );
@@ -287,17 +299,18 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
   return (
     <div className={styles.pane}>
       <CareManagementToolbar
-        header={header}
+        header={programHeader}
         searchMode={searchMode} setSearchMode={setSearchMode}
         searchText={searchText} setSearchText={setSearchText}
         searchPlaceholder="Search goals & interventions"
         showFilters={showFilters} setShowFilters={setShowFilters}
         cta={(
-          /* Icon-only cluster: note (opens the Add Care Note drawer)
-             then download (streams the CSV). Grouped so the two CTAs
-             hug the toolbar's right edge like the rest of the app's
-             icon actions. */
+          /* Active Programs and Complete, then the icon-only cluster: note
+             (opens the Add Care Note drawer) and download (streams the
+             CSV), hugging the toolbar's right edge. */
           <div className={styles.ctaCluster}>
+            {planActions}
+            <span className={styles.ctaDivider} aria-hidden="true" />
             <ActionButton
               icon="solar:notes-linear"
               tooltip="Add care note"
@@ -332,7 +345,6 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose }) {
           </div>
         )}
       />
-      {programSwitch}
       <div className={styles.templatesCard}>
         <AppliedTemplateStrip
           templates={appliedAcross.map(a => a.template)}

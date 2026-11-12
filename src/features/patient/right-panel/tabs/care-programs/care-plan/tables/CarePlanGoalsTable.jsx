@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
 import { WorklistShell } from '../../../../../../worklists/WorklistShell';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
@@ -20,6 +20,9 @@ import {
   TrendCell,
 } from './carePlanTableShared';
 import { COMPACT_GOAL_COLUMNS } from './carePlanTableColumns';
+
+// Below this width the Name column would be squeezed to a few letters.
+const NARROW_TABLE = 640;
 import { isCompletedStatus, toPickerValue, fmtCarePlanDate, openOnRowKey } from './carePlanTableModel';
 import { enrichGoalRows } from './carePlanTableSort';
 import {
@@ -99,10 +102,22 @@ export function CarePlanGoalsTable({
   // A template row has no value, progress or status, but it still gets its
   // row menu when the caller can act on one.
   const showActions = !template || Boolean(onRowMenu);
+  // A narrow table (All Programs beside the patient panel) drops Latest
+  // Reading so Name keeps its room; the target and current reading move to
+  // the row's meta line, as when the column is switched off.
+  const wrapRef = useRef(null);
+  const [narrow, setNarrow] = useState(false);
+  useLayoutEffect(() => {
+    const el = wrapRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(([entry]) => setNarrow(entry.contentRect.width < NARROW_TABLE));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const columns = template
     ? GOAL_COLUMNS.filter(c => c.key === 'priority' || c.key === 'title'
       || (showActions && c.key === 'actions'))
-    : COMPACT_GOAL_COLUMNS;
+    : narrow ? COMPACT_GOAL_COLUMNS.filter(c => c.key !== 'reading') : COMPACT_GOAL_COLUMNS;
 
   // Closed goals (see isCompletedStatus) collapse into "Closed Goals"; templates have no status.
   const { activeRows, completedRows } = useMemo(() => {
@@ -182,7 +197,7 @@ export function CarePlanGoalsTable({
   const renderRow = (g, _i, ctx) => {
     if (template) return renderTemplateRow(g);
     const hidden = ctx?.hiddenSet || null;
-    const isHidden = (k) => (hidden ? hidden.has(k) : false);
+    const isHidden = (k) => (narrow && k === 'reading') || (hidden ? hidden.has(k) : false);
     // An Assessment's reading is its "Completed" mark; Met already says so.
     const hasReading = g.currentValue && g.currentValue !== 'No Data'
       && normalizeCategory(g.category) !== 'Assessment';
@@ -316,7 +331,7 @@ export function CarePlanGoalsTable({
   const noActive = activeRows.length === 0 && completedRows.length > 0;
 
   return (
-    <div className={styles.tableWrap}>
+    <div className={styles.tableWrap} ref={wrapRef}>
       <WorklistShell
         embedded
         embeddedNoScroll

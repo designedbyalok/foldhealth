@@ -873,10 +873,8 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  /* Sets the plan's items apart from the cards above, with a title in the
-     same style as the summary and side-column cards. */
-  padding-top: var(--space-3);
-  border-top: 0.5px solid var(--neutral-150);
+  /* The column's gap already sets the plan's items apart from the cards
+     above; the title matches the summary and side-column cards. */
 }
 .gbiHeaderTitle {
   margin: 0;

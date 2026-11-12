@@ -35,6 +35,8 @@
 /* Read-only note: the text, then author and time with history and delete
    on hover. Clicking it opens the box. */
 .noteRead { justify-content: space-between; }
+/* No note yet: a one-line prompt; the editor opens full size on click. */
+.noteRead:has(> .notePlaceholder) { min-height: 0; }
 .noteReadEditable { cursor: text; }
 .noteReadEditable:hover { border-color: var(--neutral-200); }
 .noteReadEditable:focus-visible {

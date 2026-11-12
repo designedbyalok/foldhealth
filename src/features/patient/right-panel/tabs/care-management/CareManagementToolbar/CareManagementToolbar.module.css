@@ -10,8 +10,11 @@
   /* Reserve the search field's height so toggling search never moves the row. */
   min-height: 36px;
 }
+/* What doesn't fit beside the sub-tabs (Care Plan's program switch) wraps
+   under them rather than squeezing. */
 .subTabs {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   flex: 1;
