@@ -13542,6 +13542,43 @@ export const useAppStore = create((set, get) => ({
     if (error) console.warn('Failed to update JSA status:', error.message);
   },
 
+  // ── Care program suggested actions (care management redesign prototype):
+  // what a new ADT, eFax, imaging or lab event means for the patient's
+  // programs, by member id, from program_event_suggestions
+  // (supabase/program_event_suggestions_migration.sql). Local rows until seeded.
+  programEventSuggestions: {},
+  fetchProgramEventSuggestions: async (memberId) => {
+    const key = String(memberId || '');
+    if (!key || get().programEventSuggestions[key]) return;
+    set(s => ({ programEventSuggestions: { ...s.programEventSuggestions, [key]: [] } }));
+    const { data, error } = await supabase.from('program_event_suggestions').select('*').eq('member_id', key);
+    let rows = (data || []).map(r => ({
+      id: r.id, memberId: r.member_id, eventKind: r.event_kind, eventTitle: r.event_title, eventDetail: r.event_detail,
+      eventSource: r.event_source, occurredAt: r.occurred_at, programCode: r.program_code, suggestion: r.suggestion,
+      action: r.action || { type: 'review' }, status: r.status, decidedBy: r.decided_by,
+    }));
+    if (error || rows.length === 0) {
+      if (error) console.warn('fetchProgramEventSuggestions failed, using local rows:', error.message);
+      const { PROGRAM_EVENT_SUGGESTIONS } = await import('../features/patient/data/programEventSuggestionsSeed');
+      rows = PROGRAM_EVENT_SUGGESTIONS.filter(r => r.memberId === key).map(r => ({ ...r, status: 'open' }));
+    }
+    set(s => ({ programEventSuggestions: { ...s.programEventSuggestions, [key]: rows } }));
+  },
+  /** Done (acted on) or dismissed: leaves the open list, kept with who decided. */
+  decideProgramEventSuggestion: async (memberId, id, status) => {
+    const key = String(memberId || '');
+    const decidedBy = get().currentUserProfile?.name || null;
+    set(s => ({
+      programEventSuggestions: {
+        ...s.programEventSuggestions,
+        [key]: (s.programEventSuggestions[key] || []).map(r => (r.id === id ? { ...r, status, decidedBy } : r)),
+      },
+    }));
+    const { error } = await supabase.from('program_event_suggestions')
+      .update({ status, decided_by: decidedBy, decided_at: new Date().toISOString() }).eq('id', id);
+    if (error) console.warn('decideProgramEventSuggestion failed:', error.message);
+  },
+
   // ── Program eligibility (care management redesign prototype, Eligible
   // Programs), by member id, from program_eligibility
   // (supabase/program_eligibility_migration.sql). Falls back to the local

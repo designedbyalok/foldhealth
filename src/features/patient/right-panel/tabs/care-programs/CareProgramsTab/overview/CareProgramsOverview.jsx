@@ -13,6 +13,7 @@ import { parseLocalDate } from '@/lib/localDate';
 import { activityIcon } from '../../../care-management/programActivity';
 import { programOrder } from './careProgramsOverviewModel';
 import { NextBestActions } from './NextBestActions';
+import { ProgramSuggestedActions } from './ProgramSuggestedActions';
 import { CarePlanItemDrawer } from './CarePlanItemDrawer';
 import { ProgramStepDrawer } from './ProgramStepDrawer';
 import { useCareProgramsOverview } from './useCareProgramsOverview';
@@ -425,7 +426,7 @@ function ProgramSummary({ clinical, unity, onOpenItem }) {
  */
 export function CareProgramsOverview({
   patientId, programs, onOpenProgram, onOpenStep, onOpenPlan, onOpenLog, onReviewStep,
-  onStatusMenu, onRowMenu, onAssign,
+  onStatusMenu, onRowMenu, onAssign, onEnroll, eligible = null,
 }) {
   const data = useCareProgramsOverview(patientId, programs);
   const unity = useCareProgramsInsights(patientId, data);
@@ -494,12 +495,14 @@ export function CareProgramsOverview({
             </ul>
             {order.length > CARD_LIMIT && <MoreButton open={allCards} hidden={order.length - CARD_LIMIT} onToggle={() => setAllCards(v => !v)} />}
           </DashboardCard>
+          {eligible}
           <div className={styles.sumLeft}>{summaries}</div>
           <ActiveProblems problems={data.problems} loaded={data.problemsLoaded} />
         </div>
         {/* Recent activity sits under the actions so the columns end level. */}
         <div className={styles.main}>
           <WhyPrioritized why={data.why} unity={unity} onOpenRef={openRef} />
+          <ProgramSuggestedActions patientId={patientId} programs={programs} onEnroll={onEnroll} onOpenStep={onOpenStep} />
           <NextBestActions actions={data.actions} programs={order.map(o => data.entries[o.index].program)} onRun={onRun} onReview={onReviewStep} />
           <SinceLastVisit activity={data.activity} lastVisit={lastVisit} onOpenLog={onOpenLog} />
         </div>

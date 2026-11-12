@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { Badge } from '../../../../../../../components/Badge/Badge';
 import { Button } from '../../../../../../../components/Button/Button';
+import { DashboardCard } from '../../../../../../../components/DashboardCard/DashboardCard';
+import { PanelSectionItem } from '../../../../../../../components/PanelSection/PanelSection';
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { usePatientConsent } from '../../../../../hooks/usePatientConsent';
@@ -27,33 +29,30 @@ export function EligiblePrograms({ patientId, programs, catalog, onEnroll }) {
   if (!rows.length) return null;
 
   return (
-    <section className={styles.section} aria-label="Eligible programs">
-      <div className={styles.head}>
-        <Icon name="custom:ai" size={16} />
-        <span className={styles.title}>Eligible Programs</span>
-        <span className={styles.count}>{rows.length}</span>
-        <span className={styles.spacer} />
-        <span className={styles.basis}>Unity checked the problem list, labs, payer rules and consents</span>
-      </div>
+    <DashboardCard icon="custom:ai" title="Eligible Programs" count={rows.length}>
+      <p className={styles.basis}>Unity checked the problem list, labs, payer rules and consents.</p>
       <ul className={styles.list}>
         {rows.map(r => (
-          <li key={r.id} className={styles.row}>
-            <span className={styles.code}>{r.code}</span>
-            <span className={styles.body}>
-              <span className={styles.nameRow}>
-                <span className={styles.name}>{r.name}</span>
-                <Badge size="sm" tone={r.fit === 'eligible' ? 'success' : 'warning'} label={r.fit === 'eligible' ? 'Eligible' : 'Check Eligibility'} />
+          <li key={r.id}>
+            <PanelSectionItem
+              inset
+              alignTop
+              wrapTitle
+              title={`${r.name} (${r.code})`}
+              titleAside={<Badge size="sm" tone={r.fit === 'eligible' ? 'success' : 'warning'} label={r.fit === 'eligible' ? 'Eligible' : 'Check Eligibility'} />}
+              meta={r.why}
+            >
+              <span className={styles.foot}>
+                <span className={r.consentOk ? styles.consentOk : styles.consentNeeded}>
+                  <Icon name={r.consentOk ? 'solar:check-circle-linear' : 'solar:document-add-linear'} size={14} color="currentColor" />
+                  {r.consent}
+                </span>
+                <Button size="sm" variant="outline" onClick={() => onEnroll(r.code)}>Enroll</Button>
               </span>
-              <span className={styles.why}>{r.why}</span>
-              <span className={r.consentOk ? styles.consentOk : styles.consentNeeded}>
-                <Icon name={r.consentOk ? 'solar:check-circle-linear' : 'solar:document-add-linear'} size={14} color="currentColor" />
-                {r.consent}
-              </span>
-            </span>
-            <Button size="sm" variant="outline" onClick={() => onEnroll(r.code)}>Enroll</Button>
+            </PanelSectionItem>
           </li>
         ))}
       </ul>
-    </section>
+    </DashboardCard>
   );
 }

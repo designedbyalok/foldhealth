@@ -422,7 +422,9 @@ export function CareProgramsTab({ header }) {
       {visible.length === 0 ? (
         <div className={styles.programSections}>
           <NoProgramsEmptyState />
-          <EligiblePrograms patientId={patientId} programs={programs} catalog={catalog} onEnroll={handleAddProgram} />
+          <div className={styles.eligibleAlone}>
+            <EligiblePrograms patientId={patientId} programs={programs} catalog={catalog} onEnroll={handleAddProgram} />
+          </div>
         </div>
       ) : (
         <div className={styles.programSections}>
@@ -440,10 +442,10 @@ export function CareProgramsTab({ header }) {
               onStatusMenu={setStatusMenu}
               onRowMenu={setRowMenu}
               onAssign={assignOwner}
+              onEnroll={handleAddProgram}
+              eligible={<EligiblePrograms patientId={patientId} programs={programs} catalog={catalog} onEnroll={handleAddProgram} />}
             />
           )}
-
-          <EligiblePrograms patientId={patientId} programs={programs} catalog={catalog} onEnroll={handleAddProgram} />
 
           {pastPrograms.length > 0 && (
             <ProgramSection
