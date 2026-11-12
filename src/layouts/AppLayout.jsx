@@ -22,6 +22,7 @@ import { splitFullName } from '../lib/nameValidation';
 import { Toaster } from '../components/Toast/Toast';
 import { CallPopoverHost } from '../components/CallPopover/CallPopoverHost';
 import { BrowserCallCard } from '../features/messages/comms/call/BrowserCallCard';
+import { useLiveCall } from '../features/live-call/useLiveCall';
 import { CommsDrawerHost } from '../features/messages/comms/CommsDrawerHost';
 import { ReassignmentSummaryHost } from '../features/ooo/ReassignmentSummaryHost';
 import { BulkSummaryHost } from '../features/calendar/list/BulkSummaryHost';
@@ -96,6 +97,8 @@ const EditPatientDrawer    = lz(() => import('../features/patient/left-panel/tab
 const AssessmentDrawer     = lz(() => import('../features/toc/queue/AssessmentDrawer'),                    'AssessmentDrawer');
 const OutreachStatusDrawer = lz(() => import('../features/toc/queue/OutreachStatusDrawer'),                'OutreachStatusDrawer');
 const AiTasksDrawer        = lz(() => import('../features/toc/AiTasksDrawer'),                             'AiTasksDrawer');
+const LiveCallOverlay      = lz(() => import('../features/live-call/LiveCallOverlay'),                     'LiveCallOverlay');
+const WrapUpDrawer         = lz(() => import('../features/live-call/WrapUpDrawer'),                        'WrapUpDrawer');
 
 // Placeholder while a lazy chunk is in flight. Empty div keeps layout stable.
 const LazyFallback = () => <div style={{ flex: 1 }} />;
@@ -509,6 +512,8 @@ export function AppLayout() {
   const showCreateAgent = useAppStore(s => s.showCreateAgent);
   const detailPatient = useAppStore(s => s.detailPatient);
   const liveDrawerPatient = useAppStore(s => s.liveDrawerPatient);
+  const liveCallOpen = useLiveCall(s => s.open);
+  const wrapUpOpen = useLiveCall(s => s.wrapOpen);
   const goalDetailId = useAppStore(s => s.goalDetailId);
   const goalWizardOpen = useAppStore(s => s.goalWizardOpen);
   const chatGroupDetailId = useAppStore(s => s.chatGroupDetailId);
@@ -654,6 +659,8 @@ export function AppLayout() {
         {showCreateAgent && <CreateAgentDrawer />}
         <CallPopoverHost />
         <ActiveCallCard />
+        {liveCallOpen && <LiveCallOverlay />}
+        {wrapUpOpen && <WrapUpDrawer />}
         <BrowserCallCard />
         <CommsDrawerHost />
         <InvokeAgentModal />

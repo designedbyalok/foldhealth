@@ -1,0 +1,139 @@
+/* Wrap Up Call drawer. Outlines are 0.5px neutral-150 hairlines, like the
+   live call overlay. */
+
+.headerRight {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.headerDivider {
+  width: 1px;
+  height: 16px;
+  margin: 0 var(--space-1);
+  background: var(--neutral-150);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.callCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 12px;
+  background: var(--neutral-25);
+}
+
+.who {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--neutral-500);
+}
+
+.sub {
+  overflow: hidden;
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-md);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--neutral-500);
+}
+
+.statKey {
+  font-size: var(--font-sm);
+  font-weight: 400;
+  color: var(--neutral-300);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--neutral-500);
+}
+
+.spacer { flex: 1; }
+
+.sources,
+.hint {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 10px;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.row:last-child { border-bottom: none; }
+
+.rowIcon {
+  display: inline-flex;
+  flex: none;
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-md);
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+}
+
+.where {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  white-space: nowrap;
+}

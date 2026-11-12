@@ -30,6 +30,7 @@ import { JSA_MEMBERS } from '../src/features/jsa-worklist/data/mock.js';
 import { PHARMACY_WORKLIST_MEMBERS } from '../src/features/pharmacy-worklist/data/mock.js';
 import { CMP_MEMBERS } from '../src/features/cmp-worklist/data/mock.js';
 import { MY_PATIENTS } from '../src/features/my-patients/data/mock.js';
+import { LIVE_CALL_SCRIPTS } from '../src/features/live-call/data/scripts.js';
 import { SAMPLE_PROTOCOLS, HARBOR_HYPERTENSION_TEXT_FILE } from '../src/features/settings/clinical-protocols/data/sampleProtocols.js';
 import { protocolToRow } from '../src/features/settings/clinical-protocols/lib/protocolSchema.js';
 import { BUILT_IN_ROLES } from '../src/lib/accessControl.js';
@@ -675,6 +676,20 @@ const clinicalProtocolSeedRow = sourceText => p => ({
   approved_at: p.approvedAt,
 });
 
+function liveCallScriptToRow(s) {
+  return {
+    member_id: s.memberId,
+    reason: s.reason,
+    interpreter: s.interpreter,
+    summary: s.summary,
+    speakers: s.speakers,
+    lines: s.lines,
+    points: s.points,
+    meds: s.meds,
+    items: s.items,
+  };
+}
+
 function myPatientToRow(r) {
   return {
     id: r.id,
@@ -1060,6 +1075,12 @@ async function main() {
     .from('my_patients_worklist')
     .upsert(MY_PATIENTS.map(myPatientToRow), { onConflict: 'id' });
   if (myPatientsErr) { console.error('  ✗', myPatientsErr.message, '(run supabase/my_patients_worklist_migration.sql first)'); } else { console.log(`  ✓ ${MY_PATIENTS.length} patients`); }
+
+  console.log('Seeding live_call_scripts...');
+  const { error: liveCallErr } = await supabase
+    .from('live_call_scripts')
+    .upsert(LIVE_CALL_SCRIPTS.map(liveCallScriptToRow), { onConflict: 'member_id' });
+  if (liveCallErr) { console.error('  ✗', liveCallErr.message, '(run supabase/live_call_scripts_migration.sql first)'); } else { console.log(`  ✓ ${LIVE_CALL_SCRIPTS.length} scripts`); }
 
   console.log('Seeding cmp_members...');
   const { error: cmpErr } = await supabase
