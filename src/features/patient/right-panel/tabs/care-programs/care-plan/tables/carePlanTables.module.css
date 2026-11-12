@@ -90,7 +90,8 @@
 .progressTd,
 .statusTd,
 .assigneeTd,
-.adherenceTd {
+.adherenceTd,
+.readingTd {
   composes: td from '../../../../../../../components/WorklistShell/WorklistRow.module.css';
   border-left: none;
   box-sizing: border-box;
@@ -624,9 +625,12 @@
   outline-offset: -2px;
 }
 
-/* Latest Reading (goals): the value, green in range, red off target, then the target. */
-.readingTd {
-  vertical-align: top;
+/* Latest Reading (goals): the value, green in range, red off target, then the
+   target; padded and centred like the cells beside it. Doubled so it outranks
+   the composed WorklistRow .td (12px a side, no wrapping). */
+.readingTd.readingTd {
+  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-2);
+  white-space: normal;
 }
 .readingTd > span { display: block; }
 .readingValue,
