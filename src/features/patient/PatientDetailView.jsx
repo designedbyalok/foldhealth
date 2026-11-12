@@ -172,9 +172,8 @@ export function PatientDetailView() {
   const setFullScreen = useAppStore(s => s.setProfileFullScreen);
   const leftCollapsed = leftCollapsedPref || fullScreen;
   // Left-panel tab, lifted here so it survives collapse: when the panel is
-  // collapsed its tabs flow into the right-panel tab bar and its content
-  // renders in the right panel. `showingLeftContent` is only meaningful while
-  // collapsed: true means a flowed-in left tab is the active view.
+  // collapsed its tabs flow into the right-panel tab bar, and picking one
+  // opens the panel on it.
   const [leftTabRaw, setLeftTab] = useState(CARE_GAP_TABS[0]);
   // The left tabs in the user's order, without the ones they switched off
   // (More > Customize).
@@ -183,21 +182,28 @@ export function PatientDetailView() {
   // The split hosts the right panel's tabs here too; outside it, a hosted
   // tab has no home in this panel, so fall back to the first tab.
   const leftTab = programSplit || leftTabs.includes(leftTabRaw) ? leftTabRaw : leftTabs[0];
-  const [showingLeftContent, setShowingLeftContent] = useState(false);
   const dragging = useRef(false);
   const bodyRef = useRef(null);
 
-  // Collapsed: the tab bar is the merged [right tabs, …left tabs]. Route a
-  // click to the correct side and record which content the right panel shows.
+  // Opens the left panel (leaving full screen, which hides it); the choice
+  // is persisted per user, like the toggle.
+  const openLeft = useCallback(() => {
+    if (fullScreen) setFullScreen(false);
+    writeCollapse(currentUserId || 'anon', false);
+    setLeftCollapsed(false);
+  }, [currentUserId, fullScreen, setFullScreen]);
+
+  // Collapsed: the tab bar is the merged [left tabs, …right tabs]. A left
+  // tab stays in its panel: picking one opens the panel on it, and the right
+  // panel keeps what it was showing.
   const handleRightTabChange = useCallback((key) => {
     if (leftCollapsed && leftTabs.includes(key)) {
       setLeftTab(key);
-      setShowingLeftContent(true);
+      openLeft();
     } else {
       setActiveTab(key);
-      setShowingLeftContent(false);
     }
-  }, [leftCollapsed, leftTabs, setActiveTab]);
+  }, [leftCollapsed, leftTabs, setActiveTab, openLeft]);
 
   // Once the signed-in user is known, load their saved collapse state (only if
   // they have one: a new user keeps the device default until they toggle).
@@ -207,17 +213,14 @@ export function PatientDetailView() {
     if (saved !== null) setLeftCollapsed(saved === 'true');
   }, [currentUserId]);
 
-  // Toggling the panel flows the left tabs back to the left panel; the right
-  // panel returns to its own active tab, and the choice is persisted per user.
-  // In full screen, opening the panel leaves full screen.
+  // Toggling the panel flows the left tabs back to the left panel, and the
+  // choice is persisted per user. In full screen, opening the panel leaves
+  // full screen.
   const toggleLeft = useCallback(() => {
-    const wasCollapsed = leftCollapsed;
-    const next = !leftCollapsed;
-    if (fullScreen) setFullScreen(false);
-    writeCollapse(currentUserId || 'anon', next);
-    setLeftCollapsed(next);
-    if (wasCollapsed) setShowingLeftContent(false);
-  }, [currentUserId, leftCollapsed, fullScreen, setFullScreen]);
+    if (leftCollapsed) { openLeft(); return; }
+    writeCollapse(currentUserId || 'anon', true);
+    setLeftCollapsed(true);
+  }, [currentUserId, leftCollapsed, openLeft]);
 
   // Leaving the profile ends full screen.
   useEffect(() => () => setFullScreen(false), [setFullScreen]);
@@ -235,9 +238,6 @@ export function PatientDetailView() {
     return () => window.removeEventListener('keydown', onKey);
   }, [fullScreen, setFullScreen]);
 
-  // While collapsed and viewing a flowed-in left tab, the tab bar's active key
-  // is that left tab; otherwise it's the right tab.
-  const barActiveTab = leftCollapsed && showingLeftContent ? leftTab : activeTab;
 
   // Keep the left panel mounted through the collapse animation so it slides
   // out (width + fade) instead of snapping, then unmount it. On expand it
@@ -584,14 +584,14 @@ export function PatientDetailView() {
         )}
         <div className={styles.rightPanel}>
           <ProfileTabBar
-            activeTab={barActiveTab}
+            activeTab={activeTab}
             onTabChange={handleRightTabChange}
             leftCollapsed={leftCollapsed}
             onToggleLeft={toggleLeft}
             extraTabs={leftCollapsed ? leftTabs : undefined}
             fullScreen={fullScreen}
             onToggleFullScreen={() => setFullScreen(!fullScreen)}
-            actions={barActiveTab === 'Overview' ? (
+            actions={activeTab === 'Overview' ? (
               <ActionButton
                 icon="solar:tuning-2-linear"
                 size="sm"
@@ -602,20 +602,7 @@ export function PatientDetailView() {
             ) : null}
           />
           <div className={styles.tabContent}>
-            {leftCollapsed && showingLeftContent ? (
-              // Left tabs flowed into this panel: render the left content here,
-              // capped + centered so a narrow form doesn't stretch across the
-              // now-full-width panel.
-              <div className={styles.centeredContent}>
-                <PatientProfileTabs
-                  patientId={selectedPatientId}
-                  patient={patientWithAppStatus}
-                  activeTab={leftTab}
-                  onTabChange={setLeftTab}
-                  showTabBar={false}
-                />
-              </div>
-            ) : renderRightTab(activeTab)}
+            {renderRightTab(activeTab)}
           </div>
         </div>
       </div>
