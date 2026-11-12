@@ -27,6 +27,24 @@
   .overview { flex-direction: row; align-items: flex-start; }
   .main { order: 0; flex: 1; }
   .left { width: clamp(260px, 33%, 340px); flex-shrink: 0; }
+  /* Side by side, each column scrolls on its own: held at the top of the
+     tab's scroll area and no taller than it (Past Care Programs, below the
+     overview, is still a scroll away). */
+  .left,
+  .main,
+  .right {
+    position: sticky;
+    top: 0;
+    max-height: calc(100cqh - var(--space-2) - var(--space-3));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  /* Cards keep their height; the column scrolls instead of squeezing them. */
+  .left > *,
+  .main > *,
+  .right > *,
+  .sumLeft > * { flex-shrink: 0; }
 }
 @container (min-width: 1180px) {
   .left { width: clamp(280px, 24%, 340px); }
