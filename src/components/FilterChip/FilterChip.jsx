@@ -79,8 +79,16 @@ export function FilterChip({
   // chevron / clear glyph.
   info,
   disabled = false,
+  // List what's already picked first. The order is fixed when the popover
+  // opens, so rows don't jump as they're ticked.
+  pinSelected = false,
 }) {
   const [rect, setRect] = useState(null);
+  const [pinned, setPinned] = useState([]);
+  const pinnedSet = new Set(pinned);
+  const listOptions = pinSelected && pinned.length
+    ? [...options.filter(o => pinnedSet.has(o)), ...options.filter(o => !pinnedSet.has(o))]
+    : options;
   const custom = typeof renderPopover === 'function';
   const active = custom ? !!activeProp : selected.length > 0;
   const summary = activeSummary != null
@@ -117,6 +125,7 @@ export function FilterChip({
             handleClear(e);
             return;
           }
+          if (!rect && pinSelected) setPinned(selected);
           setRect(rect ? null : e.currentTarget.getBoundingClientRect());
         }}
       >
@@ -181,7 +190,7 @@ export function FilterChip({
           <RadioListPopover
             anchorRect={rect}
             label={popoverLabel || label}
-            options={options}
+            options={listOptions}
             selected={selected}
             onChange={(next) => { onChange(next); setRect(null); }}
             onClose={() => setRect(null)}
@@ -192,7 +201,7 @@ export function FilterChip({
           <CheckboxListPopover
             anchorRect={rect}
             label={popoverLabel || label}
-            options={options}
+            options={listOptions}
             selected={selected}
             onChange={onChange}
             onClose={() => setRect(null)}

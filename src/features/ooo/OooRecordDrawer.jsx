@@ -390,7 +390,16 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
   ) : (
     <>
       <Button variant="outline" disabled={saving} onClick={() => setStep(1)}>Previous</Button>
-      <Button disabled={saving || isEdit && !dirty && !MODULES.some(m => Object.keys(work.plans[m.key]).length)} onClick={() => save()} loading={saving}>Save</Button>
+      {/* Off only when editing and nothing would change: the record is as
+          saved and there's no open work to reassign. Nothing to reassign or
+          an untouched auto-reply alone don't block a save otherwise. */}
+      {(() => {
+        const nothing = isEdit && !dirty && !MODULES.some(m => work.items[m.key].some(i => work.plans[m.key][i.id]));
+        const btn = <Button disabled={saving || nothing} onClick={() => save()} loading={saving}>Save</Button>;
+        return nothing
+          ? <Tooltip label="No changes to save" placement="bottom" align="right"><span>{btn}</span></Tooltip>
+          : btn;
+      })()}
       <span className={styles.headerDivider} aria-hidden="true" />
     </>
   );

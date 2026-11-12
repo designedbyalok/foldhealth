@@ -1,6 +1,5 @@
 import { Badge } from '../../components/Badge/Badge';
 import { PriorityIcon } from '../../components/PriorityIcon/PriorityIcon';
-import { ProgressRing } from '../hcc/DiagPanel/ReviewProgressPopover';
 import styles from './ooo.module.css';
 
 /**
@@ -31,12 +30,11 @@ export const TASK_SHAPE = {
 const PROGRAM_TONE = { 'In Progress': 'warning', Enrolled: 'primary', Paused: 'neutral', 'On Hold': 'neutral' };
 export const PROGRAM_SHAPE = {
   titleOf: p => p.name || 'Care Program',
-  // Progress ring, code and status, then patient, start date and PCP.
+  // Code and status, then patient, start date and PCP.
   renderMain: p => (
     <span className={styles.itemMain}>
       <span className={styles.itemText}>
         <span className={styles.itemHead}>
-          <ProgressRing progress={p.progress > 1 ? p.progress / 100 : p.progress} size={16} stroke={2} />
           <span className={styles.itemTitle}>{p.code || p.name}</span>
           {p.status && <Badge tone={PROGRAM_TONE[p.status] || 'primary'} size="sm" label={p.status} />}
         </span>

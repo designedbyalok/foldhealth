@@ -329,10 +329,11 @@ export function findConflicts(blocks, today = isoDay(new Date())) {
 
 /** True when a block is still the untouched one a new drawer starts with. */
 export const isBlankBlock = (b) => !b.id && !b.location && !b.timezone && !b.days?.length
-  && !b.startDate && !b.endDate && (b.slots || []).every(s => !s.appointmentType && !s.start && !s.end);
+  && !b.startDate && !b.endDate && (b.slots || []).every(s => (!s.appointmentType || s.appointmentType === ALL_TYPES) && !s.start && !s.end);
 
 // A new block starts empty: the user fills in where, when and which hours.
-export const newSlot = () => ({ appointmentType: '', start: '', end: '' });
+// A time range is open to every appointment type until narrowed.
+export const newSlot = () => ({ appointmentType: ALL_TYPES, start: '', end: '' });
 
 export function newBlock() {
   return {
@@ -397,6 +398,8 @@ export const rowToBlock = (r) => ({
   slots: Array.isArray(r.slots) ? r.slots : [],
   skipHolidays: r.skip_holidays !== false,
   allowOverlap: !!r.allow_overlap,
+  createdBy: r.created_by || null,
+  createdAt: r.created_at,
   updatedAt: r.updated_at,
 });
 
