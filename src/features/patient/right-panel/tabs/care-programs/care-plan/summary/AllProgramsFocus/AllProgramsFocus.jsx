@@ -1,20 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DashboardCard, DashboardCardBody } from '@/components/DashboardCard/DashboardCard';
-import { PanelSectionItem } from '@/components/PanelSection/PanelSection';
-import { Icon } from '@/components/Icon/Icon';
 import { Badge } from '@/components/Badge/Badge';
 import { AddTaskDrawer } from '../../../../../../../tasks/AddTaskDrawer';
 import { TasksCard } from '../../../../overview/cards/TasksCard';
-import { CappedRows } from '../../../../overview/cards/CappedRows';
 import { useEventUpdates } from '../../CarePlanView/useEventUpdates';
 import { SuggestedActionRow } from '../../CarePlanView/SuggestedActionsCard';
 import { suggestionsOf } from '../../CarePlanView/suggestedActions';
+import { FocusGroups } from '../../CarePlanView/FocusGroups';
 import styles from '../../CarePlanView/CarePlanFocusPanel.module.css';
-
-const SEVERITY_ICON = {
-  danger: ['solar:danger-circle-linear', 'var(--status-error)'],
-  warning: ['solar:danger-triangle-linear', 'var(--status-warning)'],
-};
 
 // One program's suggested changes (its own event updates), tagged with the
 // program; it reports how many it has so the card can count them all.
@@ -54,25 +47,7 @@ export function AllProgramsFocus({ patientId, patientName, attention, plans = []
           {attention.length === 0 ? (
             <p className={styles.empty}>Nothing needs attention across the programs.</p>
           ) : (
-            <CappedRows
-              items={attention}
-              limit={5}
-              render={f => {
-                const [icon, color] = SEVERITY_ICON[f.severity];
-                return (
-                  <PanelSectionItem
-                    key={f.key}
-                    inset
-                    alignTop
-                    wrapTitle
-                    leading={<Icon name={icon} size={16} color={color} />}
-                    title={<button type="button" className={styles.titleButton} onClick={() => onOpenItem(f.kind, f.item, f.program)}>{f.title}</button>}
-                    meta={f.text}
-                    trailing={<Badge size="sm" label={f.program.code} />}
-                  />
-                );
-              }}
-            />
+            <FocusGroups items={attention} onOpen={f => onOpenItem(f.kind, f.item, f.program)} />
           )}
         </DashboardCardBody>
       </DashboardCard>

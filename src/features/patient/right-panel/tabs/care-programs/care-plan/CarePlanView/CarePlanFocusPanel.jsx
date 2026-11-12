@@ -1,24 +1,18 @@
 import { useMemo, useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { DashboardCard, DashboardCardBody } from '@/components/DashboardCard/DashboardCard';
-import { PanelSectionItem } from '@/components/PanelSection/PanelSection';
-import { Icon } from '@/components/Icon/Icon';
 import { Button } from '@/components/Button/Button';
 import { AddTaskDrawer } from '../../../../../../tasks/AddTaskDrawer';
 import { TasksCard } from '../../../overview/cards/TasksCard';
-import { CappedRows } from '../../../overview/cards/CappedRows';
 import { carePlanFocusItems } from '../lib/carePlanFocus';
 import { computeDueDate } from '../tables/CarePlanInterventionsTable';
 import { fmtCarePlanDate } from '../tables/carePlanTableModel';
 import { useEventUpdates } from './useEventUpdates';
 import { useReviewCadence } from './useReviewCadence';
 import { SuggestedActionsCard } from './SuggestedActionsCard';
+import { FocusGroups } from './FocusGroups';
 import styles from './CarePlanFocusPanel.module.css';
 
-const SEVERITY_ICON = {
-  danger: ['solar:danger-circle-linear', 'var(--status-error)'],
-  warning: ['solar:danger-triangle-linear', 'var(--status-warning)'],
-};
 const EMPTY = [];
 
 /**
@@ -56,36 +50,12 @@ export function CarePlanFocusPanel({ patientId, program, patientName, live, data
           {focus.length === 0 ? (
             <p className={styles.empty}>Nothing needs attention.{nextReview ? ` Next review ${nextReview}.` : ''}</p>
           ) : (
-            <CappedRows
+            <FocusGroups
               items={focus}
-              limit={4}
-              render={f => {
-                const [icon, color] = SEVERITY_ICON[f.severity];
-                return (
-                  <PanelSectionItem
-                    key={f.key}
-                    inset
-                    alignTop
-                    wrapTitle
-                    leading={<Icon name={icon} size={16} color={color} />}
-                    title={f.item ? (
-                      <button type="button" className={styles.titleButton} onClick={() => onOpenItem(f.kind, f.item)}>{f.title}</button>
-                    ) : f.title}
-                    meta={f.text}
-                  >
-                    {canEdit && (
-                      <span className={styles.actions}>
-                        {(f.kind === 'goal' || f.kind === 'review') && live?.plan?.id && (
-                          <Button variant="outline" size="sm" onClick={startReview}>Start Review</Button>
-                        )}
-                        {f.item && (
-                          <Button variant="ghost" size="sm" onClick={() => onOpenItem(f.kind, f.item)}>View Details</Button>
-                        )}
-                      </span>
-                    )}
-                  </PanelSectionItem>
-                );
-              }}
+              onOpen={f => onOpenItem(f.kind, f.item)}
+              renderActions={f => (canEdit && (f.kind === 'goal' || f.kind === 'review') && live?.plan?.id ? (
+                <Button variant="outline" size="sm" onClick={startReview}>Start Review</Button>
+              ) : null)}
             />
           )}
         </DashboardCardBody>

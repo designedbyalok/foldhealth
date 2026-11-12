@@ -5,6 +5,14 @@ import { fmtCarePlanDate, isPastDue } from '../tables/carePlanTableModel';
 
 const SEVERITY = { danger: 0, warning: 1 };
 
+/** The kinds, in the order a grouped list shows them, with their headings. */
+export const FOCUS_GROUPS = [
+  { kind: 'review', label: 'Care Plan Review' },
+  { kind: 'goal', label: 'Off-Target Goals' },
+  { kind: 'intervention', label: 'Overdue Interventions' },
+  { kind: 'barrier', label: 'Unaddressed Barriers' },
+];
+
 /**
  * "Look at These First" in the care plan side panel: what needs attention,
  * read only from the plan itself, most urgent first.
@@ -20,7 +28,9 @@ const SEVERITY = { danger: 0, warning: 1 };
  * `dueOf(intervention)` returns its due date as `{ iso, formatted }`: the
  * table's computeDueDate, so a flagged row reads overdue in the table too.
  *
- * Each entry: { key, kind, item?, severity, title, text }.
+ * Each entry: { key, kind, item?, severity, title, text, name, reason }:
+ * `title` / `text` read as a sentence; `name` (the item) and `reason` (why
+ * it's listed) are the short form for a list grouped by kind (FOCUS_GROUPS).
  */
 export function carePlanFocusItems({ goals = [], interventions = [], barriers = [], measurements = [], dueOf = () => ({}), review = null }) {
   const out = [];
@@ -33,6 +43,8 @@ export function carePlanFocusItems({ goals = [], interventions = [], barriers = 
       severity: review.status.state === 'overdue' ? 'danger' : 'warning',
       title: review.status.state === 'overdue' ? `Care plan review overdue by ${late} ${late === 1 ? 'day' : 'days'}` : 'Care plan review due',
       text: review.lastReview ? `Last reviewed ${fmtCarePlanDate(review.lastReview)}.` : 'Not reviewed yet.',
+      name: review.status.state === 'overdue' ? `Overdue by ${late} ${late === 1 ? 'day' : 'days'}` : 'Due now',
+      reason: review.lastReview ? `Last reviewed ${fmtCarePlanDate(review.lastReview)}` : 'Not reviewed yet',
     });
   }
 
@@ -49,6 +61,8 @@ export function carePlanFocusItems({ goals = [], interventions = [], barriers = 
       severity: 'danger',
       title: `${g.title} is off target`,
       text: `Latest reading ${value}${latest.takenAt ? ` on ${fmtCarePlanDate(latest.takenAt)}` : ''}.`,
+      name: g.title,
+      reason: `Latest ${value}${latest.takenAt ? ` on ${fmtCarePlanDate(latest.takenAt)}` : ''}`,
     });
   }
 
@@ -62,6 +76,8 @@ export function carePlanFocusItems({ goals = [], interventions = [], barriers = 
       severity: 'danger',
       title: `${i.title} is overdue`,
       text: `Due ${due.formatted}.`,
+      name: i.title,
+      reason: `Due ${due.formatted}`,
     });
   }
 
@@ -79,6 +95,8 @@ export function carePlanFocusItems({ goals = [], interventions = [], barriers = 
       severity: 'warning',
       title: `${b.title} has nothing addressing it`,
       text: goalIds.length ? 'None of its goals has an open intervention.' : 'It is not linked to a goal.',
+      name: b.title,
+      reason: goalIds.length ? 'Its goals have no open intervention' : 'Not linked to a goal',
     });
   }
 
