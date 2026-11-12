@@ -716,9 +716,7 @@ export function CarePlanSummaryView({
   embedded = false,
   // care_plan_mode = 'both': the roll-up is the patient-level Care Plan, so
   // its drawers edit in full and each section can add to a chosen program.
-  editable = false, summarizeRequest = 0, onSummaryState, onAddNote,
-  // All Programs: the Active Programs Summary opens in a drawer from the header.
-  programsOpen = false, onProgramsClose }) {
+  editable = false, summarizeRequest = 0, onSummaryState, onAddNote }) {
   const containerRef = useRef(null);
   const [dockWide, setDockWide] = useState(false);
   const [summaryWide, setSummaryWide] = useState(false);
@@ -1475,19 +1473,6 @@ export function CarePlanSummaryView({
           programs={programs}
           onDone={() => setRollupAdd(null)}
         />
-      )}
-      {editable && programsOpen && (
-        <Drawer title="Active Programs Summary" onClose={onProgramsClose}>
-          {activeProgramRows.length === 0 ? (
-            <div className={styles.programsEmpty}>No active programs.</div>
-          ) : (
-            <ActiveProgramsTable
-              rows={activeProgramRows}
-              onView={onOpenProgramStep ? (p) => { onProgramsClose?.(); onOpenProgramStep(p); } : undefined}
-              onOpenActivity={setActivityReviewOpen}
-            />
-          )}
-        </Drawer>
       )}
       {activityReviewOpen && (
         <ActivityReviewDrawer

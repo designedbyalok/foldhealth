@@ -49,3 +49,45 @@
   gap: var(--space-1);
   margin-top: var(--space-1);
 }
+
+/* ── Look at These First, grouped by kind (FocusGroups) ── */
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-1) 0 var(--space-1);
+  list-style: none;
+}
+.group { display: flex; flex-direction: column; gap: var(--space-1); }
+.groupHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-3);
+}
+.groupLabel { font-size: var(--font-sm); font-weight: 500; color: var(--neutral-400); }
+.groupCount { font-size: var(--font-sm); color: var(--neutral-300); }
+.groupRows { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.focusRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  /* Indented to the group label: past its icon and gap. */
+  padding: var(--space-1) var(--space-3) var(--space-1) calc(var(--space-3) + var(--space-4) + var(--space-1) / 2);
+}
+.focusRow + .focusRow { border-top: 0.5px solid var(--neutral-100); }
+.focusText { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.focusName {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-align: left;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.focusReason { font-size: var(--font-sm); color: var(--neutral-300); }
+.groupMore.groupMore { margin-left: calc(var(--space-5) + var(--space-1) / 2); }
