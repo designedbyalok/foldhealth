@@ -165,7 +165,10 @@
 }
 .mentionItem:hover,
 .mentionItemActive { background: var(--neutral-50); }
-.mentionName { flex: 1; }
+.mentionName { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.mentionNameRow { display: flex; align-items: center; gap: var(--space-1); }
+.mentionCovering { font-size: var(--font-sm); color: var(--neutral-300); }
+.mentionGroup { padding: var(--space-2) var(--space-2) var(--space-1); font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300); }
 .mentionRole { color: var(--neutral-200); }
 /* A user with no access to the record: listed, but can't be tagged. */
 .mentionItemDisabled { cursor: not-allowed; }

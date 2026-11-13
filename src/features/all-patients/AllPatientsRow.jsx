@@ -209,7 +209,6 @@ export function buildAllPatientsMiddleColumns(showPatientAppIndicator) {
 
 export function AllPatientsRow({ row, columns, hiddenSet, isSelected, onSelect }) {
   const showToast = useAppStore(s => s.showToast);
-  const startHccUpload = useAppStore(s => s.startHccUpload);
   const openPatientEdit = useAppStore(s => s.openPatientEdit);
   const openQuickView = useAppStore(s => s.openQuickView);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -233,12 +232,6 @@ export function AllPatientsRow({ row, columns, hiddenSet, isSelected, onSelect }
   const runPatientRowAction = useAppStore(s => s.runPatientRowAction);
   const handleMenuSelect = (key) => {
     if (runPatientRowAction(key, row)) return;
-    if (key === 'Upload File') {
-      // Pre-seed the upload session with this patient so ambiguous OCR
-      // matches auto-link to them in the review panel (AC-1 + AC-9 helper).
-      startHccUpload(row?.id || null);
-      return;
-    }
     if (key === 'Edit Details') {
       openPatientEdit('basic', {
         id: row.id,

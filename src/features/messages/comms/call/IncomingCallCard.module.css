@@ -1,0 +1,57 @@
+/* Incoming call, bottom right (Figma Eventus 17887:125267). */
+.card {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 9300;
+  width: 400px;
+  max-width: calc(100vw - 2 * var(--space-4));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 12px;
+  box-shadow: var(--shadow-chart);
+  animation: slideIn 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* Moves in from the right edge, settling into place. */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(calc(100% + var(--space-4))); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: fadeIn 160ms ease-out both; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+}
+
+/* Out-of-office reason: same magenta strip as the eFax and Chat notices. */
+.covering {
+  padding: var(--space-2);
+  border-bottom: 0.5px solid color-mix(in srgb, var(--accent-magenta) 20%, transparent);
+  background: color-mix(in srgb, var(--accent-magenta) 6%, var(--neutral-0));
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--accent-magenta);
+  text-align: center;
+}
+
+.body { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) var(--space-6); }
+
+.top { position: relative; display: flex; align-items: center; justify-content: center; min-height: 24px; }
+.minimize { position: absolute; right: calc(var(--space-2) * -1); top: 50%; transform: translateY(-50%); }
+.line { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-sm); line-height: var(--leading-tight); }
+.lineName { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--neutral-400); }
+.lineDivider { width: 0.5px; height: 16px; background: var(--neutral-150); }
+.lineLocation { color: var(--neutral-300); }
+
+.who { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); text-align: center; }
+.nameRow { display: inline-flex; align-items: center; }
+.name { font-size: var(--font-lg); font-weight: 500; line-height: var(--leading-tight); color: var(--neutral-400); }
+.meta,
+.status { font-size: var(--font-sm); line-height: var(--leading-tight); color: var(--neutral-200); }
+.status { padding-top: var(--space-1); font-variant-numeric: tabular-nums; }
+
+.actions { display: flex; justify-content: center; gap: var(--space-2); }
+.action { width: 96px; }

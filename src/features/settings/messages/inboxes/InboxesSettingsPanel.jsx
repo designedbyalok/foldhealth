@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
-import { Badge } from '../../../../components/Badge/Badge';
 import { Button } from '../../../../components/Button/Button';
 import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialog';
 import { EmptyState } from '../../../../components/EmptyState/EmptyState';
@@ -10,6 +9,7 @@ import { SimpleTableSkeleton } from '../../../../components/SimpleTableSkeleton/
 import { useAppStore } from '../../../../store/useAppStore';
 import { collaboratorsOf, inboxType } from '../../../messages/comms/commsInboxes';
 import { INBOX_TYPES } from './inboxesMock';
+import { UserBadges } from '../UserBadges';
 import { InboxDrawer } from './InboxDrawer';
 import efax from '../efax/EfaxSettings.module.css';
 import styles from './Inboxes.module.css';
@@ -118,9 +118,7 @@ export function InboxesSettingsPanel({ searchQuery = '', editing, setEditing }) 
               </td>
               <td>
                 {i.users.length ? (
-                  <span className={styles.collaborators}>
-                    {i.users.map(u => <Badge key={u.id} tone="neutral" size="sm" label={u.name} />)}
-                  </span>
+                  <UserBadges users={i.users} />
                 ) : (
                   <span className={efax.muted}>No collaborators</span>
                 )}

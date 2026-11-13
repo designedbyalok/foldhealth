@@ -46,19 +46,6 @@
 .rowInactive .nameLink,
 .rowInactive .number { color: var(--neutral-200); }
 
-.users {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-}
-.usersText {
-  color: var(--neutral-400);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.usersMore { color: var(--neutral-300); }
 .muted { color: var(--neutral-200); }
 
 .actions {

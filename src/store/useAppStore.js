@@ -8397,6 +8397,10 @@ export const useAppStore = create((set, get) => ({
   // false for actions it doesn't handle. `drawerProps` go to the Send
   // Education / Send Assessment drawer (e.g. initialFormIds for a resend).
   runPatientRowAction: (key, row, drawerProps = {}) => {
+    // Every patient menu (worklist rows, the patient banners) does these the
+    // same way.
+    if (key === 'Add Task' && row) { get().requestAddTask?.({ member: row.name }); return true; }
+    if (key === 'Upload File' && row) { get().startHccUpload?.(row.patientId ?? row.id ?? null); return true; }
     const types = { 'Send SMS': 'sms', 'Send Email': 'email', 'Send Education': 'content', 'Send Assessment': 'assessment' };
     const type = types[key];
     if (!type || !row) return false;

@@ -300,6 +300,36 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
     </button>
   );
 
+  // Not Available: first while searching (so whoever was searched for shows),
+  // last otherwise.
+  const searching = !!q;
+  const awaySection = away.length > 0 && (
+    <>
+      <div className={styles.group}>Not Available</div>
+      {away.map((u) => {
+        const out = outOfOffice(u);
+        const Row = outOfOfficePickable ? 'button' : 'div';
+        const rowProps = outOfOfficePickable
+          ? { type: 'button', role: 'menuitem', className: styles.userRow, onClick: () => { onSelect?.(u); close(); } }
+          : { className: `${styles.userRow} ${styles.userRowDisabled}`, 'aria-disabled': true };
+        const muted = outOfOfficePickable ? '' : ` ${styles.userNameMuted}`;
+        return (
+          <Row key={u.id} {...rowProps}>
+            <Avatar variant={u.avatarVariant || 'staff'} initials={u.initials} size={24} userName={u.name} userId={u.id} />
+            <span className={styles.userText}>
+              <span className={`${styles.userName}${muted}`}>{u.name}</span>
+              {u.role && <span className={`${styles.userRole}${muted}`}>{u.role}</span>}
+              <span className={styles.userNote}>{out.coveredBy?.length ? `Covered by: ${out.coveredBy.join(', ')}` : 'No covering provider'}</span>
+            </span>
+            <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="right">
+              <Badge tone="magenta" size="sm" label="Out of Office" />
+            </Tooltip>
+          </Row>
+        );
+      })}
+    </>
+  );
+
   return (
     <>
       {trigger}
@@ -356,32 +386,13 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
               </div>
             ) : (
               <>
+                {/* Searching for someone out shows them first, then who covers them. */}
+                {searching && awaySection}
                 {suggested.length > 0 && <div className={styles.group}>Suggested</div>}
                 {suggested.map(u => userRow(u, `Covering for ${covering.get(u.name).join(', ')}`))}
-                {suggested.length > 0 && available.length > 0 && <div className={styles.group}>All Users</div>}
+                {(suggested.length > 0 || (searching && away.length > 0)) && available.length > 0 && <div className={styles.group}>All Users</div>}
                 {available.map(u => userRow(u))}
-                {away.length > 0 && <div className={styles.group}>Not Available</div>}
-                {away.map((u) => {
-                  const out = outOfOffice(u);
-                  const Row = outOfOfficePickable ? 'button' : 'div';
-                  const rowProps = outOfOfficePickable
-                    ? { type: 'button', role: 'menuitem', className: styles.userRow, onClick: () => { onSelect?.(u); close(); } }
-                    : { className: `${styles.userRow} ${styles.userRowDisabled}`, 'aria-disabled': true };
-                  const muted = outOfOfficePickable ? '' : ` ${styles.userNameMuted}`;
-                  return (
-                    <Row key={u.id} {...rowProps}>
-                      <Avatar variant={u.avatarVariant || 'staff'} initials={u.initials} size={24} userName={u.name} userId={u.id} />
-                      <span className={styles.userText}>
-                        <span className={`${styles.userName}${muted}`}>{u.name}</span>
-                        {u.role && <span className={`${styles.userRole}${muted}`}>{u.role}</span>}
-                        <span className={styles.userNote}>{out.coveredBy?.length ? `Covered by: ${out.coveredBy.join(', ')}` : 'No covering provider'}</span>
-                      </span>
-                      <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="right">
-                        <Badge tone="magenta" size="sm" label="Out of Office" />
-                      </Tooltip>
-                    </Row>
-                  );
-                })}
+                {!searching && awaySection}
               </>
             )}
           </div>

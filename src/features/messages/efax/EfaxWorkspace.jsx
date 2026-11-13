@@ -9,8 +9,11 @@ import listStyles from '../MessagesView.module.css';
 import commsStyles from '../comms/Comms.module.css';
 import { formatTime } from '../messageUtils';
 import { CommsListHeader } from '../comms/CommsListHeader';
+import { CommsFilterDrawer } from '../comms/CommsFilterDrawer';
+import { useCommsFilters, useEfaxInboxes } from '../comms/useCommsFilters';
 import { CommsListEmpty, CommsPanelEmpty } from '../comms/CommsEmptyState';
 import { useCommsPeople } from '../comms/useCommsPeople';
+import { activeOooFor, samePerson } from '../../ooo/oooUtils';
 import { EfaxThread } from './EfaxThread';
 import { CreateEfaxDrawer } from './CreateEfaxDrawer';
 import styles from './Efax.module.css';
@@ -33,6 +36,7 @@ export function EfaxWorkspace({ navCollapsed, onToggleNav }) {
   const faxes = useAppStore(s => s.efaxes);
   const loading = useAppStore(s => s.efaxesLoading);
   const fetchEfaxes = useAppStore(s => s.fetchEfaxes);
+  const oooRecords = useAppStore(s => s.oooRecords);
   const addEfax = useAppStore(s => s.addEfax);
   const { patients, me } = useCommsPeople();
   const [selectedId, setSelectedId] = useState(null);
@@ -49,14 +53,32 @@ export function EfaxWorkspace({ navCollapsed, onToggleNav }) {
     [patients],
   );
 
+  // Filters drawer: By Date (received), By Inbox (the practice's eFax
+  // numbers) and Covering for (a number's linked users are its assignees).
+  // A fax from before numbers were recorded came in on the first line.
+  const filt = useCommsFilters();
+  const efaxInboxes = useEfaxInboxes();
+  const numberOf = (fax) => fax.efaxNumberId || efaxInboxes[0]?.id || null;
+
   const q = query.trim().toLowerCase();
   const list = faxes.filter((f) => {
     if (tab === 'open' && f.linked) return false;
     if (tab === 'linked' && !f.linked) return false;
+    if (!filt.inWindow(f.receivedAt)) return false;
+    if (filt.filters.inbox && numberOf(f) !== filt.filters.inbox) return false;
+    if (filt.filters.covering.length && !filt.coveredBy(efaxInboxes.find(i => i.id === numberOf(f))?.users)) return false;
     if (!q) return true;
     return `${f.senderName} ${f.documentType} ${f.linked?.name || ''} ${f.extracted?.name || ''}`.toLowerCase().includes(q);
   });
   const selected = list.find(f => f.id === selectedId) || null;
+  // Every linked user of a number is its assignee, so the open fax warns
+  // when any of them (other than me) is out of office.
+  const outMembers = selected
+    ? (efaxInboxes.find(i => i.id === numberOf(selected))?.members || [])
+      .filter(u => !samePerson(u, me))
+      .map(u => ({ name: u.name, record: activeOooFor(oooRecords, { id: u.id || null, name: u.name }) }))
+      .filter(u => u.record)
+    : [];
   const notLinked = faxes.filter(f => !f.linked).length;
 
   const create = (fax) => {
@@ -78,7 +100,18 @@ export function EfaxWorkspace({ navCollapsed, onToggleNav }) {
           onToggleNav={onToggleNav}
           searchActive={searchOpen}
           onSearch={() => { setSearchOpen(v => !v); setQuery(''); }}
+          filterActive={filt.open || filt.active}
+          onFilter={() => filt.setOpen(true)}
         />
+        {filt.open && (
+          <CommsFilterDrawer
+            value={filt.filters}
+            onApply={filt.apply}
+            onClose={() => filt.setOpen(false)}
+            inboxes={efaxInboxes}
+            coveringNames={filt.coveringNames}
+          />
+        )}
         <div className={listStyles.convTabs}>
           <SegmentedControl items={TABS} value={tab} onValueChange={setTab} size="sm" />
         </div>
@@ -148,6 +181,7 @@ export function EfaxWorkspace({ navCollapsed, onToggleNav }) {
           reading={reading.includes(selected.id)}
           patients={patients}
           me={me}
+          outMembers={outMembers}
         />
       ) : (
         <CommsPanelEmpty viewKey="efax" hasConversations={faxes.length > 0} onCreate={() => {}} />

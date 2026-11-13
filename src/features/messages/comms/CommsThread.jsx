@@ -8,6 +8,7 @@ import { StickyNote } from '../../../components/StickyNote/StickyNote';
 import { MessageComposer } from '../../../components/MessageComposer/MessageComposer';
 import { MessageStatus } from '../../../components/MessageStatus/MessageStatus';
 import { ChatBubble, MissedCallMarker } from '../../../components/ChatBubble/ChatBubble';
+import { activeOooFor, coveringPeople, oooStatus, samePerson } from '../../ooo/oooUtils';
 import { Link } from '../../../components/Link/Link';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Checkbox } from '../../../components/Checkbox/Checkbox';
@@ -25,6 +26,7 @@ import { useCommsMessages } from './useComms';
 import { addMessage, updateConversation, markConversationRead, findOrCreateConversation, logMessagesFor, renameThread, deleteConversation, ensurePatientToken, setSmsSession, assignMessages } from './commsRepo';
 import { sendSms, retrySend, SMS_VIA_GATEWAY } from './commsSend';
 import { useBrowserCall } from './call/useBrowserCall';
+import { IncomingCallCard } from './call/IncomingCallCard';
 import { useAppStore } from '../../../store/useAppStore';
 import { formatDuration } from './call/rtc';
 import {
@@ -47,6 +49,8 @@ const timeOnly = (iso) => new Date(iso).toLocaleTimeString('en-US', { hour: 'num
  * a message is sent (chat: saved and shown on the patient's page; SMS: sent
  * through the gateway phone; Calls: internal notes only).
  */
+const INCOMING_DEMO_PATIENT = 'Amy Phillips';
+
 export function CommsThread({ conversation, patient, me, focusMessageId, showIntro = true, onOpenProfile }) {
   const { messages, loading } = useCommsMessages(conversation.id);
   const [draft, setDraft] = useState('');
@@ -69,7 +73,42 @@ export function CommsThread({ conversation, patient, me, focusMessageId, showInt
   // A number shared by several members (FCS-5677): each SMS is logged for one.
   const patients = useAppStore(s => s.allPatients);
   const members = useMemo(() => membersForConversation(conversation, patients || []), [conversation, patients]);
+  // @mentions: the thread's patients, then staff (not me) and other patients.
+  // Staff out of office can still be mentioned; who covers them is
+  // suggested right after them.
+  const staff = useAppStore(s => s.platformPeople);
+  const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
+  const oooRecords = useAppStore(s => s.oooRecords);
+  const meId = useAppStore(s => s.currentUserProfile?.id);
+  useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
+  const mentions = useMemo(() => {
+    const threadPatients = members.length
+      ? members.map(m => ({ id: `p:${m.id}`, name: m.name, kind: 'Patient', variant: 'patient' }))
+      : (conversation.patient_name ? [{ id: `p:${conversation.patient_id || conversation.patient_name}`, name: conversation.patient_name, kind: 'Patient', variant: 'patient' }] : []);
+    const users = (staff || []).filter(u => u.id !== meId && u.name).map((u) => {
+      const out = activeOooFor(oooRecords, { id: u.id, name: u.name });
+      const by = out ? coveringPeople(out.coverage).map(c => c.name) : [];
+      return { id: u.id, name: u.name, initials: u.initials, kind: 'User', variant: 'staff', out: !!out, coveredBy: by };
+    });
+    // Any other patient can be mentioned too, after this thread's own.
+    const inThread = new Set(threadPatients.map(p => p.id));
+    const otherPatients = (patients || [])
+      .filter(p => p?.name && !inThread.has(`p:${p.id}`))
+      .map(p => ({ id: `p:${p.id}`, name: p.name, kind: 'Patient', variant: 'patient' }));
+    return [...threadPatients, ...[...users, ...otherPatients].sort((a, b) => a.name.localeCompare(b.name))];
+  }, [members, conversation.patient_id, conversation.patient_name, staff, meId, oooRecords, patients]);
   const shared = channel === 'sms' && members.length > 1;
+
+  // Demo touchpoint: in Amy Phillips' thread, Make a Call rings in a call
+  // from her instead, routed to me because I'm covering for a colleague who
+  // is out of office (the one I cover, else anyone out right now).
+  const [incomingOpen, setIncomingOpen] = useState(false);
+  const demoCaller = (patient?.name || conversation.patient_name) === INCOMING_DEMO_PATIENT;
+  const coveringFor = useMemo(() => {
+    const out = (oooRecords || []).filter(r => oooStatus(r) === 'Ongoing');
+    const mine = out.find(r => coveringPeople(r.coverage).some(c => samePerson(c, { id: meId || null, name: me?.name || '' })));
+    return (mine || out[0])?.userName || null;
+  }, [oooRecords, meId, me?.name]);
 
   // SMS works like Chat for now (no gateway, see commsSend.js): the patient
   // reads and answers it on their patient page, so an SMS thread gets a link.
@@ -490,7 +529,7 @@ export function CommsThread({ conversation, patient, me, focusMessageId, showInt
             icon="solar:phone-calling-linear"
             tooltip="Make a Call"
             disabled={!(callStatus === 'idle' || callStatus === 'ended')}
-            onClick={call}
+            onClick={demoCaller ? () => setIncomingOpen(true) : call}
           />
           <span className={styles.headerDivider} />
           <ActionButton icon="solar:magnifer-linear" tooltip="Search" />
@@ -656,6 +695,7 @@ export function CommsThread({ conversation, patient, me, focusMessageId, showInt
         attachments={pending}
         onRemoveAttachment={removePending}
         maxLength={channel === 'sms' && !internal ? 500 : undefined}
+        mentions={mentions}
         toolbarStart={shared && !internal ? (
           <>
             <LogForChip ref={chipRef} members={members} value={logFor?.id} onChange={pickLogFor} />
@@ -718,6 +758,24 @@ export function CommsThread({ conversation, patient, me, focusMessageId, showInt
         accept="image/*,video/*"
         onChange={e => { [...(e.target.files || [])].forEach(attach); e.target.value = ''; }}
       />
+      {incomingOpen && (
+        <IncomingCallCard
+          caller={{
+            name: patient?.name || conversation.patient_name,
+            phone: conversation.patient_phone,
+            gender: patient?.gender,
+            age: patient?.age,
+            pcp: patient?.pcp,
+            location: patient?.location,
+          }}
+          coveringFor={coveringFor}
+          onClose={() => setIncomingOpen(false)}
+          onViewProfile={patient ? () => {
+            const snapshot = { id: patient.id, name: patient.name, initials: patient.initials, gender: patient.gender, age: patient.age, memberId: patient.memberId, language: patient.language };
+            if (onOpenProfile) onOpenProfile(snapshot); else openQuickView(snapshot);
+          } : undefined}
+        />
+      )}
     </div>
   );
 }

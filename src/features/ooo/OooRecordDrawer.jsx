@@ -271,8 +271,9 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
     // (Load appointments first if nothing on screen has yet.)
     if (wantsReassign && !(useAppStore.getState().appointments || []).length) await useAppStore.getState().fetchAppointments?.();
     const reassign = wantsReassign && appointmentsToReassign(saved, useAppStore.getState().appointments).length > 0;
-    toast.success(started ? 'Reassignment job started. You will be notified with updates'
-      : reassign ? 'Out of Office Record Saved. Reassign Appointments Next.' : 'Out of Office Record Saved Successfully');
+    toast.success(reassign && !started ? 'Out of Office Record Saved. Reassign Appointments Next.' : 'Out of Office Record Saved Successfully');
+    // The save is confirmed first; the reassignment job follows a beat later.
+    if (started) setTimeout(() => toast.success('Reassignment job started. You will be notified with updates'), 3000);
     onSaved?.(saved, { reassign });
     onClose();
   };

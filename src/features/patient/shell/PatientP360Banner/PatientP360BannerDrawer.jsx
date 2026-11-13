@@ -15,6 +15,7 @@ import { usePatientDisplay } from '../../hooks/usePatientDisplay';
 import { QuickViewExpanded } from './PatientP360BannerExpanded';
 import { usePatientProfiles } from './usePatientProfiles';
 import { DRAWER_ACTIONS, MORE_MENU_LABELS } from './PatientP360Banner.utils';
+import { buildPatientRowMenuItems } from '../../../../components/MenuPopover/patientRowMenuItems';
 import { PatientTagPills, AddPatientTagDrawer } from './PatientTags';
 import styles from './PatientP360Banner.module.css';
 
@@ -64,6 +65,7 @@ export function PatientP360BannerDrawer({ patient, p, programCodes, onManageFami
   const updateP360Profile = useAppStore(s => s.updateP360Profile);
   const openCallPopover = useAppStore(s => s.openCallPopover);
   const openPatientEdit = useAppStore(s => s.openPatientEdit);
+  const runPatientRowAction = useAppStore(s => s.runPatientRowAction);
   const showPatientAppIndicator = useAppStore(s => s.showPatientAppIndicator);
   const display = usePatientDisplay(patient);
   const { summary: consent } = usePatientConsent(patient.id);
@@ -199,28 +201,28 @@ export function PatientP360BannerDrawer({ patient, p, programCodes, onManageFami
 
       {moreMenuRect && (
         <MenuPopover anchorRect={moreMenuRect} width={220} align="right"
+          // The same actions as a worklist row's menu (minus Chat and SMS,
+          // which are quick actions above), then this patient's admin extras.
           items={[
             ...overflowActions.map(a => ({ key: `action:${a.label}`, icon: a.icon, label: a.label })),
             ...(overflowActions.length ? [{ divider: true }] : []),
-            { key: 'assessment', icon: 'solar:clipboard-check-linear', label: 'Assessment' },
-            { key: 'education', icon: 'solar:book-linear', label: 'Education' },
-            { key: 'add-task', icon: 'solar:checklist-linear', label: 'Add Task' },
-            { key: 'referral', icon: 'solar:arrow-right-up-linear', label: 'Create Referral' },
-            { key: 'automation', icon: 'solar:bolt-linear', label: 'Run Automation' },
-            { key: 'relatives', icon: 'solar:users-group-two-rounded-linear', label: 'Add Relatives' },
-            { key: 'print', icon: 'solar:printer-linear', label: 'Print Clinical Profile' },
-            { key: 'edit', icon: 'solar:pen-linear', label: 'Edit Details' },
-            { key: 'reset-pw', icon: 'solar:refresh-linear', label: 'Reset Password' },
-            { key: 'inactive', icon: 'solar:user-cross-linear', label: patient.status === 'inactive' ? 'Set Active' : 'Set Inactive' },
-            { divider: true },
-            { key: 'block', icon: 'solar:forbidden-circle-linear', label: 'Block Number', danger: true },
+            ...buildPatientRowMenuItems([
+              { key: 'relatives', icon: 'solar:users-group-two-rounded-linear', label: 'Add Relatives' },
+              { key: 'print', icon: 'solar:printer-linear', label: 'Print Clinical Profile' },
+              { key: 'reset-pw', icon: 'solar:refresh-linear', label: 'Reset Password' },
+              { key: 'inactive', icon: 'solar:user-cross-linear', label: patient.status === 'inactive' ? 'Set Active' : 'Set Inactive' },
+              { divider: true },
+              { key: 'block', icon: 'solar:forbidden-circle-linear', label: 'Block Number', danger: true },
+            ]).filter(item => item.key !== 'Chat' && item.key !== 'Send SMS'),
           ]}
           onClose={() => setMoreMenuRect(null)}
           onSelect={(key) => {
             setMoreMenuRect(null);
             if (key.startsWith('action:')) { runAction(key.slice('action:'.length)); return; }
+            // Shared with the worklist rows (Send Email, Education, Assessment, Add Task, Upload File).
+            if (runPatientRowAction(key, patient)) return;
             if (key === 'print') { showToast('Printing clinical profile…'); window.print(); return; }
-            if (key === 'edit') { openPatientEdit('basic', patient); return; }
+            if (key === 'Edit Details') { openPatientEdit('basic', patient); return; }
             if (key === 'inactive') {
               const nextStatus = patient.status === 'inactive' ? 'active' : 'inactive';
               updatePatient(patient.id, { status: nextStatus });
@@ -237,7 +239,7 @@ export function PatientP360BannerDrawer({ patient, p, programCodes, onManageFami
                 .then(ok => showToast(ok ? `Blocked ${primary || 'primary number'} for calls and SMS` : 'Could not block the number'));
               return;
             }
-            noop(MORE_MENU_LABELS[key] || 'Action')();
+            noop(MORE_MENU_LABELS[key] || key)();
           }}
         />
       )}
