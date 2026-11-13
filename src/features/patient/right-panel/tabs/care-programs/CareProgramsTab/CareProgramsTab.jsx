@@ -139,7 +139,9 @@ export function CareProgramsTab({ header }) {
     // CMP is enrolled per sub-program: match on it when one was given.
     const existing = programs.find(p => p.code === pendingCareProgramCode && (!subProgram || p.subProgram === subProgram));
     if (existing) {
-      setPendingProgram({ program: existing, firstStep: false, carePlan });
+      // Straight in: a redirect from a worklist shouldn't wait on the
+      // in-page skeleton beat.
+      setPendingProgram({ program: existing, firstStep: false, carePlan, immediate: true });
     } else if (openOnly) {
       // Not in the program: stay on Care Programs.
     } else if (pendingCareProgramCode === 'CMP' && !subProgram) {
@@ -272,7 +274,7 @@ export function CareProgramsTab({ header }) {
 
   useEffect(() => {
     if (!pendingProgram) return;
-    const t = setTimeout(() => {
+    const open = () => {
       setStartAtFirstStep(pendingProgram.firstStep);
       openCareProgram(programUrlKey(pendingProgram.program));
       // Asked to land on the Care Plan step (e.g. the Review drawer's Open
@@ -283,7 +285,9 @@ export function CareProgramsTab({ header }) {
       }
       if (pendingProgram.stepId) setCareProgramStep(pendingProgram.stepId);
       setPendingProgram(null);
-    }, 700);
+    };
+    if (pendingProgram.immediate) { open(); return undefined; }
+    const t = setTimeout(open, 700);
     return () => clearTimeout(t);
   }, [pendingProgram, openCareProgram, setCareProgramStep]);
 
@@ -314,7 +318,9 @@ export function CareProgramsTab({ header }) {
   const toggleOne = (id) =>
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
-  if (pendingProgram) return <ProgramDetailSkeleton />;
+  // A redirect into a program shows its skeleton until the programs load,
+  // rather than flashing the Care Programs overview first.
+  if (pendingProgram || pendingCareProgramCode) return <ProgramDetailSkeleton />;
 
   if (carePlanSummaryOpen && !selectedProgram) {
     return (

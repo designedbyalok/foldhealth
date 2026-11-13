@@ -368,6 +368,7 @@ export function TopBar() {
   const navigateBackToWorklist = useAppStore(s => s.navigateBackToWorklist);
   const navigateToPatient = useAppStore(s => s.navigateToPatient);
   const patients = useAppStore(s => s.patients);
+  const myPatients = useAppStore(s => s.myPatients);
   const hccMembers = useAppStore(s => s.hccMembers);
   const awvMembers = useAppStore(s => s.awvMembers) || [];
   const ccmWorklistMembers = useAppStore(s => s.ccmWorklistMembers) || [];
@@ -504,7 +505,11 @@ export function TopBar() {
     setSearchFocused(false);
   };
   const isPatientView = activePage === 'population' && !!selectedPatientId;
-  const patientName = isPatientView ? (patients.find(p => p.id === selectedPatientId)?.name || 'Patient') : '';
+  const patientName = isPatientView
+    ? (patients.find(p => p.id === selectedPatientId)?.name
+      || myPatients.find(p => p.id === selectedPatientId || String(p.memberId) === String(selectedPatientId))?.name
+      || 'Patient')
+    : '';
 
   return (
     <>
