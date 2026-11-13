@@ -32,14 +32,16 @@ const dmEntry = {
 describe('nextBestActions', () => {
   it('puts urgent first, merges a step that reads the same across programs, and folds a program\'s plan items into one row', () => {
     const rows = nextBestActions([ccmEntry, dmEntry]);
-    expect(rows.map(r => [r.kind, r.title, r.programs.map(p => p.code).join('+')])).toEqual([
-      ['step', 'Program Related Task', 'CCM'],
-      ['plan', '1 Off-Target Goal, 1 Unaddressed Barrier', 'CCM'],
-      ['step', 'Outreach', 'CCM+DM'],
+    // CCM's "Care Plan Details" is its Care Plan step, so its plan items follow it.
+    expect(rows.map(r => [r.kind, r.title, r.programs.map(p => p.code).join('+'), r.with || ''])).toEqual([
+      ['step', 'Program Related Task', 'CCM', ''],
+      ['step', 'Outreach', 'CCM+DM', ''],
+      ['step', 'Care Plan', 'CCM', ''],
+      ['plan', '1 Off-Target Goal, 1 Unaddressed Barrier', 'CCM', 'Care Plan'],
     ]);
     expect(rows[0].detail).toMatchObject({ label: 'Program Task', text: 'Overdue, due 01/02/2020', urgent: true });
-    expect(rows[1].detail.text).toBe('Improve A1C control, Cost of strips');
-    expect(rows[2].required).toBe(true);
+    expect(rows[1].required).toBe(true);
+    expect(rows[3].detail.text).toBe('Improve A1C control, Cost of strips');
   });
 
   it('keeps a lone plan item as its own row', () => {
