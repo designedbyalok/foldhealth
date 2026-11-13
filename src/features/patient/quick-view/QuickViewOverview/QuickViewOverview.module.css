@@ -1,0 +1,87 @@
+/* Quick View > Overview: the patient's priorities in one scroll, cards
+   stacked at the drawer's width. */
+/* Its own scroll area: the hosted-tab slot clips. */
+.wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+.wrap > * { flex-shrink: 0; }
+
+.glance {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--neutral-0);
+}
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 0.5px solid var(--neutral-100);
+}
+.cell:first-child { border-left: none; }
+.cell dd { margin: 0; }
+
+.k {
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-300);
+}
+.v {
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: var(--leading-normal);
+  color: var(--neutral-500);
+  overflow-wrap: anywhere;
+}
+
+.trends {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-3);
+  list-style: none;
+}
+.trend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+}
+.trendValue {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.change {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--font-sm);
+}
+
+.empty {
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-3);
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+/* Narrow (docked panel): two across. */
+@media (max-width: 640px) {
+  .glance, .trends { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

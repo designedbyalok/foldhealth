@@ -223,7 +223,8 @@ function Takeaway({ t, onOpenRef }) {
   );
 }
 
-export function WhyPrioritized({ why, unity, onOpenRef }) {
+// `cta`: an action under the points (the Quick View's Review Care Programs).
+export function WhyPrioritized({ why, unity, onOpenRef, cta = null }) {
   // The points first; the paragraph behind Show More.
   const [open, setOpen] = useState(false);
   const ai = unity.state === 'ready' ? unity.insights.why : null;
@@ -270,6 +271,7 @@ export function WhyPrioritized({ why, unity, onOpenRef }) {
             )}
           </>
         )}
+        {cta}
       </div>
     </DashboardCard>
   );
