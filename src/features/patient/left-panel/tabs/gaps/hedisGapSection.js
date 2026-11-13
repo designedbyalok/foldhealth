@@ -1,13 +1,18 @@
 import { STATUS_BADGE_VARIANT } from '../../../../hedis-worklist/HedisWorklistRow';
 import { MEASURE_NAMES } from '../../../../hedis-worklist/ClinicalNotePanel.utils';
 import { gapInstanceNo } from '../../../../hedis-worklist/gapInstances';
+import { evidenceSummary, gapEvidence } from '../../../../hedis-worklist/gapEvidence';
 
 // A HEDIS patient's real gaps as a CareGapSection: one row per gap, the
 // latest instance. A gap added more than once keeps its other instances in
 // `previous`, which expand under it on demand. Instances are numbered oldest
 // first, the same way the worklist and Care Gap Details number them. Shared
 // by the patient's Gaps widget and the care program Care Gaps step.
-export function hedisGapSection(member) {
+// `evidenceSources` (useGapEvidenceSources) adds, under each completed or
+// closed instance, what closed it.
+const isClosed = (status) => status === 'Completed' || String(status || '').startsWith('Closed');
+
+export function hedisGapSection(member, evidenceSources) {
   const gaps = member?.gaps || [];
   if (!gaps.length) return null;
   const gapItem = (g, i) => {
@@ -26,6 +31,7 @@ export function hedisGapSection(member) {
         g.closedDate ? `Closed ${g.closedDate}` : null,
       ].filter(Boolean).join(' • '),
       openInstanceNo: g.supersededAt ? no : null,
+      evidence: isClosed(g.status) && evidenceSources ? evidenceSummary(gapEvidence(g, evidenceSources)) : '',
     };
   };
   const indexed = gaps.map((g, i) => ({ g, i }));

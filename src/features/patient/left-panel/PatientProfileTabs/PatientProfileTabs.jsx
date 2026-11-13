@@ -21,6 +21,7 @@ import { CrmTab } from '../tabs/crm/CrmTab/CrmTab.jsx';
 import { CARE_GAP_SECTIONS_EXTENDED, CARE_GAP_TABS, CARE_GAP_TABS_DRAWER } from '../../data/careGapsMock';
 import { CareGapDetailDrawer } from '../../../hedis-worklist/CareGapDetailDrawer';
 import { hedisGapSection } from '../tabs/gaps/hedisGapSection';
+import { useGapEvidenceSources } from '../tabs/gaps/useGapEvidenceSources';
 import { usePatientPanelLayout } from '../../hooks/usePatientPanelLayout';
 import { visibleTabs, visibleWidgets } from '../patientPanelLayout';
 import { PanelCustomizeDrawer } from '../PanelCustomizeDrawer/PanelCustomizeDrawer';
@@ -120,7 +121,8 @@ export function PatientProfileTabs({
     setCareGapDrawer({ member, gapCode: code, instanceNo: item.openInstanceNo ?? null, year: new Date().getFullYear() });
   };
 
-  const hedisSection = hedisGapSection(hedisMember);
+  const evidenceSources = useGapEvidenceSources(hedisMember);
+  const hedisSection = hedisGapSection(hedisMember, evidenceSources);
   const sourceSections = hedisSection ? [hedisSection] : CARE_GAP_SECTIONS_EXTENDED;
 
   // Care Gaps filters (Status, Year). A row stays when it, or one of its

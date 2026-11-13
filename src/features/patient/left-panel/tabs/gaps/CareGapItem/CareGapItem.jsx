@@ -49,6 +49,8 @@ export function CareGapItem({ item, selected, onSelect, onOpen, nested = false, 
               )}
             </span>
           )}
+          {/* What closed this instance (signed note, lab, document or claim data). */}
+          {item.evidence && <span className={styles.evidence}>{item.evidence}</span>}
         </div>
       </td>
       <td className={profileCellClass}>
