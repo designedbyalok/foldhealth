@@ -1,0 +1,26 @@
+/* My Worklist as a worklist table: the shared WorklistShell row look. */
+.row           { composes: row           from '../../components/WorklistShell/WorklistRow.module.css'; }
+.td            { composes: td            from '../../components/WorklistShell/WorklistRow.module.css'; }
+.stickyLeft    { composes: stickyLeft    from '../../components/WorklistShell/WorklistRow.module.css'; }
+.stickyRight   { composes: stickyRight   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.membersTd     { composes: membersTd     from '../../components/WorklistShell/WorklistRow.module.css'; }
+.patientCell   { composes: patientCell   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.patientName   { composes: patientName   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.patientNameLink { composes: patientNameLink from '../../components/WorklistShell/WorklistRow.module.css'; }
+.patientDemo   { composes: patientDemo   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.patientMeta   { composes: patientMeta   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.foldId        { composes: foldId        from '../../components/WorklistShell/WorklistRow.module.css'; }
+.langBadge     { composes: langBadge     from '../../components/WorklistShell/WorklistRow.module.css'; }
+.actionsCell   { composes: actionsCell   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.actionDivider { composes: actionDivider from '../../components/WorklistShell/WorklistRow.module.css'; }
+
+/* The table fills the card under its header and filters. */
+.wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+/* No checkbox column before Members here, so the cell gets the usual 12px
+   left padding (the shared one assumes a checkbox to its left). */
+.row > .membersTd { padding-left: var(--space-3); }
+.memberText { min-width: 0; display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); }
+.row > .td:not(.stickyLeft):not(.stickyRight) { color: var(--neutral-300); }
+
+.pills { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.more { font-size: var(--font-sm); color: var(--neutral-300); cursor: default; }

@@ -113,3 +113,11 @@
   flex: 1;
   min-width: 0;
 }
+
+/* Out of office (outOfOffice): section labels, and people who are out (can't be
+   picked; lighter text so the badge and the covering line keep their colour). */
+.group { padding: var(--space-2) var(--space-2) var(--space-1); font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300); border-bottom: 0.5px solid var(--neutral-100); }
+.rowDisabled { cursor: not-allowed; }
+.rowDisabled:hover { background: transparent; }
+.muted { color: var(--placeholder-text); }
+.note { font-size: var(--font-sm); color: var(--neutral-300); }

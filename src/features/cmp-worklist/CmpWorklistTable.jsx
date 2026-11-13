@@ -20,6 +20,7 @@ import { CMP_MIDDLE_COLUMNS } from './cmpColumns';
 import { CMP_FILTER_DEFS, CMP_FILTER_DEF_MAP, cmpFilterOptions, enrollmentMatches } from './cmpFilters';
 import { CMP_OWNER_ROLES } from './cmpCareTeam';
 import { Select } from '../../components/Select/Select';
+import { useCovering } from '../ooo/useCovering';
 
 // Every filter's More Filters entry, grouped (Members, Program, Care Team,
 // Clinical, Tasks); the spec lives in cmpFilters.js.
@@ -47,6 +48,11 @@ const HCC_ONLY_ROLES = new Set(['Coder', 'Support', 'QA', 'Compliance']);
 // One worklist row per member: the key enrollments are grouped by (and the
 // row id the selection holds).
 const memberKey = (e) => String(e.memberId || e.patientId || e.id);
+
+// Every owner on an enrollment (Assignee and the care team) counts for Covering for.
+const ownerNames = (e) => CMP_OWNER_ROLES.map(r => e[r.key]).filter(Boolean);
+const COVERING_DEF = { key: 'coveringFor', label: 'Covering for', primary: true, group: 'Care Team' };
+const NO_PICKS = [];
 
 export function CmpWorklistTable() {
   const members = useAppStore(s => s.cmpMembers);
@@ -84,6 +90,10 @@ export function CmpWorklistTable() {
   const [assignRole, setAssignRole] = useState('assignee');
 
   const [searchQuery, setSearchQuery] = useState('');
+  // Local, not a store key: only meaningful while I'm covering someone.
+  const [coveringFor, setCoveringFor] = useState([]);
+  const covering = useCovering();
+  const coveringPicked = covering.names.length ? coveringFor : NO_PICKS;
   const [filterBarOpen, setFilterBarOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -107,10 +117,11 @@ export function CmpWorklistTable() {
     if (q) {
       rows = rows.filter(m => (m.name || '').toLowerCase().includes(q) || (m.memberId || '').toLowerCase().includes(q));
     }
+    if (coveringPicked.length) rows = rows.filter(e => covering.coveringOn(ownerNames(e), coveringPicked).length > 0);
     // Program filters keep only the matching enrollments; a member shows
     // when any of theirs is left.
     return rows.filter(m => enrollmentMatches(m, filters));
-  }, [enriched, searchQuery, filters]);
+  }, [enriched, searchQuery, filters, coveringPicked, covering]);
 
   // One row per member: their matching enrollments (one per CMP
   // sub-program), soonest Next Action Due first. Member columns come from
@@ -133,9 +144,10 @@ export function CmpWorklistTable() {
         nextActionDueSort: minOf(list, 'nextActionDueSort'),
         programStartSort: minOf(list, 'programStartSort'),
         programDueSort: minOf(list, 'programDueSort'),
+        coveringFor: coveringPicked.length ? covering.coveringOn(list.flatMap(ownerNames), coveringPicked) : [],
       };
     });
-  }, [filtered]);
+  }, [filtered, coveringPicked, covering]);
 
   const { sorted, sortKey, sortDir, requestSort } = useTableSort(grouped, 'nextActionDueSort', 'asc');
 
@@ -149,6 +161,10 @@ export function CmpWorklistTable() {
     else selectAll(selectedIds.filter(id => !pageRows.some(r => r.id === id)));
   };
 
+  const barDefs = covering.names.length ? [COVERING_DEF, ...CMP_FILTER_DEFS] : CMP_FILTER_DEFS;
+  const barMoreItems = covering.names.length ? [{ k: COVERING_DEF.key, label: COVERING_DEF.label, primary: true, group: COVERING_DEF.group }, ...CMP_MORE_FILTER_ITEMS] : CMP_MORE_FILTER_ITEMS;
+  const barFilters = coveringPicked.length ? { ...filters, coveringFor: coveringPicked } : filters;
+
   const filterNode = (
     <FilterBar
       collapsed={!filterBarOpen}
@@ -156,18 +172,21 @@ export function CmpWorklistTable() {
       pinPrimary
       multiSelect
       leading={null}
-      filterDefs={CMP_FILTER_DEFS}
-      filters={filters}
-      onFilterChange={(k, vals) => setFilter(k, vals)}
-      onClearAll={savedActions.onClearAll}
+      filterDefs={barDefs}
+      filters={barFilters}
+      onFilterChange={(k, vals) => (k === COVERING_DEF.key ? setCoveringFor(vals) : setFilter(k, vals))}
+      onClearAll={() => { setCoveringFor([]); savedActions.onClearAll(); }}
       clearAllLabel={savedActions.clearAllLabel}
       saveLabel={savedActions.saveLabel}
       saveMenuItems={savedActions.saveMenuItems}
       onSaveMenuSelect={savedActions.onSaveMenuSelect}
       hasActive={savedActions.edited || undefined}
       onSaveFilter={(name) => saveSavedFilter('CMP', name)}
-      moreFilterItems={CMP_MORE_FILTER_ITEMS}
+      moreFilterItems={barMoreItems}
       renderChip={(k) => {
+        if (k === COVERING_DEF.key) {
+          return <FilterChip label={COVERING_DEF.label} options={covering.names} selected={coveringPicked} onChange={setCoveringFor} searchable />;
+        }
         if (k === 'dob') return <DobFilter value={filters.dob || []} onChange={vals => setFilter('dob', vals)} />;
         const def = CMP_FILTER_DEF_MAP[k];
         if (!def) return null;

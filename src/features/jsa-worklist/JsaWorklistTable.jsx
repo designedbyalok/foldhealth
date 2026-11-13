@@ -8,6 +8,7 @@ import { SavedFiltersChip } from '../hcc/SavedFiltersChip';
 import { useSavedFilterActions } from '../hcc/useSavedFilterActions';
 import { useTableSort } from '../../components/HeaderCell/useTableSort';
 import { JsaWorklistRow, JSA_MIDDLE_COLUMNS } from './JsaWorklistRow';
+import { useCovering } from '../ooo/useCovering';
 
 // FilterBar chip definitions: all seven are primary so they show on wide
 // viewports; auto-fit trims the tail into More Filters on narrow screens.
@@ -21,6 +22,8 @@ const JSA_FILTER_DEFS = [
   { key: 'assignee',      label: 'Assignee',           primary: true },
 ];
 const JSA_MORE_FILTER_ITEMS = JSA_FILTER_DEFS.map(fd => ({ k: fd.key, label: fd.label, primary: fd.primary }));
+const COVERING_DEF = { key: 'coveringFor', label: 'Covering for', primary: true };
+const NO_PICKS = [];
 
 // WorklistShell column defs: sticky checkbox + sticky Members col on the
 // left, all JSA data columns in the middle, sticky Actions on the right.
@@ -51,6 +54,10 @@ export function JsaWorklistTable() {
   const saveSavedFilter = useAppStore(s => s.saveSavedFilter);
 
   const [searchQuery, setSearchQuery] = useState('');
+  // Local, not a store key: only meaningful while I'm covering someone.
+  const [coveringFor, setCoveringFor] = useState([]);
+  const covering = useCovering();
+  const coveringPicked = covering.names.length ? coveringFor : NO_PICKS;
   const [filterBarOpen, setFilterBarOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -98,8 +105,9 @@ export function JsaWorklistTable() {
       if (!vals || vals.length === 0) return;
       rows = rows.filter(m => vals.includes(m[k]));
     });
+    if (coveringPicked.length) rows = rows.filter(m => covering.coveringOn([m.assignee], coveringPicked).length > 0);
     return rows;
-  }, [members, searchQuery, filters]);
+  }, [members, searchQuery, filters, coveringPicked, covering]);
 
   const { sorted, sortKey, sortDir, requestSort } = useTableSort(filtered, 'due', 'asc');
 
@@ -113,6 +121,10 @@ export function JsaWorklistTable() {
     else         selectAll(selectedIds.filter(id => !pageRows.find(r => r.id === id)));
   };
 
+  const barDefs = covering.names.length ? [COVERING_DEF, ...JSA_FILTER_DEFS] : JSA_FILTER_DEFS;
+  const barMoreItems = covering.names.length ? [{ k: COVERING_DEF.key, label: COVERING_DEF.label, primary: true }, ...JSA_MORE_FILTER_ITEMS] : JSA_MORE_FILTER_ITEMS;
+  const barFilters = coveringPicked.length ? { ...filters, coveringFor: coveringPicked } : filters;
+
   const filterNode = (
     <FilterBar
       collapsed={!filterBarOpen}
@@ -120,18 +132,18 @@ export function JsaWorklistTable() {
       pinPrimary
       multiSelect
       leading={null}
-      filterDefs={JSA_FILTER_DEFS}
-      filters={filters}
-      onFilterChange={(k, vals) => setFilter(k, vals)}
-      onClearAll={savedActions.onClearAll}
+      filterDefs={barDefs}
+      filters={barFilters}
+      onFilterChange={(k, vals) => (k === COVERING_DEF.key ? setCoveringFor(vals) : setFilter(k, vals))}
+      onClearAll={() => { setCoveringFor([]); savedActions.onClearAll(); }}
       clearAllLabel={savedActions.clearAllLabel}
       saveLabel={savedActions.saveLabel}
       saveMenuItems={savedActions.saveMenuItems}
       onSaveMenuSelect={savedActions.onSaveMenuSelect}
       hasActive={savedActions.edited || undefined}
       onSaveFilter={(name) => saveSavedFilter('JSA', name)}
-      getOptions={(def) => filterOptions[def.key] || []}
-      moreFilterItems={JSA_MORE_FILTER_ITEMS}
+      getOptions={(def) => (def.key === COVERING_DEF.key ? covering.names : filterOptions[def.key] || [])}
+      moreFilterItems={barMoreItems}
     />
   );
 
@@ -179,6 +191,7 @@ export function JsaWorklistTable() {
           onToggle={() => selectMember(m.id)}
           onView={() => showToast(`Program details for ${m.name}, coming soon`)}
           showToast={showToast}
+          coveringFor={coveringPicked.length ? covering.coveringOn([m.assignee], coveringPicked) : undefined}
         />
       )}
       loading={loading && pageRows.length === 0}

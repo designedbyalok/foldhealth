@@ -8,6 +8,11 @@ import { memberMatchesFilters, countActiveFilters } from './filters';
 import { getChartDocs } from './data/chartDocs';
 import { slaDueCategory } from './sla';
 import { GAP_ONLY_FILTER_KEYS } from './HccWorklistTableParts.constants';
+import { useCovering } from '../ooo/useCovering';
+
+// Every assignee a record can carry: the current one and each role's owner.
+const assigneeNamesOf = (m) => [m.assigneeName, m.sup, m.cdr, m.r1, m.r2, m.r3];
+const NO_PICKS = [];
 
 const normFoldId = (v) => (v == null ? '' : String(v).replace(/^#/, '').trim().toLowerCase());
 
@@ -218,8 +223,22 @@ export function useHccWorklistTable() {
     };
   }), [dedupedMembers, hccDosAssignments, hccAddedCharts, hccChartStatus, hccRemovedCharts]);
 
+  // "Covering for" filter: local, not in hccFilters, so saved filters and
+  // role defaults never carry it.
+  const setCurrentPage = useAppStore(s => s.setCurrentPage);
+  const { names: coveringNames, coveringOn } = useCovering();
+  const [coveringPicked, setCoveringPicked] = useState([]);
+  const covering = coveringNames.length > 0 ? coveringPicked : NO_PICKS;
+  const coveringChip = useMemo(() => ({
+    names: coveringNames,
+    selected: coveringPicked,
+    onChange: (next) => { setCoveringPicked(next); setCurrentPage(1); },
+  }), [coveringNames, coveringPicked, setCurrentPage]);
+  const coveringFor = (m) => (covering.length ? coveringOn(assigneeNamesOf(m), covering) : null);
+
   const filtered = useMemo(() => {
     let rows = enriched;
+    if (covering.length) rows = rows.filter(m => coveringOn(assigneeNamesOf(m), covering).length > 0);
     // SLA-based Due Date filter: matches the computed Created-Date colours.
     if (hccDueDateFilter) rows = rows.filter(m => slaDueCategory(m) === hccDueDateFilter);
     if (Object.keys(hccFilters).length) rows = rows.filter(m => memberMatchesFilters(m, hccFilters));
@@ -230,11 +249,11 @@ export function useHccWorklistTable() {
       m.id?.toLowerCase().includes(q)
     );
     return rows;
-  }, [enriched, searchQuery, hccDueDateFilter, hccFilters]);
+  }, [enriched, searchQuery, hccDueDateFilter, hccFilters, covering, coveringOn]);
 
   // Any filter that can scope rows out, chip filters or the Due Date chip.
   // Drives the "change your filters" empty state vs the true-empty one.
-  const filtersActive = !!hccDueDateFilter || countActiveFilters(hccFilters) > 0;
+  const filtersActive = !!hccDueDateFilter || countActiveFilters(hccFilters) > 0 || covering.length > 0;
 
   // SLA default (Astrana DOS worklist): Created Date ascending, oldest first,
   // so records closest to breaching the 14-day window surface at the top.
@@ -261,14 +280,14 @@ export function useHccWorklistTable() {
   // filter path handles the actual row filtering; this set exists only to
   // decide whether the secondary section is meaningful.
   const gapOnlyFilterActive = useMemo(() => {
-    if (hccDueDateFilter) return true;
+    if (hccDueDateFilter || covering.length) return true;
     for (const k of Object.keys(hccFilters)) {
       if (!GAP_ONLY_FILTER_KEYS.has(k)) continue;
       const v = hccFilters[k];
       if (Array.isArray(v) ? v.length > 0 : v != null) return true;
     }
     return false;
-  }, [hccFilters, hccDueDateFilter]);
+  }, [hccFilters, hccDueDateFilter, covering]);
 
   const patientsWithoutGaps = useMemo(() => {
     if (gapOnlyFilterActive) return [];
@@ -347,7 +366,7 @@ export function useHccWorklistTable() {
   };
 
   const hiddenSet = columnPrefs.hiddenSet;
-  const activeFilterCount = countActiveFilters(hccFilters);
+  const activeFilterCount = countActiveFilters(hccFilters) + (covering.length ? 1 : 0);
 
   return {
     totalRecordCount: enriched.length,
@@ -376,6 +395,8 @@ export function useHccWorklistTable() {
     patientsWithoutGaps,
     filtersActive,
     clearHccFilters,
+    coveringChip,
+    coveringFor,
     scrollWrapRef,
     someSelected,
     allSelected,

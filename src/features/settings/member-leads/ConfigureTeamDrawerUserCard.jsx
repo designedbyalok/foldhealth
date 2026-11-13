@@ -1,6 +1,8 @@
 import { Icon } from '../../../components/Icon/Icon';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Avatar } from '../../../components/Avatar/Avatar';
+import { Badge } from '../../../components/Badge/Badge';
+import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { ASSIGN_TO_DIMENSIONS } from './teamTypeConfig';
 import { HoverCard } from './HoverCard';
@@ -9,7 +11,7 @@ import drawerStyles from './ConfigureTeamDrawer.module.css';
 import { AssignValueSelect } from './ConfigureTeamDrawerAssignValueSelect';
 
 // ── User card with nested Assign To rows ───────────────────────────────
-export function UserCard({ member, teamType, showBillableCheck = false, priorUtilization, breakdown = [], usersForTin, tinAssignedPct, staffAvailablePct, onPatch, onRemove, onPatchAssignTo }) {
+export function UserCard({ member, outOfOffice = null, teamType, showBillableCheck = false, priorUtilization, breakdown = [], usersForTin, tinAssignedPct, staffAvailablePct, onPatch, onRemove, onPatchAssignTo }) {
   const dims = ASSIGN_TO_DIMENSIONS[teamType] || [];
   const capacity = Number(member.capacityPct) || 0;
   const totalAssigned = (member.assignTo || []).reduce((sum, r) => sum + (Number(r.pct) || 0), 0);
@@ -36,7 +38,15 @@ export function UserCard({ member, teamType, showBillableCheck = false, priorUti
       <div className={`${drawerStyles.userCardHead} ${showBillableCheck ? drawerStyles.userCardHeadTop : ''}`}>
         <Avatar variant="assignee" initials={member.initials} />
         <div className={drawerStyles.userCardText}>
-          <div className={drawerStyles.userCardName}>{member.name}</div>
+          <div className={drawerStyles.userCardName}>
+            {member.name}
+            {/* Out of office now: skipped from auto-assignment (dates on hover). */}
+            {outOfOffice && (
+              <Tooltip label={`Out of office ${outOfOffice}`} placement="top" align="left">
+                <Badge tone="magenta" size="sm" label="Out of Office" />
+              </Tooltip>
+            )}
+          </div>
           {member.roles && <div className={drawerStyles.userCardMeta}>{member.roles}</div>}
           <HoverCard
             placement="top"

@@ -12,6 +12,7 @@ import { formatDobDisplay, deriveDob } from '../../lib/patientDob';
 import { useAppStore } from '../../store/useAppStore';
 import { worklistMemberCallId } from '../../lib/patientCall';
 import { FoldIdTag } from '../../components/FoldIdTag/FoldIdTag';
+import { CoveringNote } from '../ooo/CoveringNote';
 import styles from './AwvWorklistRow.module.css';
 import { OutreachStatus } from '../../components/OutreachStatus/OutreachStatus';
 import { outreachFromCount } from '../../components/OutreachStatus/outreachStatusModel';
@@ -219,7 +220,7 @@ export const AWV_MIDDLE_COLUMNS = [
  * middle band so hide/reorder in the Show Columns popover ripples
  * through the body.
  */
-export function AwvWorklistRow({ member, columns, hiddenSet, selected, onToggle, onView, showToast }) {
+export function AwvWorklistRow({ member, coveringFor, columns, hiddenSet, selected, onToggle, onView, showToast }) {
   const updateAwvMemberStatus = useAppStore(s => s.updateAwvMemberStatus);
   const openQuickView = useAppStore(s => s.openQuickView);
   const openCallPopover = useAppStore(s => s.openCallPopover);
@@ -285,6 +286,7 @@ export function AwvWorklistRow({ member, columns, hiddenSet, selected, onToggle,
                 </button>
               </Tooltip>
             </div>
+            <CoveringNote people={coveringFor} />
           </div>
         </div>
       </td>

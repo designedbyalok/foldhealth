@@ -18,6 +18,7 @@ import { MEASURE_NAMES } from './ClinicalNotePanel.utils';
 import { gapInstanceLabel, gapSourceLabel } from './hedisFilters';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
 import { ActionsMenuPopover } from '../hcc/RowPopovers';
+import { CoveringNote } from '../ooo/CoveringNote';
 import styles from './HedisWorklistRow.module.css';
 import { OutreachStatus } from '../../components/OutreachStatus/OutreachStatus';
 import { outreachFromDots } from '../../components/OutreachStatus/outreachStatusModel';
@@ -369,7 +370,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
   },
 ];
 
-export function HedisWorklistRow({ member, columns, hiddenSet, isSelected, onSelect, onOpenGap }) {
+export function HedisWorklistRow({ member, coveringFor, columns, hiddenSet, isSelected, onSelect, onOpenGap }) {
   const showToast = useAppStore(s => s.showToast);
   const openQuickView = useAppStore(s => s.openQuickView);
   const platformUsers = useAppStore(s => s.platformUsers);
@@ -481,6 +482,7 @@ export function HedisWorklistRow({ member, columns, hiddenSet, isSelected, onSel
                 </span>
               </Tooltip>
             </div>
+            <CoveringNote people={coveringFor} />
           </div>
         </div>
       </td>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { formatDobDisplay, deriveDob } from '../../lib/patientDob';
+import { coveringPeople, oooStatus, recordPerson, samePerson } from '../ooo/oooUtils';
 
 const EMPTY = [];
 
@@ -43,6 +44,8 @@ function mergeWorklistRows(existing, incoming) {
     // SNP row the user just assigned to themselves.
     assigneeId: existing.assigneeId || incoming.assigneeId,
     assigneeNames: [...new Set([...(existing.assigneeNames || []), ...(incoming.assigneeNames || [])])],
+    // Every worklist the patient is on (Care Programs/Gaps filter).
+    kinds: [...new Set([...(existing.kinds || []), ...(incoming.kinds || [])])],
   };
 }
 
@@ -69,6 +72,7 @@ function toWorklistRow(source, kind) {
     assigneeId: source.assigneeId || source.assignee_id || null,
     assigneeNames: collectAssigneeNames(source),
     kind,
+    kinds: [kind],
   };
 }
 
@@ -90,10 +94,13 @@ function countMyTasksForPatient(patientName, tasks, meId, meName) {
 }
 
 /**
- * `{ rows, loading, meId, meName }`: one row per patient assigned to me
- * (deduped by name across worklists), most of my open tasks first.
+ * `{ rows, loading, meId, meName, coveringFor }`: one row per patient assigned
+ * to me (deduped by name across worklists), most of my open tasks first.
+ * `coveringFor` lists whom I'm covering while they're out. With
+ * `covering` (some of them), the rows are instead their worklist patients and
+ * the patients of their open tasks still with them.
  */
-export function useMyWorklistPatients() {
+export function useMyWorklistPatients({ covering = EMPTY } = {}) {
   const patients = useAppStore(s => s.patients);
   const patientsLoading = useAppStore(s => s.patientsLoading);
   const fetchPatients = useAppStore(s => s.fetchPatients);
@@ -112,6 +119,7 @@ export function useMyWorklistPatients() {
   const fetchHedisMembers = useAppStore(s => s.fetchHedisMembers);
   const fetchAwvMembers = useAppStore(s => s.fetchAwvMembers);
   const fetchCcmWorklistMembers = useAppStore(s => s.fetchCcmWorklistMembers);
+  const oooRecords = useAppStore(s => s.oooRecords);
 
   useEffect(() => {
     fetchPatients();
@@ -127,6 +135,21 @@ export function useMyWorklistPatients() {
 
   const meId = currentUserProfile?.id || null;
   const meName = currentUserProfile?.name || null;
+
+  // People out (now or soon) whose cover names me: I see to all their work.
+  const coverMe = useMemo(() => {
+    const me = { id: meId, name: meName || '' };
+    return new Set((oooRecords || [])
+      .filter(r => oooStatus(r) !== 'Past' && coveringPeople(r.coverage).some(c => samePerson(c, me)))
+      .map(r => normName(recordPerson(r).name)));
+  }, [oooRecords, meId, meName]);
+  // Whom I'm covering (as the Tasks "Covering for" filter): people out (now
+  // or soon) whose cover names me.
+  const coveringFor = useMemo(() => (oooRecords || [])
+    .filter(r => coverMe.has(normName(recordPerson(r).name)))
+    .map(r => recordPerson(r).name)
+    .filter((n, i, a) => n && a.indexOf(n) === i)
+    .sort((a, b) => a.localeCompare(b)), [oooRecords, coverMe]);
 
   const worklistRows = useMemo(() => {
     const merged = new Map();
@@ -150,9 +173,29 @@ export function useMyWorklistPatients() {
 
     let rows = [...merged.values()].filter(r => isAssignedToMe(r, meId, meName));
 
-    // If nothing is explicitly assigned, fall back to patients that carry
-    // open tasks for me: still real platform rows, just task-derived.
-    if (rows.length === 0 && meName) {
+    // Covering: the patients of the picked people's open tasks that came to
+    // me while they're out (the rows that carry the "Covering for" note).
+    // Covering for: whose work I'm covering. Their worklist patients and the
+    // patients of their open tasks still with them, when their cover names
+    // me (work reassigned to me is simply mine now). Each row remembers whom
+    // it's there for.
+    const viaPerson = new Map(); // patient name → names I'm covering on it
+    const note = (patient, who) => {
+      const k = normName(patient);
+      if (!k || !who) return;
+      viaPerson.set(k, new Set([...(viaPerson.get(k) || []), who]));
+    };
+    if (covering.length) {
+      const picked = covering.filter(Boolean);
+      const mine = picked.filter(p => coverMe.has(normName(p)));
+      [...merged.values()].forEach(r => mine.forEach((p) => { if (isAssignedToMe(r, null, p)) note(r.name, p); }));
+      tasks.filter(t => t.status !== 'completed' && t.member).forEach((t) => {
+        mine.forEach((p) => { if (normName(t.assigned_to) === normName(p)) note(t.member, p); });
+      });
+      rows = [...merged.values()].filter(r => viaPerson.has(normName(r.name)));
+    }
+
+    if (!covering.length && rows.length === 0 && meName) {
       const taskNames = new Set();
       for (const t of tasks) {
         if (t.status !== 'completed' && matchTaskAssignee(t, meId, meName) && t.member) {
@@ -162,16 +205,26 @@ export function useMyWorklistPatients() {
       rows = [...merged.values()].filter(r => taskNames.has(normName(r.name)));
     }
 
+    // Whom I'm covering for on this patient: the owners my open tasks came
+    // from while they're out (with their dates, for the row's note).
+    // Whom I'm covering on this patient (under Covering for); work that was
+    // reassigned to me is simply mine, so it carries no note.
+    const coveringOn = (name) => [...(viaPerson.get(normName(name)) || [])].map((who) => {
+      const r = (oooRecords || []).find(x => normName(recordPerson(x).name) === normName(who) && oooStatus(x) !== 'Past');
+      return { name: who, startAt: r?.startAt || null, endAt: r?.endAt || null };
+    });
+
     return rows
       .map(row => ({
         ...row,
         myTaskCount: countMyTasksForPatient(row.name, tasks, meId, meName),
+        coveringFor: coveringOn(row.name),
       }))
       .sort((a, b) => {
         if (b.myTaskCount !== a.myTaskCount) return b.myTaskCount - a.myTaskCount;
         return a.name.localeCompare(b.name);
       });
-  }, [patients, hccMembers, snpWorklistMembers, hedisMembers, awvMembers, ccmWorklistMembers, tasks, meId, meName]);
+  }, [patients, hccMembers, snpWorklistMembers, hedisMembers, awvMembers, ccmWorklistMembers, tasks, meId, meName, covering, oooRecords, coverMe]);
 
-  return { rows: worklistRows, loading: patientsLoading || tasksLoading, meId, meName };
+  return { rows: worklistRows, loading: patientsLoading || tasksLoading, meId, meName, coveringFor };
 }

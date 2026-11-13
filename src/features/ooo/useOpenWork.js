@@ -61,10 +61,11 @@ export function useOpenWork({ enabled, away, startAt, endAt, coverage, recordId 
   }, [appointments, tasks, programs, away, awayName, startAt, endAt]);
   const loading = enabled && programs.for !== awayName;
 
-  // Each item to the covering provider of its department (else, with one
-  // covering provider, to them).
+  // Appointments go to the covering provider of their department (else, with
+  // one covering provider, to them). Tasks and care programs start unassigned,
+  // so each area is skipped unless a covering provider is picked for it.
   const defaults = useMemo(
-    () => Object.fromEntries(MODULES.map(m => [m.key, defaultAppointmentPlan(items[m.key], coverage)])),
+    () => Object.fromEntries(MODULES.map(m => [m.key, m.key === 'appointments' ? defaultAppointmentPlan(items[m.key], coverage) : {}])),
     [items, coverage],
   );
 

@@ -14,6 +14,7 @@ import { BulkBar } from '../../components/BulkBar/BulkBar';
 import { CcmWorklistRow, CCM_MIDDLE_COLUMNS } from './CcmWorklistRow';
 import { ColumnsHeaderButton } from '../../components/WorklistColumns/ColumnsHeaderButton';
 import { useWorklistColumns } from '../worklists/useWorklistColumns';
+import { useCovering } from '../ooo/useCovering';
 import {
   TimeFilterPopover,
 } from './TimeFilterChip';
@@ -157,12 +158,22 @@ const CCM_FILTER_DEFS = (() => {
   );
   return defs;
 })();
-const CCM_MORE_FILTER_ITEMS = CCM_FILTER_DEFS.map(fd => ({
+// Shown only while the signed-in user is covering someone (see useCovering).
+const NO_PICKS = [];
+const COVERING_DEF = { key: 'coveringFor', label: 'Covering for', primary: true };
+const CCM_FILTER_DEFS_COVERING = (() => {
+  const defs = [...CCM_FILTER_DEFS];
+  defs.splice(defs.findIndex(d => d.key === 'assignee') + 1, 0, COVERING_DEF);
+  return defs;
+})();
+const toMoreItems = (defs) => defs.map(fd => ({
   k: fd.key,
   label: fd.label,
   primary: fd.primary,
   group: fd.group,
 }));
+const CCM_MORE_FILTER_ITEMS = toMoreItems(CCM_FILTER_DEFS);
+const CCM_MORE_FILTER_ITEMS_COVERING = toMoreItems(CCM_FILTER_DEFS_COVERING);
 
 const thStyle = {
   padding: '8px 14px',
@@ -209,12 +220,20 @@ export function CcmWorklistTable() {
   const setCcmFilter = useAppStore(s => s.setCcmFilter);
   const clearFilters = useAppStore(s => s.clearCcmFilters);
   const saveSavedFilter = useAppStore(s => s.saveSavedFilter);
+  // FilterBar's own fallback for onFilterChange (More Filters unchecks).
+  const setStoreFilter = useAppStore(s => s.setFilter);
   const savedActions = useSavedFilterActions('CCM', filters, clearFilters);
   const billableFilter = filters.billableMins || EMPTY_TIME_FILTER;
   const unloggedFilter = filters.unloggedMins || EMPTY_TIME_FILTER;
   const setBillableFilter = (v) => setCcmFilter('billableMins', isTimeFilterActive(v) ? v : null);
   const setUnloggedFilter = (v) => setCcmFilter('unloggedMins', isTimeFilterActive(v) ? v : null);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
+  // Local, not in ccmFilters: covering is about who's out today, so it
+  // shouldn't be saved into a saved filter.
+  const [coveringFor, setCoveringFor] = useState([]);
+  const covering = useCovering();
+  const showCovering = covering.names.length > 0;
+  const coveringPicked = showCovering ? coveringFor : NO_PICKS;
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
 
@@ -262,8 +281,11 @@ export function CcmWorklistTable() {
     // fold them into the bucket-based FILTER_KEYS loop.
     rows = rows.filter(m => matchTimeFilter(m.billableSeconds, m.assigneeName, billableFilter));
     rows = rows.filter(m => matchTimeFilter(m.unloggedSeconds, m.assigneeName, unloggedFilter));
+    if (coveringPicked.length) {
+      rows = rows.filter(m => covering.coveringOn([m.assigneeName], coveringPicked).length > 0);
+    }
     return rows;
-  }, [members, searchQuery, filters, billableFilter, unloggedFilter]);
+  }, [members, searchQuery, filters, billableFilter, unloggedFilter, coveringPicked, covering]);
 
   const userOptions = useMemo(() => {
     const names = new Set();
@@ -298,7 +320,8 @@ export function CcmWorklistTable() {
   const hasAnyActive =
     FILTER_KEYS.some(({ key }) => filters[key]?.length > 0) ||
     isTimeFilterActive(billableFilter) ||
-    isTimeFilterActive(unloggedFilter);
+    isTimeFilterActive(unloggedFilter) ||
+    coveringPicked.length > 0;
 
   // Column prefs: bespoke table, wire useWorklistColumns directly.
   const columnPrefs = useWorklistColumns('ccm', CCM_MIDDLE_COLUMNS);
@@ -328,17 +351,19 @@ export function CcmWorklistTable() {
         autoFit
         pinPrimary
         leading={null}
-        filterDefs={CCM_FILTER_DEFS}
-        moreFilterItems={CCM_MORE_FILTER_ITEMS}
+        filterDefs={showCovering ? CCM_FILTER_DEFS_COVERING : CCM_FILTER_DEFS}
+        moreFilterItems={showCovering ? CCM_MORE_FILTER_ITEMS_COVERING : CCM_MORE_FILTER_ITEMS}
         filters={{
           ...filters,
           // Mirror the two time-filter chips into FilterBar's `filters` bag
           // so autoFit treats them as active (always visible) when set.
           billableMins: isTimeFilterActive(billableFilter) ? ['active'] : [],
           unloggedMins: isTimeFilterActive(unloggedFilter) ? ['active'] : [],
+          coveringFor: coveringPicked,
         }}
         multiSelect
-        onClearAll={savedActions.onClearAll}
+        onFilterChange={(k, vals) => (k === 'coveringFor' ? setCoveringFor(vals || []) : setStoreFilter(k, vals))}
+        onClearAll={() => { setCoveringFor([]); savedActions.onClearAll(); }}
         clearAllLabel={savedActions.clearAllLabel}
         saveLabel={savedActions.saveLabel}
         saveMenuItems={savedActions.saveMenuItems}
@@ -387,6 +412,17 @@ export function CcmWorklistTable() {
                     onChange={setUnloggedFilter}
                   />
                 )}
+              />
+            );
+          }
+          if (k === 'coveringFor') {
+            return (
+              <FilterChip
+                key={k}
+                label={COVERING_DEF.label}
+                options={covering.names}
+                selected={coveringPicked}
+                onChange={setCoveringFor}
               />
             );
           }
@@ -447,6 +483,7 @@ export function CcmWorklistTable() {
                   hiddenSet={columnPrefs.hiddenSet}
                   isSelected={selectedIds.has(m.id)}
                   onSelect={toggleOne}
+                  coveringFor={coveringPicked.length ? covering.coveringOn([m.assigneeName], coveringPicked) : null}
                 />
               ))}
             </tbody>
@@ -459,7 +496,7 @@ export function CcmWorklistTable() {
         currentPage={page}
         totalItems={filtered.length}
         totalCount={members.length}
-        filtered={!!searchQuery.trim() || Object.values(filters).some(v => v?.length) || filtered.length !== members.length}
+        filtered={!!searchQuery.trim() || Object.values(filters).some(v => v?.length) || coveringPicked.length > 0 || filtered.length !== members.length}
         perPage={perPage}
         onPageChange={setPage}
         onPerPageChange={(n) => { setPerPage(n); setPage(1); }}

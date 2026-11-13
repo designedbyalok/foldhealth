@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
-import { Avatar } from '../../components/Avatar/Avatar';
+import { FilterChip } from '../../components/FilterChip/FilterChip';
+import { DobFilter } from '../../components/DobFilter/DobFilter';
+import { DateRangePopover } from '../../components/DateRangePopover/DateRangePopover';
+import { fmtDay } from '../../components/DateRangeFilter/dateRangePresets';
+import { WORKLIST_FILTERS, filterOptions, passes, rowFacts } from './worklistFilters';
 import { useAppStore } from '../../store/useAppStore';
 import {
-  formatPatientMeta, matchTaskAssignee, normName, resolvePatientId, useMyWorklistPatients,
+  matchTaskAssignee, normName, resolvePatientId, useMyWorklistPatients,
 } from './useMyWorklistPatients';
 import { TaskDetailDrawer } from '../tasks/TaskDetailDrawer';
 import { HomeWidgetEmpty } from './HomeWidgetEmpty';
+import { MyWorklistTable } from './MyWorklistTable';
 import styles from './HomeView.module.css';
 
 export function AlertsMonitoringCard({ dragHandleClassName }) {
@@ -20,7 +25,24 @@ export function AlertsMonitoringCard({ dragHandleClassName }) {
   const [selectedTask, setSelectedTask] = useState(null);
   // all_patients is ~100 KB and is only used to resolve a row click onto a
   // profile id, so it loads on click, not on every Home visit.
-  const { rows: worklistRows, loading, meId, meName } = useMyWorklistPatients();
+  // Filter row (the funnel): Covering narrows the list to the patients of
+  // the picked out-of-office people's open tasks.
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [covering, setCovering] = useState([]);
+  const { rows: allRows, loading, meId, meName, coveringFor } = useMyWorklistPatients({ covering });
+  // The worklist filters (appointments, tasks, profile), value per key.
+  const appointments = useAppStore(s => s.appointments);
+  const fetchAppointments = useAppStore(s => s.fetchAppointments);
+  useEffect(() => { if (filtersOpen && !appointments?.length) fetchAppointments?.(); }, [filtersOpen, appointments, fetchAppointments]);
+  const [values, setValues] = useState({});
+  const setValue = (key, v) => setValues(cur => ({ ...cur, [key]: v }));
+  const facts = useMemo(
+    () => allRows.map(r => [r, rowFacts(r, { patients, appointments: appointments || [], tasks })]),
+    [allRows, patients, appointments, tasks],
+  );
+  const options = useMemo(() => filterOptions(facts.map(([, f]) => f)), [facts]);
+  const items = useMemo(() => facts.filter(([, f]) => passes(f, values)).map(([row, f]) => ({ row, facts: f })), [facts, values]);
+  const anySet = covering.length > 0 || Object.values(values).some(v => v?.length);
 
   const handleRowClick = async (row) => {
     let patientId = resolvePatientId(row, patients, allPatients);
@@ -40,8 +62,7 @@ export function AlertsMonitoringCard({ dragHandleClassName }) {
     });
   };
 
-  const handleTaskBadgeClick = (e, row) => {
-    e.stopPropagation();
+  const openMyTask = (row) => {
     const match = tasks.find(t =>
       t.status !== 'completed'
       && matchTaskAssignee(t, meId, meName)
@@ -61,47 +82,78 @@ export function AlertsMonitoringCard({ dragHandleClassName }) {
           <div className={styles.cardActions}>
             <ActionButton icon="solar:user-linear" size="sm" tooltip="Assigned to me" />
             <ActionButton icon="solar:hamburger-menu-linear" size="sm" tooltip="List view" />
-            <ActionButton icon="custom:filter" size="sm" tooltip="Filter" />
+            <ActionButton
+              icon="custom:filter"
+              size="sm"
+              tooltip="Filter"
+              tooltipLeft
+              aria-pressed={filtersOpen || anySet}
+              className={filtersOpen || anySet ? styles.actionOn : undefined}
+              onClick={() => setFiltersOpen(v => !v)}
+            />
           </div>
         </div>
-        <div className={styles.cardBody}>
-          {loading && <div className={styles.loading}>Loading worklist…</div>}
-          {patientsError && !loading && <div className={styles.errorState}>Failed to load patients</div>}
-          {!loading && !patientsError && worklistRows.length === 0 && (
-            <HomeWidgetEmpty
-              icon="solar:clipboard-list-linear"
-              title="Your worklist is clear"
-              description="Patients assigned to you from SNP, HCC, and other worklists will appear here."
-            />
-          )}
-          {!loading && worklistRows.map(row => (
-            <div
-              key={row.key}
-              className={styles.patientRowBtn}
-            >
-              <button type="button" className={styles.patientRowMain} onClick={() => handleRowClick(row)}>
-                <span className={styles.checkbox} aria-hidden="true" />
-                <Avatar variant="patient" initials={row.initials} />
-                <div className={styles.patientInfo}>
-                  <div className={styles.patientName}>
-                    {row.name} <span className={styles.chevron}>›</span>
-                  </div>
-                  <div className={styles.patientMeta}>{formatPatientMeta(row)}</div>
-                </div>
+        {(filtersOpen || anySet) && (
+          <div className={styles.cardFilters}>
+            {coveringFor.length > 0 && (
+              <FilterChip
+                label="Covering for"
+                options={coveringFor}
+                selected={covering}
+                onChange={setCovering}
+                searchable={coveringFor.length > 8}
+              />
+            )}
+            {WORKLIST_FILTERS.map((f) => {
+              const v = values[f.key] || [];
+              if (f.type === 'dob') return <DobFilter key={f.key} value={v} onChange={(next) => setValue(f.key, next)} />;
+              if (f.type === 'date') {
+                return (
+                  <FilterChip
+                    key={f.key}
+                    label={f.label}
+                    active={v.length >= 2}
+                    activeSummary={v.length >= 2 ? `${fmtDay(v[0])} – ${fmtDay(v[1])}` : undefined}
+                    onClear={() => setValue(f.key, [])}
+                    renderPopover={({ anchorRect, onClose }) => (
+                      <DateRangePopover anchorRect={anchorRect} label={f.label} selected={v} onChange={(next) => setValue(f.key, next)} onClose={onClose} />
+                    )}
+                  />
+                );
+              }
+              return (
+                <FilterChip
+                  key={f.key}
+                  label={f.label}
+                  options={options[f.key] || []}
+                  selected={v}
+                  onChange={(next) => setValue(f.key, next)}
+                  searchable={(options[f.key] || []).length > 8}
+                />
+              );
+            })}
+            {anySet && (
+              <button type="button" className={styles.cardFiltersClear} onClick={() => { setValues({}); setCovering([]); }}>
+                Clear All
               </button>
-              {row.myTaskCount > 0 && (
-                <button
-                  type="button"
-                  className={[styles.badge, styles.task, styles.taskBadgeBtn].filter(Boolean).join(' ')}
-                  onClick={(e) => handleTaskBadgeClick(e, row)}
-                >
-                  <Icon name="solar:checklist-minimalistic-linear" size={10} />
-                  {row.myTaskCount} {row.myTaskCount === 1 ? 'Task' : 'Tasks'}
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+            )}
+          </div>
+        )}
+        {patientsError && !loading ? (
+          <div className={styles.errorState}>Failed to load patients</div>
+        ) : (
+          <MyWorklistTable
+            items={items}
+            loading={loading}
+            onOpen={handleRowClick}
+            onOpenTask={openMyTask}
+            emptyState={anySet ? (
+              <HomeWidgetEmpty icon="solar:filter-linear" title="No patients match these filters" description="Change or clear the filters to see more." />
+            ) : (
+              <HomeWidgetEmpty icon="solar:clipboard-list-linear" title="Your worklist is clear" description="Patients assigned to you from SNP, HCC, and other worklists will appear here." />
+            )}
+          />
+        )}
       </div>
 
       {selectedTask && (

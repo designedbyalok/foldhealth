@@ -20,6 +20,7 @@ import { useSavedFilterActions } from '../hcc/useSavedFilterActions';
 import { SnpWorklistRow, SNP_MIDDLE_COLUMNS } from './SnpWorklistRow';
 import { ColumnsHeaderButton } from '../../components/WorklistColumns/ColumnsHeaderButton';
 import { useWorklistColumns } from '../worklists/useWorklistColumns';
+import { useCovering } from '../ooo/useCovering';
 import { CarePlanReviewDrawer } from '../patient/right-panel/tabs/care-programs/care-plan/drawers/CarePlanReviewDrawer/CarePlanReviewDrawer';
 import styles from './SnpWorklistTable.module.css';
 
@@ -139,6 +140,15 @@ const STATIC_OPTIONS = {
 };
 
 const MORE_FILTER_ITEMS = FILTER_KEYS.map(f => ({ k: f.key, label: f.label, primary: f.primary, group: f.group }));
+// Shown only while the signed-in user is covering someone (see useCovering).
+const NO_PICKS = [];
+const COVERING_DEF = { key: 'coveringFor', label: 'Covering for', primary: true };
+const FILTER_KEYS_COVERING = (() => {
+  const defs = [...FILTER_KEYS];
+  defs.splice(defs.findIndex(f => f.key === 'assignee') + 1, 0, COVERING_DEF);
+  return defs;
+})();
+const MORE_FILTER_ITEMS_COVERING = FILTER_KEYS_COVERING.map(f => ({ k: f.key, label: f.label, primary: f.primary, group: f.group }));
 const PRIMARY_FILTER_KEYS = [];
 for (const f of FILTER_KEYS) {
   if (f.primary) PRIMARY_FILTER_KEYS.push(f.key);
@@ -204,6 +214,12 @@ export function SnpWorklistTable() {
   const saveSnpFilter = useAppStore(s => s.saveSnpFilter);
 
   const [selectedIds, setSelectedIds] = useState(() => new Set());
+  // Local, not in snpFilters: covering is about who's out today, so it
+  // shouldn't be saved into a saved filter.
+  const [coveringFor, setCoveringFor] = useState([]);
+  const covering = useCovering();
+  const showCovering = covering.names.length > 0;
+  const coveringPicked = showCovering ? coveringFor : NO_PICKS;
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
 
@@ -263,8 +279,11 @@ export function SnpWorklistTable() {
     }
     // DOB is a date range (Years or Custom Dates), not a bucket.
     rows = rows.filter(m => dobInRange(m.dob, m.age, filters.dob));
+    if (coveringPicked.length) {
+      rows = rows.filter(m => covering.coveringOn([m.assigneeName], coveringPicked).length > 0);
+    }
     return rows;
-  }, [enriched, searchQuery, filters]);
+  }, [enriched, searchQuery, filters, coveringPicked, covering]);
 
   // Shared sort hook: click cycles asc → desc → cleared, same as HCC.
   const { sorted, sortKey, sortDir, setSort, clearSort } = useTableSort(filtered);
@@ -300,10 +319,12 @@ export function SnpWorklistTable() {
     setVisibleFilterKeys([...next]);
   };
 
+  // A filter can leave fewer pages than the one we're on; show the last one.
+  const pageNow = Math.min(page, Math.max(1, Math.ceil(sorted.length / perPage)));
   const paginated = useMemo(() => {
-    const start = (page - 1) * perPage;
+    const start = (pageNow - 1) * perPage;
     return sorted.slice(start, start + perPage);
-  }, [sorted, page, perPage]);
+  }, [sorted, pageNow, perPage]);
 
   const allIds = paginated.map(r => r.id);
   const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.has(id));
@@ -366,10 +387,10 @@ export function SnpWorklistTable() {
 
       <FilterBar
         collapsed={!filterBarOpen}
-        filterDefs={FILTER_KEYS}
-        filters={filters}
-        onFilterChange={(k, vals) => setFilter(k, vals)}
-        onClearAll={savedActions.onClearAll}
+        filterDefs={showCovering ? FILTER_KEYS_COVERING : FILTER_KEYS}
+        filters={showCovering ? { ...filters, coveringFor: coveringPicked } : filters}
+        onFilterChange={(k, vals) => (k === 'coveringFor' ? setCoveringFor(vals || []) : setFilter(k, vals))}
+        onClearAll={() => { setCoveringFor([]); savedActions.onClearAll(); }}
         clearAllLabel={savedActions.clearAllLabel}
         saveLabel={savedActions.saveLabel}
         saveMenuItems={savedActions.saveMenuItems}
@@ -381,12 +402,22 @@ export function SnpWorklistTable() {
         visibleKeys={visibleKeys}
         onToggleVisible={toggleVisible}
         onClearVisible={clearVisibleFilters}
-        moreFilterItems={MORE_FILTER_ITEMS}
+        moreFilterItems={showCovering ? MORE_FILTER_ITEMS_COVERING : MORE_FILTER_ITEMS}
         leading={null}
         pinPrimary
         // DOB gets the Years | Custom Dates picker; every other chip is the usual multi-select.
         renderChip={(k) => {
           if (k === 'dob') return <DobFilter value={filters.dob || []} onChange={vals => setFilter('dob', vals)} />;
+          if (k === 'coveringFor') {
+            return (
+              <FilterChip
+                label={COVERING_DEF.label}
+                options={covering.names}
+                selected={coveringPicked}
+                onChange={setCoveringFor}
+              />
+            );
+          }
           const def = FILTER_KEYS.find(f => f.key === k);
           if (!def) return null;
           return (
@@ -455,6 +486,7 @@ export function SnpWorklistTable() {
                   hiddenSet={columnPrefs.hiddenSet}
                   isSelected={selectedIds.has(m.id)}
                   onSelect={toggleOne}
+                  coveringFor={coveringPicked.length ? covering.coveringOn([m.assigneeName], coveringPicked) : null}
                 />
               ))}
             </tbody>
@@ -464,10 +496,10 @@ export function SnpWorklistTable() {
       </div>
 
       <Pagination
-        currentPage={page}
+        currentPage={pageNow}
         totalItems={filtered.length}
         totalCount={enriched.length}
-        filtered={!!searchQuery.trim() || Object.values(filters).some(v => v?.length)}
+        filtered={!!searchQuery.trim() || Object.values(filters).some(v => v?.length) || coveringPicked.length > 0}
         perPage={perPage}
         onPageChange={setPage}
         onPerPageChange={(n) => { setPerPage(n); setPage(1); }}

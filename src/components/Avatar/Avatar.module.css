@@ -238,6 +238,9 @@
   text-align: left;
   white-space: nowrap;
 }
+.oooTip { gap: calc(var(--space-1) / 2); }
+.oooTipTitle { font-weight: 500; }
+.oooTipNote { margin-top: var(--space-1); color: var(--accent-magenta); }
 
 /* Figma draws avatars at 100% corner smoothing: the curve eases in over
    twice the radius. A squircle at double the radius is the CSS match;

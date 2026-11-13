@@ -131,3 +131,22 @@ export const rowToJob = (r) => ({
 });
 
 export const TYPE_LABELS = { ooo: 'Out of Office Reassignment', permanent: 'Permanent Reassignment', other: 'One-time Reassignment' };
+
+/**
+ * Tasks an Out of Office reassignment moved to a covering provider, while
+ * that cover still runs (the job's dates haven't ended): task id → { fromUser,
+ * fromUserId, to, toId }. The latest job wins when a task moved twice.
+ */
+export function coveredTasks(jobs, now = new Date()) {
+  const t = new Date(now).getTime();
+  const out = new Map();
+  [...(jobs || [])]
+    .filter(j => j.type === 'ooo' && (!j.windowEnd || new Date(j.windowEnd).getTime() > t))
+    .sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')))
+    .forEach(j => (j.results || []).forEach((r) => {
+      if (r.kind === 'task' && r.outcome === 'reassigned' && r.taskId != null) {
+        out.set(String(r.taskId), { fromUser: j.fromUser, fromUserId: j.fromUserId || null, to: r.to, toId: r.toId || null });
+      }
+    }));
+  return out;
+}

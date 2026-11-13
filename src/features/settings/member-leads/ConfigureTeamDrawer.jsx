@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { Button } from '../../../components/Button/Button';
 import { Icon } from '../../../components/Icon/Icon';
+import { Banner } from '../../../components/Banner/Banner';
+import { Tooltip } from '../../../components/Tooltip/Tooltip';
+import { activeOooFor } from '../../ooo/oooUtils';
 import { useAppStore } from '../../../store/useAppStore';
 import { TEAM_TYPE_OPTIONS, KIND_LABEL } from './teamTypeConfig';
 import {
@@ -54,6 +57,15 @@ export function ConfigureTeamDrawer({ kind = 'hcc', editTeam = null, defaultTeam
     const selectedIds = new Set(members.map(m => m.userId));
     return systemUsers.filter(u => !selectedIds.has(u.id));
   }, [systemUsers, members]);
+
+  // Team members out of office now: auto-assignment skips them until they're back.
+  const oooRecords = useAppStore(s => s.oooRecords);
+  const awayMembers = useMemo(() => members
+    .map(m => ({ userId: m.userId, name: m.name, record: activeOooFor(oooRecords, { id: m.userId || null, name: m.name }) }))
+    .filter(x => x.record), [members, oooRecords]);
+  const mdY = (v) => { const d = new Date(v); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`; };
+  const awayDates = (r) => `${mdY(r.startAt)} – ${mdY(r.endAt)}`;
+  const awayById = new Map(awayMembers.map(x => [x.userId, x.record]));
 
   const ctx = { existingTeams, editTeam, members, name, teamType };
   const utilizationFor = (userId) => calcUtilization(userId, ctx);
@@ -131,7 +143,31 @@ export function ConfigureTeamDrawer({ kind = 'hcc', editTeam = null, defaultTeam
         </>
       }
     >
-      <div className={drawerStyles.body}>
+      <div className={awayMembers.length ? `${drawerStyles.body} ${drawerStyles.bodyBanner}` : drawerStyles.body}>
+        {awayMembers.length > 0 && (
+          <Banner tone="info" size="sm">
+            {awayMembers.length === 1 ? (
+              `${awayMembers[0].name} is out of office until ${mdY(awayMembers[0].record.endAt)} and is skipped from auto-assignment.`
+            ) : (
+              <>
+                {/* Several: the count, with who and when on hover. */}
+                <Tooltip
+                  label={(
+                    <span className={drawerStyles.awayList}>
+                      {awayMembers.map(x => <span key={x.userId || x.name}>{x.name} • {awayDates(x.record)}</span>)}
+                    </span>
+                  )}
+                  placement="bottom"
+                  align="left"
+                  maxWidth={320}
+                >
+                  <span className={drawerStyles.awayCount}>{awayMembers.length} users</span>
+                </Tooltip>
+                {' '}are out of office and skipped from auto-assignment until they&apos;re back.
+              </>
+            )}
+          </Banner>
+        )}
         <ConfigureTeamDrawerBasicFields
           name={name}
           teamType={teamType}
@@ -159,6 +195,7 @@ export function ConfigureTeamDrawer({ kind = 'hcc', editTeam = null, defaultTeam
               <UserCard
                 key={m.userId}
                 member={m}
+                outOfOffice={awayById.has(m.userId) ? awayDates(awayById.get(m.userId)) : null}
                 teamType={teamType}
                 showBillableCheck={kind === 'care-program' && TIMER_PROGRAM_CODES.includes(teamType)}
                 priorUtilization={utilizationFor(m.userId)}

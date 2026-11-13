@@ -1,8 +1,7 @@
-import { useMemo } from 'react';
 import { FilterBar as BaseFilterBar } from '../../components/FilterBar/FilterBar';
 import { useAppStore } from '../../store/useAppStore';
 import { FILTER_DOMAINS } from '../hcc/filterDomains';
-import { filterDefsForList } from '../toc/tocFilters';
+import { useTocFilterDefs } from '../toc/useTocFilterDefs';
 import { DefaultViewByToggle } from './DefaultViewByToggle';
 
 // A filter's options: its own list, or (optionsFromData) the distinct values
@@ -29,10 +28,9 @@ export function FilterBar(props) {
   const patients = useAppStore(s => s.patients);
   const activeSubnavList = useAppStore(s => s.activeSubnavList);
   const saveSavedFilter = useAppStore(s => s.saveSavedFilter);
-  const filterDefs = useMemo(
-    () => props.filterDefs ?? filterDefsForList(activeSubnavList),
-    [props.filterDefs, activeSubnavList],
-  );
+  // The list's defs, plus TOC IP's "Covering for" while I'm covering someone.
+  const listDefs = useTocFilterDefs(activeSubnavList);
+  const filterDefs = props.filterDefs ?? listDefs;
   return (
     <BaseFilterBar
       groupOrder={FILTER_DOMAINS}
@@ -40,7 +38,8 @@ export function FilterBar(props) {
       filterDefs={filterDefs}
       filters={props.filters ?? activeFilters}
       getOptions={props.getOptions ?? ((def) => resolveOptions(def, patients))}
-      onFilterChange={props.onFilterChange ?? ((key, next) => setFilter(key, next))}
+      // An emptied multi-select is cleared (null), so it no longer counts as active.
+      onFilterChange={props.onFilterChange ?? ((key, next) => setFilter(key, Array.isArray(next) && !next.length ? null : next))}
       onClearAll={props.onClearAll ?? clearAllFilters}
       onSaveFilter={props.onSaveFilter ?? ((name) => saveSavedFilter(activeSubnavList || 'TCM', name))}
       leading={props.leading === undefined ? <DefaultViewByToggle /> : props.leading}

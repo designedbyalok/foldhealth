@@ -7,6 +7,8 @@ import { QueueRow, getQueueMiddleColumns } from './QueueRow';
 import { QueueEmptyState } from './QueueEmptyState';
 import { TableSkeleton } from '../../../components/TableSkeleton/TableSkeleton';
 import { enrichTocRow } from '../tocColumns';
+import { useCovering } from '../../ooo/useCovering';
+import { COVERING_FILTER_KEY } from '../useTocFilterDefs';
 
 /**
  * Agent-queue table shared by the TCM Agent Queue tab and the standalone
@@ -60,6 +62,8 @@ export function QueueTable({
   const activeFilters = useAppStore(s => s.activeFilters);
   const currentPage = useAppStore(s => s.currentPage);
   const perPage = useAppStore(s => s.perPage);
+  const covering = useCovering();
+  const coveringPicked = activeFilters[COVERING_FILTER_KEY] || [];
 
   const filteredQueue = useMemo(() => {
     let result = patients.filter(p => p.agentAssigned)
@@ -75,13 +79,17 @@ export function QueueTable({
     }
 
     for (const [key, value] of Object.entries(activeFilters)) {
+      if (key === COVERING_FILTER_KEY) {
+        if (value?.length) result = result.filter(p => covering.coveringOn([p.assignee], value).length > 0);
+        continue;
+      }
       if (value) {
         result = result.filter(p => String(p[key]) === String(value));
       }
     }
 
     return isToc ? result.map(enrichTocRow) : result;
-  }, [patients, searchQuery, activeFilters, isToc]);
+  }, [patients, searchQuery, activeFilters, isToc, covering]);
 
   // TOC only: click cycles asc → desc → clear (back to priority order).
   // TCM Agent Queue keeps its fixed priority sort.
@@ -162,6 +170,7 @@ export function QueueTable({
           voicemailCalls={callsByPatient.voicemails.get(p.id)}
           completedCall={callsByPatient.completed.get(p.id)}
           ongoingCall={callsByPatient.ongoing.get(p.id)}
+          coveringFor={coveringPicked.length ? covering.coveringOn([p.assignee], coveringPicked) : null}
         />
       )}
       selectedIds={selectedIds}

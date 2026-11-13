@@ -9,6 +9,9 @@ import { isOverdue, buildTaskMetaLine, getInitials } from './TasksView.utils';
 import { SubtaskIcon, PriorityIcon, CheckIcon } from './TasksViewIcons';
 import { TaskDatePicker } from './TasksViewDropdowns';
 import { usePopoverPosition } from './usePopoverPosition';
+import { useAssigneeOoo, useRoleOf } from './assigneeHooks';
+import { sameName } from '../ooo/oooUtils';
+import { Tooltip } from '../../components/Tooltip/Tooltip';
 import styles from './TasksView.module.css';
 
 // Build the picker options for AssigneeChange in a row cell: current user
@@ -16,6 +19,7 @@ import styles from './TasksView.module.css';
 function useAssigneeOptions() {
   const taskProfiles = useAppStore(s => s.taskProfiles);
   const currentUserProfile = useAppStore(s => s.currentUserProfile);
+  const roleOf = useRoleOf();
   return useMemo(() => {
     const list = [];
     const seen = new Set();
@@ -24,7 +28,7 @@ function useAssigneeOptions() {
         id: currentUserProfile.id,
         name: `${currentUserProfile.name} (You)`,
         initials: getInitials(currentUserProfile.name),
-        role: currentUserProfile.role,
+        role: roleOf(currentUserProfile.name),
         _realName: currentUserProfile.name,
       });
       seen.add(currentUserProfile.id);
@@ -35,13 +39,13 @@ function useAssigneeOptions() {
         id: p.id,
         name: p.name,
         initials: getInitials(p.name),
-        role: p.role,
+        role: roleOf(p.name),
         _realName: p.name,
       });
       seen.add(p.id);
     });
     return list;
-  }, [taskProfiles, currentUserProfile]);
+  }, [taskProfiles, currentUserProfile, roleOf]);
 }
 
 // Two shared cell renderers so TaskRow and TaskTableRow don't duplicate
@@ -50,6 +54,12 @@ export function AssignedToCell({ task }) {
   const updateTask = useAppStore(s => s.updateTask);
   const showToast = useAppStore(s => s.showToast);
   const options = useAssigneeOptions();
+  const outOfOffice = useAssigneeOoo();
+  const me = useAppStore(s => s.currentUserProfile);
+  // The assignee is out: their avatar wears the Out of Office badge, and its
+  // hover adds "You're covering" when their cover names me.
+  const assigneeOut = task.assigned_to ? outOfOffice({ id: task.assigned_to_id || null, name: task.assigned_to }) : null;
+  const imCovering = !!assigneeOut && (assigneeOut.coveredBy || []).some(n => sameName(n, me?.name));
 
   const onSelect = (u) => {
     const realName = u._realName || u.name;
@@ -62,6 +72,8 @@ export function AssignedToCell({ task }) {
 
   return (
     <AssigneeChange
+      oooUser={task.assigned_to ? { id: task.assigned_to_id || null, name: task.assigned_to } : undefined}
+      oooNote={imCovering ? 'You\'re covering' : undefined}
       name={task.assigned_to || undefined}
       initials={task.assigned_to ? getInitials(task.assigned_to) : undefined}
       unassigned={!task.assigned_to}
@@ -71,6 +83,7 @@ export function AssignedToCell({ task }) {
       fillContainer
       users={options}
       onSelect={onSelect}
+      outOfOffice={outOfOffice}
     />
   );
 }

@@ -48,7 +48,7 @@ const ACCESS_CARDS = {
 
 /** What each card says: what happens to current work, then to new work. */
 function linesFor(key, covered, autoReply) {
-  const existing = covered ? 'Auto-assigned to the covering providers.' : 'Stay with this user.';
+  const existing = covered ? null : 'Stay with this user.';
   switch (key) {
     case 'appointments':
       return [covered ? 'Booked visits are reassigned after Save.' : 'Booked visits are reviewed after Save.', 'New appointments can\'t be booked during OOO duration.'];
@@ -146,7 +146,7 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
         <span className={muted ? `${styles.workTitle} ${styles.workTitleMuted}` : styles.workTitle}>
           {title}{count != null && ` (${count})`}
         </span>
-        {lines.map(l => <span key={l} className={styles.workLine}>{l}</span>)}
+        {lines.filter(Boolean).map(l => <span key={l} className={styles.workLine}>{l}</span>)}
         {warningsFor(key).map(w => (
           <span key={w} className={styles.awayWarn}>
             <Icon name="solar:danger-triangle-linear" size={14} color="var(--status-warning)" />
@@ -173,11 +173,14 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
         </div>
       );
     }
+    // Nobody picked yet (tasks and programs start that way): it stays with this user.
+    const lines = linesFor(m.key, covered, autoReply);
+    if (m.key !== 'appointments' && !planPeople(plans[m.key], ids).length) lines[0] = 'Stay with this user.';
     return (
       <div key={m.key} className={styles.workCard}>
         {head({
           key: m.key,
-          lines: linesFor(m.key, covered, autoReply),
+          lines,
           title: m.title,
           count: n,
           tools: n > 0 && (

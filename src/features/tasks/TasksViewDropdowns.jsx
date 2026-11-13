@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { CheckboxTick } from '../../components/CheckboxTick/CheckboxTick';
+import { Badge } from '../../components/Badge/Badge';
+import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { useAppStore } from '../../store/useAppStore';
 import { MONTH_NAMES, formatDateFriendly, parseTaskDate } from './TasksView.utils';
 import { usePopoverPosition } from './usePopoverPosition';
@@ -155,7 +157,16 @@ export function CreatableLabelDropdown({ selectedLabels, onToggle, children }) {
   );
 }
 
-export function DetailDropdown({ value, options, onSelect, renderOption, children, searchable = true, multiSelect, selected, align = 'left', disabled = false }) {
+const NOBODY_OUT = () => null;
+const mdY = (v) => { const d = new Date(v); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`; };
+
+// `renderOption(option, { note, muted })`: `note` is a covering line to stack
+// under the name; `muted` greys a row that can't be picked.
+// `outOfOffice` (option) => { startAt, endAt, coveredBy: string[] } | null:
+// as when booking, people who are out can't be picked. They're listed last
+// under Not Available with who covers them; searching for one puts whoever
+// covers them on top, under Suggested.
+export function DetailDropdown({ value, options, onSelect, renderOption, children, searchable = true, multiSelect, selected, align = 'left', disabled = false, outOfOffice = NOBODY_OUT }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const btnRef = useRef(null);
@@ -167,6 +178,40 @@ export function DetailDropdown({ value, options, onSelect, renderOption, childre
     const label = typeof opt === 'string' ? opt : opt.label;
     return label.toLowerCase().includes(search.toLowerCase());
   });
+  const valOf = (opt) => (typeof opt === 'string' ? opt : opt.value);
+  const away = filtered.filter(o => outOfOffice(o));
+  const covering = new Map(); // covering name → names they cover
+  if (search) {
+    away.forEach(o => (outOfOffice(o).coveredBy || []).forEach((n) => {
+      covering.set(n, [...(covering.get(n) || []), valOf(o)]);
+    }));
+  }
+  const suggested = options.filter(o => covering.has(valOf(o)) && !outOfOffice(o));
+  const available = filtered.filter(o => !outOfOffice(o) && !covering.has(valOf(o)));
+
+  // A row's content: the caller's (avatar, name), with any covering line
+  // stacked under the name, as in booking's provider picker.
+  const content = (opt, extra = {}) => (renderOption
+    ? renderOption(opt, extra)
+    : (
+      <span className={styles.dropItemText}>
+        <span className={extra.muted ? styles.dropItemMuted : undefined}>{typeof opt === 'string' ? opt : opt.label}</span>
+        {extra.note && <span className={styles.dropItemNote}>{extra.note}</span>}
+      </span>
+    ));
+  const item = (opt, note) => {
+    const val = valOf(opt);
+    const isChecked = multiSelect && selectedSet.has(val);
+    return (
+      <button key={val} className={styles.simpleDropItem} onClick={() => {
+        onSelect(val);
+        if (!multiSelect) { setOpen(false); setSearch(''); }
+      }} type="button" role={multiSelect ? 'menuitemcheckbox' : undefined} aria-checked={multiSelect ? isChecked : undefined}>
+        {multiSelect && <CheckboxTick checked={isChecked} size={15} />}
+        {content(opt, { note })}
+      </button>
+    );
+  };
 
   return (
     <div style={{ position: 'relative' }}>
@@ -213,18 +258,20 @@ export function DetailDropdown({ value, options, onSelect, renderOption, childre
                 <input aria-label="Search options" className={styles.dropdownSearchInput} placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} autoFocus />
               </div>
             )}
-            {filtered.map(opt => {
-              const label = typeof opt === 'string' ? opt : opt.label;
-              const val = typeof opt === 'string' ? opt : opt.value;
-              const isChecked = multiSelect && selectedSet.has(val);
+            {suggested.length > 0 && <div className={styles.dropGroup}>Suggested</div>}
+            {suggested.map(opt => item(opt, `Covering for ${covering.get(valOf(opt)).join(', ')}`))}
+            {suggested.length > 0 && available.length > 0 && <div className={styles.dropGroup}>All Users</div>}
+            {available.map(opt => item(opt))}
+            {away.length > 0 && <div className={styles.dropGroup}>Not Available</div>}
+            {away.map((opt) => {
+              const out = outOfOffice(opt);
               return (
-                <button key={val} className={styles.simpleDropItem} onClick={() => {
-                  onSelect(val);
-                  if (!multiSelect) { setOpen(false); setSearch(''); }
-                }} type="button" role={multiSelect ? 'menuitemcheckbox' : undefined} aria-checked={multiSelect ? isChecked : undefined}>
-                  {multiSelect && <CheckboxTick checked={isChecked} size={15} />}
-                  {renderOption ? renderOption(opt) : label}
-                </button>
+                <div key={valOf(opt)} className={`${styles.simpleDropItem} ${styles.dropItemAway}`} aria-disabled="true">
+                  {content(opt, { muted: true, note: out.coveredBy?.length ? `Covered by: ${out.coveredBy.join(', ')}` : 'No covering provider' })}
+                  <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="right">
+                    <Badge tone="magenta" size="sm" label="Out of Office" />
+                  </Tooltip>
+                </div>
               );
             })}
             {filtered.length === 0 && <div className={styles.simpleDropItem} style={{ color: 'var(--neutral-200)', cursor: 'default' }}>No results</div>}

@@ -5,6 +5,10 @@ import {
   TABS, TASK_FILTER_DEFS, STATUS_ORDER, STATUS_LABELS, PRIORITY_ORDER, PRIORITY_LABELS,
   parseTaskDate, todayStart,
 } from './TasksView.utils';
+import { coveringPeople, oooStatus, recordPerson, sameName, samePerson } from '../ooo/oooUtils';
+
+// Covering for: the picked names ("away:<name>" from a saved single pick).
+const AWAY = 'away:';
 
 function buildGroupedTasks(sortedTasks, viewBy) {
   if (viewBy === 'priority') {
@@ -109,6 +113,28 @@ export function useTasksView() {
   const allPatients = useAppStore(s => s.allPatients);
   const taskProfiles = useAppStore(s => s.taskProfiles);
   const currentUserProfile = useAppStore(s => s.currentUserProfile);
+  const oooRecords = useAppStore(s => s.oooRecords);
+  // Reassignment jobs: the rows' "Covering for" notes read them.
+  const fetchReassignmentJobs = useAppStore(s => s.fetchReassignmentJobs);
+  useEffect(() => { fetchReassignmentJobs?.(); }, [fetchReassignmentJobs]);
+  // People out (now or soon) whose cover names me: I see to all their work.
+  // name (lowercase) → their record, for the Covering tab's group headers.
+  const coverRecords = useMemo(() => {
+    const me = { id: currentUserProfile?.id || null, name: currentUserProfile?.name || '' };
+    return new Map((oooRecords || [])
+      .filter(r => oooStatus(r) !== 'Past' && coveringPeople(r.coverage).some(c => samePerson(c, me)))
+      .map(r => [recordPerson(r).name.trim().toLowerCase(), r]));
+  }, [oooRecords, currentUserProfile]);
+  const coverMe = useMemo(() => new Set(coverRecords.keys()), [coverRecords]);
+  // Covering tab: open work still assigned to people I'm covering.
+  const matchCovering = useCallback(
+    (t) => t.status !== 'completed' && coverMe.has(String(t.assigned_to || '').trim().toLowerCase()),
+    [coverMe],
+  );
+  // The tab shows only while I'm covering someone, after Assigned to Me.
+  const tabs = useMemo(() => (coverMe.size
+    ? TABS.flatMap(t => (t.key === 'assigned' ? [t, { key: 'covering', label: 'Covering' }] : [t]))
+    : TABS), [coverMe]);
 
   const [selectedTask, setSelectedTask] = useState(null);
   const [showAddDrawer, setShowAddDrawer] = useState(false);
@@ -205,6 +231,7 @@ export function useTasksView() {
     else if (tasksTab === 'pool') result = result.filter(t => t.pool && !t.assigned_to && !t.assigned_to_id);
     else if (tasksTab === 'created') result = result.filter(matchCreator);
     else if (tasksTab === 'mentions') result = result.filter(matchMentioned);
+    else if (tasksTab === 'covering') result = result.filter(matchCovering);
 
     Object.entries(tasksFilters).forEach(([key, value]) => {
       if (!value) return;
@@ -216,12 +243,19 @@ export function useTasksView() {
       } else if (key === 'created_by') {
         const pickedName = (taskProfiles || []).find(p => p.id === value)?.name;
         result = result.filter(t => t.created_by_id === value || (pickedName && t.created_by === pickedName));
+      } else if (key === 'covering') {
+        // Whose work I'm covering: their tasks still with them, when their
+        // cover names me. (Work reassigned to me is simply mine now.)
+        const picked = (Array.isArray(value) ? value : [value]).map(v => String(v).replace(AWAY, ''));
+        if (picked.length) {
+          result = result.filter(t => picked.some(away => sameName(t.assigned_to, away) && coverMe.has(String(away).trim().toLowerCase())));
+        }
       } else if (key === 'member') result = result.filter(t => t.member === value);
       else if (key === 'labels') result = result.filter(t => Array.isArray(t.labels) && t.labels.includes(value));
     });
 
     return result;
-  }, [tasks, tasksTab, tasksFilters, taskProfiles, matchAssignee, matchCreator, matchMentioned]);
+  }, [tasks, tasksTab, tasksFilters, taskProfiles, matchAssignee, matchCreator, matchMentioned, coverMe, matchCovering]);
 
   const tabCounts = useMemo(() => ({
     all: tasks.length,
@@ -229,7 +263,8 @@ export function useTasksView() {
     pool: tasks.filter(t => t.pool && !t.assigned_to && !t.assigned_to_id).length,
     created: tasks.filter(matchCreator).length,
     mentions: tasks.filter(matchMentioned).length,
-  }), [tasks, matchAssignee, matchCreator, matchMentioned]);
+    covering: tasks.filter(matchCovering).length,
+  }), [tasks, matchAssignee, matchCreator, matchMentioned, matchCovering]);
 
   const handleToggle = useCallback((task) => {
     const newStatus = task.status === 'completed' ? 'pending' : 'completed';
@@ -284,13 +319,21 @@ export function useTasksView() {
   const filterDefs = useMemo(() => {
     const profileOpts = (taskProfiles || []).map(p => ({ value: p.id, label: p.name }));
     const memberOpts = (allPatients || []).map(p => ({ value: p.name, label: p.name }));
+    // Whom I'm covering: people out (now or soon) whose cover names me.
+    const awayOpts = (oooRecords || [])
+      .filter(r => oooStatus(r) !== 'Past' && coveringPeople(r.coverage).some(c => samePerson(c, { id: currentUserProfile?.id || null, name: currentUserProfile?.name || '' })))
+      .map(r => recordPerson(r).name)
+      .filter((n, i, a) => n && a.indexOf(n) === i)
+      .sort((a, b) => a.localeCompare(b));
     // Single pass: swap in the fetched profile options where they apply, and
     // append the Member filter directly after Created By. The previous
     // map().flatMap() also allocated a throwaway array per definition.
     const defs = [];
     for (const fd of TASK_FILTER_DEFS) {
       const usesProfiles = fd.key === 'assigned_to' || fd.key === 'created_by';
-      defs.push(usesProfiles && profileOpts.length
+      // Covering for only shows while I'm covering someone.
+      if (fd.key === 'covering') { if (awayOpts.length) defs.push({ ...fd, options: awayOpts, searchable: awayOpts.length > 6 }); }
+      else defs.push(usesProfiles && profileOpts.length
         ? { ...fd, options: profileOpts, searchable: true }
         : fd);
       if (fd.key === 'created_by' && memberOpts.length) {
@@ -298,10 +341,26 @@ export function useTasksView() {
       }
     }
     return defs;
-  }, [taskProfiles, allPatients]);
+  }, [taskProfiles, allPatients, oooRecords, currentUserProfile]);
 
   const viewBy = tasksFilters.view_by || 'status';
-  const grouped = useMemo(() => buildGroupedTasks(sortedTasks, viewBy), [sortedTasks, viewBy]);
+  // Covering tab: one group per person I'm covering ("Navin Jethwani · Out
+  // until 11/24/2026"); otherwise the chosen View By.
+  const grouped = useMemo(() => {
+    if (tasksTab !== 'covering') return buildGroupedTasks(sortedTasks, viewBy);
+    const byPerson = new Map();
+    sortedTasks.forEach((t) => {
+      const k = String(t.assigned_to || '').trim().toLowerCase();
+      if (!byPerson.has(k)) byPerson.set(k, { name: t.assigned_to, tasks: [] });
+      byPerson.get(k).tasks.push(t);
+    });
+    const until = (k) => {
+      const end = coverRecords.get(k)?.endAt;
+      return end ? ` · Out until ${new Date(end).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}` : '';
+    };
+    return [...byPerson].sort((a, b) => a[1].name.localeCompare(b[1].name))
+      .map(([k, g]) => ({ status: `covering:${k}`, label: `${g.name}${until(k)}`, tasks: g.tasks, noAdd: true }));
+  }, [sortedTasks, viewBy, tasksTab, coverRecords]);
   const kanbanGroups = useMemo(() => buildKanbanGroups(sortedTasks, viewBy), [sortedTasks, viewBy]);
   const hideAssignedTo = !!tasksFilters.assigned_to;
 
@@ -345,7 +404,7 @@ export function useTasksView() {
   }, [tasks, updateTask, viewBy]);
 
   return {
-    TABS,
+    TABS: tabs,
     tasks,
     tasksLoading,
     tasksTab,

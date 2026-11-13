@@ -15,6 +15,7 @@ import { FoldIdTag } from '../../components/FoldIdTag/FoldIdTag';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { formatDobDisplay, deriveDob } from '../../lib/patientDob';
 import { pauseSummary } from '../patient/right-panel/tabs/care-programs/care-plan/lib/carePlanPause';
+import { CoveringNote } from '../ooo/CoveringNote';
 import styles from './SnpWorklistRow.module.css';
 import { OutreachStatus } from '../../components/OutreachStatus/OutreachStatus';
 import { outreachFromSummary } from '../../components/OutreachStatus/outreachStatusModel';
@@ -269,7 +270,7 @@ export const SNP_MIDDLE_COLUMNS = [
   },
 ];
 
-export function SnpWorklistRow({ member, columns, hiddenSet, isSelected, onSelect }) {
+export function SnpWorklistRow({ member, columns, hiddenSet, isSelected, onSelect, coveringFor }) {
   const openQuickView = useAppStore(s => s.openQuickView);
   const openCarePlanReview = useAppStore(s => s.openCarePlanReview);
   const navigateToPatient = useAppStore(s => s.navigateToPatient);
@@ -393,6 +394,7 @@ export function SnpWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
                 </button>
               </Tooltip>
             </div>
+            <CoveringNote people={coveringFor} />
           </div>
         </div>
       </td>
