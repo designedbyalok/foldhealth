@@ -40,7 +40,8 @@ const medWord = m => String(m.name || '').split(/\s+/)[0];
  * @returns {{ text: string, urgent: boolean, title?: string, label?: string } | null}
  */
 export function stepDetail(step, ctx) {
-  const name = step.name || '';
+  // CCM calls its plan step "Care Plan Details".
+  const name = step.name === 'Care Plan Details' ? 'Care Plan' : step.name || '';
   const required = !!step.mandatory;
 
   if (name === 'Care Plan') {
@@ -150,7 +151,10 @@ export function openStepsWithDetail(steps, ctx) {
     .filter(s => s.status === STEP_STATUS.pending || s.status === STEP_STATUS.inProgress)
     .map(s => ({ ...s, detail: stepDetail(s, ctx) }))
     .filter(s => s.detail);
-  const nextRequired = open.find(s => s.mandatory && s.status === STEP_STATUS.pending && !s.detail.urgent);
+  // A program with no required steps (CCM) still has a next step: its first open one.
+  const nextRequired = steps.some(s => s.mandatory)
+    ? open.find(s => s.mandatory && s.status === STEP_STATUS.pending && !s.detail.urgent)
+    : open.find(s => s.status === STEP_STATUS.pending && !s.detail.urgent);
   return open
     .filter(s => s.detail.urgent || s.status === STEP_STATUS.inProgress || s === nextRequired)
     .sort((a, b) => rank(a) - rank(b));

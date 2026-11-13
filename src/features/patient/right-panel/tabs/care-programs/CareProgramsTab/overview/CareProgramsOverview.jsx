@@ -230,6 +230,8 @@ export function WhyPrioritized({ why, unity, onOpenRef }) {
   const takeaways = ai ? ai.takeaways : why.takeaways;
   const hasParagraph = ai ? !!ai.paragraph : why.segments.length > 0;
   const empty = !takeaways.length && !hasParagraph;
+  // With no takeaways the paragraph is all there is, so it isn't tucked away.
+  const paragraphOnly = !takeaways.length && hasParagraph;
   const plain = ai
     ? [ai.takeaways.map(t => t.text).join('; '), ai.paragraph].filter(Boolean).join('\n')
     : [why.takeaways.map(t => t.text).join('; '), why.segments.map(seg => seg.text).join('')].filter(Boolean).join('\n');
@@ -243,7 +245,7 @@ export function WhyPrioritized({ why, unity, onOpenRef }) {
         <span className={styles.cardActions}>
           <SummarizeAction unity={unity} />
           {!ai && !empty && <CopyButton text={plain} />}
-          {!empty && hasParagraph && (
+          {!empty && hasParagraph && !paragraphOnly && (
             <button type="button" className={styles.linkBtn} aria-expanded={open} onClick={() => setOpen(v => !v)}>
               {open ? 'Show Less' : 'Show More'}
               <DownChevronIcon size={12} color="currentColor" className={open ? styles.chevUp : undefined} />
@@ -261,7 +263,7 @@ export function WhyPrioritized({ why, unity, onOpenRef }) {
                 {takeaways.map(t => <Takeaway key={t.text} t={t} onOpenRef={ai ? onOpenRef : null} />)}
               </ul>
             )}
-            {open && hasParagraph && (
+            {(open || paragraphOnly) && hasParagraph && (
               <p className={styles.whyPara}>
                 {ai ? ai.paragraph : why.segments.map((seg, k) => (seg.bold ? <strong key={k}>{seg.text}</strong> : <span key={k}>{seg.text}</span>))}
               </p>

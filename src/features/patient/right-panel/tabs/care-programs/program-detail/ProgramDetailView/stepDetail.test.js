@@ -82,4 +82,17 @@ describe('openStepsWithDetail', () => {
     const ctx = { tasks: [{ status: 'missed' }] };
     expect(openStepsWithDetail(steps, ctx).map(s => s.id)).toEqual(['c', 'a']);
   });
+
+  it('gives a program with no required steps (CCM) its first open step as next', () => {
+    const steps = [
+      { id: 'ccm-outreach', name: 'Outreach', status: 'completed' },
+      { id: 'ccm-assess-overview', name: 'Overview', status: 'pending' },
+      { id: 'ccm-care-plan', name: 'Care Plan Details', status: 'pending' },
+      { id: 'ccm-billing', name: 'Billing Review', status: 'pending' },
+    ];
+    const ctx = { carePlan: { plan: { id: 'cp1' }, goals: [{ id: 'g1', title: 'Improve inhaler adherence', status: 'Not Started' }], interventions: [], barriers: [] } };
+    const open = openStepsWithDetail(steps, ctx);
+    expect(open.map(s => s.id)).toEqual(['ccm-care-plan']);
+    expect(open[0].detail).toEqual({ text: 'Not signed yet', urgent: false });
+  });
 });
