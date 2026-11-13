@@ -102,6 +102,7 @@ export function PatientDetailView() {
   const pharmacyWorklistMembers = useAppStore(s => s.pharmacyWorklistMembers);
   const hedisMembers = useAppStore(s => s.hedisMembers);
   const allPatients = useAppStore(s => s.allPatients);
+  const myPatients = useAppStore(s => s.myPatients);
   const fetchPatients = useAppStore(s => s.fetchPatients);
   const fetchHccMembers = useAppStore(s => s.fetchHccMembers);
   const fetchAwvMembers = useAppStore(s => s.fetchAwvMembers);
@@ -288,7 +289,10 @@ export function PatientDetailView() {
     || worklistMemberToPatient(snpWorklistMembers?.find(matchesId))
     || worklistMemberToPatient(pharmacyWorklistMembers?.find(matchesId))
     || worklistMemberToPatient(hedisMembers?.find(matchesId))
-    || worklistMemberToPatient(allPatients?.find(matchesId));
+    || worklistMemberToPatient(allPatients?.find(matchesId))
+    // My Patients rows live in their own slice: without this a redirect from
+    // that worklist waited on every other slice's fetch before rendering.
+    || worklistMemberToPatient(myPatients?.find(matchesId));
 
   // Worklist slices don't all carry patient_app_active: merge from the
   // patients / all_patients tables when the resolved row is missing it.

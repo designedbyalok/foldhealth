@@ -68,6 +68,8 @@ function ActionRow({ row, n, current, onRun }) {
  */
 export function NextBestActions({ actions, programs, onRun }) {
   const [view, setView] = useState('order');
+  // One program's actions read the same either way, so it's a single list.
+  const grouped = programs.length > 1 && view === 'program';
   const [all, setAll] = useState(false);
   const [collapsed, setCollapsed] = useState({});
   const required = actions.filter(a => a.required).length;
@@ -81,13 +83,13 @@ export function NextBestActions({ actions, programs, onRun }) {
       actions={(
         <span className={styles.nbaHeadRight}>
           {required > 0 && <Badge size="sm" tone="danger" label={`${required} required`} />}
-          <SegmentedControl size="sm" items={VIEWS} value={view} onValueChange={setView} />
+          {programs.length > 1 && <SegmentedControl size="sm" items={VIEWS} value={view} onValueChange={setView} />}
         </span>
       )}
     >
       {actions.length === 0 ? (
         <p className={styles.empty}>Nothing to do right now.</p>
-      ) : view === 'order' ? (
+      ) : !grouped ? (
         <>
           <ol className={styles.nbaList}>
             {shown.map((row, i) => <ActionRow key={row.key} row={row} n={i + 1} current={i === 0} onRun={onRun} />)}
