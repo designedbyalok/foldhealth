@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Avatar } from '../../../../components/Avatar/Avatar';
 import { Icon } from '../../../../components/Icon/Icon';
 import { Tooltip } from '../../../../components/Tooltip/Tooltip';
@@ -7,6 +8,7 @@ import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { AddIconMinimalist } from '../../../../components/Icon/AddIconMinimalist';
 import { Banner } from '../../../../components/Banner/Banner';
 import { EmptyState } from '../../../../components/EmptyState/EmptyState';
+import { MenuPopover } from '../../../../components/MenuPopover/MenuPopover';
 import { usePatientFamily } from '../../family/usePatientFamily';
 import { usePatientCareTeam } from '../../care-team/usePatientCareTeam';
 import { Skeleton } from '../../../../components/Skeleton/Skeleton';
@@ -183,10 +185,18 @@ function PersonRowSkeleton() {
 // `onManage` opens Add Family, Caregivers & Decision Makers; `onManageCareTeam`
 // the Primary Care Team drawer. Family loads only while `visible` (the
 // banner is expanded), with a loader until it arrives.
-export function ExpandedFamily({ p, patientId, visible = true, className, onManage, onManageCareTeam }) {
+export function ExpandedFamily({ p, patientId, visible = true, className, profiles = [], activeProfileId = 'central', onManage, onManageCareTeam }) {
   const { family, familyOf, loading } = usePatientFamily(patientId, p.family_members, visible);
+  // Which location's care team to show. From the Central Profile any
+  // location can be picked here; with a location picked at the top of the
+  // banner, it's that one.
+  const [pickedLocation, setPickedLocation] = useState('central');
+  const [locationMenu, setLocationMenu] = useState(null);
+  const canPickLocation = activeProfileId === 'central';
+  const location = canPickLocation ? pickedLocation : activeProfileId;
+  const locationName = profiles.find(pr => pr.id === location)?.name || p.care_team_profile_type || 'Central Profile';
   // The care team loads the same way, from patient_care_team.
-  const { team, loading: teamLoading } = usePatientCareTeam(patientId, visible);
+  const { team, loading: teamLoading } = usePatientCareTeam(patientId, visible, location);
   return (
     <div className={className ?? styles.expandCol}>
       <div className={styles.peopleStack}>
@@ -222,14 +232,26 @@ export function ExpandedFamily({ p, patientId, visible = true, className, onMana
         <section className={styles.peopleSection}>
           <div className={styles.sectionHead}>
             <h4 className={`${styles.expandTitle} ${styles.sectionTitleGrow}`}>Care Team</h4>
-            <Link variant="secondary" className={styles.profileType} role="button" tabIndex={0}>
-              {p.care_team_profile_type}
-              <Icon name="solar:alt-arrow-down-linear" size={12} color="currentColor" />
-            </Link>
+            {canPickLocation && profiles.length > 1 ? (
+              <Link
+                variant="secondary"
+                className={styles.profileType}
+                role="button"
+                tabIndex={0}
+                aria-haspopup="menu"
+                aria-label={`Care team location: ${locationName}`}
+                onClick={e => setLocationMenu(e.currentTarget.getBoundingClientRect())}
+              >
+                {locationName}
+                <Icon name="solar:alt-arrow-down-linear" size={12} color="currentColor" />
+              </Link>
+            ) : (
+              <span className={styles.profileTypeStatic}>{locationName}</span>
+            )}
             <span className={styles.headDivider} />
             {!teamLoading && (team.length > 0
-              ? <ActionButton icon="solar:pen-2-linear" size="sm" tooltip="Edit care team" onClick={onManageCareTeam} />
-              : <ActionButton size="sm" tooltip="Add care team members" onClick={onManageCareTeam}><AddIconMinimalist size={16} color="var(--neutral-300)" /></ActionButton>)}
+              ? <ActionButton icon="solar:pen-2-linear" size="sm" tooltip="Edit care team" onClick={() => onManageCareTeam(location)} />
+              : <ActionButton size="sm" tooltip="Add care team members" onClick={() => onManageCareTeam(location)}><AddIconMinimalist size={16} color="var(--neutral-300)" /></ActionButton>)}
           </div>
           {teamLoading ? (
             <div className={styles.people}><PersonRowSkeleton /><PersonRowSkeleton /></div>
@@ -238,12 +260,22 @@ export function ExpandedFamily({ p, patientId, visible = true, className, onMana
               <div className={styles.people}>
                 {team.map((m, i) => <PersonRow key={i} variant="staff" initials={m.initials} name={m.name} tag={m.role} sub={m.title} />)}
               </div>
-              <ViewAll onClick={onManageCareTeam} />
+              <ViewAll onClick={() => onManageCareTeam(location)} />
             </>
           ) : (
             <div className={styles.familyEmpty}>
               <EmptyState size="sm" icon="solar:users-group-rounded-linear" title="No Care Team Added" />
             </div>
+          )}
+          {locationMenu && (
+            <MenuPopover
+              anchorRect={locationMenu}
+              ariaLabel="Care team location"
+              width="auto"
+              items={profiles.map(pr => ({ key: pr.id, label: pr.name, selected: pr.id === location }))}
+              onSelect={(key) => { setPickedLocation(key); setLocationMenu(null); }}
+              onClose={() => setLocationMenu(null)}
+            />
           )}
         </section>
       </div>
@@ -254,7 +286,7 @@ export function ExpandedFamily({ p, patientId, visible = true, className, onMana
 /* Quick-view-style expanded panel: a metrics strip over a 2-column layout.
    Shared by the drawer variant AND the full banner's responsive expansion so
    both surface the same detail view. */
-export function QuickViewExpanded({ p, patientId, visible = true, programCodes, onManageFamily, onManageCareTeam }) {
+export function QuickViewExpanded({ p, patientId, visible = true, programCodes, profiles, activeProfileId, onManageFamily, onManageCareTeam }) {
   return (
     <div className={styles.drawerExpandedPanel}>
       {/* A grid, not a flex row: one row when wide, two (3 + 2) when narrow,
@@ -296,7 +328,7 @@ export function QuickViewExpanded({ p, patientId, visible = true, programCodes, 
       <div className={styles.drawerExpandedCols}>
         <div className={styles.drawerExpandedCol}>
           <ExpandedDemographics p={p} className={styles.drawerExpandedSection} />
-          <ExpandedFamily p={p} patientId={patientId} visible={visible} className={styles.drawerExpandedSection} onManage={onManageFamily} onManageCareTeam={onManageCareTeam} />
+          <ExpandedFamily p={p} patientId={patientId} visible={visible} className={styles.drawerExpandedSection} profiles={profiles} activeProfileId={activeProfileId} onManage={onManageFamily} onManageCareTeam={onManageCareTeam} />
         </div>
         <span className={styles.drawerExpandedColDivider} aria-hidden="true" />
         <div className={styles.drawerExpandedCol}>

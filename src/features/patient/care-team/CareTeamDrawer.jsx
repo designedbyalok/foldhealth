@@ -38,14 +38,17 @@ function MemberRow({ member, historical, onMenu }) {
 }
 
 /**
- * Primary Care Team (Figma SNP Story 3104:1470194): pick a role, then the
- * user who holds it; they join Current Care Team Members. Taking someone off
- * moves them to Historical Care Team Members. Save writes both to
- * patient_care_team, for any patient, profile or not.
+ * Edit Primary Care Team (Figma P360 Revamp 3752:379274): pick a role, then
+ * the user who holds it; they join Current Care Team Members. Taking someone
+ * off moves them to Historical Care Team Members. Each profile location has
+ * its own team: from the Central Profile any location can be picked here,
+ * while `lockLocation` (a location picked at the top of the banner) keeps it
+ * to `location`. Save writes that location's team to patient_care_team.
  */
-export function CareTeamDrawer({ patient, onClose }) {
+export function CareTeamDrawer({ patient, profiles = [], location: initialLocation = 'central', lockLocation = false, onClose }) {
   const patientId = String(patient.id);
-  const { team, history: savedHistory, loading } = usePatientCareTeam(patientId);
+  const [location, setLocation] = useState(initialLocation);
+  const { team, history: savedHistory, loading } = usePatientCareTeam(patientId, true, location);
   const people = useAppStore(s => s.platformPeople) || [];
   const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
   const saveCareTeam = useAppStore(s => s.saveCareTeam);
@@ -53,9 +56,10 @@ export function CareTeamDrawer({ patient, onClose }) {
 
   const [current, setCurrent] = useState(team);
   const [history, setHistory] = useState(savedHistory);
-  // Opened before the team had loaded: take it once it arrives.
-  const [seeded, setSeeded] = useState(!loading);
-  if (!seeded && !loading) { setSeeded(true); setCurrent(team); setHistory(savedHistory); }
+  // Opened before the team had loaded, or switched to another location: take
+  // that location's saved team once it's there.
+  const [seededFor, setSeededFor] = useState(loading ? null : location);
+  if (seededFor !== location && !loading) { setSeededFor(location); setCurrent(team); setHistory(savedHistory); }
   const [role, setRole] = useState('');
   const [menu, setMenu] = useState(null); // { member, historical, rect }
   const [saving, setSaving] = useState(false);
@@ -106,7 +110,7 @@ export function CareTeamDrawer({ patient, onClose }) {
 
   const save = async () => {
     setSaving(true);
-    const ok = await saveCareTeam(patientId, current, history);
+    const ok = await saveCareTeam(patientId, current, history, location);
     setSaving(false);
     if (!ok) { toast.error('The care team could not be saved. Try again.'); return; }
     toast.success('Care Team Updated Successfully');
@@ -119,19 +123,30 @@ export function CareTeamDrawer({ patient, onClose }) {
 
   return (
     <Drawer
-      title="Primary Care Team"
+      title="Edit Primary Care Team"
       onClose={onClose}
       primaryAction={<Button onClick={save} disabled={!dirty || saving} disabledReason={!dirty ? 'No changes to save' : null}>Save</Button>}
     >
       <div className={styles.body}>
         <div className={styles.pickers}>
-          <Select
-            label="Select Role"
-            options={CARE_TEAM_ROLES.map(r => ({ value: r, label: r }))}
-            value={role}
-            onValueChange={setRole}
-            placeholder="Select Care Team Role"
-          />
+          <div className={styles.pickerRow}>
+            <Select
+              label="Select Role"
+              options={CARE_TEAM_ROLES.map(r => ({ value: r, label: r }))}
+              value={role}
+              onValueChange={setRole}
+              placeholder="Select Care Team Role"
+            />
+            <Select
+              label="Select Profile Location"
+              options={profiles.map(pr => ({ value: pr.id, label: pr.name }))}
+              value={location}
+              onValueChange={setLocation}
+              // Locked to the profile picked at the top, and while edits are
+              // unsaved so they can't move to another location's team.
+              disabled={lockLocation || dirty || profiles.length < 2}
+            />
+          </div>
           <Select
             key={pickerKey}
             label="Search User"

@@ -410,3 +410,5 @@
 .personRole { font-size: var(--font-md); color: var(--neutral-300); }
 .viewAll { display: inline-flex; align-items: center; gap: var(--space-1); align-self: flex-start; font-size: var(--font-md); }
 .profileType { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-md); font-weight: 400; }
+/* The location shown when it's fixed by the profile picked at the top. */
+.profileTypeStatic { font-size: var(--font-md); color: var(--neutral-300); }

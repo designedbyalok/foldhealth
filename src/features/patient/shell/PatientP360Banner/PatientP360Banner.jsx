@@ -19,6 +19,7 @@ import { consentPopoverPos, consentSummaryLabel } from './consentBadge';
 import { PatientTagPills, AddPatientTagDrawer } from './PatientTags';
 import { AddFamilyDrawer } from '../../family/AddFamilyDrawer';
 import { CareTeamDrawer } from '../../care-team/CareTeamDrawer';
+import { usePatientProfiles } from './usePatientProfiles';
 import styles from './PatientP360Banner.module.css';
 
 export function PatientP360Banner({ patient, variant = 'full' }) {
@@ -36,7 +37,6 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [showProfileDropdown]);
-  const [selectedProfileId, setSelectedProfileId] = useState('central');
   const [moreMenuRect, setMoreMenuRect] = useState(null);
   const bannerRef = useRef(null);
   const callBtnRef = useRef(null);
@@ -93,19 +93,31 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
   // Family and care team come only from the patient's own profile; without
   // one they're empty (sample people would read as real ones).
   const p = p360Profile || { ...FALLBACK_P360, family_members: [], family_caregiver_count: 0, care_team: [] };
+  const { profiles, activeId: selectedProfileId, setActive: setSelectedProfileId } = usePatientProfiles(patient?.id, p);
   const [familyOpen, setFamilyOpen] = useState(false);
-  const [careTeamOpen, setCareTeamOpen] = useState(false);
+  // The location whose care team is being edited, or null when closed.
+  const [careTeamLocation, setCareTeamLocation] = useState(null);
   const familyDrawer = patient && (
     <>
       {familyOpen && <AddFamilyDrawer patient={patient} onClose={() => setFamilyOpen(false)} />}
-      {careTeamOpen && <CareTeamDrawer patient={patient} onClose={() => setCareTeamOpen(false)} />}
+      {careTeamLocation && (
+        <CareTeamDrawer
+          patient={patient}
+          profiles={profiles}
+          location={careTeamLocation}
+          // From the Central Profile any location's team can be edited; with
+          // a location picked at the top, only that location's.
+          lockLocation={selectedProfileId !== 'central'}
+          onClose={() => setCareTeamLocation(null)}
+        />
+      )}
     </>
   );
   const display = usePatientDisplay(patient);
   useEffect(() => { setTags(p.condition_tags || FALLBACK_P360.condition_tags); }, [p.condition_tags]);
 
   if (!patient) return null;
-  if (variant === 'drawer') return <><PatientP360BannerDrawer patient={patient} p={p} programCodes={programCodes} onManageFamily={() => setFamilyOpen(true)} onManageCareTeam={() => setCareTeamOpen(true)} />{familyDrawer}</>;
+  if (variant === 'drawer') return <><PatientP360BannerDrawer patient={patient} p={p} programCodes={programCodes} onManageFamily={() => setFamilyOpen(true)} onManageCareTeam={setCareTeamLocation} />{familyDrawer}</>;
 
 
   return (
@@ -269,10 +281,10 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
             <ExpandedDemographics p={p} />
             <ExpandedHealthStatus p={p} movedMetrics programCodes={programCodes} />
             <ExpandedAppointments p={p} />
-            <ExpandedFamily p={p} patientId={patient.id} visible={expanded} onManage={() => setFamilyOpen(true)} onManageCareTeam={() => setCareTeamOpen(true)} />
+            <ExpandedFamily p={p} patientId={patient.id} visible={expanded} profiles={profiles} activeProfileId={selectedProfileId} onManage={() => setFamilyOpen(true)} onManageCareTeam={setCareTeamLocation} />
           </div>
         ) : (
-          <QuickViewExpanded p={p} patientId={patient.id} visible={expanded} programCodes={programCodes} onManageFamily={() => setFamilyOpen(true)} onManageCareTeam={() => setCareTeamOpen(true)} />
+          <QuickViewExpanded p={p} patientId={patient.id} visible={expanded} programCodes={programCodes} profiles={profiles} activeProfileId={selectedProfileId} onManageFamily={() => setFamilyOpen(true)} onManageCareTeam={setCareTeamLocation} />
         )}
       </CollapsibleContent>
       {consentPos && <PatientConsentPopover patientId={patient.id} pos={consentPos} onClose={closeConsent} />}
