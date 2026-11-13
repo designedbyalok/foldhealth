@@ -24,7 +24,6 @@ export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, on
   const openCallPopover = useAppStore(s => s.openCallPopover);
   const openNumberCallPopover = useAppStore(s => s.openNumberCallPopover);
   const logPharmacyDial = useAppStore(s => s.logPharmacyDial);
-  const requestAddTask = useAppStore(s => s.requestAddTask);
   const runPatientRowAction = useAppStore(s => s.runPatientRowAction);
   const setPharmacyGapStatus = useAppStore(s => s.setPharmacyGapStatus);
   const openPharmacyGapDrawer = useAppStore(s => s.openPharmacyGapDrawer);
@@ -128,7 +127,6 @@ export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, on
   const handleMenuSelect = (key) => {
     if (runPatientRowAction(key, m)) return;
     if (key === 'Activity Log') { setShowActivity(true); return; }
-    if (key === 'Add Task') { requestAddTask?.({ member: m.name }); return; }
     showToast(`${key} – coming soon`);
   };
 

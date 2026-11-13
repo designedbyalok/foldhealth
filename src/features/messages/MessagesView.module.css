@@ -502,6 +502,12 @@
   line-height: var(--leading-tight);
   color: var(--accent-magenta);
 }
+/* Its dismiss ✕ stays flat: no hover or pressed fill on the tinted strip. */
+/* Pull the ✕ over its own 4px padding so the icon sits 16px from the right
+   edge, matching the text's 16px on the left. */
+.oooNotice > button { margin-right: calc(var(--space-1) * -1); }
+.oooNotice > button:hover,
+.oooNotice > button:active { background: none; }
 
 .replyPreview {
   display: flex;

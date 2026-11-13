@@ -156,7 +156,6 @@ export function CcmWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
   const openQuickView = useAppStore(s => s.openQuickView);
   const navigateToPatient = useAppStore(s => s.navigateToPatient);
   const showToast = useAppStore(s => s.showToast);
-  const requestAddTask = useAppStore(s => s.requestAddTask);
   const openPatientEdit = useAppStore(s => s.openPatientEdit);
   const [billingOpen, setBillingOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -181,7 +180,6 @@ export function CcmWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
   const runPatientRowAction = useAppStore(s => s.runPatientRowAction);
   const handleMenuSelect = (key) => {
     if (runPatientRowAction(key, m)) return;
-    if (key === 'Add Task') { requestAddTask?.({ member: m.name }); return; }
     if (key === 'Open Care Program') {
       if (m.patientId) navigateToPatient(m.patientId, { profileTab: 'Care Programs', programCode: 'CCM' });
       return;

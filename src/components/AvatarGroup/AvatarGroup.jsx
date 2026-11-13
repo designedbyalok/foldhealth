@@ -1,4 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
+import { OooWrapper } from '../Avatar/Avatar';
+import { AvatarOooLookup } from '../Avatar/AvatarOooLookup';
 import styles from './AvatarGroup.module.css';
 
 /**
@@ -12,6 +14,7 @@ import styles from './AvatarGroup.module.css';
  *
  * @param {object}   props
  * @param {Array<{ id?: string, initials: string, name?: string }>} props.people
+ *   Staff who are out of office now wear the Out of Office badge, as on Avatar.
  * @param {'patient'|'staff'} [props.variant='patient']
  * @param {'XS'|'S'|'M'|'L'|'XL'} [props.size='M']
  * @param {number}  [props.max=3]   Max tiles rendered before overflow kicks in
@@ -25,6 +28,7 @@ export function AvatarGroup({
   className,
 }) {
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const lookup = useContext(AvatarOooLookup);
   const wrapRef = useRef(null);
 
   // Close the popover when the pointer leaves the whole chip+popover cluster
@@ -49,6 +53,11 @@ export function AvatarGroup({
   // it on the group lets the overflow wrapper (which doesn't carry a size
   // class of its own) still resolve the negative-margin overlap.
   const tileSizePx = { XS: 20, S: 24, M: 32, L: 40, XL: 48 }[size] ?? 32;
+  const staff = variant === 'staff' || variant === 'provider';
+  const withOoo = (p, el, key) => {
+    const record = staff && lookup && p.name ? lookup(p.id ? { id: p.id, name: p.name } : p.name) : null;
+    return record ? <OooWrapper key={key} record={record} size={size} note={record.note}>{el}</OooWrapper> : el;
+  };
 
   return (
     <div
@@ -57,7 +66,7 @@ export function AvatarGroup({
       role="group"
       aria-label={`${people.length} ${variant === 'staff' || variant === 'provider' ? 'staff' : 'patients'}`}
     >
-      {visible.map((p, idx) => (
+      {visible.map((p, idx) => withOoo(p, (
         <span
           key={p.id ?? `${p.initials}-${idx}`}
           className={[styles.tile, sizeClass, variantClass].join(' ')}
@@ -65,7 +74,7 @@ export function AvatarGroup({
         >
           {p.initials}
         </span>
-      ))}
+      ), p.id ?? `${p.initials}-${idx}`))}
 
       {overflowing && (
         <span
@@ -93,13 +102,15 @@ export function AvatarGroup({
                   className={styles.popoverItem}
                   role="menuitem"
                 >
-                  <span
-                    className={[styles.popoverInitials, styles[variant] || styles.patient]
-                      .filter(Boolean)
-                      .join(' ')}
-                  >
-                    {p.initials}
-                  </span>
+                  {withOoo(p, (
+                    <span
+                      className={[styles.popoverInitials, styles[variant] || styles.patient]
+                        .filter(Boolean)
+                        .join(' ')}
+                    >
+                      {p.initials}
+                    </span>
+                  ))}
                   <span className={styles.popoverName}>{p.name || p.initials}</span>
                 </div>
               ))}

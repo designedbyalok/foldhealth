@@ -16,12 +16,13 @@ import { useCommsPeople } from '../comms/useCommsPeople';
 import { CommsListEmpty, CommsPanelEmpty } from '../comms/CommsEmptyState';
 import { CommsListHeader } from '../comms/CommsListHeader';
 import { markConversationRead, updateConversation } from '../comms/commsRepo';
-import { FilterChip } from '../../../components/FilterChip/FilterChip';
+import { CommsFilterDrawer } from '../comms/CommsFilterDrawer';
+import { useCommsFilters } from '../comms/useCommsFilters';
+import { collaboratorsOf, inboxOf } from '../comms/commsInboxes';
 import { BulkBar } from '../../../components/BulkBar/BulkBar';
 import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import commsStyles from '../comms/Comms.module.css';
 
-const ACTIVITY_FILTER = { Today: 1, 'Last 7 days': 7, 'Last 30 days': 30 };
 import listStyles from '../MessagesView.module.css';
 import styles from './EmailWorkspace.module.css';
 
@@ -87,10 +88,28 @@ export function EmailWorkspace({ onCompose, selectConversationId, onSelectedConv
   const [selectedId, setSelectedId] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [activity, setActivity] = useState([]);
-  // The cutoff is fixed when the filter is picked, not recomputed each render.
-  const [activityCutoff, setActivityCutoff] = useState(0);
+  // Filters drawer: By Date, By Inbox and Covering for go by the patient
+  // thread's inbox (its collaborators are its assignees). Referral emails are
+  // addressed to me, not an inbox, so they drop out under those two.
+  const f = useCommsFilters();
+  const inboxes = useAppStore(s => s.commsInboxes);
+  const inboxSample = useAppStore(s => s.commsInboxesTableMissing);
+  const fetchCommsInboxes = useAppStore(s => s.fetchCommsInboxes);
+  const platformUsers = useAppStore(s => s.platformUsers);
+  useEffect(() => { fetchCommsInboxes(); }, [fetchCommsInboxes]);
+  const emailInboxes = inboxes.filter(i => i.channel === 'email');
+  const passesInbox = (r) => {
+    const { inbox, covering } = f.filters;
+    if (!inbox && !covering.length) return true;
+    if (r.type === 'referral') return false;
+    const id = inboxOf(r.conv, inboxSample);
+    if (inbox && id !== inbox) return false;
+    if (covering.length) {
+      const box = inboxes.find(i => i.id === id);
+      if (!box || !f.coveredBy(collaboratorsOf(box, platformUsers || []).map(u => u.name))) return false;
+    }
+    return true;
+  };
   // Bulk select works on patient threads; referral emails live with their care gap.
   const [bulk, setBulk] = useState(false);
   const [picked, setPicked] = useState([]);
@@ -142,7 +161,7 @@ export function EmailWorkspace({ onCompose, selectConversationId, onSelectedConv
   const list = (FOLDERS[folder] || [])
     .map(r => (r.type === 'referral' ? { ...r, who: folder === 'inbox' ? r.referral.sentBy : (r.referral.providerName || 'No recipient yet'), unread: folder === 'inbox' && !r.referral.recipientReadAt } : r))
     .filter(r => !q || `${r.subject} ${r.body} ${r.who} ${r.referral?.memberName || ''}`.toLowerCase().includes(q))
-    .filter(r => !activityCutoff || new Date(r.at || 0).getTime() >= activityCutoff)
+    .filter(r => f.inWindow(r.at) && passesInbox(r))
     .toSorted((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
   const selectedRow = selectedId ? Object.values(FOLDERS).flat().find(r => r.key === selectedId) : null;
   const selectedReferral = selectedRow?.type === 'referral' ? byId.get(selectedRow.referral.id) : null;
@@ -160,8 +179,8 @@ export function EmailWorkspace({ onCompose, selectConversationId, onSelectedConv
           onSearch={() => { setSearchOpen(v => !v); setQuery(''); }}
           bulkActive={bulk}
           onBulk={() => { setBulk(v => !v); setPicked([]); }}
-          filterActive={filterOpen || activity.length > 0}
-          onFilter={() => setFilterOpen(v => !v)}
+          filterActive={f.open || f.active}
+          onFilter={() => f.setOpen(true)}
         />
         <div className={listStyles.convTabs}>
           <SegmentedControl
@@ -171,10 +190,14 @@ export function EmailWorkspace({ onCompose, selectConversationId, onSelectedConv
             size="sm"
           />
         </div>
-        {filterOpen && (
-          <div className={commsStyles.filterRow}>
-            <FilterChip label="Last Activity" singleSelect options={Object.keys(ACTIVITY_FILTER)} selected={activity} onChange={(v) => { setActivity(v); setActivityCutoff(v.length ? Date.now() - ACTIVITY_FILTER[v[0]] * 86400000 : 0); }} />
-          </div>
+        {f.open && (
+          <CommsFilterDrawer
+            value={f.filters}
+            onApply={f.apply}
+            onClose={() => f.setOpen(false)}
+            inboxes={emailInboxes}
+            coveringNames={f.coveringNames}
+          />
         )}
         {searchOpen && (
           <div className={styles.search}>

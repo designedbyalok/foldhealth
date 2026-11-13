@@ -68,7 +68,7 @@ const UNMATCHED = { name: 'Marisol Ventura', dob: '07/22/1968', memberId: 'Unrea
  * fax's own fields are what the sender wrote; for `review` they differ from
  * the record the way an OCR misread would.
  */
-export function buildFax({ id, patient, scenario = 'high', sender = EFAX_SENDERS[0], documentType = 'Referral', now = new Date() }) {
+export function buildFax({ id, patient, scenario = 'high', sender = EFAX_SENDERS[0], documentType = 'Referral', efaxNumberId = null, now = new Date() }) {
   const doc = EFAX_DOCUMENTS.find(d => d.value === documentType) || EFAX_DOCUMENTS[1];
   const snap = patientSnapshot(patient);
   const extracted = scenario === 'none'
@@ -92,6 +92,7 @@ export function buildFax({ id, patient, scenario = 'high', sender = EFAX_SENDERS
     suggested: scenario === 'none' ? null : snap,
     linked: null,
     read: false,
+    ...(efaxNumberId ? { efaxNumberId } : {}),
   };
 }
 
@@ -115,9 +116,9 @@ export function sampleFaxes(patients = []) {
   const base = Date.now();
   const at = mins => new Date(base - mins * 60000);
   return [
-    a && buildFax({ id: 'efax-sample-1', patient: a, scenario: 'high', sender: EFAX_SENDERS[0], documentType: 'Referral', now: at(12) }),
-    b && buildFax({ id: 'efax-sample-2', patient: b, scenario: 'review', sender: EFAX_SENDERS[1], documentType: 'Lab Results', now: at(95) }),
-    a && buildFax({ id: 'efax-sample-3', patient: a, scenario: 'none', sender: EFAX_SENDERS[2], documentType: 'Imaging Report', now: at(60 * 26) }),
+    a && buildFax({ id: 'efax-sample-1', patient: a, scenario: 'high', sender: EFAX_SENDERS[0], documentType: 'Referral', efaxNumberId: 'efax-1', now: at(12) }),
+    b && buildFax({ id: 'efax-sample-2', patient: b, scenario: 'review', sender: EFAX_SENDERS[1], documentType: 'Lab Results', efaxNumberId: 'efax-2', now: at(95) }),
+    a && buildFax({ id: 'efax-sample-3', patient: a, scenario: 'none', sender: EFAX_SENDERS[2], documentType: 'Imaging Report', efaxNumberId: 'efax-1', now: at(60 * 26) }),
   ].filter(Boolean);
 }
 
@@ -135,6 +136,8 @@ export const faxToRow = f => ({
   suggested: f.suggested,
   linked: f.linked,
   read: f.read,
+  // Only once set (efax_inbound_number_migration.sql adds the column).
+  ...(f.efaxNumberId ? { efax_number_id: f.efaxNumberId } : {}),
 });
 
 export const rowToFax = r => ({
@@ -151,6 +154,7 @@ export const rowToFax = r => ({
   suggested: r.suggested || null,
   linked: r.linked || null,
   read: !!r.read,
+  efaxNumberId: r.efax_number_id || null,
 });
 
 // How sure the read is, shown beside what matched (Figma 2916:41416).

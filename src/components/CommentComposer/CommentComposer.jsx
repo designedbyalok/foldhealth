@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Button } from '../Button/Button';
 import { Avatar } from '../Avatar/Avatar';
 import { Icon } from '../Icon/Icon';
+import { Badge } from '../Badge/Badge';
 import badgeStyles from '../Badge/Badge.module.css';
 import { MentionRoster } from './MentionRoster';
 import styles from './CommentComposer.module.css';
@@ -210,10 +211,22 @@ export function CommentComposer({
       ? users.filter(u => (u.name || '').toLowerCase().includes(q))
       : users;
     // Pickable people first; disabled ones follow so the whole roster is
-    // visible without crowding out who can actually be tagged.
+    // visible without crowding out who can actually be tagged. Searching for
+    // someone out of office lists them first (they can still be tagged), then
+    // whoever covers them (Suggested), then the rest.
     const enabled = filtered.filter(u => !u.disabled);
     const disabled = filtered.filter(u => u.disabled);
-    return usersProp ? [...enabled, ...disabled] : filtered.slice(0, 8);
+    const top = q ? enabled.filter(u => u.out) : [];
+    const covering = new Map(); // covering person's name → names of those they cover
+    top.forEach(a => (a.coveredBy || []).forEach(n => covering.set(n, [...(covering.get(n) || []), a.name])));
+    const suggested = users
+      .filter(u => !u.out && !u.disabled && covering.has(u.name))
+      .map(u => ({ ...u, coveringFor: covering.get(u.name), group: 'Suggested' }));
+    const rest = enabled.filter(u => !top.includes(u) && !covering.has(u.name));
+    const head = [...top, ...suggested];
+    const tail = usersProp ? [...rest, ...disabled] : rest.slice(0, 8);
+    if (head.length && tail.length) tail[0] = { ...tail[0], group: 'All' };
+    return [...head, ...tail];
   }, [users, usersProp, mention]);
   useEffect(() => { setMentionIdx(0); }, [mention?.query]);
   // Arrow keys step over disabled rows; -1 when nobody is pickable.
@@ -469,7 +482,8 @@ function MentionMenu({ anchor, matches, activeIdx, onPick }) {
 
   return createPortal(
     <div className={styles.mentionMenu} style={{ top: pos.top, left: pos.left, width: pos.width }}>
-      {matches.map((u, i) => (
+      {matches.map((u, i) => [
+        u.group && <div key={`g-${u.group}`} className={styles.mentionGroup}>{u.group}</div>,
         <button
           key={u.id || u.name}
           type="button"
@@ -479,10 +493,16 @@ function MentionMenu({ anchor, matches, activeIdx, onPick }) {
           className={[styles.mentionItem, i === activeIdx && !u.disabled ? styles.mentionItemActive : '', u.disabled ? styles.mentionItemDisabled : ''].filter(Boolean).join(' ')}
           onMouseDown={(e) => { e.preventDefault(); if (!u.disabled) onPick(u); }}
         >
-          <Avatar variant="staff" size={24} initials={u.initials || (u.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2)} />
+          <Avatar variant="staff" size={24} userName={u.name} userId={u.id} initials={u.initials || (u.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2)} />
           <span className={styles.mentionName}>
-            {u.name}
-            {u.roleLabel && <span className={styles.mentionRole}> ({u.roleLabel})</span>}
+            <span className={styles.mentionNameRow}>
+              <span>
+                {u.name}
+                {u.roleLabel && <span className={styles.mentionRole}> ({u.roleLabel})</span>}
+              </span>
+              {u.out && <Badge tone="magenta" size="sm" label="Out of Office" />}
+            </span>
+            {u.coveringFor && <span className={styles.mentionCovering}>Covering for {u.coveringFor.join(', ')}</span>}
           </span>
           {u.disabled && u.disabledReason && (
             <span className={styles.mentionDisabledReason}>
@@ -490,8 +510,8 @@ function MentionMenu({ anchor, matches, activeIdx, onPick }) {
               {u.disabledReason}
             </span>
           )}
-        </button>
-      ))}
+        </button>,
+      ])}
     </div>,
     document.body,
   );

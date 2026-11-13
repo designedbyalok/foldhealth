@@ -78,6 +78,7 @@ export function SelectAssigneeModal({
   // Who's out (can't be picked), and, while searching, who covers them.
   const q = query.trim();
   const away = filtered.filter(u => outOfOffice(u));
+  const searching = q.length > 0;
   const covering = new Map(); // covering name → names they cover
   if (q) {
     away.forEach(u => (outOfOffice(u).coveredBy || []).forEach((n) => {
@@ -89,6 +90,30 @@ export function SelectAssigneeModal({
 
   const selected = platformUsers.find(u => u.id === selectedId) || null;
 
+  // People out of office: Not Available, can't be picked.
+  const awaySection = away.length > 0 && (
+    <>
+      <div className={styles.group}>Not Available</div>
+      {away.map((u) => {
+        const out = outOfOffice(u);
+        return (
+          <div key={u.id} className={`${styles.row} ${styles.rowDisabled}`} aria-disabled="true">
+            <span className={styles.radio} />
+            <Avatar variant="staff" size="M" initials={u.initials} userName={u.name} userId={u.id} />
+            <span className={styles.info}>
+              <span className={styles.nameRow}>
+                <span className={`${styles.name} ${styles.muted}`}>{u.name}</span>
+                <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="left">
+                  <Badge tone="magenta" size="sm" label="Out of Office" />
+                </Tooltip>
+              </span>
+              <span className={`${styles.role} ${styles.muted}`}>{roleOf(u) || 'Staff'}</span>
+            </span>
+          </div>
+        );
+      })}
+    </>
+  );
   const pickRow = (u, note) => {
     const isSelected = u.id === selectedId;
     return (
@@ -143,29 +168,13 @@ export function SelectAssigneeModal({
               <p className={styles.empty}>No people match “{query}”.</p>
             ) : (
               <>
+                {/* Searching for someone out shows them first, then who covers them. */}
+                {searching && awaySection}
                 {suggested.length > 0 && <div className={styles.group}>Suggested</div>}
                 {suggested.map(u => pickRow(u, `Covering for ${covering.get(u.name).join(', ')}`))}
-                {suggested.length > 0 && available.length > 0 && <div className={styles.group}>All Users</div>}
+                {(suggested.length > 0 || (searching && away.length > 0)) && available.length > 0 && <div className={styles.group}>All Users</div>}
                 {available.map(u => pickRow(u))}
-                {away.length > 0 && <div className={styles.group}>Not Available</div>}
-                {away.map((u) => {
-                  const out = outOfOffice(u);
-                  return (
-                    <div key={u.id} className={`${styles.row} ${styles.rowDisabled}`} aria-disabled="true">
-                      <span className={styles.radio} />
-                      <Avatar variant="staff" size="M" initials={u.initials} userName={u.name} userId={u.id} />
-                      <span className={styles.info}>
-                        <span className={styles.nameRow}>
-                          <span className={`${styles.name} ${styles.muted}`}>{u.name}</span>
-                          <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="left">
-                            <Badge tone="magenta" size="sm" label="Out of Office" />
-                          </Tooltip>
-                        </span>
-                        <span className={`${styles.role} ${styles.muted}`}>{roleOf(u) || 'Staff'}</span>
-                      </span>
-                    </div>
-                  );
-                })}
+                {!searching && awaySection}
               </>
             )}
           </div>

@@ -180,6 +180,8 @@
 /* The summary's switch hugs its options, with room under the label. */
 .summaryTabs { gap: var(--space-2); }
 .summarySwitch { align-self: flex-start; }
+/* The outcome switch, with Collapse / Expand All at the far right. */
+.summarySwitchRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 /* Underline tabs that start at the content's left edge (no inset). */
 .summaryField .summaryTabsFlush { padding-left: 0; padding-right: 0; }
 /* 12px under the module tabs (the field's 4px gap plus 8px). */
