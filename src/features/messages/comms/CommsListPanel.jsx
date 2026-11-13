@@ -15,9 +15,9 @@ import { formatTime } from '../messageUtils';
 import { CHANNEL_META, initialsOf, isMissedCall } from './commsUtils';
 import { CommsListEmpty } from './CommsEmptyState';
 import { CommsListHeader } from './CommsListHeader';
-import { updateConversation, markConversationRead, deleteConversation, listMessagesFor } from './commsRepo';
+import { updateConversation, markConversationRead, deleteConversation, listStaffSends, subscribeComms } from './commsRepo';
 import { CommsFilterDrawer } from './CommsFilterDrawer';
-import { EMPTY_COMMS_FILTERS, commsFiltersActive, dateWindow } from './commsFilters';
+import { EMPTY_COMMS_FILTERS, commsFiltersActive, dateWindow, lastStaffSenders } from './commsFilters';
 import { collaboratorsOf, inboxOf } from './commsInboxes';
 import { isAutoReply } from './oooAutoReply';
 import { useCovering } from '../../ooo/useCovering';
@@ -75,19 +75,26 @@ export function CommsListPanel({
     if (inbox) return collaboratorsOf(inbox, platformUsers || []).some(u => sameName(u.name, name));
     return sameName(staffOf?.get(c.id), name);
   };
+  // Only threads with no inbox need their senders, and only their staff
+  // messages' names. Keyed by those ids, so a conversation's preview or unread
+  // count changing doesn't refetch; new staff messages update it live.
+  const noInboxKey = coveringOn
+    ? conversations.filter(c => !inboxById.get(inboxOf(c, inboxSample))).map(c => c.id).sort().join(',')
+    : '';
   useEffect(() => {
-    if (!coveringOn) return undefined;
+    if (!noInboxKey) return undefined;
+    const ids = noInboxKey.split(',');
     let live = true;
-    listMessagesFor(conversations.map(c => c.id)).then((msgs) => {
-      if (!live) return;
-      const last = new Map();
-      [...msgs].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).forEach((m) => {
-        if (m.direction === 'out' && !m.internal && !isAutoReply(m) && m.sender_name) last.set(m.conversation_id, m.sender_name);
-      });
-      setStaffOf(last);
-    }).catch(() => live && setStaffOf(new Map()));
-    return () => { live = false; };
-  }, [coveringOn, conversations]);
+    listStaffSends(ids)
+      .then(rows => live && setStaffOf(lastStaffSenders(rows)))
+      .catch(() => live && setStaffOf(new Map()));
+    const off = subscribeComms(({ table, type, row } = {}) => {
+      if (table !== 'patient_messages' || type !== 'INSERT' || !row || !ids.includes(row.conversation_id)) return;
+      if (row.direction !== 'out' || row.internal || isAutoReply(row) || !row.sender_name) return;
+      setStaffOf(prev => new Map(prev || []).set(row.conversation_id, row.sender_name));
+    });
+    return () => { live = false; off(); };
+  }, [noInboxKey]);
   const [bulk, setBulk] = useState(false);
   const [picked, setPicked] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(false);

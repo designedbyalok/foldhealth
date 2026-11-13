@@ -146,6 +146,36 @@ export async function listMessagesFor(conversationIds) {
   return withSessionAttribution(data || []);
 }
 
+/**
+ * Staff messages to patients in these conversations, newest first, with only
+ * the columns needed to tell who last wrote (the Covering for filter).
+ * Chunked so a long list doesn't make an over-long request URL.
+ */
+export async function listStaffSends(conversationIds) {
+  if (!conversationIds.length) return [];
+  if (await commsMode() === 'local') {
+    const ids = new Set(conversationIds);
+    return readLocal().messages
+      .filter(m => ids.has(m.conversation_id) && m.direction === 'out' && !m.internal && m.sender_name)
+      .map(m => ({ conversation_id: m.conversation_id, sender_name: m.sender_name, created_at: m.created_at, auto_reply: m.meta?.ooo_auto_reply ? 'true' : null }))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+  const chunks = [];
+  for (let i = 0; i < conversationIds.length; i += 100) chunks.push(conversationIds.slice(i, i + 100));
+  const pages = await Promise.all(chunks.map(async (ids) => {
+    const { data, error } = await supabase.from('patient_messages')
+      .select('conversation_id, sender_name, created_at, auto_reply:meta->>ooo_auto_reply')
+      .in('conversation_id', ids)
+      .eq('direction', 'out')
+      .eq('internal', false)
+      .not('sender_name', 'is', null)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }));
+  return pages.flat();
+}
+
 export async function createConversation(fields) {
   const row = { ...CONV_DEFAULTS, id: uid(), created_at: now(), last_message_at: now(), ...fields };
   if (await commsMode() === 'local') {
