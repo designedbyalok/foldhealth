@@ -14,6 +14,7 @@ import {
   flatSteps,
   fmtCompletedDate,
   initialsOf,
+  OVERVIEW_STEP_ID,
   stepsFor,
   withoutCarePlanStep,
 } from './ProgramDetailView.utils';
@@ -50,8 +51,9 @@ export function useProgramDetailView({ program, onSwitchProgram, stepId = null }
   const setGlobalStep = useAppStore(s => s.setCareProgramStep);
   const storedStep = stepId ? ownStep : globalStep;
   const setActiveStep = stepId ? setOwnStep : setGlobalStep;
-  const defaultStep = isCcm && ALL_STEPS.some(st => st.id === 'ccm-billing') ? 'ccm-billing' : firstStep?.id;
-  const activeStep = (storedStep && ALL_STEPS.some(s => s.id === storedStep)) ? storedStep : defaultStep;
+  // A program opens on its Overview; a step opened on its own opens on that step.
+  const defaultStep = stepId ? firstStep?.id : OVERVIEW_STEP_ID;
+  const activeStep = (storedStep && (storedStep === OVERVIEW_STEP_ID || ALL_STEPS.some(s => s.id === storedStep))) ? storedStep : defaultStep;
   const [expandedSections, setExpandedSections] = useState({});
   const [activeLetterTab, setActiveLetterTab] = useState('All');
   const [letterSearchOpen, setLetterSearchOpen] = useState(false);
@@ -280,12 +282,14 @@ export function useProgramDetailView({ program, onSwitchProgram, stepId = null }
     ? { formId: linkedFormId, formName: activeStepObj.formName || stepName, title: stepName }
     : ASSESSMENT_STEPS[screenName];
 
+  // From the Overview, the next step is the program's first.
   const activeStepIdx = ALL_STEPS.findIndex(s => s.id === activeStep);
-  const nextStep = activeStepIdx >= 0 && activeStepIdx < ALL_STEPS.length - 1 ? ALL_STEPS[activeStepIdx + 1] : null;
+  const nextStep = activeStepIdx < ALL_STEPS.length - 1 ? ALL_STEPS[activeStepIdx + 1] : null;
   const goNextStep = () => { if (nextStep) setActiveStep(nextStep.id); };
   const toggleSection = (id) => setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
 
   const stepFlags = {
+    isOverviewStep: activeStep === OVERVIEW_STEP_ID,
     isBillingStep: !linkedFormId && (activeStepObj?.kind === 'billing' || screenName === 'Billing Review'),
     isOutreachStep: screenName === 'Outreach',
     isPreVisitStep: /^pre-?visit$/i.test(screenName),

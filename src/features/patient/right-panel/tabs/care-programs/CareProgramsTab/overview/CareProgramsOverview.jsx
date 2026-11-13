@@ -181,8 +181,9 @@ const stamp = iso => (iso
   : '');
 
 // The manual trigger in the card header: one run writes both cards.
+// `state: 'off'` (a program's own Overview step) leaves Unity out.
 function SummarizeAction({ unity }) {
-  if (unity.state === 'ready') return null;
+  if (unity.state === 'ready' || unity.state === 'off') return null;
   return (
     <Button size="sm" variant="ghost" leadingIcon="custom:ai" disabled={unity.state === 'loading'} onClick={unity.generate}>
       {unity.state === 'loading' ? 'Writing…' : unity.error ? 'Try Again' : 'Summarize'}
@@ -222,7 +223,7 @@ function Takeaway({ t, onOpenRef }) {
   );
 }
 
-function WhyPrioritized({ why, unity, onOpenRef }) {
+export function WhyPrioritized({ why, unity, onOpenRef }) {
   // The points first; the paragraph behind Show More.
   const [open, setOpen] = useState(false);
   const ai = unity.state === 'ready' ? unity.insights.why : null;
@@ -273,7 +274,7 @@ function WhyPrioritized({ why, unity, onOpenRef }) {
 }
 
 /* ── Care Plan Summary and Program Summary (right column) ── */
-function CarePlanSummary({ data, onOpenPlan }) {
+export function CarePlanSummary({ data, onOpenPlan, progressLabel = <>Goal progress, across the programs&rsquo; care plans</> }) {
   const { totals } = data;
   const rows = [
     { key: 'goal', label: 'Goals', n: totals.goals, issue: totals.issues.goal && `${totals.issues.goal} off target` },
@@ -290,7 +291,7 @@ function CarePlanSummary({ data, onOpenPlan }) {
         <button type="button" className={styles.sumProgress} onClick={onOpenPlan}>
           <span className={styles.sumPct}>{totals.avgProgress}%</span>
           <span className={styles.sumBar} aria-hidden="true"><span style={{ width: `${Math.min(100, totals.avgProgress)}%` }} /></span>
-          <span className={styles.sumLabel}>Goal progress, across the programs&rsquo; care plans</span>
+          <span className={styles.sumLabel}>{progressLabel}</span>
         </button>
         <ul className={styles.sumRows}>
           {rows.map(r => (

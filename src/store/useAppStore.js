@@ -1682,6 +1682,9 @@ export const useAppStore = create((set, get) => ({
   pendingCareProgramCarePlan: false,
   // CMP only: which sub-program to open or enroll (opts.subProgram).
   pendingCareProgramSubProgram: null,
+  // opts.openOnly: open the program only when the patient is in it; otherwise
+  // stay on Care Programs rather than offer to enroll (a worklist row click).
+  pendingCareProgramOpenOnly: false,
   navigateToPatient: (patientId, opts = {}) => {
     const from = get().activePage;
     track('nav.patient_opened', { patientId, from });
@@ -1708,6 +1711,7 @@ export const useAppStore = create((set, get) => ({
       // Land on the program's Care Plan step rather than its first step.
       updates.pendingCareProgramCarePlan = !!opts.carePlan;
       updates.pendingCareProgramSubProgram = opts.subProgram || null;
+      updates.pendingCareProgramOpenOnly = !!opts.openOnly;
     }
     set(updates);
     const state = get();
@@ -1756,7 +1760,7 @@ export const useAppStore = create((set, get) => ({
     set({ carePlanSummaryOpen: !!open, selectedCareProgramKey: null, careProgramStep: null });
     updateHash?.(get());
   },
-  clearPendingCareProgramCode: () => set({ pendingCareProgramCode: null, pendingCareProgramCarePlan: false, pendingCareProgramSubProgram: null }),
+  clearPendingCareProgramCode: () => set({ pendingCareProgramCode: null, pendingCareProgramCarePlan: false, pendingCareProgramSubProgram: null, pendingCareProgramOpenOnly: false }),
 
   // EditPatientDrawer: one drawer shared by every "Edit …" entry-point
   // on the Profile tab, the P360 banner overflow menu, and every worklist

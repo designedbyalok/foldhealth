@@ -18,9 +18,10 @@ const sourceOf = (r, kind) => (!r.eventSource || r.eventSource.toLowerCase().sta
  * What new events (ADT, eFax, imaging, labs) mean for the patient's care
  * programs: one suggestion per event, with the action it takes (enroll, open
  * a program step, create a task, or mark reviewed) and Dismiss. An enroll
- * suggestion resolves itself once the patient is enrolled.
+ * suggestion resolves itself once the patient is enrolled. `programCode`
+ * keeps it to one program's suggestions (its Overview step).
  */
-export function ProgramSuggestedActions({ patientId, programs, onEnroll, onOpenStep }) {
+export function ProgramSuggestedActions({ patientId, programs, onEnroll, onOpenStep, programCode = null }) {
   const memberId = useAppStore(s => String(findPatientRecord(s, patientId)?.memberId || patientId || ''));
   const rows = useAppStore(s => s.programEventSuggestions[memberId]) || EMPTY;
   const fetchSuggestions = useAppStore(s => s.fetchProgramEventSuggestions);
@@ -31,7 +32,8 @@ export function ProgramSuggestedActions({ patientId, programs, onEnroll, onOpenS
   const patientName = useAppStore(s => String(findPatientRecord(s, patientId)?.name || ''));
   useEffect(() => { if (memberId) fetchSuggestions(memberId); }, [memberId, fetchSuggestions]);
 
-  const open = openSuggestions(rows, programs);
+  // A program's own Overview shows only that program's suggestions.
+  const open = openSuggestions(programCode ? rows.filter(r => r.programCode === programCode) : rows, programs);
   const resolved = open.filter(r => r.resolved);
   // Enrolled since the suggestion came in: it's done.
   useEffect(() => {

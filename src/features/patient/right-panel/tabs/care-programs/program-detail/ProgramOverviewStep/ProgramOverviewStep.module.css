@@ -1,0 +1,31 @@
+/* A program's Overview step: what to do (Why Prioritized, Next Best Actions)
+   beside what came in and where the plan stands (Suggested Actions, Care Plan
+   summary); one column, in that order, when the content area is narrow. */
+/* The scroll area is the size container; the grid inside lays out by it. */
+.wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  container-type: inline-size;
+}
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+.main,
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.main > *,
+.side > * { flex-shrink: 0; }
+
+@container (min-width: 820px) {
+  .grid { flex-direction: row; align-items: flex-start; }
+  .main { flex: 1; }
+  .side { width: clamp(280px, 34%, 360px); flex-shrink: 0; }
+}

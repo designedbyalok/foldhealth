@@ -218,7 +218,7 @@ export function CcmWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
   };
 
   const handleRowClick = () => {
-    if (m.patientId) navigateToPatient(m.patientId);
+    if (m.patientId) navigateToPatient(m.patientId, { programCode: 'CCM', openOnly: true });
     else showToast(`${m.name}, no linked patient record yet`);
   };
 
