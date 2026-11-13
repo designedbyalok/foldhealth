@@ -45,6 +45,8 @@ export function PatientProfileTabs({
   // via `renderExtraTab(key)`; pass a stable array.
   extraTabs,
   renderExtraTab,
+  // Put the hosted tabs before this panel's own (the Quick View's Overview).
+  extraTabsFirst = false,
   // Trailing action on hosted tabs in the More dropdown (OverflowTabs
   // `itemAction` shape, minus `appliesTo`, which is scoped to extraTabs here).
   extraTabAction,
@@ -60,8 +62,8 @@ export function PatientProfileTabs({
     [],
   );
   const tabItems = useMemo(
-    () => [...tabs, ...(extraTabs || [])].map(tab => ({ key: tab, label: tab })),
-    [tabs, extraTabs],
+    () => (extraTabsFirst ? [...(extraTabs || []), ...tabs] : [...tabs, ...(extraTabs || [])]).map(tab => ({ key: tab, label: tab })),
+    [tabs, extraTabs, extraTabsFirst],
   );
   const [internalTab, setInternalTab] = useState(tabs[0]);
   const activeTab = controlledActiveTab ?? internalTab;

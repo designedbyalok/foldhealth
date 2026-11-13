@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Drawer } from '../Drawer/Drawer';
 import { Icon } from '../Icon/Icon';
 import { CloseButton } from '../CloseButton/CloseButton';
 import { PatientP360Banner } from '../../features/patient/shell/PatientP360Banner/PatientP360Banner';
 import { PatientProfileTabs } from '../../features/patient/left-panel/PatientProfileTabs/PatientProfileTabs';
+import { QuickViewOverview } from '../../features/patient/quick-view/QuickViewOverview/QuickViewOverview';
 import styles from './QuickViewDrawer.module.css';
 import { programForWorklist } from '../../lib/worklistProgram';
 
@@ -63,14 +65,27 @@ function ViewFullProfile({ patient, onClose }) {
   );
 }
 
-function QuickViewBody({ patient }) {
+// The Quick View opens on Overview, its own summary tab, ahead of the profile tabs.
+const OVERVIEW_TABS = ['Overview'];
+
+function QuickViewBody({ patient, onClose }) {
+  const [tab, setTab] = useState(OVERVIEW_TABS[0]);
   return (
     <>
       <div className={styles.stickyTop}>
         <PatientP360Banner patient={patient} variant="drawer" />
       </div>
       <div className={styles.tabsPanel}>
-        <PatientProfileTabs patientId={patient.id} patient={patient} variant="drawer" />
+        <PatientProfileTabs
+          patientId={patient.id}
+          patient={patient}
+          variant="drawer"
+          activeTab={tab}
+          onTabChange={setTab}
+          extraTabs={OVERVIEW_TABS}
+          extraTabsFirst
+          renderExtraTab={() => <QuickViewOverview patient={patient} onShowTab={setTab} onClose={onClose} />}
+        />
       </div>
     </>
   );
@@ -100,7 +115,7 @@ export function QuickViewDrawer() {
       titleStyle={{ fontSize: 'var(--font-base)' }}
       bodyClassName={styles.drawerBody}
     >
-      <QuickViewBody patient={patient} />
+      <QuickViewBody patient={patient} onClose={closeQuickView} />
     </Drawer>
   );
 }
@@ -125,7 +140,7 @@ export function QuickViewPanel({ patient: snapshot, onClose }) {
         <CloseButton size={16} label="Close quick view" onClick={onClose} />
       </div>
       <div className={styles.panelBody}>
-        <QuickViewBody patient={patient} />
+        <QuickViewBody patient={patient} onClose={onClose} />
       </div>
     </aside>
   );
