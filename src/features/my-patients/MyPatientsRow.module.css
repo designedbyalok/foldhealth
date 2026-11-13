@@ -100,10 +100,12 @@
 .bar_danger { background: var(--status-error); }
 .bar_primary { background: var(--primary-300); }
 
+.whyTip { display: flex; }
 .why {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  width: 100%;
   max-width: 300px;
   padding: 0;
   border: none;
@@ -114,6 +116,9 @@
 .whyPoint {
   position: relative;
   padding-left: var(--space-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--font-md);
   line-height: var(--leading-normal);
   color: var(--neutral-400);
