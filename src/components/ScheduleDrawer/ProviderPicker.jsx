@@ -41,6 +41,35 @@ export function ProviderPicker({ value, onSelect, profileUsers = EMPTY_PROFILE_U
   const suggested = allProviders.filter(p => covering.has(p.name) && !outOfOffice(p));
   const available = matching.filter(p => !outOfOffice(p) && !covering.has(p.name));
 
+  // Not Available: first while searching (so whoever was searched for shows),
+  // last otherwise.
+  const searching = !!search.trim();
+  const awaySection = away.length > 0 && (
+    <>
+      <div className={styles.providerGroup}>Not Available</div>
+      {away.map(p => {
+        const out = outOfOffice(p);
+        return (
+          <div key={p.id || p.name} className={`${styles.providerItem} ${styles.providerItemDisabled}`} aria-disabled="true">
+            <Avatar variant="assignee" size="M" initials={getInitials(p.name).toUpperCase()} userName={p.name} userId={p.id} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className={styles.providerNameRow}>
+                <span className={styles.providerMutedName}>{p.name}</span>
+                <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="right">
+                  <Badge tone="magenta" size="sm" label="Out of Office" />
+                </Tooltip>
+              </div>
+              <div className={styles.providerMutedSub}>{p.role || p.gender}</div>
+              <div className={styles.providerCoveredBy}>
+                {out.coveredBy?.length ? `Covered by: ${out.coveredBy.join(', ')}` : 'No covering provider'}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+
   return (
     <div style={{ position: 'relative', flex: 1 }}>
       {value ? (
@@ -57,6 +86,8 @@ export function ProviderPicker({ value, onSelect, profileUsers = EMPTY_PROFILE_U
         <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setOpen(false)}>
           <div className={styles.providerDropdown} style={{ position: 'fixed', top: btnRef.current?.getBoundingClientRect().bottom + 4, left: btnRef.current?.getBoundingClientRect().left, zIndex: 9999 }} onClick={e => e.stopPropagation()}>
             <div className={styles.apptSearchWrap}><Icon name="solar:magnifer-linear" size={14} color="var(--neutral-200)" /><input aria-label="Search providers" className={styles.apptSearchInput} placeholder="Search" value={search} onChange={e => setSearch(e.target.value)} autoFocus /></div>
+            {/* Searching for someone out shows them first, then who covers them. */}
+            {searching && awaySection}
             {suggested.length > 0 && <div className={styles.providerGroup}>Suggested</div>}
             {suggested.map(p => (
               <button key={`s-${p.id || p.name}`} className={styles.providerItem} onClick={() => { onSelect(p.name, p); setOpen(false); }}>
@@ -69,7 +100,7 @@ export function ProviderPicker({ value, onSelect, profileUsers = EMPTY_PROFILE_U
                 <span style={{ fontSize: 'var(--font-sm)', color: p.slots === 'Not Available' ? 'var(--neutral-200)' : 'var(--primary-300)' }}>{p.slots || ''}</span>
               </button>
             ))}
-            {suggested.length > 0 && available.length > 0 && <div className={styles.providerGroup}>All Providers</div>}
+            {(suggested.length > 0 || (searching && away.length > 0)) && available.length > 0 && <div className={styles.providerGroup}>All Providers</div>}
             {available.map(p => (
               <button key={p.id || p.name} className={styles.providerItem} onClick={() => { onSelect(p.name, p); setOpen(false); }}>
                 <Avatar variant="assignee" size="M" initials={getInitials(p.name).toUpperCase()} />
@@ -80,27 +111,7 @@ export function ProviderPicker({ value, onSelect, profileUsers = EMPTY_PROFILE_U
                 <span style={{ fontSize: 'var(--font-sm)', color: p.slots === 'Not Available' ? 'var(--neutral-200)' : 'var(--primary-300)' }}>{p.slots || ''}</span>
               </button>
             ))}
-            {away.length > 0 && <div className={styles.providerGroup}>Not Available</div>}
-            {away.map(p => {
-              const out = outOfOffice(p);
-              return (
-                <div key={p.id || p.name} className={`${styles.providerItem} ${styles.providerItemDisabled}`} aria-disabled="true">
-                  <Avatar variant="assignee" size="M" initials={getInitials(p.name).toUpperCase()} userName={p.name} userId={p.id} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className={styles.providerNameRow}>
-                      <span className={styles.providerMutedName}>{p.name}</span>
-                      <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="right">
-                        <Badge tone="magenta" size="sm" label="Out of Office" />
-                      </Tooltip>
-                    </div>
-                    <div className={styles.providerMutedSub}>{p.role || p.gender}</div>
-                    <div className={styles.providerCoveredBy}>
-                      {out.coveredBy?.length ? `Covered by: ${out.coveredBy.join(', ')}` : 'No covering provider'}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {!searching && awaySection}
           </div>
         </div>,
         document.body

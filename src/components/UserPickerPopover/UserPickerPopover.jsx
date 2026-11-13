@@ -69,7 +69,10 @@ export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSe
     const next = isPicked(u) ? [...pickedSet].filter(x => x !== k && x !== u.name) : [...pickedSet, k];
     onSelect(next);
   };
-  const ordered = groups ? [...groups.top, ...groups.rest] : shown;
+  // While searching, people who can't be picked (e.g. Not Available, out of
+  // office) come first, so whoever was searched for shows; last otherwise.
+  const listed = groups ? [...groups.top, ...groups.rest] : shown;
+  const ordered = q ? [...listed.filter(u => u.disabled), ...listed.filter(u => !u.disabled)] : listed;
   const topKeys = new Set(groups ? groups.top.map(keyOf) : []);
   if (!anchorRect) return null;
 

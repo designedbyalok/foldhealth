@@ -21,26 +21,37 @@ function oooDay(v) {
   return d.getHours() || d.getMinutes() ? formatDateTime(v) : d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 }
 
-function OooWrapper({ record, size, note, children }) {
+/**
+ * The Out of Office mark with its hover (dates, and `note` under them), on
+ * its own: e.g. at the end of a name badge. `size` in px (default 8).
+ */
+export function OooMark({ record, size = 8, note, className }) {
+  return (
+    <Tooltip
+      variant="light"
+      placement="bottom"
+      className={className}
+      label={(
+        <span className={styles.oooTip}>
+          <span className={styles.oooTipTitle}>Out of office</span>
+          <span>{oooDay(record.startAt)} – {oooDay(record.endAt)}</span>
+          {note && <span className={styles.oooTipNote}>{note}</span>}
+        </span>
+      )}
+    >
+      <span className={styles.oooBadge} role="img" aria-label="Out of office">
+        <OooIcon size={size} color="var(--accent-magenta)" />
+      </span>
+    </Tooltip>
+  );
+}
+
+/** The Out of Office mark on the corner of any avatar-like `children`. */
+export function OooWrapper({ record, size, note, children }) {
   return (
     <span className={styles.oooWrap}>
       {children}
-      <Tooltip
-        variant="light"
-        placement="bottom"
-        className={styles.oooBadgeWrap}
-        label={(
-          <span className={styles.oooTip}>
-            <span className={styles.oooTipTitle}>Out of office</span>
-            <span>{oooDay(record.startAt)} – {oooDay(record.endAt)}</span>
-            {note && <span className={styles.oooTipNote}>{note}</span>}
-          </span>
-        )}
-      >
-        <span className={styles.oooBadge} role="img" aria-label="Out of office">
-          <OooIcon size={oooMarkSize(size)} color="var(--accent-magenta)" />
-        </span>
-      </Tooltip>
+      <OooMark record={record} size={oooMarkSize(size)} note={note} className={styles.oooBadgeWrap} />
     </span>
   );
 }

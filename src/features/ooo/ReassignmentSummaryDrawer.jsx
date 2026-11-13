@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { Icon } from '../../components/Icon/Icon';
+import { ActionButton } from '../../components/ActionButton/ActionButton';
+import { CollapseAllIcon } from '../../components/Icon/CollapseAllIcon';
+import { ExpandAllIcon } from '../../components/Icon/ExpandAllIcon';
 import { Tabs } from '../../components/Tabs/Tabs';
 import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Badge } from '../../components/Badge/Badge';
@@ -12,6 +15,7 @@ import { kindOf, TYPE_LABELS } from './reassignJobs';
 import { PROGRAM_SHAPE, TASK_SHAPE } from './openWorkRows';
 import { ApptRow, DeptGroup } from './ReassignParts';
 import styles from './reassign.module.css';
+import ooo from './ooo.module.css';
 
 const TABS = [
   { key: 'reassigned', label: 'Reassigned', pick: r => r.outcome === 'reassigned' },
@@ -70,6 +74,9 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
   const kind = kinds.find(k => k.key === kindKey) || kinds[0] || KINDS[0];
   const ofKind = job ? job.results.filter(r => kindOf(r) === kind.key) : [];
   const [tab, setTab] = useState('reassigned');
+  // Collapse All / Expand All over the department cards; null keeps each
+  // card's own default (open when it's the only one, or off Reassigned).
+  const [view, setView] = useState(null);
   const activeTab = kind.tabs.find(x => x.key === tab) || kind.tabs[0];
   const groups = byDept(ofKind.filter(activeTab.pick));
   const mixed = kinds.length > 1 || (kinds[0] && kinds[0].key !== 'appointment');
@@ -118,6 +125,7 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
                 className={styles.summaryTabsFlush}
               />
             )}
+            <div className={mixed ? `${styles.summarySwitchRow} ${styles.summarySwitchUnderTabs}` : styles.summarySwitchRow}>
             <SegmentedControl
               // The count as a grey count badge after each label.
               items={kind.tabs.map(t => ({
@@ -128,8 +136,19 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
               value={activeTab.key}
               onValueChange={setTab}
               size="md"
-              className={mixed ? `${styles.summarySwitch} ${styles.summarySwitchUnderTabs}` : styles.summarySwitch}
+              className={styles.summarySwitch}
             />
+            {groups.length > 0 && (
+              <span className={ooo.viewToggle} role="group" aria-label="View">
+                <ActionButton tooltip="Collapse All" className={view === 'collapsed' ? ooo.viewToggleOn : undefined} aria-pressed={view === 'collapsed'} onClick={() => setView('collapsed')}>
+                  <CollapseAllIcon size={20} color="var(--neutral-300)" />
+                </ActionButton>
+                <ActionButton tooltip="Expand All" tooltipLeft className={view === 'expanded' ? ooo.viewToggleOn : undefined} aria-pressed={view === 'expanded'} onClick={() => setView('expanded')}>
+                  <ExpandAllIcon size={20} color="var(--neutral-300)" />
+                </ActionButton>
+              </span>
+            )}
+            </div>
           </div>
           {groups.length === 0 ? (
             <span className={styles.empty}>Nothing here for this reassignment.</span>
@@ -141,7 +160,7 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
                   title={dept}
                   count={results.length}
                   noun={kind.key === 'task' ? 'Task' : kind.key === 'program' ? 'Program' : 'Appointment'}
-                  defaultOpen={groups.length === 1 || tab !== 'reassigned'}
+                  defaultOpen={view ? view === 'expanded' : (groups.length === 1 || tab !== 'reassigned')}
                   controls={tab === 'reassigned' ? <CoveringAvatars results={results} /> : null}
                   items={results}
                   renderItem={(r) => (kindOf(r) === 'appointment'

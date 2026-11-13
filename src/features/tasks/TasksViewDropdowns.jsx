@@ -214,6 +214,33 @@ export function DetailDropdown({ value, options, onSelect, renderOption, childre
     );
   };
 
+  // Not Available: first while searching (so whoever was searched for shows),
+  // last otherwise.
+  const searching = !!search.trim();
+  const awaySection = away.length > 0 && (
+    <>
+      <div className={styles.dropGroup}>Not Available</div>
+      {/* Tasks can still go to someone who's out: they stay pickable,
+          with who covers them and the Out of Office badge. */}
+      {away.map((opt) => {
+        const out = outOfOffice(opt);
+        return (
+          <button key={valOf(opt)} type="button" className={styles.simpleDropItem} onClick={() => { onSelect(valOf(opt)); setOpen(false); setSearch(''); }}>
+            {content(opt, {
+              away: true,
+              note: out.coveredBy?.length ? `Covered by: ${out.coveredBy.join(', ')}` : 'No covering provider',
+              badge: (
+                <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="left">
+                  <Badge tone="magenta" size="sm" label="Out of Office" />
+                </Tooltip>
+              ),
+            })}
+          </button>
+        );
+      })}
+    </>
+  );
+
   return (
     <div style={{ position: 'relative' }}>
       <button
@@ -259,29 +286,13 @@ export function DetailDropdown({ value, options, onSelect, renderOption, childre
                 <input aria-label="Search options" className={styles.dropdownSearchInput} placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} autoFocus />
               </div>
             )}
+            {/* Searching for someone out shows them first, then who covers them. */}
+            {searching && awaySection}
             {suggested.length > 0 && <div className={styles.dropGroup}>Suggested</div>}
             {suggested.map(opt => item(opt, `Covering for ${covering.get(valOf(opt)).join(', ')}`))}
-            {suggested.length > 0 && available.length > 0 && <div className={styles.dropGroup}>All Users</div>}
+            {(suggested.length > 0 || (searching && away.length > 0)) && available.length > 0 && <div className={styles.dropGroup}>All Users</div>}
             {available.map(opt => item(opt))}
-            {away.length > 0 && <div className={styles.dropGroup}>Not Available</div>}
-            {/* Tasks can still go to someone who's out: they stay pickable,
-                with who covers them and the Out of Office badge. */}
-            {away.map((opt) => {
-              const out = outOfOffice(opt);
-              return (
-                <button key={valOf(opt)} type="button" className={styles.simpleDropItem} onClick={() => { onSelect(valOf(opt)); setOpen(false); setSearch(''); }}>
-                  {content(opt, {
-                    away: true,
-                    note: out.coveredBy?.length ? `Covered by: ${out.coveredBy.join(', ')}` : 'No covering provider',
-                    badge: (
-                      <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="left">
-                        <Badge tone="magenta" size="sm" label="Out of Office" />
-                      </Tooltip>
-                    ),
-                  })}
-                </button>
-              );
-            })}
+            {!searching && awaySection}
             {filtered.length === 0 && <div className={styles.simpleDropItem} style={{ color: 'var(--neutral-200)', cursor: 'default' }}>No results</div>}
           </div>
         </div>,

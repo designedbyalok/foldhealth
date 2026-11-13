@@ -134,3 +134,12 @@
 .contextDocDot { margin-right: var(--space-1); }
 .contextForm { padding: var(--space-4); }
 .contextHeading { margin: 0; font-size: var(--font-base); font-weight: 500; line-height: 1.2; color: var(--neutral-500); }
+
+/* The out-of-office banner sits under the header here, so its line is on
+   the bottom (Internal Chat's sits on the composer, line on top). */
+.oooNoticeTop {
+  border-top: none;
+  border-bottom: 0.5px solid color-mix(in srgb, var(--accent-magenta) 20%, transparent);
+}
+.awayCount { font-weight: 500; text-decoration: underline dotted; text-underline-offset: 2px; cursor: default; }
+.awayList { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); text-align: left; }

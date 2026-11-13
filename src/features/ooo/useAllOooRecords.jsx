@@ -9,7 +9,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { NewButton, RecordsBody } from './OooRecordsParts';
 import { useOooRecords } from './useOooRecords';
 import { useOooRecordActions } from './useOooRecordActions';
-import { formatDate, oooStatus, recordsOnDate, sortRecords } from './oooUtils';
+import { coveringPeople, formatDate, oooStatus, recordsOnDate, sortRecords } from './oooUtils';
 import styles from './ooo.module.css';
 
 const PER_PAGE_DEFAULT = 10;
@@ -19,7 +19,7 @@ const isDefaultStatus = s => s.length === DEFAULT_STATUS.length && DEFAULT_STATU
 
 /**
  * Everyone's current and upcoming Out of Office records with search,
- * filters (Date Range, Status, User) and New OOO Record, for Settings → Calendar → OOO Records
+ * filters (Date Range, Status, User, Covering Provider) and New OOO Record, for Settings → Calendar → OOO Records
  * and the calendar's month-view drawer (Figma Eventus 17367:121995,
  * 17414:107368). With `highlightDate`, the records out that day come first,
  * tinted and outlined for a few seconds (17507:108921); with `highlightId`,
@@ -42,6 +42,7 @@ export function useAllOooRecords({ highlightDate, highlightId, embedded = false,
   const [dateRange, setDateRange] = useState([]); // [startISO, endISO] or []
   const [status, setStatus] = useState(DEFAULT_STATUS);
   const [userFilter, setUserFilter] = useState([]);
+  const [coverFilter, setCoverFilter] = useState([]);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(PER_PAGE_DEFAULT);
   // The day's rows are tinted and outlined for 4s after opening, then fade
@@ -70,6 +71,7 @@ export function useAllOooRecords({ highlightDate, highlightId, embedded = false,
     let list = records.filter(r => (pinned.has(r.id) || status.includes(oooStatus(r)))
       && (!q || String(r.userName || '').toLowerCase().includes(q))
       && (!userFilter.length || userFilter.includes(r.userName))
+      && (!coverFilter.length || coveringPeople(r.coverage).some(c => coverFilter.includes(c.name)))
       && (from == null || (new Date(r.startAt).getTime() < to && new Date(r.endAt).getTime() > from)));
     list = sortRecords(list);
     if (highlightDate && !highlightId) {
@@ -77,7 +79,7 @@ export function useAllOooRecords({ highlightDate, highlightId, embedded = false,
       list = [...list.filter(r => on.has(r.id)), ...list.filter(r => !on.has(r.id))];
     }
     return list;
-  }, [records, query, userFilter, status, dateRange, highlightDate, highlightId]);
+  }, [records, query, userFilter, coverFilter, status, dateRange, highlightDate, highlightId]);
   // Never past the last page: deleting the only row on page 2 falls back to
   // page 1 rather than showing an empty table.
   // Opening on one record: jump to its page once, when it's in the list.
@@ -88,10 +90,11 @@ export function useAllOooRecords({ highlightDate, highlightId, embedded = false,
   const pageNow = Math.min(page, lastPage);
   const pageRows = shown.slice((pageNow - 1) * perPage, pageNow * perPage);
   const userOptions = useMemo(() => [...new Set(records.map(r => r.userName))].sort(), [records]);
+  const coverOptions = useMemo(() => [...new Set(records.flatMap(r => coveringPeople(r.coverage).map(c => c.name)).filter(Boolean))].sort(), [records]);
 
-  const filterCount = (dateRange.length === 2 ? 1 : 0) + (isDefaultStatus(status) ? 0 : 1) + (userFilter.length ? 1 : 0);
+  const filterCount = (dateRange.length === 2 ? 1 : 0) + (isDefaultStatus(status) ? 0 : 1) + (userFilter.length ? 1 : 0) + (coverFilter.length ? 1 : 0);
   const resetPage = (fn) => (v) => { fn(v); setPage(1); };
-  const clearFilters = () => { setDateRange([]); setStatus(DEFAULT_STATUS); setUserFilter([]); setPage(1); };
+  const clearFilters = () => { setDateRange([]); setStatus(DEFAULT_STATUS); setUserFilter([]); setCoverFilter([]); setPage(1); };
 
   const tools = (
     <>
@@ -142,6 +145,7 @@ export function useAllOooRecords({ highlightDate, highlightId, embedded = false,
         onChange={(v) => resetPage(setStatus)(v.length ? v : DEFAULT_STATUS)}
       />
       <FilterChip label="User" options={userOptions} selected={userFilter} onChange={resetPage(setUserFilter)} searchable />
+      <FilterChip label="Covering Provider" options={coverOptions} selected={coverFilter} onChange={resetPage(setCoverFilter)} searchable />
       {filterCount > 0 && (
         <button type="button" className={styles.clearAll} onClick={clearFilters}>
           <Icon name="solar:close-circle-linear" size={14} color="var(--primary-300)" />

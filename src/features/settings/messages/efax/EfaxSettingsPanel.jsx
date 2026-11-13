@@ -1,16 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
-import { AvatarGroup } from '../../../../components/AvatarGroup/AvatarGroup';
 import { Button } from '../../../../components/Button/Button';
 import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialog';
 import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { SimpleTableSkeleton } from '../../../../components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { Switch } from '../../../../components/Switch/Switch';
 import { useAppStore } from '../../../../store/useAppStore';
+import { UserBadges } from '../UserBadges';
 import { EfaxNumberDrawer } from './EfaxNumberDrawer';
 import styles from './EfaxSettings.module.css';
-
-const initialsOf = (name) => String(name || '?').split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
 /**
  * Settings > Messages > eFax: the practice's eFax numbers with their linked
@@ -108,18 +106,7 @@ export function EfaxSettingsPanel({ searchQuery = '', editing, setEditing }) {
               <td className={styles.number}>{n.number}</td>
               <td>
                 {n.users.length ? (
-                  <div className={styles.users}>
-                    <AvatarGroup
-                      variant="staff"
-                      size="S"
-                      max={3}
-                      people={n.users.map(u => ({ id: u.id, name: u.name, initials: u.initials || initialsOf(u.name) }))}
-                    />
-                    <span className={styles.usersText}>
-                      {n.users[0].name}
-                      {n.users.length > 1 && <span className={styles.usersMore}> +{n.users.length - 1}</span>}
-                    </span>
-                  </div>
+                  <UserBadges users={n.users} />
                 ) : (
                   <span className={styles.muted}>No users linked</span>
                 )}

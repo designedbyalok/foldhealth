@@ -1,4 +1,5 @@
 .root {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -46,6 +47,7 @@
 }
 
 .row {
+  position: relative;
   display: flex;
   align-items: flex-end;
   gap: var(--space-2);
@@ -240,3 +242,38 @@
 }
 .internal .sendBtn:hover:not(:disabled) { background: var(--secondary-50); }
 .internal .sendDivider { background: var(--secondary-200); }
+
+/* @mention suggestions: right above the box, starting at the "@" (left is
+   set inline), 350px wide. */
+.mentions {
+  position: absolute;
+  width: 350px;
+  max-width: 100%;
+  bottom: calc(100% + var(--space-1));
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  max-height: 20rem;
+  overflow-y: auto;
+  padding: var(--space-1);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-popover);
+}
+.mention {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--space-1);
+  cursor: pointer;
+}
+.mentionActive { background: var(--primary-25); }
+.mentionText { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); min-width: 0; line-height: var(--leading-tight); }
+.mentionName { font-size: var(--font-base); color: var(--neutral-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mentionKind { font-size: var(--font-sm); color: var(--neutral-300); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mentionGroup { padding: var(--space-2) var(--space-2) var(--space-1); font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300); }
+.mentionNameRow { display: flex; align-items: center; gap: var(--space-1); min-width: 0; }
+.mentionNameRow > :last-child:not(.mentionName) { margin-block: calc(var(--space-1) / -2); }

@@ -275,7 +275,6 @@ export function SnpWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
   const openCarePlanReview = useAppStore(s => s.openCarePlanReview);
   const navigateToPatient = useAppStore(s => s.navigateToPatient);
   const openCallPopover = useAppStore(s => s.openCallPopover);
-  const requestAddTask = useAppStore(s => s.requestAddTask);
   const setSnpProgramSubStatus = useAppStore(s => s.setSnpProgramSubStatus);
   const setSnpAssignee = useAppStore(s => s.setSnpAssignee);
   const platformUsers = useAppStore(s => s.platformUsers);
@@ -344,7 +343,6 @@ export function SnpWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
   const handleMenuSelect = (key) => {
     if (runPatientRowAction(key, m)) return;
     if (key === 'View Program') { openInCareProgram(); return; }
-    if (key === 'Add Task') { requestAddTask?.({ member: m.name }); return; }
     if (key === 'Edit Details') {
       openPatientEdit('basic', {
         id: m.patientId || m.id,

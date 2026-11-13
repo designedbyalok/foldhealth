@@ -215,7 +215,6 @@ export function WorklistRow({ patient, columns, hiddenSet, isSelected, onSelect 
   const openDetail = useAppStore(s => s.openDetail);
   const openLiveDrawer = useAppStore(s => s.openLiveDrawer);
   const showToast = useAppStore(s => s.showToast);
-  const requestAddTask = useAppStore(s => s.requestAddTask);
   const platformUsers = useAppStore(s => s.platformUsers);
   const updatePatient = useAppStore(s => s.updatePatient);
   const openPatientEdit = useAppStore(s => s.openPatientEdit);
@@ -276,7 +275,6 @@ export function WorklistRow({ patient, columns, hiddenSet, isSelected, onSelect 
   const runPatientRowAction = useAppStore(s => s.runPatientRowAction);
   const handleMenuSelect = (key) => {
     if (runPatientRowAction(key, p)) return;
-    if (key === 'Add Task') { requestAddTask({ member: p.name }); return; }
     if (key === 'Cancel Call') { showToast('Cancelled call'); return; }
     if (key === 'Edit Details') { openPatientEdit('basic', p); return; }
     showToast(`${key} – coming soon`);
