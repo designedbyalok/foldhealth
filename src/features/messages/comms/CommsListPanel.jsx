@@ -16,9 +16,11 @@ import { CHANNEL_META, initialsOf, isMissedCall } from './commsUtils';
 import { CommsListEmpty } from './CommsEmptyState';
 import { CommsListHeader } from './CommsListHeader';
 import { updateConversation, markConversationRead, deleteConversation, listStaffSends, subscribeComms } from './commsRepo';
-import { CommsFilterDrawer } from './CommsFilterDrawer';
-import { EMPTY_COMMS_FILTERS, commsFiltersActive, dateWindow, lastStaffSenders } from './commsFilters';
-import { collaboratorsOf, inboxOf } from './commsInboxes';
+import { FilterChip } from '../../../components/FilterChip/FilterChip';
+import { DateRangeFilter } from '../../../components/DateRangeFilter/DateRangeFilter';
+import { inDatePreset } from '../../../components/DateRangeFilter/dateRangePresets';
+import { EMPTY_COMMS_FILTERS, commsFiltersActive, lastStaffSenders } from './commsFilters';
+import { collaboratorsOf, inboxLabel, inboxOf } from './commsInboxes';
 import { isAutoReply } from './oooAutoReply';
 import { useCovering } from '../../ooo/useCovering';
 import { sameName } from '../../ooo/oooUtils';
@@ -50,10 +52,10 @@ export function CommsListPanel({
   const [query, setQuery] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState(EMPTY_COMMS_FILTERS);
-  // The date window is fixed when the filters are applied, not each render.
-  const [dateRange, setDateRange] = useState(null);
-  const applyFilters = (f) => { setFilters(f); setDateRange(dateWindow(f)); };
+  const setFilter = (patch) => setFilters(f => ({ ...f, ...patch }));
   const { channels } = filters;
+  // The date window is fixed when the date filter is picked, not each render.
+  const inDate = useMemo(() => inDatePreset(filters.datePreset, filters.dateRange), [filters.datePreset, filters.dateRange]);
   // Covering for: conversations whose inbox has someone I'm covering as a
   // collaborator (the inbox's assignees). A thread with no inbox (Chat) goes
   // by the last staff member who wrote to the patient, as for the auto-reply;
@@ -70,6 +72,7 @@ export function CommsListPanel({
   const listInboxChannels = channel === 'all' ? ['sms', 'email'] : [channel];
   const inboxOptions = inboxes.filter(i => listInboxChannels.includes(i.channel));
   const inboxById = useMemo(() => new Map(inboxes.map(i => [i.id, i])), [inboxes]);
+  const inboxPicked = inboxById.get(filters.inbox);
   const coversThread = (c, name) => {
     const inbox = inboxById.get(inboxOf(c, inboxSample));
     if (inbox) return collaboratorsOf(inbox, platformUsers || []).some(u => sameName(u.name, name));
@@ -120,10 +123,7 @@ export function CommsListPanel({
     if (tab === 'unanswered' && !isMissedCall(c)) return false;
     if (tab === 'pinned' && !c.pinned) return false;
     if (channels.length && !channels.some(k => CHANNEL_FILTER[k] === c.channel)) return false;
-    if (dateRange) {
-      const t = new Date(c.last_message_at).getTime();
-      if (t < dateRange.from || t >= dateRange.to) return false;
-    }
+    if (filters.datePreset && !inDate(c.last_message_at)) return false;
     if (coveringOn && !filters.covering.some(n => coversThread(c, n))) return false;
     if (filters.inbox && inboxOf(c, inboxSample) !== filters.inbox) return false;
     if (!q) return true;
@@ -149,7 +149,7 @@ export function CommsListPanel({
         bulkActive={bulk}
         onBulk={() => { setBulk(v => !v); setPicked([]); }}
         filterActive={filterOpen || commsFiltersActive(filters)}
-        onFilter={() => setFilterOpen(true)}
+        onFilter={() => setFilterOpen(v => !v)}
       />
 
       <div className={listStyles.convTabs}>
@@ -157,14 +157,33 @@ export function CommsListPanel({
       </div>
 
       {filterOpen && (
-        <CommsFilterDrawer
-          value={filters}
-          onApply={applyFilters}
-          onClose={() => setFilterOpen(false)}
-          channels={mixed ? Object.keys(CHANNEL_FILTER) : []}
-          coveringNames={coveringNames}
-          inboxes={inboxOptions}
-        />
+        <div className={styles.filterRow}>
+          <DateRangeFilter
+            label="Date"
+            preset={filters.datePreset}
+            range={filters.dateRange}
+            onChange={(datePreset, dateRange) => setFilter({ datePreset, dateRange: dateRange || [] })}
+          />
+          {inboxOptions.length > 0 && (
+            <FilterChip
+              label="Inbox"
+              singleSelect
+              options={inboxOptions.map(inboxLabel)}
+              selected={inboxPicked ? [inboxLabel(inboxPicked)] : []}
+              onChange={(next) => setFilter({ inbox: inboxOptions.find(i => inboxLabel(i) === next[0])?.id || null })}
+            />
+          )}
+          {mixed && <FilterChip label="Channel" options={Object.keys(CHANNEL_FILTER)} selected={channels} onChange={v => setFilter({ channels: v })} />}
+          {coveringNames.length > 0 && (
+            <FilterChip
+              label="Covering for"
+              searchable={coveringNames.length > 8}
+              options={coveringNames}
+              selected={filters.covering}
+              onChange={v => setFilter({ covering: v })}
+            />
+          )}
+        </div>
       )}
 
       {searchOpen && (
