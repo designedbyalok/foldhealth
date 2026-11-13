@@ -13,7 +13,8 @@ import { Icon } from '../../components/Icon/Icon';
 import { SimpleTableSkeleton } from '../../components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { openMeasureYears } from './data/caregapWhitelistMock';
 import { STATUS_BADGE_VARIANT } from './HedisWorklistRow';
-import { notApplicableReason } from './gapEligibility';
+import { applicabilityLabel, notApplicableReason } from './gapEligibility';
+import { HoverCard } from '../../components/HoverCard/HoverCard';
 import styles from './AddCareGapsDrawer.module.css';
 
 const isClosed = (status) => status === 'Completed' || String(status || '').startsWith('Closed');
@@ -219,12 +220,8 @@ export function AddCareGapsDrawer() {
     () => whitelist.filter(w => appliesTo(w, { ipa, hpCode, measureYear })),
     [whitelist, ipa, hpCode, measureYear],
   );
-  // Measures that don't apply to this patient (sex, age) aren't offered;
-  // a note under the list says which and why.
-  const notApplicable = contractGaps
-    .map(w => ({ w, reason: notApplicableReason(w, liveMember, measureYear) }))
-    .filter(x => x.reason);
-  const whitelisted = contractGaps.filter(w => !notApplicable.some(x => x.w === w));
+  // Measures that don't apply to this patient (sex, age) aren't offered.
+  const whitelisted = contractGaps.filter(w => !notApplicableReason(w, liveMember, measureYear));
   // A gap that is open or already met this measure year can't be added
   // again: it stays in the list with its status, but can't be selected.
   const eligible = whitelisted.filter(w => {
@@ -335,17 +332,46 @@ export function AddCareGapsDrawer() {
 
         <section className={styles.section}>
           <div className={styles.listHead}>
-            <span className={styles.label}>Care Gaps<span className={styles.req}>•</span></span>
-            <span className={styles.count}>{picked.length} selected</span>
+            <span className={styles.labelWithInfo}>
+              <span className={styles.label}>Care Gaps</span>
+              {/* Who each measure applies to: the list only offers the ones
+                  that fit this patient's sex and age. */}
+              <HoverCard
+                trigger={(
+                  <span className={styles.infoTrigger} aria-label="Who each care gap applies to">
+                    <Icon name="solar:info-circle-linear" size={14} color="var(--neutral-300)" />
+                  </span>
+                )}
+                width={320}
+                ariaLabel="Who each care gap applies to"
+              >
+                <div className={styles.applyCard}>
+                  <span className={styles.applyIntro}>Only care gaps that apply to this patient are listed. Each one applies to:</span>
+                  <ul className={styles.applyList}>
+                    {contractGaps.toSorted((a, b) => a.code.localeCompare(b.code)).map(w => (
+                      <li key={w.id} className={styles.applyItem}>
+                        <span className={styles.applyCode}>{w.code}</span>
+                        <span>{applicabilityLabel(w)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </HoverCard>
+              <span className={styles.req}>•</span>
+            </span>
+            {whitelisted.length > 0 && <span className={styles.count}>{picked.length} selected</span>}
           </div>
-          <SearchBar value={query} onChange={(e) => setQuery(e.target.value)} autoFocus={false} fullWidth placeholder="Search by measure code or name" />
+          {/* Nothing to search when no gap applies to this patient. */}
+          {(loading || whitelisted.length > 0) && (
+            <SearchBar value={query} onChange={(e) => setQuery(e.target.value)} autoFocus={false} fullWidth placeholder="Search by measure code or name" />
+          )}
           {loading ? (
             <SimpleTableSkeleton rows={5} cols={2} />
           ) : visible.length === 0 ? (
             <div className={styles.empty}>
               {whitelisted.length === 0
-                ? `No care gaps are whitelisted for ${ipa || 'this IPA'} · ${hpCode || 'this HP code'} · ${measureYear}.`
-                : 'No whitelisted care gaps match your search.'}
+                ? `No care gaps can be added for this patient in ${measureYear}.`
+                : 'No care gaps match your search.'}
             </div>
           ) : (
             <div className={styles.list}>
@@ -363,11 +389,6 @@ export function AddCareGapsDrawer() {
                 />
               ))}
             </div>
-          )}
-          {!loading && notApplicable.length > 0 && (
-            <span className={styles.helper}>
-              Not shown for this patient: {notApplicable.map(x => `${x.w.code} (${x.reason})`).join(', ')}.
-            </span>
           )}
         </section>
 
