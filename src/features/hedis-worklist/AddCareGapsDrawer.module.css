@@ -208,3 +208,15 @@
   border-bottom: 0.5px solid var(--neutral-150);
 }
 .lockNote { font-size: var(--font-sm); color: var(--neutral-300); white-space: nowrap; }
+
+/* Care Gaps title with the "who each gap applies to" info card. */
+.labelWithInfo { display: inline-flex; align-items: center; gap: var(--space-1); }
+.infoTrigger { display: inline-flex; align-items: center; cursor: help; }
+.applyCard { display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--font-sm); color: var(--neutral-400); }
+.applyIntro { color: var(--neutral-300); line-height: 1.4; }
+.applyList { display: flex; flex-direction: column; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.applyItem { display: grid; grid-template-columns: calc(var(--space-12) + var(--space-2)) 1fr; gap: var(--space-2); }
+.applyCode { font-weight: 500; }
+/* The dot sits after the info icon here, outside the label, so it takes the
+   label's size itself; the row gap already spaces it. */
+.labelWithInfo .req { font-size: var(--font-md); line-height: 1.2; margin-left: 0; }

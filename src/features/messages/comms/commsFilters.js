@@ -33,3 +33,17 @@ export function dateWindow(f, now = new Date()) {
   if (f.date === 'month') return { from: today - 29 * 86400000, to: Infinity };
   return null;
 }
+
+/**
+ * Covering for, threads with no inbox: the staff member who last wrote to the
+ * patient in each conversation (Out of Office auto-replies don't count).
+ * `rows` are listStaffSends rows, newest first. Returns conversation id → name.
+ */
+export function lastStaffSenders(rows = []) {
+  const last = new Map();
+  rows.forEach((r) => {
+    if (last.has(r.conversation_id) || r.auto_reply === 'true' || !r.sender_name) return;
+    last.set(r.conversation_id, r.sender_name);
+  });
+  return last;
+}

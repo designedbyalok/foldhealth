@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ageAtYearEnd, notApplicableReason } from './gapEligibility';
+import { ageAtYearEnd, applicabilityLabel, notApplicableReason } from './gapEligibility';
 
 const BCS = { code: 'BCS', sex: 'F', ageMin: 40, ageMax: 74 };
 const COL = { code: 'COL', ageMin: 45, ageMax: 75 };
@@ -16,5 +16,13 @@ describe('gap eligibility', () => {
   it('keeps a measure that applies, or when sex and age are unknown', () => {
     expect(notApplicableReason(BCS, { gender: 'F', dob: '01/01/1960' }, 2026)).toBe(null);
     expect(notApplicableReason(BCS, {}, 2026)).toBe(null);
+  });
+});
+
+describe('applicabilityLabel', () => {
+  it('names who a measure applies to', () => {
+    expect(applicabilityLabel(BCS)).toBe('Female patients, ages 40–74');
+    expect(applicabilityLabel(COL)).toBe('Ages 45–75');
+    expect(applicabilityLabel({ code: 'X' })).toBe('All patients');
   });
 });

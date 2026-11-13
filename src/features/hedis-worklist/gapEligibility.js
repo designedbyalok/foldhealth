@@ -16,6 +16,12 @@ export function ageAtYearEnd(member, measureYear) {
 const ageRange = (w) => (w.ageMin != null && w.ageMax != null ? `ages ${w.ageMin}–${w.ageMax}`
   : w.ageMin != null ? `ages ${w.ageMin}+` : w.ageMax != null ? `up to age ${w.ageMax}` : null);
 
+// Who the measure applies to, e.g. "Female, ages 40–74" or "All patients".
+export function applicabilityLabel(w) {
+  const text = [w.sex ? `${SEX_LABEL[w.sex]} patients` : null, ageRange(w)].filter(Boolean).join(', ');
+  return text ? text[0].toUpperCase() + text.slice(1) : 'All patients';
+}
+
 // Why the measure doesn't apply to this patient, or null when it does (or
 // when the patient's sex / age isn't known, so nothing is hidden on a guess).
 export function notApplicableReason(w, member, measureYear) {
