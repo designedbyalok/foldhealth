@@ -16,11 +16,10 @@ import { CHANNEL_META, initialsOf, isMissedCall } from './commsUtils';
 import { CommsListEmpty } from './CommsEmptyState';
 import { CommsListHeader } from './CommsListHeader';
 import { updateConversation, markConversationRead, deleteConversation, listStaffSends, subscribeComms } from './commsRepo';
-import { FilterChip } from '../../../components/FilterChip/FilterChip';
-import { DateRangeFilter } from '../../../components/DateRangeFilter/DateRangeFilter';
 import { inDatePreset } from '../../../components/DateRangeFilter/dateRangePresets';
 import { EMPTY_COMMS_FILTERS, commsFiltersActive, lastStaffSenders } from './commsFilters';
-import { collaboratorsOf, inboxLabel, inboxOf } from './commsInboxes';
+import { collaboratorsOf, inboxOf } from './commsInboxes';
+import { CommsFilterChips } from './CommsFilterChips';
 import { isAutoReply } from './oooAutoReply';
 import { useCovering } from '../../ooo/useCovering';
 import { sameName } from '../../ooo/oooUtils';
@@ -72,7 +71,6 @@ export function CommsListPanel({
   const listInboxChannels = channel === 'all' ? ['sms', 'email'] : [channel];
   const inboxOptions = inboxes.filter(i => listInboxChannels.includes(i.channel));
   const inboxById = useMemo(() => new Map(inboxes.map(i => [i.id, i])), [inboxes]);
-  const inboxPicked = inboxById.get(filters.inbox);
   const coversThread = (c, name) => {
     const inbox = inboxById.get(inboxOf(c, inboxSample));
     if (inbox) return collaboratorsOf(inbox, platformUsers || []).some(u => sameName(u.name, name));
@@ -157,33 +155,13 @@ export function CommsListPanel({
       </div>
 
       {filterOpen && (
-        <div className={styles.filterRow}>
-          <DateRangeFilter
-            label="Date"
-            preset={filters.datePreset}
-            range={filters.dateRange}
-            onChange={(datePreset, dateRange) => setFilter({ datePreset, dateRange: dateRange || [] })}
-          />
-          {inboxOptions.length > 0 && (
-            <FilterChip
-              label="Inbox"
-              singleSelect
-              options={inboxOptions.map(inboxLabel)}
-              selected={inboxPicked ? [inboxLabel(inboxPicked)] : []}
-              onChange={(next) => setFilter({ inbox: inboxOptions.find(i => inboxLabel(i) === next[0])?.id || null })}
-            />
-          )}
-          {mixed && <FilterChip label="Channel" options={Object.keys(CHANNEL_FILTER)} selected={channels} onChange={v => setFilter({ channels: v })} />}
-          {coveringNames.length > 0 && (
-            <FilterChip
-              label="Covering for"
-              searchable={coveringNames.length > 8}
-              options={coveringNames}
-              selected={filters.covering}
-              onChange={v => setFilter({ covering: v })}
-            />
-          )}
-        </div>
+        <CommsFilterChips
+          filters={filters}
+          onChange={setFilter}
+          inboxes={inboxOptions}
+          channels={mixed ? Object.keys(CHANNEL_FILTER) : []}
+          coveringNames={coveringNames}
+        />
       )}
 
       {searchOpen && (

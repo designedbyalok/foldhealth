@@ -9,7 +9,7 @@ import listStyles from '../MessagesView.module.css';
 import commsStyles from '../comms/Comms.module.css';
 import { formatTime } from '../messageUtils';
 import { CommsListHeader } from '../comms/CommsListHeader';
-import { CommsFilterDrawer } from '../comms/CommsFilterDrawer';
+import { CommsFilterChips } from '../comms/CommsFilterChips';
 import { useCommsFilters, useEfaxInboxes } from '../comms/useCommsFilters';
 import { CommsListEmpty, CommsPanelEmpty } from '../comms/CommsEmptyState';
 import { useCommsPeople } from '../comms/useCommsPeople';
@@ -101,20 +101,14 @@ export function EfaxWorkspace({ navCollapsed, onToggleNav }) {
           searchActive={searchOpen}
           onSearch={() => { setSearchOpen(v => !v); setQuery(''); }}
           filterActive={filt.open || filt.active}
-          onFilter={() => filt.setOpen(true)}
+          onFilter={() => filt.setOpen(v => !v)}
         />
-        {filt.open && (
-          <CommsFilterDrawer
-            value={filt.filters}
-            onApply={filt.apply}
-            onClose={() => filt.setOpen(false)}
-            inboxes={efaxInboxes}
-            coveringNames={filt.coveringNames}
-          />
-        )}
         <div className={listStyles.convTabs}>
           <SegmentedControl items={TABS} value={tab} onValueChange={setTab} size="sm" />
         </div>
+        {filt.open && (
+          <CommsFilterChips filters={filt.filters} onChange={filt.setFilter} inboxes={efaxInboxes} coveringNames={filt.coveringNames} />
+        )}
         {searchOpen && (
           <div className={styles.listSearch}>
             <SearchBar

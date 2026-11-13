@@ -16,7 +16,7 @@ import { useCommsPeople } from '../comms/useCommsPeople';
 import { CommsListEmpty, CommsPanelEmpty } from '../comms/CommsEmptyState';
 import { CommsListHeader } from '../comms/CommsListHeader';
 import { markConversationRead, updateConversation } from '../comms/commsRepo';
-import { CommsFilterDrawer } from '../comms/CommsFilterDrawer';
+import { CommsFilterChips } from '../comms/CommsFilterChips';
 import { useCommsFilters } from '../comms/useCommsFilters';
 import { collaboratorsOf, inboxOf } from '../comms/commsInboxes';
 import { BulkBar } from '../../../components/BulkBar/BulkBar';
@@ -180,7 +180,7 @@ export function EmailWorkspace({ onCompose, selectConversationId, onSelectedConv
           bulkActive={bulk}
           onBulk={() => { setBulk(v => !v); setPicked([]); }}
           filterActive={f.open || f.active}
-          onFilter={() => f.setOpen(true)}
+          onFilter={() => f.setOpen(v => !v)}
         />
         <div className={listStyles.convTabs}>
           <SegmentedControl
@@ -191,13 +191,7 @@ export function EmailWorkspace({ onCompose, selectConversationId, onSelectedConv
           />
         </div>
         {f.open && (
-          <CommsFilterDrawer
-            value={f.filters}
-            onApply={f.apply}
-            onClose={() => f.setOpen(false)}
-            inboxes={emailInboxes}
-            coveringNames={f.coveringNames}
-          />
+          <CommsFilterChips filters={f.filters} onChange={f.setFilter} inboxes={emailInboxes} coveringNames={f.coveringNames} />
         )}
         {searchOpen && (
           <div className={styles.search}>
