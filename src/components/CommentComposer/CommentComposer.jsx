@@ -222,7 +222,8 @@ export function CommentComposer({
     const suggested = users
       .filter(u => !u.out && !u.disabled && covering.has(u.name))
       .map(u => ({ ...u, coveringFor: covering.get(u.name), group: 'Suggested' }));
-    const rest = enabled.filter(u => !top.includes(u) && !covering.has(u.name));
+    const topSet = new Set(top);
+    const rest = enabled.filter(u => !topSet.has(u) && !covering.has(u.name));
     const head = [...top, ...suggested];
     const tail = usersProp ? [...rest, ...disabled] : rest.slice(0, 8);
     if (head.length && tail.length) tail[0] = { ...tail[0], group: 'All' };

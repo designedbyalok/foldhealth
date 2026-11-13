@@ -132,6 +132,7 @@ export function MessageComposer({
     <div
       key={m.id}
       role="option"
+      tabIndex={-1}
       aria-selected={index === mentionIndex}
       className={index === mentionIndex ? `${styles.mention} ${styles.mentionActive}` : styles.mention}
       // Keep the text box focused while picking.
