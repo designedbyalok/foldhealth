@@ -30,6 +30,7 @@ import { StatusIcon } from './StatusIcon';
 import { staffById, ROLE_LABEL, ROLES } from './assignment/astranaStaff';
 import { RoleAssigneePicker } from './RoleAssigneePicker';
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
+import { activeOooFor, initialsOf } from '../ooo/oooUtils';
 import { ReviewProgressPopover } from './DiagPanel/ReviewProgressPopover';
 import { buildReviewStages } from './DiagPanel/ReviewProgressPopover.utils';
 import { createPortal } from 'react-dom';
@@ -370,6 +371,9 @@ export function RoleStatusCell({ name, status, date, role, memberId, dosDate, pr
  * assigned step that isn't Completed yet.
  */
 export function RolePicker({ role, memberId, dosDate, current }) {
+  // Names only here, except someone out of office: their avatar carries the
+  // Out of Office badge (and "You're covering" when it's you covering).
+  const away = useAppStore(s => (current?.name ? activeOooFor(s.oooRecords, current.name) : null));
   return (
     <RoleAssigneePicker
       role={role}
@@ -379,8 +383,10 @@ export function RolePicker({ role, memberId, dosDate, current }) {
       trigger={({ ref, onClick }) => (current ? (
         <AssigneeChange
           ref={ref}
-          hideAvatar
+          hideAvatar={!away}
           name={current.name}
+          initials={initialsOf(current.name)}
+          oooUser={away ? { name: current.name } : undefined}
           showRole={false}
           onClick={onClick}
           ariaLabel={`Change ${ROLE_LABEL[role] || role} assignee (currently ${current.name})`}

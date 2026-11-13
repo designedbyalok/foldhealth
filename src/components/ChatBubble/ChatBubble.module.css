@@ -316,6 +316,23 @@
   white-space: nowrap;
 }
 
+/* ── Out of Office auto-reply: an outgoing bubble, dashed magenta ── */
+.bubbleAutoReply {
+  background: color-mix(in srgb, var(--accent-magenta) 6%, var(--neutral-0));
+  border: 0.5px dashed var(--accent-magenta);
+  color: var(--neutral-400);
+}
+.bubbleAutoReply .inlineLink { color: var(--status-info-dark, var(--status-info)); }
+.autoReplyBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--accent-magenta);
+}
+
 /* ── Missed call marker ── */
 .missed {
   display: flex;

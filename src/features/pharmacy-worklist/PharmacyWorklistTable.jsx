@@ -288,7 +288,6 @@ export function PharmacyWorklistTable() {
                   isSelected={selectedIds.has(m.id)}
                   onSelect={toggleSelected}
                   onOpenCareGap={(hedisMemberId, code) => setCareGap({ hedisMemberId, code })}
-                  coveringFor={coveringPicked.length ? covering.coveringOn([m.assigneeName], coveringPicked) : undefined}
                 />
               ))}
             </tbody>

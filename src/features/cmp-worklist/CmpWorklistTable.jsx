@@ -144,10 +144,9 @@ export function CmpWorklistTable() {
         nextActionDueSort: minOf(list, 'nextActionDueSort'),
         programStartSort: minOf(list, 'programStartSort'),
         programDueSort: minOf(list, 'programDueSort'),
-        coveringFor: coveringPicked.length ? covering.coveringOn(list.flatMap(ownerNames), coveringPicked) : [],
       };
     });
-  }, [filtered, coveringPicked, covering]);
+  }, [filtered]);
 
   const { sorted, sortKey, sortDir, requestSort } = useTableSort(grouped, 'nextActionDueSort', 'asc');
 

@@ -12,7 +12,6 @@ import { formatDobDisplay, deriveDob } from '../../lib/patientDob';
 import { useAppStore } from '../../store/useAppStore';
 import { worklistMemberCallId } from '../../lib/patientCall';
 import { FoldIdTag } from '../../components/FoldIdTag/FoldIdTag';
-import { CoveringNote } from '../ooo/CoveringNote';
 import styles from './JsaWorklistRow.module.css';
 import { OutreachStatus } from '../../components/OutreachStatus/OutreachStatus';
 import { outreachFromCount } from '../../components/OutreachStatus/outreachStatusModel';
@@ -122,6 +121,7 @@ export const JSA_MIDDLE_COLUMNS = [
         <AssigneeChange
           name={member.assignee}
           initials={member.assigneeIn}
+          oooUser={{ name: member.assignee }}
           showRole={false}
           onClick={() => ctx.showToast(`Change assignee for ${member.name}, coming soon`)}
         />
@@ -195,7 +195,7 @@ export const JSA_MIDDLE_COLUMNS = [
   },
 ];
 
-export function JsaWorklistRow({ member, columns, hiddenSet, selected, onToggle, onView, showToast, coveringFor }) {
+export function JsaWorklistRow({ member, columns, hiddenSet, selected, onToggle, onView, showToast }) {
   const updateJsaMemberStatus = useAppStore(s => s.updateJsaMemberStatus);
   const openQuickView = useAppStore(s => s.openQuickView);
   const openCallPopover = useAppStore(s => s.openCallPopover);
@@ -261,7 +261,6 @@ export function JsaWorklistRow({ member, columns, hiddenSet, selected, onToggle,
                 </button>
               </Tooltip>
             </div>
-            <CoveringNote people={coveringFor} />
           </div>
         </div>
       </td>

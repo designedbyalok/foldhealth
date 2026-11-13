@@ -20,7 +20,7 @@ export const TASK_CARDS = [
 ];
 
 // "MM-DD-YYYY" or "MM/DD/YYYY" (or ISO) → the end of that day (ms), or NaN.
-function dueEnd(due) {
+export function dueEnd(due) {
   const m = /^(\d{2})[-/](\d{2})[-/](\d{4})$/.exec(String(due || ''));
   const d = m ? new Date(+m[3], +m[1] - 1, +m[2]) : new Date(due);
   if (Number.isNaN(d.getTime())) return NaN;

@@ -7,6 +7,8 @@ import { CommsThread } from './CommsThread';
 import { PatientEmailThread } from './PatientEmailThread';
 import { CommsPanelEmpty } from './CommsEmptyState';
 import { pollInboundSms, SMS_VIA_GATEWAY } from './commsSend';
+import { watchOooAutoReplies } from './oooAutoReply';
+import { useAppStore } from '../../../store/useAppStore';
 import { patientFor, isMissedCall } from './commsUtils';
 import styles from './Comms.module.css';
 
@@ -64,6 +66,9 @@ export function CommsWorkspace({
     setNavWasCollapsed(navCollapsed);
     if (!navCollapsed && profile) { setProfile(null); setNavWasOpen(false); }
   }
+
+  // A patient writing to someone out of office gets their auto-reply, once.
+  useEffect(() => watchOooAutoReplies(() => useAppStore.getState().oooRecords || []), []);
 
   useEffect(() => {
     if (!smsInView) return undefined;

@@ -12,7 +12,6 @@ import { worklistMemberCallId } from '../../lib/patientCall';
 import { clinicalRolesPickerLabel } from '../../lib/worklistAssignee';
 import { PharmacyActivityDrawer } from './program/PharmacyActivityLog';
 import { MANUAL_GAP_STATUSES, contactCallTarget, isReversalReopen, pharmaciesUsed, prescribersOf } from './pharmacyWorklist.utils';
-import { CoveringNote } from '../ooo/CoveringNote';
 import styles from './PharmacyWorklistRow.module.css';
 
 const MAX_INLINE_GAPS = 2;
@@ -20,7 +19,7 @@ const MAX_INLINE_GAPS = 2;
 const HCC_ONLY_ROLES = new Set(['Coder', 'Support', 'QA', 'Compliance']);
 const LANG_MAP = { en: 'English', es: 'Spanish', zh: 'Chinese', yue: 'Cantonese', ko: 'Korean', vi: 'Vietnamese', hi: 'Hindi', pa: 'Punjabi' };
 
-export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, onSelect, onOpenCareGap, coveringFor }) {
+export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, onSelect, onOpenCareGap }) {
   const openQuickView = useAppStore(s => s.openQuickView);
   const openCallPopover = useAppStore(s => s.openCallPopover);
   const openNumberCallPopover = useAppStore(s => s.openNumberCallPopover);
@@ -172,7 +171,6 @@ export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, on
                 </button>
               </Tooltip>
             </div>
-            <CoveringNote people={coveringFor} />
           </div>
         </div>
       </td>

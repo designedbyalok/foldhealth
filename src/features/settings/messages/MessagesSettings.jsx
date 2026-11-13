@@ -3,6 +3,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { SectionTitleBar } from '../../../components/SectionTitleBar/SectionTitleBar';
 import { ChatSettingsPanel } from './ChatSettingsPanel';
 import { EfaxSettingsPanel } from './efax/EfaxSettingsPanel';
+import { InboxesSettingsPanel } from './inboxes/InboxesSettingsPanel';
 import { useAppStore } from '../../../store/useAppStore';
 import styles from '../agents/AgentsTable.module.css';
 
@@ -24,10 +25,14 @@ export function MessagesSettings() {
   const [efaxSearchQuery, setEfaxSearchQuery] = useState('');
   // eFax number being added ('new') or edited; null when the drawer is closed.
   const [efaxEditing, setEfaxEditing] = useState(null);
+  const [inboxSearchQuery, setInboxSearchQuery] = useState('');
+  // Inbox being added ('new') or edited; null when the drawer is closed.
+  const [inboxEditing, setInboxEditing] = useState(null);
 
   const activeTabLabel = TAB_MAP[messageTab] || 'Chat Settings';
   const isChatSettings = messageTab === 'chat-settings';
   const isEfax = messageTab === 'efax';
+  const isInboxes = messageTab === 'inboxes';
 
   // Chat groups back the Chat Settings tab only, placeholder tabs
   // (Inboxes / Template Responses) and eFax must not trigger the query, and
@@ -45,12 +50,12 @@ export function MessagesSettings() {
         tabs={TABS}
         activeTab={messageTab}
         onTabChange={setMessageTab}
-        actions={isChatSettings || isEfax ? ['search'] : []}
-        searchPlaceholder={isEfax ? 'Search eFax numbers…' : 'Search groups…'}
-        searchValue={isEfax ? efaxSearchQuery : chatSearchQuery}
-        onSearchChange={isEfax ? setEfaxSearchQuery : setChatSearchQuery}
-        primaryActionLabel={isChatSettings ? 'Add/Update Group' : isEfax ? 'Add eFax' : undefined}
-        onPrimaryAction={() => (isEfax ? setEfaxEditing('new') : setChatGroupDetailId('new'))}
+        actions={isChatSettings || isEfax || isInboxes ? ['search'] : []}
+        searchPlaceholder={isEfax ? 'Search eFax numbers…' : isInboxes ? 'Search inboxes…' : 'Search groups…'}
+        searchValue={isEfax ? efaxSearchQuery : isInboxes ? inboxSearchQuery : chatSearchQuery}
+        onSearchChange={isEfax ? setEfaxSearchQuery : isInboxes ? setInboxSearchQuery : setChatSearchQuery}
+        primaryActionLabel={isChatSettings ? 'Add/Update Group' : isEfax ? 'Add eFax' : isInboxes ? 'New Inbox' : undefined}
+        onPrimaryAction={() => (isEfax ? setEfaxEditing('new') : isInboxes ? setInboxEditing('new') : setChatGroupDetailId('new'))}
       />
 
       <div className={styles.tableWrap}>
@@ -58,6 +63,8 @@ export function MessagesSettings() {
           <ChatSettingsPanel searchQuery={chatSearchQuery} />
         ) : isEfax ? (
           <EfaxSettingsPanel searchQuery={efaxSearchQuery} editing={efaxEditing} setEditing={setEfaxEditing} />
+        ) : isInboxes ? (
+          <InboxesSettingsPanel searchQuery={inboxSearchQuery} editing={inboxEditing} setEditing={setInboxEditing} />
         ) : (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
             <div style={{ textAlign: 'center' }}>

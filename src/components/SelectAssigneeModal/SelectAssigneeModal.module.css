@@ -81,6 +81,7 @@
 }
 .name {
   font-size: var(--font-base);
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -121,3 +122,7 @@
 .rowDisabled:hover { background: transparent; }
 .muted { color: var(--placeholder-text); }
 .note { font-size: var(--font-sm); color: var(--neutral-300); }
+/* A name with its Out of Office badge right after it. */
+.nameRow { display: flex; align-items: center; gap: var(--space-1); min-width: 0; }
+/* The badge is taller than the name; let it overhang so the role keeps the usual gap. */
+.nameRow > :last-child { margin-block: calc(var(--space-1) / -2); }

@@ -114,6 +114,9 @@ export const Select = forwardRef(function Select({
   badges = false,
   portal = false,
   defaultOpen = false,
+  // Single select: while something is picked (and the menu is closed), the
+  // chevron becomes an ✕ that clears it (onValueChange(null)).
+  clearable = false,
   ...rest
 }, ref) {
   if (legacyOnChange && !onValueChange) warnDeprecated('Select', 'onChange', true, 'onValueChange');
@@ -460,12 +463,26 @@ export const Select = forwardRef(function Select({
               : (selected ? (selected.triggerLabel ?? selected.label) : placeholder)}
           </span>
         )}
-        <DownChevronIcon
-          size={14}
-          color={disabled ? 'var(--neutral-150)' : 'var(--neutral-300)'}
-          className={open ? styles.chevronOpen : styles.chevron}
-          {...(searchable ? { onClick: (e) => { e.stopPropagation(); if (!disabled) setOpen(o => !o); } } : {})}
-        />
+        {clearable && !multiple && !disabled && !open && selected ? (
+          <span
+            role="button"
+            tabIndex={0}
+            aria-label="Clear selection"
+            title="Clear selection"
+            className={styles.clear}
+            onClick={(e) => { e.stopPropagation(); onChange(null); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onChange(null); } }}
+          >
+            <CloseIcon size={14} />
+          </span>
+        ) : (
+          <DownChevronIcon
+            size={14}
+            color={disabled ? 'var(--neutral-150)' : 'var(--neutral-300)'}
+            className={open ? styles.chevronOpen : styles.chevron}
+            {...(searchable ? { onClick: (e) => { e.stopPropagation(); if (!disabled) setOpen(o => !o); } } : {})}
+          />
+        )}
       </TriggerTag>
       {open && renderMenu(
         <Listbox

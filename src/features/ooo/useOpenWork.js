@@ -21,7 +21,7 @@ export const MODULES = [
  * @param {{ id, name }} opts.away
  * @param {string}  opts.startAt
  * @param {string}  opts.endAt
- * @param {object[]} opts.coverage
+ * @param {object[]} opts.coverage – The record's covering providers by location
  * @param {string}  [opts.recordId]
  */
 export function useOpenWork({ enabled, away, startAt, endAt, coverage, recordId }) {
@@ -61,16 +61,19 @@ export function useOpenWork({ enabled, away, startAt, endAt, coverage, recordId 
   }, [appointments, tasks, programs, away, awayName, startAt, endAt]);
   const loading = enabled && programs.for !== awayName;
 
-  // Appointments go to the covering provider of their department (else, with
-  // one covering provider, to them). Tasks and care programs start unassigned,
-  // so each area is skipped unless a covering provider is picked for it.
+  // "Assign all work to covering providers automatically" (on by default):
+  // each item goes to the covering provider of its location (else, with one
+  // covering provider, to them). Off: every area starts unassigned.
+  const [autoAssign, setAutoAssignState] = useState(true);
   const defaults = useMemo(
-    () => Object.fromEntries(MODULES.map(m => [m.key, m.key === 'appointments' ? defaultAppointmentPlan(items[m.key], coverage) : {}])),
-    [items, coverage],
+    () => Object.fromEntries(MODULES.map(m => [m.key, autoAssign ? defaultAppointmentPlan(items[m.key], coverage) : {}])),
+    [items, coverage, autoAssign],
   );
 
-  // Edited plans replace the default for their module.
+  // Edited plans replace the default for their module; switching auto-assign
+  // starts every area over from the new default.
   const [edits, setEdits] = useState({});
+  const setAutoAssign = (on) => { setAutoAssignState(on); setEdits({}); };
   const plans = Object.fromEntries(MODULES.map(m => [m.key, edits[m.key] ?? defaults[m.key]]));
   const setPlan = (key, next) => setEdits(e => ({ ...e, [key]: typeof next === 'function' ? next(e[key] ?? defaults[key]) : next }));
 
@@ -92,5 +95,5 @@ export function useOpenWork({ enabled, away, startAt, endAt, coverage, recordId 
     ];
   };
 
-  return { items, plans, defaults, setPlan, pickUsers, loading };
+  return { items, plans, defaults, setPlan, pickUsers, loading, autoAssign, setAutoAssign };
 }

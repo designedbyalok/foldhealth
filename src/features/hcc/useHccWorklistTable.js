@@ -234,7 +234,6 @@ export function useHccWorklistTable() {
     selected: coveringPicked,
     onChange: (next) => { setCoveringPicked(next); setCurrentPage(1); },
   }), [coveringNames, coveringPicked, setCurrentPage]);
-  const coveringFor = (m) => (covering.length ? coveringOn(assigneeNamesOf(m), covering) : null);
 
   const filtered = useMemo(() => {
     let rows = enriched;
@@ -396,7 +395,6 @@ export function useHccWorklistTable() {
     filtersActive,
     clearHccFilters,
     coveringChip,
-    coveringFor,
     scrollWrapRef,
     someSelected,
     allSelected,

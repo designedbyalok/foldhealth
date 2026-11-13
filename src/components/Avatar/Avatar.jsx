@@ -50,7 +50,8 @@ function OooWrapper({ record, size, note, children }) {
  * two staff with the same name aren't confused) and the badge shows whenever
  * that user is out of office now (the app supplies the lookup through
  * AvatarOooLookup); or pass `ooo` (a record, or null) to decide it yourself.
- * `oooNote` adds a line under the dates in that hover (e.g. "You're covering").
+ * `oooNote` adds a line under the dates in that hover (e.g. "You're covering");
+ * without it, the record's own `note` (set by the app's lookup) is used.
  */
 export function Avatar({ userName, userId, ooo, oooNote, ...props }) {
   const lookup = useContext(AvatarOooLookup);
@@ -58,5 +59,5 @@ export function Avatar({ userName, userId, ooo, oooNote, ...props }) {
     : lookup(userId ? { id: userId, name: userName } : userName);
   const record = ooo !== undefined ? ooo : found;
   const el = <AvatarBase {...props} />;
-  return record ? <OooWrapper record={record} size={props.size} note={oooNote}>{el}</OooWrapper> : el;
+  return record ? <OooWrapper record={record} size={props.size} note={oooNote ?? record.note}>{el}</OooWrapper> : el;
 }

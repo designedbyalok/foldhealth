@@ -129,6 +129,7 @@ export const CMP_MIDDLE_COLUMNS = [
       <AssigneeChange
         name={e.assignee || undefined}
         initials={e.assigneeIn || undefined}
+        oooUser={e.assignee ? { name: e.assignee } : undefined}
         unassigned={!e.assignee}
         showRole={false}
         users={ctx.users}
@@ -148,6 +149,7 @@ export const CMP_MIDDLE_COLUMNS = [
       <AssigneeChange
         name={e[key] || undefined}
         initials={e[key] ? initialsOf(e[key]) : undefined}
+        oooUser={e[key] ? { name: e[key] } : undefined}
         unassigned={!e[key]}
         showRole={false}
         users={ctx.users}

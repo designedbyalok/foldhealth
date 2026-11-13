@@ -49,8 +49,9 @@ const pickerUser = (u) => ({ id: u.id, name: u.name, initials: u.initials, role:
  * @param {{ from, to }} props.timeWindow
  * @param {object}   props.plan        – appointment id → { action, to? }
  * @param {function} props.onPlan      – (updater: plan => plan) => void
+ * @param {{ id?, name }[]} [props.suggested] – The record's covering providers, first under Suggested
  */
-export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPlan }) {
+export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPlan, suggested }) {
   const users = useAppStore(s => (s.platformPeople?.length ? s.platformPeople : s.platformUsers));
   const oooRecords = useAppStore(s => s.oooRecords);
   const locations = useAppStore(s => s.practiceLocations);
@@ -74,14 +75,24 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
     && (!typeF.length || typeF.includes(a.appointment_type_name))
     && (!stateF.length || stateF.includes(stateOf.get(a.location)))), [appointments, deptF, typeF, stateF, stateOf]);
 
-  // Who can cover each department, worked out once.
+  // The record's covering providers, listed first in every picker.
+  const suggestedKeys = (suggested || []).flatMap(c => [c.id, c.name].filter(Boolean));
+  const withNote = (list) => list.map(u => (suggestedKeys.includes(u.id) || suggestedKeys.includes(u.name) ? { ...u, note: `Covering for ${awayUser?.name}` } : u));
+
+  // Who can cover each department, worked out once. The record's covering
+  // providers can take any department's visits, even where they don't work.
   const covering = useMemo(() => {
+    const coverers = (suggested || []).map(c => {
+      const u = (users || []).find(x => (c.id && x.id === c.id) || x.name === c.name);
+      return u ? pickerUser(u) : { id: c.id || c.name, name: c.name, role: '' };
+    });
     const map = new Map();
     groupByDepartment(appointments).forEach(({ name }) => {
-      map.set(name, coveringProviders(name, users, { awayUser, oooRecords, window: timeWindow }).map(pickerUser));
+      const here = coveringProviders(name, users, { awayUser, oooRecords, window: timeWindow }).map(pickerUser);
+      map.set(name, [...coverers.filter(c => !here.some(h => h.id === c.id || h.name === c.name)), ...here]);
     });
     return map;
-  }, [appointments, users, awayUser, oooRecords, timeWindow]);
+  }, [appointments, users, awayUser, oooRecords, timeWindow, suggested]);
   const groups = groupByDepartment(shown);
   const coveredGroups = groups.filter(g => covering.get(g.name)?.length);
   const uncoveredGroups = groups.filter(g => !covering.get(g.name)?.length);
@@ -104,7 +115,7 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
     const picked = [...new Set(ids.map(id => plan[id]?.toId || plan[id]?.to).filter(Boolean))];
     setPicker({
       rect: e.currentTarget.getBoundingClientRect(),
-      users: list,
+      users: withNote(list),
       selected: picked.length === 1 ? picked[0] : undefined,
       onPick: (u) => assign(ids, u),
       onUnassign: picked.length ? () => clear(ids) : undefined,
@@ -229,7 +240,7 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
         icon: 'solar:user-plus-rounded-linear',
         onClick: (ids, e) => {
           if (!common.length) { showToast?.('No One Covers All the Selected Departments. Pick Fewer Departments.'); return; }
-          setPicker({ rect: e.currentTarget.getBoundingClientRect(), users: common, onPick: (u) => { assign(ids, u); setSelected(new Set()); } });
+          setPicker({ rect: e.currentTarget.getBoundingClientRect(), users: withNote(common), onPick: (u) => { assign(ids, u); setSelected(new Set()); } });
         },
       },
       { label: 'Cancel', icon: 'solar:calendar-mark-linear', variant: 'destructive', onClick: (ids) => setConfirm({ ids, clearSelection: true }) },
@@ -327,6 +338,8 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
           onClose={() => setPicker(null)}
           emptyText="No one else works at this department."
           align="right"
+          titleCaseSections
+          pinned={suggestedKeys.length ? { label: 'Suggested', keys: suggestedKeys } : null}
         />
       )}
       {menu && (

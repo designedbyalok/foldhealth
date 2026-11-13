@@ -170,6 +170,7 @@ export const PHARMACY_MIDDLE_COLUMNS = [
         <AssigneeChange
           name={m.assigneeName}
           initials={m.assigneeInitials}
+          oooUser={{ name: m.assigneeName }}
           showRole={false}
           users={ctx.eligibleUsers}
           onSelect={(u) => ctx.setPharmacyAssignee(m.id, u)}

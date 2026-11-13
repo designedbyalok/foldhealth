@@ -78,19 +78,14 @@ export function StatusGroupRows({ group, colCount, onToggle, onTaskClick, hideAs
               <Badge label={`${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}`} />
             </div>
             <div className={styles.groupActions}>
-              {/* Groups that aren't a status (e.g. a person on the Covering tab) can't add. */}
-              {!group.noAdd && (
-                <>
-                  <ActionButton
-                    icon="solar:add-circle-linear"
-                    size="sm"
-                    tooltip="Add task"
-                    tooltipLeft
-                    onClick={e => { e.stopPropagation(); onAddTask?.(status); }}
-                  />
-                  <div style={{ width: 0.5, height: 16, background: 'var(--neutral-150)' }} />
-                </>
-              )}
+              <ActionButton
+                icon="solar:add-circle-linear"
+                size="sm"
+                tooltip="Add task"
+                tooltipLeft
+                onClick={e => { e.stopPropagation(); onAddTask?.(status); }}
+              />
+              <div style={{ width: 0.5, height: 16, background: 'var(--neutral-150)' }} />
               <ActionButton
                 icon={collapsed ? 'solar:alt-arrow-down-linear' : 'solar:alt-arrow-up-linear'}
                 size="sm"

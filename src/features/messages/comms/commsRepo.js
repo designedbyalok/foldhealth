@@ -86,7 +86,7 @@ if (typeof window !== 'undefined') {
 // ── Public API ────────────────────────────────────────────────────────────
 // One conversation's row (sending a message only needs its unread count, not
 // every conversation in the practice).
-async function getConversation(id) {
+export async function getConversation(id) {
   if (await commsMode() === 'local') return readLocal().conversations.find(c => c.id === id) || null;
   const { data } = await supabase.from('patient_conversations').select('*').eq('id', id).maybeSingle();
   return data || null;

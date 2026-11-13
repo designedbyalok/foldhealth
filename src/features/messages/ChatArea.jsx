@@ -6,6 +6,9 @@ import { ChatHeader } from './ChatHeader';
 import { ChatMessagesList } from './ChatMessagesList';
 import { MessageComposer } from '../../components/MessageComposer/MessageComposer';
 import { Icon } from '../../components/Icon/Icon';
+import { CloseButton } from '../../components/CloseButton/CloseButton';
+import { useAppStore } from '../../store/useAppStore';
+import { activeOooFor } from '../ooo/oooUtils';
 import { toast } from '../../components/Toast/sonnerToast';
 import { getDisplayName } from './messageUtils';
 import styles from './MessagesView.module.css';
@@ -20,6 +23,12 @@ export function ChatArea({ currentUser, otherUser, onConversationUpdate }) {
   const [dragOver, setDragOver]           = useState(false);
   const [pending, setPending]             = useState([]);
   const [formPickerOpen, setFormPickerOpen] = useState(false);
+  // The person on the other end out of office: a note over the composer,
+  // dismissable for this conversation.
+  const oooRecords = useAppStore(s => s.oooRecords);
+  const otherOut = otherUser ? activeOooFor(oooRecords, { id: otherUser.id || null, name: getDisplayName(otherUser) }) : null;
+  const [oooHiddenFor, setOooHiddenFor] = useState(null);
+  const showOoo = !!otherOut && oooHiddenFor !== otherUser?.id;
 
   const messagesRef   = useRef(null);
   const channelRef    = useRef(null);
@@ -227,6 +236,13 @@ export function ChatArea({ currentUser, otherUser, onConversationUpdate }) {
         onReply={setReplyTo}
       />
 
+      {/* Over the composer's top border, at the foot of the conversation. */}
+      {showOoo && (
+        <div className={styles.oooNotice} role="status">
+          <span>{getDisplayName(otherUser)} is out of office and may not respond</span>
+          <CloseButton size={12} label="Dismiss" onClick={() => setOooHiddenFor(otherUser.id)} />
+        </div>
+      )}
       <div
         className={dragOver ? styles.dragOver : undefined}
         onDragOver={e => { e.preventDefault(); setDragOver(true); }}

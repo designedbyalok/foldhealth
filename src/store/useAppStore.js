@@ -257,6 +257,8 @@ import { defaultProgramTypes } from '../features/settings/care-program-config/ca
 import { fetchPatientSnapshotRow } from './lib/patientSnapshotsPersist';
 import { buildPatientSnapshot, patientSnapshotKey } from '../lib/patientSnapshot';
 import { EFAX_NUMBERS_MOCK } from '../features/settings/messages/efax/efaxNumbersMock';
+import { INBOXES_MOCK } from '../features/settings/messages/inboxes/inboxesMock';
+import { fetchInboxRows, persistInboxInsert, persistInboxUpdate, persistInboxDelete } from './lib/commsInboxesPersist';
 import {
   LIST_FILTER_KEY,
   detachSaved,
@@ -10890,6 +10892,45 @@ export const useAppStore = create((set, get) => ({
     set(s => ({ efaxNumbers: s.efaxNumbers.filter(n => n.id !== id) }));
     if (!get().efaxNumbersTableMissing) persistEfaxNumberDelete(id);
   },
+  // ── Practice inboxes (Supabase `comms_inboxes`) ─────────────────────────
+  // Settings > Messages > Inboxes, and the Comms Filters drawer's By Inbox.
+  // Falls back to the mock (same ids as the migration seed) until
+  // comms_inboxes_migration.sql has run; edits then stay session-only.
+  commsInboxes: [],
+  commsInboxesLoading: false,
+  commsInboxesLoaded: false,
+  commsInboxesTableMissing: false,
+  fetchCommsInboxes: async () => {
+    if (get().commsInboxesLoading || get().commsInboxesLoaded) return;
+    set({ commsInboxesLoading: true });
+    const { rows, missing } = await fetchInboxRows();
+    set(s => ({
+      commsInboxes: [
+        ...s.commsInboxes.filter(l => !rows.some(r => r.id === l.id)),
+        ...(missing || !rows.length ? INBOXES_MOCK.filter(m => !s.commsInboxes.some(l => l.id === m.id)) : rows),
+      ],
+      commsInboxesLoading: false,
+      commsInboxesLoaded: true,
+      commsInboxesTableMissing: missing,
+    }));
+  },
+  addCommsInbox: async (inbox) => {
+    if (!inbox?.id) return;
+    set(s => ({ commsInboxes: [inbox, ...s.commsInboxes] }));
+    if (get().commsInboxesTableMissing) return;
+    const { missing } = await persistInboxInsert(inbox);
+    if (missing) set({ commsInboxesTableMissing: true });
+  },
+  updateCommsInbox: (id, patch) => {
+    if (!id || !patch) return;
+    set(s => ({ commsInboxes: s.commsInboxes.map(i => (i.id === id ? { ...i, ...patch } : i)) }));
+    if (!get().commsInboxesTableMissing) persistInboxUpdate(id, patch);
+  },
+  deleteCommsInbox: (id) => {
+    if (!id) return;
+    set(s => ({ commsInboxes: s.commsInboxes.filter(i => i.id !== id) }));
+    if (!get().commsInboxesTableMissing) persistInboxDelete(id);
+  },
   logCareGapActivity: (memberId, entry) => {
     // Random suffix: several entries can be logged in the same millisecond
     // (bulk status changes, multi-program outreach) and `id` is the table's
@@ -17329,6 +17370,37 @@ export const useAppStore = create((set, get) => ({
       [{ field: 'primary_user', from: a.primary_user || '', to: person.name, type: 'user' }])));
     await get().fetchAppointments?.({ force: true });
     return back.length;
+  },
+
+  /**
+   * Move tasks and care programs that an Out of Office record's reassignment
+   * moved away from `who` back to them, when the record is deleted (no
+   * `ranges`) or shortened (`ranges`: the dates taken off; tasks due then).
+   * Only what's still with whoever covered them goes back (workToReturn).
+   */
+  restoreReassignedWork: async (who, { recordId, ranges = null } = {}) => {
+    const { workToReturn } = await import('../features/ooo/reassignJobs');
+    const { personOf, sameName } = await import('../features/ooo/oooUtils');
+    const person = personOf(who);
+    if (!recordId || !person.name) return 0;
+    await get().fetchReassignmentJobs?.({ force: true });
+    if (!(get().tasks || []).length) await get().fetchTasks?.();
+    const { taskIds, programs } = workToReturn(get().reassignmentJobs || [], { recordId, tasks: get().tasks || [], ranges });
+    const taskOk = await Promise.all(taskIds.map(id => get()
+      .updateTask(id, { assigned_to: person.name, assigned_to_id: person.id || null }, { assigneeAudit: 'ooo_returned' })
+      .catch(() => false)));
+    let programCount = 0;
+    if (programs.length) {
+      const { data, error } = await supabase.from('patient_care_programs').select('id, assignee').in('id', programs.map(p => p.id));
+      if (error) console.warn('restoreReassignedWork:', error.message);
+      const back = (data || []).filter(row => programs.some(p => String(p.id) === String(row.id) && sameName(row.assignee, p.to))).map(row => row.id);
+      if (back.length) {
+        const { error: upErr } = await supabase.from('patient_care_programs').update({ assignee: person.name }).in('id', back);
+        if (upErr) console.warn('restoreReassignedWork:', upErr.message);
+        else programCount = back.length;
+      }
+    }
+    return taskOk.filter(ok => ok !== false).length + programCount;
   },
 
   // ── On call schedules (Create Schedule drawer) ──

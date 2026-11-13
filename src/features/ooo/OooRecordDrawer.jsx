@@ -83,6 +83,7 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
   const saveOooRecord = useAppStore(s => s.saveOooRecord);
   const oooRecords = useAppStore(s => s.oooRecords);
   const restoreReassigned = useAppStore(s => s.restoreReassignedAppointments);
+  const restoreWork = useAppStore(s => s.restoreReassignedWork);
   const meName = useAppStore(s => s.currentUserProfile?.name);
   const isEdit = !!record;
   // A record that has started: from a previous day, its start is fixed;
@@ -364,7 +365,10 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
           ns > os && { from: os, to: Math.min(ns, oe) },
           ne < oe && { from: Math.max(ne, os), to: oe },
         ].filter(Boolean);
-        if (removed.length) await restoreReassigned({ id: saved.userId, name: saved.userName }, removed);
+        if (removed.length) {
+          await restoreReassigned({ id: saved.userId, name: saved.userName }, removed);
+          await restoreWork({ id: saved.userId, name: saved.userName }, { recordId: saved.id, ranges: removed });
+        }
       }
       const started = await runReassignments(saved);
       await finish(saved, false, started);
@@ -626,6 +630,7 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], initi
               searchable
               placeholder="Select Provider"
               searchPlaceholder="Search by name, email or role"
+              clearable
               options={coverOptions}
               value={covererKey}
               disabled={!values.userName}

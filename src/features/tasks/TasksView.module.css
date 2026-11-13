@@ -2121,13 +2121,13 @@
 
 /* Assignee dropdowns, out of office (DetailDropdown outOfOffice), as in
    booking's provider picker: section labels; the name with its covering line
-   stacked under it; people who are out can't be picked (lighter name, so the
-   badge and the covering line keep their colour). */
-.dropGroup { padding: var(--space-2) calc(var(--space-3) + var(--space-1) / 2) var(--space-1); font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300); border-bottom: 0.5px solid var(--neutral-100); }
-.dropItemText { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); flex: 1; min-width: 0; }
+   stacked under it; people who are out stay pickable, with the badge. */
+.dropGroup { padding: var(--space-2) var(--space-3) var(--space-1); font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300); border-bottom: 0.5px solid var(--neutral-100); }
+.dropItemText { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.dropItemNameRow { display: flex; align-items: center; gap: var(--space-1); }
 .dropItemName { font-size: var(--font-base); font-weight: 500; color: var(--neutral-400); }
 .dropItemRole { font-size: var(--font-sm); color: var(--neutral-200); }
 .dropItemNote { margin-top: var(--space-1); font-size: var(--font-sm); color: var(--neutral-300); }
-.dropItemMuted { color: var(--placeholder-text); }
-.dropItemAway { cursor: not-allowed; }
-.dropItemAway:hover { background: none; }
+/* People lists use the provider picker's spacing: search flush at the top, 12px sides, 10px avatar gap. */
+.dropPeople { padding: 0; }
+.dropPeople .simpleDropItem { gap: calc(var(--space-2) + var(--space-1) / 2); padding: calc(var(--space-2) + var(--space-1) / 2) var(--space-3); }

@@ -15,7 +15,6 @@ import { Phq9AssessmentDrawer } from './Phq9AssessmentDrawer/Phq9AssessmentDrawe
 import { LiveCallDuration } from '../worklist/LiveCallDuration';
 import { useCallDuration } from '../worklist/useCallDuration';
 import rowStyles from '../worklist/WorklistRow.module.css';
-import { CoveringNote } from '../../ooo/CoveringNote';
 import styles from './QueueRow.module.css';
 
 const LANG_MAP = { en: 'English', es: 'Spanish', zh: 'Chinese', yue: 'Cantonese', ko: 'Korean', vi: 'Vietnamese', hi: 'Hindi', pa: 'Punjabi' };
@@ -354,6 +353,7 @@ export function getQueueMiddleColumns(programLabel = 'TOC') {
         <AssigneeChange
           name={p.assignee}
           initials={p.assigneeInitials}
+          oooUser={{ name: p.assignee }}
           showRole={false}
           users={ctx.assigneePickerUsers}
           onSelect={(u) => ctx.updatePatient?.(p.id, {
@@ -420,7 +420,7 @@ export const QUEUE_MIDDLE_COLUMNS = getQueueMiddleColumns('TCM');
 // `voicemailCalls`, `completedCall`, and `ongoingCall` are indexed at the
 // table level (see QueueTable's `callsByPatient` memo) and passed in so this
 // row doesn't have to scan the entire callDetails array on every render.
-export function QueueRow({ patient, columns, hiddenSet, isSelected, onSelect, voicemailCalls, completedCall, ongoingCall, coveringFor }) {
+export function QueueRow({ patient, columns, hiddenSet, isSelected, onSelect, voicemailCalls, completedCall, ongoingCall }) {
   const openQuickView = useAppStore(s => s.openQuickView);
   const openCallPopover = useAppStore(s => s.openCallPopover);
   const openLiveDrawer = useAppStore(s => s.openLiveDrawer);
@@ -516,7 +516,6 @@ export function QueueRow({ patient, columns, hiddenSet, isSelected, onSelect, vo
                 </button>
               </Tooltip>
             </div>
-            <CoveringNote people={coveringFor} />
           </div>
         </div>
       </td>

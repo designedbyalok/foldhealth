@@ -65,6 +65,7 @@ export function buildActivityLogItems(auditLog, activityTab) {
         break;
       case 'assignee_changed':
       case 'ooo_reassigned':
+      case 'ooo_returned':
         entries.push({
           ...base,
           t: 'assignee_change',

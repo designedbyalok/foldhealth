@@ -19,7 +19,6 @@ import { gapSourceLabel } from './hedisFilters';
 import { gapInstanceNo } from './gapInstances';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
 import { ActionsMenuPopover } from '../hcc/RowPopovers';
-import { CoveringNote } from '../ooo/CoveringNote';
 import styles from './HedisWorklistRow.module.css';
 import { OutreachStatus } from '../../components/OutreachStatus/OutreachStatus';
 import { outreachFromDots } from '../../components/OutreachStatus/outreachStatusModel';
@@ -259,6 +258,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
                 <AssigneeChange
                   name={assignee}
                   initials={initials}
+                  oooUser={{ name: assignee }}
                   showRole={false}
                   users={ctx.assigneePickerUsers}
                   pickerTitle="Change assignee"
@@ -367,7 +367,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
   },
 ];
 
-export function HedisWorklistRow({ member, coveringFor, columns, hiddenSet, isSelected, onSelect, onOpenGap }) {
+export function HedisWorklistRow({ member, columns, hiddenSet, isSelected, onSelect, onOpenGap }) {
   const showToast = useAppStore(s => s.showToast);
   const openQuickView = useAppStore(s => s.openQuickView);
   const platformUsers = useAppStore(s => s.platformUsers);
@@ -479,7 +479,6 @@ export function HedisWorklistRow({ member, coveringFor, columns, hiddenSet, isSe
                 </span>
               </Tooltip>
             </div>
-            <CoveringNote people={coveringFor} />
           </div>
         </div>
       </td>

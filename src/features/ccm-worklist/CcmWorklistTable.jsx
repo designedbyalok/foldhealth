@@ -483,7 +483,6 @@ export function CcmWorklistTable() {
                   hiddenSet={columnPrefs.hiddenSet}
                   isSelected={selectedIds.has(m.id)}
                   onSelect={toggleOne}
-                  coveringFor={coveringPicked.length ? covering.coveringOn([m.assigneeName], coveringPicked) : null}
                 />
               ))}
             </tbody>

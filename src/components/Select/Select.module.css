@@ -159,6 +159,15 @@
   white-space: nowrap;
 }
 
+.clear {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: var(--space-1);
+  cursor: pointer;
+}
+.clear:hover { background: var(--neutral-50); }
+.clear:focus-visible { outline: 2px solid var(--primary-100); outline-offset: 1px; }
+
 .chevron,
 .chevronOpen {
   flex-shrink: 0;

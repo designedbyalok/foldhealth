@@ -1,8 +1,6 @@
 import { Icon } from '../../../components/Icon/Icon';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Avatar } from '../../../components/Avatar/Avatar';
-import { Badge } from '../../../components/Badge/Badge';
-import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { ASSIGN_TO_DIMENSIONS } from './teamTypeConfig';
 import { HoverCard } from './HoverCard';
@@ -36,16 +34,11 @@ export function UserCard({ member, outOfOffice = null, teamType, showBillableChe
     <div className={drawerStyles.userCard}>
       {/* With the check the column is taller: line the avatar and capacity up with the name. */}
       <div className={`${drawerStyles.userCardHead} ${showBillableCheck ? drawerStyles.userCardHeadTop : ''}`}>
-        <Avatar variant="assignee" initials={member.initials} />
+        {/* Out of office now (skipped from auto-assignment): the avatar's badge, dates on hover. */}
+        <Avatar variant="assignee" initials={member.initials} userName={outOfOffice ? member.name : undefined} userId={member.userId} />
         <div className={drawerStyles.userCardText}>
           <div className={drawerStyles.userCardName}>
             {member.name}
-            {/* Out of office now: skipped from auto-assignment (dates on hover). */}
-            {outOfOffice && (
-              <Tooltip label={`Out of office ${outOfOffice}`} placement="top" align="left">
-                <Badge tone="magenta" size="sm" label="Out of Office" />
-              </Tooltip>
-            )}
           </div>
           {member.roles && <div className={drawerStyles.userCardMeta}>{member.roles}</div>}
           <HoverCard

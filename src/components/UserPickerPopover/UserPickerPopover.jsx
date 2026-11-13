@@ -17,8 +17,9 @@ const initialsOf = (name) => String(name || '?').trim().split(/\s+/).map(w => w[
  *
  * @param {object}   props
  * @param {DOMRect}  props.anchorRect
- * @param {{ id?, name, role?, initials?, section?, badge?, disabled?, searchText? }[]} props.users
- *   `section` groups users under that header (in the order given), `badge`
+ * @param {{ id?, name, role?, note?, initials?, section?, badge?, disabled?, searchText? }[]} props.users
+ *   `section` groups users under that header (in the order given), `note` is
+ *   a line under the role (e.g. "Covering for Navin Jethwani"), `badge`
  *   is a node shown after the name (e.g. why they're limited), and
  *   `disabled` lists a user who can't be picked.
  * @param {string}   [props.selected]     – Who's currently picked (ticked): their id, or (older data) name
@@ -131,7 +132,9 @@ export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSe
             value: keyOf(u),
             label: u.badge ? <span className={styles.nameRow}><span className={styles.nameText}>{u.name}</span>{u.badge}</span> : u.name,
             searchText: u.searchText || u.name,
-            description: u.role,
+            description: u.role || u.note
+              ? <span className={styles.desc}>{u.role && <span>{u.role}</span>}{u.note && <span className={styles.note}>{u.note}</span>}</span>
+              : undefined,
             disabled: !!u.disabled,
             leading: <Avatar variant="staff" initials={u.initials || initialsOf(u.name)} size="M" />,
             section: u.section ?? (groups ? (topKeys.has(keyOf(u)) ? pinned.label : restLabel) : undefined),

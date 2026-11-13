@@ -191,7 +191,6 @@ export function JsaWorklistTable() {
           onToggle={() => selectMember(m.id)}
           onView={() => showToast(`Program details for ${m.name}, coming soon`)}
           showToast={showToast}
-          coveringFor={coveringPicked.length ? covering.coveringOn([m.assignee], coveringPicked) : undefined}
         />
       )}
       loading={loading && pageRows.length === 0}

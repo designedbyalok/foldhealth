@@ -160,8 +160,9 @@ export function CreatableLabelDropdown({ selectedLabels, onToggle, children }) {
 const NOBODY_OUT = () => null;
 const mdY = (v) => { const d = new Date(v); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`; };
 
-// `renderOption(option, { note, muted })`: `note` is a covering line to stack
-// under the name; `muted` greys a row that can't be picked.
+// `renderOption(option, { note, away })`: `note` is a covering line to stack
+// under the name; `away` marks someone out of office (still pickable), and
+// `badge` is their Out of Office badge, to sit right after the name.
 // `outOfOffice` (option) => { startAt, endAt, coveredBy: string[] } | null:
 // as when booking, people who are out can't be picked. They're listed last
 // under Not Available with who covers them; searching for one puts whoever
@@ -195,7 +196,7 @@ export function DetailDropdown({ value, options, onSelect, renderOption, childre
     ? renderOption(opt, extra)
     : (
       <span className={styles.dropItemText}>
-        <span className={extra.muted ? styles.dropItemMuted : undefined}>{typeof opt === 'string' ? opt : opt.label}</span>
+        <span className={styles.dropItemNameRow}>{typeof opt === 'string' ? opt : opt.label}{extra.badge}</span>
         {extra.note && <span className={styles.dropItemNote}>{extra.note}</span>}
       </span>
     ));
@@ -232,7 +233,7 @@ export function DetailDropdown({ value, options, onSelect, renderOption, childre
       {open && !disabled && pos && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => { setOpen(false); setSearch(''); }}>
           <div
-            className={styles.simpleDropdown}
+            className={outOfOffice !== NOBODY_OUT ? `${styles.simpleDropdown} ${styles.dropPeople}` : styles.simpleDropdown}
             style={{
               position: 'fixed',
               // When placement flips to 'top', anchor via the bottom edge so
@@ -263,15 +264,22 @@ export function DetailDropdown({ value, options, onSelect, renderOption, childre
             {suggested.length > 0 && available.length > 0 && <div className={styles.dropGroup}>All Users</div>}
             {available.map(opt => item(opt))}
             {away.length > 0 && <div className={styles.dropGroup}>Not Available</div>}
+            {/* Tasks can still go to someone who's out: they stay pickable,
+                with who covers them and the Out of Office badge. */}
             {away.map((opt) => {
               const out = outOfOffice(opt);
               return (
-                <div key={valOf(opt)} className={`${styles.simpleDropItem} ${styles.dropItemAway}`} aria-disabled="true">
-                  {content(opt, { muted: true, note: out.coveredBy?.length ? `Covered by: ${out.coveredBy.join(', ')}` : 'No covering provider' })}
-                  <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="right">
-                    <Badge tone="magenta" size="sm" label="Out of Office" />
-                  </Tooltip>
-                </div>
+                <button key={valOf(opt)} type="button" className={styles.simpleDropItem} onClick={() => { onSelect(valOf(opt)); setOpen(false); setSearch(''); }}>
+                  {content(opt, {
+                    away: true,
+                    note: out.coveredBy?.length ? `Covered by: ${out.coveredBy.join(', ')}` : 'No covering provider',
+                    badge: (
+                      <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="left">
+                        <Badge tone="magenta" size="sm" label="Out of Office" />
+                      </Tooltip>
+                    ),
+                  })}
+                </button>
               );
             })}
             {filtered.length === 0 && <div className={styles.simpleDropItem} style={{ color: 'var(--neutral-200)', cursor: 'default' }}>No results</div>}

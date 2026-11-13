@@ -14,7 +14,6 @@ import { useAppStore } from '../../store/useAppStore';
 import { worklistMemberCallId } from '../../lib/patientCall';
 import { FoldIdTag } from '../../components/FoldIdTag/FoldIdTag';
 import { CcmBillingReviewDrawer } from './CcmBillingReviewDrawer';
-import { CoveringNote } from '../ooo/CoveringNote';
 import styles from './CcmWorklistRow.module.css';
 
 const LANG_MAP = { en: 'English', es: 'Spanish', zh: 'Chinese', yue: 'Cantonese', ko: 'Korean', vi: 'Vietnamese', hi: 'Hindi', pa: 'Punjabi', ch: 'Chinese' };
@@ -89,6 +88,7 @@ export const CCM_MIDDLE_COLUMNS = [
         <AssigneeChange
           name={m.assigneeName}
           initials={m.assigneeInitials || m.assigneeName.slice(0, 2).toUpperCase()}
+          oooUser={{ name: m.assigneeName }}
           showRole={false}
           onClick={() => ctx.showToast?.(`Change assignee for ${m.name}, coming soon`)}
         />
@@ -152,7 +152,7 @@ export const CCM_MIDDLE_COLUMNS = [
   },
 ];
 
-export function CcmWorklistRow({ member, columns, hiddenSet, isSelected, onSelect, coveringFor }) {
+export function CcmWorklistRow({ member, columns, hiddenSet, isSelected, onSelect }) {
   const openQuickView = useAppStore(s => s.openQuickView);
   const navigateToPatient = useAppStore(s => s.navigateToPatient);
   const showToast = useAppStore(s => s.showToast);
@@ -273,7 +273,6 @@ export function CcmWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
                 </button>
               </Tooltip>
             </div>
-            <CoveringNote people={coveringFor} />
           </div>
         </div>
       </td>

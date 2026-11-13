@@ -72,6 +72,8 @@ export async function sendEmail({ conversation, sender, from, to, cc, bcc, subje
     status: 'queued',
     ...(meta ? { meta } : {}),
   });
+  // null: already saved (a unique key, e.g. one Out of Office auto-reply).
+  if (!message) return null;
   return settle(message, deliverEmail);
 }
 
@@ -92,6 +94,7 @@ export async function sendSms({ conversation, sender, to, body, meta, loggedFor 
     ...(meta ? { meta } : {}),
     ...(loggedFor ? { logged_for_patient_id: loggedFor.id, logged_for_name: loggedFor.name } : {}),
   });
+  if (!message) return null;
   return SMS_VIA_GATEWAY ? settle(message, deliverSms) : message;
 }
 

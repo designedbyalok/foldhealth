@@ -1,4 +1,5 @@
 import { Badge } from '../../components/Badge/Badge';
+import { Link } from '../../components/Link/Link';
 import { PriorityIcon } from '../../components/PriorityIcon/PriorityIcon';
 import styles from './ooo.module.css';
 
@@ -7,6 +8,7 @@ import styles from './ooo.module.css';
  * (Reassign Open Work) and the Out of Office Reassignment Summary.
  */
 const usDate = (d) => String(d || '').replace(/-/g, '/');
+const openPatient = (id) => window.open(`#/population/patient/${encodeURIComponent(id)}`, '_blank', 'noopener');
 
 // Rows in a module's drawer (Figma Eventus 17818:123335). Every module
 // groups by department (`location`).
@@ -39,7 +41,20 @@ export const PROGRAM_SHAPE = {
           {p.status && <Badge tone={PROGRAM_TONE[p.status] || 'primary'} size="sm" label={p.status} />}
         </span>
         <span className={styles.itemSubSm}>
-          {[p.patientName, p.startDate && `Start Date: ${usDate(p.startDate)}`, p.pcp && `PCP: ${p.pcp}`].filter(Boolean).join(' • ')}
+          {/* The patient opens their profile in a new tab, so the drawer keeps its place. */}
+          {p.patientName && (p.patientId ? (
+            <Link
+              variant="subtle"
+              role="link"
+              tabIndex={0}
+              onClick={(e) => { e.stopPropagation(); openPatient(p.patientId); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); openPatient(p.patientId); } }}
+            >
+              {p.patientName}
+            </Link>
+          ) : p.patientName)}
+          {p.patientName && (p.startDate || p.pcp) && ' • '}
+          {[p.startDate && `Start Date: ${usDate(p.startDate)}`, p.pcp && `PCP: ${p.pcp}`].filter(Boolean).join(' • ')}
         </span>
       </span>
     </span>
