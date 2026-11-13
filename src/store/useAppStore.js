@@ -244,6 +244,7 @@ const CIS_APPOINTMENTS_MOCK = [
 import { fetchReferralDirectoryRows, fetchCaregapReferralRows, persistCaregapReferralInsert, persistCaregapReferralUpdate, persistCaregapReferralRead } from './lib/caregapReferralsPersist';
 import { REFERRAL_SENDER_LINES_MOCK } from '../features/hedis-worklist/data/referralDirectoryMock';
 import { CAREGAP_WHITELIST_MOCK } from '../features/hedis-worklist/data/caregapWhitelistMock';
+import { tagGapInstance, withStatus } from '../features/hedis-worklist/gapInstances';
 import { fetchEfaxNumberRows, persistEfaxNumberInsert, persistEfaxNumberUpdate, persistEfaxNumberDelete } from './lib/efaxNumbersPersist';
 import { fetchCaregapLabRows, persistLabOrder, persistLabResult } from './lib/caregapLabsPersist';
 import { fetchStepStatusRows, persistStepStatus } from './lib/careProgramStepStatusPersist';
@@ -10069,7 +10070,7 @@ export const useAppStore = create((set, get) => ({
     const prevGap = prevMember?.gaps?.find(g => g.code === gapCode);
     const prevStatus = prevGap?.status ?? null;
     if (prevStatus === nextStatus) return;
-    const entry = {
+    const entry = tagGapInstance(prevMember?.gaps, {
       id: `status-${Date.now()}-${memberId}-${gapCode}`,
       at: new Date().toISOString(),
       actor: get().currentActorName(),
@@ -10078,12 +10079,12 @@ export const useAppStore = create((set, get) => ({
       from: prevStatus,
       to: nextStatus,
       gapCode,
-    };
+    });
     set(s => ({
       hedisMembers: (s.hedisMembers || []).map(m =>
         m.id !== memberId ? m : {
           ...m,
-          gaps: (m.gaps || []).map(g => g.code === gapCode && !g.supersededAt ? { ...g, status: nextStatus } : g),
+          gaps: (m.gaps || []).map(g => g.code === gapCode && !g.supersededAt ? withStatus(g, nextStatus) : g),
         }
       ),
       caregapActivity: {
@@ -10103,15 +10104,16 @@ export const useAppStore = create((set, get) => ({
     const prevGap    = prevMember?.gaps?.find(g => g.code === gapCode);
     const prevName   = prevGap?.assignee || null;
     const initialsOf = (n) => (String(n || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '');
-    const entry = {
+    const entry = tagGapInstance(prevMember?.gaps, {
       id: `assign-${Date.now()}`,
       at: new Date().toISOString(),
       actor: get().currentActorName(),
       t: 'assignee_change',
       title: 'Assignee Changed',
+      gapCode,
       fromAssignee: prevName ? { initials: initialsOf(prevName), name: prevName } : null,
       toAssignee:   nextAssignee ? { initials: initialsOf(nextAssignee), name: nextAssignee } : null,
-    };
+    });
     set(s => ({
       hedisMembers: (s.hedisMembers || []).map(m =>
         m.id !== memberId ? m : {
@@ -10158,7 +10160,7 @@ export const useAppStore = create((set, get) => ({
         m.id !== memberId ? m : {
           ...m,
           gaps: (m.gaps || []).map(g => updates[g.code] && !g.supersededAt
-            ? { ...g, status: updates[g.code], ...(assignee !== undefined ? { assignee } : {}) }
+            ? { ...withStatus(g, updates[g.code]), ...(assignee !== undefined ? { assignee } : {}) }
             : g),
         }
       ),
@@ -10252,6 +10254,9 @@ export const useAppStore = create((set, get) => ({
         measureYear: r.measure_year,
         ipas: r.ipas || [],
         hpCodes: r.hp_codes || [],
+        sex: r.sex ?? null,
+        ageMin: r.age_min ?? null,
+        ageMax: r.age_max ?? null,
         billable: r.billable,
       })),
       caregapWhitelistLoading: false,
@@ -10274,7 +10279,7 @@ export const useAppStore = create((set, get) => ({
   // `parentGap` snapshot) is inserted just before it. Gaps are looked up by
   // code across the app, so first-match lookups land on the active gap and
   // the status / assignee mutations skip superseded ones.
-  // Each item carries its own workflows and (when re-added) reason.
+  // Each item carries the reason it was added again, when it was.
   addCareGaps: (memberId, { items, ipa, hpCode, measureYear }) => {
     track('hedis.gaps_added', { memberId, count: items.length });
     const startDate = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
@@ -10283,7 +10288,7 @@ export const useAppStore = create((set, get) => ({
       hedisMembers: (s.hedisMembers || []).map(m => {
         if (m.id !== memberId) return m;
         let gaps = [...(m.gaps || [])];
-        items.forEach(({ whitelist, parent, workflows, reason }) => {
+        items.forEach(({ whitelist, parent, reason }) => {
           const next = {
             code: whitelist.code,
             status: 'Open',
@@ -10294,7 +10299,6 @@ export const useAppStore = create((set, get) => ({
             measureYear,
             ipa,
             hpCode,
-            workflows,
             reason: reason || null,
             parentGap: parent ? { ...parent } : null,
           };
@@ -10312,17 +10316,21 @@ export const useAppStore = create((set, get) => ({
     // Dev Login has no session to write with; keep the demo change local.
     const persist = !isDevBypass();
     if (persist) persistHedisGaps(memberId, get().hedisMembers.find(m => m.id === memberId)?.gaps);
-    items.forEach(({ whitelist, parent }) => {
-      const entry = {
+    const addedGaps = get().hedisMembers.find(m => m.id === memberId)?.gaps;
+    items.forEach(({ whitelist, parent, reason }) => {
+      const entry = tagGapInstance(addedGaps, {
         id: Date.now() + Math.random(),
         at: new Date().toISOString(),
         actor,
         t: 'system',
+        gapCode: whitelist.code,
         title: `Gap added - ${whitelist.code}`,
-        subtitle: parent
-          ? `MY${measureYear} · Linked to previous ${whitelist.code} gap (${parent.status})`
-          : `MY${measureYear} · ${ipa} · ${hpCode}`,
-      };
+        subtitle: [
+          `MY${measureYear}`,
+          parent ? `Added again after ${parent.status}` : `${ipa} · ${hpCode}`,
+          reason ? `Reason: ${reason}` : null,
+        ].filter(Boolean).join(' · '),
+      });
       set(s => ({
         caregapActivity: {
           ...s.caregapActivity,
@@ -10886,7 +10894,8 @@ export const useAppStore = create((set, get) => ({
     // Random suffix: several entries can be logged in the same millisecond
     // (bulk status changes, multi-program outreach) and `id` is the table's
     // primary key, so a bare Date.now() made the later inserts fail.
-    const full = { id: `cg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, at: new Date().toISOString(), ...entry };
+    const gaps = (get().hedisMembers || []).find(m => m.id === memberId)?.gaps;
+    const full = tagGapInstance(gaps, { id: `cg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, at: new Date().toISOString(), ...entry });
     set(s => ({
       caregapActivity: {
         ...s.caregapActivity,

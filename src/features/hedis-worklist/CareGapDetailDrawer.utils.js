@@ -44,6 +44,7 @@ export const STATUS_STYLE = {
 };
 
 export const MORE_ACTIONS = [
+  { key: 'add-gap',       label: 'Add Care Gap',        icon: 'solar:clipboard-add-linear' },
   { key: 'task',          label: 'Add Task',            icon: 'solar:clipboard-check-linear' },
   { key: 'clinical-note', label: 'Add Clinical Note',   icon: 'solar:notes-linear', openClinicalNote: true },
   { key: 'appointment',   label: 'Schedule Appointment', icon: 'solar:calendar-linear' },

@@ -135,7 +135,7 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
       return carePlanInPanel ? <CarePlanInPanelNotice /> : <CarePlanView patientId={v.patientId} program={program} />;
     }
     if (stepFlags.isAppointmentStep) return <AppointmentStep patientId={v.currentPatient?.id} programCode={program.code} stepName={v.screenName} />;
-    if (stepFlags.isOpenCareGapsStep) return <OpenCareGaps />;
+    if (stepFlags.isOpenCareGapsStep) return <OpenCareGaps patientId={v.patientId} patientName={v.currentPatient?.name} />;
     if (stepFlags.isMedReconStep) return <MedicationReconciliation programCode={program.code} />;
     if (stepFlags.isProgramTasksStep) {
       return <ProgramRelatedTasks programCode={program.code} patientId={v.patientId} onAddTask={() => v.setAddTaskOpen(true)} filters={v.taskFilters} search={v.taskSearchText} />;

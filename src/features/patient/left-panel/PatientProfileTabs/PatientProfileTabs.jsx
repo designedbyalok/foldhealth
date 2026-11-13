@@ -20,8 +20,7 @@ import { ProfileTab } from '../tabs/profile/ProfileTab/ProfileTab.jsx';
 import { CrmTab } from '../tabs/crm/CrmTab/CrmTab.jsx';
 import { CARE_GAP_SECTIONS_EXTENDED, CARE_GAP_TABS, CARE_GAP_TABS_DRAWER } from '../../data/careGapsMock';
 import { CareGapDetailDrawer } from '../../../hedis-worklist/CareGapDetailDrawer';
-import { STATUS_BADGE_VARIANT } from '../../../hedis-worklist/HedisWorklistRow';
-import { MEASURE_NAMES } from '../../../hedis-worklist/ClinicalNotePanel.utils';
+import { hedisGapSection } from '../tabs/gaps/hedisGapSection';
 import { usePatientPanelLayout } from '../../hooks/usePatientPanelLayout';
 import { visibleTabs, visibleWidgets } from '../patientPanelLayout';
 import { PanelCustomizeDrawer } from '../PanelCustomizeDrawer/PanelCustomizeDrawer';
@@ -82,6 +81,7 @@ export function PatientProfileTabs({
   const [careGapDrawer, setCareGapDrawer] = useState(null);
   const searchRef = useRef(null);
   const hedisMembers = useAppStore(s => s.hedisMembers) || [];
+  const openAddCareGaps = useAppStore(s => s.openAddCareGaps);
 
   const stickyNotes = useAppStore(s => s.stickyNotes);
   const fetchStickyNotes = useAppStore(s => s.fetchStickyNotes);
@@ -111,45 +111,17 @@ export function PatientProfileTabs({
       || (patient?.name && (m.name === patient.name))));
 
   const openGap = (item) => {
-    const code = String(item.title || '').split(' - ')[0].trim();
+    const code = item.code || String(item.title || '').split(' - ')[0].trim();
     const member = hedisMember;
     if (!code || !member) {
       toggleGap(item.id);
       return;
     }
-    setCareGapDrawer({ member, gapCode: code, year: new Date().getFullYear() });
+    setCareGapDrawer({ member, gapCode: code, instanceNo: item.openInstanceNo ?? null, year: new Date().getFullYear() });
   };
 
-  // A patient on the HEDIS worklist shows their real gaps: one row per open
-  // gap. A re-added measure's earlier (superseded) instances ride along as
-  // `previous` and expand under it on demand.
-  const gapItem = (g, i) => ({
-    id: `hedis-${g.code}-${i}`,
-    title: `${g.code} - ${MEASURE_NAMES[g.code] || g.code}`,
-    status: g.status,
-    statusVariant: STATUS_BADGE_VARIANT[g.status] || 'neutral',
-    // Measurement year: stamped on gaps added in Fold, else the start year.
-    year: g.measureYear ? String(g.measureYear) : (String(g.startDate || '').match(/\d{4}$/)?.[0] || ''),
-    diagnosis: g.supersededAt
-      ? `Previous Instance • Closed ${g.closedDate || g.supersededAt}`
-      : g.startDate ? `Opened ${g.startDate}` : '',
-  });
-  const hedisGaps = (hedisMember?.gaps || []).map((g, i) => ({ g, i }));
-  const activeCodes = new Set(hedisGaps.filter(({ g }) => !g.supersededAt).map(({ g }) => g.code));
-  const sourceSections = hedisGaps.length
-    ? [{
-        title: 'HEDIS Measures',
-        items: hedisGaps
-          // A superseded gap only stands on its own if its measure has no open one.
-          .filter(({ g }) => !g.supersededAt || !activeCodes.has(g.code))
-          .map(({ g, i }) => ({
-            ...gapItem(g, i),
-            previous: g.supersededAt ? [] : hedisGaps
-              .filter(x => x.g.code === g.code && x.g.supersededAt)
-              .map(x => gapItem(x.g, x.i)),
-          })),
-      }]
-    : CARE_GAP_SECTIONS_EXTENDED;
+  const hedisSection = hedisGapSection(hedisMember);
+  const sourceSections = hedisSection ? [hedisSection] : CARE_GAP_SECTIONS_EXTENDED;
 
   // Care Gaps filters (Status, Year). A row stays when it, or one of its
   // previous instances, matches, so a closed status still finds old ones.
@@ -206,6 +178,18 @@ export function PatientProfileTabs({
                   <span className={styles.viewBy}>View By: Action</span>
                   <DownChevronIcon size={10} />
                   <span className={styles.filterDivider} />
+                  {/* Same Add Care Gaps drawer as the worklist, already set
+                      to this patient. Only patients on the HEDIS worklist
+                      have gaps to add to. */}
+                  {hedisMember && (
+                    <ActionButton
+                      icon="solar:clipboard-add-linear"
+                      size="sm"
+                      tooltip="Add Care Gap"
+                      onClick={() => openAddCareGaps(hedisMember)}
+                    />
+                  )}
+                  {hedisMember && <span className={styles.filterDivider} />}
                   <ActionButton
                     icon="custom:filter"
                     size="sm"
@@ -426,8 +410,10 @@ export function PatientProfileTabs({
 
       {careGapDrawer && (
         <CareGapDetailDrawer
-          member={careGapDrawer.member}
+          // The live row, so a gap added from inside the drawer shows up.
+          member={hedisMember || careGapDrawer.member}
           gapCode={careGapDrawer.gapCode}
+          instanceNo={careGapDrawer.instanceNo}
           year={careGapDrawer.year}
           onClose={() => setCareGapDrawer(null)}
         />

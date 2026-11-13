@@ -97,12 +97,6 @@
   background: var(--neutral-0);
 }
 .subLabel { font-size: var(--font-sm); font-weight: 500; color: var(--neutral-400); }
-.configRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 200px;
-  gap: var(--space-3);
-  align-items: start;
-}
 .history {
   width: 100%;
   border-collapse: collapse;
@@ -213,3 +207,4 @@
   border-radius: 0;
   border-bottom: 0.5px solid var(--neutral-150);
 }
+.lockNote { font-size: var(--font-sm); color: var(--neutral-300); white-space: nowrap; }

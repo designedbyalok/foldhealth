@@ -25,7 +25,9 @@ export function useClinicalNotePanel({ member, gapCode, selectedNoteId = null, o
   const showToast = useAppStore(s => s.showToast);
   const bulkUpdateGapStatuses = useAppStore(s => s.bulkUpdateGapStatuses);
   const openNativeGap = useAppStore(s => s.openNativeGap);
-  const logCareGapActivity = useAppStore(s => s.logCareGapActivity);
+  const storeLogCareGapActivity = useAppStore(s => s.logCareGapActivity);
+  // Logged against this gap unless the entry names its own.
+  const logCareGapActivity = (memberId, entry) => storeLogCareGapActivity(memberId, { gapCode, ...entry });
   const createCareGapSignOffTask = useAppStore(s => s.createCareGapSignOffTask);
   const updateSignOffTaskPdf = useAppStore(s => s.updateSignOffTaskPdf);
   const upsertClinicalNote = useAppStore(s => s.upsertClinicalNote);

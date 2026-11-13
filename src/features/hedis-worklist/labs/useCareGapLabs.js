@@ -23,7 +23,9 @@ export function useCareGapLabs({ member, gapCode, year }) {
   const allResults = useAppStore(s => s.caregapLabResults[member?.id]) || EMPTY;
   const saveLabOrder = useAppStore(s => s.saveLabOrder);
   const saveLabResult = useAppStore(s => s.saveLabResult);
-  const logCareGapActivity = useAppStore(s => s.logCareGapActivity);
+  const storeLogCareGapActivity = useAppStore(s => s.logCareGapActivity);
+  // Logged against this gap unless the entry names its own.
+  const logCareGapActivity = (memberId, entry) => storeLogCareGapActivity(memberId, { gapCode, ...entry });
   const currentActorName = useAppStore(s => s.currentActorName);
   const updateGapStatus = useAppStore(s => s.updateGapStatus);
   const showToast = useAppStore(s => s.showToast);

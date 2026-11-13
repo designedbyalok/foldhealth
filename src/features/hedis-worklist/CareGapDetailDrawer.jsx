@@ -68,6 +68,7 @@ import { ScheduleDrawer } from '../../components/ScheduleDrawer/ScheduleDrawer';
 import { FilePreview } from '../../components/FilePreview/FilePreview';
 import { useAppStore } from '../../store/useAppStore';
 import { TABS, MORE_ACTIONS, MEASURE_NAMES, toActivityLogEntries, initialsOf } from './CareGapDetailDrawer.utils';
+import { activityForInstance } from './gapInstances';
 import { NOTELESS_GAP_CODES, noteOpenGaps } from './ClinicalNotePanel.utils';
 import { CareGapDetailDrawerHeader } from './CareGapDetailDrawerHeader';
 import styles from './CareGapDetailDrawer.module.css';
@@ -116,7 +117,14 @@ function CareGapDetailDrawerContent({ member, gapCode, instanceNo = null, year, 
   const showToast = useAppStore(s => s.showToast);
   const updateGapStatus = useAppStore(s => s.updateGapStatus);
   const updateGapAssignee = useAppStore(s => s.updateGapAssignee);
-  const logCareGapActivity = useAppStore(s => s.logCareGapActivity);
+  const storeLogCareGapActivity = useAppStore(s => s.logCareGapActivity);
+  // Everything logged from this drawer belongs to the gap and instance on
+  // screen (the store fills in the latest instance when none is picked).
+  const logCareGapActivity = (memberId, entry) => storeLogCareGapActivity(memberId, {
+    gapCode: currentCode,
+    ...(viewInstanceNo != null ? { instanceNo: viewInstanceNo } : {}),
+    ...entry,
+  });
   const currentActorName = useAppStore(s => s.currentActorName);
   const addProgramDocument = useAppStore(s => s.addProgramDocument);
   const updateProgramDocument = useAppStore(s => s.updateProgramDocument);
@@ -126,6 +134,7 @@ function CareGapDetailDrawerContent({ member, gapCode, instanceNo = null, year, 
   const fetchProgramDocuments = useAppStore(s => s.fetchProgramDocuments);
   useEffect(() => { fetchProgramDocuments(); }, [fetchProgramDocuments]);
   const activityEntries = useAppStore(s => s.caregapActivity[member?.id]);
+  const openAddCareGaps = useAppStore(s => s.openAddCareGaps);
   const platformUsers = useAppStore(s => s.platformUsers);
   const updateAppointment = useAppStore(s => s.updateAppointment);
   const deleteAppointment = useAppStore(s => s.deleteAppointment);
@@ -598,6 +607,7 @@ function CareGapDetailDrawerContent({ member, gapCode, instanceNo = null, year, 
     else if (a.key === 'reminder') openReminderNew();
     else if (a.key === 'referral') openReferral();
     else if (a.key === 'lab') openLabOrder();
+    else if (a.key === 'add-gap') openAddCareGaps(member);
     else showToast(`${a.label}, coming soon`);
   };
 
@@ -1080,7 +1090,10 @@ function CareGapDetailDrawerContent({ member, gapCode, instanceNo = null, year, 
   });
   // Referral entries open the referral (read-only, or for editing while it
   // is still a draft) when it still exists for this member.
-  const allActivityEntries = [...(activityEntries || []), ...commentEntries].map(e => {
+  // The Activity Log is per instance: this gap's entries for the instance on
+  // screen, plus untagged entries from before activity was tagged by gap.
+  const instanceActivity = activityForInstance(activityEntries, gap.code, viewed?.no ?? 1, instances[0]?.no ?? 1);
+  const allActivityEntries = [...instanceActivity, ...commentEntries].map(e => {
     const ref = e.t === 'referral' && e.detailCard?.referralId
       ? memberReferrals.find(r => r.id === e.detailCard.referralId)
       : null;

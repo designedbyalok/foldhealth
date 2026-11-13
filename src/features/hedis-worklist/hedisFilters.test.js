@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { memberMatchesFilters } from './hedisFilters';
+import { gapMatchesGapFilters, memberMatchesFilters } from './hedisFilters';
 
 const yearsAgo = (y, extraDays = 0) => {
   const d = new Date();
@@ -62,7 +62,26 @@ describe('Source and Instance filters', () => {
   it('matches a member when any gap has the picked source or instance', () => {
     expect(memberMatchesFilters(m, { gapSource: ['Manual'] })).toBe(true);
     expect(memberMatchesFilters({ gaps: [m.gaps[1]] }, { gapSource: ['Manual'] })).toBe(false);
+    expect(memberMatchesFilters(m, { gapInstance: ['Older'] })).toBe(true);
+    expect(memberMatchesFilters({ gaps: [m.gaps[0]] }, { gapInstance: ['Older'] })).toBe(false);
+    // Saved filters from before Active / Previous became Latest / Older.
     expect(memberMatchesFilters(m, { gapInstance: ['Previous'] })).toBe(true);
-    expect(memberMatchesFilters({ gaps: [m.gaps[0]] }, { gapInstance: ['Previous'] })).toBe(false);
+  });
+});
+
+describe('Compliance and Operational Status filters', () => {
+  const m = { gaps: [
+    { code: 'BCS', status: 'Open' },
+    { code: 'CBP', status: 'Completed' },
+    { code: 'COL', status: 'Closed - UTR' },
+  ] };
+  it('reads compliance and work stage from the one gap status', () => {
+    expect(memberMatchesFilters(m, { complianceStatus: ['Compliant'] })).toBe(true);
+    expect(memberMatchesFilters({ gaps: [m.gaps[0]] }, { complianceStatus: ['Compliant'] })).toBe(false);
+    expect(memberMatchesFilters({ gaps: [m.gaps[2]] }, { complianceStatus: ['Closed'] })).toBe(true);
+    expect(memberMatchesFilters({ gaps: [m.gaps[0]] }, { operationalStatus: ['Not Started'] })).toBe(true);
+  });
+  it('narrows a member to the matching gaps', () => {
+    expect(m.gaps.filter(g => gapMatchesGapFilters(g, { complianceStatus: ['Non-Compliant'] })).map(g => g.code)).toEqual(['BCS']);
   });
 });
