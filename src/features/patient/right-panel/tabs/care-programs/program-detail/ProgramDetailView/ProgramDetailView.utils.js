@@ -45,6 +45,11 @@ export function withoutCarePlanStep(steps) {
 }
 export const flatSteps = (list) => list.flatMap(s => (s.type === 'section' ? s.children : [s]));
 
+// Every program opens on its Overview (ProgramOverviewStep). It isn't one of
+// the program's configured steps: nothing to complete, so it stays out of the
+// step list, progress and Next Best Actions.
+export const OVERVIEW_STEP_ID = 'overview';
+
 export function letterPdfBlob(letter) {
   if (!letter?.contentBase64) return null;
   const bin = atob(letter.contentBase64);

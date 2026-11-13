@@ -135,11 +135,13 @@ export function CareProgramsTab({ header }) {
   const requestEnrollment = useConsentedEnrollment(patientId, programs);
   useEffect(() => {
     if (!pendingCareProgramCode || !patientId || !programsLoaded) return;
-    const { pendingCareProgramCarePlan: carePlan, pendingCareProgramSubProgram: subProgram } = useAppStore.getState();
+    const { pendingCareProgramCarePlan: carePlan, pendingCareProgramSubProgram: subProgram, pendingCareProgramOpenOnly: openOnly } = useAppStore.getState();
     // CMP is enrolled per sub-program: match on it when one was given.
     const existing = programs.find(p => p.code === pendingCareProgramCode && (!subProgram || p.subProgram === subProgram));
     if (existing) {
       setPendingProgram({ program: existing, firstStep: false, carePlan });
+    } else if (openOnly) {
+      // Not in the program: stay on Care Programs.
     } else if (pendingCareProgramCode === 'CMP' && !subProgram) {
       // No sub-program to enroll in: let the user pick one.
       setCmpPickerRect(npBtnRef.current?.getBoundingClientRect() ?? null);

@@ -76,13 +76,14 @@ function StepStatusIcon({ status }) {
 }
 
 // `recommended`: a care plan recommendation awaits approval on this step.
-export function StepItem({ step, isActive, onClick, isChild, recommended = false }) {
+// `icon` stands in for the status mark on a step with nothing to complete (Overview).
+export function StepItem({ step, isActive, onClick, isChild, recommended = false, icon = null }) {
   return (
     <button
       className={`${styles.stepItem} ${isActive ? styles.stepItemActive : ''} ${isChild ? styles.stepChild : ''}`}
       onClick={onClick}
     >
-      <StepStatusIcon status={step.status} />
+      {icon ? <Icon name={icon} size={16} color={isActive ? 'var(--primary-300)' : 'var(--neutral-300)'} /> : <StepStatusIcon status={step.status} />}
       <span className={isActive ? styles.stepNameActive : styles.stepName}>{step.name}</span>
       {recommended && (
         <span className={styles.recommendedMark} role="img" aria-label="Care plan recommendation awaiting approval" title="Care plan recommendation awaiting approval">

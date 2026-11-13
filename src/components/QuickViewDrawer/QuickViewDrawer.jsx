@@ -5,6 +5,7 @@ import { CloseButton } from '../CloseButton/CloseButton';
 import { PatientP360Banner } from '../../features/patient/shell/PatientP360Banner/PatientP360Banner';
 import { PatientProfileTabs } from '../../features/patient/left-panel/PatientProfileTabs/PatientProfileTabs';
 import styles from './QuickViewDrawer.module.css';
+import { programForWorklist } from '../../lib/worklistProgram';
 
 /**
  * The patient a quick view shows: the snapshot it was opened with, with the
@@ -45,10 +46,17 @@ function useQuickViewPatient(snapshot) {
     : snapshot;
 }
 
+// From a program's worklist the profile opens in that program, when the
+// patient is in it.
 function ViewFullProfile({ patient, onClose }) {
   const navigateToPatient = useAppStore(s => s.navigateToPatient);
+  const programCode = useAppStore(s => (s.activePage === 'population' ? programForWorklist(s.activeSubnavList) : null));
+  const open = () => {
+    onClose();
+    navigateToPatient(patient.id, programCode ? { programCode, openOnly: true } : undefined);
+  };
   return (
-    <button className={styles.profileLink} onClick={() => { onClose(); navigateToPatient(patient.id); }}>
+    <button className={styles.profileLink} onClick={open}>
       View Full Profile
       <Icon name="solar:arrow-right-linear" size={16} />
     </button>

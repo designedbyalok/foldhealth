@@ -109,7 +109,10 @@ export function MyPatientsTable() {
     const cur = filters.band || [];
     setFilter('band', cur.includes(label) ? cur.filter(x => x !== label) : [...cur, label]);
   };
-  const openPrograms = row => navigateToPatient(row.memberId, { profileTab: 'Care Programs' });
+  // Into the row's first program (its Overview), or the Care Programs list.
+  const openPrograms = row => navigateToPatient(row.memberId, row.programs?.[0]
+    ? { programCode: row.programs[0], openOnly: true }
+    : { profileTab: 'Care Programs' });
 
   const header = (
     <SectionTitleBar

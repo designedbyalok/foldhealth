@@ -42,7 +42,8 @@ import { useCarePlanPanelOpen } from '../../../../../hooks/useProgramPanelSplitA
 import { ProgramDetailViewHeader } from './ProgramDetailViewHeader';
 import { ProgramDetailViewContentHeader } from './ProgramDetailViewContentHeader';
 import { ProgramDetailViewLetters } from './ProgramDetailViewLetters';
-import { downloadLetters } from './ProgramDetailView.utils';
+import { downloadLetters, flatSteps, OVERVIEW_STEP_ID } from './ProgramDetailView.utils';
+import { ProgramOverviewStep } from '../ProgramOverviewStep/ProgramOverviewStep.jsx';
 import { mmddyy } from './ProgramDetailView.utils';
 import { ProgramReportDrawer } from '../report/ProgramReportDrawer';
 import styles from './ProgramDetailView.module.css';
@@ -211,6 +212,13 @@ export function ProgramDetailView({ program, onClose, onSwitchProgram, stepId = 
 
       <div className={styles.body}>
         {!stepOnly && <div className={styles.stepList}>
+          {/* First in every program, whatever its configured steps. */}
+          <StepItem
+            step={{ id: OVERVIEW_STEP_ID, name: 'Overview' }}
+            icon="solar:widget-2-linear"
+            isActive={v.activeStep === OVERVIEW_STEP_ID}
+            onClick={() => v.setActiveStep(OVERVIEW_STEP_ID)}
+          />
           {v.stepList.map(step => {
             if (step.type === 'section') {
               const expanded = v.expandedSections[step.id] ?? step.expanded;
@@ -234,6 +242,15 @@ export function ProgramDetailView({ program, onClose, onSwitchProgram, stepId = 
         </div>}
 
         <div className={styles.content}>
+          {stepFlags.isOverviewStep ? (
+            <ProgramOverviewStep
+              patientId={v.patientId}
+              program={program}
+              carePlanStepId={flatSteps(v.stepList).find(s => /care plan/i.test(s.screen || s.name))?.id}
+              onOpenStep={v.setActiveStep}
+              onEnroll={() => {}}
+            />
+          ) : (<>
           <ProgramDetailViewContentHeader
             program={program}
             carePlanInPanel={carePlanInPanel}
@@ -272,6 +289,7 @@ export function ProgramDetailView({ program, onClose, onSwitchProgram, stepId = 
             onMarkStep={v.markStep}
           />
           {renderStepBody()}
+          </>)}
         </div>
       </div>
 
