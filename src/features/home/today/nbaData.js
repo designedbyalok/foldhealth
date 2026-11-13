@@ -16,21 +16,22 @@
 export const PANEL_TODAY = {
   touchesDone: 9,
   touchesPlanned: 24,
-  minutesTotal: 104,
-  minutesByProgram: [['CCM', 64], ['TCM', 18], ['BHI', 22]],
-  atThreshold: 3,
+  // The day's progress in care terms (review F-41): no minute totals here;
+  // time lives in each program's billing step.
+  escalationsCleared: 2,
   overdue: 1,
   pulse: {
     overdue: { count: 1, caption: 'TCM contact deadlines' },
     'due-today': { count: 10, caption: 'scheduled + rule-fired' },
     escalated: { count: 2, caption: 'Tara needs a human' },
-    threshold: { count: 6, caption: 'CCM minutes · 10 days left' },
+    rising: { count: 5, caption: 'Abnormal readings and trends' },
   },
   adherence: { total: 120, onTrack: 22, slipping: 48, offPlan: 50 },
 };
 
 // urgency drives the row's left accent + which Panel Pulse bucket it counts
-// toward: overdue · escalated · threshold · due-today · rising · followup.
+// toward: overdue · escalated · due-today · rising · followup. Rows are ranked
+// on clinical need, never on billing minutes (review F-09).
 // `fallback*` identity is only used if the patient database has not loaded.
 export const NBA_ITEMS = [
   {
@@ -45,8 +46,8 @@ export const NBA_ITEMS = [
   {
     id: 'nba-2',
     programs: ['CCM', 'DM'], riskTier: 'High',
-    urgency: 'threshold', reasonIcon: 'solar:hourglass-linear',
-    reason: "6 min from 20-min CCM threshold · 10 days left in August · discharged St. Luke's 8/19, follow-up promised",
+    urgency: 'due-today', reasonIcon: 'solar:phone-calling-linear',
+    reason: "Discharged St. Luke's 8/19 · CHF follow-up call promised for this week, not done yet",
     suggestedAction: 'Call: CHF goal check-in due, interpreter not needed (bilingual daughter)',
     isAgent: false, agentName: null, agentStatus: null, rank: 2,
     fallbackName: 'Maria Delgado', fallbackAge: 67, fallbackPayer: 'Humana MA', fallbackProvider: 'Dr. A. Patel',
@@ -90,9 +91,9 @@ export const NBA_ITEMS = [
   {
     id: 'nba-7',
     programs: ['CCM'], riskTier: 'Moderate',
-    urgency: 'threshold', reasonIcon: 'solar:hourglass-linear',
-    reason: '2 min from 20-min CCM threshold · interpreter line pre-booked 3:30 PM',
-    suggestedAction: 'Quick check-in closes the month',
+    urgency: 'due-today', reasonIcon: 'solar:calendar-linear',
+    reason: 'Monthly care plan check-in due · interpreter line pre-booked 3:30 PM',
+    suggestedAction: 'Call: review goals and medications with the interpreter',
     isAgent: false, agentName: null, agentStatus: null, rank: 7,
     fallbackName: 'Lucille Tran', fallbackAge: 74, fallbackPayer: 'Humana MA', fallbackProvider: 'Dr. A. Patel',
   },
@@ -108,8 +109,8 @@ export const NBA_ITEMS = [
   {
     id: 'nba-9',
     programs: ['CCM', 'DM'], riskTier: 'High',
-    urgency: 'threshold', reasonIcon: 'solar:hourglass-linear',
-    reason: 'CHF weight up 4 lbs in 3 days · 9 min from CCM threshold · no touch in 21 days',
+    urgency: 'rising', reasonIcon: 'solar:graph-up-linear',
+    reason: 'CHF weight up 4 lbs in 3 days · no touch in 21 days',
     suggestedAction: 'Call: symptom check + daily weight review',
     isAgent: false, agentName: null, agentStatus: null, rank: 9,
     fallbackName: 'Harold Briggs', fallbackAge: 79, fallbackPayer: 'Wellcare MA', fallbackProvider: 'Dr. L. Chen',
@@ -118,7 +119,7 @@ export const NBA_ITEMS = [
     id: 'nba-10',
     programs: ['CCM', 'AWV'], riskTier: 'Rising',
     urgency: 'due-today', reasonIcon: 'solar:document-text-linear',
-    reason: 'AWV due this month · 6 min from CCM threshold · combine in one visit',
+    reason: 'AWV due this month · monthly CCM check-in also due · combine in one visit',
     suggestedAction: 'Schedule combined CCM + AWV call',
     isAgent: false, agentName: null, agentStatus: null, rank: 10,
     fallbackName: 'Teresa Morales', fallbackAge: 70, fallbackPayer: 'Humana MA', fallbackProvider: 'Dr. A. Patel',
