@@ -257,6 +257,8 @@ import { defaultProgramTypes } from '../features/settings/care-program-config/ca
 import { fetchPatientSnapshotRow } from './lib/patientSnapshotsPersist';
 import { buildPatientSnapshot, patientSnapshotKey } from '../lib/patientSnapshot';
 import { EFAX_NUMBERS_MOCK } from '../features/settings/messages/efax/efaxNumbersMock';
+import { INBOXES_MOCK } from '../features/settings/messages/inboxes/inboxesMock';
+import { fetchInboxRows, persistInboxInsert, persistInboxUpdate, persistInboxDelete } from './lib/commsInboxesPersist';
 import {
   LIST_FILTER_KEY,
   detachSaved,
@@ -10889,6 +10891,45 @@ export const useAppStore = create((set, get) => ({
     if (!id) return;
     set(s => ({ efaxNumbers: s.efaxNumbers.filter(n => n.id !== id) }));
     if (!get().efaxNumbersTableMissing) persistEfaxNumberDelete(id);
+  },
+  // ── Practice inboxes (Supabase `comms_inboxes`) ─────────────────────────
+  // Settings > Messages > Inboxes, and the Comms Filters drawer's By Inbox.
+  // Falls back to the mock (same ids as the migration seed) until
+  // comms_inboxes_migration.sql has run; edits then stay session-only.
+  commsInboxes: [],
+  commsInboxesLoading: false,
+  commsInboxesLoaded: false,
+  commsInboxesTableMissing: false,
+  fetchCommsInboxes: async () => {
+    if (get().commsInboxesLoading || get().commsInboxesLoaded) return;
+    set({ commsInboxesLoading: true });
+    const { rows, missing } = await fetchInboxRows();
+    set(s => ({
+      commsInboxes: [
+        ...s.commsInboxes.filter(l => !rows.some(r => r.id === l.id)),
+        ...(missing || !rows.length ? INBOXES_MOCK.filter(m => !s.commsInboxes.some(l => l.id === m.id)) : rows),
+      ],
+      commsInboxesLoading: false,
+      commsInboxesLoaded: true,
+      commsInboxesTableMissing: missing,
+    }));
+  },
+  addCommsInbox: async (inbox) => {
+    if (!inbox?.id) return;
+    set(s => ({ commsInboxes: [inbox, ...s.commsInboxes] }));
+    if (get().commsInboxesTableMissing) return;
+    const { missing } = await persistInboxInsert(inbox);
+    if (missing) set({ commsInboxesTableMissing: true });
+  },
+  updateCommsInbox: (id, patch) => {
+    if (!id || !patch) return;
+    set(s => ({ commsInboxes: s.commsInboxes.map(i => (i.id === id ? { ...i, ...patch } : i)) }));
+    if (!get().commsInboxesTableMissing) persistInboxUpdate(id, patch);
+  },
+  deleteCommsInbox: (id) => {
+    if (!id) return;
+    set(s => ({ commsInboxes: s.commsInboxes.filter(i => i.id !== id) }));
+    if (!get().commsInboxesTableMissing) persistInboxDelete(id);
   },
   logCareGapActivity: (memberId, entry) => {
     // Random suffix: several entries can be logged in the same millisecond

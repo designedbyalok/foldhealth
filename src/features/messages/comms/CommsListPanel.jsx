@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
-import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { BulkBar } from '../../../components/BulkBar/BulkBar';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
 import { toast } from '../../../components/Toast/sonnerToast';
@@ -16,11 +15,16 @@ import { formatTime } from '../messageUtils';
 import { CHANNEL_META, initialsOf, isMissedCall } from './commsUtils';
 import { CommsListEmpty } from './CommsEmptyState';
 import { CommsListHeader } from './CommsListHeader';
-import { updateConversation, markConversationRead, deleteConversation } from './commsRepo';
+import { updateConversation, markConversationRead, deleteConversation, listMessagesFor } from './commsRepo';
+import { CommsFilterDrawer } from './CommsFilterDrawer';
+import { EMPTY_COMMS_FILTERS, commsFiltersActive, dateWindow } from './commsFilters';
+import { collaboratorsOf, inboxOf } from './commsInboxes';
+import { isAutoReply } from './oooAutoReply';
+import { useCovering } from '../../ooo/useCovering';
+import { sameName } from '../../ooo/oooUtils';
 import styles from './Comms.module.css';
 
 const CHANNEL_FILTER = { Chat: 'chat', SMS: 'sms', Calls: 'call', Email: 'email' };
-const ACTIVITY_FILTER = { Today: 1, 'Last 7 days': 7, 'Last 30 days': 30 };
 
 /**
  * The middle column of Comms for Chat / SMS / Calls / All: the header
@@ -45,10 +49,45 @@ export function CommsListPanel({
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
-  const [channels, setChannels] = useState([]);
-  const [activity, setActivity] = useState([]);
-  // The cutoff is fixed when the filter is picked, not recomputed each render.
-  const [activityCutoff, setActivityCutoff] = useState(0);
+  const [filters, setFilters] = useState(EMPTY_COMMS_FILTERS);
+  // The date window is fixed when the filters are applied, not each render.
+  const [dateRange, setDateRange] = useState(null);
+  const applyFilters = (f) => { setFilters(f); setDateRange(dateWindow(f)); };
+  const { channels } = filters;
+  // Covering for: conversations whose inbox has someone I'm covering as a
+  // collaborator (the inbox's assignees). A thread with no inbox (Chat) goes
+  // by the last staff member who wrote to the patient, as for the auto-reply;
+  // those messages load only while that filter is on.
+  const { names: coveringNames } = useCovering();
+  const [staffOf, setStaffOf] = useState(null); // conversation id → last staff sender name
+  const coveringOn = filters.covering.length > 0;
+  // By Inbox: the inboxes of this list's channels (SMS, email).
+  const inboxes = useAppStore(s => s.commsInboxes);
+  const inboxSample = useAppStore(s => s.commsInboxesTableMissing);
+  const fetchCommsInboxes = useAppStore(s => s.fetchCommsInboxes);
+  const platformUsers = useAppStore(s => s.platformUsers);
+  useEffect(() => { fetchCommsInboxes(); }, [fetchCommsInboxes]);
+  const listInboxChannels = channel === 'all' ? ['sms', 'email'] : [channel];
+  const inboxOptions = inboxes.filter(i => listInboxChannels.includes(i.channel));
+  const inboxById = useMemo(() => new Map(inboxes.map(i => [i.id, i])), [inboxes]);
+  const coversThread = (c, name) => {
+    const inbox = inboxById.get(inboxOf(c, inboxSample));
+    if (inbox) return collaboratorsOf(inbox, platformUsers || []).some(u => sameName(u.name, name));
+    return sameName(staffOf?.get(c.id), name);
+  };
+  useEffect(() => {
+    if (!coveringOn) return undefined;
+    let live = true;
+    listMessagesFor(conversations.map(c => c.id)).then((msgs) => {
+      if (!live) return;
+      const last = new Map();
+      [...msgs].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).forEach((m) => {
+        if (m.direction === 'out' && !m.internal && !isAutoReply(m) && m.sender_name) last.set(m.conversation_id, m.sender_name);
+      });
+      setStaffOf(last);
+    }).catch(() => live && setStaffOf(new Map()));
+    return () => { live = false; };
+  }, [coveringOn, conversations]);
   const [bulk, setBulk] = useState(false);
   const [picked, setPicked] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -74,7 +113,12 @@ export function CommsListPanel({
     if (tab === 'unanswered' && !isMissedCall(c)) return false;
     if (tab === 'pinned' && !c.pinned) return false;
     if (channels.length && !channels.some(k => CHANNEL_FILTER[k] === c.channel)) return false;
-    if (activityCutoff && new Date(c.last_message_at).getTime() < activityCutoff) return false;
+    if (dateRange) {
+      const t = new Date(c.last_message_at).getTime();
+      if (t < dateRange.from || t >= dateRange.to) return false;
+    }
+    if (coveringOn && !filters.covering.some(n => coversThread(c, n))) return false;
+    if (filters.inbox && inboxOf(c, inboxSample) !== filters.inbox) return false;
     if (!q) return true;
     const memberNames = (smsMembers.get(c.id) || []).map(m => m.name).join(' ');
     return `${c.patient_name} ${c.thread_name || ''} ${memberNames} ${c.group_name || ''} ${c.last_preview} ${c.patient_phone || ''}`.toLowerCase().includes(q);
@@ -97,8 +141,8 @@ export function CommsListPanel({
         onSearch={() => { setSearchOpen(v => !v); setQuery(''); }}
         bulkActive={bulk}
         onBulk={() => { setBulk(v => !v); setPicked([]); }}
-        filterActive={filterOpen || channels.length > 0 || activity.length > 0}
-        onFilter={() => setFilterOpen(v => !v)}
+        filterActive={filterOpen || commsFiltersActive(filters)}
+        onFilter={() => setFilterOpen(true)}
       />
 
       <div className={listStyles.convTabs}>
@@ -106,10 +150,14 @@ export function CommsListPanel({
       </div>
 
       {filterOpen && (
-        <div className={styles.filterRow}>
-          {mixed && <FilterChip label="Channel" options={Object.keys(CHANNEL_FILTER)} selected={channels} onChange={setChannels} />}
-          <FilterChip label="Last Activity" singleSelect options={Object.keys(ACTIVITY_FILTER)} selected={activity} onChange={(v) => { setActivity(v); setActivityCutoff(v.length ? Date.now() - ACTIVITY_FILTER[v[0]] * 86400000 : 0); }} />
-        </div>
+        <CommsFilterDrawer
+          value={filters}
+          onApply={applyFilters}
+          onClose={() => setFilterOpen(false)}
+          channels={mixed ? Object.keys(CHANNEL_FILTER) : []}
+          coveringNames={coveringNames}
+          inboxes={inboxOptions}
+        />
       )}
 
       {searchOpen && (

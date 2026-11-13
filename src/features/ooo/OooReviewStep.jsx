@@ -74,10 +74,10 @@ function coverersFirst(users, coverers, awayName) {
 
 /** What each card says: what happens to current work, then to new work. */
 function linesFor(key, covered, autoReply) {
-  const existing = null;
+  const existing = covered ? 'Auto-assigned to the covering providers.' : 'Stay with this user.';
   switch (key) {
     case 'appointments':
-      return [existing, 'New appointments can\'t be booked during OOO duration.'];
+      return [covered ? 'Booked visits are reassigned after Save.' : 'Booked visits are reviewed after Save.', 'New appointments can\'t be booked during OOO duration.'];
     case 'carePlan':
     case 'medRecon':
     case 'intervention':
@@ -197,13 +197,14 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
     if (!n) {
       return (
         <div key={m.key} className={styles.workCard}>
-          {head({ key: m.key, muted: true, lines: linesFor(m.key, covered, autoReply), title: m.title, count: 0 })}
+          {/* Nothing open: the first line follows the Auto-assign checkbox. */}
+          {head({ key: m.key, muted: true, lines: (() => { const l = linesFor(m.key, covered, autoReply); if (!autoAssign) l[0] = 'Stay with this user.'; return l; })(), title: m.title, count: 0 })}
         </div>
       );
     }
-    // Nobody picked yet (every area starts that way): no line about current work.
+    // Nobody picked for this area (auto-assign off, or cleared): its work stays.
     const lines = linesFor(m.key, covered, autoReply);
-    if (!planPeople(plans[m.key], ids).length) lines[0] = null;
+    if (!planPeople(plans[m.key], ids).length) lines[0] = 'Stay with this user.';
     return (
       <div key={m.key} className={styles.workCard}>
         {head({
