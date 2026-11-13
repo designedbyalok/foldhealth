@@ -18,9 +18,11 @@ CREATE TABLE IF NOT EXISTS public.comms_inboxes (
 );
 
 ALTER TABLE public.comms_inboxes ENABLE ROW LEVEL SECURITY;
-DO $$ BEGIN
-  CREATE POLICY "Allow all" ON public.comms_inboxes FOR ALL USING (true) WITH CHECK (true);
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+-- Signed-in staff only, never anon (see RLS_POSTURE.md). Dropped first so a
+-- re-run also narrows a policy created by an earlier version of this file.
+DROP POLICY IF EXISTS "Allow all" ON public.comms_inboxes;
+CREATE POLICY "Allow all" ON public.comms_inboxes
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 ALTER TABLE public.patient_conversations ADD COLUMN IF NOT EXISTS inbox_id text;
 
