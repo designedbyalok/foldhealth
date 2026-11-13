@@ -15,6 +15,7 @@ import { usePatientDisplay } from '../../hooks/usePatientDisplay';
 import { QuickViewExpanded } from './PatientP360BannerExpanded';
 import { DRAWER_ACTIONS, MORE_MENU_LABELS } from './PatientP360Banner.utils';
 import { PatientTagPills, AddPatientTagDrawer } from './PatientTags';
+import { InterpreterChip } from '../../shared/InterpreterOffer/InterpreterOffer';
 import styles from './PatientP360Banner.module.css';
 
 // Every quick action, SMS last. The row shows as many as fit; the rest move
@@ -161,6 +162,7 @@ export function PatientP360BannerDrawer({ patient, p, programCodes, onManageFami
         <PatientTagPills patientId={patient.id} />
         <button className={styles.drawerAddTagBtn} aria-label="Add tag" onClick={() => setAddTagOpen(true)}><Icon name="solar:add-circle-linear" size={12} color="var(--neutral-300)" /></button>
         {addTagOpen && <AddPatientTagDrawer patient={patient} onClose={() => setAddTagOpen(false)} />}
+        <InterpreterChip patientId={patient.id} size="xs" />
         <button className={styles.drawerExpandIcon} onClick={() => setDrawerExpanded(v => !v)} aria-expanded={drawerExpanded} aria-label={drawerExpanded ? 'Collapse panel' : 'Expand panel'}>
           <span className={`${styles.drawerExpandIconInner} ${drawerExpanded ? styles.drawerExpandIconRotated : ''}`}>
             <Icon name="custom:expand-drawer" size={16} />

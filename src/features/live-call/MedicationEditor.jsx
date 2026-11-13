@@ -32,7 +32,9 @@ export function MedicationEditor({ script, med, cmName, showToast }) {
   const save = () => {
     if (error) return;
     session.saveMed(med.n, { ...draft, days: draft.days === '' ? '' : Number(draft.days) });
-    showToast(`${med.n} ${stopped ? `stopped · ${draft.reason}` : 'updated'} · saved with the call at wrap-up`);
+    showToast(draft.orderRef?.trim()
+      ? `${med.n} ${stopped ? `stopped · ${draft.reason}` : 'updated'} · updates the medication list at wrap-up`
+      : `${med.n}: sent for prescriber review at wrap-up · no order reference`);
   };
 
   return (
@@ -87,6 +89,15 @@ export function MedicationEditor({ script, med, cmName, showToast }) {
             <Input label="Days Supply" type="number" min="1" placeholder="e.g. 30" value={String(draft.days ?? '')} onChange={e => set({ days: e.target.value })} />
           </div>
         )}
+
+        <Input
+          label="Order Reference"
+          placeholder="e.g. Discharge orders 11/08, Rx #4471"
+          value={draft.orderRef || ''}
+          onChange={e => set({ orderRef: e.target.value })}
+          showInfo
+          infoText="The medication list changes only against an order. Without one, the change goes to the prescriber for review."
+        />
 
         {noteOpen ? (
           <Textarea rows={3} aria-label="Note" placeholder="Add note" value={draft.note} onChange={e => set({ note: e.target.value })} />

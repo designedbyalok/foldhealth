@@ -71,7 +71,9 @@ export function ActionItems({ script, cmName, showToast }) {
           const copy = acceptCopy(it);
           const title = session.edits[it.id] || it.title;
           const who = speakerOf(script, line.who, cmName);
-          const fields = [...(it.src ? [['Source', `${it.src[0]} · ${it.src[1]}`]] : []), ...it.fields];
+          // A medication change with no order behind it says so: it goes to the prescriber.
+          const source = it.src ? [['Source', `${it.src[0]} · ${it.src[1]}`]] : it.where === 'Medications' ? [['Source', 'Patient-reported · no order on file']] : [];
+          const fields = [...source, ...it.fields];
           const cls = [styles.item, st === 'accepted' ? styles.itemAccepted : '', session.focus === it.id ? styles.itemFocus : ''].filter(Boolean).join(' ');
           return (
             <div key={it.id} className={cls}>

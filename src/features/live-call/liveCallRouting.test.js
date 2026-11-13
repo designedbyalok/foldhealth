@@ -51,11 +51,36 @@ describe('live call routing', () => {
     const store = fakeStore([{ id: 'f', name: 'Furosemide 40 mg', status: 'Active' }, { id: 'mt', name: 'Metoprolol succinate 25 mg', status: 'Active' }]);
     const accepted = ['w1', 'w3', 'w5', 'w6', 'w7', 'w8', 'w9'].map(item);
     const done = await routeAcceptedItems({ store, patient: { name: 'William Davis' }, pid: '11143', program: { id: 'p1', code: 'TOC IP' }, accepted, script: william, today });
-    expect(done).toEqual({ task: 2, appointment: 1, carePlan: 2, medication: 2, failed: 0 });
-    expect(store.state.updatePatientMedication).toHaveBeenCalledWith('11143', 'f', { status: 'Stopped', stop: '2026-11-12', stopReason: 'Therapeutic Change' });
-    expect(store.state.updatePatientMedication).toHaveBeenCalledWith('11143', 'mt', { name: 'Metoprolol succinate 50 mg', sig: 'Nightly' });
+    expect(done).toEqual({ task: 2, appointment: 1, carePlan: 2, medication: 2, prescriber: 0, failed: 0 });
+    // Reconciled against the discharge orders: the list changes, citing the order.
+    const orderNote = 'Reconciled on a live call against Discharge orders, St. Mary Hospital 11/08.';
+    expect(store.state.updatePatientMedication).toHaveBeenCalledWith('11143', 'f', { status: 'Stopped', stop: '2026-11-12', stopReason: 'Therapeutic Change', note: orderNote });
+    expect(store.state.updatePatientMedication).toHaveBeenCalledWith('11143', 'mt', { name: 'Metoprolol succinate 50 mg', sig: 'Nightly', note: orderNote });
     expect(store.state.savePatientCarePlanGoal.mock.calls[0][2]).toMatchObject({ title: 'Walk to church on Sundays again', patientTitle: 'I’d like to get back to walking to church on Sundays.' });
     expect(routedSummary(done)).toBe('2 tasks, 1 appointment, 2 care plan items and 2 medication updates');
+  });
+
+  it('sends a patient-reported medication change to the prescriber instead of the list', async () => {
+    const store = fakeStore([{ id: 'f', name: 'Furosemide 40 mg', status: 'Active' }]);
+    const reported = { ...item('w1'), src: undefined };
+    expect(routeLabel(reported.route, reported)).toBe('Sends to the prescriber for review');
+    const done = await routeAcceptedItems({ store, patient: { name: 'William Davis' }, pid: '11143', program: { id: 'p1', code: 'TOC IP' }, accepted: [reported], script: william, today });
+    expect(done).toMatchObject({ prescriber: 1, medication: 0 });
+    expect(store.state.updatePatientMedication).not.toHaveBeenCalled();
+    expect(store.state.createTask.mock.calls[0][0]).toMatchObject({ name: `Prescriber review: ${reported.title}`, priority: 'high', due_date: '11-13-2026' });
+    expect(routedSummary(done)).toBe('1 prescriber review');
+  });
+
+  it('changes the list from the medication editor only against an order reference', async () => {
+    const med = william.meds[0];
+    const store = fakeStore([{ id: 'x', name: med.n, status: 'Active' }]);
+    const base = { patient: { name: 'William Davis' }, pid: '11143', program: null, accepted: [], script: william, today };
+    const noOrder = await routeAcceptedItems({ ...base, store, medEdits: { [med.n]: { sig: '1 tablet daily' } } });
+    expect(noOrder).toMatchObject({ prescriber: 1, medication: 0 });
+    expect(store.state.updatePatientMedication).not.toHaveBeenCalled();
+    const ordered = await routeAcceptedItems({ ...base, store, medEdits: { [med.n]: { sig: '1 tablet daily', orderRef: 'Rx 4471' } } });
+    expect(ordered).toMatchObject({ prescriber: 0, medication: 1 });
+    expect(store.state.updatePatientMedication.mock.calls[0][2].note).toContain('Per order Rx 4471');
   });
 
   it('uses an edited title for a task and skips stopping a medication that isn’t on the list', async () => {

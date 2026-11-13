@@ -1,19 +1,17 @@
 import { inlineAddPayload } from '../patient/right-panel/tabs/care-programs/care-plan/lib/carePlanInlineAdd';
-import { medRecord } from './liveCallModel';
+import { medBasis, medRecord } from './liveCallModel';
 
 /* Wrap-up routing: what each accepted action item becomes when the call is
    completed. An item's `route` (data/scripts.js) names the record; items
    without one stay on the call record only. */
 
-// patient_medications.source allows manual / openfda / discharge_import: a
-// medication reported on a call is a manual entry, marked in its note.
-const LIVE_CALL_NOTE = 'Reported on a live call.';
 const pad = n => String(n).padStart(2, '0');
 const mdy = d => `${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${d.getFullYear()}`;
 const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 /** Where an accepted item lands, for the wrap-up list. */
-export function routeLabel(route) {
+export function routeLabel(route, item) {
+  if (route?.kind === 'medication' && item && medBasis(item) !== 'order') return 'Sends to the prescriber for review';
   switch (route?.kind) {
     case 'task': return 'Creates a task';
     case 'appointment': return 'Books an appointment';
@@ -62,6 +60,18 @@ export function taskRecord({ route, patient, pid, program, me, today }) {
   };
 }
 
+/**
+ * A medication change with no order behind it: a high-priority task for the
+ * prescriber to review, instead of a change to the medication list.
+ */
+export function prescriberReviewTask({ change, detail, patient, pid, program, me, today }) {
+  const route = { name: `Prescriber review: ${change}`, priority: 'high', dueInDays: 1 };
+  return {
+    ...taskRecord({ route, patient, pid, program, me, today }),
+    description: `${detail} The medication list stays as it is until a prescriber orders the change.`,
+  };
+}
+
 /** The appointments row, in the Schedule drawer's shape. */
 export function appointmentRecord({ route, patient, pid }) {
   return {
@@ -95,7 +105,7 @@ export function appointmentRecord({ route, patient, pid }) {
 export async function routeAcceptedItems({ store, patient, pid, program, accepted, script, medEdits = {}, today = new Date() }) {
   const s = store.getState();
   const me = s.currentUserProfile;
-  const done = { task: 0, appointment: 0, carePlan: 0, medication: 0, failed: 0 };
+  const done = { task: 0, appointment: 0, carePlan: 0, medication: 0, prescriber: 0, failed: 0 };
   const ok = (kind, result) => { if (result) done[kind] += 1; else done.failed += 1; };
 
   const needsMeds = accepted.some(it => it.route?.kind === 'medication') || Object.keys(medEdits).length > 0;
@@ -114,13 +124,20 @@ export async function routeAcceptedItems({ store, patient, pid, program, accepte
       return ['carePlan', await save(pid, program, route.words ? { ...payload, patientTitle: route.words } : payload)];
     }
     if (route.kind === 'medication') {
+      // Patient-reported: the prescriber decides; the list doesn't change.
+      if (medBasis(it) !== 'order') {
+        const line = script.lines?.[it.lineIdx];
+        const heard = line ? ` The patient said: “${line.hl || line.text}”` : '';
+        return ['prescriber', await s.createTask(prescriberReviewTask({ change: it.title, detail: `Reported on a live call on ${mdy(today)}.${heard}`, patient, pid, program, me, today }))];
+      }
+      const orderNote = `Reconciled on a live call against ${it.src[1] || 'the order'}.`;
       const found = findMedication(meds(), route.name);
       if (route.action === 'add' || !found) {
         if (route.action === 'stop') return null;
-        return ['medication', await s.addPatientMedication(pid, { name: route.rename || route.name, sig: route.sig || '', start: route.start || iso(today), note: LIVE_CALL_NOTE, source: 'manual' })];
+        return ['medication', await s.addPatientMedication(pid, { name: route.rename || route.name, sig: route.sig || '', start: route.start || iso(today), note: orderNote, source: 'manual' })];
       }
-      if (route.action === 'stop') return ['medication', await s.updatePatientMedication(pid, found.id, { status: 'Stopped', stop: iso(today), stopReason: route.reason || '' })];
-      return ['medication', await s.updatePatientMedication(pid, found.id, { ...(route.rename ? { name: route.rename } : {}), ...(route.sig ? { sig: route.sig } : {}) })];
+      if (route.action === 'stop') return ['medication', await s.updatePatientMedication(pid, found.id, { status: 'Stopped', stop: iso(today), stopReason: route.reason || '', note: orderNote })];
+      return ['medication', await s.updatePatientMedication(pid, found.id, { ...(route.rename ? { name: route.rename } : {}), ...(route.sig ? { sig: route.sig } : {}), note: orderNote })];
     }
     return null;
   };
@@ -128,9 +145,15 @@ export async function routeAcceptedItems({ store, patient, pid, program, accepte
   // Medication editor saves: the full record from the editor.
   const saveEdit = async (med) => {
     const r = medRecord(med, medEdits[med.n]);
+    // An edit with no order reference goes to the prescriber, not the list.
+    if (!r.orderRef?.trim()) {
+      const change = r.status === 'Stopped' ? `stop ${med.n} (${r.reason || 'no reason given'})` : `${med.n}: ${r.sig}`;
+      return ['prescriber', await s.createTask(prescriberReviewTask({ change, detail: `Changed in the medication review on a live call on ${mdy(today)}, with no order reference.${r.note ? ` Note: ${r.note}` : ''}`, patient, pid, program, me, today }))];
+    }
     const fields = { status: r.status, start: r.start, stop: r.stop, stopReason: r.reason, sig: r.sig, lastFilledOn: r.last, daysSupply: r.days === '' ? null : Number(r.days), note: r.note };
     const found = findMedication(meds(), med.n);
-    return ['medication', found ? await s.updatePatientMedication(pid, found.id, fields) : await s.addPatientMedication(pid, { name: med.n, ...fields, note: fields.note || LIVE_CALL_NOTE, source: 'manual' })];
+    fields.note = [fields.note, `Per order ${r.orderRef.trim()} (live call).`].filter(Boolean).join(' ');
+    return ['medication', found ? await s.updatePatientMedication(pid, found.id, fields) : await s.addPatientMedication(pid, { name: med.n, ...fields, source: 'manual' })];
   };
 
   // One after another, never at once: two care plan items saved together
@@ -158,6 +181,7 @@ export function routedSummary(done) {
     done.appointment && `${done.appointment} ${done.appointment === 1 ? 'appointment' : 'appointments'}`,
     done.carePlan && `${done.carePlan} care plan ${done.carePlan === 1 ? 'item' : 'items'}`,
     done.medication && `${done.medication} medication ${done.medication === 1 ? 'update' : 'updates'}`,
+    done.prescriber && `${done.prescriber} prescriber ${done.prescriber === 1 ? 'review' : 'reviews'}`,
   ].filter(Boolean);
   if (!parts.length) return '';
   return parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;

@@ -76,6 +76,7 @@ export function ScheduleDrawer({ onClose, selectedSlot, onSave, existingAppointm
       patients={drawer.patients}
       selectedPatient={drawer.selectedPatient}
       setSelectedPatient={drawer.setSelectedPatient}
+      interpreter={drawer.interpreter}
       reasonForVisit={drawer.reasonForVisit}
       setReasonForVisit={drawer.setReasonForVisit}
       appointmentTypes={drawer.appointmentTypes}

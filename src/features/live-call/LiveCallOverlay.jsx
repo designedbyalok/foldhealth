@@ -17,10 +17,21 @@ import { CallWorkspace } from './CallWorkspace';
 import { DroppedCallBanner } from './DroppedCallBanner';
 import { ActionItems } from './ActionItems';
 import styles from './LiveCallOverlay.module.css';
+import { InterpreterChip } from '../patient/shared/InterpreterOffer/InterpreterOffer';
+import { useInterpreterStatus } from '../patient/shared/InterpreterOffer/useInterpreterStatus';
 
 const clock = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
 /** The call in progress, full screen: brief, live transcript and the action items it raises. */
+
+// The patient's interpreter status when they need one (offer it before the
+// call goes on), else the language the script was recorded in.
+function CallInterpreter({ patientId, script }) {
+  const { status } = useInterpreterStatus(patientId);
+  if (status) return <InterpreterChip patientId={patientId} size="xs" />;
+  return <span className={styles.interp} title={script.interpreter}>{script.interpreter}</span>;
+}
+
 export function LiveCallOverlay() {
   const call = useLiveCall();
   const callSeconds = useAppStore(s => s.activeCallSeconds);
@@ -68,7 +79,7 @@ export function LiveCallOverlay() {
                   </>
                 )}
               </span>
-              {script && <><span className={styles.sep}>•</span><span className={styles.interp} title={script.interpreter}>{script.interpreter}</span></>}
+              {script && <><span className={styles.sep}>•</span><CallInterpreter patientId={String(patient.memberId ?? patient.id)} script={script} /></>}
               <span className={styles.sep}>•</span>
               <span className={styles[`status_${status.tone}`]}>{status.label}</span>
             </span>

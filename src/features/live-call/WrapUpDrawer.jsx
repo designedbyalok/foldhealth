@@ -44,8 +44,8 @@ function WrapUpDrawerBody() {
   const reached = session.disposition === copy.done;
   const canComplete = !saving && (!reached || summary.trim().length > 0);
   const endedAt = new Date(session.wrapEndedAt);
-  const destination = (route) => {
-    const label = routeLabel(route);
+  const destination = (route, item) => {
+    const label = routeLabel(route, item);
     if ((route?.kind === 'goal' || route?.kind === 'barrier') && planProgram?.code) return `${label} (${planProgram.code})`;
     return label;
   };
@@ -165,14 +165,14 @@ function WrapUpDrawerBody() {
               <li key={m} className={styles.row}>
                 <span className={styles.rowIcon}><Icon name="solar:pill-linear" size={16} color="var(--neutral-400)" /></span>
                 <span className={styles.rowText}>Medication update: {m}</span>
-                <span className={styles.where}>Updates the medication list</span>
+                <span className={styles.where}>{/for prescriber review$/.test(m) ? 'Sends to the prescriber for review' : 'Updates the medication list'}</span>
               </li>
             ))}
             {draft.accepted.map(it => (
               <li key={it.id} className={styles.row}>
                 <span className={styles.rowIcon}><Icon name={it.icon} size={16} color="var(--neutral-400)" /></span>
                 <span className={styles.rowText}>{it.type}: {it.title}</span>
-                <span className={styles.where}>{destination(it.route)}</span>
+                <span className={styles.where}>{destination(it.route, it)}</span>
               </li>
             ))}
           </ul>

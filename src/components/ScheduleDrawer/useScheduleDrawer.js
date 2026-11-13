@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import { useInterpreterStatus } from '../../features/patient/shared/InterpreterOffer/useInterpreterStatus';
 import { supabase } from '../../lib/supabase';
 import { trackFunnel } from '../../lib/tracking';
 import { FALLBACK_APPOINTMENT_TYPES, displayAppointmentStatus, storedAppointmentStatus } from './scheduleDrawerConstants';
@@ -47,6 +48,11 @@ export function useScheduleDrawer({ onClose, selectedSlot, onSave, existingAppoi
   // back to `initialPatientId`'s patients.find lookup below.
   const [selectedPatient, setSelectedPatientState] = useState(initialSelectedPatient || null);
   const [reasonForVisit, setReasonForVisit] = useState('');
+  // Section 1557: a patient who needs an interpreter gets a qualified one
+  // booked with the visit unless they chose a family member instead.
+  const { prefs: interpreterPrefs, status: interpreterNeed } = useInterpreterStatus(selectedPatient ? String(selectedPatient.memberId ?? selectedPatient.id) : null);
+  const [bookInterpreterChoice, setBookInterpreter] = useState(null);
+  const bookInterpreter = bookInterpreterChoice ?? (interpreterPrefs?.interpreterOffer?.status !== 'declined');
   const [appointmentType, setAppointmentTypeState] = useState(null);
   const [mode, setMode] = useState('');
   const [location, setLocation] = useState('');
@@ -202,7 +208,7 @@ export function useScheduleDrawer({ onClose, selectedSlot, onSave, existingAppoi
       time_end: time ? computeEndTime(time) : '',
       reason_for_visit: reasonForVisit,
       member_instruction: memberInstructionRef.current,
-      staff_instruction: staffInstructionRef.current,
+      staff_instruction: [staffInstructionRef.current, interpreterNeed && bookInterpreter ? `Book a qualified ${interpreterPrefs?.preferredLanguage || ''} interpreter.`.replace(/\s+/g, ' ') : ''].filter(Boolean).join('\n'),
       require_rsvp: requireRsvp,
       recurring,
       recurring_config: recurring ? JSON.stringify({ frequency: recurFrequency, unit: recurUnit, days: recurDays, endDate: recurEndDate }) : null,
@@ -288,6 +294,7 @@ export function useScheduleDrawer({ onClose, selectedSlot, onSave, existingAppoi
     bookingSuccess,
     selectedPatient,
     setSelectedPatient,
+    interpreter: interpreterNeed ? { language: interpreterPrefs?.preferredLanguage || '', offer: interpreterPrefs?.interpreterOffer || null, book: bookInterpreter, setBook: setBookInterpreter } : null,
     reasonForVisit,
     setReasonForVisit,
     appointmentType,
