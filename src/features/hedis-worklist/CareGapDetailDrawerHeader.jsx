@@ -10,7 +10,6 @@ import { MEASURE_NAMES, STATUSES, daysAgo, initialsOf } from './CareGapDetailDra
 import { computeDsfbDueDateISO } from './dsf/dsfScoring';
 import { CIS_CODE } from './cis/cisRules';
 import { GapSourceCircle } from './GapSourceCircle';
-import { gapSourceLabel } from './hedisFilters';
 import styles from './CareGapDetailDrawer.module.css';
 
 // Status → shared Badge tone. Aligns with STATUS_STYLE's colour intent
@@ -234,7 +233,7 @@ export function CareGapDetailDrawerHeader({
                         aria-expanded={instanceMenuOpen}
                         onClick={() => setInstanceMenuOpen(v => !v)}
                       >
-                        Instance {viewed.no} • {viewed.active ? 'Active' : 'Previous'}
+                        Instance {viewed.no} ({viewed.active ? 'Active' : 'Previous'})
                         <Icon name="solar:alt-arrow-down-linear" size={12} color="currentColor" />
                       </button>
                       {instanceMenuOpen && (
@@ -245,17 +244,20 @@ export function CareGapDetailDrawerHeader({
                           ariaLabel="Gap instances"
                           items={instances.map(i => ({
                             key: String(i.no),
-                            // Second line: source, the instance it is the
-                            // parent of (if any), and its dates.
-                            iconElement: <GapSourceCircle gap={i.gap} />,
+                            // Title line: source circle, instance number and the
+                            // status badge on the right. Second line: Active /
+                            // Previous and its dates.
                             tall: true,
                             label: (
                               <span className={styles.instanceOption}>
-                                <span>{`Instance ${i.no} • ${i.active ? 'Active' : 'Previous'} • ${i.gap.status}`}</span>
+                                <span className={styles.instanceOptionHead}>
+                                  <GapSourceCircle gap={i.gap} />
+                                  <span className={styles.instanceOptionTitle}>Instance {i.no}</span>
+                                  <Badge size="sm" tone={STATUS_TONE[i.gap.status] || 'grey'} label={i.gap.status} />
+                                </span>
                                 <span className={styles.instanceOptionMeta}>
                                   {[
-                                    gapSourceLabel(i.gap),
-                                    !i.active && instances.find(x => x.no === i.no + 1) ? `Parent of Instance ${i.no + 1}` : null,
+                                    i.active ? 'Active' : 'Previous',
                                     `Opened ${i.gap.startDate || '-'}`,
                                     i.gap.closedDate ? `Closed ${i.gap.closedDate}` : null,
                                   ].filter(Boolean).join(' • ')}
@@ -267,6 +269,19 @@ export function CareGapDetailDrawerHeader({
                           onSelect={(key) => { setInstanceMenuOpen(false); onPickInstance?.(Number(key)); }}
                           onClose={() => setInstanceMenuOpen(false)}
                         />
+                      )}
+                      {/* Viewing a previous instance: one click back to the active one. */}
+                      {!viewed.active && instances.some(i => i.active) && (
+                        <>
+                          <span style={{ color: 'var(--neutral-300)' }}>{' • '}</span>
+                          <button
+                            type="button"
+                            className={`${styles.instancePickerBtn} ${styles.instanceBackLink}`}
+                            onClick={() => onPickInstance?.(instances.find(i => i.active).no)}
+                          >
+                            Go to Active Instance
+                          </button>
+                        </>
                       )}
                     </>
                   )}

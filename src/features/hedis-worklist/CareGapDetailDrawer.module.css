@@ -728,6 +728,9 @@
   cursor: pointer;
 }
 .instancePickerBtn:hover { text-decoration: underline; }
-.instanceOption { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); min-width: 0; white-space: normal; }
-.instanceOptionMeta { font-size: var(--font-sm); color: var(--neutral-300); }
+.instanceOption { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); width: 100%; min-width: 0; white-space: normal; }
+.instanceOptionHead { display: flex; align-items: center; gap: var(--space-2); }
+.instanceOptionTitle { flex: 1; min-width: 0; }
+.instanceOptionMeta { padding-left: calc(var(--space-4) + var(--space-2)); font-size: var(--font-sm); color: var(--neutral-300); }
 .gapTitleWithSource { display: flex; align-items: center; gap: var(--space-2); }
+.instanceBackLink { color: var(--neutral-200); }
