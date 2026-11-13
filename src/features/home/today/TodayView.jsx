@@ -34,7 +34,7 @@ const PULSE = [
   { key: 'overdue',   title: 'Overdue',               accent: 'overdue',   match: (it) => it.urgency === 'overdue' },
   { key: 'due-today', title: 'Due Today',             accent: 'dueToday',  match: (it) => it.urgency === 'due-today' },
   { key: 'escalated', title: 'Agent-Escalated to Me', accent: 'escalated', match: (it) => it.isAgent },
-  { key: 'threshold', title: 'Threshold-Risk',        accent: 'threshold', match: (it) => it.urgency === 'threshold' },
+  { key: 'rising',    title: 'Clinical Change',       accent: 'rising',    match: (it) => it.urgency === 'rising' },
 ];
 
 const LENS = ['All', 'CCM', 'TCM', 'BHI', 'AWV', 'DM'];
@@ -314,7 +314,9 @@ export function TodayView() {
         <div className={styles.headSummary}>
           <span><b>{PANEL_TODAY.touchesDone}</b> of {PANEL_TODAY.touchesPlanned} touches</span>
           <span className={styles.headDot} aria-hidden="true">·</span>
-          <span><b>{PANEL_TODAY.minutesTotal}</b> min logged today</span>
+          <span><b>{PANEL_TODAY.escalationsCleared}</b> escalations cleared</span>
+          <span className={styles.headDot} aria-hidden="true">·</span>
+          <span><b>{PANEL_TODAY.overdue}</b> overdue</span>
         </div>
         {startName && (
           <Button onClick={() => openPatient(startRow)}>

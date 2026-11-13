@@ -9,6 +9,7 @@ import { secondsToTime } from '../../../../../../data/ccmBillingMock';
 import { CcmBillingLogTable } from '../CcmBillingLogTable/CcmBillingLogTable.jsx';
 import { CcmBillingReportDrawer } from '../CcmBillingReportDrawer/CcmBillingReportDrawer.jsx';
 import styles from './CcmBillingReview.module.css';
+import { addOnNote } from './billingAddOn';
 
 const REPORT_MONTH_LABEL = (ym) => {
   if (!ym) return '';
@@ -293,6 +294,7 @@ export function CcmBillingReview({ program, patientId: patientIdProp }) {
                 <Icon name="solar:info-circle-linear" size={16} color="var(--neutral-300)" />
                 <span>
                   Scheduled to be sent for billing on {AUTO_CLAIM_DATE_FULL(currentPeriod.yearMonth)}.
+                  {' '}{addOnNote(complexity, overshoot)}
                 </span>
               </div>
             )}

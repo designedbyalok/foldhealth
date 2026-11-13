@@ -62,7 +62,7 @@
 }
 
 /* Compact day summary: the numbers users can't get from Panel Pulse below
-   (touches + minutes). Reads as one line, no eyebrow labels. */
+   (touches, escalations cleared, overdue). Reads as one line, no eyebrow labels. */
 .headSummary {
   display: flex;
   align-items: center;
@@ -114,7 +114,7 @@
 
 .num_overdue { color: var(--status-error); }
 .num_escalated { color: var(--accent-purple); }
-.num_threshold { color: var(--status-warning); }
+.num_rising { color: var(--status-warning); }
 
 .pulseTitleRow {
   display: inline-flex;
