@@ -68,10 +68,13 @@ export function useAllOooRecords({ highlightDate, highlightId, embedded = false,
     // Status starts on Ongoing and Upcoming; past records show when it's
     // picked, or when the calendar opened this list on one.
     const pinned = new Set(highlightId ? [highlightId] : highlightDate ? recordsOnDate(records, highlightDate).map(r => r.id) : []);
-    let list = records.filter(r => (pinned.has(r.id) || status.includes(oooStatus(r)))
+    const statuses = new Set(status);
+    const pickedUsers = new Set(userFilter);
+    const covers = new Set(coverFilter);
+    let list = records.filter(r => (pinned.has(r.id) || statuses.has(oooStatus(r)))
       && (!q || String(r.userName || '').toLowerCase().includes(q))
-      && (!userFilter.length || userFilter.includes(r.userName))
-      && (!coverFilter.length || coveringPeople(r.coverage).some(c => coverFilter.includes(c.name)))
+      && (!pickedUsers.size || pickedUsers.has(r.userName))
+      && (!covers.size || coveringPeople(r.coverage).some(c => covers.has(c.name)))
       && (from == null || (new Date(r.startAt).getTime() < to && new Date(r.endAt).getTime() > from)));
     list = sortRecords(list);
     if (highlightDate && !highlightId) {

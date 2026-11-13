@@ -3,6 +3,8 @@ import { DateRangeFilter } from '../../../components/DateRangeFilter/DateRangeFi
 import { inboxLabel } from './commsInboxes';
 import styles from './Comms.module.css';
 
+const NONE = [];
+
 /**
  * The FilterChip row under a Comms list's tabs (Chat, SMS, Calls, All
  * Conversations, Email, eFax): Date, Inbox (when the list has inboxes),
@@ -14,7 +16,7 @@ import styles from './Comms.module.css';
  * @param {string[]} [props.channels]      – channel names to offer
  * @param {string[]} [props.coveringNames] – people I'm covering
  */
-export function CommsFilterChips({ filters, onChange, inboxes = [], channels = [], coveringNames = [] }) {
+export function CommsFilterChips({ filters, onChange, inboxes = NONE, channels = NONE, coveringNames = NONE }) {
   const inboxPicked = inboxes.find(i => i.id === filters.inbox);
   return (
     <div className={styles.filterRow}>
