@@ -21,7 +21,17 @@ const MEASURES = [
   { code: 'DSF-A', name: 'Depression Screening (PHQ-2)' },
 ];
 
-export const MEASURE_YEARS = [2026, 2025];
+export const MEASURE_YEARS = [2027, 2026, 2025, 2024];
+
+// Measure years a user can add a gap to on `today`: the current year and the
+// two before it, plus the next year from October (payers start sending next
+// year's gaps then).
+export function openMeasureYears(today = new Date()) {
+  const year = today.getFullYear();
+  const years = [year, year - 1, year - 2];
+  if (today.getMonth() + 1 >= 10) years.unshift(year + 1);
+  return years;
+}
 
 export const CAREGAP_WHITELIST_MOCK = MEASURE_YEARS.flatMap(year =>
   MEASURES

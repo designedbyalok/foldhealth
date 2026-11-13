@@ -12,7 +12,7 @@ import { Badge } from '../../components/Badge/Badge';
 import { Banner } from '../../components/Banner/Banner';
 import { Icon } from '../../components/Icon/Icon';
 import { SimpleTableSkeleton } from '../../components/SimpleTableSkeleton/SimpleTableSkeleton';
-import { MEASURE_YEARS } from './data/caregapWhitelistMock';
+import { openMeasureYears } from './data/caregapWhitelistMock';
 import { STATUS_BADGE_VARIANT } from './HedisWorklistRow';
 import styles from './AddCareGapsDrawer.module.css';
 
@@ -180,7 +180,10 @@ export function AddCareGapsDrawer() {
   const fetchWhitelist = useAppStore(s => s.fetchCaregapWhitelist);
   const hedisMembers = useAppStore(s => s.hedisMembers);
 
-  const [measureYear, setMeasureYear] = useState(MEASURE_YEARS[0]);
+  const [measureYears] = useState(() => openMeasureYears());
+  // Default to the current year; the next year is there to pick when open.
+  const defaultYear = new Date().getFullYear();
+  const [measureYear, setMeasureYear] = useState(defaultYear);
   // Per selected gap: { [code]: { workflows, reason } }.
   const [config, setConfig] = useState({});
   const [selected, setSelected] = useState([]);
@@ -189,13 +192,13 @@ export function AddCareGapsDrawer() {
   useEffect(() => {
     if (!member) return;
     fetchWhitelist();
-    setMeasureYear(MEASURE_YEARS[0]);
+    setMeasureYear(defaultYear);
     setConfig({});
     setSelected([]);
     setQuery('');
   }, [member?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const yearOptions = MEASURE_YEARS.map(y => ({ value: String(y), label: `MY${y}` }));
+  const yearOptions = measureYears.map(y => ({ value: String(y), label: String(y) }));
 
   // Read the live row so a gap added moments ago drops out of the list.
   const liveMember = hedisMembers.find(m => m.id === member?.id) || member;
@@ -340,7 +343,7 @@ export function AddCareGapsDrawer() {
           ) : visible.length === 0 ? (
             <div className={styles.empty}>
               {whitelisted.length === 0
-                ? `No care gaps are whitelisted for ${ipa || 'this IPA'} · ${hpCode || 'this HP code'} · MY${measureYear}.`
+                ? `No care gaps are whitelisted for ${ipa || 'this IPA'} · ${hpCode || 'this HP code'} · ${measureYear}.`
                 : 'No whitelisted care gaps match your search.'}
             </div>
           ) : (
