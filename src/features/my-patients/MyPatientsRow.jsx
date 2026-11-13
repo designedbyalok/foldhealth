@@ -107,6 +107,7 @@ export function MyPatientsRow({ row, hiddenSet, selected, onToggle, onOpenProgra
       {show('why') && (
         <td className={styles.td}>
           <Tooltip
+            className={styles.whyTip}
             variant="card"
             maxWidth={320}
             placement="bottom"
