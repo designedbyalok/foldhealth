@@ -147,3 +147,17 @@
 .collapseOuter { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.22s ease; overflow: hidden; }
 .collapseOuter.collapsedSection { grid-template-rows: 0fr; }
 .collapseInner { overflow: hidden; min-height: 0; }
+
+/* Care Gaps filter row (Status, Year), toggled by the header's filter icon. */
+.gapFilters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+.gapFiltersEmpty {
+  padding: var(--space-3) 0;
+  font-size: var(--font-md);
+  color: var(--neutral-300);
+}

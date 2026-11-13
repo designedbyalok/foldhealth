@@ -22,3 +22,26 @@
 
 .moreBtn { display: flex; align-items: center; opacity: 0; transition: opacity 0.1s; }
 .row:hover .moreBtn { opacity: 1; }
+
+/* Date line; an open gap with earlier instances adds its toggle after a •. */
+.metaRow { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-1); }
+
+/* Toggle on an open gap that has earlier instances. */
+.previousToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--font-md);
+  color: var(--primary-300);
+  cursor: pointer;
+}
+.previousToggle:hover { text-decoration: underline; }
+
+/* An earlier instance, expanded under its open gap: indented and muted. */
+.rowNested { background: var(--neutral-25); }
+.rowNested .content { padding-left: var(--space-4); opacity: 0.75; }
+.rowNested .status { opacity: 0.75; }
