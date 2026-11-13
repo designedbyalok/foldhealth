@@ -233,7 +233,7 @@ export function CareGapDetailDrawerHeader({
                         aria-expanded={instanceMenuOpen}
                         onClick={() => setInstanceMenuOpen(v => !v)}
                       >
-                        Instance {viewed.no} ({viewed.active ? 'Active' : 'Previous'})
+                        Instance {viewed.no} of {instances.length}
                         <Icon name="solar:alt-arrow-down-linear" size={12} color="currentColor" />
                       </button>
                       {instanceMenuOpen && (
@@ -245,8 +245,7 @@ export function CareGapDetailDrawerHeader({
                           items={instances.map(i => ({
                             key: String(i.no),
                             // Title line: source circle, instance number and the
-                            // status badge on the right. Second line: Active /
-                            // Previous and its dates.
+                            // status badge on the right. Second line: its dates.
                             tall: true,
                             label: (
                               <span className={styles.instanceOption}>
@@ -257,7 +256,6 @@ export function CareGapDetailDrawerHeader({
                                 </span>
                                 <span className={styles.instanceOptionMeta}>
                                   {[
-                                    i.active ? 'Active' : 'Previous',
                                     `Opened ${i.gap.startDate || '-'}`,
                                     i.gap.closedDate ? `Closed ${i.gap.closedDate}` : null,
                                   ].filter(Boolean).join(' • ')}
@@ -270,7 +268,7 @@ export function CareGapDetailDrawerHeader({
                           onClose={() => setInstanceMenuOpen(false)}
                         />
                       )}
-                      {/* Viewing a previous instance: one click back to the active one. */}
+                      {/* Viewing an older instance: one click back to the latest. */}
                       {!viewed.active && instances.some(i => i.active) && (
                         <>
                           <span style={{ color: 'var(--neutral-300)' }}>{' • '}</span>
@@ -279,7 +277,7 @@ export function CareGapDetailDrawerHeader({
                             className={`${styles.instancePickerBtn} ${styles.instanceBackLink}`}
                             onClick={() => onPickInstance?.(instances.find(i => i.active).no)}
                           >
-                            Go to Active Instance
+                            Go to Latest Instance
                           </button>
                         </>
                       )}

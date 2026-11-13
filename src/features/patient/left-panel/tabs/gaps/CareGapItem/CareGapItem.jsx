@@ -6,7 +6,7 @@ import styles from './CareGapItem.module.css';
 
 /**
  * One care gap as a ProfileTable row: Title, Status, actions. An open gap with
- * earlier instances (`item.previous`) gets a View Previous Instances toggle;
+ * other instances (`item.previous`) gets a View Other Instances toggle;
  * `nested` renders one of those earlier instances, muted and indented, below it.
  */
 export function CareGapItem({ item, selected, onSelect, onOpen, nested = false, previousOpen = false, onTogglePrevious }) {
@@ -42,13 +42,15 @@ export function CareGapItem({ item, selected, onSelect, onOpen, nested = false, 
                     aria-expanded={previousOpen}
                     onClick={(e) => { e.stopPropagation(); onTogglePrevious?.(); }}
                   >
-                    {previousOpen ? 'Hide Previous Instances' : `View Previous Instances (${previousCount})`}
+                    {previousOpen ? 'Hide Other Instances' : `View Other Instances (${previousCount})`}
                     <Icon name={previousOpen ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-down-linear'} size={12} color="currentColor" />
                   </button>
                 </>
               )}
             </span>
           )}
+          {/* What closed this instance (signed note, lab, document or claim data). */}
+          {item.evidence && <span className={styles.evidence}>{item.evidence}</span>}
         </div>
       </td>
       <td className={profileCellClass}>

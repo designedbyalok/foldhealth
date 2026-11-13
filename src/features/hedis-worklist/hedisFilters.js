@@ -27,7 +27,8 @@ export const MORE_FILTER_ITEMS = [
   { k: 'zip', label: 'Zip Code', primary: true },
   { k: 'assignee', label: 'Assignee', primary: true },
   { k: 'careGaps', label: 'Gaps', primary: true },
-  { k: 'gapStatus', label: 'Gap Status', primary: true },
+  { k: 'complianceStatus', label: 'Compliance Status', primary: true },
+  { k: 'operationalStatus', label: 'Operational Status', primary: true },
   { k: 'gapSource', label: 'Source', primary: true },
   { k: 'gapInstance', label: 'Instance', primary: true },
   { k: 'careGapAddedDate', label: 'Gap Added Date', primary: true },
@@ -87,18 +88,40 @@ const AGE_GROUPS = [
 // and the cell always agree. Gaps added in Fold are stamped `fold-native`;
 // a gap closed then re-added stays in the row stamped `supersededAt`.
 export const gapSourceLabel = (g) => (g.source === 'fold-native' ? 'Manual' : 'Claim');
-export const gapInstanceLabel = (g) => (g.supersededAt ? 'Previous' : 'Active');
+export const gapInstanceLabel = (g) => (g.supersededAt ? 'Older' : 'Latest');
+// Saved filters from before the rename keep working.
+const LEGACY_INSTANCE = { Active: 'Latest', Previous: 'Older' };
+
+// A gap's one status answers two questions, so it's filtered two ways:
+// compliance (has the measure been met?) and operational (where the work
+// stands). Completed is compliant; a Closed status ended without meeting it.
+export const gapComplianceLabel = (g) => (g.status === 'Completed' ? 'Compliant'
+  : String(g.status || '').startsWith('Closed') ? 'Closed' : 'Non-Compliant');
+export const gapOperationalLabel = (g) => (!g.status || g.status === 'Open' ? 'Not Started' : g.status);
+
+// Filters that narrow a member's gaps, not just the member list.
+export function gapMatchesGapFilters(g, filters = {}) {
+  const pick = (k) => filters[k] || [];
+  const inst = pick('gapInstance').map(v => LEGACY_INSTANCE[v] || v);
+  return (!pick('gapSource').length || pick('gapSource').includes(gapSourceLabel(g)))
+    && (!inst.length || inst.includes(gapInstanceLabel(g)))
+    && (!pick('complianceStatus').length || pick('complianceStatus').includes(gapComplianceLabel(g)))
+    && (!pick('operationalStatus').length || pick('operationalStatus').includes(gapOperationalLabel(g)));
+}
+export const GAP_LEVEL_FILTER_KEYS = ['gapSource', 'gapInstance', 'complianceStatus', 'operationalStatus'];
 
 export const FILTER_DEFS = [
   { k: 'memberStatus',        label: 'Member Status', type: 'multi',
     opts: MEMBER_STATUS_FILTER_OPTIONS },
-  { k: 'gapStatus',           label: 'Gap Status', type: 'multi',
-    opts: ['Open', 'Engaged', 'Engaged Requires Follow-Up', 'Submitted', 'Completed',
+  { k: 'complianceStatus',    label: 'Compliance Status', type: 'multi',
+    opts: ['Non-Compliant', 'Compliant', 'Closed'] },
+  { k: 'operationalStatus',   label: 'Operational Status', type: 'multi',
+    opts: ['Not Started', 'Engaged', 'Engaged Requires Follow-Up', 'Submitted', 'Completed',
            'Closed - Data', 'Closed - Do not call', 'Closed - UTR', 'Closed - Other'] },
   { k: 'gapSource',           label: 'Source', type: 'multi',
     opts: ['Claim', 'Manual'] },
   { k: 'gapInstance',         label: 'Instance', type: 'multi',
-    opts: ['Active', 'Previous'] },
+    opts: ['Latest', 'Older'] },
   { k: 'assignee',            label: 'Assignee', type: 'multi',
     dynamic: 'assignee', opts: [], searchable: true },
   { k: 'gender',              label: 'Gender', type: 'multi',
@@ -195,8 +218,13 @@ function matchOne(m, k, vals) {
       }
       return false;
     }
+    case 'complianceStatus':    return (m.gaps || []).some(g => vals.includes(gapComplianceLabel(g)));
+    case 'operationalStatus':   return (m.gaps || []).some(g => vals.includes(gapOperationalLabel(g)));
     case 'gapSource':           return (m.gaps || []).some(g => vals.includes(gapSourceLabel(g)));
-    case 'gapInstance':         return (m.gaps || []).some(g => vals.includes(gapInstanceLabel(g)));
+    case 'gapInstance': {
+      const want = vals.map(v => LEGACY_INSTANCE[v] || v);
+      return (m.gaps || []).some(g => want.includes(gapInstanceLabel(g)));
+    }
     case 'assignee': {
       // Match a member if the row-level assignee OR any per-gap assignee
       // is in the selected set: same fields the row's Assignee column

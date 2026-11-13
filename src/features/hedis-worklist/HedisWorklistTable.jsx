@@ -36,8 +36,8 @@ import {
   PRIMARY_FILTER_KEYS as HEDIS_PRIMARY_FILTER_KEYS,
   memberMatchesFilters as hedisMemberMatchesFilters,
   countActiveFilters as countActiveHedisFilters,
-  gapInstanceLabel,
-  gapSourceLabel,
+  GAP_LEVEL_FILTER_KEYS,
+  gapMatchesGapFilters,
 } from './hedisFilters';
 import { CIS_CODE } from './cis/cisRules';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
@@ -124,17 +124,14 @@ export function HedisWorklistTable() {
     }
     const matched = result.filter(m => hedisMemberMatchesFilters(m, hedisFilters)
       && (!covering.length || coveringOn(assigneeNamesOf(m), covering).length > 0));
-    // Source / Instance are per-gap: a matching member shows only the gaps
-    // that match, not all of its gaps. `allGaps` keeps the rest for context
-    // (a manual gap's parent instance).
-    const src = hedisFilters?.gapSource || [];
-    const inst = hedisFilters?.gapInstance || [];
-    if (!src.length && !inst.length) return matched;
+    // Source, Instance, Compliance and Operational Status are per-gap: a
+    // matching member shows only the gaps that match, not all of its gaps.
+    // `allGaps` keeps the rest for context (a gap's other instances).
+    if (!GAP_LEVEL_FILTER_KEYS.some(k => hedisFilters?.[k]?.length)) return matched;
     return matched.map(m => ({
       ...m,
       allGaps: m.gaps,
-      gaps: (m.gaps || []).filter(g => (!src.length || src.includes(gapSourceLabel(g)))
-        && (!inst.length || inst.includes(gapInstanceLabel(g)))),
+      gaps: (m.gaps || []).filter(g => gapMatchesGapFilters(g, hedisFilters)),
     }));
   }, [searchQuery, hedisFilters, hedisMembers, covering, coveringOn]);
   const isFiltered = !!searchQuery.trim() || Object.values(hedisFilters || {}).some(v => v?.length) || covering.length > 0;

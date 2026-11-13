@@ -15,7 +15,8 @@ import { computeDsfbDueDateISO } from './dsf/dsfScoring';
 import { CIS_CODE, cisDueIndicator, evaluateCis } from './cis/cisRules';
 import { platformUsersForAssigneePicker } from '../../lib/worklistAssignee';
 import { MEASURE_NAMES } from './ClinicalNotePanel.utils';
-import { gapInstanceLabel, gapSourceLabel } from './hedisFilters';
+import { gapSourceLabel } from './hedisFilters';
+import { gapInstanceNo } from './gapInstances';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
 import { ActionsMenuPopover } from '../hcc/RowPopovers';
 import { CoveringNote } from '../ooo/CoveringNote';
@@ -90,7 +91,7 @@ function GapSourceIcon({ gap, gaps, onOpenInstance }) {
                   <span className={styles.srcItemText}>
                     <span className={styles.srcValue}>Instance {o.no} • {o.gap.status}</span>
                     <span className={styles.srcItemMeta}>
-                      {o.active ? 'Active' : 'Previous'} • {o.gap.startDate || '-'}{o.gap.closedDate ? ` – ${o.gap.closedDate}` : ''}
+                      Opened {o.gap.startDate || '-'}{o.gap.closedDate ? ` • Closed ${o.gap.closedDate}` : ''}
                     </span>
                   </span>
                   <ActionButton
@@ -109,9 +110,6 @@ function GapSourceIcon({ gap, gaps, onOpenInstance }) {
   );
 }
 
-// A previous instance (closed, then the gap was added again) reads as history:
-// its line is greyed out in every per-gap column.
-const gapItemClass = (g) => (gapInstanceLabel(g) === 'Previous' ? `${styles.gapItem} ${styles.gapItemPrevious}` : styles.gapItem);
 
 export const STATUS_BADGE_VARIANT = {
   Open:                            'primary',
@@ -160,35 +158,34 @@ export const HEDIS_MIDDLE_COLUMNS = [
     renderCell: (member, ctx) => (
       <div className={styles.gapItems}>
         {(ctx.visibleGaps || []).map((g, i) => (
-          <div key={`${g.code}-${i}`} className={gapItemClass(g)}>
+          <div key={`${g.code}-${i}`} className={styles.gapItem}>
             {/* Hover shows the measure's full name; the code alone is hard to read.
-                A superseded gap (closed, then re-added) is history: the drawer
-                and every gap action work on the active gap with that code, so
-                its pill is a label, not a button. */}
-            <span className={styles.gapCodeLine}>
-            {g.supersededAt ? (
-              <Tooltip label={`${MEASURE_NAMES[g.code] || g.code} · previous gap, re-added ${g.supersededAt}`}>
-                <Badge size="md" label={g.code} />
-              </Tooltip>
-            ) : (
-            <Tooltip label={MEASURE_NAMES[g.code] || g.code}>
-              <button
-                type="button"
-                className={styles.gapBadgeButton}
-                aria-label={`Open ${g.code}${MEASURE_NAMES[g.code] ? ` (${MEASURE_NAMES[g.code]})` : ''} care gap details`}
-                onClick={(e) => { e.stopPropagation(); ctx.onOpenGap?.(member, g.code); }}
-              >
-                <Badge size="md" label={g.code} />
-              </button>
-            </Tooltip>
-            )}
-            <GapSourceIcon
-              gap={g}
-              gaps={member.allGaps || member.gaps}
-              onOpenInstance={(code, no) => ctx.onOpenGap?.(member, code, no)}
-            />
-            {gapInstanceLabel(g) === 'Previous' && <span className={styles.previousTag}>Previous</span>}
-            </span>
+                A gap added more than once is numbered, and each line opens
+                its own instance in Care Gap Details. */}
+            {(() => {
+              const no = gapInstanceNo(member.allGaps || member.gaps, g);
+              const name = MEASURE_NAMES[g.code] || g.code;
+              return (
+                <span className={styles.gapCodeLine}>
+                  <Tooltip label={no ? `${name} · Instance ${no}` : name}>
+                    <button
+                      type="button"
+                      className={styles.gapBadgeButton}
+                      aria-label={`Open ${g.code}${MEASURE_NAMES[g.code] ? ` (${MEASURE_NAMES[g.code]})` : ''}${no ? ` instance ${no}` : ''} care gap details`}
+                      onClick={(e) => { e.stopPropagation(); ctx.onOpenGap?.(member, g.code, g.supersededAt ? no : undefined); }}
+                    >
+                      <Badge size="md" label={g.code} />
+                    </button>
+                  </Tooltip>
+                  <GapSourceIcon
+                    gap={g}
+                    gaps={member.allGaps || member.gaps}
+                    onOpenInstance={(code, n) => ctx.onOpenGap?.(member, code, n)}
+                  />
+                  {no && <span className={styles.instanceTag}>Instance {no}</span>}
+                </span>
+              );
+            })()}
           </div>
         ))}
         {ctx.extraCount > 0 && (
@@ -221,7 +218,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
     renderCell: (member, ctx) => (
       <div className={styles.gapItems}>
         {(ctx.visibleGaps || []).map((g, i) => (
-          <div key={`${g.code}-${i}`} className={gapItemClass(g)}>
+          <div key={`${g.code}-${i}`} className={styles.gapItem}>
             <Badge size="md" tone={STATUS_BADGE_VARIANT[g.status] || 'neutral'} label={STATUS_LABEL[g.status] || g.status} />
           </div>
         ))}
@@ -257,7 +254,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
             ctx.updateGapAssignee(ctx.memberId, g.code, u?.name || null);
           };
           return (
-            <div key={`${g.code}-${i}`} className={gapItemClass(g)}>
+            <div key={`${g.code}-${i}`} className={styles.gapItem}>
               {assignee ? (
                 <AssigneeChange
                   name={assignee}
@@ -298,7 +295,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
     renderCell: (member, ctx) => (
       <div className={styles.gapItems}>
         {(ctx.visibleGaps || []).map((g, i) => (
-          <div key={`${g.code}-${i}`} className={gapItemClass(g)}>
+          <div key={`${g.code}-${i}`} className={styles.gapItem}>
             <div className={styles.startDateCell}>
               <span className={styles.startDateValue}>{g.startDate ?? member.startDate}</span>
               {/* DSF-B carries a 30-day window. Anchor is the paired

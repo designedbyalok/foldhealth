@@ -611,6 +611,9 @@ function caregapWhitelistToRow(w) {
     measure_year: w.measureYear,
     ipas: w.ipas,
     hp_codes: w.hpCodes,
+    sex: w.sex,
+    age_min: w.ageMin,
+    age_max: w.ageMax,
     billable: w.billable,
     active: true,
   };

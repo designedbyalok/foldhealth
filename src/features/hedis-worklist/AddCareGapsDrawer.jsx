@@ -5,7 +5,6 @@ import { PatientBanner } from '../../components/PatientBanner/PatientBanner';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { Button } from '../../components/Button/Button';
 import { Select } from '../../components/Select/Select';
-import { ChipSelect } from '../../components/ChipSelect/ChipSelect';
 import { SearchBar } from '../../components/SearchBar/SearchBar';
 import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Badge } from '../../components/Badge/Badge';
@@ -14,11 +13,13 @@ import { Icon } from '../../components/Icon/Icon';
 import { SimpleTableSkeleton } from '../../components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { openMeasureYears } from './data/caregapWhitelistMock';
 import { STATUS_BADGE_VARIANT } from './HedisWorklistRow';
+import { notApplicableReason } from './gapEligibility';
 import styles from './AddCareGapsDrawer.module.css';
 
-const WORKFLOWS = ['Outreach', 'Clinical Note', 'Referral', 'Task'];
-
 const isClosed = (status) => status === 'Completed' || String(status || '').startsWith('Closed');
+// Only a gap closed without being met can be added again. Completed means
+// the patient met the measure, and a measure is met once per measure year.
+const canReAdd = (status) => String(status || '').startsWith('Closed');
 
 const appliesTo = (w, { ipa, hpCode, measureYear }) =>
   w.measureYear === measureYear
@@ -36,14 +37,14 @@ const yearOf = (g) => (g.measureYear ? Number(g.measureYear) : Number(String(g.s
 // newest first. Read-only context for re-adding the gap.
 function GapHistory({ history }) {
   return (
-    <table className={styles.history} aria-label="Previous instances">
+    <table className={styles.history} aria-label="Instances in this measure year">
       <thead>
         <tr><th>Instance</th><th>Status</th><th>Opened</th><th>Closed</th></tr>
       </thead>
       <tbody>
         {history.map((g, i) => (
           <tr key={`${g.startDate}-${i}`}>
-            <td>{history.length - i}{g.supersededAt ? ' (Previous)' : ' (Latest)'}</td>
+            <td>{history.length - i}</td>
             <td><Badge size="sm" tone={isClosed(g.status) ? 'neutral' : 'warning'} label={g.status} /></td>
             <td>{g.startDate || '-'}</td>
             <td>{g.closedDate || '-'}</td>
@@ -54,19 +55,23 @@ function GapHistory({ history }) {
   );
 }
 
-// The patient's current gap for this measure decides the row: none → no
-// badge; open (any non-closed status) → its status badge, locked; closed →
-// its status badge, can be added again.
-function GapRow({ whitelist, parent, history, checked, config, onToggle, onConfig }) {
+// The patient's current gap for this measure in the selected measure year
+// decides the row: none → can be added; closed without being met → can be
+// added again with a reason; open or completed → locked, with why.
+function GapRow({ whitelist, parent, history, measureYear, checked, config, onToggle, onConfig }) {
   const needsReason = history.length > 0;
-  const alreadyOpen = !!parent && !isClosed(parent.status);
+  const locked = !!parent && !canReAdd(parent.status);
+  const lockNote = !locked ? null
+    : parent.status === 'Completed' ? `Already met in ${measureYear}`
+    : 'Already open';
   return (
-    <div className={[styles.gapRow, checked ? styles.gapRowOn : '', alreadyOpen ? styles.gapRowOpen : ''].join(' ')}>
+    <div className={[styles.gapRow, checked ? styles.gapRowOn : '', locked ? styles.gapRowOpen : ''].join(' ')}>
       <label className={styles.gapMain}>
-        <Checkbox checked={checked} disabled={alreadyOpen} onCheckedChange={onToggle} aria-label={`Add ${whitelist.code}`} />
+        <Checkbox checked={checked} disabled={locked} onCheckedChange={onToggle} aria-label={`Add ${whitelist.code}`} />
         <span className={styles.gapCode}>{whitelist.code}</span>
         <span className={styles.gapName}>{whitelist.name}</span>
         <span className={styles.gapMeta}>
+          {lockNote && <span className={styles.lockNote}>{lockNote}</span>}
           {parent && <Badge size="sm" tone={STATUS_BADGE_VARIANT[parent.status] || 'neutral'} label={parent.status} />}
         </span>
       </label>
@@ -74,24 +79,16 @@ function GapRow({ whitelist, parent, history, checked, config, onToggle, onConfi
         <div className={styles.gapConfig}>
           {needsReason ? (
             <>
-              <span className={styles.subLabel}>Previous instances in this measure year</span>
+              <span className={styles.subLabel}>Instances in this measure year</span>
               <GapHistory history={history} />
-            </>
-          ) : (
-            <span className={styles.helper}>No previous instance in this measure year. A new care gap will be created.</span>
-          )}
-          <div className={styles.configRow}>
-            <div className={styles.field}>
-              <span className={styles.label}>Workflow<span className={styles.req}>•</span></span>
-              <ChipSelect options={WORKFLOWS} value={config.workflows} onChange={(v) => onConfig({ ...config, workflows: v })} ariaLabel={`${whitelist.code} workflow`} />
-            </div>
-            {needsReason && (
               <div className={styles.field}>
                 <span className={styles.label}>Reason<span className={styles.req}>•</span></span>
                 <Select options={toOptions(REASONS)} value={config.reason} placeholder="Why add it again?" onValueChange={(v) => onConfig({ ...config, reason: v })} />
               </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <span className={styles.helper}>No instance of this gap in {measureYear} yet. A new care gap will be created.</span>
+          )}
         </div>
       )}
     </div>
@@ -210,20 +207,29 @@ export function AddCareGapsDrawer() {
     : String(g.startDate || '').endsWith(String(measureYear))) && (g.ipa || g.hpCode));
   const ipa = yearGap?.ipa || member?.ipa || '';
   const hpCode = yearGap?.hpCode || member?.hpCode || '';
+  // The patient's current gap per measure in the selected measure year.
   const existingByCode = useMemo(
-    () => Object.fromEntries((liveMember?.gaps || []).filter(g => !g.supersededAt).map(g => [g.code, g])),
-    [liveMember],
+    () => Object.fromEntries((liveMember?.gaps || [])
+      .filter(g => !g.supersededAt && yearOf(g) === measureYear)
+      .map(g => [g.code, g])),
+    [liveMember, measureYear],
   );
 
-  const whitelisted = useMemo(
+  const contractGaps = useMemo(
     () => whitelist.filter(w => appliesTo(w, { ipa, hpCode, measureYear })),
     [whitelist, ipa, hpCode, measureYear],
   );
-  // A gap the patient already has open can't be added again: it stays in
-  // the list with its status, but can't be selected.
+  // Measures that don't apply to this patient (sex, age) aren't offered;
+  // a note under the list says which and why.
+  const notApplicable = contractGaps
+    .map(w => ({ w, reason: notApplicableReason(w, liveMember, measureYear) }))
+    .filter(x => x.reason);
+  const whitelisted = contractGaps.filter(w => !notApplicable.some(x => x.w === w));
+  // A gap that is open or already met this measure year can't be added
+  // again: it stays in the list with its status, but can't be selected.
   const eligible = whitelisted.filter(w => {
     const existing = existingByCode[w.code];
-    return !existing || isClosed(existing.status);
+    return !existing || canReAdd(existing.status);
   });
   const q = query.trim().toLowerCase();
   const visible = q
@@ -246,29 +252,24 @@ export function AddCareGapsDrawer() {
   const historyFor = (code) => (liveMember?.gaps || [])
     .filter(g => g.code === code && yearOf(g) === measureYear)
     .toSorted((a, b) => (!!a.supersededAt - !!b.supersededAt));
-  const configFor = (code) => config[code] || { workflows: [], reason: '' };
-  const canSave = picked.length > 0 && ipa && hpCode && picked.every(w => {
-    const c = configFor(w.code);
-    return c.workflows.length > 0 && (historyFor(w.code).length === 0 || !!c.reason);
-  });
+  const configFor = (code) => config[code] || { reason: '' };
+  const canSave = picked.length > 0 && ipa && hpCode
+    && picked.every(w => historyFor(w.code).length === 0 || !!configFor(w.code).reason);
 
   const toggle = (code) => setSelected(sel => sel.includes(code) ? sel.filter(c => c !== code) : [...sel, code]);
 
   // Why Add Gap is off, shown on hover of the disabled button.
   const disabledReason = picked.length === 0 ? 'Select a care gap'
     : !ipa || !hpCode ? 'This patient has no IPA or HP Code for this measure year'
-    : picked.some(w => configFor(w.code).workflows.length === 0) ? 'Pick a workflow for each care gap'
     : 'Pick a reason for each care gap added again';
 
   const doSave = () => {
     const items = picked.map(w => {
       const existing = existingByCode[w.code];
-      const c = configFor(w.code);
       return {
         whitelist: w,
         parent: existing && isClosed(existing.status) ? existing : null,
-        workflows: c.workflows,
-        reason: historyFor(w.code).length ? c.reason : null,
+        reason: historyFor(w.code).length ? configFor(w.code).reason : null,
       };
     });
     addCareGaps(member.id, { items, ipa, hpCode, measureYear });
@@ -310,7 +311,7 @@ export function AddCareGapsDrawer() {
       {/* Edge to edge under the patient banner (or the drawer header when
           the Member field names the patient). */}
       <Banner className={styles.billingBar}>
-        Only whitelisted gaps are billed. A gap is added to SSD automatically once its clinical note is signed; otherwise close it manually.
+        A gap is added to SSD automatically once its clinical note is signed; otherwise close it manually.
       </Banner>
 
       <div className={styles.container}>
@@ -354,6 +355,7 @@ export function AddCareGapsDrawer() {
                   whitelist={w}
                   parent={existingByCode[w.code] || null}
                   history={historyFor(w.code)}
+                  measureYear={measureYear}
                   checked={selected.includes(w.code)}
                   config={configFor(w.code)}
                   onConfig={(c) => setConfig(prev => ({ ...prev, [w.code]: c }))}
@@ -361,6 +363,11 @@ export function AddCareGapsDrawer() {
                 />
               ))}
             </div>
+          )}
+          {!loading && notApplicable.length > 0 && (
+            <span className={styles.helper}>
+              Not shown for this patient: {notApplicable.map(x => `${x.w.code} (${x.reason})`).join(', ')}.
+            </span>
           )}
         </section>
 

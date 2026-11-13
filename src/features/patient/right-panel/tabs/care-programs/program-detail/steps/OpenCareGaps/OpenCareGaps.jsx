@@ -1,8 +1,15 @@
+import { useState } from 'react';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { WorklistShell } from '../../../../../../../../components/WorklistShell/WorklistShell';
+import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
+import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { CARE_GAP_SECTIONS_EXTENDED } from '../../../../../../data/careGapsMock';
+import { CareGapSection } from '../../../../../../left-panel/tabs/gaps/CareGapSection/CareGapSection.jsx';
+import { hedisGapSection, findHedisMember } from '../../../../../../left-panel/tabs/gaps/hedisGapSection';
+import { useGapEvidenceSources } from '../../../../../../left-panel/tabs/gaps/useGapEvidenceSources';
+import { CareGapDetailDrawer } from '../../../../../../../hedis-worklist/CareGapDetailDrawer';
 import styles from './OpenCareGaps.module.css';
 
 // Per-gap overlay: who it's assigned to and which resolve action it needs.
@@ -58,7 +65,39 @@ function GapRow({ item }) {
   );
 }
 
-export function OpenCareGaps() {
+// A patient on the HEDIS worklist sees their real gaps here, stacked by
+// instance exactly as in the Gaps widget; clicking one opens Care Gap Details
+// and Add Care Gap opens the same drawer as the worklist. Other patients keep
+// the sample list.
+export function OpenCareGaps({ patientId, patientName }) {
+  const hedisMembers = useAppStore(s => s.hedisMembers);
+  const openAddCareGaps = useAppStore(s => s.openAddCareGaps);
+  const [drawer, setDrawer] = useState(null);
+  const member = findHedisMember(hedisMembers, patientId, patientName);
+  const evidenceSources = useGapEvidenceSources(member);
+  const section = hedisGapSection(member, evidenceSources);
+  if (member) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.hedisHead}>
+          <span className={styles.sectionLabel}>{section ? section.title : 'HEDIS Measures'}</span>
+          <ActionButton icon="solar:clipboard-add-linear" size="sm" tooltip="Add Care Gap" onClick={() => openAddCareGaps(member)} />
+        </div>
+        {section
+          ? <CareGapSection section={{ ...section, title: '' }} selectedGaps={[]} onOpenGap={(item) => setDrawer({ code: item.code, instanceNo: item.openInstanceNo ?? null })} />
+          : <div className={styles.empty}>No care gaps yet.</div>}
+        {drawer && (
+          <CareGapDetailDrawer
+            member={member}
+            gapCode={drawer.code}
+            instanceNo={drawer.instanceNo}
+            year={new Date().getFullYear()}
+            onClose={() => setDrawer(null)}
+          />
+        )}
+      </div>
+    );
+  }
   return (
     <div className={styles.container}>
       {CARE_GAP_SECTIONS_EXTENDED.map(section => (

@@ -130,6 +130,7 @@ export function HedisGapScreen({ memberId, code }) {
       actor: currentActorName(),
       t: 'appointment',
       title: 'Reminder Set',
+      gapCode: gap.code,
       gapCodes: [gap.code],
       detailCard: { title: row.title || 'Reminder', subtitle: [reminderDate(row), row.time, row.assignee].filter(Boolean).join(' • '), status: 'Pending' },
     });
