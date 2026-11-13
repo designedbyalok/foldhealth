@@ -1,6 +1,8 @@
 import { Fragment, useState, useRef, useEffect, useMemo } from 'react';
 import { DownChevronIcon } from '../../../../components/Icon/DownChevronIcon';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
+import { FilterChip } from '../../../../components/FilterChip/FilterChip';
+import { Link } from '../../../../components/Link/Link';
 import { OverflowTabs } from '../../../../components/Tabs/OverflowTabs';
 import { StickyNote } from '../../../../components/StickyNote/StickyNote';
 import { StickyNoteAuditDrawer } from '../../../../components/StickyNoteAuditDrawer/StickyNoteAuditDrawer';
@@ -68,6 +70,9 @@ export function PatientProfileTabs({
   const setActiveTab = onTabChange ?? setInternalTab;
   const [selectedGaps, setSelectedGaps] = useState([]);
   const [gapsCollapsed, setGapsCollapsed] = useState(false);
+  const [gapFiltersOpen, setGapFiltersOpen] = useState(false);
+  const [gapStatusFilter, setGapStatusFilter] = useState([]);
+  const [gapYearFilter, setGapYearFilter] = useState([]);
   const [diagnosisCollapsed, setDiagnosisCollapsed] = useState(false);
   const [alertsCollapsed, setAlertsCollapsed] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -115,28 +120,53 @@ export function PatientProfileTabs({
     setCareGapDrawer({ member, gapCode: code, year: new Date().getFullYear() });
   };
 
-  // A patient on the HEDIS worklist shows their real gaps, one row per gap,
-  // so a re-added measure lists its Open gap and its closed parent apart.
-  const sourceSections = hedisMember?.gaps?.length
+  // A patient on the HEDIS worklist shows their real gaps: one row per open
+  // gap. A re-added measure's earlier (superseded) instances ride along as
+  // `previous` and expand under it on demand.
+  const gapItem = (g, i) => ({
+    id: `hedis-${g.code}-${i}`,
+    title: `${g.code} - ${MEASURE_NAMES[g.code] || g.code}`,
+    status: g.status,
+    statusVariant: STATUS_BADGE_VARIANT[g.status] || 'neutral',
+    // Measurement year: stamped on gaps added in Fold, else the start year.
+    year: g.measureYear ? String(g.measureYear) : (String(g.startDate || '').match(/\d{4}$/)?.[0] || ''),
+    diagnosis: g.supersededAt
+      ? `Previous Instance • Closed ${g.closedDate || g.supersededAt}`
+      : g.startDate ? `Opened ${g.startDate}` : '',
+  });
+  const hedisGaps = (hedisMember?.gaps || []).map((g, i) => ({ g, i }));
+  const activeCodes = new Set(hedisGaps.filter(({ g }) => !g.supersededAt).map(({ g }) => g.code));
+  const sourceSections = hedisGaps.length
     ? [{
         title: 'HEDIS Measures',
-        items: hedisMember.gaps.map((g, i) => ({
-          id: `hedis-${g.code}-${i}`,
-          title: `${g.code} - ${MEASURE_NAMES[g.code] || g.code}`,
-          status: g.status,
-          statusVariant: STATUS_BADGE_VARIANT[g.status] || 'neutral',
-          diagnosis: g.supersededAt
-            ? `Previous gap · Closed ${g.closedDate || g.supersededAt}`
-            : g.startDate ? `Opened ${g.startDate}` : '',
-        })),
+        items: hedisGaps
+          // A superseded gap only stands on its own if its measure has no open one.
+          .filter(({ g }) => !g.supersededAt || !activeCodes.has(g.code))
+          .map(({ g, i }) => ({
+            ...gapItem(g, i),
+            previous: g.supersededAt ? [] : hedisGaps
+              .filter(x => x.g.code === g.code && x.g.supersededAt)
+              .map(x => gapItem(x.g, x.i)),
+          })),
       }]
     : CARE_GAP_SECTIONS_EXTENDED;
 
+  // Care Gaps filters (Status, Year). A row stays when it, or one of its
+  // previous instances, matches, so a closed status still finds old ones.
+  const allGapItems = sourceSections.flatMap(sec => sec.items.flatMap(it => [it, ...(it.previous || [])]));
+  const gapFilterOptions = {
+    status: [...new Set(allGapItems.map(it => it.status).filter(Boolean))].sort(),
+    year: [...new Set(allGapItems.map(it => it.year).filter(Boolean))].sort().reverse(),
+  };
+  const matchesGapFilters = (it) => (!gapStatusFilter.length || gapStatusFilter.includes(it.status))
+    && (!gapYearFilter.length || gapYearFilter.includes(it.year));
+  const gapFilterCount = gapStatusFilter.length + gapYearFilter.length;
+
   const careGapSections = sourceSections.map(section => ({
     ...section,
-    items: searchQuery
-      ? section.items.filter(item => item.title.toLowerCase().includes(searchQuery.toLowerCase()))
-      : section.items,
+    items: section.items
+      .filter(item => !searchQuery || item.title.toLowerCase().includes(searchQuery.toLowerCase()))
+      .filter(item => !gapFilterCount || matchesGapFilters(item) || (item.previous || []).some(matchesGapFilters)),
   }));
 
   // A tab switched off while open falls back to the first one shown.
@@ -176,14 +206,35 @@ export function PatientProfileTabs({
                   <span className={styles.viewBy}>View By: Action</span>
                   <DownChevronIcon size={10} />
                   <span className={styles.filterDivider} />
-                  <ActionButton icon="custom:filter" size="sm" tooltip="Filter" />
+                  <ActionButton
+                    icon="custom:filter"
+                    size="sm"
+                    tooltip="Filter"
+                    active={gapFiltersOpen}
+                    dot={gapFilterCount > 0}
+                    onClick={() => setGapFiltersOpen(v => !v)}
+                  />
                 </div>
               )}
             </div>
 
             <div className={`${styles.collapseOuter} ${gapsCollapsed ? styles.collapsedSection : ''}`}>
               <div className={styles.collapseInner}>
+                {gapFiltersOpen && (
+                  <div className={styles.gapFilters}>
+                    <FilterChip label="Status" size="S" options={gapFilterOptions.status} selected={gapStatusFilter} onChange={setGapStatusFilter} />
+                    {gapFilterOptions.year.length > 0 && (
+                      <FilterChip label="Year" size="S" options={gapFilterOptions.year} selected={gapYearFilter} onChange={setGapYearFilter} />
+                    )}
+                    {gapFilterCount > 0 && (
+                      <Link variant="secondary" onClick={() => { setGapStatusFilter([]); setGapYearFilter([]); }}>Clear All</Link>
+                    )}
+                  </div>
+                )}
                 <div className={styles.sections}>
+                  {gapFilterCount > 0 && careGapSections.every(sec => !sec.items.length) && (
+                    <div className={styles.gapFiltersEmpty}>No care gaps match these filters.</div>
+                  )}
                   {careGapSections.map(section => (
                     <CareGapSection
                       key={section.title}
