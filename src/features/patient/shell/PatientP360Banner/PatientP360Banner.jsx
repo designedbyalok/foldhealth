@@ -22,6 +22,7 @@ import { PatientTagPills, AddPatientTagDrawer } from './PatientTags';
 import { AddFamilyDrawer } from '../../family/AddFamilyDrawer';
 import { CareTeamDrawer } from '../../care-team/CareTeamDrawer';
 import { AgentHandoffStrip } from '../../../live-call/AgentHandoffStrip';
+import { InterpreterChip } from '../../shared/InterpreterOffer/InterpreterOffer';
 import styles from './PatientP360Banner.module.css';
 
 export function PatientP360Banner({ patient, variant = 'full' }) {
@@ -289,6 +290,7 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
         <button className={styles.addTagBtn} aria-label="Add tag" onClick={() => setAddTagOpen(true)}><Icon name="solar:add-circle-linear" size={12} color="var(--neutral-300)" /></button>
         {addTagOpen && <AddPatientTagDrawer patient={patient} onClose={() => setAddTagOpen(false)} />}
         {familyDrawer}
+        <InterpreterChip patientId={patient.id} />
         <AgentHandoffStrip patient={patient} inline />
         <span className={styles.row2Spacer} aria-hidden="true" />
         <div ref={dockRef} className={styles.timerDockSlot} data-ccm-timer-dock />

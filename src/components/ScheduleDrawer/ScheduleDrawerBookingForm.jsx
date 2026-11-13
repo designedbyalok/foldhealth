@@ -1,4 +1,5 @@
 import { Button } from '../Button/Button';
+import { Checkbox } from '../Checkbox/Checkbox';
 import { Drawer } from '../Drawer/Drawer';
 import { ScheduleDrawerPatientSection } from './ScheduleDrawerPatientSection';
 import { ScheduleDrawerAppointmentDetails } from './ScheduleDrawerAppointmentDetails';
@@ -22,6 +23,7 @@ export function ScheduleDrawerBookingBody(props) {
     memberInstructionRef,
     staffInstructionRef,
     patientLocked = false,
+    interpreter = null,
   } = props;
 
   return (
@@ -34,6 +36,17 @@ export function ScheduleDrawerBookingBody(props) {
         setReasonForVisit={setReasonForVisit}
         locked={patientLocked}
       />
+      {interpreter && (
+        <label className={styles.interpreterRow}>
+          <Checkbox checked={interpreter.book} onCheckedChange={v => interpreter.setBook(v === true)} />
+          <span className={styles.interpreterText}>
+            <span>Book a qualified {interpreter.language} interpreter</span>
+            {interpreter.offer?.status === 'declined' && (
+              <span className={styles.interpreterHint}>The patient asked for {interpreter.offer.name || 'a family member'} to interpret.</span>
+            )}
+          </span>
+        </label>
+      )}
       <ScheduleDrawerAppointmentDetails {...props} />
       <ScheduleDrawerInstructionFields
         requireRsvp={requireRsvp}

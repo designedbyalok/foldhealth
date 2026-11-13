@@ -17,7 +17,7 @@ describe('patient consent rows', () => {
 
   it('gives empty preferences when the patient has no row', () => {
     expect(preferencesFromRow(null)).toEqual({
-      channelByProgram: {}, preferredLanguage: null, needsInterpreter: false, healthLiteracy: 'unknown',
+      channelByProgram: {}, preferredLanguage: null, needsInterpreter: false, interpreterOffer: null, healthLiteracy: 'unknown',
       contactPoints: [], updatedBy: null, updatedAt: null,
     });
   });

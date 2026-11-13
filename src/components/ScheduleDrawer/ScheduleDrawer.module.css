@@ -374,3 +374,25 @@
   transition: transform .2s; box-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 .switchInput:checked + .switchTrack .switchThumb { transform: translateX(14px); }
+
+/* Section 1557: book a qualified interpreter with the visit. */
+.interpreterRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.interpreterText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+}
+.interpreterHint {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}

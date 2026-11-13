@@ -24,6 +24,18 @@ const RESPONSE_SCHEMA = {
   required: ['subject', 'body'],
 };
 
+// A patient email also lists the facts it rests on, shown beside the draft so
+// the sender can check them before it goes out.
+const PATIENT_RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    subject: { type: 'string' },
+    body: { type: 'string' },
+    facts: { type: 'array', items: { type: 'string' } },
+  },
+  required: ['subject', 'body', 'facts'],
+};
+
 const REFERRAL_FIELDS = ['patientName', 'patientAge', 'patientSex', 'gap', 'providerName', 'providerSpecialty', 'reason', 'note', 'attachments', 'senderName'];
 const PATIENT_FIELDS = ['patientName', 'subject', 'notes', 'senderName'];
 
@@ -44,6 +56,12 @@ function buildPatientPrompt(d) {
     'Rules:',
     '- Warm, plain language a patient understands; no medical jargon.',
     '- Use only the facts provided. Never invent diagnoses, results, dates or history.',
+    '- Never say anything is booked, confirmed, scheduled, arranged, sent, ordered or',
+    '  approved unless the notes say it already happened. Write planned things as',
+    '  intent ("we are arranging your ride", "we will call you to find a time").',
+    '- Never offer a specific appointment date or time unless the notes give it.',
+    '- "facts": each fact from the notes that the email relies on, one short line each,',
+    '  in the notes\' words. Empty when the email relies on none.',
     '- Keep the subject under 70 characters.',
     '- Body: a greeting by first name if given, 1 to 2 short paragraphs, then',
     '  "Warm regards," on its own line.',
@@ -92,7 +110,7 @@ export default async function handler(req, res) {
   try {
     const ai = await generateJson({
       prompt: patientMode ? buildPatientPrompt(d) : buildPrompt(d),
-      schema: RESPONSE_SCHEMA,
+      schema: patientMode ? PATIENT_RESPONSE_SCHEMA : RESPONSE_SCHEMA,
       name: 'email_draft',
       temperature: 0.4,
       logTag: 'referral-email',
@@ -102,7 +120,11 @@ export default async function handler(req, res) {
     if (!ai.ok) return res.status(502).json({ error: { message: 'The AI service is unavailable right now.' } });
     const draft = ai.data;
     return res.status(200).json({
-      email: { subject: String(draft.subject || ''), body: String(draft.body || '') },
+      email: {
+        subject: String(draft.subject || ''),
+        body: String(draft.body || ''),
+        ...(patientMode ? { facts: Array.isArray(draft.facts) ? draft.facts.map(String).filter(Boolean) : [] } : {}),
+      },
     });
   } catch (err) {
     console.error('[referral-email]', err?.message || err);

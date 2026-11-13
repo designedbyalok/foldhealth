@@ -109,11 +109,29 @@ export function pointsView(script, shown) {
 }
 
 /** What Accept says and does for an item: medication changes route, others save at wrap-up. */
+/**
+ * What a medication change heard on a call rests on: 'order' (matches a
+ * discharge or prescriber order, or is the order), 'refill' (a refill for the
+ * prescriber to sign) or 'reported' (the patient's words only). Only an order
+ * may change the medication list; the rest go to the prescriber.
+ */
+export function medBasis(item) {
+  const [kind] = item?.src || [];
+  if (kind === 'Reconciled' || kind === 'Ordered') return 'order';
+  if (kind === 'Refill Request') return 'refill';
+  return 'reported';
+}
+
 export function acceptCopy(item) {
   if (item.where !== 'Medications') return { label: 'Accept', done: 'Accepted · saved with the call at wrap-up' };
   const [kind] = item.src || [];
-  const label = { Reconciled: 'Reconcile', 'Refill Request': 'Send for Signature', Ordered: 'Apply Order' }[kind] || 'Send to Prescriber';
-  return { label, done: `${label === 'Reconcile' ? 'Reconciled' : 'Accepted'} · saved with the call at wrap-up` };
+  const basis = medBasis(item);
+  if (basis === 'order') {
+    const label = kind === 'Ordered' ? 'Apply Order' : 'Reconcile';
+    return { label, done: `${label === 'Reconcile' ? 'Reconciled' : 'Applied'} against the order · updates the medication list at wrap-up` };
+  }
+  if (basis === 'refill') return { label: 'Send for Signature', done: 'Sent for signature at wrap-up' };
+  return { label: 'Send to Prescriber', done: 'Sent for prescriber review at wrap-up · the list changes only once it’s ordered' };
 }
 
 /** Header status for the recording. */
@@ -206,6 +224,7 @@ export function medRecord(med, saved) {
     last: med.last || '',
     days: med.days ?? '',
     note: '',
+    orderRef: '',
     by: med.by || '',
     ...(saved || {}),
   };
@@ -255,7 +274,10 @@ export function medMentions(script, shown, med, limit = 3) {
 export function medUpdateLines(script, medEdits) {
   return script.meds.filter(m => medEdits[m.n]).map(m => {
     const r = medRecord(m, medEdits[m.n]);
-    return r.status === 'Stopped' ? `${m.n}: stopped ${isoToUs(r.stop)} (${r.reason})` : `${m.n}: ${r.sig}`;
+    const change = r.status === 'Stopped' ? `${m.n}: stopped ${isoToUs(r.stop)} (${r.reason})` : `${m.n}: ${r.sig}`;
+    // Only an order reference lets an edit change the list; without one it
+    // goes to the prescriber.
+    return r.orderRef?.trim() ? `${change} · per order ${r.orderRef.trim()}` : `${change} · for prescriber review`;
   });
 }
 

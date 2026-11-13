@@ -42,6 +42,8 @@ describe('live call model', () => {
     expect(acceptCopy({ where: 'Tasks' }).label).toBe('Accept');
     expect(acceptCopy({ where: 'Medications', src: ['Refill Request', 'Routes to Dr. L. Chen to sign'] })).toMatchObject({ label: 'Send for Signature' });
     expect(acceptCopy({ where: 'Medications', src: ['Reconciled', 'x'] }).label).toBe('Reconcile');
+    expect(acceptCopy({ where: 'Medications' }).label).toBe('Send to Prescriber');
+    expect(acceptCopy({ where: 'Medications', src: ['Reconciled', 'x'] }).done).toContain('updates the medication list');
   });
 
   it('fills the care manager and splits highlights', () => {

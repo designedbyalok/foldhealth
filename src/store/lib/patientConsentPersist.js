@@ -50,6 +50,9 @@ export const preferencesFromRow = (r) => ({
   channelByProgram: r?.channel_by_program || {},
   preferredLanguage: r?.preferred_language || null,
   needsInterpreter: !!r?.needs_interpreter,
+  // Section 1557: whether a qualified interpreter was offered, and the
+  // patient's choice. null until recorded.
+  interpreterOffer: r?.interpreter_offer || null,
   healthLiteracy: r?.health_literacy || 'unknown',
   contactPoints: Array.isArray(r?.contact_points) ? r.contact_points : [],
   updatedBy: r?.updated_by || null,
@@ -120,6 +123,7 @@ export async function persistPreferences(patientId, prefs, updatedBy) {
     channel_by_program: prefs.channelByProgram || {},
     preferred_language: prefs.preferredLanguage || null,
     needs_interpreter: !!prefs.needsInterpreter,
+    interpreter_offer: prefs.interpreterOffer || null,
     health_literacy: prefs.healthLiteracy || 'unknown',
     contact_points: prefs.contactPoints || [],
     updated_by: updatedBy || null,

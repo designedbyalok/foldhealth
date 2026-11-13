@@ -385,3 +385,33 @@
   background: var(--status-error);
   flex-shrink: 0;
 }
+
+/* What a Unity draft rests on, under the message: claims to check, then the facts used. */
+.draftBasis {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.draftBasisTitle {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+.draftBasisList {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-4);
+  font-size: var(--font-sm);
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+}
+.draftFacts {
+  padding: var(--space-2) var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+}
+.draftFactsNone {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}

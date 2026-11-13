@@ -21,6 +21,7 @@ import { supabase } from '../../../lib/supabase';
 import { formShareLink } from '../../forms/formLink';
 import { EDUCATION_LIBRARY } from './educationLibrary';
 import { draftPatientEmail } from './draftPatientEmail';
+import { unsupportedClaims } from './draftClaims';
 import { SendToSection } from './SendToSection';
 import { SendToPicker } from './SendToPicker';
 import {
@@ -75,6 +76,8 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
   const [showCc, setShowCc] = useState(!!initial.cc?.length);
   const [showBcc, setShowBcc] = useState(!!initial.bcc?.length);
   const [subject, setSubject] = useState(initial.subject ?? DEFAULT_SUBJECT);
+  // What the last Unity draft rested on: the sender's notes and the facts it used.
+  const [aiBasis, setAiBasis] = useState(null);
   const [useTemplate, setUseTemplate] = useState(initial.useTemplate ?? true);
   const [templateId, setTemplateId] = useState(initial.draft?.meta?.templateId || DEFAULT_TEMPLATE_ID);
   // The message, as HTML from the editor.
@@ -153,6 +156,8 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
     ? [contact?.email, ...extraContacts.map(c => c.email)].filter(Boolean)
     : globalTo;
   const subjectError = touched && !subject.trim() ? 'Add a subject.' : null;
+  // A Unity draft can't claim what didn't happen: flag those sentences.
+  const claims = useMemo(() => (aiBasis && !useTemplate ? unsupportedClaims(htmlToText(body), aiBasis.notes) : []), [aiBasis, useTemplate, body]);
   const canSend = forPatient
     ? !!contact && !sendToError && !!subject.trim() && !busy
     : !!patient && to.length > 0 && to.every(isEmailAddress) && !!subject.trim() && !blockers.length && !busy;
@@ -231,15 +236,17 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
   // goes into the template's body.
   const generate = async () => {
     setGenerating(true);
+    const notes = htmlToText(body);
     const draft = await draftPatientEmail({
       patientName: patient?.name,
       subject: subject.trim(),
-      notes: htmlToText(body),
+      notes,
       senderName: sender.name,
     });
     setGenerating(false);
     if (!draft) { toast.error('UnityAI is unavailable right now. Try again in a moment.'); return; }
     setDirty(true);
+    setAiBasis({ notes, facts: Array.isArray(draft.facts) ? draft.facts : [] });
     if (draft.subject) setSubject(draft.subject);
     setBody(textToHtml(draft.body));
     toast.success('Email Drafted Successfully');
@@ -507,6 +514,26 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
               notice={PHI_NOTICE}
               actions={editorActions}
             />
+          )}
+          {aiBasis && !useTemplate && (
+            <div className={styles.draftBasis}>
+              {claims.length > 0 && (
+                <Banner tone="warning" size="sm" icon="solar:danger-triangle-linear">
+                  <span className={styles.draftBasisTitle}>Check before sending</span>
+                  <ul className={styles.draftBasisList}>
+                    {claims.map(c => <li key={c.sentence}>“{c.sentence}” {c.reason}.</li>)}
+                  </ul>
+                </Banner>
+              )}
+              <div className={styles.draftFacts}>
+                <span className={styles.draftBasisTitle}>Unity used</span>
+                {aiBasis.facts.length ? (
+                  <ul className={styles.draftBasisList}>{aiBasis.facts.map(f => <li key={f}>{f}</li>)}</ul>
+                ) : (
+                  <span className={styles.draftFactsNone}>No facts from your notes; the draft is general wording only.</span>
+                )}
+              </div>
+            </div>
           )}
           <input
             ref={imageInputRef}
