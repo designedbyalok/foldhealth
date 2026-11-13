@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
-import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { AvatarGroup } from '../../components/AvatarGroup/AvatarGroup';
 import { Banner } from '../../components/Banner/Banner';
 import { Button } from '../../components/Button/Button';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { Icon } from '../../components/Icon/Icon';
 import { Skeleton } from '../../components/Skeleton/Skeleton';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
-import { UserPickerPopover } from '../../components/UserPickerPopover/UserPickerPopover';
 import { toast } from '../../components/Toast/sonnerToast';
+import { useAppStore } from '../../store/useAppStore';
 import { initialsOf } from './oooUtils';
 import { NO_DEPARTMENT, planPeople } from './openWork';
 import { MODULES } from './useOpenWork';
@@ -27,11 +27,13 @@ const shapeOf = (key) => (key === 'programs' ? PROGRAM_SHAPE : TASK_SHAPE);
 const programKey = (p) => String(p.code || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const VIEW = {
   task: {
+    key: 'view',
     label: 'View Task',
     icon: 'solar:eye-linear',
     onSelect: t => window.open(`#/tasks?taskId=${encodeURIComponent(t.id)}`, '_blank', 'noopener'),
   },
   programs: {
+    key: 'view',
     label: 'View Program',
     icon: 'solar:eye-linear',
     onSelect: p => window.open(`#/population/patient/${encodeURIComponent(p.patientId)}/care-management/care-programs/${programKey(p)}`, '_blank', 'noopener'),
@@ -46,12 +48,39 @@ const ACCESS_CARDS = {
   'Program Worklists': ['programs'],
 };
 
+/**
+ * A task row's "…" in the reassign drawer: View Task, then the status changes
+ * the Tasks list offers (no Delete here).
+ */
+function useTaskActions() {
+  const updateTask = useAppStore(s => s.updateTask);
+  const completeSignOff = useAppStore(s => s.completeCareGapSignOffTask);
+  const setStatus = (t, status, done) => { updateTask(t.id, { status }); toast.success(done); };
+  const complete = { key: 'complete', label: 'Mark as Complete', icon: 'solar:check-circle-linear', onSelect: (t) => {
+    // HEDIS sign-off tasks close their gaps too, as on the Tasks list.
+    if (t.hedisMemberId) { completeSignOff(t.id, 'NP'); toast.success('Task Completed Successfully'); } else setStatus(t, 'completed', 'Task Completed Successfully');
+  } };
+  const missed = { key: 'missed', label: 'Mark as Missed', icon: 'solar:close-circle-linear', onSelect: t => setStatus(t, 'missed', 'Task Marked as Missed Successfully') };
+  const pending = { key: 'pending', label: 'Mark as Pending', icon: 'solar:clock-circle-linear', onSelect: t => setStatus(t, 'pending', 'Task Marked as Pending Successfully') };
+  return t => [VIEW.task, ...(t.status === 'missed' ? [pending, complete] : [complete, missed])];
+}
+
+/** The record's covering providers first, under Suggested (unless they're out too). */
+function coverersFirst(users, coverers, awayName) {
+  const isCoverer = u => coverers.some(c => (c.id && u.realId === c.id) || u.name === c.name);
+  const top = users.filter(u => !u.disabled && isCoverer(u)).map(u => ({ ...u, section: 'Suggested', note: `Covering for ${awayName}` }));
+  return [...top, ...users.filter(u => !top.some(t => t.id === u.id))];
+}
+
 /** What each card says: what happens to current work, then to new work. */
 function linesFor(key, covered, autoReply) {
-  const existing = covered ? null : 'Stay with this user.';
+  const existing = null;
   switch (key) {
     case 'appointments':
-      return [covered ? 'Booked visits are reassigned after Save.' : 'Booked visits are reviewed after Save.', 'New appointments can\'t be booked during OOO duration.'];
+      return [existing, 'New appointments can\'t be booked during OOO duration.'];
+    case 'carePlan':
+    case 'medRecon':
+    case 'intervention':
     case 'tasks':
       return [existing, covered ? 'New tasks are assigned to the covering provider.' : 'New tasks stay with this user.'];
     case 'programs':
@@ -70,7 +99,7 @@ function linesFor(key, covered, autoReply) {
  * of the user's work. Each says what happens to what's open now and to
  * new work while they're away, and who it goes to (avatars).
  *   - Work that can move (appointments, tasks, care programs): the count in
- *     the title, and Edit (or the avatars) for that module's own Reassign
+ *     the title, and Reassign (or the avatars) for that module's own Reassign
  *     drawer over this one.
  *   - Calls and Communications: who takes calls (or the OOO phone tree), and
  *     the auto-reply message, which can be edited here.
@@ -89,10 +118,9 @@ function linesFor(key, covered, autoReply) {
  * @param {function} props.onMessageChange – (text) => void, on Save under the field
  */
 export function OooReviewStep({ summary, away, timeWindow, work, coverers, missingByName, phoneTree, autoReply, message, onMessageChange }) {
-  const { items, plans, defaults, setPlan, pickUsers, loading } = work;
+  const { items, plans, defaults, setPlan, pickUsers, loading, autoAssign, setAutoAssign } = work;
   const [editing, setEditing] = useState(null); // module key whose drawer is open
   const [viewSchedule, setViewSchedule] = useState(null); // an on-call schedule, read-only
-  const [picker, setPicker] = useState(null);   // { rect, key } assigning a whole module
   // The auto-reply message is edited as a draft: Save keeps it, Discard or
   // a click outside the field goes back to the saved message.
   const [draft, setDraft] = useState(null); // null: read-only
@@ -131,7 +159,7 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
   // grey unassigned avatar when nobody yet.
   const whoFor = (key, ids, label, onClick) => {
     const ps = planPeople(plans[key], ids);
-    if (!ps.length) return <AssigneeChange avatarOnly size="S" unassigned ariaLabel={`Pick a covering provider for ${label}`} onClick={(e) => setPicker({ rect: e.currentTarget.getBoundingClientRect(), key })} />;
+    if (!ps.length) return null;
     return avatars(ps, ps.map(p => <span key={p.name}>{p.name}{deptsOf(key, ids, p) && ` • ${deptsOf(key, ids, p)}`}</span>), onClick, `Covering providers for ${label}`);
   };
   const covererTip = (prefix) => coverers.map(p => (
@@ -173,9 +201,9 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
         </div>
       );
     }
-    // Nobody picked yet (tasks and programs start that way): it stays with this user.
+    // Nobody picked yet (every area starts that way): no line about current work.
     const lines = linesFor(m.key, covered, autoReply);
-    if (m.key !== 'appointments' && !planPeople(plans[m.key], ids).length) lines[0] = 'Stay with this user.';
+    if (!planPeople(plans[m.key], ids).length) lines[0] = null;
     return (
       <div key={m.key} className={styles.workCard}>
         {head({
@@ -185,9 +213,15 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
           count: n,
           tools: n > 0 && (
             <>
-              {whoFor(m.key, ids, m.title, () => setEditing(m.key))}
-              <span className={styles.actionDivider} aria-hidden="true" />
-              <Button variant="soft" size="sm" leadingIcon="solar:pen-linear" onClick={() => setEditing(m.key)}>Edit</Button>
+              {planPeople(plans[m.key], ids).length > 0 && (
+                <>
+                  {whoFor(m.key, ids, m.title, () => setEditing(m.key))}
+                  <span className={styles.actionDivider} aria-hidden="true" />
+                </>
+              )}
+              {planPeople(plans[m.key], ids).length
+                ? <Button variant="outline" tone="neutral" size="sm" leadingIcon="solar:pen-linear" onClick={() => setEditing(m.key)}>Edit</Button>
+                : <Button variant="soft" size="sm" leadingIcon="solar:user-linear" onClick={() => setEditing(m.key)}>Reassign</Button>}
             </>
           ),
         })}
@@ -288,6 +322,12 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
     <div className={styles.form}>
       <Banner tone="info" size="sm">This can also be edited later under actions for this out of office record.</Banner>
       <p className={styles.workIntro}>Review this user&apos;s work for the out of office duration:</p>
+      {covered && (
+        <label className={styles.autoAssign}>
+          <Checkbox checked={autoAssign} onCheckedChange={(v) => setAutoAssign(v === true)} />
+          <span>Auto-assign all work to covering providers</span>
+        </label>
+      )}
 
       <div className={styles.workList}>
         {loading
@@ -297,30 +337,6 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
         {commsCard}
       </div>
 
-      {picker && (() => {
-        // Nobody assigned yet: pick one person for the whole module, from
-        // those who work at every department its items are in.
-        const ids = items[picker.key].map(i => i.id);
-        const depts = [...new Set(items[picker.key].map(i => String(i.location || '').trim()).filter(d => d && d !== NO_DEPARTMENT))];
-        const worksAll = (u) => depts.every(d => (u.locations || []).some(l => String(l).trim().toLowerCase() === d.toLowerCase()));
-        return (
-          <UserPickerPopover
-            anchorRect={picker.rect}
-            align="right"
-            width={350}
-            title="Select Provider"
-            titleCaseSections
-            users={pickUsers().filter(worksAll)}
-            emptyText="No one works at all of these departments. Use Edit to pick per department."
-            onSelect={(u) => setPlan(picker.key, p => {
-              const n = { ...p };
-              ids.forEach(id => { n[id] = { action: 'reassign', to: u.name, toId: u.realId || null }; });
-              return n;
-            })}
-            onClose={() => setPicker(null)}
-          />
-        );
-      })()}
       {viewSchedule && (
         <OnCallScheduleDrawer schedule={viewSchedule} readOnly onClose={() => setViewSchedule(null)} />
       )}
@@ -333,7 +349,8 @@ export function OooReviewStep({ summary, away, timeWindow, work, coverers, missi
           away={away}
           timeWindow={timeWindow}
           summary={summary}
-          usersFor={(d) => pickUsers(deptArg(d))}
+          usersFor={(d) => coverersFirst(pickUsers(deptArg(d)), coverers, away?.name)}
+          suggested={coverers}
           onSave={async (next) => {
             // Marked only: everything is reassigned with the record's Save.
             setPlan(editingModule.key, next);
@@ -362,10 +379,11 @@ const samePlan = (a, b) => {
  * (it runs with the record's Save), Reset goes back to the defaults (each
  * item to its department's covering provider), closing discards it.
  */
-function ModuleReassignDrawer({ module: m, items, plan, defaultPlan, away, timeWindow, summary, usersFor, onSave, onClose }) {
+function ModuleReassignDrawer({ module: m, items, plan, defaultPlan, away, timeWindow, summary, usersFor, suggested, onSave, onClose }) {
   const [draft, setDraft] = useState(plan);
   const [saving, setSaving] = useState(false);
   const shape = shapeOf(m.key);
+  const taskActions = useTaskActions();
   return (
     <Drawer
       title={`Reassign ${m.title}`}
@@ -394,7 +412,7 @@ function ModuleReassignDrawer({ module: m, items, plan, defaultPlan, away, timeW
     >
       <div className={`${styles.form} ${styles.reassignForm}`}>
         {m.key === 'appointments' ? (
-          <ReassignPlanner appointments={items} awayUser={away} timeWindow={timeWindow} plan={draft} onPlan={setDraft} />
+          <ReassignPlanner appointments={items} awayUser={away} timeWindow={timeWindow} plan={draft} onPlan={setDraft} suggested={suggested} />
         ) : (
           <ReassignItemsPlanner
             items={items}
@@ -403,7 +421,7 @@ function ModuleReassignDrawer({ module: m, items, plan, defaultPlan, away, timeW
             noun={m.noun}
             icon={m.icon}
             usersFor={usersFor}
-            rowAction={m.key === 'programs' ? VIEW.programs : VIEW.task}
+            rowActions={m.key === 'programs' ? () => [VIEW.programs] : taskActions}
             grouped={m.key !== 'programs'}
             plan={draft}
             onPlan={setDraft}

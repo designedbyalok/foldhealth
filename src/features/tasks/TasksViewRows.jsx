@@ -84,6 +84,7 @@ export function AssignedToCell({ task }) {
       users={options}
       onSelect={onSelect}
       outOfOffice={outOfOffice}
+      outOfOfficePickable
     />
   );
 }

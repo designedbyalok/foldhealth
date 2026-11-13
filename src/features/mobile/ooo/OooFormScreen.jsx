@@ -53,6 +53,7 @@ export function OooFormScreen({ recordId }) {
   const saveOooRecord = useAppStore(s => s.saveOooRecord);
   const deleteOooRecord = useAppStore(s => s.deleteOooRecord);
   const restoreReassigned = useAppStore(s => s.restoreReassignedAppointments);
+  const restoreWork = useAppStore(s => s.restoreReassignedWork);
   // The record being edited; Edit Existing (overlap) switches to another.
   const [record, setRecord] = useState(() => (recordId ? (oooRecords || []).find(r => r.id === recordId) || null : null));
   const [values, setValues] = useState(() => valuesOf(record, me));
@@ -113,7 +114,10 @@ export function OooFormScreen({ recordId }) {
           ns > os && { from: os, to: Math.min(ns, oe) },
           ne < oe && { from: Math.max(ne, os), to: oe },
         ].filter(Boolean);
-        if (removed.length) await restoreReassigned({ id: saved.userId, name: saved.userName }, removed);
+        if (removed.length) {
+          await restoreReassigned({ id: saved.userId, name: saved.userName }, removed);
+          await restoreWork({ id: saved.userId, name: saved.userName }, { recordId: saved.id, ranges: removed });
+        }
       }
       if (needsReassign && !(useAppStore.getState().appointments || []).length) await useAppStore.getState().fetchAppointments?.();
       const toMove = needsReassign && appointmentsToReassign(saved, useAppStore.getState().appointments).length > 0;
@@ -133,6 +137,7 @@ export function OooFormScreen({ recordId }) {
       if (ok) {
         await restoreReassigned({ id: record.userId, name: record.userName },
           [{ from: new Date(record.startAt).getTime(), to: new Date(record.endAt).getTime() }]);
+        await restoreWork({ id: record.userId, name: record.userName }, { recordId: record.id });
         toast.success('Out of Office Record Deleted Successfully');
         setConfirmDelete(false);
         pop();

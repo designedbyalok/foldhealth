@@ -34,7 +34,8 @@ import styles from './AssigneeChange.module.css';
  * in booking's provider picker: people who are out can't be picked. They're
  * listed last under Not Available with an Out of Office badge (its tooltip
  * gives the dates) and who covers them; searching for one puts whoever
- * covers them on top, under Suggested, "Covering for …".
+ * covers them on top, under Suggested, "Covering for …". `outOfOfficePickable`
+ * keeps them pickable (tasks can still go to someone who's out).
  */
 const NOBODY_OUT = () => null;
 const mdY = (v) => { const d = new Date(v); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`; };
@@ -66,6 +67,7 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
   users,
   onSelect,
   outOfOffice = NOBODY_OUT,
+  outOfOfficePickable = false,
   // Opt-in: `{ id, name }` of the assigned person, so the avatar wears the
   // Out of Office badge while they're away; `oooNote` adds a line to its hover.
   oooUser,
@@ -361,18 +363,23 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
                 {away.length > 0 && <div className={styles.group}>Not Available</div>}
                 {away.map((u) => {
                   const out = outOfOffice(u);
+                  const Row = outOfOfficePickable ? 'button' : 'div';
+                  const rowProps = outOfOfficePickable
+                    ? { type: 'button', role: 'menuitem', className: styles.userRow, onClick: () => { onSelect?.(u); close(); } }
+                    : { className: `${styles.userRow} ${styles.userRowDisabled}`, 'aria-disabled': true };
+                  const muted = outOfOfficePickable ? '' : ` ${styles.userNameMuted}`;
                   return (
-                    <div key={u.id} className={`${styles.userRow} ${styles.userRowDisabled}`} aria-disabled="true">
-                      <Avatar variant={u.avatarVariant || 'staff'} initials={u.initials} size={24} />
+                    <Row key={u.id} {...rowProps}>
+                      <Avatar variant={u.avatarVariant || 'staff'} initials={u.initials} size={24} userName={u.name} userId={u.id} />
                       <span className={styles.userText}>
-                        <span className={`${styles.userName} ${styles.userNameMuted}`}>{u.name}</span>
-                        {u.role && <span className={`${styles.userRole} ${styles.userNameMuted}`}>{u.role}</span>}
+                        <span className={`${styles.userName}${muted}`}>{u.name}</span>
+                        {u.role && <span className={`${styles.userRole}${muted}`}>{u.role}</span>}
                         <span className={styles.userNote}>{out.coveredBy?.length ? `Covered by: ${out.coveredBy.join(', ')}` : 'No covering provider'}</span>
                       </span>
                       <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="right">
                         <Badge tone="magenta" size="sm" label="Out of Office" />
                       </Tooltip>
-                    </div>
+                    </Row>
                   );
                 })}
               </>

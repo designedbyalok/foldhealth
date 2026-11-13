@@ -31,7 +31,7 @@ export function HccWorklistTableView({
   filterOpen, setFilterOpen, activeFilterCount, openHccHistoryDrawer, showToast,
   startHccUpload, setHccUploadPhase, saveDialogOpen, setSaveDialogOpen, renameTarget, setRenameTarget,
   saveHccFilter, renameHccSavedFilter, combinedRows, filtered, patientsWithoutGaps, filtersActive, totalRecordCount,
-  hccMembersLoading, clearHccFilters, coveringChip, coveringFor, scrollWrapRef, someSelected, allSelected, handleSelectAll,
+  hccMembersLoading, clearHccFilters, coveringChip, scrollWrapRef, someSelected, allSelected, handleSelectAll,
   setMemberSortPop, orderedColumns, hiddenSet, sortKey, sortDir, setSortPop,
   colCfgBtnRef, colCfgRect, setColCfgRect, paginated, selectedHccIds, clearHccSelected,
   bulkAssigneeOpen, setBulkAssigneeOpen, sortPop, setSort, clearSort, memberSortPop,
@@ -223,7 +223,6 @@ export function HccWorklistTableView({
                   <HccWorklistRow
                     key={row.key}
                     member={row.member}
-                    coveringFor={coveringFor(row.member)}
                     hiddenCols={hiddenSet}
                     columns={orderedColumns}
                     staggerIndex={index}

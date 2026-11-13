@@ -360,7 +360,6 @@ export function HedisWorklistTable() {
                 <HedisWorklistRow
                   key={m.id}
                   member={m}
-                  coveringFor={covering.length ? coveringOn(assigneeNamesOf(m), covering) : null}
                   columns={orderedColumnsForRow}
                   hiddenSet={columnPrefs.hiddenSet}
                   isSelected={selectedSet.has(m.id)}

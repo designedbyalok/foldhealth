@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { Icon } from '../Icon/Icon';
+import { OooIcon } from '../Icon/OooIcon';
 import { AvatarBase } from '../Avatar/AvatarBase';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { MenuPopover } from '../MenuPopover/MenuPopover';
@@ -25,6 +26,10 @@ function formatBytes(n) {
  *   the outer side (mirrors 'left'; the internal card shows it too)
  * - side 'internal' – a staff-only note: dashed orange card with an
  *   "Internal" badge
+ * - side 'autoReply' – an Out of Office auto-reply sent for the staff member
+ *   (Figma Eventus 17883:125133): laid out like 'right' (name, avatar, time
+ *   and status), the bubble dashed magenta with an "Out of office Auto-Reply"
+ *   label over the text
  *
  * Inside the bubble, in order: an optional reply quote, attachment, link
  * card (a preview of the first URL in `text`) or call, then the text. Links
@@ -32,7 +37,7 @@ function formatBytes(n) {
  * info blue otherwise. Under it: the time
  * and, for our messages, a status (pass a <MessageStatus />).
  *
- * @param {'left'|'right'|'internal'} props.side
+ * @param {'left'|'right'|'internal'|'autoReply'} props.side
  * @param {string}  props.name           – sender name over the bubble
  * @param {string}  [props.initials]     – avatar initials; on 'right', omit to hide the avatar
  * @param {string}  [props.text]
@@ -77,8 +82,9 @@ export function ChatBubble({
   const menuRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const autoReply = side === 'autoReply';
   const internal = side === 'internal';
-  const right = side === 'right';
+  const right = side === 'right' || autoReply;
   const attachmentUrl = useStorageUrl(attachment?.url, signUrl);
 
   const linkMatch = !attachment && !call && text ? text.match(URL_RE) : null;
@@ -206,7 +212,13 @@ export function ChatBubble({
             {menu}
           </div>
         )}
-        <div className={[styles.bubble, right ? styles.bubbleRight : styles.bubbleLeft, call ? styles.bubbleCall : '', flush ? styles.bubbleFlush : ''].join(' ')}>
+        <div className={[styles.bubble, right ? styles.bubbleRight : styles.bubbleLeft, autoReply ? styles.bubbleAutoReply : '', call ? styles.bubbleCall : '', flush ? styles.bubbleFlush : ''].join(' ')}>
+          {autoReply && (
+            <span className={styles.autoReplyBadge}>
+              <OooIcon size={14} color="var(--accent-magenta)" />
+              Out of office Auto-Reply
+            </span>
+          )}
           {inner}
         </div>
         {timeRow}

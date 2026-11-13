@@ -23,7 +23,7 @@ export function ProviderPicker({ value, onSelect, profileUsers = EMPTY_PROFILE_U
   const btnRef = useRef(null);
 
   const allProviders = useMemo(() => {
-    const dbUsers = profileUsers.map(u => ({ id: u.id, name: u.name, email: u.email, gender: 'Staff', dob: '', age: '', slots: 'Available' }));
+    const dbUsers = profileUsers.map(u => ({ id: u.id, name: u.name, email: u.email, role: u.role || 'Staff', dob: '', age: '', slots: 'Available' }));
     return dbUsers.length > 0 ? dbUsers : PROVIDER_OPTIONS;
   }, [profileUsers]);
 
@@ -40,12 +40,6 @@ export function ProviderPicker({ value, onSelect, profileUsers = EMPTY_PROFILE_U
   }
   const suggested = allProviders.filter(p => covering.has(p.name) && !outOfOffice(p));
   const available = matching.filter(p => !outOfOffice(p) && !covering.has(p.name));
-  // Two staff with the same name are told apart by their email.
-  const shared = useMemo(() => {
-    const n = new Map();
-    allProviders.forEach(p => n.set(p.name, (n.get(p.name) || 0) + 1));
-    return new Set([...n].filter(([, c]) => c > 1).map(([name]) => name));
-  }, [allProviders]);
 
   return (
     <div style={{ position: 'relative', flex: 1 }}>
@@ -66,10 +60,10 @@ export function ProviderPicker({ value, onSelect, profileUsers = EMPTY_PROFILE_U
             {suggested.length > 0 && <div className={styles.providerGroup}>Suggested</div>}
             {suggested.map(p => (
               <button key={`s-${p.id || p.name}`} className={styles.providerItem} onClick={() => { onSelect(p.name, p); setOpen(false); }}>
-                <Avatar variant="assignee" initials={getInitials(p.name).toUpperCase()} />
+                <Avatar variant="assignee" size="M" initials={getInitials(p.name).toUpperCase()} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 'var(--font-base)', fontWeight: 500, color: 'var(--neutral-400)' }}>{p.name}</div>
-                  <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)' }}>{shared.has(p.name) && p.email ? p.email : p.gender}</div>
+                  <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)' }}>{p.role || p.gender}</div>
                   <div className={styles.providerCovering}>Covering for {covering.get(p.name).join(', ')}</div>
                 </div>
                 <span style={{ fontSize: 'var(--font-sm)', color: p.slots === 'Not Available' ? 'var(--neutral-200)' : 'var(--primary-300)' }}>{p.slots || ''}</span>
@@ -78,10 +72,10 @@ export function ProviderPicker({ value, onSelect, profileUsers = EMPTY_PROFILE_U
             {suggested.length > 0 && available.length > 0 && <div className={styles.providerGroup}>All Providers</div>}
             {available.map(p => (
               <button key={p.id || p.name} className={styles.providerItem} onClick={() => { onSelect(p.name, p); setOpen(false); }}>
-                <Avatar variant="assignee" initials={getInitials(p.name).toUpperCase()} />
+                <Avatar variant="assignee" size="M" initials={getInitials(p.name).toUpperCase()} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 'var(--font-base)', fontWeight: 500, color: 'var(--neutral-400)' }}>{p.name}</div>
-                  <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)' }}>{shared.has(p.name) && p.email ? p.email : p.gender}</div>
+                  <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)' }}>{p.role || p.gender}</div>
                 </div>
                 <span style={{ fontSize: 'var(--font-sm)', color: p.slots === 'Not Available' ? 'var(--neutral-200)' : 'var(--primary-300)' }}>{p.slots || ''}</span>
               </button>
@@ -91,17 +85,19 @@ export function ProviderPicker({ value, onSelect, profileUsers = EMPTY_PROFILE_U
               const out = outOfOffice(p);
               return (
                 <div key={p.id || p.name} className={`${styles.providerItem} ${styles.providerItemDisabled}`} aria-disabled="true">
-                  <Avatar variant="assignee" initials={getInitials(p.name).toUpperCase()} />
+                  <Avatar variant="assignee" size="M" initials={getInitials(p.name).toUpperCase()} userName={p.name} userId={p.id} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className={styles.providerMutedName}>{p.name}</div>
-                    <div className={styles.providerMutedSub}>{shared.has(p.name) && p.email ? p.email : p.gender}</div>
+                    <div className={styles.providerNameRow}>
+                      <span className={styles.providerMutedName}>{p.name}</span>
+                      <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="right">
+                        <Badge tone="magenta" size="sm" label="Out of Office" />
+                      </Tooltip>
+                    </div>
+                    <div className={styles.providerMutedSub}>{p.role || p.gender}</div>
                     <div className={styles.providerCoveredBy}>
                       {out.coveredBy?.length ? `Covered by: ${out.coveredBy.join(', ')}` : 'No covering provider'}
                     </div>
                   </div>
-                  <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="right">
-                    <Badge tone="magenta" size="sm" label="Out of Office" />
-                  </Tooltip>
                 </div>
               );
             })}

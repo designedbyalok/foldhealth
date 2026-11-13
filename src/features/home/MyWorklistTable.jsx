@@ -11,7 +11,8 @@ import { outreachFromDots } from '../../components/OutreachStatus/outreachStatus
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { useAppStore } from '../../store/useAppStore';
-import { CoveringNote } from '../ooo/CoveringNote';
+import { Avatar } from '../../components/Avatar/Avatar';
+import { initialsOf } from '../ooo/oooUtils';
 import styles from './MyWorklistTable.module.css';
 
 const COLUMNS = [
@@ -19,6 +20,7 @@ const COLUMNS = [
   { key: 'programs', label: 'Active Program | Open Gaps', width: 220 },
   { key: 'nextAction', label: 'Next Action Due', width: 130 },
   { key: 'outreach', label: 'Last Outreach', width: 140 },
+  { key: 'assignee', label: 'Assignee', width: 170 },
   { key: 'actions', label: 'Actions', sticky: 'right', width: 170 },
 ];
 const MAX_PILLS = 5;
@@ -29,7 +31,7 @@ const mdY = (ms) => {
 };
 const ageShort = (age) => (age ? String(age).replace(/\s+/g, ' ') : '');
 
-function Row({ row, facts, onOpen, onOpenTask }) {
+function Row({ row, facts, meName, onOpen, onOpenTask }) {
   const openCallPopover = useAppStore(s => s.openCallPopover);
   const showToast = useAppStore(s => s.showToast);
   const callRef = useRef(null);
@@ -55,7 +57,6 @@ function Row({ row, facts, onOpen, onOpenTask }) {
                 </Tooltip>
               )}
             </div>
-            <CoveringNote people={row.coveringFor} />
           </div>
         </div>
       </td>
@@ -73,6 +74,19 @@ function Row({ row, facts, onOpen, onOpenTask }) {
       <td className={styles.td}>{facts.nextAction != null ? mdY(facts.nextAction) : '-'}</td>
       <td className={styles.td}>
         <OutreachStatus {...outreachFromDots(facts.outreach?.dots, { date: facts.outreach?.date, attended: facts.outreach?.attended })} />
+      </td>
+      <td className={styles.td}>
+        {/* Covered patients show who's out (their avatar's badge, "You're
+            covering" on hover); the rest are mine. */}
+        {(() => {
+          const who = row.coveringFor?.[0]?.name || meName;
+          return who ? (
+            <span className={styles.assignee}>
+              <Avatar variant="assignee" size="S" initials={initialsOf(who)} userName={who} />
+              <span className={styles.assigneeName}>{who}</span>
+            </span>
+          ) : '-';
+        })()}
       </td>
       <td className={`${styles.td} ${styles.stickyRight}`}>
         <span className={styles.actionsCell}>
@@ -112,15 +126,17 @@ function Row({ row, facts, onOpen, onOpenTask }) {
  * My Worklist (Home) as a worklist table (Figma My Worklist 5028:58501):
  * Members (name, gender and age, Fold ID and language, any "Covering for"),
  * Active Program | Open Gaps (the worklists they're on), Next Action Due (next
- * appointment or open task), Last Outreach, and View / Call / More.
+ * appointment or open task), Last Outreach, Assignee (whoever's out, for a
+ * patient I'm covering), and View / Call / More.
  *
  * @param {Array<{ row, facts }>} props.items – rows with their facts (worklistFilters.rowFacts)
+ * @param {string}  props.meName – The signed-in user, the Assignee of my own patients
  * @param {boolean} props.loading
  * @param {React.ReactNode} props.emptyState
  * @param {function} props.onOpen     – (row) => open the patient quick view
  * @param {function} props.onOpenTask – (row) => open one of my tasks for them
  */
-export function MyWorklistTable({ items, loading, emptyState, onOpen, onOpenTask }) {
+export function MyWorklistTable({ items, meName, loading, emptyState, onOpen, onOpenTask }) {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const last = Math.max(1, Math.ceil(items.length / perPage));
@@ -132,10 +148,10 @@ export function MyWorklistTable({ items, loading, emptyState, onOpen, onOpenTask
         header={null}
         columns={COLUMNS}
         rows={shown}
-        renderRow={({ row, facts }) => <Row key={row.key} row={row} facts={facts} onOpen={onOpen} onOpenTask={onOpenTask} />}
+        renderRow={({ row, facts }) => <Row key={row.key} row={row} facts={facts} meName={meName} onOpen={onOpen} onOpenTask={onOpenTask} />}
         loading={loading}
         emptyState={emptyState}
-        minTableWidth={1010}
+        minTableWidth={1180}
         fixedLayout
         page={pageNow}
         perPage={perPage}

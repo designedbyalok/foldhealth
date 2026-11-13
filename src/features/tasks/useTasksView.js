@@ -344,23 +344,7 @@ export function useTasksView() {
   }, [taskProfiles, allPatients, oooRecords, currentUserProfile]);
 
   const viewBy = tasksFilters.view_by || 'status';
-  // Covering tab: one group per person I'm covering ("Navin Jethwani · Out
-  // until 11/24/2026"); otherwise the chosen View By.
-  const grouped = useMemo(() => {
-    if (tasksTab !== 'covering') return buildGroupedTasks(sortedTasks, viewBy);
-    const byPerson = new Map();
-    sortedTasks.forEach((t) => {
-      const k = String(t.assigned_to || '').trim().toLowerCase();
-      if (!byPerson.has(k)) byPerson.set(k, { name: t.assigned_to, tasks: [] });
-      byPerson.get(k).tasks.push(t);
-    });
-    const until = (k) => {
-      const end = coverRecords.get(k)?.endAt;
-      return end ? ` · Out until ${new Date(end).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}` : '';
-    };
-    return [...byPerson].sort((a, b) => a[1].name.localeCompare(b[1].name))
-      .map(([k, g]) => ({ status: `covering:${k}`, label: `${g.name}${until(k)}`, tasks: g.tasks, noAdd: true }));
-  }, [sortedTasks, viewBy, tasksTab, coverRecords]);
+  const grouped = useMemo(() => buildGroupedTasks(sortedTasks, viewBy), [sortedTasks, viewBy]);
   const kanbanGroups = useMemo(() => buildKanbanGroups(sortedTasks, viewBy), [sortedTasks, viewBy]);
   const hideAssignedTo = !!tasksFilters.assigned_to;
 

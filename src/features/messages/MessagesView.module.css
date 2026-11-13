@@ -487,6 +487,22 @@
 }
 
 /* Reply preview in compose area */
+/* Internal chat: the other person is out of office. A small inline alert
+   strip, magenta, edge to edge on the composer's top border; its text and
+   close button line up with the message box (16px in). */
+.oooNotice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-4);
+  border-top: 0.5px solid color-mix(in srgb, var(--accent-magenta) 20%, transparent);
+  background: color-mix(in srgb, var(--accent-magenta) 6%, var(--neutral-0));
+  font-size: var(--font-sm);
+  line-height: var(--leading-tight);
+  color: var(--accent-magenta);
+}
+
 .replyPreview {
   display: flex;
   align-items: stretch;

@@ -144,6 +144,7 @@ export function AlertsMonitoringCard({ dragHandleClassName }) {
         ) : (
           <MyWorklistTable
             items={items}
+            meName={meName}
             loading={loading}
             onOpen={handleRowClick}
             onOpenTask={openMyTask}

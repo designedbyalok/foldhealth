@@ -288,7 +288,7 @@
 
 /* ── Provider Dropdown ── */
 .providerDropdown {
-  position: absolute; top: calc(100% + 4px); left: 0; min-width: 340px;
+  position: absolute; top: calc(100% + 4px); left: 0; min-width: 380px;
   background: var(--neutral-0); border: 0.5px solid var(--neutral-150);
   border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 50;
   overflow: hidden;
@@ -308,6 +308,7 @@
 .providerItemDisabled:hover { background: none; }
 /* Unavailable: lighter text instead of opacity, so the Out of Office badge
    and the covering line keep their colour. */
+.providerNameRow { display: flex; align-items: center; gap: var(--space-1); }
 .providerMutedName { font-size: var(--font-base); font-weight: 500; color: var(--placeholder-text); }
 .providerMutedSub { font-size: var(--font-sm); color: var(--placeholder-text); }
 /* Stays readable on the muted row: who to book instead. */

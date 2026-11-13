@@ -170,7 +170,6 @@ export function QueueTable({
           voicemailCalls={callsByPatient.voicemails.get(p.id)}
           completedCall={callsByPatient.completed.get(p.id)}
           ongoingCall={callsByPatient.ongoing.get(p.id)}
-          coveringFor={coveringPicked.length ? covering.coveringOn([p.assignee], coveringPicked) : null}
         />
       )}
       selectedIds={selectedIds}

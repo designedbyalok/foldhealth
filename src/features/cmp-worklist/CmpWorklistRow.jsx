@@ -9,7 +9,6 @@ import { formatDobDisplay, deriveDob } from '../../lib/patientDob';
 import { memberLanguageLabel } from '../../lib/memberFilters';
 import { worklistMemberCallId } from '../../lib/patientCall';
 import { useAppStore } from '../../store/useAppStore';
-import { CoveringNote } from '../ooo/CoveringNote';
 import { CMP_MIDDLE_COLUMNS } from './cmpColumns';
 import styles from './CmpWorklistRow.module.css';
 
@@ -76,7 +75,6 @@ export function CmpWorklistRow({ member, columns, hiddenSet, selected, onToggle,
                 </button>
               </Tooltip>
             </div>
-            <CoveringNote people={member.coveringFor} />
           </div>
         </div>
       </td>

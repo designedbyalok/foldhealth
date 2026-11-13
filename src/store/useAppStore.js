@@ -17331,6 +17331,37 @@ export const useAppStore = create((set, get) => ({
     return back.length;
   },
 
+  /**
+   * Move tasks and care programs that an Out of Office record's reassignment
+   * moved away from `who` back to them, when the record is deleted (no
+   * `ranges`) or shortened (`ranges`: the dates taken off; tasks due then).
+   * Only what's still with whoever covered them goes back (workToReturn).
+   */
+  restoreReassignedWork: async (who, { recordId, ranges = null } = {}) => {
+    const { workToReturn } = await import('../features/ooo/reassignJobs');
+    const { personOf, sameName } = await import('../features/ooo/oooUtils');
+    const person = personOf(who);
+    if (!recordId || !person.name) return 0;
+    await get().fetchReassignmentJobs?.({ force: true });
+    if (!(get().tasks || []).length) await get().fetchTasks?.();
+    const { taskIds, programs } = workToReturn(get().reassignmentJobs || [], { recordId, tasks: get().tasks || [], ranges });
+    const taskOk = await Promise.all(taskIds.map(id => get()
+      .updateTask(id, { assigned_to: person.name, assigned_to_id: person.id || null }, { assigneeAudit: 'ooo_returned' })
+      .catch(() => false)));
+    let programCount = 0;
+    if (programs.length) {
+      const { data, error } = await supabase.from('patient_care_programs').select('id, assignee').in('id', programs.map(p => p.id));
+      if (error) console.warn('restoreReassignedWork:', error.message);
+      const back = (data || []).filter(row => programs.some(p => String(p.id) === String(row.id) && sameName(row.assignee, p.to))).map(row => row.id);
+      if (back.length) {
+        const { error: upErr } = await supabase.from('patient_care_programs').update({ assignee: person.name }).in('id', back);
+        if (upErr) console.warn('restoreReassignedWork:', upErr.message);
+        else programCount = back.length;
+      }
+    }
+    return taskOk.filter(ok => ok !== false).length + programCount;
+  },
+
   // ── On call schedules (Create Schedule drawer) ──
   // Shared by everyone; until the table exists they're kept for the
   // session only (onCallLocal).

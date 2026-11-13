@@ -52,8 +52,8 @@ const checkState = (ids, selected) => {
  * @param {function} props.renderMain  – (item) => the row's content (a task row,
  *   a care program row), between the checkbox and the assignee
  * @param {function} props.titleOf     – (item) => its name, for labels
- * @param {{ label: string, icon: string, onSelect: function }} [props.rowAction] – The row's "…"
- *   action, e.g. View Task / View Program: (item) => void
+ * @param {function} [props.rowActions] – (item) => the row's "…" menu: [{ key, label, icon, danger?,
+ *   onSelect: (item) => void }], e.g. View Task and the status changes
  * @param {string}   props.noun        – "Task", "Program" (singular)
  * @param {string}   props.icon        – Solar icon for the empty state
  * @param {function} props.usersFor    – (department | null) => UserPickerPopover users,
@@ -62,7 +62,7 @@ const checkState = (ids, selected) => {
  * @param {object}   props.plan
  * @param {function} props.onPlan      – (updater: plan => plan) => void
  */
-export function ReassignItemsPlanner({ items, renderMain, titleOf, noun, icon, usersFor, plan, onPlan, rowAction, grouped = false }) {
+export function ReassignItemsPlanner({ items, renderMain, titleOf, noun, icon, usersFor, plan, onPlan, rowActions, grouped = false }) {
   const [selected, setSelected] = useState(() => new Set());
   const [groupBy, setGroupBy] = useState('status');
   const [picker, setPicker] = useState(null); // { rect, ids, dept? }
@@ -103,8 +103,8 @@ export function ReassignItemsPlanner({ items, renderMain, titleOf, noun, icon, u
       />
     );
   };
-  // More Options on a row: View Task / View Program (`rowAction`).
-  const more = (item) => rowAction && (
+  // More Options on a row (`rowActions`).
+  const more = (item) => rowActions && (
     <ActionButton
       icon="solar:menu-dots-linear"
       size="sm"
@@ -146,7 +146,7 @@ export function ReassignItemsPlanner({ items, renderMain, titleOf, noun, icon, u
 
   return (
     <div className={styles.planner}>
-      <div className={`${styles.plannerHead} ${styles.plannerHeadFlat}`}>
+      <div className={styles.plannerHead}>
         <span className={styles.plannerTitle}>Select Covering Providers</span>
         {grouped && <SegmentedControl size="sm" items={GROUP_VIEWS} value={groupBy} onValueChange={setGroupBy} aria-label="View tasks by" />}
       </div>
@@ -210,8 +210,8 @@ export function ReassignItemsPlanner({ items, renderMain, titleOf, noun, icon, u
         <MenuPopover
           anchorRect={menu.rect}
           align="right"
-          items={[{ key: 'view', label: rowAction.label, icon: rowAction.icon }]}
-          onSelect={() => { rowAction.onSelect(menu.item); setMenu(null); }}
+          items={rowActions(menu.item)}
+          onSelect={(key) => { rowActions(menu.item).find(a => a.key === key)?.onSelect(menu.item); setMenu(null); }}
           onClose={() => setMenu(null)}
         />
       )}

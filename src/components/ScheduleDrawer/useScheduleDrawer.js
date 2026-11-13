@@ -146,7 +146,7 @@ export function useScheduleDrawer({ onClose, selectedSlot, onSave, existingAppoi
   }, [initialPatientId, patients]);
 
   useEffect(() => {
-    supabase.from('profiles').select('id, full_name, first_name, last_name, email, status').order('full_name').then(({ data }) => {
+    supabase.from('profiles').select('id, full_name, first_name, last_name, email, status, clinical_roles').order('full_name').then(({ data }) => {
       if (!data) return;
       const users = [];
       for (const u of data) {
@@ -155,6 +155,7 @@ export function useScheduleDrawer({ onClose, selectedSlot, onSave, existingAppoi
           id: u.id,
           name: u.full_name?.trim() || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
           email: u.email,
+          role: u.clinical_roles?.[0] || 'Staff',
         });
       }
       setProfileUsers(users);

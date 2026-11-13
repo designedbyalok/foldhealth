@@ -153,15 +153,16 @@ export function SelectAssigneeModal({
                   return (
                     <div key={u.id} className={`${styles.row} ${styles.rowDisabled}`} aria-disabled="true">
                       <span className={styles.radio} />
-                      <Avatar variant="staff" size="M" initials={u.initials} />
+                      <Avatar variant="staff" size="M" initials={u.initials} userName={u.name} userId={u.id} />
                       <span className={styles.info}>
-                        <span className={`${styles.name} ${styles.muted}`}>{u.name}</span>
-                        {roleOf(u) && <span className={`${styles.role} ${styles.muted}`}>{roleOf(u)}</span>}
-                        <span className={styles.note}>{out.coveredBy?.length ? `Covered by: ${out.coveredBy.join(', ')}` : 'No covering provider'}</span>
+                        <span className={styles.nameRow}>
+                          <span className={`${styles.name} ${styles.muted}`}>{u.name}</span>
+                          <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="left">
+                            <Badge tone="magenta" size="sm" label="Out of Office" />
+                          </Tooltip>
+                        </span>
+                        <span className={`${styles.role} ${styles.muted}`}>{roleOf(u) || 'Staff'}</span>
                       </span>
-                      <Tooltip label={`Out of office ${mdY(out.startAt)} - ${mdY(out.endAt)}`} placement="top" align="right">
-                        <Badge tone="magenta" size="sm" label="Out of Office" />
-                      </Tooltip>
                     </div>
                   );
                 })}

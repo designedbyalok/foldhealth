@@ -366,7 +366,7 @@ export function AddTaskDrawerBody({
             // Patient Task runs on the member and stays locked to them. The
             // Tasks list's own Add Task has no kind and is always open.
             disabled={showScheduleFields && !isInternalTask}
-            renderOption={(opt, { note, muted } = {}) => {
+            renderOption={(opt, { note, away, badge } = {}) => {
               const label = typeof opt === 'string' ? opt : opt.label;
               const val = typeof opt === 'string' ? opt : opt.value;
               const initials = (val || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -377,12 +377,12 @@ export function AddTaskDrawerBody({
               const isMember = (memberOptions || []).some(m => (typeof m === 'string' ? m : m.value) === val);
               return (
                 <>
-                  <Avatar variant={isMember ? 'patient' : 'assignee'} initials={initials} />
+                  <Avatar variant={isMember ? 'patient' : 'assignee'} size="M" initials={initials} userName={away && !isMember ? val : undefined} />
                   {/* As booking's provider picker: name, role (Member for a
                       patient), then any covering line. */}
                   <span className={styles.dropItemText}>
-                    <span className={muted ? `${styles.dropItemName} ${styles.dropItemMuted}` : styles.dropItemName}>{label}</span>
-                    <span className={muted ? `${styles.dropItemRole} ${styles.dropItemMuted}` : styles.dropItemRole}>{isMember ? 'Member' : roleOf(val)}</span>
+                    <span className={styles.dropItemNameRow}><span className={styles.dropItemName}>{label}</span>{badge}</span>
+                    <span className={styles.dropItemRole}>{isMember ? 'Member' : roleOf(val)}</span>
                     {note && <span className={styles.dropItemNote}>{note}</span>}
                   </span>
                 </>

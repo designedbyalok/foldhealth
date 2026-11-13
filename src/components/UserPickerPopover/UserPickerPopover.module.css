@@ -38,5 +38,11 @@
 .nameText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* titleCaseSections: the list's section headers keep their case. */
 .titleSections [role="presentation"] { text-transform: none; letter-spacing: normal; }
-/* 4px between the avatar and the name, in the user rows as in Unassign. */
-.list [role="option"] { gap: var(--space-1); }
+/* Rows as in Figma 16978:128278: 8px around and between the avatar and the
+   text, 4px between rows, 2px between the lines. */
+.list, .list > [role="listbox"] { gap: var(--space-1); }
+.row, .list [role="option"] { gap: var(--space-2); padding: var(--space-2); line-height: var(--leading-tight); }
+.desc { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); margin-top: calc(var(--space-1) / 2); }
+[role="option"]:not([aria-disabled="true"]) .desc { color: var(--neutral-200); }
+/* `note`: a grey line under the role (e.g. "Covering for …"). */
+[role="option"]:not([aria-disabled="true"]) .desc .note { color: var(--neutral-300); }

@@ -187,7 +187,6 @@ export function AwvWorklistTable() {
         <AwvWorklistRow
           key={m.id}
           member={m}
-          coveringFor={covering.length ? coveringOn([m.assignee], covering) : null}
           columns={ctx.orderedColumns}
           hiddenSet={ctx.hiddenSet}
           selected={selectedIds.includes(m.id)}

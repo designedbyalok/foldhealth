@@ -4,6 +4,8 @@
  * `appointments` and saves it (reassignment_jobs).
  */
 import { findConflict } from './reassignUtils';
+import { dueEnd } from './openWork';
+import { sameName } from './oooUtils';
 
 // The bits of an appointment the summary shows, kept on the job so it
 // still reads right after the appointment has moved or been cancelled.
@@ -149,4 +151,40 @@ export function coveredTasks(jobs, now = new Date()) {
       }
     }));
   return out;
+}
+
+/**
+ * What goes back to the user when their Out of Office record is deleted or
+ * shortened: the tasks and care programs its reassignment jobs moved, while
+ * they're still with whoever covered them (anything since reassigned by hand,
+ * or a task completed, stays put).
+ *   - Deleted (no `ranges`): every such task and care program.
+ *   - Shortened (`ranges` [{ from, to }] in ms, the dates taken off): tasks
+ *     due on those dates. Care programs have no dates, and don't return when
+ *     the record ends either, so they stay with the covering provider.
+ * Returns { taskIds, programs: [{ id, to }] }; programs are checked against
+ * their current assignee by the caller.
+ */
+export function workToReturn(jobs, { recordId, tasks = [], ranges = null }) {
+  const DAY = 24 * 60 * 60 * 1000;
+  const taskById = new Map((tasks || []).map(t => [String(t.id), t]));
+  const taskIds = new Set();
+  const programs = new Map();
+  (jobs || [])
+    .filter(j => j.type === 'ooo' && recordId && j.oooRecordId === recordId)
+    .forEach(j => (j.results || []).forEach((r) => {
+      if (r.outcome !== 'reassigned') return;
+      if (r.kind === 'task') {
+        const t = taskById.get(String(r.taskId));
+        if (!t || t.status === 'completed' || !sameName(t.assigned_to, r.to)) return;
+        if (ranges) {
+          const end = dueEnd(t.due_date);
+          if (Number.isNaN(end) || !ranges.some(x => end >= x.from && end - DAY < x.to)) return;
+        }
+        taskIds.add(t.id);
+      } else if (r.kind === 'program' && !ranges && r.programId != null) {
+        programs.set(String(r.programId), { id: r.programId, to: r.to });
+      }
+    }));
+  return { taskIds: [...taskIds], programs: [...programs.values()] };
 }

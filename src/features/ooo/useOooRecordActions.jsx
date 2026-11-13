@@ -19,6 +19,7 @@ import { samePerson } from './oooUtils';
 export function useOooRecordActions({ user, users } = {}) {
   const deleteOooRecord = useAppStore(s => s.deleteOooRecord);
   const restoreReassigned = useAppStore(s => s.restoreReassignedAppointments);
+  const restoreWork = useAppStore(s => s.restoreReassignedWork);
   const [form, setForm] = useState(null); // { record?, user? }
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -72,10 +73,12 @@ export function useOooRecordActions({ user, users } = {}) {
             try {
               const ok = await deleteOooRecord(toDelete.id);
               // As the dialog says: appointments reassigned away for these
-              // dates go back to the provider (upcoming ones only).
+              // dates go back to the provider (upcoming ones only), and so do
+              // the tasks and care programs this record moved.
               if (ok) {
                 await restoreReassigned({ id: toDelete.userId, name: toDelete.userName },
                   [{ from: new Date(toDelete.startAt).getTime(), to: new Date(toDelete.endAt).getTime() }]);
+                await restoreWork({ id: toDelete.userId, name: toDelete.userName }, { recordId: toDelete.id });
                 toast.success('Out of Office Record Deleted Successfully');
               }
               setToDelete(null);

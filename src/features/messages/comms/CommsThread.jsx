@@ -794,16 +794,19 @@ function ThreadItem({ message: m, prev, conversation, attributed = false, canLog
   }
 
   const attachment = m.meta?.attachment;
+  // Sent for a staff member who's out of office (meta.ooo_auto_reply): the
+  // magenta auto-reply card, with its time and delivery status.
+  const autoReply = !!m.meta?.ooo_auto_reply;
   return (
     <ChatBubble
-      side={m.internal ? 'internal' : own ? 'right' : 'left'}
+      side={autoReply ? 'autoReply' : m.internal ? 'internal' : own ? 'right' : 'left'}
       name={label}
       initials={initialsOf(shownName)}
       avatarIcon={unassigned ? 'solar:user-linear' : undefined}
       text={m.body}
       attachment={attachment}
       // On a shared number each SMS keeps its avatar and "Sender → Member" line.
-      compact={sameSender && !m.internal && !(attributed && isSmsText(m))}
+      compact={sameSender && !m.internal && !autoReply && !(attributed && isSmsText(m))}
       time={timeOnly(m.created_at)}
       status={own && !m.internal ? <MessageStatus status={statusOf(m)} onResend={() => retrySend(m)} /> : null}
       menuItems={menuItems}
