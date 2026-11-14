@@ -12,7 +12,6 @@ import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { IntroCard } from '../../../components/IntroCard/IntroCard';
 import { useAppStore } from '../../../store/useAppStore';
 import { protocolCounts, protocolStatus } from './lib/protocolSchema';
-import { isFoldProtocol } from './lib/foldProtocols';
 import { ProtocolUploadDrawer } from './ProtocolUploadDrawer';
 import { ProtocolReviewDrawer } from './ProtocolReviewDrawer';
 import { PlanCounts } from './ProtocolScope';
@@ -133,7 +132,7 @@ export function ClinicalProtocolsPanel({ tabs, activeTab, onTabChange }) {
         <td className={`${styles.td} ${styles.tdName}`}>
           <span className={styles.nameCell}>
             <button type="button" className={styles.nameLink} onClick={() => setReviewId(p.id)}>{p.title}</button>
-            <span className={styles.nameSub}>{[p.organization, p.version && `v${p.version}`, !isFoldProtocol(p) && p.sourceName].filter(Boolean).join(' · ')}</span>
+            <span className={styles.nameSub}>{[p.organization, p.version && `v${p.version}`, p.sourceName].filter(Boolean).join(' · ')}</span>
           </span>
         </td>
         <td className={styles.td}>{p.conditions.length ? <BadgeRow items={p.conditions} maxLines={2} /> : '-'}</td>

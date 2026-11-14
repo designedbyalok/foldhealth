@@ -25,7 +25,7 @@ export const PROTOCOL_STATUSES = [
 const STATUS_BY_VALUE = Object.fromEntries(PROTOCOL_STATUSES.map(s => [s.value, s]));
 export const protocolStatus = (value) => STATUS_BY_VALUE[value] || STATUS_BY_VALUE.draft;
 
-// 'fold': Fold's own protocols (lib/foldProtocols.js), seeded rather than uploaded.
+// 'fold': Fold's former built-in protocols, retired by retire_legacy_clinical_protocols.sql.
 export const SOURCE_KINDS = ['pdf', 'docx', 'json', 'fold'];
 
 export const COMPARATORS = ['<', '<=', '>', '>=', '=', 'between'];
