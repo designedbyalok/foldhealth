@@ -107,7 +107,7 @@ export function CarePlanSummaryPanel({
         <DashboardCard
           icon="custom:ai"
           tone="ai"
-          title="Unity Summary"
+          title="Care Plan Summary"
           actions={state === 'ready' && data && (
             <>
               <ActionButton icon="solar:copy-linear" size="sm" tooltip="Copy summary" onClick={summary.copy} />
