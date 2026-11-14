@@ -32,6 +32,8 @@ export const PANEL_TODAY = {
 // urgency drives the row's left accent + which Panel Pulse bucket it counts
 // toward: overdue · escalated · due-today · rising · followup. Rows are ranked
 // on clinical need, never on billing minutes (review F-09).
+// `deadline` names a regulatory deadline (TCM 2-day contact, 7-day visit);
+// those rows can't be snoozed (review F-24).
 // `fallback*` identity is only used if the patient database has not loaded.
 export const NBA_ITEMS = [
   {
@@ -41,6 +43,7 @@ export const NBA_ITEMS = [
     reason: 'Tara reached {first} 10:20 AM post-discharge (Mercy General 8/21 6:40 AM, CHF). Confused about the furosemide→torsemide switch. RN med rec needed by 5:00 PM.',
     suggestedAction: "Take over: Tara's transcript and the discharge diff are ready",
     isAgent: true, agentName: 'Tara', agentStatus: 'reached 10:20 AM, escalated', rank: 1,
+    deadline: 'TCM 2-day contact',
     fallbackName: 'James Whitfield', fallbackAge: 72, fallbackPayer: 'Aetna MA', fallbackProvider: 'Dr. L. Chen',
   },
   {
