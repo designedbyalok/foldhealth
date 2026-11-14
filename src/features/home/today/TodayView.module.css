@@ -212,6 +212,11 @@
 .row {
   composes: row rowClickable from '../../../components/WorklistShell/WorklistRow.module.css';
 }
+/* Snoozed rows sit at the end of the list, muted, with the end date in Status. */
+.rowSnoozed .patientCell,
+.rowSnoozed .programList,
+.rowSnoozed .nbaStack { opacity: 0.55; }
+.snoozeTag { display: inline-flex; }
 .stickyLeft { composes: stickyLeft from '../../../components/WorklistShell/WorklistRow.module.css'; }
 .stickyRight { composes: stickyRight from '../../../components/WorklistShell/WorklistRow.module.css'; }
 .membersTd {
@@ -248,6 +253,10 @@
 .programList { display: flex; gap: var(--space-1); flex-wrap: wrap; }
 
 .nbaStack {
+  /* Set here, not only on .nbaTd: the composed shared .td can load after this
+     sheet and win with nowrap, which stretches the table and pushes Status
+     off-screen. */
+  white-space: normal;
   display: flex;
   flex-direction: column;
   gap: calc(var(--space-1) + var(--space-1) / 2);

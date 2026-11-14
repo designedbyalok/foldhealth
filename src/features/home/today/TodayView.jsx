@@ -14,6 +14,9 @@ import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { formatDobDisplay, deriveDob } from '../../../lib/patientDob';
 import { toast } from '../../../components/Toast/sonnerToast';
 import { NBA_ITEMS, PANEL_TODAY } from './nbaData';
+import { SnoozeDialog } from './SnoozeDialog';
+import { applySnoozes, formatSnoozeDate, snoozeKey } from './snooze';
+import { todayIso } from '../../../lib/clinicalDates';
 import styles from './TodayView.module.css';
 
 const LANG_MAP = { en: 'English', es: 'Spanish', zh: 'Chinese', yue: 'Cantonese', ko: 'Korean', vi: 'Vietnamese', hi: 'Hindi', pa: 'Punjabi' };
@@ -180,18 +183,27 @@ function MemberCell({ item, onOpen, showToast }) {
   );
 }
 
-const ROW_MENU_ITEMS = [
-  { key: 'snooze', icon: 'solar:alarm-linear', label: 'Snooze' },
-  { key: 'reassign', icon: 'solar:users-group-rounded-linear', label: 'Reassign' },
-];
+const REASSIGN_ITEM = { key: 'reassign', icon: 'solar:users-group-rounded-linear', label: 'Reassign' };
 
-function TodayRow({ item, onSnooze, onOpen, showToast }) {
+// Regulatory deadlines can't be snoozed; a snoozed row offers to end it instead.
+function rowMenuItems(item) {
+  if (item.snooze) return [{ key: 'unsnooze', icon: 'solar:alarm-turn-off-linear', label: 'End Snooze' }, REASSIGN_ITEM];
+  const snooze = { key: 'snooze', icon: 'solar:alarm-linear', label: 'Snooze' };
+  if (item.deadline) Object.assign(snooze, { disabled: true, tooltip: `${item.deadline} is a regulatory deadline and can't be snoozed` });
+  return [snooze, REASSIGN_ITEM];
+}
+
+function TodayRow({ item, onSnooze, onUnsnooze, onOpen, showToast }) {
   const open = () => onOpen(item);
   const [menuOpen, setMenuOpen] = useState(false);
   const moreRef = useRef(null);
-  const onMenuSelect = (key) => { if (key === 'snooze') onSnooze(item); else showTouchModeSoon('Reassign'); };
+  const onMenuSelect = (key) => {
+    if (key === 'snooze') onSnooze(item);
+    else if (key === 'unsnooze') onUnsnooze(item);
+    else showTouchModeSoon('Reassign');
+  };
   return (
-    <tr className={styles.row} onClick={open}>
+    <tr className={[styles.row, item.snooze ? styles.rowSnoozed : ''].filter(Boolean).join(' ')} onClick={open}>
       <MemberCell item={item} onOpen={onOpen} showToast={showToast} />
 
       <td className={styles.programsTd}>
@@ -216,7 +228,15 @@ function TodayRow({ item, onSnooze, onOpen, showToast }) {
       </td>
 
       <td className={styles.statusTd}>
-        <Badge tone={RISK_TONE[item.riskTier] || 'neutral'} size="md" label={item.riskTier} />
+        {item.snooze ? (
+          <Tooltip label={item.snooze.note ? `${item.snooze.reason}: ${item.snooze.note}` : item.snooze.reason} variant="light">
+            <span className={styles.snoozeTag}>
+              <Badge tone="neutral" size="md" label={`Snoozed to ${formatSnoozeDate(item.snooze.until)}`} />
+            </span>
+          </Tooltip>
+        ) : (
+          <Badge tone={RISK_TONE[item.riskTier] || 'neutral'} size="md" label={item.riskTier} />
+        )}
       </td>
 
       <td className={`${styles.actionsTd} ${styles.stickyRight}`} onClick={e => e.stopPropagation()}>
@@ -230,7 +250,7 @@ function TodayRow({ item, onSnooze, onOpen, showToast }) {
             {menuOpen && (
               <MenuPopover
                 anchorRef={moreRef}
-                items={ROW_MENU_ITEMS}
+                items={rowMenuItems(item)}
                 onSelect={onMenuSelect}
                 onClose={() => setMenuOpen(false)}
                 width={176}
@@ -251,14 +271,19 @@ export function TodayView() {
   const navigateToPatient = useAppStore((s) => s.navigateToPatient);
   const showToast = useAppStore((s) => s.showToast);
   const userName = useAppStore((s) => s.currentUserProfile?.name);
+  const snoozes = useAppStore((s) => s.nextActionSnoozes);
+  const fetchSnoozes = useAppStore((s) => s.fetchNextActionSnoozes);
+  const snoozeNextAction = useAppStore((s) => s.snoozeNextAction);
+  const unsnoozeNextAction = useAppStore((s) => s.unsnoozeNextAction);
 
   const [pulse, setPulse] = useState(null);   // active Panel Pulse bucket
   const [lens, setLens] = useState('All');     // program lens
-  const [dismissed, setDismissed] = useState(() => new Set()); // snoozed row ids
+  const [snoozing, setSnoozing] = useState(null); // row in the Snooze dialog
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
 
   useEffect(() => { fetchAllPatients(); }, [fetchAllPatients]);
+  useEffect(() => { fetchSnoozes(); }, [fetchSnoozes]);
 
   const greetName = (userName || '').trim().split(/\s+/)[0] || 'there';
   const dateLabel = useMemo(
@@ -266,10 +291,10 @@ export function TodayView() {
     [],
   );
 
-  // Bind the clinical scenarios to real patients, then apply the snooze set.
+  // Bind the clinical scenarios to real patients; snoozed rows sink to the end.
   const rows = useMemo(
-    () => bindScenarios(NBA_ITEMS, allPatients).filter((r) => !dismissed.has(r.id)),
-    [allPatients, dismissed],
+    () => applySnoozes(bindScenarios(NBA_ITEMS, allPatients), snoozes, todayIso()),
+    [allPatients, snoozes],
   );
 
   const filtered = useMemo(() => rows.filter((it) => {
@@ -293,8 +318,13 @@ export function TodayView() {
     if (item.patientId) navigateToPatient(item.patientId, { careManagementTab: 'Comprehensive Care Plan' });
     else toast('Patient profile is still loading.');
   };
-  const onSnooze = (item) => setDismissed((prev) => new Set(prev).add(item.id));
-  const startRow = rows[0];
+  const confirmSnooze = async ({ reason, note, until }) => {
+    const item = snoozing;
+    setSnoozing(null);
+    const ok = await snoozeNextAction({ itemKey: snoozeKey(item), memberId: item.memberId, reason, note, until });
+    if (ok) toast(`Snoozed ${item.patientName} until ${formatSnoozeDate(until)}.`);
+  };
+  const startRow = rows.find((r) => !r.snooze);
   const startName = startRow ? shortName(startRow.patientName) : null;
   // Show skeletons only on the very first load, before the patient list arrives.
   const showSkeleton = patientsLoading && allPatients.length === 0;
@@ -367,10 +397,18 @@ export function TodayView() {
             </div>
           )}
           renderRow={(it) => (
-            <TodayRow key={it.id} item={it} onSnooze={onSnooze} onOpen={openPatient} showToast={showToast} />
+            <TodayRow
+              key={it.id}
+              item={it}
+              onSnooze={setSnoozing}
+              onUnsnooze={(row) => unsnoozeNextAction(snoozeKey(row))}
+              onOpen={openPatient}
+              showToast={showToast}
+            />
           )}
         />
       </div>
+      {snoozing && <SnoozeDialog item={snoozing} onConfirm={confirmSnooze} onCancel={() => setSnoozing(null)} />}
     </div>
   );
 }

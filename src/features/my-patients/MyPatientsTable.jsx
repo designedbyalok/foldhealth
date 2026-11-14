@@ -109,10 +109,9 @@ export function MyPatientsTable() {
     const cur = filters.band || [];
     setFilter('band', cur.includes(label) ? cur.filter(x => x !== label) : [...cur, label]);
   };
-  // Into the row's first program (its Overview), or the Care Programs list.
-  const openPrograms = row => navigateToPatient(row.memberId, row.programs?.[0]
-    ? { programCode: row.programs[0], openOnly: true }
-    : { profileTab: 'Care Programs' });
+  // My Patients spans programs, so land on the Care Programs list rather than
+  // picking one; program worklists are the ones that open a program's Overview.
+  const openPrograms = row => navigateToPatient(row.memberId, { profileTab: 'Care Programs' });
 
   const header = (
     <SectionTitleBar
