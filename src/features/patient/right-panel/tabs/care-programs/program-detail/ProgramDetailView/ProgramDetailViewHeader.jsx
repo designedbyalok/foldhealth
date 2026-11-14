@@ -6,7 +6,6 @@ import { MenuPopover } from '../../../../../../../components/MenuPopover/MenuPop
 import { CollapsibleContent } from '../../../../../../../components/Collapsible/Collapsible';
 import { CloseButton } from '../../../../../../../components/CloseButton/CloseButton';
 import { BannerExpandIcon } from '../../../../../../../components/Icon/BannerExpandIcon';
-import { ProgressRing } from '../../../../../../hcc/DiagPanel/ReviewProgressPopover';
 import { ProgramStatusRing } from '../shared/ProgramStatusRing/ProgramStatusRing.jsx';
 import { ProgramBadges } from '../shared/ProgramBadges/ProgramBadges.jsx';
 import { statusColorFor, isProgramClosed } from '../../../../../data/programStatus';
@@ -82,13 +81,6 @@ export function ProgramDetailViewHeader({
           </button>
         </div>
         <div className={styles.headerRight}>
-          {isCcm && (
-            <>
-              <span className={styles.secondaryBadge}><ProgressRing progress={0.5} size={14} stroke={2} />BHI</span>
-              <span className={styles.secondaryBadge}><ProgressRing progress={0.75} size={14} stroke={2} />APCM</span>
-              <span className={styles.headerDivider} />
-            </>
-          )}
           {otherPrograms.length > 0 && (
             <>
               <ProgramBadges programs={otherPrograms} progressFor={progressFor} onSelect={onSwitchProgram} />
