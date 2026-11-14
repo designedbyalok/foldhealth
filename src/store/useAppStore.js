@@ -212,6 +212,14 @@ const cisAppointmentFromRow = (r) => ({
   bookedByName: r.booked_by_name || '',
   createdAt: r.created_at,
 });
+
+const mapSnoozeRow = r => ({
+  itemKey: r.item_key,
+  memberId: r.member_id || null,
+  reason: r.reason,
+  note: r.note || null,
+  until: r.snoozed_until,
+});
 // Same rows as the migration's demo seed, used until it runs.
 const CIS_APPOINTMENTS_MOCK = [
   { id: 'cisappt-19304-01', memberId: '19304', date: '2026-10-20', time: '10:30 AM', provider: 'Dr. Maria Lopez, Sunrise Pediatrics', doses: ['ipv:2', 'hepb:3'], note: 'Mom confirmed by phone.', status: 'Scheduled', reminderId: null, bookedByName: 'Care Coordinator', createdAt: '2026-10-07T15:00:00Z' },
@@ -565,6 +573,45 @@ export const useAppStore = create((set, get) => ({
       console.warn('[store] delete reminder failed:', error.message);
       set(st => ({ patientReminders: { ...st.patientReminders, [key]: before } }));
       get().showToast?.('Could not delete the reminder. Please try again.');
+    }
+  },
+
+  // The signed-in user's snoozes on the Home Today list (next_action_snoozes),
+  // keyed by item key. `null` until fetched. Each one has a reason and an
+  // until-date (review F-24); expired ones are simply ignored by the list.
+  nextActionSnoozes: null,
+  fetchNextActionSnoozes: async () => {
+    if (get().nextActionSnoozes) return;
+    const { data, error } = await supabase
+      .from('next_action_snoozes')
+      .select('item_key, member_id, reason, note, snoozed_until');
+    if (error) console.warn('[store] next_action_snoozes fetch failed (run supabase/next_action_snoozes_migration.sql):', error.message);
+    set({ nextActionSnoozes: Object.fromEntries((data || []).map(r => [r.item_key, mapSnoozeRow(r)])) });
+  },
+  // Optimistic, like reminders: the row moves at once and goes back if the save fails.
+  snoozeNextAction: async ({ itemKey, memberId, reason, note, until }) => {
+    const before = get().nextActionSnoozes || {};
+    set({ nextActionSnoozes: { ...before, [itemKey]: { itemKey, memberId: memberId || null, reason, note: note || null, until } } });
+    const { error } = await supabase
+      .from('next_action_snoozes')
+      .upsert({ item_key: itemKey, member_id: memberId || null, reason, note: note || null, snoozed_until: until }, { onConflict: 'user_id,item_key' });
+    if (error) {
+      console.warn('[store] snooze failed:', error.message);
+      set({ nextActionSnoozes: before });
+      get().showToast?.('Could not snooze. Please try again.');
+      return false;
+    }
+    return true;
+  },
+  unsnoozeNextAction: async (itemKey) => {
+    const before = get().nextActionSnoozes || {};
+    const { [itemKey]: _gone, ...rest } = before;
+    set({ nextActionSnoozes: rest });
+    const { error } = await supabase.from('next_action_snoozes').delete().eq('item_key', itemKey);
+    if (error) {
+      console.warn('[store] unsnooze failed:', error.message);
+      set({ nextActionSnoozes: before });
+      get().showToast?.('Could not end the snooze. Please try again.');
     }
   },
 
