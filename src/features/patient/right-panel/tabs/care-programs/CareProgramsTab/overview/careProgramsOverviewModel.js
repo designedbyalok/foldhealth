@@ -6,12 +6,6 @@ import { isExcludedStatus } from '../../care-plan/lib/gbiStatus';
 const normName = n => (n === 'Care Plan Details' ? 'Care Plan' : n);
 const ITEM_KIND = { goal: 'Goal', intervention: 'Intervention', barrier: 'Barrier' };
 const ITEM_SUB = { goal: 'Off target', intervention: 'Overdue', barrier: 'Nothing addressing it' };
-const PLAN_KINDS = ['intervention', 'goal', 'barrier'];
-const PLAN_LABEL = {
-  goal: ['Off-Target Goal', 'Off-Target Goals'],
-  intervention: ['Overdue Intervention', 'Overdue Interventions'],
-  barrier: ['Unaddressed Barrier', 'Unaddressed Barriers'],
-};
 
 /**
  * One enrollment, ready for the overview:
@@ -31,17 +25,14 @@ export function programProgress({ program, steps, ctx }) {
  * required one in each program) and the care plan items that need attention,
  * in one ordered list. A step that reads the same in several programs (an
  * Outreach that's Required in three) is one row tagged with each program.
+ * Each care plan item is its own row (the goal off target, the barrier with
+ * nothing addressing it), and they stand in for their program's Care Plan
+ * step, which would only say the same thing in general.
  * Order: urgent first (urgent steps, overdue interventions), then goals off
- * target and barriers with nothing addressing them, then the rest; a care
- * plan item then moves to just after its program's Care Plan step, when that
- * step is listed, so related work stays together.
+ * target and barriers with nothing addressing them, then the rest.
  *
- * A program with several care plan items gets one 'plan' row for them (its
- * title the counts, its detail their names) instead of a row each.
- *
- * Row: { key, kind: 'step'|'goal'|'intervention'|'barrier'|'plan', title, label?, programs: [program],
- *        refs: [{ program, step }] | ref: { program, item? }, counts? (plan), detail: { text, urgent },
- *        required, with?: 'Care Plan' }
+ * Row: { key, kind: 'step'|'goal'|'intervention'|'barrier', title, label?, programs: [program],
+ *        refs: [{ program, step }] | ref: { program, item }, detail: { text, urgent }, required }
  */
 export function nextBestActions(entries) {
   const steps = new Map();
@@ -57,58 +48,27 @@ export function nextBestActions(entries) {
       steps.set(k, row);
     }
   });
-  // A program's care plan items: one row each, or one row for the plan when
-  // there are several, so they don't crowd out the program work.
-  const items = entries.flatMap((e, order) => {
-    const list = (e.attention || []).filter(a => a.item);
-    if (list.length < 2) {
-      return list.map(a => ({
-        key: `${a.kind}:${e.program.id}:${a.item.id}`,
-        kind: a.kind,
-        title: a.item.title,
-        sub: ITEM_SUB[a.kind],
-        programs: [e.program],
-        ref: { program: e.program, item: a.item },
-        detail: { text: a.text, urgent: a.kind === 'intervention' },
-        required: false,
-        order,
-      }));
-    }
-    const counts = { goal: 0, intervention: 0, barrier: 0 };
-    for (const a of list) counts[a.kind] += 1;
-    return [{
-      key: `plan:${e.program.id}`,
-      kind: 'plan',
-      title: PLAN_KINDS.filter(k => counts[k]).map(k => `${counts[k]} ${PLAN_LABEL[k][counts[k] === 1 ? 0 : 1]}`).join(', '),
-      programs: [e.program],
-      ref: { program: e.program },
-      counts,
-      detail: { text: list.map(a => a.item.title).join(', '), urgent: counts.intervention > 0 },
-      required: false,
-      order,
-    }];
-  });
-  const bucket = r => (r.detail.urgent ? 0 : r.kind !== 'step' ? 1 : 2);
-  const ranked = [...steps.values(), ...items].sort((a, b) => bucket(a) - bucket(b) || a.order - b.order);
-
-  // Care plan items follow their program's Care Plan step.
-  const out = [];
-  const placed = new Set();
-  for (const r of ranked) {
-    if (placed.has(r)) continue;
-    if (r.kind !== 'step' && ranked.some(x => x.kind === 'step' && x.title === 'Care Plan' && x.programs.includes(r.programs[0]))) continue;
-    out.push(r);
-    placed.add(r);
-    if (r.kind === 'step' && r.title === 'Care Plan') {
-      for (const it of ranked) {
-        if (it.kind !== 'step' && !placed.has(it) && r.programs.includes(it.programs[0])) {
-          out.push({ ...it, with: 'Care Plan' });
-          placed.add(it);
-        }
-      }
-    }
+  const items = entries.flatMap((e, order) => (e.attention || []).filter(a => a.item).map(a => ({
+    key: `${a.kind}:${e.program.id}:${a.item.id}`,
+    kind: a.kind,
+    title: a.item.title,
+    sub: ITEM_SUB[a.kind],
+    programs: [e.program],
+    ref: { program: e.program, item: a.item },
+    detail: { text: a.text, urgent: a.kind === 'intervention' },
+    required: false,
+    order,
+  })));
+  // A program whose care plan items are listed drops its Care Plan step.
+  const withItems = new Set(items.map(it => it.programs[0].id));
+  const stepRows = [];
+  for (const r of steps.values()) {
+    if (r.title !== 'Care Plan') { stepRows.push(r); continue; }
+    const keep = r.refs.filter(ref => !withItems.has(ref.program.id));
+    if (keep.length) stepRows.push({ ...r, refs: keep, programs: keep.map(ref => ref.program) });
   }
-  return out;
+  const bucket = r => (r.detail.urgent ? 0 : r.kind !== 'step' ? 1 : 2);
+  return [...stepRows, ...items].sort((a, b) => bucket(a) - bucket(b) || a.order - b.order);
 }
 
 /**
@@ -127,7 +87,7 @@ export function whyPrioritized(actions, { acuity, totals, progress = [], firstNa
     takeaways.push({ tone: 'danger', text: `${a.title} (${a.programs.map(p => p.code).join(', ')}${late})` });
   }
   if (urgent.length > 2) takeaways.push({ tone: 'danger', text: `${urgent.length - 2} more urgent` });
-  const offTarget = actions.reduce((n, a) => n + (a.kind === 'goal' ? 1 : a.counts?.goal || 0), 0);
+  const offTarget = actions.filter(a => a.kind === 'goal').length;
   if (offTarget) takeaways.push({ tone: 'warning', text: `${offTarget} ${offTarget === 1 ? 'goal' : 'goals'} off target` });
   if (/high/i.test(acuity || '')) takeaways.push({ tone: 'warning', text: `${acuity} acuity` });
 

@@ -30,33 +30,30 @@ const dmEntry = {
 };
 
 describe('nextBestActions', () => {
-  it('puts urgent first, merges a step that reads the same across programs, and folds a program\'s plan items into one row', () => {
+  it('puts urgent first, merges a step that reads the same across programs, and lists each care plan item instead of the Care Plan step', () => {
     const rows = nextBestActions([ccmEntry, dmEntry]);
-    // CCM's "Care Plan Details" is its Care Plan step, so its plan items follow it.
-    expect(rows.map(r => [r.kind, r.title, r.programs.map(p => p.code).join('+'), r.with || ''])).toEqual([
-      ['step', 'Program Related Task', 'CCM', ''],
-      ['step', 'Outreach', 'CCM+DM', ''],
-      ['step', 'Care Plan', 'CCM', ''],
-      ['plan', '1 Off-Target Goal, 1 Unaddressed Barrier', 'CCM', 'Care Plan'],
+    // CCM's "Care Plan Details" is its Care Plan step; its goal and barrier stand in for it.
+    expect(rows.map(r => [r.kind, r.title, r.programs.map(p => p.code).join('+')])).toEqual([
+      ['step', 'Program Related Task', 'CCM'],
+      ['goal', 'Improve A1C control', 'CCM'],
+      ['barrier', 'Cost of strips', 'CCM'],
+      ['step', 'Outreach', 'CCM+DM'],
     ]);
     expect(rows[0].detail).toMatchObject({ label: 'Program Task', text: 'Overdue, due 01/02/2020', urgent: true });
-    expect(rows[1].required).toBe(true);
-    expect(rows[3].detail.text).toBe('Improve A1C control, Cost of strips');
+    expect(rows[3].required).toBe(true);
+    expect(rows[1].detail.text).toBe('Latest reading 9 %.');
   });
 
-  it('keeps a lone plan item as its own row', () => {
-    const rows = nextBestActions([{ ...ccmEntry, steps: [], attention: ccmEntry.attention.slice(0, 1) }]);
-    expect(rows.map(r => [r.kind, r.title])).toEqual([['goal', 'Improve A1C control']]);
+  it('keeps the Care Plan step when the plan has nothing needing attention', () => {
+    const rows = nextBestActions([{ ...ccmEntry, attention: [] }]);
+    expect(rows.map(r => r.title)).toContain('Care Plan');
   });
 
-  it('places care plan items right after their program\'s Care Plan step', () => {
-    const entry = { ...ccmEntry, steps: [{ id: 's2', name: 'Care Plan', status: 'in_progress' }],
-      carePlan: { plan: { id: 'cp1' }, goals: [goal], interventions: [], barriers: [barrier], measurements: [{ goalId: 'g1', value: '9', favorable: false }] } };
-    const rows = nextBestActions([entry]);
-    expect(rows.map(r => [r.title, r.with || ''])).toEqual([
-      ['Care Plan', ''],
-      ['1 Off-Target Goal, 1 Unaddressed Barrier', 'Care Plan'],
-    ]);
+  it('keeps the Care Plan step for a program with no listed items when another program shares it', () => {
+    const dmWithPlan = { ...dmEntry, steps: [{ id: 't2', name: 'Care Plan', status: 'in_progress' }] };
+    const ccmPlanOnly = { ...ccmEntry, steps: [{ id: 's2', name: 'Care Plan', status: 'in_progress' }] };
+    const plan = nextBestActions([ccmPlanOnly, dmWithPlan]).find(r => r.title === 'Care Plan');
+    expect(plan?.programs.map(p => p.code)).toEqual(['DM']);
   });
 });
 

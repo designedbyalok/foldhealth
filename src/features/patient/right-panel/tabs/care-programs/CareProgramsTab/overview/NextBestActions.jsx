@@ -15,7 +15,6 @@ const KIND = {
   goal: { icon: 'solar:target-linear', label: 'Goal' },
   intervention: { icon: 'solar:checklist-minimalistic-linear', label: 'Intervention' },
   barrier: { icon: 'solar:flag-linear', label: 'Barrier' },
-  plan: { icon: 'solar:clipboard-heart-linear', label: 'Care Plan' },
 };
 const LIMIT = 5;
 
@@ -33,7 +32,7 @@ function ActionRow({ row, n, current, onRun }) {
       <div className={styles.nbaBody}>
         <span className={styles.nbaKind}>
           <Icon name={kind.icon} size={12} color="currentColor" />
-          {row.label || kind.label}{row.with ? ` · With ${row.with}` : ''}
+          {row.label || kind.label}
         </span>
         <span className={styles.nbaTitleLine}>
           <span className={styles.nbaTitle}>{row.title}</span>
@@ -52,7 +51,7 @@ function ActionRow({ row, n, current, onRun }) {
       </div>
       <div className={styles.nbaActions}>
         <Button size="sm" variant={current ? 'solid' : 'outline'} onClick={() => onRun(row)}>
-          {row.kind === 'step' ? 'Open Step' : row.kind === 'plan' ? 'Open Care Plan' : `Open ${ITEM_LABEL[row.kind]}`}
+          {isStep ? 'Open Step' : `Open ${ITEM_LABEL[row.kind]}`}
         </Button>
       </div>
     </li>

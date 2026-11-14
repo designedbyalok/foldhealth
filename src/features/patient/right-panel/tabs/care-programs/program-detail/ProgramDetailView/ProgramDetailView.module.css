@@ -805,21 +805,6 @@
   flex-shrink: 0;
 }
 
-/* Secondary program badges in the header (BHI, APCM under CCM). Compact
-   pill w/ progress ring: same visual language as the main program pill. */
-.secondaryBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border: 0.5px solid var(--primary-200);
-  border-radius: 999px;
-  background: var(--primary-50);
-  font-size: var(--font-sm);
-  font-weight: 500;
-  color: var(--primary-400);
-}
-
 /* Neutral fallback for steps whose content view isn't built yet. */
 .stepPlaceholder {
   flex: 1;
