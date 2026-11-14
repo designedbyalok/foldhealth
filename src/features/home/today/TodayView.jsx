@@ -203,7 +203,13 @@ function TodayRow({ item, onSnooze, onUnsnooze, onOpen, showToast }) {
     else showTouchModeSoon('Reassign');
   };
   return (
-    <tr className={[styles.row, item.snooze ? styles.rowSnoozed : ''].filter(Boolean).join(' ')} onClick={open}>
+    <tr
+      className={[styles.row, item.snooze ? styles.rowSnoozed : ''].filter(Boolean).join(' ')}
+      tabIndex={0}
+      aria-label={`Open ${item.patientName}`}
+      onClick={open}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(); } }}
+    >
       <MemberCell item={item} onOpen={onOpen} showToast={showToast} />
 
       <td className={styles.programsTd}>
