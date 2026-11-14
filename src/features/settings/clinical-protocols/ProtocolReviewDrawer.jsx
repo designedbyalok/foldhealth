@@ -16,7 +16,6 @@ import { UnityIcon } from '../../../components/UnityIcon/UnityIcon';
 import { Tabs } from '../../../components/Tabs/Tabs';
 import { useAppStore } from '../../../store/useAppStore';
 import { protocolCounts, protocolStatus } from './lib/protocolSchema';
-import { isFoldProtocol } from './lib/foldProtocols';
 import { PROTOCOL_SECTIONS, itemComplete } from './lib/protocolSections';
 import { ProtocolMigrationDrawer } from './ProtocolMigrationDrawer';
 import { CategoryPanel, DocumentPanel, ScopeOverview } from './ProtocolScope';
@@ -244,12 +243,10 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
   if (!protocol || !draft) return null;
   if (migrating) return <ProtocolMigrationDrawer protocolId={protocol.id} onClose={onClose} />;
   const status = protocolStatus(protocol.status);
-  // Fold's own protocols are maintained by Fold: read-only here.
-  const isFold = isFoldProtocol(protocol);
   // Only admins edit, approve, retire or delete (RLS enforces the same).
-  const canManage = !isSample && !isFold && isAdmin;
+  const canManage = !isSample && isAdmin;
   const editable = canManage && EDITABLE.has(protocol.status);
-  const canDraftTemplate = !isSample && !isFold && protocol.status === 'active';
+  const canDraftTemplate = !isSample && protocol.status === 'active';
   const counts = protocolCounts(draft.protocol);
   const supersede = protocol.status === 'draft' ? protocolToSupersede(protocol.id) : null;
   const warnings = protocol.parseMeta?.warnings || [];
@@ -257,8 +254,8 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
   const setItems = (key, items) => setDraft(cur => ({ ...cur, protocol: { ...cur.protocol, [key]: items } }));
   const pendingNew = PROTOCOL_SECTIONS.some(s => (draft.protocol[s.key] || []).some(i => i.isNew));
   const canSubmit = !busy && !building && draft.title?.trim() && !pendingNew;
-  // The scope is a client protocol's plan; Fold's and the samples have none.
-  const showScope = !isSample && !isFold;
+  // The scope is an uploaded protocol's plan; the samples have none.
+  const showScope = !isSample;
   const plan = draft.protocol.plan || null;
   const setPlan = next => setDraft(cur => ({ ...cur, protocol: { ...cur.protocol, plan: next } }));
   // Approval creates what the output shows, so it waits for a refresh after edits.
@@ -337,8 +334,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
   const alertsEl = (
     <>
       {isSample && <Banner variant="outline" tone="info">Sample protocol. Run supabase/clinical_protocols_migration.sql to upload and review your own.</Banner>}
-      {isFold && <Banner variant="outline" tone="info">Fold protocol, built from the published guidelines listed below and kept current by Fold. It can't be edited; to follow different rules, upload your organization's protocol.</Banner>}
-      {!isSample && !isFold && adminKnown && !isAdmin && <Banner variant="outline" tone="info">Only an admin can edit, approve, retire or delete protocols.</Banner>}
+      {!isSample && adminKnown && !isAdmin && <Banner variant="outline" tone="info">Only an admin can edit, approve, retire or delete protocols.</Banner>}
       {protocol.status === 'failed' && <Banner variant="outline" tone="danger">{protocol.parseError || 'This file could not be parsed.'}</Banner>}
       {protocol.status === 'processing' && <Banner variant="outline" tone="info">Parsing this document. Its items appear here when it finishes.</Banner>}
       {protocol.status === 'draft' && (
@@ -351,7 +347,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
             : 'Check every item against its source passage before approving. Nothing in this protocol is used until it is approved.'}
         </Banner>
       )}
-      {protocol.status === 'active' && protocol.approvedBy && !isFold && (
+      {protocol.status === 'active' && protocol.approvedBy && (
         <Banner variant="outline" tone="success">{`Approved by ${protocol.approvedBy} on ${fmtDate(protocol.approvedAt)}.`}</Banner>
       )}
       {protocol.status === 'superseded' && <Banner variant="outline" tone="info">A newer version replaced this protocol. It is kept for reference.</Banner>}

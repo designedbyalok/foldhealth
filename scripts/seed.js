@@ -33,8 +33,6 @@ import { MY_PATIENTS } from '../src/features/my-patients/data/mock.js';
 import { LIVE_CALL_SCRIPTS } from '../src/features/live-call/data/scripts.js';
 import { PROGRAM_ELIGIBILITY } from '../src/features/patient/data/programEligibilitySeed.js';
 import { PROGRAM_EVENT_SUGGESTIONS } from '../src/features/patient/data/programEventSuggestionsSeed.js';
-import { SAMPLE_PROTOCOLS, HARBOR_HYPERTENSION_TEXT_FILE } from '../src/features/settings/clinical-protocols/data/sampleProtocols.js';
-import { protocolToRow } from '../src/features/settings/clinical-protocols/lib/protocolSchema.js';
 import { BUILT_IN_ROLES } from '../src/lib/accessControl.js';
 import { snpSnapshotFormRow } from '../src/features/forms/templates/snpSnapshotForm.js';
 import { POP_GROUPS } from '../src/features/population-groups/PopulationGroupsView.utils.js';
@@ -667,17 +665,6 @@ function practiceLocationToRow(l) {
   };
 }
 
-const clinicalProtocolSeedRow = sourceText => p => ({
-  id: p.id,
-  ...protocolToRow(p),
-  source_kind: p.sourceKind,
-  source_name: p.sourceName,
-  source_text: sourceText,
-  uploaded_by: p.uploadedBy,
-  approved_by: p.approvedBy,
-  approved_at: p.approvedAt,
-});
-
 function liveCallScriptToRow(s) {
   return {
     member_id: s.memberId,
@@ -1133,14 +1120,6 @@ async function main() {
     .from('patient_care_programs')
     .upsert(cmpEnrollments, { onConflict: 'id', ignoreDuplicates: true });
   if (cmpEnrollErr) { console.error('  ✗', cmpEnrollErr.message, '(run the patient_care_programs sub_program and lifecycle migrations first)'); } else { console.log(`  ✓ ${cmpEnrollments.length} CMP enrollments`); }
-
-  // Sample clinical protocol (Settings > Clinical Protocols), with its document text.
-  console.log('Seeding clinical_protocols...');
-  const protocolText = readFileSync(new URL(`../src/features/settings/clinical-protocols/data/${HARBOR_HYPERTENSION_TEXT_FILE}`, import.meta.url), 'utf8');
-  const { error: protoErr } = await supabase
-    .from('clinical_protocols')
-    .upsert(SAMPLE_PROTOCOLS.map(clinicalProtocolSeedRow(protocolText)), { onConflict: 'id' });
-  if (protoErr) { console.error('  ✗', protoErr.message, '(run supabase/clinical_protocols_migration.sql first)'); } else { console.log(`  ✓ ${SAMPLE_PROTOCOLS.length} protocol`); }
 
   // Built-in roles for Access Control, everything allowed. By name, so the
   // permissions an admin has since switched off are left alone.

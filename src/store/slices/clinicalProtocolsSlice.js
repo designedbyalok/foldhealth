@@ -8,7 +8,6 @@ import {
   protocolToRow,
   rowToProtocol,
 } from '../../features/settings/clinical-protocols/lib/protocolSchema';
-import { isFoldProtocol } from '../../features/settings/clinical-protocols/lib/foldProtocols';
 import { buildTemplateCatalog, TEMPLATE_DESCRIPTION_MAX } from '../../features/settings/care-plan-library/lib/aiTemplateDraft';
 import { materializeNewGoals, requestTemplateDraft, templateDraftToTemplate, withoutDraftMarks } from '../../features/settings/care-plan-library/lib/templateDraftToEditor';
 import { planOf } from '../../features/settings/clinical-protocols/lib/protocolPlan';
@@ -281,13 +280,10 @@ export const createClinicalProtocolsSlice = (set, get) => {
         if (supErr) console.warn('approveClinicalProtocol supersede:', supErr.message);
         else patchLocal(supersede.id, { status: 'superseded', updatedAt: now });
       }
-      // A client protocol's approved scope becomes its care plan template
-      // (Fold's own come with starter templates). One parsed before scopes
-      // existed gets a template drafted in the background instead.
-      if (!isFoldProtocol(next)) {
-        if (planOf(next.protocol)) await get().createTemplateFromProtocolPlan(id);
-        else get().draftTemplateFromProtocol(id);
-      }
+      // An approved scope becomes the protocol's care plan template. One
+      // parsed before scopes existed gets a template drafted in the background instead.
+      if (planOf(next.protocol)) await get().createTemplateFromProtocolPlan(id);
+      else get().draftTemplateFromProtocol(id);
       return true;
     },
 
