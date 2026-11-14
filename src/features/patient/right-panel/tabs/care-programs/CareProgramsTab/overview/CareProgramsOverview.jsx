@@ -451,7 +451,6 @@ export function CareProgramsOverview({
   const shownOrder = allCards ? order : order.slice(0, CARD_LIMIT);
   const onRun = (row) => {
     if (row.kind === 'step') setOpenStep({ program: row.refs[0].program, stepId: row.refs[0].step.id });
-    else if (row.kind === 'plan') onOpenPlan(row.ref.program);
     else setOpenItem({ kind: row.kind, ...row.ref });
   };
   // A Unity takeaway names the action, reading or concern it is about by key.
